@@ -649,7 +649,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             </div>
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#ef4444">*</span></label>
-              <select class="inp" id="applicant-select" onchange="syncPayeeIfSame()">
+              <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncEmployeeId()">
                 <option>王小明</option><option>陳小華</option><option>李大勇</option><option>王美玲</option><option>張志偉</option><option>林雅婷</option>
               </select>
             </div>
@@ -657,7 +657,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">員工編號</label>
-              <input class="inp" id="employee-id" placeholder="請輸入員工編號">
+              <input class="inp" id="employee-id" placeholder="依申請人自動帶入" readonly style="background:#f8fafc;color:#374151;font-family:monospace;font-weight:600;letter-spacing:.05em">
             </div>
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">付款方式</label>
@@ -713,15 +713,15 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label>
-                  <input class="inp pretax" type="number" placeholder="0" value="" oninput="calcRowTax(this)">
+                  <input class="inp pretax" type="number" placeholder="自動計算" value="" readonly style="background:#f8fafc;color:#64748b">
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">稅額 (NT$)</label>
                   <input class="inp taxamt" type="number" placeholder="自動計算" value="" readonly style="background:#f8fafc;color:#64748b">
                 </div>
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$)</label>
-                  <input class="inp withtax" type="number" placeholder="自動計算" value="" readonly style="background:#f8fafc;color:#374151;font-weight:700">
+                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#ef4444">*</span></label>
+                  <input class="inp withtax" type="number" placeholder="請輸入含稅金額" value="" oninput="calcRowFromTotal(this)" style="font-weight:700">
                 </div>
               </div>
             </div>
@@ -943,6 +943,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
             <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">使用者</th>
+            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">員工編號</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">Email</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">角色</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">加入時間</th>
@@ -952,6 +953,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">潔</div><span style="font-weight:500">某員工A</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-a@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:var(--brand-light);color:var(--brand);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">管理者</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -963,6 +965,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">鈞</div><span style="font-weight:500">某員工B</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-b@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -974,6 +977,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#d97706;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">舒</div><span style="font-weight:500">某員工E</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-e@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -985,6 +989,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#8b5cf6;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">湘</div><span style="font-weight:500">某員工C</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-c@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -996,6 +1001,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#06b6d4;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">姿</div><span style="font-weight:500">某員工F</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-f@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1007,6 +1013,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#16a34a;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">如</div><span style="font-weight:500">某員工G</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-g@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1018,6 +1025,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#38a3a5;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">岩</div><span style="font-weight:500">某員工H</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-h@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1029,6 +1037,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#ec4899;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">馨</div><span style="font-weight:500">某員工I</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-i@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1040,6 +1049,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr style="border-bottom:1px solid #f8fafc">
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#0ea5e9;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">鴻</div><span style="font-weight:500">某員工J</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-j@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1051,6 +1061,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <tr>
               <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
               <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#f97316;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">安</div><span style="font-weight:500">某員工D</span></div></td>
+              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T-XXXX</td>
               <td style="padding:12px 16px;color:#64748b">user-d@tsagroup.com.tw</td>
               <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
               <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
@@ -1122,11 +1133,15 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <input class="inp" id="add-name" placeholder="例：李小明">
         </div>
         <div>
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
-          <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">員工編號</label>
+          <input class="inp" id="add-empid" placeholder="例：T0001" style="font-family:monospace;letter-spacing:.05em">
         </div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
+          <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
+        </div>
         <div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">角色 <span style="color:#ef4444">*</span></label>
           <select class="inp" id="add-role">
@@ -1136,6 +1151,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <option>管理者</option>
           </select>
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">標籤</label>
           <select class="inp" id="add-tag">
@@ -1146,13 +1163,13 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <option>簽核代理</option>
           </select>
         </div>
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
-        <select class="inp" id="add-dept">
-          <option value="">請選擇部門</option>
-          <option>人力資源部</option><option>行政管理部</option><option>業務部</option><option>資訊部</option><option>財務部</option><option>研發部</option>
-        </select>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
+          <select class="inp" id="add-dept">
+            <option value="">請選擇部門</option>
+            <option>人力資源部</option><option>行政管理部</option><option>業務部</option><option>資訊部</option><option>財務部</option><option>研發部</option>
+          </select>
+        </div>
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b">
         ℹ️ 新增後系統將自動發送邀請信至填寫的 Email
@@ -1185,6 +1202,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">員工編號</label>
+          <input class="inp" id="edit-empid" placeholder="例：T0001" style="font-family:monospace;letter-spacing:.05em">
+        </div>
+        <div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">角色</label>
           <select class="inp" id="edit-role">
             <option>申請人</option>
@@ -1192,6 +1213,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <option>管理者</option>
           </select>
         </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">標籤</label>
           <select class="inp" id="edit-tag">
@@ -1202,12 +1225,12 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <option>簽核代理</option>
           </select>
         </div>
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
-        <select class="inp" id="edit-dept">
-          <option>人力資源部</option><option>行政管理部</option><option>業務部</option><option>資訊部</option><option>財務部</option><option>研發部</option>
-        </select>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
+          <select class="inp" id="edit-dept">
+            <option>人力資源部</option><option>行政管理部</option><option>業務部</option><option>資訊部</option><option>財務部</option><option>研發部</option>
+          </select>
+        </div>
       </div>
     </div>
     <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
@@ -1916,6 +1939,7 @@ function sw(name,elOrName){
       let found = false;
       Array.from(appSel.options).forEach(o => { if (o.value === currentUser.name || o.text === currentUser.name) { appSel.value = o.value; found = true; } });
       if (!found) { const opt = new Option(currentUser.name, currentUser.name, true, true); appSel.prepend(opt); }
+      syncEmployeeId(); // 設定申請人後自動帶入員工編號
     }
     if (payeeSel && currentUser?.name) {
       let found = false;
@@ -1929,6 +1953,31 @@ function sw(name,elOrName){
       if(reasonEl&&!reasonEl._autoSave){reasonEl.addEventListener('input',autoSaveDraft);reasonEl._autoSave=true;}
     },100);
   }
+}
+
+// ── 員工編號對照表 ──
+const EMPLOYEE_IDS = {
+  '某員工F':'T-XXXX','某員工J':'T-XXXX','某員工C':'T-XXXX','某員工A':'T-XXXX',
+  '某員工G':'T-XXXX','某員工H':'T-XXXX','某員工B':'T-XXXX','某員工E':'T-XXXX',
+  '某員工D':'T-XXXX','某員工I':'T-XXXX'
+};
+function syncEmployeeId(){
+  const sel=document.getElementById('applicant-select');
+  const empInput=document.getElementById('employee-id');
+  if(!sel||!empInput)return;
+  const name=sel.value;
+  // 先從對照表查，沒有再從使用者管理表格查
+  let id=EMPLOYEE_IDS[name]||'';
+  if(!id){
+    document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row){
+      const nameEl=row.querySelector('td:nth-child(2) span');
+      const empCell=row.querySelector('td:nth-child(3)');
+      if(nameEl&&empCell&&nameEl.textContent.trim()===name){
+        id=empCell.textContent.trim();
+      }
+    });
+  }
+  empInput.value=id;
 }
 
 // ── FORM ITEMS ──
@@ -1949,22 +1998,22 @@ function addItem(){
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑬ 張數</label><input class="inp" type="number" min="0" placeholder="0"></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="0" oninput="calcRowTax(this)"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">稅額 (NT$)</label><input class="inp taxamt" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$)</label><input class="inp withtax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;font-weight:700;color:#374151"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#ef4444">*</span></label><input class="inp withtax" type="number" placeholder="請輸入含稅金額" oninput="calcRowFromTotal(this)" style="font-weight:700"></div>
   </div>`;
   document.getElementById('items-list').appendChild(d);
   // 初始化新明細的日期選擇器
   const newDateInp = d.querySelector('.date-inp');
   if (newDateInp) initFlatpickr(newDateInp);
 }
-function calcRowTax(inp){
+function calcRowFromTotal(inp){
   const card=inp.closest('.item-card');
-  const pre=parseFloat(inp.value)||0;
-  const taxamt=Math.round(pre*0.05);
-  const total=pre+taxamt;
-  card.querySelector('.taxamt').value=taxamt||'';
-  card.querySelector('.withtax').value=total||'';
+  const total=parseFloat(inp.value)||0;
+  const pretax=total>0?Math.round(total/1.05):0;
+  const tax=total>0?total-pretax:0;
+  card.querySelector('.pretax').value=pretax||'';
+  card.querySelector('.taxamt').value=tax||'';
   calcTotal();
 }
 function calcTotal(){
@@ -2080,6 +2129,7 @@ function closeAddUserModal(){
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
+  const empId=document.getElementById('add-empid').value.trim();
   const email=document.getElementById('add-email').value.trim();
   const role=document.getElementById('add-role').value;
   if(!name||!email||!role){toast('⚠️ 請填寫姓名、Email 與角色');return;}
@@ -2097,6 +2147,7 @@ function doAddUser(){
   tr.innerHTML=`
     <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
     <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#38a3a5;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${name.charAt(0)}</div><span style="font-weight:500">${name}</span></div></td>
+    <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${empId||'—'}</td>
     <td style="padding:12px 16px;color:#64748b">${email}</td>
     <td style="padding:12px 16px"><span style="${roleColors[role]||''};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${role}</span></td>
     <td style="padding:12px 16px">${tag?`<span style="${tagColor}">${tag}</span>`:''}</td>
@@ -2117,10 +2168,13 @@ function showEditUserModal(btn){
   const row=btn.closest('tr');
   _editRow=row;
   const name=row.querySelector('td:nth-child(2) span').textContent;
-  const email=row.querySelector('td:nth-child(3)').textContent.trim();
-  const role=row.querySelector('td:nth-child(4) span').textContent.trim();
-  const tagEl=row.querySelector('td:nth-child(5) span');
+  const empId=row.querySelector('td:nth-child(3)')?row.querySelector('td:nth-child(3)').textContent.trim():'';
+  const email=row.querySelector('td:nth-child(4)').textContent.trim();
+  const role=row.querySelector('td:nth-child(5) span').textContent.trim();
+  const tagEl=row.querySelector('td:nth-child(6) span');
   const tag=tagEl?tagEl.textContent.trim():'';
+  const empidEl=document.getElementById('edit-empid');
+  if(empidEl)empidEl.value=empId;
   const avatarSrc=row.querySelector('img').src;
   document.getElementById('edit-user-name-display').textContent=name;
   document.getElementById('edit-user-email-display').textContent=email;
@@ -2148,8 +2202,12 @@ function doEditUser(){
     '簽核人':'background:#dcfce7;color:#15803d',
     '申請人':'background:#f1f5f9;color:#64748b'
   };
-  _editRow.querySelector('td:nth-child(4)').innerHTML=`<span style="${roleColors[role]||''};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${role}</span>`;
-  _editRow.querySelector('td:nth-child(5)').innerHTML=tag&&tag!=='無標籤'?`<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;font-size:12px">${tag}</span>`:'';
+  const newEmpId=document.getElementById('edit-empid')?.value.trim()||'';
+  const empIdCell=_editRow.querySelector('td:nth-child(3)');
+  if(empIdCell)empIdCell.textContent=newEmpId;
+  _editRow.querySelector('td:nth-child(5)').innerHTML=`<span style="${roleColors[role]||''};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${role}</span>`;
+  const tagCell=_editRow.querySelector('td:nth-child(6)');
+  if(tagCell)tagCell.innerHTML=tag&&tag!=='無標籤'?`<span style="background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:12px;font-size:12px">${tag}</span>`:'';
   closeEditUserModal();
   toast('✅ 已儲存變更');
 }
@@ -2899,6 +2957,7 @@ function renderMonthlyChart(id,moMap){
 
 </body>
 </html>
+
 
 
 
