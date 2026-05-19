@@ -309,7 +309,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
   <div class="view active" id="view-dashboard">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
-        <div id="dashboard-greeting" style="font-size:20px;font-weight:700;color:#0f172a">Hi，你好 👋</div>
+        <div id="dashboard-greeting" style="font-size:20px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px">Hi，你好 <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect width="34" height="34" rx="8" fill="#1e9d6b"/><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="white"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="white"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="white"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="white"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="white"/></svg></div>
         <div id="tw-datetime" style="font-size:14px;color:#64748b;margin-top:2px">載入中...</div>
       </div>
     </div>
@@ -1354,19 +1354,13 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // 若是 Google token，檢查是否過期
-      if (currentUser.token && !currentUser.token.startsWith('manual_')) {
-        const payload = parseJwtSafe(currentUser.token);
-        if (payload && payload.exp && payload.exp * 1000 < Date.now()) {
-          // token 已過期 → 靜默清除，回到登入頁
-          localStorage.removeItem('bf_user');
-          currentUser = null;
-          // 繼續往下執行（顯示登入頁）
-        } else {
-          showApp();
-          return;
-        }
+      // 檢查自訂 session 是否過期（8 小時）
+      if (currentUser.sessionExpiry && currentUser.sessionExpiry < Date.now()) {
+        // session 已過期 → 清除並回到登入頁
+        localStorage.removeItem('bf_user');
+        currentUser = null;
       } else {
+        // session 有效（或舊版無 sessionExpiry）→ 直接進入
         showApp();
         return;
       }
@@ -1412,7 +1406,7 @@ function manualLogin() {
     return;
   }
   if (!name) { toast('⚠️ 請輸入姓名'); return; }
-  currentUser = { email, name, token: 'manual_' + Date.now() };
+  currentUser = { email, name, token: 'manual_' + Date.now(), sessionExpiry: Date.now() + 8*60*60*1000 };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
   showApp();
 }
@@ -1424,7 +1418,7 @@ function handleGoogleLogin(response) {
     document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱登入';
     return;
   }
-  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential };
+  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, sessionExpiry: Date.now() + 8*60*60*1000 };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
   showApp();
 }
@@ -1447,7 +1441,7 @@ function showApp() {
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting)greeting.textContent='Hi，'+currentUser.name+' 👋';
+    if(greeting)greeting.innerHTML='Hi，'+currentUser.name+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><rect width="34" height="34" rx="8" fill="#1e9d6b"/><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="white" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="white"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="white"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="white"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="white"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="white"/></svg>';
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     loadDashboard();
