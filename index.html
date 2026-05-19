@@ -910,7 +910,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="font-size:20px;font-weight:700;color:#0f172a">系統管理</div>
         <div style="font-size:13px;color:#94a3b8;margin-top:2px">使用者管理 · 簽核流程設定</div>
       </div>
-      <button class="btn btn-p" onclick="showAddUserModal()">
+      <button id="add-user-btn" class="btn btn-p" onclick="showAddUserModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增人員
       </button>
     </div>
@@ -922,9 +922,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <div class="card" style="padding:14px 16px;margin-bottom:14px">
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
           <input class="inp" id="admin-search" style="max-width:240px" placeholder="搜尋姓名或 Email...">
-          <select class="inp" id="admin-filter-role" style="width:130px">
-            <option value="">全部角色</option>
-            <option>申請人</option><option>管理者</option>
+          <select class="inp" id="admin-filter-dept" style="width:150px">
+            <option value="">全部部門</option>
+            <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
           </select>
           <button class="btn btn-p" style="padding:8px 14px;font-size:13px" onclick="applyAdminFilter()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>搜尋
@@ -1090,7 +1090,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <div id="admin-panel-flow" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
         <div><div style="font-size:15px;font-weight:700;color:#0f172a">簽核流程設定</div></div>
-        <button class="btn btn-p" onclick="toast('✅ 已新增關卡（示範）')">+ 新增關卡</button>
+        <button class="btn btn-p" onclick="showAddFlowModal()">+ 新增關卡</button>
       </div>
       <div class="card" style="padding:22px">
         <div class="section-title">目前簽核流程（共 3 關）</div>
@@ -1099,19 +1099,19 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">1</div>
             <div><div style="font-size:14px;font-weight:600;color:#0f172a">總幹事</div><div style="font-size:12px;color:#94a3b8">第一關</div></div>
             <div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">鈞</div><div><div style="font-size:13px;font-weight:500;color:#374151">某員工B</div><div style="font-size:11px;color:#94a3b8">user-b@tsagroup.com.tw</div></div></div>
-            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="總幹事" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toast('✏️ 編輯「總幹事」簽核設定')">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
+            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="總幹事" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="editFlowRow(this)">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
           </div>
           <div class="flow-row" style="display:grid;grid-template-columns:44px 1fr 200px auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
             <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">2</div>
             <div><div style="font-size:14px;font-weight:600;color:#0f172a">主任委員</div><div style="font-size:12px;color:#94a3b8">第二關</div></div>
             <div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">潔</div><div><div style="font-size:13px;font-weight:500;color:#374151">某員工A</div><div style="font-size:11px;color:#94a3b8">user-a@tsagroup.com.tw</div></div></div>
-            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="主任委員" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toast('✏️ 編輯「主任委員」簽核設定')">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
+            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="主任委員" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="editFlowRow(this)">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
           </div>
           <div class="flow-row" style="display:grid;grid-template-columns:44px 1fr 200px auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
             <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">3</div>
             <div><div style="font-size:14px;font-weight:600;color:#0f172a">財務委員</div><div style="font-size:12px;color:#94a3b8">第三關</div></div>
             <div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:#f97316;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">安</div><div><div style="font-size:13px;font-weight:500;color:#374151">某員工D</div><div style="font-size:11px;color:#94a3b8">user-d@tsagroup.com.tw</div></div></div>
-            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="財務委員" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toast('✏️ 編輯「財務委員」簽核設定')">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
+            <div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="財務委員" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="editFlowRow(this)">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>
           </div>
         </div>
       </div>
@@ -1139,25 +1139,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <input class="inp" id="add-name" placeholder="例：李小明">
         </div>
         <div>
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">員工編號</label>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">員工編號 <span style="color:#ef4444">*</span></label>
           <input class="inp" id="add-empid" placeholder="例：T0001" style="font-family:monospace;letter-spacing:.05em">
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
-          <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">角色</label>
-          <select class="inp" id="add-role">
-            <option value="申請人" selected>申請人</option>
-            <option value="管理者">管理者</option>
-          </select>
-        </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
+        <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
       </div>
       <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
         <select class="inp" id="add-dept">
           <option value="">請選擇部門</option>
           <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
@@ -1207,16 +1198,86 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       </div>
       <div>
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
-        <select class="inp" id="edit-dept" style="width:100%">
-            <option value="">請選擇部門</option>
-            <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-          </select>
-        </div>
+        <select class="inp" id="edit-dept">
+          <option value="">請選擇部門</option>
+          <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
+        </select>
       </div>
     </div>
     <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-o" onclick="closeEditUserModal()">取消</button>
       <button class="btn btn-p" onclick="doEditUser()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Flow Modal -->
+<div id="edit-flow-modal" class="modal-bg">
+  <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#0f172a">編輯簽核關卡</div>
+        <div id="edit-flow-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px">修改關卡設定</div>
+      </div>
+      <button onclick="closeEditFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">關卡名稱 <span style="color:#ef4444">*</span></label>
+        <input class="inp" id="edit-flow-name" placeholder="例：總幹事">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">負責人 <span style="color:#ef4444">*</span></label>
+        <select class="inp" id="edit-flow-person"></select>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-o" onclick="closeEditFlowModal()">取消</button>
+      <button class="btn btn-p" onclick="doEditFlow()">儲存變更</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Flow Modal -->
+<div id="add-flow-modal" class="modal-bg">
+  <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#0f172a">新增簽核關卡</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">在流程最後新增一關</div>
+      </div>
+      <button onclick="closeAddFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">關卡名稱 <span style="color:#ef4444">*</span></label>
+        <input class="inp" id="add-flow-name" placeholder="例：執行長">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">負責人 <span style="color:#ef4444">*</span></label>
+        <select class="inp" id="add-flow-person"></select>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-o" onclick="closeAddFlowModal()">取消</button>
+      <button class="btn btn-p" onclick="doAddFlow()">確認新增</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="delete-confirm-modal" class="modal-bg">
+  <div style="background:#fff;border-radius:16px;width:400px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:24px 24px 8px;text-align:center">
+      <div style="width:52px;height:52px;border-radius:50%;background:#fef2f2;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </div>
+      <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:6px">確定要刪除？</div>
+      <div id="delete-confirm-msg" style="font-size:14px;color:#64748b;line-height:1.6">此操作無法復原。</div>
+    </div>
+    <div style="padding:16px 24px 24px;display:flex;gap:10px;justify-content:center">
+      <button class="btn btn-o" style="min-width:90px" onclick="closeDeleteConfirmModal()">取消</button>
+      <button id="delete-confirm-btn" class="btn" style="min-width:90px;background:#ef4444;color:#fff;border:none" onclick="executeDeleteUser()">確認刪除</button>
     </div>
   </div>
 </div>
@@ -1329,7 +1390,15 @@ function applyRolePermissions() {
     }
   });
 
-  // 3. 批次操作區（全選、批次刪除等）
+  // 3. 新增人員按鈕（Header）
+  const addUserBtn = document.getElementById('add-user-btn');
+  if (addUserBtn) {
+    addUserBtn.disabled = !admin;
+    addUserBtn.style.opacity = admin ? '' : '0.3';
+    addUserBtn.style.cursor = admin ? 'pointer' : 'not-allowed';
+  }
+
+  // 4. 批次操作區（全選、批次刪除等）
   const batchArea = document.querySelector('#admin-panel-users .card:first-child');
   if (batchArea) {
     const selectAll = batchArea.querySelector('input[type="checkbox"]');
@@ -1355,16 +1424,9 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // 檢查自訂 session 是否過期（8 小時）
-      if (currentUser.sessionExpiry && currentUser.sessionExpiry < Date.now()) {
-        // session 已過期 → 清除並回到登入頁
-        localStorage.removeItem('bf_user');
-        currentUser = null;
-      } else {
-        // session 有效（或舊版無 sessionExpiry）→ 直接進入
-        showApp();
-        return;
-      }
+      // session 永久有效（demo 模式，移除時效限制）
+      showApp();
+      return;
     } catch(e) {
       localStorage.removeItem('bf_user');
     }
@@ -1495,15 +1557,8 @@ async function callAPI(action, data = {}) {
 }
 
 function handleAuthError() {
-  if (window._authErrorShown) return;
-  window._authErrorShown = true;
-  // 如果 App 尚未完全載入（剛開頁面），直接回登入頁，不跳 modal
-  if (!window._appReady) {
-    localStorage.removeItem('bf_user');
-    location.reload();
-    return;
-  }
-  showSessionExpiredModal();
+  // 靜態 demo：不顯示過期 modal，靜默忽略 auth 錯誤
+  console.warn('[BeneFlow] auth error silently ignored in demo mode');
 }
 
 function showSessionExpiredModal() {
@@ -2140,6 +2195,94 @@ function toggleFlowRow(btn){
   }
 }
 
+// ── FLOW EDIT / ADD ──
+let _editFlowRow=null;
+
+function getFlowUserOptions(selectedName){
+  const users=[];
+  document.querySelectorAll('#admin-panel-users tbody tr').forEach(row=>{
+    const nameEl=row.querySelector('td:nth-child(2)');
+    const name=nameEl?nameEl.innerText.trim():'';
+    const emailEl=row.querySelector('td:nth-child(5)');
+    const email=emailEl?emailEl.textContent.trim():'';
+    if(name&&email)users.push({name,email});
+  });
+  if(users.length===0){
+    // fallback: hardcoded from initial data
+    [
+      {name:'某員工B',email:'user-b@tsagroup.com.tw'},
+      {name:'陳美華',email:'meihua@tsagroup.com.tw'},
+      {name:'某員工A',email:'user-a@tsagroup.com.tw'}
+    ].forEach(u=>users.push(u));
+  }
+  return users.map(u=>`<option value="${u.name}" data-email="${u.email}"${u.name===selectedName?' selected':''}>${u.name}（${u.email}）</option>`).join('');
+}
+
+function editFlowRow(btn){
+  const row=btn.closest('.flow-row');
+  if(!row)return;
+  _editFlowRow=row;
+  const stepName=row.children[1]?.children[0]?.textContent.trim()||'';
+  const stepLabel=row.children[1]?.children[1]?.textContent.trim()||'';
+  const personName=row.children[2]?.children[1]?.children[0]?.textContent.trim()||'';
+  document.getElementById('edit-flow-name').value=stepName;
+  document.getElementById('edit-flow-subtitle').textContent='修改 '+stepLabel+' 設定';
+  document.getElementById('edit-flow-person').innerHTML=getFlowUserOptions(personName);
+  document.getElementById('edit-flow-modal').classList.add('open');
+}
+function closeEditFlowModal(){
+  document.getElementById('edit-flow-modal').classList.remove('open');
+  _editFlowRow=null;
+}
+function doEditFlow(){
+  if(!_editFlowRow){closeEditFlowModal();return;}
+  const newName=document.getElementById('edit-flow-name').value.trim();
+  const sel=document.getElementById('edit-flow-person');
+  const newPerson=sel.value;
+  const newEmail=sel.selectedOptions[0]?.dataset.email||'';
+  if(!newName||!newPerson){toast('⚠️ 請填寫關卡名稱和負責人');return;}
+  _editFlowRow.children[1].children[0].textContent=newName;
+  _editFlowRow.children[2].children[0].textContent=newPerson.charAt(0);
+  _editFlowRow.children[2].children[1].children[0].textContent=newPerson;
+  _editFlowRow.children[2].children[1].children[1].textContent=newEmail;
+  const badge=_editFlowRow.querySelector('.flow-status');
+  if(badge)badge.dataset.name=newName;
+  closeEditFlowModal();
+  toast('✅ 已更新「'+newName+'」簽核關卡');
+}
+
+function showAddFlowModal(){
+  document.getElementById('add-flow-name').value='';
+  document.getElementById('add-flow-person').innerHTML=getFlowUserOptions('');
+  document.getElementById('add-flow-modal').classList.add('open');
+}
+function closeAddFlowModal(){
+  document.getElementById('add-flow-modal').classList.remove('open');
+}
+function doAddFlow(){
+  const name=document.getElementById('add-flow-name').value.trim();
+  const sel=document.getElementById('add-flow-person');
+  const person=sel.value;
+  const email=sel.selectedOptions[0]?.dataset.email||'';
+  if(!name||!person){toast('⚠️ 請填寫關卡名稱和負責人');return;}
+  const flowRows=document.querySelectorAll('.flow-row');
+  const num=flowRows.length+1;
+  const avatarColors=['#38a3a5','#1e9d6b','#6366f1','#06b6d4','#d97706','#f97316','#8b5cf6','#16a34a'];
+  const color=avatarColors[person.charCodeAt(0)%avatarColors.length];
+  const newRow=document.createElement('div');
+  newRow.className='flow-row';
+  newRow.style.cssText='display:grid;grid-template-columns:44px 1fr 200px auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0';
+  newRow.innerHTML=`<div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">${num}</div><div><div style="font-size:14px;font-weight:600;color:#0f172a">${name}</div><div style="font-size:12px;color:#94a3b8">第${num}關</div></div><div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">${person.charAt(0)}</div><div><div style="font-size:13px;font-weight:500;color:#374151">${person}</div><div style="font-size:11px;color:#94a3b8">${email}</div></div></div><div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="${name}" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="editFlowRow(this)">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>`;
+  if(flowRows.length>0){
+    flowRows[0].parentElement.appendChild(newRow);
+  }
+  const title=document.querySelector('#admin-panel-flow .section-title');
+  if(title)title.textContent='目前簽核流程（共 '+num+' 關）';
+  closeAddFlowModal();
+  toast('✅ 已新增第 '+num+' 關：'+name);
+  setTimeout(applyRolePermissions,50);
+}
+
 // ── ADMIN TABS ──
 function switchAdminTab(tab){
   document.getElementById('admin-panel-users').style.display=tab==='users'?'block':'none';
@@ -2156,17 +2299,19 @@ function closeAddUserModal(){
   document.getElementById('add-name').value='';
   document.getElementById('add-empid').value='';
   document.getElementById('add-email').value='';
-  document.getElementById('add-role').value='申請人';
   document.getElementById('add-dept').value='';
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
   const empId=document.getElementById('add-empid').value.trim();
   const email=document.getElementById('add-email').value.trim();
-  const role=document.getElementById('add-role').value||'申請人';
+  const role='申請人';
   const dept=document.getElementById('add-dept').value;
-  if(!name||!email){toast('⚠️ 請填寫姓名與 Email');return;}
+  if(!name){toast('⚠️ 請填寫姓名');return;}
+  if(!empId){toast('⚠️ 請填寫員工編號');return;}
+  if(!email){toast('⚠️ 請填寫 Email');return;}
   if(!email.endsWith('@tsagroup.com.tw')){toast('⚠️ Email 須為 @tsagroup.com.tw');return;}
+  if(!dept){toast('⚠️ 請選擇部門');return;}
   const roleColors={
     '管理者':'background:var(--brand-light);color:var(--brand)',
     '申請人':'background:#f1f5f9;color:#64748b'
@@ -2240,14 +2385,33 @@ function doEditUser(){
 }
 
 // ── DELETE USER ──
+let _deleteTargetRow = null;
 function confirmDeleteUser(btn){
   const row=btn.closest('tr');
-  const name=row.querySelector('td:nth-child(2) span').textContent;
-  if(confirm('確定要刪除「'+name+'」？此操作無法復原。')){
-    row.style.transition='opacity .3s';
-    row.style.opacity='0';
-    setTimeout(()=>{row.remove();toast('🗑️ 已刪除 '+name);},300);
-  }
+  _deleteTargetRow=row;
+  const nameEl=row.querySelector('td:nth-child(2) span')||row.querySelector('td:nth-child(2)');
+  const name=nameEl?nameEl.textContent.trim():'此使用者';
+  document.getElementById('delete-confirm-msg').textContent='即將刪除「'+name+'」，此操作無法復原。';
+  document.getElementById('delete-confirm-modal').classList.add('open');
+}
+function closeDeleteConfirmModal(){
+  document.getElementById('delete-confirm-modal').classList.remove('open');
+  _deleteTargetRow=null;
+}
+function executeDeleteUser(){
+  if(!_deleteTargetRow){closeDeleteConfirmModal();return;}
+  const row=_deleteTargetRow;
+  const nameEl=row.querySelector('td:nth-child(2) span')||row.querySelector('td:nth-child(2)');
+  const name=nameEl?nameEl.textContent.trim():'使用者';
+  closeDeleteConfirmModal();
+  row.style.transition='opacity .3s';
+  row.style.opacity='0';
+  setTimeout(()=>{
+    row.remove();
+    if(!_deletedUsers.includes(name))_deletedUsers.push(name);
+    syncApplicantFilter();
+    toast('🗑️ 已刪除 '+name);
+  },300);
 }
 
 
@@ -2320,22 +2484,7 @@ function syncApplicantFilter() {
   });
 }
 
-// 覆寫 confirmDeleteUser 以觸發同步
-const _origDelete = window.confirmDeleteUser;
-window.confirmDeleteUser = function(btn) {
-  const row = btn.closest('tr');
-  const name = row.querySelector('td:nth-child(2) span').textContent;
-  if (confirm('確定要刪除「' + name + '」？此操作無法復原。')) {
-    row.style.transition = 'opacity .3s';
-    row.style.opacity = '0';
-    setTimeout(() => {
-      row.remove();
-      if (!_deletedUsers.includes(name)) _deletedUsers.push(name);
-      syncApplicantFilter();
-      toast('🗑️ 已刪除 ' + name);
-    }, 300);
-  }
-};
+// confirmDeleteUser 已整合 syncApplicantFilter，無需再覆寫
 
 // 覆寫 doAddUser 以觸發同步
 const _origAddUser = window.doAddUser;
@@ -2390,13 +2539,13 @@ function resetAppFilter() {
 // ══════════════════════════════════════════
 function applyAdminFilter() {
   const q = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
-  const role = document.getElementById('admin-filter-role')?.value || '';
+  const dept = document.getElementById('admin-filter-dept')?.value || '';
   const rows = document.querySelectorAll('#admin-panel-users tbody tr');
   let visible = 0;
   rows.forEach(r => {
     const text = r.textContent.toLowerCase();
-    const roleText = r.cells[3]?.textContent || '';
-    const match = (!q || text.includes(q)) && (!role || roleText.includes(role));
+    const deptText = r.cells[3]?.textContent || '';
+    const match = (!q || text.includes(q)) && (!dept || deptText.includes(dept));
     r.style.display = match ? '' : 'none';
     if (match) visible++;
   });
@@ -2407,7 +2556,7 @@ function applyAdminFilter() {
 
 function resetAdminFilter() {
   document.getElementById('admin-search').value = '';
-  document.getElementById('admin-filter-role').value = '';
+  document.getElementById('admin-filter-dept').value = '';
   document.querySelectorAll('#admin-panel-users tbody tr').forEach(r => r.style.display = '');
   const countEl = document.getElementById('selected-count');
   if (countEl) countEl.textContent = '共 10 位使用者';
