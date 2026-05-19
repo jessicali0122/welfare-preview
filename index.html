@@ -1415,13 +1415,27 @@ function applyRolePermissions() {
 
 // Google 登入初始化
 window.onload = function() {
-  // 先檢查 localStorage 是否有 session
   const saved = localStorage.getItem('bf_user');
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // session 永久有效（demo 模式，移除時效限制）
       showApp();
+      // 背景靜默更新 token（不打擾使用者）
+      if (GOOGLE_CLIENT_ID) {
+        google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: function(response) {
+            const payload = parseJwt(response.credential);
+            if (payload && currentUser) {
+              currentUser.token = response.credential;
+              currentUser.sessionExpiry = Date.now() + 8 * 60 * 60 * 1000;
+              localStorage.setItem('bf_user', JSON.stringify(currentUser));
+            }
+          },
+          auto_select: true,
+        });
+        google.accounts.id.prompt();
+      }
       return;
     } catch(e) {
       localStorage.removeItem('bf_user');
@@ -1553,8 +1567,11 @@ async function callAPI(action, data = {}) {
 }
 
 function handleAuthError() {
-  // 靜態 demo：不顯示過期 modal，靜默忽略 auth 錯誤
-  console.warn('[BeneFlow] auth error silently ignored in demo mode');
+  localStorage.removeItem('bf_user');
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  toast('⚠️ 登入已過期，請重新登入');
 }
 
 function showSessionExpiredModal() {
