@@ -148,7 +148,29 @@ input[type=checkbox]{accent-color:var(--brand)}
   #main-wrapper{margin-left:0!important}
   .sl{width:56px!important;height:56px!important}
   .sl::after{font-size:10px!important}
-}</style>
+}
+.inp-error{border-color:#ef4444!important;background:#fff5f5!important}
+.inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
+.skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
+@keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.copy-btn{background:none;border:none;cursor:pointer;color:#94a3b8;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;transition:color .15s}
+.copy-btn:hover{color:var(--brand)}
+.empty-state{text-align:center;padding:48px 20px;color:#94a3b8}
+.empty-state svg{margin-bottom:12px;opacity:.4}
+.empty-state p{font-size:14px;margin:0}
+.empty-state small{font-size:12px;color:#cbd5e1}
+@media print{
+  #sidebar,#main-wrapper>header,.btn,#toast,#receipt-confirm,#user-menu,#notif-panel,.no-print{display:none!important}
+  #main-content{margin-left:0!important;padding:16px!important}
+  .view{display:none!important}
+  #view-detail{display:block!important}
+  .card{box-shadow:none!important;border:1px solid #e2e8f0!important;break-inside:avoid;margin-bottom:12px}
+  .print-header{display:block!important}
+  body{background:#fff!important}
+  #approve-box{display:none!important}
+}
+.print-header{display:none}
+</style>
 </head>
 <body>
 
@@ -419,10 +441,10 @@ input[type=checkbox]{accent-color:var(--brand)}
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap">篩選區間</span>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button id="arange-month" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('month'">本月</button>
-          <button id="arange-quarter" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('quarter'">本季</button>
-          <button id="arange-year" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('year'">本年</button>
-          <button id="arange-custom" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('custom'">自訂</button>
+          <button id="arange-month" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('month')">本月</button>
+          <button id="arange-quarter" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('quarter')">本季</button>
+          <button id="arange-year" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('year')">本年</button>
+          <button id="arange-custom" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('custom')">自訂</button>
         </div>
         <div id="analytics-custom-range" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
           <input type="date" id="analytics-date-start" class="inp" style="width:148px;font-size:14px;padding:5px 8px">
@@ -732,6 +754,9 @@ input[type=checkbox]{accent-color:var(--brand)}
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:10px">
           <span id="detail-case-no" style="font-size:20px;font-weight:700;color:#0f172a">EWC-202505-0012</span>
+          <button class="copy-btn no-print" title="複製單號" onclick="copyCaseNo(document.getElementById('detail-case-no').textContent)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
           <span id="detail-status-badge" class="badge bp">簽核中</span>
         </div>
         <div style="font-size:13px;color:#94a3b8;margin-top:2px">建立於 2025/05/10 09:32:14</div>
@@ -1557,6 +1582,7 @@ function updateBadge(count) {
 //  案件清單載入
 // ══════════════════════════════════════════
 async function loadApplications() {
+  showTableSkeleton('applications-tbody', 7, 5);
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   const cases = res.cases || [];
@@ -1565,7 +1591,7 @@ async function loadApplications() {
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
@@ -1747,7 +1773,10 @@ async function submitForm() {
   const tax    = items.reduce((s,i)=>s+i.tax,0);
   const total  = items.reduce((s,i)=>s+i.total,0);
 
-  if (!subjectEl?.value) { toast('⚠️ 請填寫主旨'); return; }
+  if (!subjectEl?.value) {
+    if(subjectEl){subjectEl.classList.add('inp-error');subjectEl.focus();setTimeout(()=>subjectEl.classList.remove('inp-error'),2500);}
+    toast('⚠️ 請填寫主旨'); return;
+  }
   if (items.length === 0) { toast('⚠️ 請至少新增一筆明細'); return; }
 
   // 收據提醒
@@ -1772,11 +1801,17 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   const pretax = items.reduce((s,i)=>s+i.pretax,0);
   const tax    = items.reduce((s,i)=>s+i.tax,0);
   const total  = items.reduce((s,i)=>s+i.total,0);
+  const applyDateEl = document.getElementById('apply-date');
+  const employeeIdEl = document.getElementById('employee-id');
+  const applicantEl = document.getElementById('applicant-select');
   const res = await callAPI('submit', {
     project:    subjectEl?.value || '',
     department: departmentEl?.value || '',
     reason:     reasonEl?.value || '',
     payee:      payeeEl?.value || currentUser?.name,
+    name:       applicantEl?.value || currentUser?.name,
+    applyDate:  applyDateEl?.value || '',
+    employeeId: employeeIdEl?.value || '',
     pretax, tax, total, items,
   });
 
@@ -1838,6 +1873,26 @@ function sw(name,elOrName){
   if(name==='detail')updateDetailFlow('step1');
   if(name==='new-form'){
     checkDraftBanner();
+    // 預設申請日期為今天
+    const applyDateEl = document.getElementById('apply-date');
+    if (applyDateEl && !applyDateEl.value) {
+      const now = new Date();
+      applyDateEl.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+    }
+    // 申請人/收款人預設為登入者
+    const appSel = document.getElementById('applicant-select');
+    const payeeSel = document.getElementById('payee-select');
+    if (appSel && currentUser?.name) {
+      // 先找有沒有符合的 option，沒有就新增
+      let found = false;
+      Array.from(appSel.options).forEach(o => { if (o.value === currentUser.name || o.text === currentUser.name) { appSel.value = o.value; found = true; } });
+      if (!found) { const opt = new Option(currentUser.name, currentUser.name, true, true); appSel.prepend(opt); }
+    }
+    if (payeeSel && currentUser?.name) {
+      let found = false;
+      Array.from(payeeSel.options).forEach(o => { if (o.value === currentUser.name || o.text === currentUser.name) { payeeSel.value = o.value; found = true; } });
+      if (!found) { const opt = new Option(currentUser.name, currentUser.name, true, true); payeeSel.prepend(opt); }
+    }
     setTimeout(()=>{
       const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
       const reasonEl=document.querySelector('#view-new-form textarea');
@@ -2579,6 +2634,43 @@ function clearDraft(){
   toast('🗑️ 草稿已捨棄');
 }
 
+
+// ===== ESC KEY - close modals =====
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  var rc = document.getElementById('receipt-confirm');
+  if (rc && rc.classList.contains('open')) { rc.classList.remove('open'); return; }
+  var um = document.getElementById('user-menu');
+  if (um && um.style.display === 'block') { um.style.display = 'none'; return; }
+  closeNotif();
+});
+
+// ===== COPY CASE NUMBER =====
+function copyCaseNo(caseId) {
+  caseId = (caseId || '').trim();
+  if (!caseId) return;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(caseId).then(function() { toast('📋 已複製：' + caseId); }).catch(function() { _fallbackCopy(caseId); });
+  } else { _fallbackCopy(caseId); }
+}
+function _fallbackCopy(text) {
+  var el = document.createElement('textarea');
+  el.value = text; el.style.position = 'fixed'; el.style.opacity = '0';
+  document.body.appendChild(el); el.select();
+  try { document.execCommand('copy'); toast('📋 已複製：' + text); } catch(e) { toast('請手動複製：' + text); }
+  document.body.removeChild(el);
+}
+
+// ===== LOADING SKELETON =====
+function showTableSkeleton(tbodyId, cols, rows) {
+  var tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  var row = '';
+  for (var c = 0; c < cols; c++) { row += '<td style="padding:12px 16px"><span class="skeleton" style="height:14px;width:' + (60 + Math.random()*60|0) + 'px">&nbsp;</span></td>'; }
+  var html = '';
+  for (var r = 0; r < rows; r++) { html += '<tr>' + row + '</tr>'; }
+  tbody.innerHTML = html;
+}
 // ===== ANALYTICS =====
 var _analyticsAllCases = null;
 var _analyticsRange = 'month';
@@ -2715,6 +2807,9 @@ function renderMonthlyChart(id,moMap){
 
 </body>
 </html>
+
+
+
 
 
 
