@@ -1420,22 +1420,6 @@ window.onload = function() {
     try {
       currentUser = JSON.parse(saved);
       showApp();
-      // 背景靜默更新 token（不打擾使用者）
-      if (GOOGLE_CLIENT_ID) {
-        google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: function(response) {
-            const payload = parseJwt(response.credential);
-            if (payload && currentUser) {
-              currentUser.token = response.credential;
-              currentUser.sessionExpiry = Date.now() + 8 * 60 * 60 * 1000;
-              localStorage.setItem('bf_user', JSON.stringify(currentUser));
-            }
-          },
-          auto_select: true,
-        });
-        google.accounts.id.prompt();
-      }
       return;
     } catch(e) {
       localStorage.removeItem('bf_user');
@@ -1567,11 +1551,15 @@ async function callAPI(action, data = {}) {
 }
 
 function handleAuthError() {
+  // Token 過期：清除舊 session，以小橫幅提示重新登入，不強制中斷操作
+  if (document.getElementById('auth-expired-bar')) return;
   localStorage.removeItem('bf_user');
   currentUser = null;
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('login-screen').style.display = 'flex';
-  toast('⚠️ 登入已過期，請重新登入');
+  const bar = document.createElement('div');
+  bar.id = 'auth-expired-bar';
+  bar.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
+  bar.innerHTML = '⚠️ 登入已過期 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">重新登入</button>';
+  document.body.appendChild(bar);
 }
 
 function showSessionExpiredModal() {
