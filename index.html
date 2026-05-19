@@ -177,6 +177,11 @@ input[type=checkbox]{accent-color:var(--brand)}
   #admin-panel-users th:nth-child(6),
   #admin-panel-users td:nth-child(6){max-width:80px}
 }
+@supports (height: 100dvh) {
+  @media(max-width:768px){
+    #app,#app>div{height:100dvh!important}
+  }
+}
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
@@ -489,12 +494,13 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly>
           <button class="btn btn-p" style="font-size:13px;padding:5px 16px" onclick="applyCustomRange()">套用</button>
         </div>
-        <div id="analytics-range-label" style="font-size:13px;color:#94a3b8;white-space:nowrap;padding-left:4px">載入中...</div>
-        <div style="flex:1"></div>
-        <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 14px;flex-shrink:0">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          匯出 CSV
-        </button>
+        <div style="margin-left:auto;display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <div id="analytics-range-label" style="font-size:13px;color:#94a3b8;white-space:nowrap">載入中...</div>
+          <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 14px;flex-shrink:0">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            匯出 CSV
+          </button>
+        </div>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:14px">
@@ -638,15 +644,21 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           </div>
         </div>
 
-        <!-- ④ 收款人 + 所屬部門 + 申請人 -->
+        <!-- ⑥ 申請人 + ④ 收款人 + ⑤ 所屬部門 -->
         <div class="card" style="padding:20px">
           <div class="section-title">申請人資料</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
             <div>
+              <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#ef4444">*</span></label>
+              <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
+                <option>李潔慧</option><option>王鈞逸</option><option>何舒維</option><option>邱湘芬</option><option>陳姿璇</option><option>黃如華</option><option>黃岩</option><option>鄒馨瑩</option><option>蔡鴻陵</option><option>鄭安汝</option>
+              </select>
+            </div>
+            <div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
                 <label style="font-size:13px;font-weight:600;color:#374151">④ 收款人 <span style="color:#ef4444">*</span></label>
                 <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:#64748b;cursor:pointer;font-weight:500">
-                  <input type="checkbox" id="same-as-applicant" checked onchange="toggleSameAsApplicant(this)">申請人同收款人
+                  <input type="checkbox" id="same-as-applicant" checked onchange="toggleSameAsApplicant(this)">同申請人
                 </label>
               </div>
               <select class="inp" id="payee-select" disabled>
@@ -657,12 +669,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑤ 所屬部門</label>
               <select class="inp" id="form-dept-select" style="background:#f8fafc;color:#374151">
                 <option value="">依申請人自動帶入</option><option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#ef4444">*</span></label>
-              <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
-                <option>李潔慧</option><option>王鈞逸</option><option>何舒維</option><option>邱湘芬</option><option>陳姿璇</option><option>黃如華</option><option>黃岩</option><option>鄒馨瑩</option><option>蔡鴻陵</option><option>鄭安汝</option>
               </select>
             </div>
           </div>
