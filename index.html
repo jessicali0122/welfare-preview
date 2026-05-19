@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>福委會請款簽核系統</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%231e9d6b'/><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='white' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='white'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='white'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='white'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='white'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='white'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Noto Sans TC','sans-serif']}}}}</script>
@@ -1230,9 +1232,25 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      showApp();
-      return;
-    } catch(e) {}
+      // 若是 Google token，檢查是否過期
+      if (currentUser.token && !currentUser.token.startsWith('manual_')) {
+        const payload = parseJwtSafe(currentUser.token);
+        if (payload && payload.exp && payload.exp * 1000 < Date.now()) {
+          // token 已過期 → 靜默清除，回到登入頁
+          localStorage.removeItem('bf_user');
+          currentUser = null;
+          // 繼續往下執行（顯示登入頁）
+        } else {
+          showApp();
+          return;
+        }
+      } else {
+        showApp();
+        return;
+      }
+    } catch(e) {
+      localStorage.removeItem('bf_user');
+    }
   }
   // 初始化 Google Sign-In（需要 Client ID）
   if (GOOGLE_CLIENT_ID) {
@@ -1308,6 +1326,7 @@ function showApp() {
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     loadDashboard();
+    setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
   }
@@ -1352,9 +1371,14 @@ async function callAPI(action, data = {}) {
 }
 
 function handleAuthError() {
-  // 只顯示一次提示
   if (window._authErrorShown) return;
   window._authErrorShown = true;
+  // 如果 App 尚未完全載入（剛開頁面），直接回登入頁，不跳 modal
+  if (!window._appReady) {
+    localStorage.removeItem('bf_user');
+    location.reload();
+    return;
+  }
   showSessionExpiredModal();
 }
 
