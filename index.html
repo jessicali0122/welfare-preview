@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js"></script>
 <script src="https://cdn.tailwindcss.com">
 </script>
 <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Noto Sans TC','sans-serif']}}}}
@@ -170,6 +173,30 @@ input[type=checkbox]{accent-color:var(--brand)}
   #approve-box{display:none!important}
 }
 .print-header{display:none}
+/* ── Flatpickr 品牌主題 ── */
+.flatpickr-calendar{font-family:'Noto Sans TC',sans-serif!important;border-radius:14px!important;box-shadow:0 8px 32px rgba(0,0,0,.13)!important;border:1px solid #e2e8f0!important;padding:4px}
+.flatpickr-months{background:var(--brand);border-radius:10px 10px 0 0}
+.flatpickr-month{color:#fff!important;fill:#fff!important}
+.flatpickr-prev-month,.flatpickr-next-month{color:#fff!important;fill:#fff!important}
+.flatpickr-prev-month:hover svg,.flatpickr-next-month:hover svg{fill:#b2e4ce!important}
+.flatpickr-current-month{color:#fff!important}
+.flatpickr-current-month .flatpickr-monthDropdown-months{background:var(--brand)!important;color:#fff!important;border:none;font-family:'Noto Sans TC',sans-serif;font-weight:700}
+.flatpickr-current-month input.cur-year{color:#fff!important;font-family:'Noto Sans TC',sans-serif;font-weight:700}
+.numInputWrapper span.arrowUp:after{border-bottom-color:#fff!important}
+.numInputWrapper span.arrowDown:after{border-top-color:#fff!important}
+.flatpickr-weekdays{background:#fff;padding-top:4px}
+span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-size:11px!important}
+.flatpickr-days{border:none!important}
+.dayContainer{padding:2px 4px 4px}
+.flatpickr-day{border-radius:8px!important;color:#374151;font-size:13px;height:34px;line-height:34px;font-family:'Noto Sans TC',sans-serif}
+.flatpickr-day:hover,.flatpickr-day.prevMonthDay:hover,.flatpickr-day.nextMonthDay:hover{background:var(--brand-light)!important;border-color:var(--brand-light)!important;color:var(--brand)!important}
+.flatpickr-day.today{border-color:var(--brand)!important;color:var(--brand)!important;font-weight:700}
+.flatpickr-day.today:hover{background:var(--brand-light)!important}
+.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.selected.startRange,.flatpickr-day.selected.endRange{background:var(--brand)!important;border-color:var(--brand)!important;color:#fff!important;font-weight:700}
+.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:#cbd5e1!important}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#e2e8f0!important}
+.date-inp{cursor:pointer!important}
+.date-inp::placeholder{color:#94a3b8}
 </style>
 </head>
 <body>
@@ -211,17 +238,17 @@ input[type=checkbox]{accent-color:var(--brand)}
   <!-- Nav -->
   <nav style="flex:1;padding:10px 0;overflow:hidden;display:flex;flex-direction:column;align-items:center">
     <div class="sl-section-label" style="color:#b0a9a4;font-size:11px;font-weight:700;padding:4px 4px 6px;letter-spacing:.09em;text-transform:uppercase">主選單</div>
-    <div class="sl active" data-view="dashboard" data-label="儀表板" onclick="sw('dashboard')">
+    <div class="sl active" data-view="dashboard" data-label="總覽" onclick="sw('dashboard')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-      <span class="sl-text">儀表板</span>
+      <span class="sl-text">總覽</span>
     </div>
     <div class="sl" data-view="applications" data-label="案件追蹤" onclick="sw('applications')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <span class="sl-text">案件追蹤</span>
     </div>
-    <div class="sl" data-view="approvals" data-label="待簽核" onclick="sw('approvals')">
+    <div class="sl" data-view="approvals" data-label="待審核" onclick="sw('approvals')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <span class="sl-text">待簽核</span>
+      <span class="sl-text">待審核</span>
       <span class="sl-badge approval-badge" style="margin-left:auto;background:#ef4444;color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:700;display:none">0</span>
     </div>
 
@@ -258,7 +285,7 @@ input[type=checkbox]{accent-color:var(--brand)}
     <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">儀表板</span>
+    <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
   </header>
 
   <!-- NOTIFICATION PANEL -->
@@ -393,14 +420,14 @@ input[type=checkbox]{accent-color:var(--brand)}
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
           </button>
           <button class="btn btn-o" onclick="sw('approvals')" style="width:100%;justify-content:center">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>待簽核
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>待審核
           </button>
           <button class="btn btn-o" style="width:100%;justify-content:center" onclick="exportCSV()">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>匯出 Excel
           </button>
         </div>
         <div style="margin-top:14px;padding:10px 12px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#15803d">
-          ✅ 目前沒有待簽核案件
+          ✅ 目前沒有待審核案件
         </div>
       </div>
     </div>
@@ -447,9 +474,9 @@ input[type=checkbox]{accent-color:var(--brand)}
           <button id="arange-custom" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('custom')">自訂</button>
         </div>
         <div id="analytics-custom-range" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
-          <input type="date" id="analytics-date-start" class="inp" style="width:148px;font-size:14px;padding:5px 8px">
+          <input type="text" id="analytics-date-start" class="inp date-inp" placeholder="開始日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly>
           <span style="font-size:13px;color:#64748b">至</span>
-          <input type="date" id="analytics-date-end" class="inp" style="width:148px;font-size:14px;padding:5px 8px">
+          <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly>
           <button class="btn btn-p" style="font-size:13px;padding:5px 16px" onclick="applyCustomRange()">套用</button>
         </div>
       </div>
@@ -593,7 +620,7 @@ input[type=checkbox]{accent-color:var(--brand)}
               </div>
               <div>
                 <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">③ 申請日期</label>
-                <input class="inp" type="date" id="apply-date">
+                <input class="inp date-inp" type="text" id="apply-date" placeholder="選擇日期" readonly style="cursor:pointer">
               </div>
             </div>
           </div>
@@ -656,7 +683,7 @@ input[type=checkbox]{accent-color:var(--brand)}
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期</label>
-                  <input class="inp" type="date" value="">
+                  <input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer">
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label>
@@ -842,7 +869,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   <div class="view" id="view-approvals">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
       <div>
-        <div style="font-size:20px;font-weight:700;color:#0f172a">待簽核案件</div>
+        <div style="font-size:20px;font-weight:700;color:#0f172a">待審核案件</div>
         <div id="approvals-count-label" style="font-size:13px;color:#94a3b8;margin-top:2px">0 件需要您處理</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
@@ -863,7 +890,7 @@ input[type=checkbox]{accent-color:var(--brand)}
       <button class="btn btn-o" style="padding:5px 14px;font-size:13px;color:#fff;border-color:rgba(255,255,255,.3)" onclick="clearSelection()">取消選取</button>
     </div>
     <div id="approvals-list" style="display:flex;flex-direction:column;gap:12px">
-      <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待簽核案件</div>
+      <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>
     </div>
   </div>
 
@@ -1418,7 +1445,7 @@ function showApp() {
     const initial = currentUser.name.charAt(0);
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
-    document.getElementById('ptitle').textContent = '儀表板';
+    document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
     if(greeting)greeting.textContent='Hi，'+currentUser.name+' 👋';
     const menuInfo=document.getElementById('user-menu-info');
@@ -1427,6 +1454,10 @@ function showApp() {
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
+    // 初始化所有靜態日期選擇器
+    setTimeout(function(){
+      document.querySelectorAll('.date-inp').forEach(function(el){ initFlatpickr(el); });
+    }, 50);
   }
 }
 
@@ -1509,7 +1540,7 @@ function reLogin() {
 }
 
 // ══════════════════════════════════════════
-//  儀表板載入
+//  總覽載入
 // ══════════════════════════════════════════
 async function loadDashboard() {
   const res = await callAPI('list');
@@ -1547,7 +1578,7 @@ async function loadDashboard() {
   if (monthEl) monthEl.textContent = thisMonth.length;
   // 更新最新紀錄表格
   renderDashboardTable(cases.slice(0, 5));
-  // 更新待簽核數字
+  // 更新待審核數字
   updateBadge(pending.length);
 }
 
@@ -1615,7 +1646,7 @@ async function loadApplications() {
 }
 
 // ══════════════════════════════════════════
-//  待簽核清單載入
+//  待審核清單載入
 // ══════════════════════════════════════════
 async function loadApprovals() {
   const res = await callAPI('list');
@@ -1624,7 +1655,7 @@ async function loadApprovals() {
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">✅ 目前沒有待簽核案件</div>';
+    container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">✅ 目前沒有待審核案件</div>';
     return;
   }
   const countLbl=document.getElementById('approvals-count-label');
@@ -1751,9 +1782,9 @@ async function submitForm() {
   document.querySelectorAll('.item-card').forEach(card => {
     const inputs = card.querySelectorAll('input,select');
     items.push({
-      date:        card.querySelector('input[type=date]')?.value || '',
+      date:        card.querySelector('.date-inp')?.value || '',
       category:    card.querySelectorAll('select')[0]?.value || '',
-      description: card.querySelectorAll('input:not([type=date]):not([type=number])')[0]?.value || '',
+      description: card.querySelectorAll('input:not(.date-inp):not([type=number])')[0]?.value || '',
       department:  card.querySelectorAll('select')[1]?.value || '',
       receiptType: card.querySelectorAll('select')[2]?.value || '',
       count:       card.querySelector('input[type=number][min="0"]')?.value || 0,
@@ -1848,7 +1879,7 @@ function toggleSidebar(){
 }
 
 // ── NAVIGATION ──
-const titles={dashboard:'儀表板',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待簽核',analytics:'費用分析',admin:'系統管理'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 function sw(name,elOrName){
@@ -1880,7 +1911,8 @@ function sw(name,elOrName){
     const applyDateEl = document.getElementById('apply-date');
     if (applyDateEl && !applyDateEl.value) {
       const now = new Date();
-      applyDateEl.value = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+      setFpDate(applyDateEl, todayStr);
     }
     // 申請人/收款人預設為登入者
     const appSel = document.getElementById('applicant-select');
@@ -1913,7 +1945,7 @@ function addItem(){
   d.className='item-card';
   d.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--brand)">明細 #${iCount}</span><button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1" onclick="this.closest('.item-card').remove();calcTotal()">×</button></div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期</label><input class="inp" type="date"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期</label><input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer"></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label><select class="inp"><option>餐飲費用</option><option>活動費用</option><option>交通費用</option><option>住宿費用</option><option>辦公用品</option><option>採購費用</option><option>其他</option></select></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 說明用途</label><input class="inp" placeholder="說明用途"></div>
   </div>
@@ -1928,6 +1960,9 @@ function addItem(){
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$)</label><input class="inp withtax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;font-weight:700;color:#374151"></div>
   </div>`;
   document.getElementById('items-list').appendChild(d);
+  // 初始化新明細的日期選擇器
+  const newDateInp = d.querySelector('.date-inp');
+  if (newDateInp) initFlatpickr(newDateInp);
 }
 function calcRowTax(inp){
   const card=inp.closest('.item-card');
@@ -2017,7 +2052,7 @@ function updateDetailFlow(state){
       statusHtml='<div style="font-size:13px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div><div style="font-size:12px;color:#94a3b8;margin-top:3px">'+s.person+' · '+s.time+'</div>';
       html+='<div style="position:relative;'+mb+'"><div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center">'+svgX+'</div><div style="padding-top:2px"><div style="font-size:14px;font-weight:700;color:#0f172a">'+s.label+'</div>'+statusHtml+'</div></div>';
     }else if(isCurrent){
-      statusHtml='<div style="font-size:13px;color:#d97706;font-weight:600;margin-top:2px">⏳ 待簽核中</div><div style="font-size:12px;color:#94a3b8;margin-top:3px">'+s.person+' · 送出於 '+(s.prev||s.time)+'</div>';
+      statusHtml='<div style="font-size:13px;color:#d97706;font-weight:600;margin-top:2px">⏳ 待審核中</div><div style="font-size:12px;color:#94a3b8;margin-top:3px">'+s.person+' · 送出於 '+(s.prev||s.time)+'</div>';
       html+='<div style="position:relative;'+mb+'"><div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px var(--brand-light);display:flex;align-items:center;justify-content:center"><span style="color:#fff;font-size:14px;font-weight:700">'+(i+1)+'</span></div><div style="padding-top:2px"><div style="font-size:14px;font-weight:700;color:#0f172a">'+s.label+'</div>'+statusHtml+'</div></div>';
     }else{
       statusHtml='<div style="font-size:13px;color:#cbd5e1;margin-top:2px">等待前一關完成</div><div style="font-size:12px;color:#cbd5e1;margin-top:3px">'+s.person+'</div>';
@@ -2300,7 +2335,24 @@ function resetAdminFilter() {
 }
 
 // ══════════════════════════════════════════
-//  自訂日曆 Date Picker
+//  Flatpickr 日期選擇器 Helper
+// ══════════════════════════════════════════
+function initFlatpickr(el, opts) {
+  if (!el || el._flatpickr) return el && el._flatpickr;
+  return flatpickr(el, Object.assign({
+    locale: 'zh_tw',
+    dateFormat: 'Y-m-d',
+    disableMobile: true,
+    allowInput: false,
+  }, opts || {}));
+}
+function setFpDate(el, dateStr) {
+  if (!el) return;
+  if (el._flatpickr) { el._flatpickr.setDate(dateStr, true); }
+  else { el.value = dateStr; }
+}
+// ══════════════════════════════════════════
+//  自訂日曆 Date Picker (案件追蹤篩選)
 // ══════════════════════════════════════════
 const dpState = { start: null, end: null, curMonth: {start: null, end: null} };
 
@@ -2853,6 +2905,7 @@ function renderMonthlyChart(id,moMap){
 
 </body>
 </html>
+
 
 
 
