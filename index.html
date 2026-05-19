@@ -264,52 +264,79 @@ input[type=checkbox]{accent-color:var(--brand)}
         <div id="tw-datetime" style="font-size:14px;color:#64748b;margin-top:2px">載入中...</div>
       </div>
     </div>
-    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
-      <div class="stat" style="border-top:3px solid var(--brand)">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:8px">全部案件</div>
-            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-all">—</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:6px">年度累計</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <!-- 帳面餘額 大卡 -->
+      <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);border:none;padding:24px;display:flex;flex-direction:column;justify-content:space-between;min-height:160px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+            <div style="width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+            </div>
+            <div style="font-size:13px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.3px">已核准總支出</div>
           </div>
-          <div style="width:38px;height:38px;background:var(--brand-light);border-radius:10px;display:flex;align-items:center;justify-content:center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div style="font-size:34px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px" id="stat-balance">NT$ —</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:6px">本年度累計（已完成案件）</div>
+        </div>
+        <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.2);display:flex;gap:24px">
+          <div>
+            <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:3px">待核准金額</div>
+            <div style="font-size:16px;font-weight:700;color:#fff" id="stat-pending-amt">NT$ —</div>
+          </div>
+          <div style="width:1px;background:rgba(255,255,255,.2)"></div>
+          <div>
+            <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:3px">全部案件</div>
+            <div style="font-size:16px;font-weight:700;color:#fff" id="stat-all">—</div>
           </div>
         </div>
       </div>
-      <div class="stat" style="border-top:3px solid #f59e0b">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div style="font-size:13px;color:#64748b;font-weight:500;margin-bottom:8px">簽核中</div>
-            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-pending">—</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:6px">待處理案件</div>
-          </div>
-          <div style="width:38px;height:38px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-        </div>
-      </div>
-      <div class="stat" style="background:var(--brand);border:none">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div style="font-size:13px;color:rgba(255,255,255,.75);font-weight:500;margin-bottom:8px">已完成</div>
-            <div style="font-size:28px;font-weight:700;color:#fff;line-height:1" id="stat-done">—</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:6px">已完成案件</div>
-          </div>
-          <div style="width:38px;height:38px;background:rgba(255,255,255,.18);border-radius:10px;display:flex;align-items:center;justify-content:center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      <!-- 右側 2x2 統計 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="stat" style="border-top:3px solid #f59e0b;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">簽核中</div>
+              <div style="font-size:26px;font-weight:700;color:#0f172a;line-height:1" id="stat-pending">—</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:5px">待處理案件</div>
+            </div>
+            <div style="width:34px;height:34px;background:#fef3c7;border-radius:9px;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="stat" style="background:#1a2236;border:none">
-        <div style="display:flex;justify-content:space-between;align-items:start">
-          <div>
-            <div style="font-size:13px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:8px">已退件</div>
-            <div style="font-size:28px;font-weight:700;color:#fff;line-height:1" id="stat-rejected">0</div>
-            <div style="font-size:12px;color:rgba(255,255,255,.45);margin-top:6px">退件率 0%</div>
+        <div class="stat" style="background:var(--brand);border:none;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:12px;color:rgba(255,255,255,.75);font-weight:500;margin-bottom:6px">已完成</div>
+              <div style="font-size:26px;font-weight:700;color:#fff;line-height:1" id="stat-done">—</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:5px">已完成案件</div>
+            </div>
+            <div style="width:34px;height:34px;background:rgba(255,255,255,.18);border-radius:9px;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
           </div>
-          <div style="width:38px;height:38px;background:rgba(255,255,255,.1);border-radius:10px;display:flex;align-items:center;justify-content:center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+        </div>
+        <div class="stat" style="background:#1a2236;border:none;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:12px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:6px">已退件</div>
+              <div style="font-size:26px;font-weight:700;color:#fff;line-height:1" id="stat-rejected">0</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:5px" id="stat-rejected-rate">退件率 0%</div>
+            </div>
+            <div style="width:34px;height:34px;background:rgba(255,255,255,.1);border-radius:9px;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="stat" style="border-top:3px solid #e2e8f0;padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">本月申請</div>
+              <div style="font-size:26px;font-weight:700;color:#0f172a;line-height:1" id="stat-this-month">—</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:5px">本月新增</div>
+            </div>
+            <div style="width:34px;height:34px;background:#f1f5f9;border-radius:9px;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
           </div>
         </div>
       </div>
@@ -1341,6 +1368,9 @@ function parseJwt(token) {
   return JSON.parse(decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
 }
 
+function parseJwtSafe(token){
+  try{return parseJwt(token);}catch(e){return null;}
+}
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -1449,6 +1479,16 @@ async function loadDashboard() {
   const pending = cases.filter(c => c.status && c.status.includes('待'));
   const done    = cases.filter(c => c.status === '已完成');
   const rejected= cases.filter(c => c.status === '已退件');
+  // 帳面餘額計算
+  const approvedTotal = done.reduce((s,c) => s + Number(c.total||0), 0);
+  const pendingTotal  = pending.reduce((s,c) => s + Number(c.total||0), 0);
+  const now = new Date();
+  const thisMonth = cases.filter(c => {
+    if (!c.createdAt) return false;
+    const ds = String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
+    const d = new Date(ds+'T00:00:00');
+    return !isNaN(d) && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
+  });
   // 更新統計數字
   const allEl = document.getElementById('stat-all');
   const pendEl = document.getElementById('stat-pending');
@@ -1458,6 +1498,14 @@ async function loadDashboard() {
   if (doneEl) doneEl.textContent = done.length;
   const rejEl = document.getElementById('stat-rejected');
   if (rejEl) rejEl.textContent = rejected.length;
+  const rejRate = document.getElementById('stat-rejected-rate');
+  if (rejRate) rejRate.textContent = '退件率 ' + (cases.length>0 ? Math.round(rejected.length/cases.length*100) : 0) + '%';
+  const balEl = document.getElementById('stat-balance');
+  if (balEl) balEl.textContent = 'NT$ ' + approvedTotal.toLocaleString();
+  const pendAmtEl = document.getElementById('stat-pending-amt');
+  if (pendAmtEl) pendAmtEl.textContent = 'NT$ ' + pendingTotal.toLocaleString();
+  const monthEl = document.getElementById('stat-this-month');
+  if (monthEl) monthEl.textContent = thisMonth.length;
   // 更新最新紀錄表格
   renderDashboardTable(cases.slice(0, 5));
   // 更新待簽核數字
@@ -2653,5 +2701,7 @@ function renderMonthlyChart(id,moMap){
 
 </body>
 </html>
+
+
 
 
