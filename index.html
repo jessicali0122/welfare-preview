@@ -181,7 +181,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   <div style="padding:14px 0;border-top:1px solid #f0ede9;display:flex;align-items:center;justify-content:center">
     <div onclick="toggleUserMenu()" class="user-avatar-initial" style="width:32px;height:32px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;cursor:pointer" title="帳號選項">潔</div>
     <div class="sidebar-brand-text" style="flex:1;min-width:0">
-      <div style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">李潔慧</div>
+      <div class="user-name-display" style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
       <div style="font-size:12px;color:#94a3b8;margin-top:1px">管理者</div>
     </div>
   </div>
@@ -221,7 +221,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   <div class="view active" id="view-dashboard">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div>
-        <div style="font-size:20px;font-weight:700;color:#0f172a">Hi，李潔慧 👋</div>
+        <div id="dashboard-greeting" style="font-size:20px;font-weight:700;color:#0f172a">Hi，你好 👋</div>
         <div id="tw-datetime" style="font-size:14px;color:#64748b;margin-top:2px">載入中...</div>
       </div>
     </div>
@@ -1239,6 +1239,8 @@ function showApp() {
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
     document.getElementById('ptitle').textContent = '儀表板';
+    const greeting=document.getElementById('dashboard-greeting');
+    if(greeting)greeting.textContent='Hi，'+currentUser.name+' 👋';
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     loadDashboard();
@@ -1290,6 +1292,8 @@ async function loadDashboard() {
   if (allEl)  allEl.textContent  = cases.length;
   if (pendEl) pendEl.textContent = pending.length;
   if (doneEl) doneEl.textContent = done.length;
+  const rejEl = document.getElementById('stat-rejected');
+  if (rejEl) rejEl.textContent = rejected.length;
   // 更新最新紀錄表格
   renderDashboardTable(cases.slice(0, 5));
   // 更新待簽核數字
@@ -1636,20 +1640,21 @@ function toggleNotif(e){e.stopPropagation();document.getElementById('notif-panel
 function closeNotif(){document.getElementById('notif-panel').classList.remove('open');}
 function markAllRead(){
   document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
-  document.getElementById('bell-badge').style.display='none';
+  const bellBadge=document.getElementById('bell-badge');
+  if(bellBadge)bellBadge.style.display='none';
   toast('✅ 全部通知已標為已讀');
 }
 function notifClick(el,view){
   el.classList.remove('unread');
   const unread=document.querySelectorAll('.notif-item.unread').length;
   const b=document.getElementById('bell-badge');
-  if(unread===0)b.style.display='none';else b.textContent=unread;
+  if(b){if(unread===0)b.style.display='none';else b.textContent=unread;}
   closeNotif();sw(view,null);
 }
 document.addEventListener('click',e=>{
   const panel=document.getElementById('notif-panel');
   const bell=document.getElementById('bell-btn');
-  if(panel&&panel.classList.contains('open')&&!panel.contains(e.target)&&!bell.contains(e.target))closeNotif();
+  if(panel&&panel.classList.contains('open')&&!panel.contains(e.target)&&(!bell||!bell.contains(e.target)))closeNotif();
 });
 
 // ── DETAIL FLOW ──
