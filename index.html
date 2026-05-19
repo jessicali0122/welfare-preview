@@ -667,9 +667,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             </div>
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑤ 所屬部門</label>
-              <select class="inp" id="form-dept-select" style="background:#f8fafc;color:#374151">
-                <option value="">依申請人自動帶入</option><option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-              </select>
+              <input class="inp" id="form-dept-select" placeholder="依申請人自動帶入" readonly style="background:#f8fafc;color:#374151">
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
@@ -712,16 +710,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
                   <input class="inp" placeholder="例：慶生聚餐費用" value="">
                 </div>
               </div>
-              <!-- ⑫ 單據類型 + ⑬ 張數 -->
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-                <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label>
-                  <select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select>
-                </div>
-                <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑬ 張數</label>
-                  <input class="inp" type="number" min="0" placeholder="0" value="1">
-                </div>
+              <!-- ⑫ 單據類型 -->
+              <div style="margin-bottom:10px">
+                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label>
+                <select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select>
               </div>
               <!-- ⑪ 金額 -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -774,8 +766,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           </div>
         </div>
         <div class="card" style="padding:20px">
-          <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px">送出前確認</div>
-          <div style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:2">✓ 送出後不可自行修改<br>✓ 需經 3 關簽核完成<br>✓ 自動發送 Google Chat 通知</div>
+          <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px">注意事項</div>
+          <div style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:2">✓ 固定送件日：每月 10、20、30 日（如遇例假日則順延辦理）<br>✓ 單張請款金額達 $3,000(含)以上，經核准後可不受送件日限制，隨時提出申請<br>✓ 請款時須檢附憑證正本、影本各1份（憑證類型：發票／收據・統編：61409721）</div>
           <div style="display:flex;flex-direction:column;gap:8px">
             <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="submitForm()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
@@ -1850,7 +1842,6 @@ async function submitForm() {
       description: card.querySelectorAll('input:not(.date-inp):not([type=number])')[0]?.value || '',
       department:  document.getElementById('form-dept-select')?.value || '',
       receiptType: card.querySelectorAll('select')[1]?.value || '',
-      count:       card.querySelector('input[type=number][min="0"]')?.value || 0,
       pretax:      parseFloat(card.querySelector('.pretax')?.value) || 0,
       tax:         parseFloat(card.querySelector('.taxamt')?.value) || 0,
       total:       parseFloat(card.querySelector('.withtax')?.value) || 0,
@@ -1981,16 +1972,25 @@ function sw(name,elOrName){
     const appSel = document.getElementById('applicant-select');
     const payeeSel = document.getElementById('payee-select');
     if (appSel && currentUser?.name) {
-      // 先找有沒有符合的 option，沒有就新增
       let found = false;
-      Array.from(appSel.options).forEach(o => { if (o.value === currentUser.name || o.text === currentUser.name) { appSel.value = o.value; found = true; } });
-      if (!found) { const opt = new Option(currentUser.name, currentUser.name, true, true); appSel.prepend(opt); }
-      syncApplicantFields(); // 設定申請人後自動帶入員工編號與部門
+      const uName = currentUser.name;
+      Array.from(appSel.options).forEach(o => {
+        if (!found && (o.text === uName || o.value === uName || uName.includes(o.text) || o.text.includes(uName))) {
+          appSel.value = o.value; found = true;
+        }
+      });
+      if (!found) { const opt = new Option(uName, uName, true, true); appSel.prepend(opt); }
+      syncApplicantFields();
     }
     if (payeeSel && currentUser?.name) {
       let found = false;
-      Array.from(payeeSel.options).forEach(o => { if (o.value === currentUser.name || o.text === currentUser.name) { payeeSel.value = o.value; found = true; } });
-      if (!found) { const opt = new Option(currentUser.name, currentUser.name, true, true); payeeSel.prepend(opt); }
+      const uName = currentUser.name;
+      Array.from(payeeSel.options).forEach(o => {
+        if (!found && (o.text === uName || o.value === uName || uName.includes(o.text) || o.text.includes(uName))) {
+          payeeSel.value = o.value; found = true;
+        }
+      });
+      if (!found) { const opt = new Option(uName, uName, true, true); payeeSel.prepend(opt); }
     }
     setTimeout(()=>{
       const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
@@ -2061,9 +2061,8 @@ function addItem(){
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label><select class="inp"><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 說明用途</label><input class="inp" placeholder="說明用途"></div>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label><select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select></div>
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑬ 張數</label><input class="inp" type="number" min="0" placeholder="0"></div>
+  <div style="margin-bottom:10px">
+    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label><select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
