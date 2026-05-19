@@ -109,7 +109,42 @@ input[type=checkbox]{accent-color:var(--brand)}
   .stat{padding:14px 16px!important}
 }
 
-</style>
+
+/* ── BATCH BAR ── */
+#batch-bar{display:none;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:14px;align-items:center;gap:12px}
+#batch-bar.show{display:flex}
+.cb-item{width:18px;height:18px;accent-color:var(--brand);cursor:pointer;flex-shrink:0}
+
+/* ── DRAFT BANNER ── */
+#draft-banner{display:none;background:#fefce8;border:1.5px solid #fde047;border-radius:10px;padding:10px 16px;margin-bottom:14px;align-items:center;gap:10px;font-size:13px;font-weight:500;color:#854d0e}
+#draft-banner.show{display:flex}
+
+/* ── RECEIPT WARNING ── */
+#receipt-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+#receipt-confirm.open{display:flex}
+
+/* ── MOBILE 優化 ── */
+@media(max-width:768px){
+  header{padding:0 12px!important}
+  #ptitle{font-size:14px!important}
+  #detail-grid{grid-template-columns:1fr!important}
+  #analytics-grid{grid-template-columns:1fr!important}
+  #form-grid{grid-template-columns:1fr!important}
+  .stat{padding:12px 14px!important}
+  #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  main{padding:14px!important}
+  .card{border-radius:10px!important}
+  #view-approvals .card{padding:14px!important}
+  #batch-bar{flex-wrap:wrap;gap:8px}
+  table{font-size:12px!important}
+  th,td{padding:8px 10px!important}
+  .btn{padding:7px 12px!important;font-size:13px!important}
+  aside{width:64px!important}
+  #sidebar-wrapper{width:64px!important}
+  #main-wrapper{margin-left:0!important}
+  .sl{width:56px!important;height:56px!important}
+  .sl::after{font-size:10px!important}
+}</style>
 </head>
 <body>
 
@@ -344,6 +379,10 @@ input[type=checkbox]{accent-color:var(--brand)}
         <div style="font-size:20px;font-weight:700;color:#0f172a">費用分析</div>
         <div style="font-size:13px;color:#94a3b8;margin-top:2px">2026 年度 · 即時更新</div>
       </div>
+      <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 16px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        匯出 CSV
+      </button>
     </div>
     <div class="card" style="overflow:hidden;margin-bottom:14px">
       <div style="padding:18px 20px">
@@ -445,6 +484,13 @@ input[type=checkbox]{accent-color:var(--brand)}
 
   <!-- ===== NEW FORM (費用申請單) ===== -->
   <div class="view" id="view-new-form">
+    <div id="draft-banner">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      偵測到上次未完成的草稿，是否要恢復？
+      <div style="flex:1"></div>
+      <button class="btn btn-p" style="padding:4px 12px;font-size:12px" onclick="restoreDraft()">恢復草稿</button>
+      <button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="clearDraft()">捨棄</button>
+    </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button class="btn btn-o" style="padding:6px 12px" onclick="sw('applications')">← 返回</button>
       <div><div style="font-size:20px;font-weight:700;color:#0f172a">費用申請單</div><div style="font-size:13px;color:#94a3b8;margin-top:1px">草稿自動儲存</div></div>
@@ -698,9 +744,27 @@ input[type=checkbox]{accent-color:var(--brand)}
 
   <!-- ===== APPROVALS ===== -->
   <div class="view" id="view-approvals">
-    <div style="margin-bottom:20px">
-      <div style="font-size:20px;font-weight:700;color:#0f172a">待簽核案件</div>
-      <div style="font-size:13px;color:#94a3b8;margin-top:2px">0 件需要您處理</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:700;color:#0f172a">待簽核案件</div>
+        <div id="approvals-count-label" style="font-size:13px;color:#94a3b8;margin-top:2px">0 件需要您處理</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-o" style="font-size:13px;padding:7px 14px" onclick="toggleSelectAll()">
+          <input type="checkbox" id="select-all-cb" style="margin-right:6px;accent-color:var(--brand)">全選
+        </button>
+        <button class="btn btn-g" style="font-size:13px;padding:7px 14px" onclick="batchApprove()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          批次核准
+        </button>
+      </div>
+    </div>
+    <div id="batch-bar" class="">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      <span id="batch-count-label">已選 0 件</span>
+      <div style="flex:1"></div>
+      <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:13px" onclick="batchApprove()">批次核准選取</button>
+      <button class="btn btn-o" style="padding:5px 14px;font-size:13px;color:#fff;border-color:rgba(255,255,255,.3)" onclick="clearSelection()">取消選取</button>
     </div>
     <div id="approvals-list" style="display:flex;flex-direction:column;gap:12px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待簽核案件</div>
@@ -1268,11 +1332,58 @@ async function callAPI(action, data = {}) {
       redirect: 'follow',
     });
     const json = await res.json();
+    // 偵測 auth 錯誤：token 過期或無效
+    if (!json.ok && json.error && (
+      json.error.includes('登入') ||
+      json.error.includes('授權') ||
+      json.error.includes('token') ||
+      json.error.includes('login') ||
+      json.error.includes('auth') ||
+      json.error.includes('unauthorized')
+    )) {
+      handleAuthError();
+      return { ok: false, error: 'SESSION_EXPIRED', _authError: true };
+    }
     return json;
   } catch(err) {
     console.error('API Error:', err);
     return { ok: false, error: err.message };
   }
+}
+
+function handleAuthError() {
+  // 只顯示一次提示
+  if (window._authErrorShown) return;
+  window._authErrorShown = true;
+  showSessionExpiredModal();
+}
+
+function showSessionExpiredModal() {
+  // 移除舊的 modal（如果有）
+  const existing = document.getElementById('session-modal');
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = 'session-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:28px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">
+      <div style="font-size:40px;margin-bottom:12px">⏰</div>
+      <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">登入已過期</div>
+      <div style="font-size:14px;color:#64748b;margin-bottom:20px;line-height:1.6">
+        您的登入憑證已失效（Google Token 每小時需重新驗證）<br>請重新登入繼續使用。
+      </div>
+      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;font-size:15px" onclick="reLogin()">
+        重新登入
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function reLogin() {
+  localStorage.removeItem('bf_user');
+  window._authErrorShown = false;
+  location.reload();
 }
 
 // ══════════════════════════════════════════
@@ -1332,7 +1443,7 @@ function updateBadge(count) {
 // ══════════════════════════════════════════
 async function loadApplications() {
   const res = await callAPI('list');
-  if (!res.ok) { toast('❌ 載入失敗：' + res.error); return; }
+  if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   const cases = res.cases || [];
   const tbody = document.getElementById('applications-tbody');
   const countLabel = document.getElementById('app-count-label');
@@ -1367,7 +1478,7 @@ async function loadApplications() {
 // ══════════════════════════════════════════
 async function loadApprovals() {
   const res = await callAPI('list');
-  if (!res.ok) { toast('❌ 載入失敗：' + res.error); return; }
+  if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   const pending = (res.cases || []).filter(c => c.status && c.status.includes('待'));
   const container = document.getElementById('approvals-list');
   if (!container) return;
@@ -1375,10 +1486,14 @@ async function loadApprovals() {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">✅ 目前沒有待簽核案件</div>';
     return;
   }
+  const countLbl=document.getElementById('approvals-count-label');
+  if(countLbl)countLbl.textContent=pending.length+' 件需要您處理';
   container.innerHTML = pending.map(c => `
-    <div class="card" style="padding:18px;border-left:4px solid var(--brand);margin-bottom:12px">
+    <div class="card approval-card" data-caseid="${c.caseId}" style="padding:18px;border-left:4px solid var(--brand);margin-bottom:12px">
       <div style="display:flex;align-items:start;justify-content:space-between;gap:16px">
-        <div style="flex:1">
+        <div style="display:flex;align-items:start;gap:12px;flex:1">
+          <input type="checkbox" class="cb-item approval-cb" data-caseid="${c.caseId}" style="margin-top:4px" onchange="updateBatchBar()">
+          <div style="flex:1">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
             <span style="font-size:15px;font-weight:700;color:var(--brand)">${c.caseId}</span>
             <span class="badge bp">${c.status}</span>
@@ -1396,6 +1511,8 @@ async function loadApprovals() {
           <button class="btn btn-r" style="padding:6px 12px;font-size:13px" onclick="quickReject('${c.caseId}')">退件</button>
         </div>
       </div>
+          </div>
+        </div>
     </div>`).join('');
 }
 
@@ -1518,7 +1635,28 @@ async function submitForm() {
   if (!subjectEl?.value) { toast('⚠️ 請填寫主旨'); return; }
   if (items.length === 0) { toast('⚠️ 請至少新增一筆明細'); return; }
 
+  // 收據提醒
+  const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
+  if (needsReceipt) {
+    window._pendingSubmitData = { subjectEl, reasonEl, departmentEl, applicantEl, payeeEl, items };
+    document.getElementById('receipt-confirm').classList.add('open');
+    return;
+  }
+  await doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items);
+}
+
+async function confirmSubmitForm() {
+  document.getElementById('receipt-confirm').classList.remove('open');
+  const d = window._pendingSubmitData;
+  if (!d) return;
+  await doSubmitForm(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items);
+}
+
+async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   toast('⏳ 送出中...');
+  const pretax = items.reduce((s,i)=>s+i.pretax,0);
+  const tax    = items.reduce((s,i)=>s+i.tax,0);
+  const total  = items.reduce((s,i)=>s+i.total,0);
   const res = await callAPI('submit', {
     project:    subjectEl?.value || '',
     department: departmentEl?.value || '',
@@ -1528,6 +1666,7 @@ async function submitForm() {
   });
 
   if (res.ok) {
+    localStorage.removeItem('bf_draft');
     toast('✅ 申請已送出！單號：' + res.caseId + '，已通知簽核人');
     setTimeout(() => sw('applications'), 1500);
     loadDashboard();
@@ -1581,6 +1720,15 @@ function sw(name,elOrName){
   if(name==='approvals') loadApprovals();
   if(name==='dashboard') loadDashboard();
   if(name==='detail')updateDetailFlow('step1');
+  if(name==='new-form'){
+    checkDraftBanner();
+    setTimeout(()=>{
+      const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
+      const reasonEl=document.querySelector('#view-new-form textarea');
+      if(subjectEl&&!subjectEl._autoSave){subjectEl.addEventListener('input',autoSaveDraft);subjectEl._autoSave=true;}
+      if(reasonEl&&!reasonEl._autoSave){reasonEl.addEventListener('input',autoSaveDraft);reasonEl._autoSave=true;}
+    },100);
+  }
 }
 
 // ── FORM ITEMS ──
@@ -2212,7 +2360,124 @@ function closeSidebar(){
   document.getElementById('sidebar-wrapper').classList.remove('open');
   document.getElementById('mobile-overlay').classList.remove('open');
 }
+// ══════════════════════════════════════════
+//  批次核准
+// ══════════════════════════════════════════
+function updateBatchBar(){
+  const checked=document.querySelectorAll('.approval-cb:checked');
+  const bar=document.getElementById('batch-bar');
+  const lbl=document.getElementById('batch-count-label');
+  if(lbl)lbl.textContent='已選 '+checked.length+' 件';
+  if(bar){if(checked.length>0)bar.classList.add('show');else bar.classList.remove('show');}
+}
+function toggleSelectAll(){
+  const allCb=document.querySelectorAll('.approval-cb');
+  const selectAllCb=document.getElementById('select-all-cb');
+  const shouldCheck=selectAllCb?selectAllCb.checked:true;
+  allCb.forEach(cb=>cb.checked=shouldCheck);
+  updateBatchBar();
+}
+function clearSelection(){
+  document.querySelectorAll('.approval-cb').forEach(cb=>cb.checked=false);
+  const sa=document.getElementById('select-all-cb');
+  if(sa)sa.checked=false;
+  updateBatchBar();
+}
+async function batchApprove(){
+  const checked=document.querySelectorAll('.approval-cb:checked');
+  if(checked.length===0){toast('⚠️ 請先勾選要核准的案件');return;}
+  if(!confirm('確定批次核准 '+checked.length+' 件案件？'))return;
+  toast('⏳ 批次處理中...');
+  const ids=Array.from(checked).map(cb=>cb.getAttribute('data-caseid'));
+  let success=0;
+  for(const caseId of ids){
+    const res=await callAPI('approve',{caseId,comment:'批次核准'});
+    if(res.ok)success++;
+  }
+  toast('✅ 已核准 '+success+'/'+ids.length+' 件');
+  clearSelection();
+  loadApprovals();loadDashboard();
+}
+
+// ══════════════════════════════════════════
+//  匯出 CSV
+// ══════════════════════════════════════════
+async function exportCSV(){
+  toast('⏳ 準備匯出...');
+  const res=await callAPI('list');
+  if(!res.ok){toast('❌ 匯出失敗：'+res.error);return;}
+  const cases=res.cases||[];
+  const headers=['單號','申請人','部門','狀態','未稅金額','稅額','含稅總額','申請時間'];
+  const rows=cases.map(c=>[
+    c.caseId||'',c.name||'',c.department||'',c.status||'',
+    c.pretax||0,c.tax||0,c.total||0,c.createdAt||''
+  ]);
+  const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  const date=new Date().toLocaleDateString('zh-TW').replace(/\//g,'-');
+  a.href=url;a.download='BeneFlow_'+date+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ CSV 已下載！共 '+cases.length+' 筆');
+}
+
+// ══════════════════════════════════════════
+//  草稿自動儲存 / 恢復
+// ══════════════════════════════════════════
+function autoSaveDraft(){
+  const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  const reasonEl=document.querySelector('#view-new-form textarea');
+  const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',ts:Date.now()};
+  localStorage.setItem('bf_draft',JSON.stringify(draft));
+}
+function checkDraftBanner(){
+  const saved=localStorage.getItem('bf_draft');
+  const banner=document.getElementById('draft-banner');
+  if(!banner)return;
+  if(saved){
+    try{
+      const d=JSON.parse(saved);
+      if(d.subject||d.reason){banner.classList.add('show');return;}
+    }catch(e){}
+  }
+  banner.classList.remove('show');
+}
+function restoreDraft(){
+  const saved=localStorage.getItem('bf_draft');
+  if(!saved)return;
+  try{
+    const d=JSON.parse(saved);
+    const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
+    const reasonEl=document.querySelector('#view-new-form textarea');
+    if(subjectEl&&d.subject)subjectEl.value=d.subject;
+    if(reasonEl&&d.reason)reasonEl.value=d.reason;
+    document.getElementById('draft-banner').classList.remove('show');
+    toast('✅ 草稿已恢復！');
+  }catch(e){toast('❌ 草稿恢復失敗');}
+}
+function clearDraft(){
+  localStorage.removeItem('bf_draft');
+  document.getElementById('draft-banner').classList.remove('show');
+  toast('🗑️ 草稿已捨棄');
+}
 </script>
+
+<!-- RECEIPT CONFIRM MODAL -->
+<div id="receipt-confirm">
+  <div style="background:#fff;border-radius:16px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px">📎 請記得附上憑證</div>
+    <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px">
+      您的申請中有選擇<strong>發票</strong>或<strong>收據</strong>憑證類型，<br>
+      請確認已準備好實體憑證，審核人員將會核對。
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="confirmSubmitForm()">確認送出</button>
+      <button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById('receipt-confirm').classList.remove('open')">返回修改</button>
+    </div>
+  </div>
+</div>
 
 <!-- USER MENU DROPDOWN -->
 <div id="user-menu" style="display:none;position:fixed;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;min-width:210px;overflow:hidden">
