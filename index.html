@@ -2003,31 +2003,35 @@ function syncApplicantFields(){
   const sel=document.getElementById('applicant-select');
   if(!sel)return;
   const name=sel.value;
+
+  // 優先從使用者表格依 email（最可靠）或姓名比對
+  let matchedEmpId=EMPLOYEE_IDS[name]||'';
+  let matchedDept=EMPLOYEE_DEPTS[name]||'';
+
+  document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row){
+    const nameEl=row.querySelector('td:nth-child(2) span');
+    const empCell=row.querySelector('td:nth-child(3)');
+    const emailCell=row.querySelector('td:nth-child(5)');
+    const rowName=nameEl?nameEl.textContent.trim():'';
+    const rowEmail=emailCell?emailCell.textContent.trim():'';
+    // 姓名完全符合 OR email 和登入者相同
+    const isMatch=rowName===name||(currentUser&&rowEmail===currentUser.email);
+    if(isMatch){
+      if(!matchedEmpId&&empCell){
+        const v=empCell.textContent.trim();
+        if(v&&v!=='—') matchedEmpId=v;
+      }
+      if(!matchedDept) matchedDept=row.dataset.dept||'';
+    }
+  });
+
   // 員工編號
   const empInput=document.getElementById('employee-id');
-  if(empInput){
-    let id=EMPLOYEE_IDS[name]||'';
-    if(!id){
-      document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row){
-        const nameEl=row.querySelector('td:nth-child(2) span');
-        const empCell=row.querySelector('td:nth-child(3)');
-        if(nameEl&&empCell&&nameEl.textContent.trim()===name) id=empCell.textContent.trim();
-      });
-    }
-    empInput.value=id;
-  }
+  if(empInput) empInput.value=matchedEmpId;
+
   // 所屬部門
   const deptSel=document.getElementById('form-dept-select');
-  if(deptSel){
-    let dept=EMPLOYEE_DEPTS[name]||'';
-    if(!dept){
-      document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row){
-        const nameEl=row.querySelector('td:nth-child(2) span');
-        if(nameEl&&nameEl.textContent.trim()===name) dept=row.dataset.dept||'';
-      });
-    }
-    if(dept) deptSel.value=dept;
-  }
+  if(deptSel&&matchedDept) deptSel.value=matchedDept;
 }
 // 向下相容舊呼叫
 function syncEmployeeId(){ syncApplicantFields(); }
@@ -2201,8 +2205,8 @@ let _editFlowRow=null;
 function getFlowUserOptions(selectedName){
   const users=[];
   document.querySelectorAll('#admin-panel-users tbody tr').forEach(row=>{
-    const nameEl=row.querySelector('td:nth-child(2)');
-    const name=nameEl?nameEl.innerText.trim():'';
+    const nameEl=row.querySelector('td:nth-child(2) span');
+    const name=nameEl?nameEl.textContent.trim():'';
     const emailEl=row.querySelector('td:nth-child(5)');
     const email=emailEl?emailEl.textContent.trim():'';
     if(name&&email)users.push({name,email});
