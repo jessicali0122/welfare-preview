@@ -445,7 +445,6 @@ input[type=checkbox]{accent-color:var(--brand)}
           <button id="arange-quarter" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('quarter')">本季</button>
           <button id="arange-year" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('year')">本年</button>
           <button id="arange-custom" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('custom')">自訂</button>
-          <button id="arange-clear" class="btn btn-o" style="font-size:14px;padding:6px 14px;display:none;color:#64748b" onclick="clearAnalyticsRange()">✕ 清除</button>
         </div>
         <div id="analytics-custom-range" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
           <input type="date" id="analytics-date-start" class="inp" style="width:148px;font-size:14px;padding:5px 8px">
@@ -1592,7 +1591,7 @@ async function loadApplications() {
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
@@ -2677,41 +2676,39 @@ function showTableSkeleton(tbodyId, cols, rows) {
 }
 // ===== ANALYTICS =====
 var _analyticsAllCases = null;
-var _analyticsRange = 'month';
-function setAnalyticsRange(type){
-  // 點同一個按鈕再次 → 清除
-  if(_analyticsRange===type && type!=='custom'){clearAnalyticsRange();return;}
-  _analyticsRange=type;
-  ['month','quarter','year','custom'].forEach(function(t){
-    var btn=document.getElementById('arange-'+t);if(!btn)return;
-    if(t===type){btn.style.background='var(--brand)';btn.style.color='#fff';btn.style.borderColor='var(--brand)';}
-    else{btn.style.background='';btn.style.color='';btn.style.borderColor='';}
-  });
-  var clearBtn=document.getElementById('arange-clear');
-  if(clearBtn)clearBtn.style.display='inline-flex';
-  var cr=document.getElementById('analytics-custom-range');
-  if(cr)cr.style.display=type==='custom'?'flex':'none';
-  if(type!=='custom'){var r=getDateRange(type);renderAnalytics(r.start,r.end);}
-}
-function clearAnalyticsRange(){
-  _analyticsRange=null;
+var _analyticsRange = null; // 預設不限定區間
+function _resetAnalyticsButtons(){
   ['month','quarter','year','custom'].forEach(function(t){
     var btn=document.getElementById('arange-'+t);if(!btn)return;
     btn.style.background='';btn.style.color='';btn.style.borderColor='';
   });
-  var clearBtn=document.getElementById('arange-clear');
-  if(clearBtn)clearBtn.style.display='none';
   var cr=document.getElementById('analytics-custom-range');
   if(cr)cr.style.display='none';
+}
+function setAnalyticsRange(type){
+  // 再次點擊同一個按鈕 → 取消選取（顯示全部）
+  if(_analyticsRange===type){
+    _analyticsRange=null;
+    _resetAnalyticsButtons();
+    var s=document.getElementById('analytics-date-start');var e=document.getElementById('analytics-date-end');
+    if(s)s.value='';if(e)e.value='';
+    if(_analyticsAllCases!==null){renderAnalytics(new Date('2000-01-01'),new Date('2099-12-31'));}
+    return;
+  }
+  _analyticsRange=type;
+  _resetAnalyticsButtons();
+  var activeBtn=document.getElementById('arange-'+type);
+  if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+  var cr=document.getElementById('analytics-custom-range');
+  if(cr)cr.style.display=type==='custom'?'flex':'none';
+  if(type!=='custom'&&_analyticsAllCases!==null){var r=getDateRange(type);renderAnalytics(r.start,r.end);}
+}
+function clearAnalyticsRange(){
+  _analyticsRange=null;
+  _resetAnalyticsButtons();
   var s=document.getElementById('analytics-date-start');var e=document.getElementById('analytics-date-end');
   if(s)s.value='';if(e)e.value='';
-  // 顯示全部資料（無日期限制）
-  if(_analyticsAllCases){
-    var lbl=document.getElementById('analytics-range-label');
-    if(lbl)lbl.textContent='全部資料 · '+_analyticsAllCases.length+' 件';
-    var start=new Date('2000-01-01');var end=new Date('2099-12-31');
-    renderAnalytics(start,end);
-  }
+  if(_analyticsAllCases!==null){renderAnalytics(new Date('2000-01-01'),new Date('2099-12-31'));}
 }
 function applyCustomRange(){
   var s=document.getElementById('analytics-date-start');
@@ -2742,13 +2739,27 @@ async function loadAnalytics(){
     if(lbl)lbl.textContent='載入失敗';return;
   }
   _analyticsAllCases=res.cases||[];
-  // 若上次停在「自訂」但沒有填日期，或者尚未選過範圍，預設回本月
+  // 若上次停在「自訂」但沒有填日期 → 清除選取狀態
   var sd=document.getElementById('analytics-date-start');
   var ed=document.getElementById('analytics-date-end');
-  if(!_analyticsRange||(_analyticsRange==='custom'&&(!sd||!sd.value||!ed||!ed.value))){
-    _analyticsRange='month';
+  if(_analyticsRange==='custom'&&(!sd||!sd.value||!ed||!ed.value)){
+    _analyticsRange=null;
+    _resetAnalyticsButtons();
   }
-  setAnalyticsRange(_analyticsRange);
+  if(_analyticsRange&&_analyticsRange!=='custom'){
+    // 恢復上次選取的區間
+    var r=getDateRange(_analyticsRange);
+    var activeBtn=document.getElementById('arange-'+_analyticsRange);
+    if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+    renderAnalytics(r.start,r.end);
+  } else if(_analyticsRange==='custom'){
+    var activeBtn=document.getElementById('arange-custom');
+    if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+    applyCustomRange();
+  } else {
+    // 預設：不限定區間，顯示全部資料
+    renderAnalytics(new Date('2000-01-01'),new Date('2099-12-31'));
+  }
 }
 function renderAnalytics(startDate,endDate){
   var cases=_analyticsAllCases||[];
@@ -2760,7 +2771,8 @@ function renderAnalytics(startDate,endDate){
   });
   var fmt=function(d){return d.getFullYear()+'/'+(d.getMonth()+1+'').padStart(2,'0')+'/'+(d.getDate()+'').padStart(2,'0');};
   var lbl=document.getElementById('analytics-range-label');
-  if(lbl)lbl.textContent=fmt(startDate)+' — '+fmt(endDate)+' · '+filtered.length+' 件';
+  var isAllData=(startDate.getFullYear()<=2000&&endDate.getFullYear()>=2099);
+  if(lbl)lbl.textContent=(isAllData?'不限定區間':fmt(startDate)+' — '+fmt(endDate))+' · '+filtered.length+' 件';
   var tot=filtered.reduce(function(s,c){return s+Number(c.total||0);},0);
   var apv=filtered.filter(function(c){return c.status==='已完成';}).reduce(function(s,c){return s+Number(c.total||0);},0);
   var tEl=document.getElementById('analytics-total');var cEl=document.getElementById('analytics-count');var aEl=document.getElementById('analytics-approved');
