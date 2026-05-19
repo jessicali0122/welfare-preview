@@ -420,7 +420,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
           <div>
             <div style="font-size:15px;font-weight:700;color:#0f172a">各月請款金額</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:2px">2026 年度統計（含稅）</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:2px" id="chart-year-label"></div>
           </div>
           <div style="font-size:14px;font-weight:700;color:var(--brand)">NT$ 0 <span style="font-size:12px;color:#94a3b8;font-weight:400">年度總計</span></div>
         </div>
@@ -431,11 +431,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">4月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">5月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#cbd5e1">6月</span></div>
-        </div>
-        <div style="border-top:1px solid #f1f5f9;margin-top:12px;padding-top:12px;display:flex;gap:20px">
-          <div><div style="font-size:12px;color:#94a3b8">本月含稅</div><div style="font-size:17px;font-weight:700;color:#0f172a">NT$ 0</div></div>
-          <div><div style="font-size:12px;color:#94a3b8">本月未稅</div><div style="font-size:17px;font-weight:700;color:#0f172a">NT$ 0</div></div>
-          <div><div style="font-size:12px;color:#94a3b8">稅額合計</div><div style="font-size:17px;font-weight:700;color:#0f172a">NT$ 0</div></div>
         </div>
       </div>
       <div class="card" style="padding:20px">
@@ -479,15 +474,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== ANALYTICS ===== -->
   <div class="view" id="view-analytics">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-          <div id="analytics-range-label" style="font-size:13px;color:#94a3b8;margin-top:2px">載入中...</div>
-      </div>
-      <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 16px">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        匯出 CSV
-      </button>
-    </div>
     <div class="card" style="padding:14px 18px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
         <span style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap">篩選區間</span>
@@ -503,6 +489,12 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly>
           <button class="btn btn-p" style="font-size:13px;padding:5px 16px" onclick="applyCustomRange()">套用</button>
         </div>
+        <div style="flex:1"></div>
+        <div id="analytics-range-label" style="font-size:13px;color:#94a3b8;white-space:nowrap">載入中...</div>
+        <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 14px;flex-shrink:0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          匯出 CSV
+        </button>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px">
@@ -1607,6 +1599,8 @@ function reLogin() {
 //  總覽載入
 // ══════════════════════════════════════════
 async function loadDashboard() {
+  const yl = document.getElementById('chart-year-label');
+  if (yl) yl.textContent = new Date().getFullYear() + ' 年度統計（含稅）';
   const res = await callAPI('list');
   if (!res.ok) return;
   const cases = res.cases || [];
