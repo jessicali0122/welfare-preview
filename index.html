@@ -187,6 +187,11 @@ input[type=checkbox]{accent-color:var(--brand)}
 @media(max-width:768px){
   #app,#app>div,#main-wrapper{height:calc(var(--vh,1vh)*100)!important}
 }
+/* 手機版 Modal：避免超出螢幕、加入 overflow scroll */
+@media(max-width:768px){
+  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:auto!important}
+  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
+}
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
@@ -1439,7 +1444,7 @@ window.onload = function() {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleLogin,
-      auto_select: false,
+      auto_select: true,  // 允許靜默重新驗證，避免頻繁跳出「登入逾期」
     });
     google.accounts.id.renderButton(
       document.getElementById('g-signin-btn'),
@@ -1484,7 +1489,9 @@ function handleGoogleLogin(response) {
     document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱登入';
     return;
   }
-  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, sessionExpiry: Date.now() + 8*60*60*1000 };
+  // 以 JWT 本身的 exp 計算 token 實際過期時間（通常 1 小時），session 另外維持 8 小時
+  const tokenExpiry = payload.exp ? payload.exp * 1000 : Date.now() + 55 * 60 * 1000;
+  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry: Date.now() + 8*60*60*1000 };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
   showApp();
 }
@@ -1560,7 +1567,24 @@ async function callAPI(action, data = {}) {
 }
 
 function handleAuthError() {
-  // Token 過期：清除舊 session，以小橫幅提示重新登入，不強制中斷操作
+  if (document.getElementById('auth-expired-bar')) return;
+  // 先嘗試靜默刷新 Google Token，成功則不中斷使用
+  if (window.google?.accounts?.id && currentUser?.token && !currentUser.token.startsWith('manual_')) {
+    try {
+      google.accounts.id.prompt(notification => {
+        // One Tap 被跳過或關閉才顯示提示條
+        if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+          _showAuthExpiredBar();
+        }
+      });
+      // 5 秒後若仍未刷新則顯示提示條
+      setTimeout(() => { if (!currentUser || !currentUser.token) _showAuthExpiredBar(); }, 5000);
+      return;
+    } catch(e) {}
+  }
+  _showAuthExpiredBar();
+}
+function _showAuthExpiredBar() {
   if (document.getElementById('auth-expired-bar')) return;
   localStorage.removeItem('bf_user');
   currentUser = null;
@@ -1702,11 +1726,11 @@ async function loadApplications() {
       : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.department||'—'}</td>
-      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">—</span></td>
-      <td style="padding:12px 16px;color:#374151">—</td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
+      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category||'—'}</span></td>
+      <td style="padding:12px 16px;color:#374151">${c.pretax?'NT$ '+Number(c.pretax||0).toLocaleString():'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;color:#374151">${c.step||1} / 1</td>
+      <td style="padding:12px 16px;color:#374151">${c.step||1} / ${c.totalSteps||4}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${c.createdAt}</td>
       <td style="padding:12px 16px;display:flex;gap:6px">${actionBtn}</td>
@@ -1864,7 +1888,7 @@ async function submitForm() {
 
   const subjectEl   = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl    = document.querySelector('#view-new-form textarea');
-  const departmentEl= document.querySelector('#view-new-form select.inp');
+  const departmentEl= document.getElementById('form-dept-select');
   const applicantEl = document.getElementById('applicant-select');
   const payeeEl     = document.getElementById('payee-select');
 
@@ -1905,6 +1929,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   const applicantEl = document.getElementById('applicant-select');
   const res = await callAPI('submit', {
     project:    subjectEl?.value || '',
+    subject:    subjectEl?.value || '',   // 同時送 subject，讓後端 Chat 通知顯示主旨
     department: departmentEl?.value || '',
     reason:     reasonEl?.value || '',
     payee:      payeeEl?.value || currentUser?.name,
@@ -2788,6 +2813,8 @@ window.sw = function(view, ...args) {
   if (view === 'applications') {
     setTimeout(syncApplicantFilter, 50);
   }
+  // 每次切換頁面都刷新 viewport，確保手機版按鈕可用
+  if (typeof updateVH === 'function') setTimeout(updateVH, 50);
 };
 
 // 初始同步
