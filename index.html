@@ -119,6 +119,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #sidebar-wrapper.open{left:0!important}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
+  #header-avatar{display:inline-flex!important}
   #main-wrapper{margin-left:0!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
@@ -330,6 +331,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
+    <div id="header-avatar" onclick="toggleUserMenu()" class="user-avatar-initial" style="display:none;width:32px;height:32px;border-radius:50%;background:#1e9d6b;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;cursor:pointer" title="帳號選項">潔</div>
   </header>
 
   <!-- NOTIFICATION PANEL -->
@@ -1334,7 +1336,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 // ══════════════════════════════════════════
 //  設定：你的 Apps Script 網址
 // ══════════════════════════════════════════
-const API_URL = 'https://script.google.com/macros/s/AKfycbxuQh6R-vTqBe1uRhGRxr0cXhqhAL2ZEmQcq-NIIGjjmBJRhrVtX7zpvO3a4g4RqjCp/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyonP2xxT9x5gtKRmD0wmM2NTfF_ccKl-DiCBXUXVpKv_NNp9GmGWyQ_nJPF8xPZI9i/exec';
 const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.googleusercontent.com';
 
 // ══════════════════════════════════════════
@@ -1516,6 +1518,7 @@ function showApp() {
   if (currentUser) {
     const initial = currentUser.name.charAt(0);
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
+    document.getElementById('header-avatar').textContent = initial;
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
