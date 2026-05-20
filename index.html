@@ -60,6 +60,8 @@ input[type=radio]{accent-color:var(--brand)}
 #toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;transform:translateY(80px);opacity:0;transition:all .3s;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.3)}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
 .modal-bg.open{display:flex}
+.modal-bg>div{max-height:90vh;overflow-y:auto}
+.modal-bg>div>div:first-child{position:sticky;top:0;z-index:2;background:#fff}
 .notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden}
 .notif-panel.open{display:block}
 .notif-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s}
@@ -155,7 +157,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #analytics-grid{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
   .stat{padding:12px 14px!important}
-  #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  #stats-grid{grid-template-columns:1fr!important}
   main{padding:14px!important}
   .card{border-radius:10px!important}
   #view-approvals .card{padding:14px!important}
@@ -493,7 +495,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <thead><tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9">
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請單號</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">項目</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">分類</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">關卡</th>
@@ -622,7 +624,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">項目</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">關卡</th>
@@ -861,7 +863,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <table style="width:100%;font-size:14px;border-collapse:collapse">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">分類</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">項目</th>
+              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">說明用途</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">憑證</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">日期</th>
               <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">未稅</th>
@@ -887,7 +889,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         </div>
         <div id="approve-box" class="card" style="padding:20px;border:2px solid #b2e0e1">
           <div style="font-size:14px;font-weight:700;color:var(--brand);margin-bottom:3px">需要您審核</div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">您是本關簽核人：第二關 主管審核</div>
+          <div id="approve-box-label" style="font-size:12px;color:#94a3b8;margin-bottom:12px">您是本關簽核人</div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">簽核意見</label>
           <textarea class="inp" rows="3" placeholder="填寫意見（退件時必填）..."></textarea>
           <div style="display:flex;gap:8px;margin-top:10px">
@@ -1360,6 +1362,7 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 //  登入狀態
 // ══════════════════════════════════════════
 let currentUser = null; // { email, name, token }
+let _selectedFiles = []; // 待上傳附件（File 物件陣列）
 
 // ── 管理者名單（可依需求擴充）──
 const ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
@@ -2012,6 +2015,11 @@ async function loadDetail(caseId) {
   if (approveBox) {
     approveBox.style.display = isMyTurn ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
+    if (isMyTurn) {
+      const stepNames = ['第一關 總幹事','第二關 副主任委員','第三關 主任委員','第四關 財務委員'];
+      const lbl = document.getElementById('approve-box-label');
+      if (lbl) lbl.textContent = '您是本關簽核人：' + (stepNames[myDetailStep - 1] || '第' + myDetailStep + '關');
+    }
   }
   toast('');
 }
@@ -2137,6 +2145,19 @@ async function confirmSubmitForm() {
 }
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
+  // 先 base64 編碼附件
+  const fileArr = _selectedFiles.filter(Boolean);
+  let fileData = [];
+  if (fileArr.length > 0) {
+    toast('⏳ 處理附件中...');
+    fileData = await Promise.all(fileArr.map(f => new Promise(function(resolve) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        resolve({ name: f.name, type: f.type || 'application/octet-stream', data: e.target.result.split(',')[1] });
+      };
+      reader.readAsDataURL(f);
+    })));
+  }
   toast('⏳ 送出中...');
   const pretax = items.reduce((s,i)=>s+i.pretax,0);
   const tax    = items.reduce((s,i)=>s+i.tax,0);
@@ -2153,11 +2174,13 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     name:       getUserFromAdminTable(currentUser?.email)?.name || cleanName(applicantEl?.value) || currentUser?.name,
     applyDate:  applyDateEl?.value || '',
     employeeId: employeeIdEl?.value || '',
-    pretax, tax, total, items,
+    pretax, tax, total, items, files: fileData,
   });
 
   if (res.ok) {
     localStorage.removeItem('bf_draft');
+    _selectedFiles = [];
+    document.getElementById('file-list').innerHTML = '';
     toast('✅ 申請已送出！單號：' + res.caseId + '，已通知簽核人');
     setTimeout(() => sw('applications'), 1500);
     loadDashboard();
@@ -2357,27 +2380,35 @@ function calcTotal(){
 }
 
 // ── FILE UPLOAD ──
+function removeSelectedFile(idx) {
+  _selectedFiles[idx] = null;
+}
+
 function handleFileUpload(files) {
   if (!files || files.length === 0) return;
   const list = document.getElementById('file-list');
   if (!list) return;
   const maxSize = 10 * 1024 * 1024;
+  let added = 0;
   Array.from(files).forEach(function(file) {
     if (file.size > maxSize) { toast('⚠️ 檔案過大：' + file.name + '（上限 10MB）'); return; }
+    const idx = _selectedFiles.length;
+    _selectedFiles.push(file);
+    added++;
     const ext = file.name.split('.').pop().toLowerCase();
     const iconMap = { pdf: '📄', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', xlsx: '📊', xls: '📊' };
     const icon = iconMap[ext] || '📎';
     const item = document.createElement('div');
+    item.dataset.fileIdx = idx;
     item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0';
     item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
       + '<span style="font-size:13px;color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + file.name + '</span>'
       + '<span style="font-size:11px;color:#94a3b8">' + (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + '</span>'
-      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="this.closest(\'div\').remove()">×</button>';
+      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="removeSelectedFile(' + idx + ');this.closest(\'div\').remove()">×</button>';
     list.appendChild(item);
   });
-  toast('✅ 已選取 ' + files.length + ' 個檔案');
+  if (added > 0) toast('✅ 已選取 ' + _selectedFiles.filter(Boolean).length + ' 個附件');
   document.getElementById('file-upload-input').value = '';
-  // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度與滾動
   updateVH();
   var mc = document.getElementById('main-content');
   if (mc) {
