@@ -57,7 +57,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:500}
 input[type=radio]{accent-color:var(--brand)}
 .tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600}
-#toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;transform:translateY(80px);opacity:0;transition:opacity .3s,transform .3s;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.3);min-width:160px;white-space:nowrap;pointer-events:none}
+#toast{position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;transform:translateY(80px);opacity:0;transition:all .3s;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,.3)}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
 .modal-bg.open{display:flex}
 .modal-bg>div{max-height:90vh;overflow-y:auto}
@@ -197,7 +197,7 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* Mobile toast：防止超出螢幕寬度 */
 @media(max-width:768px){
-  #toast{max-width:calc(100vw - 32px)!important;right:8px!important;bottom:16px!important;font-size:13px!important;padding:11px 14px!important;word-break:break-word;white-space:normal!important}
+  #toast{max-width:calc(100vw - 32px)!important;right:8px!important;bottom:16px!important;font-size:13px!important;padding:11px 14px!important;word-break:break-word}
 }
 /* Mobile receipt-confirm modal */
 @media(max-width:768px){
@@ -1505,7 +1505,7 @@ function manualLogin() {
   }
   if (!name) { toast('⚠️ 請輸入姓名'); return; }
   var cleanedManualName = name.replace(/[A-Za-z]+/g, '').trim() || name;
-  currentUser = { email, name: cleanedManualName, token: 'manual_' + Date.now() + '_' + email, sessionExpiry: Date.now() + 8*60*60*1000 };
+  currentUser = { email, name: cleanedManualName, token: 'manual_' + Date.now(), sessionExpiry: Date.now() + 8*60*60*1000 };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
   showApp();
 }
@@ -1605,19 +1605,15 @@ function logout() {
 // ══════════════════════════════════════════
 //  API 呼叫通用函式
 // ══════════════════════════════════════════
-async function callAPI(action, data = {}, _retry = 0) {
+async function callAPI(action, data = {}) {
   try {
     const body = { action, token: currentUser?.token, ...data };
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 秒 timeout
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body),
       redirect: 'follow',
-      signal: controller.signal,
     });
-    clearTimeout(timeoutId);
     const json = await res.json();
     // 偵測 auth 錯誤：token 過期或無效
     if (!json.ok && json.error && (
@@ -1633,15 +1629,8 @@ async function callAPI(action, data = {}, _retry = 0) {
     }
     return json;
   } catch(err) {
-    // 網路抖動或 Apps Script cold start：自動重試最多 2 次
-    if (_retry < 2 && (err.name === 'AbortError' || err.name === 'TypeError' || err.message.includes('network') || err.message.includes('fetch'))) {
-      const delay = (_retry + 1) * 1500; // 1.5s, 3s
-      console.warn('API 失敗，' + delay + 'ms 後重試（第' + (_retry+1) + '次）', err.message);
-      await new Promise(r => setTimeout(r, delay));
-      return callAPI(action, data, _retry + 1);
-    }
     console.error('API Error:', err);
-    return { ok: false, error: err.name === 'AbortError' ? '請求逾時，請確認網路後重試' : err.message };
+    return { ok: false, error: err.message };
   }
 }
 
@@ -1840,16 +1829,7 @@ function renderDashboardTable(cases) {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const catVal = (function(c){
-      if(c.category && String(c.category).trim()) return c.category;
-      if(c.type && String(c.type).trim()) return c.type;
-      var its = c.items || [];
-      for(var i=0;i<its.length;i++){
-        var cat = its[i].category||its[i].type||its[i].cat||'';
-        if(cat && String(cat).trim()) return cat;
-      }
-      return '—';
-    })(c);
+    const catVal = c.category || c.type || (c.items && c.items.length > 0 && c.items[0].category) || '—';
     const stepVal = c.step != null ? c.step : 1;
     const totalVal = c.totalSteps != null ? c.totalSteps : 4;
     const cid = c.caseId || '';
@@ -1905,16 +1885,7 @@ async function loadApplications() {
     const actionBtn = (c.status === '已完成' && cid)
       ? viewBtn + `<button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${cid}')">列印</button>`
       : viewBtn;
-    const catVal = (function(c){
-      if(c.category && String(c.category).trim()) return c.category;
-      if(c.type && String(c.type).trim()) return c.type;
-      var its = c.items || [];
-      for(var i=0;i<its.length;i++){
-        var cat = its[i].category||its[i].type||its[i].cat||'';
-        if(cat && String(cat).trim()) return cat;
-      }
-      return '—';
-    })(c);
+    const catVal = c.category || c.type || (c.items && c.items.length > 0 && c.items[0].category) || '—';
     const stepVal = (c.step != null ? c.step : 1);
     const totalVal = (c.totalSteps != null ? c.totalSteps : (c.steps != null ? c.steps : 4));
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
@@ -2061,25 +2032,13 @@ function renderDetailFiles(files) {
     return;
   }
   el.innerHTML = files.map(function(f) {
-    var rawUrl = typeof f === 'string' ? f : (f.url || f.link || '');
-    var name   = typeof f === 'string' ? (rawUrl.split('/').pop() || '附件') : (f.name || f.fileName || rawUrl.split('/').pop() || '附件');
-    var fileId = (f && f.id) ? f.id : '';
-    if (!fileId) {
-      var m = rawUrl.match(/[\/]d[\/]([a-zA-Z0-9_-]{20,})/);
-      if (m) fileId = m[1];
-    }
-    // 統一使用 /view 連結（可直接在手機瀏覽器開啟）
-    var openUrl = fileId ? ('https://drive.google.com/file/d/' + fileId + '/view') : rawUrl;
+    var url = typeof f === 'string' ? f : (f.url || f.link || '');
+    var name = typeof f === 'string' ? url.split('/').pop() || '附件' : (f.name || f.fileName || url.split('/').pop() || '附件');
     var isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
-    var thumbHtml = (isImg && fileId)
-      ? '<img src="https://drive.google.com/thumbnail?id=' + fileId + '&sz=w80-h80" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #e2e8f0" onerror="this.style.display='none'">'
-      : '';
-    var iconHtml = isImg
-      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">' +
-      (thumbHtml || iconHtml) +
-      '<a href="' + openUrl + '" target="_blank" rel="noopener" style="font-size:13px;color:#1e9d6b;font-weight:500;text-decoration:none;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</a>' +
+      (isImg ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' :
+               '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>') +
+      '<a href="' + url + '" target="_blank" style="font-size:13px;color:#1e9d6b;font-weight:500;text-decoration:none;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</a>' +
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
       '</div>';
   }).join('');
@@ -2236,24 +2195,8 @@ async function saveDraftForm() {
   const pretax = Array.from(document.querySelectorAll('.pretax')).reduce((s,el)=>s+(parseFloat(el.value)||0),0);
   const tax    = Array.from(document.querySelectorAll('.taxamt')).reduce((s,el)=>s+(parseFloat(el.value)||0),0);
   const total  = Array.from(document.querySelectorAll('.withtax')).reduce((s,el)=>s+(parseFloat(el.value)||0),0);
-  // ★ 修正：收集明細（含 category），讓草稿案件可正確顯示分類欄位
-  const items = [];
-  document.querySelectorAll('.item-card').forEach(card => {
-    const withtax = parseFloat(card.querySelector('.withtax')?.value) || 0;
-    if (withtax > 0) {
-      items.push({
-        date:        card.querySelector('.date-inp')?.value || '',
-        category:    card.querySelectorAll('select')[0]?.value || '',
-        description: card.querySelectorAll('input:not(.date-inp):not([type=number])')[0]?.value || '',
-        receiptType: card.querySelectorAll('select')[1]?.value || '',
-        pretax:      parseFloat(card.querySelector('.pretax')?.value) || 0,
-        tax:         parseFloat(card.querySelector('.taxamt')?.value) || 0,
-        total:       withtax,
-      });
-    }
-  });
   toast('⏳ 儲存中...');
-  const res = await callAPI('draft', { project: subjectEl?.value||'', reason: reasonEl?.value||'', pretax, tax, total, items });
+  const res = await callAPI('draft', { project: subjectEl?.value||'', reason: reasonEl?.value||'', pretax, tax, total, items:[] });
   if (res.ok) toast('💾 草稿已儲存！單號：' + res.caseId);
   else toast('❌ 儲存失敗：' + res.error);
 }
@@ -2264,7 +2207,9 @@ function printCase(caseId) {
 }
 
 // ── SIDEBAR COLLAPSE ──
-// toggleSidebar defined below
+function toggleSidebar(){
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
 
 // ── NAVIGATION ──
 const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理'};
@@ -2473,23 +2418,10 @@ function handleFileUpload(files) {
 }
 
 // ── TOAST ──
-let _toastTimer = null;
 function toast(msg){
-  if (!msg) return; // 忽略空字串呼叫（載入中清空）
   const t=document.getElementById('toast');
-  if (_toastTimer) { clearTimeout(_toastTimer); _toastTimer = null; }
-  t.textContent = msg;
-  t.style.transition = 'none';
-  t.style.transform = 'translateY(0)';
-  t.style.opacity = '1';
-  // 強制 reflow 再開啟 transition，確保動畫從頭播
-  t.offsetHeight;
-  t.style.transition = 'opacity .3s, transform .3s';
-  _toastTimer = setTimeout(() => {
-    t.style.transform = 'translateY(80px)';
-    t.style.opacity = '0';
-    _toastTimer = null;
-  }, 3000);
+  t.textContent=msg;t.style.transform='translateY(0)';t.style.opacity='1';
+  setTimeout(()=>{t.style.transform='translateY(80px)';t.style.opacity='0';},3000);
 }
 
 // ── NOTIFICATIONS ──
@@ -2915,33 +2847,15 @@ function applyAppFilter() {
   const applicant = document.getElementById('app-filter-applicant')?.value || '';
   const status = document.getElementById('app-filter-status')?.value || '';
   const cat = document.getElementById('app-filter-cat')?.value || '';
-  // [修正] 加入日期篩選（從 dpState 讀取）
-  const dateStart = dpState.start;
-  const dateEnd   = dpState.end;
   const rows = document.querySelectorAll('#applications-tbody tr');
   let visible = 0;
   rows.forEach(r => {
     if (r.querySelector('td[colspan]')) return;
     const text = r.textContent.toLowerCase();
-    // 日期篩選：讀第 8 欄（申請時間）
-    let dateMatch = true;
-    if (dateStart || dateEnd) {
-      const dateCell = r.cells[7]?.textContent?.trim() || '';
-      const ds = dateCell.replace(/\//g, '-').split(' ')[0];
-      const d = new Date(ds + 'T00:00:00');
-      if (!isNaN(d)) {
-        if (dateStart && d < dateStart) dateMatch = false;
-        if (dateEnd) {
-          const endOfDay = new Date(dateEnd); endOfDay.setHours(23,59,59,999);
-          if (d > endOfDay) dateMatch = false;
-        }
-      }
-    }
     const match = (!q || text.includes(q))
       && (!applicant || text.includes(applicant))
       && (!status || r.cells[6]?.textContent.includes(status))
-      && (!cat || r.cells[3]?.textContent.includes(cat))
-      && dateMatch;
+      && (!cat || r.cells[3]?.textContent.includes(cat));
     r.style.display = match ? '' : 'none';
     if (match) visible++;
   });
@@ -2952,11 +2866,9 @@ function applyAppFilter() {
 
 function resetAppFilter() {
   document.getElementById('app-search').value = '';
-  // [修正] 有 disabled placeholder 的 select 用 selectedIndex=0 重置
-  ['app-filter-applicant','app-filter-status','app-filter-cat'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.selectedIndex = 0;
-  });
+  document.getElementById('app-filter-applicant').value = '';
+  document.getElementById('app-filter-status').value = '';
+  document.getElementById('app-filter-cat').value = '';
   dpState.start = null; dpState.end = null;
   updateDpDisplay('start'); updateDpDisplay('end');
   document.querySelectorAll('#applications-tbody tr').forEach(r => r.style.display = '');
