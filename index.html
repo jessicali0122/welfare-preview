@@ -189,8 +189,9 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* 手機版 Modal：避免超出螢幕、加入 overflow scroll */
 @media(max-width:768px){
-  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:auto!important}
-  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
+  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:hidden!important}
+  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
+  .modal-bg>div>div:first-child{position:sticky;top:0;z-index:1;background:#fff}
 }
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
@@ -198,6 +199,9 @@ input[type=checkbox]{accent-color:var(--brand)}
 @keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .copy-btn{background:none;border:none;cursor:pointer;color:#94a3b8;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;transition:color .15s}
 .copy-btn:hover{color:var(--brand)}
+/* Modal 關閉按鈕：確保手機觸控區域夠大 */
+.modal-bg .modal-close-btn{min-width:40px;min-height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:22px;line-height:1;transition:background .15s}
+.modal-bg .modal-close-btn:hover{background:#f1f5f9;color:#374151}
 .empty-state{text-align:center;padding:48px 20px;color:#94a3b8}
 .empty-state svg{margin-bottom:12px;opacity:.4}
 .empty-state p{font-size:14px;margin:0}
@@ -1133,14 +1137,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Add User Modal -->
-<div id="add-user-modal" class="modal-bg">
+<div id="add-user-modal" class="modal-bg" onclick="if(event.target===this)closeAddUserModal()">
   <div style="background:#fff;border-radius:16px;width:500px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:16px;font-weight:700;color:#0f172a">新增人員</div>
         <div style="font-size:12px;color:#94a3b8;margin-top:2px">新增單一使用者至系統</div>
       </div>
-      <button onclick="closeAddUserModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
+      <button onclick="closeAddUserModal()" class="modal-close-btn">×</button>
     </div>
     <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -1176,14 +1180,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Edit User Modal -->
-<div id="edit-user-modal" class="modal-bg">
+<div id="edit-user-modal" class="modal-bg" onclick="if(event.target===this)closeEditUserModal()">
   <div style="background:#fff;border-radius:16px;width:500px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:16px;font-weight:700;color:#0f172a">編輯人員資料</div>
         <div id="edit-user-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px">修改使用者角色與資訊</div>
       </div>
-      <button onclick="closeEditUserModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
+      <button onclick="closeEditUserModal()" class="modal-close-btn">×</button>
     </div>
     <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
@@ -1222,14 +1226,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Edit Flow Modal -->
-<div id="edit-flow-modal" class="modal-bg">
+<div id="edit-flow-modal" class="modal-bg" onclick="if(event.target===this)closeEditFlowModal()">
   <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:16px;font-weight:700;color:#0f172a">編輯簽核關卡</div>
         <div id="edit-flow-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px">修改關卡設定</div>
       </div>
-      <button onclick="closeEditFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
+      <button onclick="closeEditFlowModal()" class="modal-close-btn">&times;</button>
     </div>
     <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1249,14 +1253,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Add Flow Modal -->
-<div id="add-flow-modal" class="modal-bg">
+<div id="add-flow-modal" class="modal-bg" onclick="if(event.target===this)closeAddFlowModal()">
   <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
       <div>
         <div style="font-size:16px;font-weight:700;color:#0f172a">新增簽核關卡</div>
         <div style="font-size:12px;color:#94a3b8;margin-top:2px">在流程最後新增一關</div>
       </div>
-      <button onclick="closeAddFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
+      <button onclick="closeAddFlowModal()" class="modal-close-btn">&times;</button>
     </div>
     <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
       <div>
@@ -1276,7 +1280,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Delete Confirm Modal -->
-<div id="delete-confirm-modal" class="modal-bg">
+<div id="delete-confirm-modal" class="modal-bg" onclick="if(event.target===this)closeDeleteConfirmModal()">
   <div style="background:#fff;border-radius:16px;width:400px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:24px 24px 8px;text-align:center">
       <div style="width:52px;height:52px;border-radius:50%;background:#fef2f2;display:inline-flex;align-items:center;justify-content:center;margin-bottom:14px">
@@ -1293,11 +1297,11 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div>
 
 <!-- Import Modal -->
-<div id="import-modal" class="modal-bg">
+<div id="import-modal" class="modal-bg" onclick="if(event.target===this)closeImportModal()">
   <div style="background:#fff;border-radius:16px;width:480px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="padding:18px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
       <div style="font-size:15px;font-weight:700;color:#0f172a">批次匯入名單</div>
-      <button onclick="closeImportModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
+      <button onclick="closeImportModal()" class="modal-close-btn">×</button>
     </div>
     <div style="padding:20px">
       <div style="border:2px dashed var(--brand-mid);border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#f9fefe;margin-bottom:16px">
@@ -1347,6 +1351,7 @@ function isAdmin() {
 
 // ── 根據角色套用 / 移除受限功能 ──
 function applyRolePermissions() {
+  if (!currentUser) return; // 未登入時不更動按鈕狀態
   const admin = isAdmin();
 
   // 1. 使用者管理表格：checkbox、編輯、刪除
@@ -1572,13 +1577,11 @@ function handleAuthError() {
   if (window.google?.accounts?.id && currentUser?.token && !currentUser.token.startsWith('manual_')) {
     try {
       google.accounts.id.prompt(notification => {
-        // One Tap 被跳過或關閉才顯示提示條
-        if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+        // 只有使用者主動關閉才顯示逾期條；被靜默略過（isSkippedMoment）代表裝置或瀏覽器抑制了彈窗，不視為真正逾期
+        if (notification.isDismissedMoment()) {
           _showAuthExpiredBar();
         }
       });
-      // 5 秒後若仍未刷新則顯示提示條
-      setTimeout(() => { if (!currentUser || !currentUser.token) _showAuthExpiredBar(); }, 5000);
       return;
     } catch(e) {}
   }
@@ -1587,7 +1590,7 @@ function handleAuthError() {
 function _showAuthExpiredBar() {
   if (document.getElementById('auth-expired-bar')) return;
   localStorage.removeItem('bf_user');
-  currentUser = null;
+  // 不清除 currentUser，讓 UI 保持可用，使用者可自行點按重新登入
   const bar = document.createElement('div');
   bar.id = 'auth-expired-bar';
   bar.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
@@ -1632,7 +1635,7 @@ async function loadDashboard() {
   const res = await callAPI('list');
   if (!res.ok) return;
   const cases = res.cases || [];
-  const pending = cases.filter(c => c.status && c.status.includes('待'));
+  const pending = cases.filter(c => c.status && (c.status.includes('待') || c.status.includes('簽核中')));
   const done    = cases.filter(c => c.status === '已完成');
   const rejected= cases.filter(c => c.status === '已退件');
   // 帳面餘額計算
@@ -1677,10 +1680,10 @@ function renderDashboardTable(cases) {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151">${c.name}</td>
-      <td style="padding:12px 16px;color:#374151">${c.department||'—'}</td>
+    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId||''}')">
+      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId||'—'}</td>
+      <td style="padding:12px 16px;color:#374151">${c.name||'—'}</td>
+      <td style="padding:12px 16px;color:#374151">${c.project||c.subject||c.title||'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8">${c.createdAt}</td>
@@ -1720,17 +1723,23 @@ async function loadApplications() {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const actionBtn = c.status === '已完成'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
-         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${c.caseId}')">列印</button>`
-      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
+    const cid = c.caseId || '';
+    const viewBtn = cid
+      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${cid}')">查看</button>`
+      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #cbd5e1;background:#f8fafc;color:#cbd5e1;border-radius:9px;cursor:not-allowed;font-weight:600" disabled>查看</button>`;
+    const actionBtn = (c.status === '已完成' && cid)
+      ? viewBtn + `<button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${cid}')">列印</button>`
+      : viewBtn;
+    const catVal = c.category || c.type || '—';
+    const stepVal = (c.step != null ? c.step : 1);
+    const totalVal = (c.totalSteps != null ? c.totalSteps : (c.steps != null ? c.steps : 4));
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category||'—'}</span></td>
+      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${cid||'—'}</td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||c.title||'—'}</td>
+      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${catVal}</span></td>
       <td style="padding:12px 16px;color:#374151">${c.pretax?'NT$ '+Number(c.pretax||0).toLocaleString():'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;color:#374151">${c.step||1} / ${c.totalSteps||4}</td>
+      <td style="padding:12px 16px;color:#374151">${stepVal} / ${totalVal}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${c.createdAt}</td>
       <td style="padding:12px 16px;display:flex;gap:6px">${actionBtn}</td>
@@ -1744,7 +1753,7 @@ async function loadApplications() {
 async function loadApprovals() {
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
-  const pending = (res.cases || []).filter(c => c.status && c.status.includes('待'));
+  const pending = (res.cases || []).filter(c => c.status && (c.status.includes('待') || c.status.includes('簽核中')));
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
@@ -3020,6 +3029,12 @@ function clearDraft(){
 // ===== ESC KEY - close modals =====
 document.addEventListener('keydown', function(e) {
   if (e.key !== 'Escape') return;
+  if (document.getElementById('edit-flow-modal')?.classList.contains('open')) { closeEditFlowModal(); return; }
+  if (document.getElementById('add-flow-modal')?.classList.contains('open')) { closeAddFlowModal(); return; }
+  if (document.getElementById('import-modal')?.classList.contains('open')) { closeImportModal(); return; }
+  if (document.getElementById('add-user-modal')?.classList.contains('open')) { closeAddUserModal(); return; }
+  if (document.getElementById('edit-user-modal')?.classList.contains('open')) { closeEditUserModal(); return; }
+  if (document.getElementById('delete-confirm-modal')?.classList.contains('open')) { closeDeleteConfirmModal(); return; }
   var rc = document.getElementById('receipt-confirm');
   if (rc && rc.classList.contains('open')) { rc.classList.remove('open'); return; }
   var um = document.getElementById('user-menu');
@@ -3206,7 +3221,7 @@ function renderMonthlyChart(id,moMap){
 </script>
 
 <!-- RECEIPT CONFIRM MODAL -->
-<div id="receipt-confirm">
+<div id="receipt-confirm" onclick="if(event.target===this)this.classList.remove('open')">
   <div style="background:#fff;border-radius:16px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px">📎 請記得附上憑證</div>
     <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px">
