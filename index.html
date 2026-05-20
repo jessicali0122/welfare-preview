@@ -314,6 +314,12 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
   </div>
 
+  <!-- 登出按鈕（手機/電腦側邊欄共用） -->
+  <div onclick="logout()" class="sl" data-label="登出" title="登出" style="color:#ef4444;margin-bottom:8px;border-radius:10px" onmouseenter="this.style.background='#fef2f2';this.style.color='#dc2626'" onmouseleave="this.style.background='';this.style.color='#ef4444'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <span class="sl-text">登出</span>
+  </div>
+
 </aside>
 </div>
 
@@ -559,7 +565,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
     <div class="card" style="padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <input class="inp" id="app-search" style="width:190px" placeholder="搜尋單號或項目...">
+        <input class="inp" id="app-search" style="width:190px" placeholder="搜尋單號或主旨...">
         <select class="inp" id="app-filter-applicant" style="width:130px">
           <option value="" disabled selected hidden>申請人</option>
         </select>
@@ -598,17 +604,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <table style="width:100%;border-collapse:collapse;font-size:14px">
         <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">項目</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">未稅</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">關卡</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
         </tr></thead>
         <tbody id="applications-tbody">
-          <tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
+          <tr><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -953,7 +958,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table style="width:100%;min-width:720px;border-collapse:collapse;font-size:14px">
           <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-            <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+            <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="adminToggleSelectAll(this)"></th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">使用者</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">員工編號</th><th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">部門</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">Email</th>
@@ -1699,12 +1704,12 @@ function updateBadge(count) {
 //  案件清單載入
 // ══════════════════════════════════════════
 async function loadApplications() {
-  showTableSkeleton('applications-tbody', 9, 5);
+  showTableSkeleton('applications-tbody', 8, 5);
   const res = await callAPI('list');
   if (!res.ok) {
     if(!res._authError) toast('❌ 載入失敗：' + res.error);
     const tb = document.getElementById('applications-tbody');
-    if(tb) tb.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後重新整理</small></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後重新整理</small></div></td></tr>';
     const cl = document.getElementById('app-count-label');
     if(cl) cl.textContent = '共 0 件';
     return;
@@ -1715,7 +1720,7 @@ async function loadApplications() {
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
@@ -1728,12 +1733,11 @@ async function loadApplications() {
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
       <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category||'—'}</span></td>
-      <td style="padding:12px 16px;color:#374151">${c.pretax?'NT$ '+Number(c.pretax||0).toLocaleString():'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;color:#374151">${c.step||1} / ${c.totalSteps||4}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${c.createdAt}</td>
-      <td style="padding:12px 16px;display:flex;gap:6px">${actionBtn}</td>
+      <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2011,25 +2015,31 @@ function sw(name,elOrName){
       const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
       setFpDate(applyDateEl, todayStr);
     }
-    // 申請人/收款人預設為登入者
+    // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
     const payeeSel = document.getElementById('payee-select');
-    if (appSel && currentUser?.name) {
+    if (appSel && currentUser) {
+      const chName = getChineseNameByEmail(currentUser.email);
+      const uName  = chName || currentUser.name;
       let found = false;
-      const uName = currentUser.name;
       Array.from(appSel.options).forEach(o => {
-        if (!found && (o.text === uName || o.value === uName || uName.includes(o.text) || o.text.includes(uName))) {
+        if (!found && (o.value === uName || o.text === uName)) {
           appSel.value = o.value; found = true;
         }
       });
-      if (!found) { const opt = new Option(uName, uName, true, true); appSel.prepend(opt); }
+      // 若仍找不到（非系統成員），插入一筆
+      if (!found) {
+        const opt = new Option(uName, uName, true, true);
+        appSel.prepend(opt);
+      }
       syncApplicantFields();
     }
-    if (payeeSel && currentUser?.name) {
+    if (payeeSel && currentUser) {
+      const chName = getChineseNameByEmail(currentUser.email);
+      const uName  = chName || currentUser.name;
       let found = false;
-      const uName = currentUser.name;
       Array.from(payeeSel.options).forEach(o => {
-        if (!found && (o.text === uName || o.value === uName || uName.includes(o.text) || o.text.includes(uName))) {
+        if (!found && (o.value === uName || o.text === uName)) {
           payeeSel.value = o.value; found = true;
         }
       });
@@ -2055,6 +2065,20 @@ const EMPLOYEE_DEPTS = {
   '陳姿璇':'供應鏈部','黃如華':'人力資源部','黃岩':'行銷部',
   '鄒馨瑩':'人力資源部','蔡鴻陵':'通路事業發展部','鄭安汝':'財務會計部'
 };
+// 依 email 從使用者表格反查中文姓名
+function getChineseNameByEmail(email) {
+  if (!email) return null;
+  let found = null;
+  document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row) {
+    const emailCell = row.querySelector('td:nth-child(5)');
+    const nameEl    = row.querySelector('td:nth-child(2) span');
+    if (emailCell && emailCell.textContent.trim() === email && nameEl) {
+      found = nameEl.textContent.trim();
+    }
+  });
+  return found;
+}
+
 function syncApplicantFields(){
   const sel=document.getElementById('applicant-select');
   if(!sel)return;
@@ -2507,7 +2531,7 @@ function executeDeleteUser(){
 
 function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';}
 function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
-function toggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
+function adminToggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
 function updateSelectedCount(){const n=document.querySelectorAll('.user-cb:checked').length;document.getElementById('selected-count').textContent=n>0?'已選取 '+n+' 位使用者':'共 10 位使用者';}
 document.addEventListener('change',e=>{if(e.target.classList.contains('user-cb'))updateSelectedCount();});
 function applyTag(roleName){
@@ -2598,7 +2622,7 @@ function applyAppFilter() {
     const text = r.textContent.toLowerCase();
     const match = (!q || text.includes(q))
       && (!applicant || text.includes(applicant))
-      && (!status || r.cells[6]?.textContent.includes(status))
+      && (!status || r.cells[5]?.textContent.includes(status))
       && (!cat || r.cells[2]?.textContent.includes(cat));
     r.style.display = match ? '' : 'none';
     if (match) visible++;
