@@ -306,19 +306,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
   </nav>
 
   <!-- User -->
-  <div style="padding:14px 0;border-top:1px solid #f0ede9;display:flex;align-items:center;justify-content:center">
-    <div onclick="toggleUserMenu()" class="user-avatar-initial" style="width:32px;height:32px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;cursor:pointer" title="帳號選項">潔</div>
+  <div onclick="toggleUserMenu()" title="帳號選項" style="padding:14px 0;border-top:1px solid #f0ede9;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+    <div class="user-avatar-initial" style="width:32px;height:32px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">潔</div>
     <div class="sidebar-brand-text" style="flex:1;min-width:0">
       <div class="user-name-display" style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:1px">管理者</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:1px">帳號 &amp; 登出</div>
     </div>
   </div>
 
-  <!-- 登出按鈕（手機/電腦側邊欄共用） -->
-  <div onclick="logout()" class="sl" data-label="登出" title="登出" style="color:#ef4444;margin-bottom:8px;border-radius:10px" onmouseenter="this.style.background='#fef2f2';this.style.color='#dc2626'" onmouseleave="this.style.background='';this.style.color='#ef4444'">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-    <span class="sl-text">登出</span>
-  </div>
 
 </aside>
 </div>
@@ -478,7 +473,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <thead><tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9">
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請單號</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">項目</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅金額</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">狀態</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請時間</th>
@@ -1685,7 +1680,7 @@ function renderDashboardTable(cases) {
     return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${c.name}</td>
-      <td style="padding:12px 16px;color:#374151">${c.department||'—'}</td>
+      <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8">${c.createdAt}</td>
@@ -2908,21 +2903,38 @@ function toggleUserMenu(){
   const trigger=document.querySelector('[onclick="toggleUserMenu()"]');
   const rect=trigger.getBoundingClientRect();
   m.style.position='fixed';
-  m.style.left=(rect.right+8)+'px';
-  m.style.bottom=(window.innerHeight-rect.bottom)+'px';
-  m.style.top='auto';
-  m.style.right='auto';
   m.style.display='block';
+  const mw=m.offsetWidth||220;
+  const isMobile=window.innerWidth<=768;
+  if(isMobile){
+    // 手機：彈窗出現在頭像正上方（sidebar 內部）
+    m.style.left=Math.max(4,rect.left-4)+'px';
+    m.style.right='auto';
+    m.style.bottom=(window.innerHeight-rect.top+8)+'px';
+    m.style.top='auto';
+  } else {
+    // 電腦：頭像右方，超出右邊界則靠右
+    const leftPos=rect.right+8;
+    if(leftPos+mw>window.innerWidth-8){
+      m.style.left='auto';
+      m.style.right='8px';
+    } else {
+      m.style.left=leftPos+'px';
+      m.style.right='auto';
+    }
+    m.style.bottom=(window.innerHeight-rect.bottom)+'px';
+    m.style.top='auto';
+  }
 }
 document.addEventListener('click',function(e){
-  const wrap=document.getElementById('user-menu-wrap');
-  const sidebarUser=document.querySelector('#sidebar .sidebar-user-trigger');
   const m=document.getElementById('user-menu');
-  // 如果點到頭像本身，toggleUserMenu 會處理
+  if(!m||m.style.display!=='block')return;
+  // 點到觸發區域 → toggleUserMenu 自己處理
   if(e.target.closest('[onclick="toggleUserMenu()"]'))return;
-  if(m&&!m.contains(e.target)){
-    m.style.display='none';
-  }
+  // 點到 user menu 內部 → 不關閉（讓按鈕生效）
+  if(m.contains(e.target))return;
+  // 其他地方 → 關閉
+  m.style.display='none';
 });
 
 
