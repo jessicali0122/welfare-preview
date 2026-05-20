@@ -119,7 +119,6 @@ input[type=checkbox]{accent-color:var(--brand)}
   #sidebar-wrapper.open{left:0!important}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
-  #header-avatar{display:inline-flex!important}
   #main-wrapper{margin-left:0!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
@@ -331,7 +330,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
-    <div id="header-avatar" onclick="toggleUserMenu()" class="user-avatar-initial" style="display:none;width:32px;height:32px;border-radius:50%;background:#1e9d6b;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;cursor:pointer" title="帳號選項">潔</div>
   </header>
 
   <!-- NOTIFICATION PANEL -->
@@ -479,7 +477,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請單號</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請人</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">項目</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅金額</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">分類</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">未稅</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">關卡</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">狀態</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請時間</th>
         </tr></thead>
@@ -1518,7 +1519,6 @@ function showApp() {
   if (currentUser) {
     const initial = currentUser.name.charAt(0);
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
-    document.getElementById('header-avatar').textContent = initial;
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
@@ -1674,22 +1674,45 @@ async function loadDashboard() {
   updateBadge(pending.length);
 }
 
+function formatTWTime(val) {
+  if (!val) return '—';
+  // 已是 yyyy/MM/dd HH:mm:ss 格式直接回傳
+  if (/^\d{4}\/\d{2}\/\d{2}/.test(String(val))) return String(val);
+  // ISO 格式轉台灣時間
+  const d = new Date(val);
+  if (isNaN(d)) return String(val);
+  const tw = new Date(d.getTime() + 8 * 3600000);
+  return tw.getUTCFullYear() + '/' +
+    String(tw.getUTCMonth()+1).padStart(2,'0') + '/' +
+    String(tw.getUTCDate()).padStart(2,'0') + ' ' +
+    String(tw.getUTCHours()).padStart(2,'0') + ':' +
+    String(tw.getUTCMinutes()).padStart(2,'0') + ':' +
+    String(tw.getUTCSeconds()).padStart(2,'0');
+}
+
 function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="6" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
+    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
-    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId||''}')">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId||'—'}</td>
+    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
+    const catVal = c.category || c.type || '—';
+    const stepVal = c.step != null ? c.step : 1;
+    const totalVal = c.totalSteps != null ? c.totalSteps : 4;
+    const cid = c.caseId || '';
+    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${cid}')">
+      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${cid||'—'}</td>
       <td style="padding:12px 16px;color:#374151">${c.name||'—'}</td>
-      <td style="padding:12px 16px;color:#374151">${c.project||c.subject||c.title||'—'}</td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||c.title||'—'}</td>
+      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${catVal}</span></td>
+      <td style="padding:12px 16px;color:#374151">${c.pretax ? 'NT$ '+Number(c.pretax||0).toLocaleString() : '—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:12px 16px;color:#374151">${stepVal} / ${totalVal}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:12px 16px;color:#94a3b8">${c.createdAt}</td>
+      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${formatTWTime(c.createdAt)}</td>
     </tr>`;
   }).join('');
 }
@@ -1733,7 +1756,7 @@ async function loadApplications() {
     const actionBtn = (c.status === '已完成' && cid)
       ? viewBtn + `<button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${cid}')">列印</button>`
       : viewBtn;
-    const catVal = c.category || c.type || '—';
+    const catVal = c.category || c.type || (c.items && c.items.length > 0 && c.items[0].category) || '—';
     const stepVal = (c.step != null ? c.step : 1);
     const totalVal = (c.totalSteps != null ? c.totalSteps : (c.steps != null ? c.steps : 4));
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
@@ -1744,7 +1767,7 @@ async function loadApplications() {
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;color:#374151">${stepVal} / ${totalVal}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${c.createdAt}</td>
+      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${formatTWTime(c.createdAt)}</td>
       <td style="padding:12px 16px;display:flex;gap:6px">${actionBtn}</td>
     </tr>`;
   }).join('');
@@ -3161,7 +3184,7 @@ async function loadAnalytics(){
   }
 }
 function renderAnalytics(startDate,endDate){
-  var cases=_analyticsAllCases||[];
+  var cases=(_analyticsAllCases||[]).filter(function(c){return c.status==='已完成';});
   var filtered=cases.filter(function(c){
     if(!c.createdAt)return false;
     var ds=String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
