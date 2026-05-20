@@ -191,11 +191,9 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* 手機版 Modal：避免超出螢幕、加入 overflow scroll */
 @media(max-width:768px){
-  .modal-bg.open{align-items:flex-start!important;padding:16px!important;overflow-y:auto!important;box-sizing:border-box!important}
-  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;margin:auto!important;width:calc(100vw - 32px)!important;max-width:480px!important;min-width:0!important;box-sizing:border-box!important;border-radius:14px!important}
+  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:auto!important}
+  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
   .modal-bg>div>div:first-child{position:sticky;top:0;z-index:1;background:#fff}
-  /* 防止彈窗子元素超出邊界 */
-  .modal-bg>div *{max-width:100%;box-sizing:border-box}
 }
 /* Mobile toast：防止超出螢幕寬度 */
 @media(max-width:768px){
@@ -1842,18 +1840,16 @@ function renderDashboardTable(cases) {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const catVal = (function(){
-      if(c.category && String(c.category).trim()) return String(c.category).trim();
-      if(c.type && String(c.type).trim()) return String(c.type).trim();
-      if(c.items && c.items.length > 0){
-        for(var i=0;i<c.items.length;i++){
-          var it=c.items[i];
-          var cat=it.category||it.type||it.cat||it.catName||'';
-          if(cat&&String(cat).trim())return String(cat).trim();
-        }
+    const catVal = (function(c){
+      if(c.category && String(c.category).trim()) return c.category;
+      if(c.type && String(c.type).trim()) return c.type;
+      var its = c.items || [];
+      for(var i=0;i<its.length;i++){
+        var cat = its[i].category||its[i].type||its[i].cat||'';
+        if(cat && String(cat).trim()) return cat;
       }
       return '—';
-    })();
+    })(c);
     const stepVal = c.step != null ? c.step : 1;
     const totalVal = c.totalSteps != null ? c.totalSteps : 4;
     const cid = c.caseId || '';
@@ -1909,18 +1905,16 @@ async function loadApplications() {
     const actionBtn = (c.status === '已完成' && cid)
       ? viewBtn + `<button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${cid}')">列印</button>`
       : viewBtn;
-    const catVal = (function(){
-      if(c.category && String(c.category).trim()) return String(c.category).trim();
-      if(c.type && String(c.type).trim()) return String(c.type).trim();
-      if(c.items && c.items.length > 0){
-        for(var i=0;i<c.items.length;i++){
-          var it=c.items[i];
-          var cat=it.category||it.type||it.cat||it.catName||'';
-          if(cat&&String(cat).trim())return String(cat).trim();
-        }
+    const catVal = (function(c){
+      if(c.category && String(c.category).trim()) return c.category;
+      if(c.type && String(c.type).trim()) return c.type;
+      var its = c.items || [];
+      for(var i=0;i<its.length;i++){
+        var cat = its[i].category||its[i].type||its[i].cat||'';
+        if(cat && String(cat).trim()) return cat;
       }
       return '—';
-    })();
+    })(c);
     const stepVal = (c.step != null ? c.step : 1);
     const totalVal = (c.totalSteps != null ? c.totalSteps : (c.steps != null ? c.steps : 4));
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
@@ -2067,26 +2061,24 @@ function renderDetailFiles(files) {
     return;
   }
   el.innerHTML = files.map(function(f) {
-    var url = typeof f === 'string' ? f : (f.url || f.link || '');
-    var name = typeof f === 'string' ? url.split('/').pop() || '附件' : (f.name || f.fileName || url.split('/').pop() || '附件');
+    var rawUrl = typeof f === 'string' ? f : (f.url || f.link || '');
+    var name   = typeof f === 'string' ? (rawUrl.split('/').pop() || '附件') : (f.name || f.fileName || rawUrl.split('/').pop() || '附件');
+    var fileId = (f && f.id) ? f.id : '';
+    if (!fileId) {
+      var m = rawUrl.match(/[\/]d[\/]([a-zA-Z0-9_-]{20,})/);
+      if (m) fileId = m[1];
+    }
+    // 統一使用 /view 連結（可直接在手機瀏覽器開啟）
+    var openUrl = fileId ? ('https://drive.google.com/file/d/' + fileId + '/view') : rawUrl;
     var isImg = /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
-    // 如果是 drive.google.com/file/d/ID/view 格式，提取 ID 做縮圖
-    var fileId = (f.id) || (url.match(/\/file\/d\/([^\/]+)/) || [])[1] || '';
-    // 統一轉為可開啟的 view 連結
-    var openUrl = url;
-    if(fileId && !url.includes('/view')) {
-      openUrl = 'https://drive.google.com/file/d/' + fileId + '/view';
-    }
-    // 圖片用縮圖 URL
-    var previewHtml = '';
-    if(isImg && fileId) {
-      var thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w200';
-      previewHtml = '<img src="' + thumbUrl + '" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #e2e8f0" onerror="this.style.display=\'none\'">';
-    }
+    var thumbHtml = (isImg && fileId)
+      ? '<img src="https://drive.google.com/thumbnail?id=' + fileId + '&sz=w80-h80" style="width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;border:1px solid #e2e8f0" onerror="this.style.display='none'">'
+      : '';
+    var iconHtml = isImg
+      ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+      : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
     return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">' +
-      (previewHtml || (isImg
-        ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-        : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>')) +
+      (thumbHtml || iconHtml) +
       '<a href="' + openUrl + '" target="_blank" rel="noopener" style="font-size:13px;color:#1e9d6b;font-weight:500;text-decoration:none;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + name + '</a>' +
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>' +
       '</div>';
@@ -2272,9 +2264,7 @@ function printCase(caseId) {
 }
 
 // ── SIDEBAR COLLAPSE ──
-function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('collapsed');
-}
+// toggleSidebar defined below
 
 // ── NAVIGATION ──
 const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理'};
