@@ -120,7 +120,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
-  #stats-grid{grid-template-columns:repeat(2,1fr)!important}
+  #stats-grid{grid-template-columns:1fr!important}
   #charts-row{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
   #detail-grid{grid-template-columns:1fr!important}
@@ -189,9 +189,18 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* 手機版 Modal：避免超出螢幕、加入 overflow scroll */
 @media(max-width:768px){
-  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:hidden!important}
+  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:auto!important}
   .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
   .modal-bg>div>div:first-child{position:sticky;top:0;z-index:1;background:#fff}
+}
+/* Mobile toast：防止超出螢幕寬度 */
+@media(max-width:768px){
+  #toast{max-width:calc(100vw - 32px)!important;right:8px!important;bottom:16px!important;font-size:13px!important;padding:11px 14px!important;word-break:break-word}
+}
+/* Mobile receipt-confirm modal */
+@media(max-width:768px){
+  #receipt-confirm.open{align-items:flex-start!important;overflow-y:auto!important;padding:16px 0!important}
+  #receipt-confirm.open>div{margin:auto!important;width:calc(100vw - 24px)!important;max-width:400px!important;max-height:calc(var(--vh,1vh)*90)!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch!important}
 }
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
@@ -330,6 +339,13 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
+    <!-- 通知鈴鐺 -->
+    <button id="bell-btn" onclick="toggleNotif(event)" style="width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative" title="通知">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="bell-badge" style="display:none;position:absolute;top:4px;right:4px;background:#ef4444;color:#fff;font-size:9px;font-weight:700;border-radius:10px;padding:0 4px;min-width:14px;height:14px;line-height:14px;text-align:center">0</span>
+    </button>
+    <!-- 使用者頭像（手機版主要入口） -->
+    <div onclick="toggleUserMenuHeader(event)" class="user-avatar-initial" style="width:32px;height:32px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;cursor:pointer" title="帳號選項">潔</div>
   </header>
 
   <!-- NOTIFICATION PANEL -->
@@ -357,7 +373,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div id="tw-datetime" style="font-size:14px;color:#64748b;margin-top:2px">載入中...</div>
       </div>
     </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+        <div id="stats-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
       <!-- 帳面餘額 大卡 -->
       <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);border:none;padding:24px;display:flex;flex-direction:column;justify-content:space-between;min-height:160px">
         <div>
@@ -374,11 +390,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div>
             <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:3px">已完成件數</div>
             <div style="font-size:16px;font-weight:700;color:#fff" id="stat-done-count">—</div>
-          </div>
-          <div style="width:1px;background:rgba(255,255,255,.2)"></div>
-          <div>
-            <div style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:3px">全部案件</div>
-            <div style="font-size:16px;font-weight:700;color:#fff" id="stat-all">—</div>
           </div>
         </div>
       </div>
@@ -441,15 +452,21 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <div style="font-size:15px;font-weight:700;color:#0f172a">各月請款金額</div>
             <div style="font-size:12px;color:#94a3b8;margin-top:2px" id="chart-year-label"></div>
           </div>
-          <div style="font-size:14px;font-weight:700;color:var(--brand)">NT$ 0 <span style="font-size:12px;color:#94a3b8;font-weight:400">年度總計</span></div>
+          <div id="dash-year-total" style="font-size:14px;font-weight:700;color:var(--brand)">NT$ 0 <span style="font-size:12px;color:#94a3b8;font-weight:400">年度總計</span></div>
         </div>
-        <div style="display:flex;align-items:flex-end;gap:10px;height:130px;padding:0 4px">
+        <div id="dash-chart-bars" style="display:flex;align-items:flex-end;gap:6px;height:130px;padding:0 4px;overflow-x:auto;-webkit-overflow-scrolling:touch">
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">1月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">2月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">3月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">4月</span></div>
           <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">5月</span></div>
-          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#cbd5e1">6月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">6月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">7月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">8月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">9月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">10月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">11月</span></div>
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px"><div style="width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1"></div><span style="font-size:11px;color:#94a3b8">12月</span></div>
         </div>
       </div>
       <div class="card" style="padding:20px">
@@ -462,7 +479,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>待審核
           </button>
         </div>
-        <div style="margin-top:14px;padding:10px 12px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#15803d">
+        <div id="dash-quick-info" style="margin-top:14px;padding:10px 12px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#15803d">
           ✅ 目前沒有待審核案件
         </div>
       </div>
@@ -959,7 +976,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table style="width:100%;min-width:720px;border-collapse:collapse;font-size:14px">
           <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-            <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)"></th>
+            <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="toggleSelectAllUsers(this)"></th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">使用者</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">員工編號</th><th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">部門</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">Email</th>
@@ -1558,6 +1575,17 @@ function showApp() {
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
+    // URL 參數支援：LINE/chat 通知連結可直接開啟特定案件
+    // 用法：index.html?caseId=EWC-xxx 或 index.html?caseId=EWC-xxx&action=approve
+    (function() {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        var caseId = params.get('caseId') || params.get('case');
+        if (caseId) {
+          setTimeout(function() { loadDetail(caseId); }, 800);
+        }
+      } catch(e) {}
+    })();
     // 初始化所有靜態日期選擇器
     setTimeout(function(){
       document.querySelectorAll('.date-inp').forEach(function(el){ initFlatpickr(el); });
@@ -1625,7 +1653,7 @@ function _showAuthExpiredBar() {
   // 不清除 currentUser，讓 UI 保持可用，使用者可自行點按重新登入
   const bar = document.createElement('div');
   bar.id = 'auth-expired-bar';
-  bar.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
+  bar.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);max-width:calc(100vw - 32px);';
   bar.innerHTML = '⚠️ 登入已過期 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">重新登入</button>';
   document.body.appendChild(bar);
 }
@@ -1665,7 +1693,18 @@ async function loadDashboard() {
   const yl = document.getElementById('chart-year-label');
   if (yl) yl.textContent = new Date().getFullYear() + ' 年度統計（含稅）';
   const res = await callAPI('list');
-  if (!res.ok) return;
+  if (!res.ok) {
+    if (!res._authError) {
+      ['stat-pending','stat-done','stat-rejected','stat-this-month'].forEach(function(id){
+        var el=document.getElementById(id); if(el) el.textContent='0';
+      });
+      var balEl2=document.getElementById('stat-balance'); if(balEl2) balEl2.textContent='NT$ 0';
+      var dcEl=document.getElementById('stat-done-count'); if(dcEl) dcEl.textContent='0 件';
+      var tb=document.getElementById('dashboard-tbody');
+      if(tb) tb.innerHTML='<tr><td colspan="8" style="text-align:center;padding:30px"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後<button onclick="loadDashboard()" style="color:var(--brand);background:none;border:none;cursor:pointer;font-size:12px;font-weight:600;font-family:inherit;padding:0 2px">重新整理</button></small></div></td></tr>';
+    }
+    return;
+  }
   const cases = res.cases || [];
   const pending = cases.filter(c => c.status && (c.status.includes('待') || c.status.includes('簽核中')));
   const done    = cases.filter(c => c.status === '已完成');
@@ -1681,10 +1720,8 @@ async function loadDashboard() {
     return !isNaN(d) && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
   });
   // 更新統計數字
-  const allEl = document.getElementById('stat-all');
   const pendEl = document.getElementById('stat-pending');
   const doneEl = document.getElementById('stat-done');
-  if (allEl)  allEl.textContent  = cases.length;
   if (pendEl) pendEl.textContent = pending.length;
   if (doneEl) doneEl.textContent = done.length;
   const rejEl = document.getElementById('stat-rejected');
@@ -1708,6 +1745,52 @@ async function loadDashboard() {
     return ws === myDashStep;
   }).length : 0;
   updateBadge(myPendingCount);
+  // 更新快速操作待審核提示
+  const qi = document.getElementById('dash-quick-info');
+  if (qi) {
+    if (myPendingCount > 0) {
+      qi.style.background = '#fef3c7'; qi.style.color = '#b45309';
+      qi.textContent = '⏳ 您有 ' + myPendingCount + ' 件待審核案件';
+    } else {
+      qi.style.background = '#f0fdf4'; qi.style.color = '#15803d';
+      qi.textContent = '✅ 目前沒有待審核案件';
+    }
+  }
+  // 動態渲染各月請款金額圖表（含稅，本年度）
+  const yearCases = cases.filter(c => {
+    if (!c.createdAt) return false;
+    const ds = String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
+    const d = new Date(ds+'T00:00:00');
+    return !isNaN(d) && d.getFullYear() === now.getFullYear();
+  });
+  const monthAmounts = Array(12).fill(0);
+  yearCases.forEach(c => {
+    const ds = String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
+    const d = new Date(ds+'T00:00:00');
+    if (!isNaN(d)) monthAmounts[d.getMonth()] += Number(c.total||0);
+  });
+  const yearTotal = monthAmounts.reduce((s,v)=>s+v,0);
+  const ytEl = document.getElementById('dash-year-total');
+  if (ytEl) ytEl.innerHTML = 'NT$ '+yearTotal.toLocaleString()+' <span style="font-size:12px;color:#94a3b8;font-weight:400">年度總計</span>';
+  const chartEl = document.getElementById('dash-chart-bars');
+  if (chartEl) {
+    const maxVal = Math.max(...monthAmounts, 1);
+    const monthNames = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    const curMonth = now.getMonth();
+    chartEl.innerHTML = monthAmounts.map((v,i) => {
+      const pct = Math.max(5, Math.round(v/maxVal*95));
+      const isActive = v > 0;
+      const isCurrent = i === curMonth;
+      const barStyle = isActive
+        ? 'width:100%;background:var(--brand);border-radius:5px 5px 0 0;transition:height .4s ease;height:'+pct+'%'
+        : 'width:100%;background:#e2e8f0;border-radius:5px 5px 0 0;height:5%;border:2px dashed #cbd5e1';
+      const labelStyle = isCurrent ? 'font-size:11px;color:var(--brand);font-weight:700' : 'font-size:11px;color:#94a3b8';
+      const title = v > 0 ? 'NT$ '+v.toLocaleString() : '';
+      return '<div style="flex:1;min-width:22px;display:flex;flex-direction:column;align-items:center;gap:5px" title="'+monthNames[i]+' '+title+'">'
+        +'<div style="'+barStyle+'"></div>'
+        +'<span style="'+labelStyle+'">'+monthNames[i]+'</span></div>';
+    }).join('');
+  }
 }
 
 // 清理姓名：移除 Google 帳號可能夾帶的英文名稱（如「李潔慧Jessica」→「李潔慧」）
@@ -1743,7 +1826,7 @@ function renderDashboardTable(cases) {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const catVal = c.category || c.type || '—';
+    const catVal = c.category || c.type || (c.items && c.items.length > 0 && c.items[0].category) || '—';
     const stepVal = c.step != null ? c.step : 1;
     const totalVal = c.totalSteps != null ? c.totalSteps : 4;
     const cid = c.caseId || '';
@@ -2649,7 +2732,7 @@ function executeDeleteUser(){
 
 function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';}
 function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
-function toggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
+function toggleSelectAllUsers(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
 function updateSelectedCount(){const n=document.querySelectorAll('.user-cb:checked').length;document.getElementById('selected-count').textContent=n>0?'已選取 '+n+' 位使用者':'共 10 位使用者';}
 document.addEventListener('change',e=>{if(e.target.classList.contains('user-cb'))updateSelectedCount();});
 function applyTag(roleName){
@@ -3023,13 +3106,25 @@ function toggleUserMenu(){
   const m=document.getElementById('user-menu');
   const isOpen=m.style.display==='block';
   if(isOpen){m.style.display='none';return;}
-  const trigger=document.querySelector('[onclick="toggleUserMenu()"]');
+  const trigger=document.querySelector('#sidebar [onclick="toggleUserMenu()"]') || document.querySelector('[onclick="toggleUserMenu()"]');
   const rect=trigger.getBoundingClientRect();
   m.style.position='fixed';
   m.style.left=(rect.right+8)+'px';
   m.style.bottom=(window.innerHeight-rect.bottom)+'px';
   m.style.top='auto';
   m.style.right='auto';
+  m.style.display='block';
+}
+function toggleUserMenuHeader(e){
+  if(e)e.stopPropagation();
+  const m=document.getElementById('user-menu');
+  const isOpen=m.style.display==='block';
+  if(isOpen){m.style.display='none';return;}
+  m.style.position='fixed';
+  m.style.right='12px';
+  m.style.top='56px';
+  m.style.left='auto';
+  m.style.bottom='auto';
   m.style.display='block';
 }
 document.addEventListener('click',function(e){
