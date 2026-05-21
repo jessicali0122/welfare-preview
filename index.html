@@ -1203,8 +1203,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 </div><!-- end #app -->
 
 <!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async>
-</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 // ══════════════════════════════════════════
@@ -1334,28 +1333,23 @@ function applyRolePermissions() {
 }
 
 // Google 登入初始化
-window.onload = function() {
-  const saved = localStorage.getItem('bf_user');
-  if (saved) {
-    try {
-      currentUser = JSON.parse(saved);
-      showApp();
-      return;
-    } catch(e) {
-      localStorage.removeItem('bf_user');
-    }
-  }
-  // 初始化 Google Sign-In（需要 Client ID）
-  if (GOOGLE_CLIENT_ID) {
+function initGoogleSignIn() {
+  if (GOOGLE_CLIENT_ID && window.google?.accounts?.id) {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleLogin,
-      auto_select: true,  // 允許靜默重新驗證，避免頻繁跳出「登入逾期」
+      auto_select: true,
     });
     google.accounts.id.renderButton(
       document.getElementById('g-signin-btn'),
       { theme: 'outline', size: 'large', text: 'signin_with', locale: 'zh-TW', width: 280 }
     );
+  } else if (GOOGLE_CLIENT_ID) {
+    // GSI 尚未載入，200ms 後重試（最多 20 次）
+    if ((window._gsiRetry || 0) < 20) {
+      window._gsiRetry = (window._gsiRetry || 0) + 1;
+      setTimeout(initGoogleSignIn, 200);
+    }
   } else {
     document.getElementById('g-signin-btn').innerHTML = `
       <div style="width:100%;display:flex;flex-direction:column;gap:10px">
@@ -1372,6 +1366,21 @@ window.onload = function() {
         </div>
       </div>`;
   }
+}
+
+// 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
+window.onload = function() {
+  const saved = localStorage.getItem('bf_user');
+  if (saved) {
+    try {
+      currentUser = JSON.parse(saved);
+      showApp();
+      return;
+    } catch(e) {
+      localStorage.removeItem('bf_user');
+    }
+  }
+  initGoogleSignIn();
 };
 
 function manualLogin() {
