@@ -1333,22 +1333,69 @@ function applyRolePermissions() {
 }
 
 // Google 登入初始化
+const _googleBtnHTML = `
+  <button onclick="triggerGoogleLogin()" style="display:flex;align-items:center;gap:12px;border:1.5px solid #dadce0;border-radius:10px;padding:11px 20px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:inherit;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 1px 6px rgba(0,0,0,.15)'" onmouseout="this.style.boxShadow=''">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+    <span style="font-size:14px;font-weight:500;color:#3c4043">使用 Google 帳戶登入</span>
+  </button>`;
+
+function triggerGoogleLogin() {
+  if (window.google?.accounts?.id) {
+    google.accounts.id.prompt(notification => {
+      // One Tap 被關閉時自動走 OAuth redirect 流程
+      if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
+        // 觸發 OAuth popup
+        const params = new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID,
+          redirect_uri: location.origin + location.pathname,
+          response_type: 'token id_token',
+          scope: 'openid email profile',
+          nonce: Math.random().toString(36).slice(2),
+          prompt: 'select_account',
+        });
+        // 使用 Google Identity Services 的 oauth2 endpoint
+        const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+        const popup = window.open(authUrl, 'google_login', 'width=500,height=600,left=200,top=100');
+        // 監聽 popup 回傳（callback by hash fragment）
+        const timer = setInterval(() => {
+          try {
+            if (popup.closed) { clearInterval(timer); return; }
+            const hash = popup.location.hash;
+            if (hash && hash.includes('id_token')) {
+              clearInterval(timer);
+              popup.close();
+              const p = new URLSearchParams(hash.slice(1));
+              const payload = parseJwtSafe(p.get('id_token'));
+              if (payload) handleGoogleLogin({ credential: p.get('id_token') });
+            }
+          } catch(e) {}
+        }, 300);
+      }
+    });
+  }
+}
+
 function initGoogleSignIn() {
+  const btn = document.getElementById('g-signin-btn');
   if (GOOGLE_CLIENT_ID && window.google?.accounts?.id) {
     google.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleLogin,
       auto_select: true,
+      use_fedcm_for_prompt: true,
     });
-    google.accounts.id.renderButton(
-      document.getElementById('g-signin-btn'),
-      { theme: 'outline', size: 'large', text: 'signin_with', locale: 'zh-TW', width: 280 }
-    );
+    // 顯示自訂按鈕（比 renderButton iframe 更可靠）
+    if (btn) btn.innerHTML = _googleBtnHTML;
+    // 同時嘗試 One Tap 靜默登入
+    google.accounts.id.prompt();
   } else if (GOOGLE_CLIENT_ID) {
-    // GSI 尚未載入，200ms 後重試（最多 20 次）
-    if ((window._gsiRetry || 0) < 20) {
+    // GSI 尚未載入，200ms 後重試（最多 25 次 = 5 秒）
+    if ((window._gsiRetry || 0) < 25) {
       window._gsiRetry = (window._gsiRetry || 0) + 1;
       setTimeout(initGoogleSignIn, 200);
+    } else {
+      // 超時：顯示按鈕並給提示
+      if (btn) btn.innerHTML = _googleBtnHTML + '<div style="font-size:12px;color:#ef4444;margin-top:8px;text-align:center">Google 服務載入逾時，請重新整理</div>';
     }
   } else {
     document.getElementById('g-signin-btn').innerHTML = `
