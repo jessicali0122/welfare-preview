@@ -799,7 +799,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           </button>
           <span id="detail-status-badge" class="badge bp">簽核中</span>
         </div>
-        <div id="detail-header-date" style="font-size:13px;color:#94a3b8;margin-top:2px">建立於 —</div>
+        <div id="detail-header-subject" style="font-size:15px;font-weight:600;color:#374151;margin-top:2px">—</div>
+        <div id="detail-header-date" style="font-size:13px;color:#94a3b8;margin-top:1px">建立於 —</div>
       </div>
       <button class="btn btn-o" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
@@ -809,10 +810,19 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <div style="display:flex;flex-direction:column;gap:14px">
         <div class="card" style="padding:20px">
           <div class="section-title">申請資訊</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;font-size:14px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 20px;font-size:14px">
+            <div style="grid-column:1/-1"><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">主旨</div><div id="detail-subject" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請人</div><div id="detail-applicant-name" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請日期</div><div id="detail-apply-date" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">付款方式</div><div style="font-weight:600;color:#0f172a">匯款（公司薪轉戶）</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">送出時間</div><div id="detail-created-at" style="font-weight:600;color:#0f172a">—</div></div>
+          </div>
+          <div id="detail-reason-wrap" style="margin-top:14px;display:none">
+            <div style="color:#94a3b8;font-size:12px;margin-bottom:4px">備註／請款原因</div>
+            <div id="detail-reason" style="font-size:14px;color:#374151;background:#f8fafc;border-radius:8px;padding:10px 12px;white-space:pre-wrap;line-height:1.6">—</div>
           </div>
         </div>
         <div class="card" style="padding:20px">
@@ -1780,6 +1790,31 @@ async function loadDetail(caseId) {
   document.getElementById('detail-created-at').textContent    = fmtDate(c.createdAt);
   const headerDate = document.getElementById('detail-header-date');
   if (headerDate) headerDate.textContent = '建立於 ' + fmtDate(c.createdAt);
+  // 主旨
+  const subjectEl = document.getElementById('detail-subject');
+  if (subjectEl) subjectEl.textContent = c.subject || c.project || '—';
+  const headerSubjectEl = document.getElementById('detail-header-subject');
+  if (headerSubjectEl) headerSubjectEl.textContent = c.subject || c.project || '—';
+  // 員工編號
+  const empIdEl = document.getElementById('detail-employee-id');
+  if (empIdEl) empIdEl.textContent = c.employeeId || '—';
+  // 收款人
+  const payeeEl = document.getElementById('detail-payee');
+  if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
+  // 申請日期
+  const applyDateEl = document.getElementById('detail-apply-date');
+  if (applyDateEl) applyDateEl.textContent = c.applyDate ? fmtDate(c.applyDate) : '—';
+  // 備註／請款原因
+  const reasonWrap = document.getElementById('detail-reason-wrap');
+  const reasonEl   = document.getElementById('detail-reason');
+  if (reasonEl && reasonWrap) {
+    if (c.reason && String(c.reason).trim()) {
+      reasonEl.textContent = c.reason;
+      reasonWrap.style.display = 'block';
+    } else {
+      reasonWrap.style.display = 'none';
+    }
+  }
   // 更新明細表
   renderDetailItems(c.items || []);
   // 更新附件清單
