@@ -838,9 +838,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             </tbody>
             <tfoot><tr style="border-top:2px solid #e2e8f0">
               <td colspan="4" style="padding:10px 0;font-weight:700;color:#0f172a">合計</td>
-              <td style="padding:10px 0;text-align:right;font-weight:700">NT$ 0</td>
-              <td style="padding:10px 0;text-align:right;font-weight:700;color:#64748b">NT$ 0</td>
-              <td style="padding:10px 0;text-align:right;font-size:17px;font-weight:700;color:var(--brand)">NT$ 0</td>
+              <td id="detail-sum-pretax" style="padding:10px 0;text-align:right;font-weight:700">NT$ 0</td>
+              <td id="detail-sum-tax" style="padding:10px 0;text-align:right;font-weight:700;color:#64748b">NT$ 0</td>
+              <td id="detail-sum-total" style="padding:10px 0;text-align:right;font-size:17px;font-weight:700;color:var(--brand)">NT$ 0</td>
             </tfoot>
           </table>
         </div>
@@ -1639,7 +1639,7 @@ function renderDashboardTable(cases) {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
     return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151">${c.name}</td>
+      <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
       <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
@@ -1687,7 +1687,7 @@ async function loadApplications() {
       : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc" data-dept="${c.department||''}">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151">${c.name||'—'}</td>
+      <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
       <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
@@ -1726,8 +1726,8 @@ async function loadApprovals() {
             <span class="badge bp">${c.status}</span>
           </div>
           <div style="display:grid;grid-template-columns:repeat(4,auto);gap:16px;font-size:13px;margin-bottom:8px">
-            <div><span style="color:#94a3b8">申請人：</span><span style="font-weight:600;color:#374151">${c.name}</span></div>
-            <div><span style="color:#94a3b8">部門：</span><span style="font-weight:600">${c.department||'—'}</span></div>
+            <div><span style="color:#94a3b8">申請人：</span><span style="font-weight:600;color:#374151">${localName(c.email,c.name)}</span></div>
+            <div><span style="color:#94a3b8">部門：</span><span style="font-weight:600">${localDept(c.email,c.department)}</span></div>
             <div><span style="color:#94a3b8">含稅：</span><span style="font-weight:700;color:#0f172a">NT$ ${Number(c.total||0).toLocaleString()}</span></div>
             <div><span style="color:#94a3b8">送出：</span><span style="color:#374151">${fmtDate(c.createdAt)}</span></div>
           </div>
@@ -1775,8 +1775,8 @@ async function loadDetail(caseId) {
   const state = c.status === '已完成' ? 'done' : c.status === '已退件' ? 'rejected' : 'step1';
   updateDetailFlow(state);
   // 更新申請資訊
-  document.getElementById('detail-applicant-name').textContent = c.name || '—';
-  document.getElementById('detail-department').textContent    = c.department || '—';
+  document.getElementById('detail-applicant-name').textContent = localName(c.email, c.name);
+  document.getElementById('detail-department').textContent    = localDept(c.email, c.department);
   document.getElementById('detail-created-at').textContent    = fmtDate(c.createdAt);
   const headerDate = document.getElementById('detail-header-date');
   if (headerDate) headerDate.textContent = '建立於 ' + fmtDate(c.createdAt);
@@ -1833,17 +1833,19 @@ function renderDetailItems(items) {
       <td style="padding:10px 0;text-align:right;color:#64748b">NT$ ${Number(it.tax||0).toLocaleString()}</td>
       <td style="padding:10px 0;text-align:right;font-weight:600">NT$ ${Number(it.total||0).toLocaleString()}</td>
     </tr>`).join('');
-  // 動態更新 tfoot 合計
-  const sumPretax = items.reduce((s,it)=>s+Number(it.pretax||0),0);
-  const sumTax    = items.reduce((s,it)=>s+Number(it.tax||0),0);
-  const sumTotal  = items.reduce((s,it)=>s+Number(it.total||0),0);
-  const tfoot = tbody.closest('table')?.querySelector('tfoot');
-  if (tfoot) {
-    const cells = tfoot.querySelectorAll('td');
-    if (cells[1]) cells[1].textContent = 'NT$ ' + sumPretax.toLocaleString();
-    if (cells[2]) cells[2].textContent = 'NT$ ' + sumTax.toLocaleString();
-    if (cells[3]) cells[3].textContent = 'NT$ ' + sumTotal.toLocaleString();
-  }
+  // 動態更新 tfoot 合計（用ID直接定位，最穩定）
+  let sumPretax = 0, sumTax = 0, sumTotal = 0;
+  items.forEach(function(it){
+    sumPretax += Number(it.pretax || it.preTax || 0);
+    sumTax    += Number(it.tax    || it.taxAmt  || 0);
+    sumTotal  += Number(it.total  || it.withtax || it.amount || 0);
+  });
+  const spEl = document.getElementById('detail-sum-pretax');
+  const stEl = document.getElementById('detail-sum-tax');
+  const suEl = document.getElementById('detail-sum-total');
+  if (spEl) spEl.textContent = 'NT$ ' + sumPretax.toLocaleString();
+  if (stEl) stEl.textContent = 'NT$ ' + sumTax.toLocaleString();
+  if (suEl) suEl.textContent = 'NT$ ' + sumTotal.toLocaleString();
 }
 
 async function doApprove() {
@@ -2072,20 +2074,36 @@ function sw(name,elOrName){
 // ── 員工編號 & 部門對照表 ──
 // 本地使用者清單（email 正確版，供 fallback 及 getChineseNameByEmail 使用）
 const LOCAL_USER_LIST = [
-  {name:'李潔慧',  email:'jessica@tsagroup.com.tw'},
-  {name:'王鈞逸',  email:'jimmywang@tsagroup.com.tw'},
-  {name:'邱湘芬',  email:'stefanie@tsagroup.com.tw'},
-  {name:'鄭安汝',  email:'reneecheng@tsagroup.com.tw'},
-  {name:'何舒維',  email:'mollyho@tsagroup.com.tw'},
-  {name:'陳姿璇',  email:'dori@tsagroup.com.tw'},
-  {name:'黃如華',  email:'amandahuang@tsagroup.com.tw'},
-  {name:'黃岩',    email:'kelvinng@tsagroup.com.tw'},
-  {name:'鄒馨瑩',  email:'sandy@tsagroup.com.tw'},
-  {name:'蔡鴻陵',  email:'ian@tsagroup.com.tw'},
+  {name:'李潔慧',  email:'jessica@tsagroup.com.tw',         dept:'後勤部'},
+  {name:'王鈞逸',  email:'jimmywang@tsagroup.com.tw',       dept:'資訊部'},
+  {name:'邱湘芬',  email:'stefanie@tsagroup.com.tw',        dept:'後勤部'},
+  {name:'鄭安汝',  email:'reneecheng@tsagroup.com.tw',      dept:'財務會計部'},
+  {name:'何舒維',  email:'mollyho@tsagroup.com.tw',         dept:'數位廣告部'},
+  {name:'陳姿璇',  email:'dori@tsagroup.com.tw',            dept:'供應鏈部'},
+  {name:'黃如華',  email:'amandahuang@tsagroup.com.tw',     dept:'人力資源部'},
+  {name:'黃岩',    email:'kelvinng@tsagroup.com.tw',        dept:'行銷部'},
+  {name:'鄒馨瑩',  email:'sandy@tsagroup.com.tw',           dept:'人力資源部'},
+  {name:'蔡鴻陵',  email:'ian@tsagroup.com.tw',             dept:'通路事業發展部'},
 ];
 // email → 中文姓名快速查表
 const LOCAL_EMAIL_TO_NAME = {};
 LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
+// 根據 email 查詢本地使用者（名稱 + 部門）
+function getLocalUser(email){
+  if(!email)return null;
+  return LOCAL_USER_LIST.find(function(u){return u.email===email;})||null;
+}
+// 顯示用：優先本地中文名，其次 GAS 返回名（去除英文後綴）
+function localName(email,fallback){
+  if(email&&LOCAL_EMAIL_TO_NAME[email])return LOCAL_EMAIL_TO_NAME[email];
+  if(fallback)return String(fallback).replace(/[A-Za-z\s]+$/,'').trim()||fallback;
+  return '—';
+}
+// 顯示用：優先本地部門，其次 GAS 返回部門
+function localDept(email,fallback){
+  var u=getLocalUser(email);
+  return (u&&u.dept)||fallback||'—';
+}
 
 const EMPLOYEE_IDS = {
   '陳姿璇':'T0018','蔡鴻陵':'T0020','邱湘芬':'T0028','李潔慧':'T0033',
@@ -2491,7 +2509,11 @@ async function loadAdminUsers() {
   tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
   const res = await callAPI('listUsers');
   if (!res.ok) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '</td></tr>';
+    if (res._authError) {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
+    } else {
+      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#94a3b8">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
+    }
     return;
   }
   const users = res.users || [];
@@ -3313,15 +3335,14 @@ function renderAnalytics(startDate,endDate){
   var lbl=document.getElementById('analytics-range-label');
   var isAllData=(startDate.getFullYear()<=2000&&endDate.getFullYear()>=2099);
   if(lbl)lbl.textContent=(isAllData?'不限定區間':fmt(startDate)+' — '+fmt(endDate))+' · '+filtered.length+' 件';
+  var approvedFiltered=filtered.filter(function(c){return c.status==='已完成';});
   var tot=filtered.reduce(function(s,c){return s+Number(c.total||0);},0);
-  var apv=filtered.filter(function(c){return c.status==='已完成';}).reduce(function(s,c){return s+Number(c.total||0);},0);
+  var apv=approvedFiltered.reduce(function(s,c){return s+Number(c.total||0);},0);
   var tEl=document.getElementById('analytics-total');var cEl=document.getElementById('analytics-count');var aEl=document.getElementById('analytics-approved');
   if(tEl)tEl.textContent='NT$ '+tot.toLocaleString();
-  if(cEl)cEl.textContent=filtered.length+' 件';
-  // [Bug 修復] 只顯示已核准（已完成）金額
+  // 案件總數只計算已完成（已核准）件數
+  if(cEl)cEl.textContent=approvedFiltered.length+' 件';
   if(aEl)aEl.textContent='NT$ '+apv.toLocaleString();
-  // 圖表只統計已完成案件
-  var approvedFiltered=filtered.filter(function(c){return c.status==='已完成';});
   var catMap={};
   approvedFiltered.forEach(function(c){
     var items=c.items||[];
