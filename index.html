@@ -557,11 +557,18 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         </select>
         <select class="inp" id="app-filter-status" style="width:120px">
           <option value="" disabled selected hidden>狀態</option>
-          <option>草稿</option><option>簽核中</option><option>已完成</option><option>已退件</option>
+          <option value="草稿">草稿</option>
+          <option value="待">簽核中</option>
+          <option value="已完成">已完成</option>
+          <option value="已退件">已退件</option>
         </select>
         <select class="inp" id="app-filter-cat" style="width:120px">
           <option value="" disabled selected hidden>分類</option>
           <option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option>
+        </select>
+        <select class="inp" id="app-filter-dept" style="width:130px">
+          <option value="" disabled selected hidden>部門</option>
+          <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
         </select>
         <!-- 客製日曆：開始日期 -->
         <div style="position:relative" id="dp-start-wrap">
@@ -792,18 +799,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           </button>
           <span id="detail-status-badge" class="badge bp">簽核中</span>
         </div>
-        <div style="font-size:13px;color:#94a3b8;margin-top:2px">建立於 2025/05/10 09:32:14</div>
-      </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <label style="font-size:12px;color:#94a3b8;font-weight:500;white-space:nowrap">模擬狀態：</label>
-        <select class="inp" style="width:140px;font-size:13px" onchange="updateDetailFlow(this.value)">
-          <option value="step1">第1關審核中</option>
-          <option value="step2" selected>第2關審核中</option>
-          <option value="step3">第3關審核中</option>
-          <option value="step4">第4關審核中</option>
-          <option value="done">已完成</option>
-          <option value="rejected">已退件</option>
-        </select>
+        <div id="detail-header-date" style="font-size:13px;color:#94a3b8;margin-top:2px">建立於 —</div>
       </div>
       <button class="btn btn-o" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
@@ -867,6 +863,15 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>退件
             </button>
           </div>
+        </div>
+        <!-- 退件後重新申請（僅申請人可見） -->
+        <div id="resubmit-box" class="card" style="padding:20px;border:2px solid #fca5a5;display:none">
+          <div style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:3px">此案件已退件</div>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">您可重新確認內容後送出，將重新進入第1關簽核</div>
+          <button class="btn" style="width:100%;justify-content:center;background:#dc2626;color:#fff;font-size:14px" onclick="doResubmit()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+            重新申請（送出後通知第1關簽核人）
+          </button>
         </div>
       </div>
     </div>
@@ -953,140 +958,23 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">加入時間</th>
             <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
           </tr></thead>
-          <tbody>
-            <tr data-dept="後勤部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">潔</div><span style="font-weight:500">李潔慧</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0033</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">後勤部</td>
-              <td style="padding:12px 16px;color:#64748b">jessica@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:var(--brand-light);color:var(--brand);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">管理者</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="資訊部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">鈞</div><span style="font-weight:500">王鈞逸</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0076</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">資訊部</td>
-              <td style="padding:12px 16px;color:#64748b">jimmywang@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="數位廣告部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#d97706;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">舒</div><span style="font-weight:500">何舒維</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0083</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">數位廣告部</td>
-              <td style="padding:12px 16px;color:#64748b">mollyho@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="後勤部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#8b5cf6;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">湘</div><span style="font-weight:500">邱湘芬</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0028</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">後勤部</td>
-              <td style="padding:12px 16px;color:#64748b">stefanie@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="供應鏈部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#06b6d4;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">姿</div><span style="font-weight:500">陳姿璇</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0018</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">供應鏈部</td>
-              <td style="padding:12px 16px;color:#64748b">dori@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="人力資源部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#16a34a;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">如</div><span style="font-weight:500">黃如華</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0051</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">人力資源部</td>
-              <td style="padding:12px 16px;color:#64748b">amandahuang@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="行銷部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#38a3a5;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">岩</div><span style="font-weight:500">黃岩</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0069</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">行銷部</td>
-              <td style="padding:12px 16px;color:#64748b">kelvinng@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="人力資源部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#ec4899;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">馨</div><span style="font-weight:500">鄒馨瑩</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0012</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">人力資源部</td>
-              <td style="padding:12px 16px;color:#64748b">sandy@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="通路事業發展部" style="border-bottom:1px solid #f8fafc">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#0ea5e9;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">鴻</div><span style="font-weight:500">蔡鴻陵</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0020</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">通路事業發展部</td>
-              <td style="padding:12px 16px;color:#64748b">ian@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
-            <tr data-dept="財務會計部">
-              <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-              <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#f97316;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">安</div><span style="font-weight:500">鄭安汝</span></div></td>
-              <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">T0092</td><td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">財務會計部</td>
-              <td style="padding:12px 16px;color:#64748b">reneecheng@tsagroup.com.tw</td>
-              <td style="padding:12px 16px"><span style="background:#f1f5f9;color:#64748b;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">申請人</span></td>
-              <td class="join-time" style="padding:12px 16px;color:#94a3b8">2025/05/15 00:00:00</td>
-              <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-                <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-                <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-              </div></td>
-            </tr>
+          <tbody id="admin-users-tbody">
+            <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
           </tbody>
         </table>
         </div>
         <div style="padding:12px 16px;border-top:1px solid #f1f5f9;font-size:13px;color:#94a3b8;display:flex;align-items:center;justify-content:space-between">
-          <span id="selected-count">共 10 位使用者</span>
+          <span id="selected-count">共 0 位使用者</span>
           <span>限 @tsagroup.com.tw 網域</span>
         </div>
       </div>
     </div>
     <div id="admin-panel-flow" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div><div style="font-size:15px;font-weight:700;color:#0f172a">簽核流程設定</div></div>
-        <button class="btn btn-p" onclick="showAddFlowModal()">+ 新增關卡</button>
+      </div>
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:#92400e;line-height:1.6">
+        ⚠️ <b>注意：</b>流程設定目前為<b>唯讀顯示</b>，如需修改簽核人或順序，請聯繫系統管理員在後端程式中調整 CONFIG.APPROVERS 設定。
       </div>
       <div class="card" style="padding:22px">
         <div class="section-title">目前簽核流程（共 4 關）</div>
@@ -1333,8 +1221,23 @@ let currentUser = null; // { email, name, token }
 // ── 管理者名單（可依需求擴充）──
 const ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
 
+// ── 簽核人清單（順序對應 4 個關卡，必須與 GAS CONFIG.APPROVERS 相同）──
+const APPROVER_EMAILS = [
+  'jimmywang@tsagroup.com.tw',    // 第1關
+  'stefanie@tsagroup.com.tw',     // 第2關
+  'jessica@tsagroup.com.tw',      // 第3關
+  'reneecheng@tsagroup.com.tw',   // 第4關
+];
+
 function isAdmin() {
   return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+}
+
+// 判斷目前登入者是否為某案件當關的簽核人
+function isMyTurnToApprove(c) {
+  if (!currentUser || !c.status || !c.status.includes('待')) return false;
+  const stepIdx = (c.step || 1) - 1;
+  return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length && APPROVER_EMAILS[stepIdx] === currentUser.email;
 }
 
 // ── 根據角色套用 / 移除受限功能 ──
@@ -1342,7 +1245,7 @@ function applyRolePermissions() {
   const admin = isAdmin();
 
   // 1. 使用者管理表格：checkbox、編輯、刪除
-  document.querySelectorAll('#admin-panel-users tbody input[type="checkbox"].user-cb').forEach(el => {
+  document.querySelectorAll('#admin-users-tbody input[type="checkbox"].user-cb').forEach(el => {
     if (admin) {
       el.disabled = false;
       el.style.opacity = '';
@@ -1354,7 +1257,7 @@ function applyRolePermissions() {
     }
   });
 
-  document.querySelectorAll('#admin-panel-users tbody button').forEach(btn => {
+  document.querySelectorAll('#admin-users-tbody button').forEach(btn => {
     const txt = btn.textContent.trim();
     if (txt === '編輯' || txt === '刪除') {
       if (admin) {
@@ -1401,7 +1304,7 @@ function applyRolePermissions() {
   }
 
   // 4. 批次操作區（全選、批次刪除等）
-  const batchArea = document.querySelector('#admin-panel-users .card:first-child');
+  const batchArea = document.querySelector('#admin-panel-users > .card:first-child');
   if (batchArea) {
     const selectAll = batchArea.querySelector('input[type="checkbox"]');
     if (selectAll) {
@@ -1416,6 +1319,17 @@ function applyRolePermissions() {
         btn.style.cursor = admin ? 'pointer' : 'not-allowed';
       }
     });
+  }
+
+  // 5. 側邊欄「系統管理」入口：非管理者完全隱藏
+  const adminNavItem = document.querySelector('.sl[data-view="admin"]');
+  if (adminNavItem) {
+    adminNavItem.style.display = admin ? '' : 'none';
+    // 同時隱藏上方的「管理」分組標題
+    const adminLabel = adminNavItem.previousElementSibling;
+    if (adminLabel && adminLabel.classList.contains('sl-section-label')) {
+      adminLabel.style.display = admin ? '' : 'none';
+    }
   }
 }
 
@@ -1636,7 +1550,7 @@ async function loadDashboard() {
   const yl = document.getElementById('chart-year-label');
   if (yl) yl.textContent = '已完成案件（含稅）';
   const res = await callAPI('list');
-  if (!res.ok) return;
+  if (!res.ok) { if (!res._authError) toast('❌ 總覽載入失敗：' + res.error); return; }
   const cases = res.cases || [];
   const pending = cases.filter(c => c.status && c.status.includes('待'));
   const done    = cases.filter(c => c.status === '已完成');
@@ -1668,8 +1582,9 @@ async function loadDashboard() {
   if (monthEl) monthEl.textContent = thisMonth.length;
   // 更新最新紀錄表格
   renderDashboardTable(cases.slice(0, 5));
-  // 更新待審核數字
-  updateBadge(pending.length);
+  // 更新待審核數字：只算「輪到我審核」的件數（與待審核頁面邏輯一致）
+  const myPending = cases.filter(c => isMyTurnToApprove(c));
+  updateBadge(myPending.length);
   // 渲染各月請款圖表（只顯示已完成案件）
   const dashTotalEl = document.getElementById('dashboard-approved-total');
   if (dashTotalEl) dashTotalEl.innerHTML = 'NT$ ' + approvedTotal.toLocaleString() + ' <span style="font-size:12px;color:#94a3b8;font-weight:400">已完成總計</span>';
@@ -1742,7 +1657,7 @@ async function loadApplications() {
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
          <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${c.caseId}')">列印</button>`
       : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
-    return `<tr class="tr" style="border-bottom:1px solid #f8fafc">
+    return `<tr class="tr" style="border-bottom:1px solid #f8fafc" data-dept="${c.department||''}">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${c.name||'—'}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
@@ -1762,7 +1677,8 @@ async function loadApplications() {
 async function loadApprovals() {
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
-  const pending = (res.cases || []).filter(c => c.status && c.status.includes('待'));
+  // 只顯示「輪到目前登入者審核」的案件（當關簽核人 = 我）
+  const pending = (res.cases || []).filter(c => isMyTurnToApprove(c));
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
@@ -1834,6 +1750,8 @@ async function loadDetail(caseId) {
   document.getElementById('detail-applicant-name').textContent = c.name || '—';
   document.getElementById('detail-department').textContent    = c.department || '—';
   document.getElementById('detail-created-at').textContent    = fmtDate(c.createdAt);
+  const headerDate = document.getElementById('detail-header-date');
+  if (headerDate) headerDate.textContent = '建立於 ' + fmtDate(c.createdAt);
   // 更新明細表
   renderDetailItems(c.items || []);
   // 更新附件清單
@@ -1856,14 +1774,19 @@ async function loadDetail(caseId) {
       }).join('');
     }
   }
-  // 更新簽核按鈕
+  // 更新簽核按鈕：僅對「當前關卡對應的簽核人」顯示（使用全域 APPROVER_EMAILS + isMyTurnToApprove）
   const approveBox = document.getElementById('approve-box');
-  const APPROVER_EMAILS = ['jimmywang@tsagroup.com.tw','stefanie@tsagroup.com.tw','jessica@tsagroup.com.tw','reneecheng@tsagroup.com.tw'];
-  const isApprover = currentUser && APPROVER_EMAILS.includes(currentUser.email);
-  const isPending  = c.status && c.status.includes('待');
   if (approveBox) {
-    approveBox.style.display = (isApprover && isPending) ? 'block' : 'none';
+    approveBox.style.display = isMyTurnToApprove(c) ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
+  }
+  // 退件後「重新申請」按鈕（只對申請人本人顯示）
+  let resubmitBox = document.getElementById('resubmit-box');
+  const isOwner = currentUser && c.email === currentUser.email;
+  if (resubmitBox) {
+    const showResubmit = isOwner && c.status === '已退件';
+    resubmitBox.style.display = showResubmit ? 'block' : 'none';
+    resubmitBox.setAttribute('data-caseid', c.caseId);
   }
   toast('');
 }
@@ -1902,6 +1825,22 @@ async function doReject() {
   const res = await callAPI('reject', { caseId, comment });
   if (res.ok) { toast('❌ 已退件，申請人將收到通知'); loadDetail(caseId); }
   else toast('❌ 錯誤：' + res.error);
+}
+
+// ── 退件後重新送出 ──
+async function doResubmit() {
+  const box = document.getElementById('resubmit-box');
+  const caseId = box ? box.getAttribute('data-caseid') : null;
+  if (!caseId) return;
+  if (!confirm('確定要重新送出案件 ' + caseId + '？\n送出後將重新進入第1關簽核流程。')) return;
+  toast('⏳ 重新送出中...');
+  const res = await callAPI('resubmit', { caseId });
+  if (res.ok) {
+    toast('✅ 已重新送出！已通知第1關簽核人');
+    setTimeout(() => loadDetail(caseId), 1000);
+  } else {
+    toast('❌ 重新送出失敗：' + res.error);
+  }
 }
 
 // ══════════════════════════════════════════
@@ -1980,6 +1919,8 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   if (res.ok) {
     localStorage.removeItem('bf_draft');
     toast('✅ 申請已送出！單號：' + res.caseId + '，已通知簽核人');
+    // 實際上傳附件到 Google Drive（在背景執行，不阻塞畫面跳轉）
+    uploadPendingFiles(res.caseId);
     setTimeout(() => sw('applications'), 1500);
     loadDashboard();
   } else {
@@ -2039,6 +1980,7 @@ function sw(name,elOrName){
   if(name==='approvals') loadApprovals();
   if(name==='dashboard') loadDashboard();
   if(name==='analytics') loadAnalytics();
+  if(name==='admin') loadAdminUsers();
   if(name==='detail')updateDetailFlow('step1');
   if(name==='new-form'){
     checkDraftBanner();
@@ -2103,7 +2045,7 @@ const EMPLOYEE_DEPTS = {
 function getChineseNameByEmail(email) {
   if (!email) return null;
   let found = null;
-  document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row) {
+  document.querySelectorAll('#admin-users-tbody tr').forEach(function(row) {
     const emailCell = row.querySelector('td:nth-child(5)');
     const nameEl    = row.querySelector('td:nth-child(2) span');
     if (emailCell && emailCell.textContent.trim() === email && nameEl) {
@@ -2122,7 +2064,7 @@ function syncApplicantFields(){
   let matchedEmpId=EMPLOYEE_IDS[name]||'';
   let matchedDept=EMPLOYEE_DEPTS[name]||'';
 
-  document.querySelectorAll('#admin-panel-users tbody tr').forEach(function(row){
+  document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
     const nameEl=row.querySelector('td:nth-child(2) span');
     const empCell=row.querySelector('td:nth-child(3)');
     const emailCell=row.querySelector('td:nth-child(5)');
@@ -2197,6 +2139,9 @@ function calcTotal(){
 }
 
 // ── FILE UPLOAD ──
+// 儲存待上傳的 File 物件（送出後實際上傳 Drive）
+if (!window._pendingFiles) window._pendingFiles = [];
+
 function handleFileUpload(files) {
   if (!files || files.length === 0) return;
   const list = document.getElementById('file-list');
@@ -2204,18 +2149,21 @@ function handleFileUpload(files) {
   const maxSize = 10 * 1024 * 1024;
   Array.from(files).forEach(function(file) {
     if (file.size > maxSize) { toast('⚠️ 檔案過大：' + file.name + '（上限 10MB）'); return; }
+    // 儲存 File 物件供送出時上傳
+    window._pendingFiles.push(file);
     const ext = file.name.split('.').pop().toLowerCase();
     const iconMap = { pdf: '📄', jpg: '🖼️', jpeg: '🖼️', png: '🖼️', xlsx: '📊', xls: '📊' };
     const icon = iconMap[ext] || '📎';
     const item = document.createElement('div');
     item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0';
+    item.dataset.fileName = file.name;
     item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
       + '<span style="font-size:13px;color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + file.name + '</span>'
       + '<span style="font-size:11px;color:#94a3b8">' + (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + '</span>'
-      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="this.closest(\'div\').remove()">×</button>';
+      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="removePendingFile(\'' + file.name.replace(/'/g,"\\'") + '\');this.closest(\'div\').remove()">×</button>';
     list.appendChild(item);
   });
-  toast('✅ 已選取 ' + files.length + ' 個檔案');
+  toast('✅ 已選取 ' + files.length + ' 個檔案（送出時自動上傳）');
   document.getElementById('file-upload-input').value = '';
   // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度與滾動
   updateVH();
@@ -2224,6 +2172,43 @@ function handleFileUpload(files) {
     mc.style.overflowY = 'hidden';
     requestAnimationFrame(function() { mc.style.overflowY = 'auto'; });
   }
+}
+
+function removePendingFile(name) {
+  window._pendingFiles = window._pendingFiles.filter(f => f.name !== name);
+}
+
+// 將 File 轉成 base64 字串
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload  = function(e) { resolve(e.target.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// 送出後實際上傳 Google Drive
+async function uploadPendingFiles(caseId) {
+  const files = window._pendingFiles || [];
+  if (!files.length) return;
+  toast('⏳ 上傳附件中（共 ' + files.length + ' 個）...');
+  let ok = 0, fail = 0;
+  for (const file of files) {
+    try {
+      const b64 = await fileToBase64(file);
+      const res = await callAPI('uploadFile', {
+        caseId,
+        fileName : file.name,
+        mimeType : file.type || 'application/octet-stream',
+        fileData : b64,
+      });
+      if (res.ok) ok++; else { fail++; console.warn('上傳失敗', file.name, res.error); }
+    } catch(e) { fail++; console.error('上傳例外', file.name, e); }
+  }
+  window._pendingFiles = [];
+  if (fail === 0) toast('✅ 附件上傳完成（' + ok + ' 個）');
+  else toast('⚠️ 附件上傳：' + ok + ' 成功，' + fail + ' 失敗');
 }
 
 // ── TOAST ──
@@ -2308,8 +2293,12 @@ function updateDetailFlow(state){
   box.style.display=(state==='done'||state==='rejected')?'none':'block';
 }
 
+// ── FLOW 唯讀提示（流程設定需至後端修改） ──
+function _flowReadOnly(){ toast('⚠️ 流程設定為唯讀顯示，如需修改請聯繫管理員調整後端設定'); }
+function showAddFlowModal(){ _flowReadOnly(); }
+
 // ── FLOW STATUS TOGGLE ──
-function toggleFlowRow(btn){
+function toggleFlowRow(btn){ _flowReadOnly(); return; }
   const row=btn.closest('.flow-row');
   if(!row)return;
   const badge=row.querySelector('.flow-status');
@@ -2348,7 +2337,7 @@ let _editFlowRow=null;
 
 function getFlowUserOptions(selectedName){
   const users=[];
-  document.querySelectorAll('#admin-panel-users tbody tr').forEach(row=>{
+  document.querySelectorAll('#admin-users-tbody tr').forEach(row=>{
     const nameEl=row.querySelector('td:nth-child(2) span');
     const name=nameEl?nameEl.textContent.trim():'';
     const emailEl=row.querySelector('td:nth-child(5)');
@@ -2366,7 +2355,8 @@ function getFlowUserOptions(selectedName){
   return users.map(u=>`<option value="${u.name}" data-email="${u.email}"${u.name===selectedName?' selected':''}>${u.name}（${u.email}）</option>`).join('');
 }
 
-function editFlowRow(btn){
+function editFlowRow(btn){ _flowReadOnly(); return; }
+function _editFlowRow_orig(btn){
   const row=btn.closest('.flow-row');
   if(!row)return;
   _editFlowRow=row;
@@ -2383,7 +2373,7 @@ function closeEditFlowModal(){
   _editFlowRow=null;
 }
 function doEditFlow(){
-  if(!_editFlowRow){closeEditFlowModal();return;}
+  _flowReadOnly(); closeEditFlowModal(); return;
   const newName=document.getElementById('edit-flow-name').value.trim();
   const sel=document.getElementById('edit-flow-person');
   const newPerson=sel.value;
@@ -2408,6 +2398,7 @@ function closeAddFlowModal(){
   document.getElementById('add-flow-modal').classList.remove('open');
 }
 function doAddFlow(){
+  _flowReadOnly(); closeAddFlowModal(); return;
   const name=document.getElementById('add-flow-name').value.trim();
   const sel=document.getElementById('add-flow-person');
   const person=sel.value;
@@ -2440,6 +2431,58 @@ function switchAdminTab(tab){
   setTimeout(applyRolePermissions, 50);
 }
 
+// ══════════════════════════════════════════
+//  使用者管理 — 從後端載入
+// ══════════════════════════════════════════
+const ADMIN_USER_AVATAR_COLORS = ['#1e9d6b','#6366f1','#d97706','#8b5cf6','#06b6d4','#16a34a','#38a3a5','#ec4899','#0ea5e9','#f97316'];
+function adminUserAvatarColor(name) {
+  return ADMIN_USER_AVATAR_COLORS[(name||'?').charCodeAt(0) % ADMIN_USER_AVATAR_COLORS.length];
+}
+function buildAdminUserRow(u) {
+  const roleStyle = u.role === '管理者'
+    ? 'background:var(--brand-light);color:var(--brand)'
+    : 'background:#f1f5f9;color:#64748b';
+  const avatarColor = adminUserAvatarColor(u.name);
+  const firstChar = (u.name || '?').charAt(0);
+  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" style="border-bottom:1px solid #f8fafc">
+    <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
+    <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px">
+      <div style="width:30px;height:30px;border-radius:50%;background:${avatarColor};display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">${firstChar}</div>
+      <span style="font-weight:500">${u.name||'—'}</span></div></td>
+    <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${u.employeeId||'—'}</td>
+    <td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">${u.department||'—'}</td>
+    <td style="padding:12px 16px;color:#64748b">${u.email||'—'}</td>
+    <td style="padding:12px 16px"><span style="${roleStyle};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${u.role||'申請人'}</span></td>
+    <td style="padding:12px 16px;color:#94a3b8">—</td>
+    <td style="padding:12px 16px"><div style="display:flex;gap:6px">
+      <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
+      <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
+    </div></td>
+  </tr>`;
+}
+
+async function loadAdminUsers() {
+  if (!isAdmin()) return; // 非管理者不呼叫
+  const tbody = document.getElementById('admin-users-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
+  const res = await callAPI('listUsers');
+  if (!res.ok) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '</td></tr>';
+    return;
+  }
+  const users = res.users || [];
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">尚無使用者資料</td></tr>';
+  } else {
+    tbody.innerHTML = users.map(buildAdminUserRow).join('');
+  }
+  const countEl = document.getElementById('selected-count');
+  if (countEl) countEl.textContent = '共 ' + users.length + ' 位使用者';
+  setTimeout(applyRolePermissions, 50);
+  syncApplicantFilter();
+}
+
 // ── ADD USER MODAL ──
 function showAddUserModal(){document.getElementById('add-user-modal').classList.add('open');}
 function closeAddUserModal(){
@@ -2460,30 +2503,16 @@ function doAddUser(){
   if(!email){toast('⚠️ 請填寫 Email');return;}
   if(!email.endsWith('@tsagroup.com.tw')){toast('⚠️ Email 須為 @tsagroup.com.tw');return;}
   if(!dept){toast('⚠️ 請選擇部門');return;}
-  const roleColors={
-    '管理者':'background:var(--brand-light);color:var(--brand)',
-    '申請人':'background:#f1f5f9;color:#64748b'
-  };
-  const tbody=document.querySelector('#admin-panel-users .card:last-child tbody');
-  const tr=document.createElement('tr');
-  tr.style.cssText='border-bottom:1px solid #f8fafc';
-  if(dept)tr.dataset.dept=dept;
-  tr.innerHTML=`
-    <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-    <td style="padding:12px 16px"><div style="display:flex;align-items:center;gap:8px"><div style="width:30px;height:30px;border-radius:50%;background:#38a3a5;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${name.charAt(0)}</div><span style="font-weight:500">${name}</span></div></td>
-    <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${empId||'—'}</td>
-    <td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">${dept||'—'}</td>
-    <td style="padding:12px 16px;color:#64748b">${email}</td>
-    <td style="padding:12px 16px"><span style="${roleColors[role]||''};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${role}</span></td>
-    <td style="padding:12px 16px;color:#94a3b8">${new Date().toLocaleString('zh-TW').replace(/\//g,'/')}</td>
-    <td style="padding:12px 16px"><div style="display:flex;gap:6px">
-      <button class="btn btn-o" style="padding:5px 10px;font-size:13px" onclick="showEditUserModal(this)">編輯</button>
-      <button style="padding:5px 10px;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
-    </div></td>`;
-  if(tbody)tbody.appendChild(tr);
   closeAddUserModal();
-  toast('✅ 已新增 '+name+'，邀請信已發送');
-  setTimeout(applyRolePermissions, 50);
+  toast('⏳ 新增中...');
+  callAPI('addUser',{name,employeeId:empId,email,department:dept,role:'申請人'}).then(res=>{
+    if(res.ok){
+      toast('✅ 已新增 '+name);
+      loadAdminUsers();
+    } else {
+      toast('❌ 新增失敗：'+res.error);
+    }
+  });
 }
 
 // ── EDIT USER MODAL ──
@@ -2517,19 +2546,20 @@ function closeEditUserModal(){
 }
 function doEditUser(){
   if(!_editRow){closeEditUserModal();return;}
-  const role=document.getElementById('edit-role').value||'申請人';
-  const roleColors={
-    '管理者':'background:var(--brand-light);color:var(--brand)',
-    '申請人':'background:#f1f5f9;color:#64748b'
-  };
-  const newEmpId=document.getElementById('edit-empid')?.value.trim()||'';
-  const empIdCell=_editRow.querySelector('td:nth-child(3)');
-  if(empIdCell)empIdCell.textContent=newEmpId;
-  const newDept=document.getElementById('edit-dept')?.value||'';
-  if(newDept){_editRow.dataset.dept=newDept;const deptCell=_editRow.querySelector('td:nth-child(4)');if(deptCell)deptCell.textContent=newDept;}
-  _editRow.querySelector('td:nth-child(6)').innerHTML=`<span style="${roleColors[role]||''};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${role}</span>`;
+  const role     = document.getElementById('edit-role').value||'申請人';
+  const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
+  const newDept  = document.getElementById('edit-dept')?.value||'';
+  const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
   closeEditUserModal();
-  toast('✅ 已儲存變更');
+  toast('⏳ 儲存中...');
+  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,role}).then(res=>{
+    if(res.ok){
+      toast('✅ 已儲存變更');
+      loadAdminUsers();
+    } else {
+      toast('❌ 儲存失敗：'+res.error);
+    }
+  });
 }
 
 // ── DELETE USER ──
@@ -2551,38 +2581,67 @@ function executeDeleteUser(){
   const row=_deleteTargetRow;
   const nameEl=row.querySelector('td:nth-child(2) span')||row.querySelector('td:nth-child(2)');
   const name=nameEl?nameEl.textContent.trim():'使用者';
+  const email=row.dataset.email||row.querySelector('td:nth-child(5)')?.textContent.trim()||'';
   closeDeleteConfirmModal();
-  row.style.transition='opacity .3s';
-  row.style.opacity='0';
-  setTimeout(()=>{
-    row.remove();
-    if(!_deletedUsers.includes(name))_deletedUsers.push(name);
-    syncApplicantFilter();
-    toast('🗑️ 已刪除 '+name);
-  },300);
+  toast('⏳ 刪除中...');
+  callAPI('deleteUser',{email}).then(res=>{
+    if(res.ok){
+      if(!_deletedUsers.includes(name))_deletedUsers.push(name);
+      toast('🗑️ 已刪除 '+name);
+      loadAdminUsers();
+    } else {
+      toast('❌ 刪除失敗：'+res.error);
+    }
+  });
 }
 
 
 function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';}
 function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
 function adminToggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
-function updateSelectedCount(){const n=document.querySelectorAll('.user-cb:checked').length;document.getElementById('selected-count').textContent=n>0?'已選取 '+n+' 位使用者':'共 10 位使用者';}
+function updateSelectedCount(){
+  const n=document.querySelectorAll('.user-cb:checked').length;
+  const total=document.querySelectorAll('#admin-users-tbody tr[data-email]').length;
+  document.getElementById('selected-count').textContent=n>0?'已選取 '+n+' 位使用者':'共 '+total+' 位使用者';
+}
 document.addEventListener('change',e=>{if(e.target.classList.contains('user-cb'))updateSelectedCount();});
-function applyTag(roleName){
+async function applyTag(roleName){
   const checked=document.querySelectorAll('.user-cb:checked');
   if(checked.length===0){toast('⚠️ 請先勾選使用者');return;}
-  const roleColors={'管理者':'background:var(--brand-light);color:var(--brand)','申請人':'background:#f1f5f9;color:#64748b'};
-  checked.forEach(cb=>{
+  toast('⏳ 批次設定角色中...');
+  let ok=0,fail=0;
+  for(const cb of Array.from(checked)){
     const row=cb.closest('tr');
-    const roleCell=row.querySelector('td:nth-child(6)');
-    if(roleCell)roleCell.innerHTML='<span style="'+( roleColors[roleName]||'background:#f1f5f9;color:#64748b')+';padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">'+roleName+'</span>';
-  });
-  toast('✅ 已對 '+checked.length+' 位使用者設定角色「'+roleName+'」');
+    const email=row?.dataset.email||'';
+    if(!email){fail++;continue;}
+    const res=await callAPI('editUser',{email,role:roleName});
+    if(res.ok)ok++;else fail++;
+  }
+  if(fail===0)toast('✅ 已對 '+ok+' 位使用者設定角色「'+roleName+'」');
+  else toast('⚠️ 完成 '+ok+' 筆，'+fail+' 筆失敗');
+  hideBatchTag();
+  loadAdminUsers();
 }
-function exportUsers(){toast('📥 已匯出使用者名單（CSV）');}
+async function exportUsers(){
+  toast('⏳ 匯出中...');
+  const res = await callAPI('listUsers');
+  if (!res.ok) { toast('❌ 匯出失敗：' + res.error); return; }
+  const users = res.users || [];
+  if (users.length === 0) { toast('⚠️ 目前無使用者資料可匯出'); return; }
+  const header = ['Email','姓名','員工編號','部門','角色'].join(',');
+  const rows = users.map(u => [u.email, u.name, u.employeeId, u.department, u.role].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
+  const csv = '﻿' + header + '\n' + rows.join('\n'); // BOM for Excel UTF-8
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'BeneFlow_users_' + new Date().toISOString().slice(0,10) + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('✅ 已匯出 ' + users.length + ' 位使用者（CSV）');
+}
 function showImportModal(){document.getElementById('import-modal').classList.add('open');}
 function closeImportModal(){document.getElementById('import-modal').classList.remove('open');}
-function doImport(){closeImportModal();toast('✅ 已匯入 2 位新使用者');}
+function doImport(){closeImportModal();toast('⚠️ 批次匯入功能尚未開放，請透過「新增使用者」逐筆新增');}
 
 
 // ══════════════════════════════════════════
@@ -2590,7 +2649,7 @@ function doImport(){closeImportModal();toast('✅ 已匯入 2 位新使用者');
 // ══════════════════════════════════════════
 // 目前名單（從系統管理的 tbody 動態讀取）
 function getAdminUserList() {
-  const rows = document.querySelectorAll('#admin-panel-users tbody tr');
+  const rows = document.querySelectorAll('#admin-users-tbody tr');
   const users = [];
   rows.forEach(r => {
     const nameEl = r.querySelector('td:nth-child(2) span');
@@ -2649,6 +2708,7 @@ function applyAppFilter() {
   const applicant = document.getElementById('app-filter-applicant')?.value || '';
   const status = document.getElementById('app-filter-status')?.value || '';
   const cat = document.getElementById('app-filter-cat')?.value || '';
+  const dept = document.getElementById('app-filter-dept')?.value || '';
   const rows = document.querySelectorAll('#applications-tbody tr');
   let visible = 0;
   rows.forEach(r => {
@@ -2656,8 +2716,9 @@ function applyAppFilter() {
     const text = r.textContent.toLowerCase();
     const match = (!q || text.includes(q))
       && (!applicant || text.includes(applicant))
-      && (!status || r.cells[5]?.textContent.includes(status))
-      && (!cat || r.cells[2]?.textContent.includes(cat));
+      && (!status || r.cells[6]?.textContent.includes(status))
+      && (!cat || r.cells[3]?.textContent.includes(cat))
+      && (!dept || (r.dataset.dept || '').includes(dept));
     r.style.display = match ? '' : 'none';
     if (match) visible++;
   });
@@ -2671,6 +2732,7 @@ function resetAppFilter() {
   document.getElementById('app-filter-applicant').value = '';
   document.getElementById('app-filter-status').value = '';
   document.getElementById('app-filter-cat').value = '';
+  const deptEl = document.getElementById('app-filter-dept'); if (deptEl) deptEl.value = '';
   dpState.start = null; dpState.end = null;
   updateDpDisplay('start'); updateDpDisplay('end');
   document.querySelectorAll('#applications-tbody tr').forEach(r => r.style.display = '');
@@ -2688,7 +2750,7 @@ function resetAppFilter() {
 function applyAdminFilter() {
   const q = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
   const dept = document.getElementById('admin-filter-dept')?.value || '';
-  const rows = document.querySelectorAll('#admin-panel-users tbody tr');
+  const rows = document.querySelectorAll('#admin-users-tbody tr');
   let visible = 0;
   rows.forEach(r => {
     const text = r.textContent.toLowerCase();
@@ -2705,9 +2767,8 @@ function applyAdminFilter() {
 function resetAdminFilter() {
   document.getElementById('admin-search').value = '';
   document.getElementById('admin-filter-dept').value = '';
-  document.querySelectorAll('#admin-panel-users tbody tr').forEach(r => r.style.display = '');
-  const countEl = document.getElementById('selected-count');
-  if (countEl) countEl.textContent = '共 10 位使用者';
+  document.querySelectorAll('#admin-users-tbody tr').forEach(r => r.style.display = '');
+  updateSelectedCount();
   toast('🔄 已清除篩選條件');
 }
 
