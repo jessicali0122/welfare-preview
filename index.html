@@ -1441,12 +1441,14 @@ function showApp() {
   document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
   if (currentUser) {
-    const initial = currentUser.name.charAt(0);
+    // 優先用 LOCAL_EMAIL_TO_NAME 取中文名，避免顯示 Google 帳號英文名
+    const displayName = LOCAL_EMAIL_TO_NAME[currentUser.email] || currentUser.name;
+    const initial = displayName.charAt(0);
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
-    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = currentUser.name);
+    document.querySelectorAll('.user-name-display').forEach(el => el.textContent = displayName);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting)greeting.innerHTML='Hi，'+currentUser.name+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';
+    if(greeting)greeting.innerHTML='Hi，'+displayName+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     loadDashboard();
@@ -1639,7 +1641,7 @@ function renderDashboardTable(cases) {
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${c.name}</td>
       <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category||'其他'}</span></td>
+      <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
@@ -1687,7 +1689,7 @@ async function loadApplications() {
       <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${c.name||'—'}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category||'其他'}</span></td>
+      <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;color:#374151">${c.step||1} / ${c.totalSteps||4}</td>
       <td style="padding:12px 16px"><span class="badge ${statusClass}">${c.status}</span></td>
@@ -1831,6 +1833,17 @@ function renderDetailItems(items) {
       <td style="padding:10px 0;text-align:right;color:#64748b">NT$ ${Number(it.tax||0).toLocaleString()}</td>
       <td style="padding:10px 0;text-align:right;font-weight:600">NT$ ${Number(it.total||0).toLocaleString()}</td>
     </tr>`).join('');
+  // 動態更新 tfoot 合計
+  const sumPretax = items.reduce((s,it)=>s+Number(it.pretax||0),0);
+  const sumTax    = items.reduce((s,it)=>s+Number(it.tax||0),0);
+  const sumTotal  = items.reduce((s,it)=>s+Number(it.total||0),0);
+  const tfoot = tbody.closest('table')?.querySelector('tfoot');
+  if (tfoot) {
+    const cells = tfoot.querySelectorAll('td');
+    if (cells[1]) cells[1].textContent = 'NT$ ' + sumPretax.toLocaleString();
+    if (cells[2]) cells[2].textContent = 'NT$ ' + sumTax.toLocaleString();
+    if (cells[3]) cells[3].textContent = 'NT$ ' + sumTotal.toLocaleString();
+  }
 }
 
 async function doApprove() {
@@ -2057,6 +2070,23 @@ function sw(name,elOrName){
 }
 
 // ── 員工編號 & 部門對照表 ──
+// 本地使用者清單（email 正確版，供 fallback 及 getChineseNameByEmail 使用）
+const LOCAL_USER_LIST = [
+  {name:'李潔慧',  email:'jessica@tsagroup.com.tw'},
+  {name:'王鈞逸',  email:'jimmywang@tsagroup.com.tw'},
+  {name:'邱湘芬',  email:'stefanie@tsagroup.com.tw'},
+  {name:'鄭安汝',  email:'reneecheng@tsagroup.com.tw'},
+  {name:'何舒維',  email:'mollyho@tsagroup.com.tw'},
+  {name:'陳姿璇',  email:'dori@tsagroup.com.tw'},
+  {name:'黃如華',  email:'amandahuang@tsagroup.com.tw'},
+  {name:'黃岩',    email:'kelvinng@tsagroup.com.tw'},
+  {name:'鄒馨瑩',  email:'sandy@tsagroup.com.tw'},
+  {name:'蔡鴻陵',  email:'ian@tsagroup.com.tw'},
+];
+// email → 中文姓名快速查表
+const LOCAL_EMAIL_TO_NAME = {};
+LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
+
 const EMPLOYEE_IDS = {
   '陳姿璇':'T0018','蔡鴻陵':'T0020','邱湘芬':'T0028','李潔慧':'T0033',
   '黃如華':'T0051','黃岩':'T0069','王鈞逸':'T0076','何舒維':'T0083',
@@ -2067,9 +2097,12 @@ const EMPLOYEE_DEPTS = {
   '陳姿璇':'供應鏈部','黃如華':'人力資源部','黃岩':'行銷部',
   '鄒馨瑩':'人力資源部','蔡鴻陵':'通路事業發展部','鄭安汝':'財務會計部'
 };
-// 依 email 從使用者表格反查中文姓名
+// 依 email 查中文姓名：優先查本地對照表，再查已載入的管理者表格
 function getChineseNameByEmail(email) {
   if (!email) return null;
+  // 1. 先查本地對照表（最快、不依賴 DOM）
+  if (LOCAL_EMAIL_TO_NAME[email]) return LOCAL_EMAIL_TO_NAME[email];
+  // 2. 再查管理者表格（可處理新增的非預設使用者）
   let found = null;
   document.querySelectorAll('#admin-users-tbody tr').forEach(function(row) {
     const emailCell = row.querySelector('td:nth-child(5)');
@@ -2339,12 +2372,8 @@ function getFlowUserOptions(selectedName){
     if(name&&email)users.push({name,email});
   });
   if(users.length===0){
-    // fallback: hardcoded from initial data
-    [
-      {name:'王鈞逸',email:'jimmywang@tsagroup.com.tw'},
-      {name:'陳美華',email:'meihua@tsagroup.com.tw'},
-      {name:'李潔慧',email:'jessica@tsagroup.com.tw'}
-    ].forEach(u=>users.push(u));
+    // fallback: 當 admin 表格未載入時使用
+    LOCAL_USER_LIST.forEach(u=>users.push(u));
   }
   return users.map(u=>`<option value="${u.name}" data-email="${u.email}"${u.name===selectedName?' selected':''}>${u.name}（${u.email}）</option>`).join('');
 }
