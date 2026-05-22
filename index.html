@@ -55,7 +55,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 .item-card{background:#f9fafb;border:1.5px solid #e8e2de;border-radius:12px;padding:16px;margin-bottom:10px}
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:500}
 input[type=radio]{accent-color:var(--brand)}
-.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600}
+.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.01em}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:normal;text-align:center;word-break:break-word}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -555,21 +555,23 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="font-size:15px;font-weight:700;color:#0f172a">最新申請紀錄</div>
         <span onclick="sw('applications')" style="font-size:13px;color:var(--brand);cursor:pointer;font-weight:600">查看全部 →</span>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <thead><tr style="background:#f8fafc;border-bottom:1px solid #f1f5f9">
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請單號</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">主旨</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">分類</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅金額</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">狀態</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">簽核人</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請時間</th>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <table style="width:100%;min-width:560px;border-collapse:collapse;font-size:14px">
+        <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請人</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
         </tr></thead>
         <tbody id="dashboard-tbody">
           <tr style="border-bottom:1px solid #f8fafc"><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
   </div>
 
@@ -609,7 +611,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       </div>
       <div class="stat" style="border-top:3px solid var(--brand);background:linear-gradient(135deg,#f0fdf8 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">已核准總金額</div>
-        <div id="analytics-approved" style="font-size:17px;font-weight:800;color:var(--brand);line-height:1.2;word-break:break-word">—</div>
+        <div id="analytics-approved" style="font-size:22px;font-weight:800;color:var(--brand);line-height:1.2;word-break:break-word">—</div>
       </div>
       <div class="stat" style="border-top:3px solid var(--amber,#f59e0b);background:linear-gradient(135deg,#fffbf0 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">簽核中件數</div>
@@ -626,16 +628,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <div style="padding:18px 20px">
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px" id="charts-row">
           <div>
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:3px">費用類別佔比</div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">已完成案件・依類別</div>
-            <div id="chart-category" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:3px">部門費用排行</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">已完成案件・依部門累計</div>
+            <div id="chart-department" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
               <div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0">載入中...</div>
             </div>
           </div>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:3px">部門費用排行</div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">已完成案件・依部門累計</div>
-            <div id="chart-department" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:3px">費用類別佔比</div>
+            <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">已完成案件・依類別</div>
+            <div id="chart-category" style="display:flex;flex-direction:column;gap:10px;font-size:13px">
               <div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0">載入中...</div>
             </div>
           </div>
@@ -1020,7 +1022,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== APPROVALS ===== -->
   <div class="view" id="view-approvals">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
       <div>
           <div id="approvals-count-label" style="font-size:13px;color:#94a3b8;margin-top:2px">0 件需要您處理</div>
       </div>
@@ -1034,6 +1036,19 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         </button>
       </div>
     </div>
+    <!-- 管理員分頁（輪到我 vs 代理）-->
+    <div id="approvals-tabs" style="display:none;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
+      <div style="display:flex;gap:0">
+        <div class="admin-tab active" id="atab-mine" onclick="switchApprovalTab('mine')" style="display:flex;align-items:center;gap:6px">
+          🔑 我需要審核
+          <span id="atab-mine-count" style="background:var(--amber,#f59e0b);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
+        </div>
+        <div class="admin-tab" id="atab-proxy" onclick="switchApprovalTab('proxy')" style="display:flex;align-items:center;gap:6px">
+          🛡️ 代理審核
+          <span id="atab-proxy-count" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
+        </div>
+      </div>
+    </div>
     <div id="batch-bar" class="">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span id="batch-count-label">已選 0 件</span>
@@ -1041,8 +1056,13 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:13px" onclick="batchApprove()">批次核准選取</button>
       <button class="btn btn-o" style="padding:5px 14px;font-size:13px;color:#fff;border-color:rgba(255,255,255,.3)" onclick="clearSelection()">取消選取</button>
     </div>
+    <!-- 我需要審核 -->
     <div id="approvals-list" style="display:flex;flex-direction:column;gap:12px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>
+    </div>
+    <!-- 代理審核（管理員專用）-->
+    <div id="approvals-list-proxy" style="display:none;flex-direction:column;gap:12px">
+      <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有代理審核案件</div>
     </div>
   </div>
 
@@ -1868,11 +1888,8 @@ async function loadApplications() {
   tbody.innerHTML = sortedCases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
     const stepApprover = (c.status && (c.status.includes('待') || c.status === '已退件')) ? getStepApproverName(c.step) : '';
-    const stepTotal = c.totalSteps || 4;
-    const stepCurrent = c.step || 1;
-    // 狀態欄：badge + 小字關卡進度
-    const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`
-      + (c.status !== '已完成' && c.status !== '草稿' ? `<span style="font-size:11px;color:#94a3b8;margin-left:5px">${stepCurrent}/${stepTotal}</span>` : '');
+    // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
+    const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
     const actionBtn = c.status === '已完成'
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
          <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${c.caseId}')">列印</button>`
@@ -1938,7 +1955,7 @@ async function loadApprovals() {
       // 主旨 + 分類標籤
       +       (subject ? '<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
       +           subject
-      +           + (category ? (function(){var c=catColor(category);return '&ensp;<span style="font-size:12px;font-weight:600;background:'+c.bg+';color:'+c.color+';padding:2px 9px;border-radius:6px;border:1px solid '+c.border+'">'+category+'</span>';})() : '')
+      +           + (category ? (function(){var c=catColor(category);return '&ensp;<span style="font-size:12px;font-weight:600;background:'+c.bg+';color:'+c.color+';padding:3px 10px;border-radius:20px;border:1px solid '+c.border+';letter-spacing:.01em">'+category+'</span>';})() : '')
       +         '</div>' : '')
       // 申請人 / 部門 / 含稅 / 送出
       +       '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px 16px;font-size:13px">'
@@ -1959,20 +1976,36 @@ async function loadApprovals() {
       + '</div>';
   }
 
-  let html = '';
-  // ── 我的審核責任 ──
-  if (myTurnCases.length > 0) {
-    if (isAdmin() && proxyCases.length > 0) {
-      html += '<div style="font-size:13px;font-weight:700;color:var(--brand);margin-bottom:10px;padding:7px 14px;background:var(--brand-light);border-radius:8px">🔑 我的審核責任（' + myTurnCases.length + ' 件）</div>';
+  // ── 分兩個列表（管理員分頁）──
+  const proxyContainer = document.getElementById('approvals-list-proxy');
+  const tabsEl = document.getElementById('approvals-tabs');
+  const tabMineCount = document.getElementById('atab-mine-count');
+  const tabProxyCount = document.getElementById('atab-proxy-count');
+
+  if (isAdmin() && proxyCases.length > 0) {
+    // 顯示分頁 tab
+    if (tabsEl) tabsEl.style.display = '';
+    if (tabMineCount) tabMineCount.textContent = myTurnCases.length;
+    if (tabProxyCount) tabProxyCount.textContent = proxyCases.length;
+    // 我需要審核列表
+    container.innerHTML = myTurnCases.length > 0
+      ? myTurnCases.map(c => _approvalCardHtml(c, false)).join('')
+      : '<div style="text-align:center;padding:40px;color:#94a3b8">目前沒有輪到您的案件</div>';
+    // 代理列表
+    if (proxyContainer) {
+      proxyContainer.innerHTML = proxyCases.map(c => _approvalCardHtml(c, true)).join('');
     }
-    html += myTurnCases.map(c => _approvalCardHtml(c, false)).join('');
+    // 預設顯示「我需要審核」分頁
+    switchApprovalTab('mine');
+  } else {
+    // 非管理員或無代理案件：隱藏分頁，直接顯示
+    if (tabsEl) tabsEl.style.display = 'none';
+    if (proxyContainer) proxyContainer.style.display = 'none';
+    container.style.display = 'flex';
+    container.innerHTML = myTurnCases.length > 0
+      ? myTurnCases.map(c => _approvalCardHtml(c, false)).join('')
+      : '<div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>';
   }
-  // ── 管理員代理（其他關卡）──
-  if (proxyCases.length > 0) {
-    html += '<div style="font-size:13px;font-weight:700;color:#64748b;margin:' + (myTurnCases.length > 0 ? '18px' : '0') + ' 0 10px;padding:7px 14px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">🛡️ 代理審核（其他關卡・' + proxyCases.length + ' 件）</div>';
-    html += proxyCases.map(c => _approvalCardHtml(c, true)).join('');
-  }
-  container.innerHTML = html;
 }
 
 function quickApprove(caseId) {
@@ -3737,8 +3770,31 @@ function updateBatchBar(){
   if(lbl)lbl.textContent='已選 '+checked.length+' 件';
   if(bar){if(checked.length>0)bar.classList.add('show');else bar.classList.remove('show');}
 }
+function switchApprovalTab(tab){
+  const mine=document.getElementById('approvals-list');
+  const proxy=document.getElementById('approvals-list-proxy');
+  const tabMine=document.getElementById('atab-mine');
+  const tabProxy=document.getElementById('atab-proxy');
+  if(tab==='mine'){
+    if(mine){mine.style.display='flex';}
+    if(proxy){proxy.style.display='none';}
+    if(tabMine)tabMine.classList.add('active');
+    if(tabProxy)tabProxy.classList.remove('active');
+  } else {
+    if(mine){mine.style.display='none';}
+    if(proxy){proxy.style.display='flex';}
+    if(tabMine)tabMine.classList.remove('active');
+    if(tabProxy)tabProxy.classList.add('active');
+  }
+  // 清除選取狀態
+  clearSelection();
+}
 function toggleSelectAll(){
-  const allCb=document.querySelectorAll('.approval-cb');
+  // 只選目前可見分頁的 checkbox
+  const activePanel = document.getElementById('approvals-list-proxy')?.style.display==='flex'
+    ? document.getElementById('approvals-list-proxy')
+    : document.getElementById('approvals-list');
+  const allCb = activePanel ? activePanel.querySelectorAll('.approval-cb') : document.querySelectorAll('.approval-cb');
   const selectAllCb=document.getElementById('select-all-cb');
   const shouldCheck=selectAllCb?selectAllCb.checked:true;
   allCb.forEach(cb=>cb.checked=shouldCheck);
@@ -4050,7 +4106,7 @@ function renderApprovedTable(approvedCases){
       var cats=[];c.items.forEach(function(it){if(it.category&&cats.indexOf(it.category)===-1)cats.push(it.category);});
       cat=cats.join('、');
     } else {cat=c.category||'';}
-    var catHtml=cat?(function(){var cc=catColor(cat);return '<span style="display:inline-block;background:'+cc.bg+';color:'+cc.color+';border:1px solid '+cc.border+';border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600">'+cat+'</span>';})():'<span style="color:#d1d5db">—</span>';
+    var catHtml=cat?(function(){var cc=catColor(cat);return '<span style="display:inline-flex;align-items:center;background:'+cc.bg+';color:'+cc.color+';border:1px solid '+cc.border+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600">'+cat+'</span>';})():'<span style="color:#d1d5db">—</span>';
     var amt='NT$ '+Number(c.total||0).toLocaleString();
     var subj=c.subject||c.project||'（無主旨）';
     var applicant=c.name||c.email||'—';
