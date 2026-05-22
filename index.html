@@ -205,6 +205,28 @@ input[type=checkbox]{accent-color:var(--brand)}
   .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
 }
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
+
+/* ── 表單明細卡片：手機版欄位格線 ── */
+@media(max-width:640px){
+  /* 右側欄（附件+送出）取消 sticky */
+  #form-grid>div:last-child{position:static!important}
+  /* 申請人資料卡 3欄→2欄（排除小計橫幅） */
+  #view-new-form .card>div[style*="grid-template-columns:1fr 1fr 1fr"]:not([style*="brand-light"]){grid-template-columns:1fr 1fr!important}
+  /* 明細卡：日期/類別/用途 → 2欄；金額行 → 2欄 */
+  .item-card>div:nth-child(2){grid-template-columns:1fr 1fr!important}
+  .item-card>div:last-child{grid-template-columns:1fr 1fr!important}
+}
+@media(max-width:400px){
+  /* 極小螢幕：全部單欄 */
+  #view-new-form .card>div[style*="grid-template-columns:1fr 1fr 1fr"]:not([style*="brand-light"]){grid-template-columns:1fr!important}
+  .item-card>div:nth-child(2){grid-template-columns:1fr!important}
+  .item-card>div:last-child{grid-template-columns:1fr!important}
+}
+/* ── 管理分頁：手機版加大觸控區域 ── */
+@media(max-width:768px){
+  .admin-tab{padding:13px 0!important;font-size:13px!important;flex:1;text-align:center!important;display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px}
+  #view-admin .card>div:first-child{flex-wrap:wrap!important;gap:10px!important}
+}
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
 @keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -922,9 +944,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增人員
       </button>
     </div>
-    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;margin-bottom:20px">
-      <div class="admin-tab active" id="tab-users" onclick="switchAdminTab('users')">👥 使用者管理</div>
-      <div class="admin-tab" id="tab-flow" onclick="switchAdminTab('flow')">⚙️ 流程設定</div>
+    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;margin-bottom:20px;overflow:visible">
+      <div class="admin-tab active" id="tab-users" onclick="switchAdminTab('users')" style="flex:1;text-align:center">👥 使用者管理</div>
+      <div class="admin-tab" id="tab-flow" onclick="switchAdminTab('flow')" style="flex:1;text-align:center">⚙️ 流程設定</div>
     </div>
     <div id="admin-panel-users">
       <div class="card" style="padding:14px 16px;margin-bottom:14px">
@@ -1361,8 +1383,14 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      showApp();
-      return;
+      // session 8小時過期 → 清除並重新登入
+      if (currentUser.sessionExpiry && Date.now() > currentUser.sessionExpiry) {
+        localStorage.removeItem('bf_user');
+        currentUser = null;
+      } else {
+        showApp();
+        return;
+      }
     } catch(e) {
       localStorage.removeItem('bf_user');
     }
@@ -1519,8 +1547,11 @@ function handleAuthError() {
           _showAuthExpiredBar();
         }
       });
-      // 5 秒後若仍未刷新則顯示提示條
-      setTimeout(() => { if (!currentUser || !currentUser.token) _showAuthExpiredBar(); }, 5000);
+      // 5 秒後若 token 仍未刷新（tokenExpiry 已過）則顯示提示條
+      setTimeout(() => {
+        const exp = currentUser?.tokenExpiry;
+        if (!exp || Date.now() > exp) _showAuthExpiredBar();
+      }, 5000);
       return;
     } catch(e) {}
   }
@@ -1532,7 +1563,10 @@ function _showAuthExpiredBar() {
   currentUser = null;
   const bar = document.createElement('div');
   bar.id = 'auth-expired-bar';
-  bar.style.cssText = 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
+  const isMob = window.innerWidth <= 768;
+  bar.style.cssText = isMob
+    ? 'position:fixed;top:12px;left:12px;right:12px;background:#1e293b;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.35);white-space:nowrap;justify-content:space-between'
+    : 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
   bar.innerHTML = '⚠️ 登入已過期 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">重新登入</button>';
   document.body.appendChild(bar);
 }
@@ -1965,6 +1999,18 @@ async function submitForm() {
   }
   if (items.length === 0) { toast('⚠️ 請至少新增一筆明細'); return; }
 
+  // 每筆明細的含稅金額必須 > 0
+  const hasZeroAmount = items.some(i => !(i.total > 0));
+  if (hasZeroAmount) {
+    document.querySelectorAll('.withtax').forEach(el => {
+      if (!(parseFloat(el.value) > 0)) {
+        el.classList.add('inp-error');
+        setTimeout(() => el.classList.remove('inp-error'), 2500);
+      }
+    });
+    toast('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
+  }
+
   // 收據提醒
   const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
   if (needsReceipt) {
@@ -2359,7 +2405,8 @@ async function uploadPendingFiles(caseId, files) {
         updateSubmitCardStatus('⏳', '上傳中 ' + ok + '/' + files.length + '...');
       } else {
         fail++;
-        failedNames.push(file.name);
+        const errDetail = res.error ? '（' + res.error + '）' : '';
+        failedNames.push(file.name + errDetail);
         console.warn('上傳失敗', file.name, res.error);
       }
     } catch(e) {
