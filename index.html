@@ -85,8 +85,11 @@ input[type=checkbox]{accent-color:var(--brand)}
 @media(max-width:768px){
   .flow-row{grid-template-columns:36px 1fr!important;grid-template-rows:auto auto!important;gap:10px!important}
   .flow-row>div:nth-child(3){grid-column:2;margin-top:-4px}
-  .flow-row>div:nth-child(4){grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
-  .flow-row>div:nth-child(4) span,.flow-row>div:nth-child(4) button{width:auto!important;flex:1;min-width:60px}
+  .flow-row>div:nth-child(4){grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  /* 「啟用中」badge 和「編輯」按鈕：彈性延伸；↑↓ 按鈕：固定正方形，觸控加大 */
+  .flow-row>div:nth-child(4)>.flow-order-btn{width:44px!important;height:44px!important;flex:0 0 44px!important;font-size:18px!important}
+  .flow-row>div:nth-child(4)>.flow-status-badge{flex:1;text-align:center}
+  .flow-row>div:nth-child(4)>.flow-edit-btn{flex:1;justify-content:center;min-width:60px}
 }
 
 /* ── USER MENU ── */
@@ -173,6 +176,10 @@ input[type=checkbox]{accent-color:var(--brand)}
   #main-wrapper{margin-left:0!important}
   .sl{width:56px!important;height:56px!important}
   .sl::after{font-size:10px!important}
+  /* 送出成功卡片：手機版全寬靠底 */
+  #submit-result-card{left:12px!important;right:12px!important;width:auto!important;bottom:16px!important}
+  /* 日期選擇器：手機版自動靠左，不超出螢幕 */
+  .dp-panel{width:calc(100vw - 32px)!important;max-width:320px!important;left:0!important;right:auto!important}
 }
 /* ── 使用者管理表格：手機版隱藏次要欄位 ── */
 @media(max-width:768px){
@@ -2590,10 +2597,19 @@ function renderFlowList(approvers) {
   list.innerHTML = approvers.map((a, i) => {
     const color = avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length];
     const initial = a.name ? a.name.charAt(0) : '?';
-    const stepLabel = '第' + (numLabels[i] || (i+1)) + '關：' + (a.label || a.name);
-    const editBtns = admin
-      ? `<button onclick="showEditFlowModal(${i})" style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500">編輯</button>`
-      : `<button disabled style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:500;opacity:.4">編輯</button>`;
+    const isFirst = i === 0;
+    const isLast  = i === approvers.length - 1;
+
+    const orderBtns = admin
+      ? `<button class="flow-order-btn" onclick="moveFlowStep(${i},-1)" title="往上移" ${isFirst ? 'disabled' : ''} style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:${isFirst?'#f8fafc':'#fff'};color:${isFirst?'#cbd5e1':'#374151'};cursor:${isFirst?'not-allowed':'pointer'};font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
+         <button class="flow-order-btn" onclick="moveFlowStep(${i},1)"  title="往下移" ${isLast  ? 'disabled' : ''} style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:${isLast?'#f8fafc':'#fff'};color:${isLast?'#cbd5e1':'#374151'};cursor:${isLast?'not-allowed':'pointer'};font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↓</button>`
+      : `<button class="flow-order-btn" disabled style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.4">↑</button>
+         <button class="flow-order-btn" disabled style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.4">↓</button>`;
+
+    const editBtn = admin
+      ? `<button class="flow-edit-btn" onclick="showEditFlowModal(${i})" style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500">編輯</button>`
+      : `<button class="flow-edit-btn" disabled style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:500;opacity:.4">編輯</button>`;
+
     return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
       <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
       <div>
@@ -2607,12 +2623,43 @@ function renderFlowList(approvers) {
           <div style="font-size:11px;color:#94a3b8">${a.email}</div>
         </div>
       </div>
-      <div style="display:flex;gap:6px">
-        <span style="padding:6px 10px;font-size:12px;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-weight:600;white-space:nowrap">啟用中</span>
-        ${editBtns}
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="flow-status-badge" style="padding:6px 10px;font-size:12px;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-weight:600;white-space:nowrap">啟用中</span>
+        ${orderBtns}
+        ${editBtn}
       </div>
     </div>`;
   }).join('');
+}
+
+// 上下移動關卡順序並儲存
+async function moveFlowStep(index, direction) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  const newIndex = index + direction;
+  if (newIndex < 0 || newIndex >= _flowApprovers.length) return;
+
+  // 交換順序
+  const updated = _flowApprovers.slice();
+  const tmp = updated[index];
+  updated[index] = updated[newIndex];
+  updated[newIndex] = tmp;
+
+  // 樂觀更新 UI（立即反映，不等後端）
+  _flowApprovers = updated;
+  APPROVER_EMAILS.length = 0;
+  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  renderFlowList(_flowApprovers);
+
+  // 同步儲存至後端
+  const res = await callAPI('saveFlow', { approvers: updated });
+  if (!res || !res.ok) {
+    toast('❌ 順序儲存失敗：' + (res && res.error ? res.error : '請稍後再試'));
+    // 儲存失敗就重新載入
+    loadAdminFlow();
+  } else {
+    toast('✅ 已調整第' + (index+1) + '關與第' + (newIndex+1) + '關的順序');
+    _cacheClear();
+  }
 }
 
 // 取得流程負責人下拉選項
