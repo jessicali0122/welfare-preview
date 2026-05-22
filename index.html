@@ -15,7 +15,7 @@
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 body{margin:0;background:#fff}
-:root{--brand:#1e9d6b;--brand-dark:#157a50;--brand-light:#e6f5ee;--brand-mid:#3dba84}
+:root{--brand:#1e9d6b;--brand-dark:#157a50;--brand-light:#e6f5ee;--brand-mid:#3dba84;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
 
 /* ── SIDEBAR ── */
@@ -29,6 +29,7 @@ aside .sidebar-brand-text{display:none}
 .sl:hover{background:#f1f5f9;color:#334155}
 .sl.active{background:#1e293b;color:#fff}
 .sl.active svg{stroke:#fff!important}
+.sl.active::before{content:'';position:absolute;bottom:6px;left:50%;transform:translateX(-50%);width:20px;height:3px;background:var(--amber,#f59e0b);border-radius:2px;z-index:1}
 .sl svg{flex-shrink:0}
 
 /* notification dot */
@@ -41,7 +42,8 @@ aside .sidebar-brand-text{display:none}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;touch-action:manipulation}
 button{touch-action:manipulation}
 .btn-p{background:var(--brand);color:#fff}.btn-p:hover{background:var(--brand-dark)}
-.btn-o{background:#fff;color:#374151;border:1px solid #d1d5db}.btn-o:hover{background:#f9fafb}
+.btn-o{background:#fff;color:#374151;border:1px solid #d1d5db}.btn-o:hover{background:#fffbeb;border-color:#fcd34d}
+.btn-a{background:var(--amber);color:#fff;border:none}.btn-a:hover{background:var(--amber-dark)}
 .btn-g{background:var(--brand);color:#fff}.btn-g:hover{background:var(--brand-dark)}
 .btn-r{background:#dc2626;color:#fff}.btn-r:hover{background:#b91c1c}
 .inp{width:100%;border:1.5px solid #e2e8f0;border-radius:9px;padding:8px 12px;font-size:14px;color:#111827;outline:none;transition:border .15s;font-family:inherit;background:#fff}
@@ -57,8 +59,17 @@ input[type=radio]{accent-color:var(--brand)}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:normal;text-align:center;word-break:break-word}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+/* Topbar amber gradient accent strip */
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand) 0%,var(--amber-mid,#fbbf24) 55%,var(--amber,#f59e0b) 100%);pointer-events:none;z-index:1}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
 .modal-bg.open{display:flex}
+/* Approval card mobile: stack buttons in a row below content */
+@media(max-width:520px){
+  .approval-card>div{flex-wrap:wrap!important}
+  .approval-card>div>div:first-child{flex-basis:100%!important;flex-grow:1!important}
+  .approval-card>div>div:last-child{flex-direction:row!important;flex-basis:100%!important;gap:6px!important;margin-top:10px!important;border-top:1px solid #f1f5f9;padding-top:10px!important}
+  .approval-card>div>div:last-child>button{flex:1;min-width:0;font-size:13px!important;padding:9px 6px!important;justify-content:center!important}
+}
 .notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden}
 .notif-panel.open{display:block}
 .notif-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s}
@@ -66,8 +77,8 @@ input[type=radio]{accent-color:var(--brand)}
 .notif-item.unread{border-left:3px solid var(--brand)}
 .notif-item.unread{padding-left:13px}
 .admin-tab{padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;color:#64748b;transition:all .15s}
-.admin-tab.active{color:var(--brand);border-bottom-color:var(--brand)}
-.section-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9}
+.admin-tab.active{color:var(--amber-dark,#d97706);border-bottom-color:var(--amber,#f59e0b)}
+.section-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;padding-left:9px;border-left:3px solid var(--amber,#f59e0b)}
 input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── FORM INNER GRIDS MOBILE ── */
@@ -198,11 +209,22 @@ input[type=checkbox]{accent-color:var(--brand)}
 @media(max-width:768px){
   #app,#app>div,#main-wrapper{height:calc(var(--vh,1vh)*100)!important}
 }
-/* 手機版 Modal：避免超出螢幕、加入 overflow scroll */
+/* 手機版 Modal：底部抽屜式，避免大黑塊 */
 @media(max-width:768px){
-  .modal-bg.open{align-items:flex-start!important;padding:16px 0!important;overflow-y:auto!important}
-  .modal-bg>div{max-height:calc(var(--vh,1vh)*88)!important;overflow-y:auto!important;margin:auto!important;width:calc(100vw - 24px)!important;max-width:480px!important}
+  .modal-bg.open{align-items:flex-end!important;padding:0!important;overflow:hidden!important}
+  .modal-bg>div{
+    max-height:92vh!important;
+    overflow-y:auto!important;
+    -webkit-overflow-scrolling:touch!important;
+    margin:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    border-radius:20px 20px 0 0!important;
+    padding-bottom:max(env(safe-area-inset-bottom,0px),12px)!important;
+    animation:slideUpModal .25s ease!important
+  }
 }
+@keyframes slideUpModal{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .inp-error{border-color:#ef4444!important;background:#fff5f5!important}
 
 /* ── 表單明細卡片：手機版欄位格線 ── */
@@ -230,16 +252,18 @@ input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── 手機版表格列隱藏 ── */
 @media(max-width:768px){
-  /* 案件追蹤：隱藏「關卡」(6th) 與「申請時間」(8th) */
-  #view-applications thead th:nth-child(6),
-  #applications-tbody td:nth-child(6),
+  /* 案件追蹤：隱藏「簽核人」(7th) 與「申請時間」(8th) */
+  #view-applications thead th:nth-child(7),
+  #applications-tbody td:nth-child(7),
   #view-applications thead th:nth-child(8),
   #applications-tbody td:nth-child(8){display:none!important}
-  /* 總覽最新紀錄：隱藏「分類」(4th) 與「申請時間」(7th) */
+  /* 總覽最新紀錄：隱藏「分類」(4th)、「簽核人」(7th)、「申請時間」(8th) */
   #view-dashboard thead th:nth-child(4),
   #dashboard-tbody td:nth-child(4),
   #view-dashboard thead th:nth-child(7),
-  #dashboard-tbody td:nth-child(7){display:none!important}
+  #dashboard-tbody td:nth-child(7),
+  #view-dashboard thead th:nth-child(8),
+  #dashboard-tbody td:nth-child(8){display:none!important}
   /* 費用分析明細表：手機隱藏「單號」(2nd) 與「申請人」(3rd) */
   #view-analytics .card table thead th:nth-child(2),
   #analytics-approved-tbody td:nth-child(2),
@@ -311,12 +335,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 <body>
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:#f8f5f3">
-  <div style="background:#fff;border-radius:20px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.12);border:1px solid #e8ddd8;text-align:center">
+<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%)">
+  <div style="background:#fff;border-radius:20px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 40px rgba(0,0,0,.12);border:1px solid #e8ddd8;text-align:center;overflow:hidden;position:relative">
+    <!-- amber gradient top accent -->
+    <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#1e9d6b 0%,#fbbf24 50%,#f59e0b 100%)"></div>
     <div style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;overflow:hidden;background:#fff">
       <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/><path d="M25 7 C23 3 17 4 18 8 C21 10 24 8 25 7Z" fill="#1e9d6b"/><path d="M27 4 C29 1 34 2 33 6 C30 7 27 5 27 4Z" fill="#1e9d6b"/></svg>
     </div>
-    <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">BeneFlow</div>
+    <div style="font-size:22px;font-weight:700;color:#0f172a;margin-bottom:6px">Bene<span style="color:var(--amber,#f59e0b)">Flow</span></div>
     <div style="font-size:14px;color:#64748b;margin-bottom:28px">福委會請款簽核系統<br>請使用公司帳號登入</div>
     <div id="g-signin-btn" style="display:flex;justify-content:center;margin-bottom:16px"></div>
     <div id="login-error" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
@@ -335,7 +361,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- Header -->
   <div style="padding:14px 0;border-bottom:1px solid #f0ede9;display:flex;align-items:center;justify-content:center">
-    <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent">
+    <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent;box-shadow:0 0 0 2px rgba(251,191,36,.35)">
       <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>
     </div>
     <div class="sidebar-brand-text" style="flex:1;min-width:0">
@@ -430,7 +456,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <!-- 頂部三欄：已核准總支出 + 總申請案件 + 快速操作 -->
     <div id="dashboard-top-grid" style="display:grid;grid-template-columns:2fr 1fr 1.5fr;gap:14px;margin-bottom:14px;align-items:stretch">
       <!-- 已核准總支出 -->
-      <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);border:none;padding:20px 24px;display:flex;align-items:center;gap:16px">
+      <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 60%,#1a6e4a 100%);border:none;padding:20px 24px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-20px;width:90px;height:90px;border-radius:50%;background:rgba(251,191,36,.18)"></div>
+        <div style="position:absolute;bottom:-30px;right:30px;width:60px;height:60px;border-radius:50%;background:rgba(245,158,11,.12)"></div>
         <div style="width:48px;height:48px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
         </div>
@@ -460,7 +488,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <button class="btn btn-p" onclick="sw('new-form')" style="width:100%;justify-content:center;padding:10px">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
             </button>
-            <button class="btn btn-o" onclick="sw('approvals')" style="width:100%;justify-content:center">
+            <button class="btn btn-a" onclick="sw('approvals')" style="width:100%;justify-content:center">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>待審核
             </button>
           </div>
@@ -509,15 +537,15 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         </div>
       </div>
       <!-- 已退件 -->
-      <div class="stat" style="border-top:3px solid #334155;padding:16px 14px">
+      <div class="stat" style="border-top:3px solid #f97316;padding:16px 14px">
         <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
           <div>
             <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">已退件</div>
             <div style="font-size:24px;font-weight:700;color:#0f172a;line-height:1" id="stat-rejected">0</div>
             <div style="font-size:11px;color:#94a3b8;margin-top:5px" id="stat-rejected-rate">退件率 0%</div>
           </div>
-          <div style="width:30px;height:30px;background:#f1f5f9;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div style="width:30px;height:30px;background:#ffedd5;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
         </div>
       </div>
@@ -535,10 +563,11 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">分類</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">含稅金額</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">狀態</th>
+          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">簽核人</th>
           <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請時間</th>
         </tr></thead>
         <tbody id="dashboard-tbody">
-          <tr style="border-bottom:1px solid #f8fafc"><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
+          <tr style="border-bottom:1px solid #f8fafc"><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
     </div>
@@ -578,17 +607,17 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">已核准件數</div>
         <div id="analytics-count" style="font-size:26px;font-weight:800;color:var(--brand);line-height:1">—</div>
       </div>
-      <div class="stat" style="border-top:3px solid var(--brand);padding:16px 14px;text-align:center">
+      <div class="stat" style="border-top:3px solid var(--brand);background:linear-gradient(135deg,#f0fdf8 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">已核准總金額</div>
-        <div id="analytics-approved" style="font-size:22px;font-weight:800;color:var(--brand);line-height:1">—</div>
+        <div id="analytics-approved" style="font-size:17px;font-weight:800;color:var(--brand);line-height:1.2;word-break:break-word">—</div>
       </div>
-      <div class="stat" style="border-top:3px solid #f59e0b;padding:16px 14px;text-align:center">
+      <div class="stat" style="border-top:3px solid var(--amber,#f59e0b);background:linear-gradient(135deg,#fffbf0 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">簽核中件數</div>
-        <div id="analytics-pending-count" style="font-size:26px;font-weight:800;color:#d97706;line-height:1">—</div>
+        <div id="analytics-pending-count" style="font-size:26px;font-weight:800;color:var(--amber-dark,#d97706);line-height:1">—</div>
       </div>
-      <div class="stat" style="border-top:3px solid #94a3b8;padding:16px 14px;text-align:center">
+      <div class="stat" style="border-top:3px solid #f97316;background:linear-gradient(135deg,#fff8f3 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">退件件數</div>
-        <div id="analytics-rejected-count" style="font-size:26px;font-weight:800;color:#64748b;line-height:1">—</div>
+        <div id="analytics-rejected-count" style="font-size:26px;font-weight:800;color:#f97316;line-height:1">—</div>
       </div>
     </div>
 
@@ -709,8 +738,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">關卡</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
         </tr></thead>
@@ -844,10 +873,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <span style="font-size:18px">+</span> 新增明細
           </button>
           <!-- ⑭ 合計 -->
-          <div style="margin-top:14px;background:var(--brand-light);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border:1px solid #b2e0e1">
-            <div style="text-align:center"><div style="font-size:12px;color:var(--brand-dark);font-weight:500">未稅小計</div><div id="sum-pretax" style="font-size:17px;font-weight:700;color:var(--brand);margin-top:2px">NT$ 0</div></div>
-            <div style="text-align:center"><div style="font-size:12px;color:var(--brand-dark);font-weight:500">稅額合計</div><div id="sum-tax" style="font-size:17px;font-weight:700;color:var(--brand);margin-top:2px">NT$ 0</div></div>
-            <div style="text-align:center"><div style="font-size:12px;color:var(--brand-dark);font-weight:600">⑭ 合計（含稅）</div><div id="sum-total" style="font-size:18px;font-weight:700;color:var(--brand);margin-top:2px">NT$ 0</div></div>
+          <div style="margin-top:14px;background:var(--amber-light,#fef3c7);border-radius:10px;padding:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;border:1px solid #fcd34d">
+            <div style="text-align:center"><div style="font-size:12px;color:#92400e;font-weight:500">未稅小計</div><div id="sum-pretax" style="font-size:17px;font-weight:700;color:var(--amber-dark,#d97706);margin-top:2px">NT$ 0</div></div>
+            <div style="text-align:center"><div style="font-size:12px;color:#92400e;font-weight:500">稅額合計</div><div id="sum-tax" style="font-size:17px;font-weight:700;color:var(--amber-dark,#d97706);margin-top:2px">NT$ 0</div></div>
+            <div style="text-align:center"><div style="font-size:12px;color:#92400e;font-weight:600">⑭ 合計（含稅）</div><div id="sum-total" style="font-size:19px;font-weight:800;color:var(--amber-dark,#d97706);margin-top:2px">NT$ 0</div></div>
           </div>
         </div>
 
@@ -880,7 +909,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="submitForm()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
             </button>
-            <button class="btn btn-o" style="width:100%;justify-content:center" onclick="saveDraftForm()">
+            <button class="btn btn-a" style="width:100%;justify-content:center" onclick="saveDraftForm()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>儲存草稿
             </button>
           </div>
@@ -962,11 +991,11 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div id="flow-title" class="section-title">簽核進度（2 / 3 關）</div>
           <div id="flow-timeline" style="position:relative;padding-left:50px"></div>
         </div>
-        <div id="approve-box" class="card" style="padding:20px;border:2px solid #b2e0e1">
-          <div style="font-size:14px;font-weight:700;color:var(--brand);margin-bottom:3px">需要您審核</div>
+        <div id="approve-box" class="card" style="padding:20px;border:2px solid var(--amber-mid,#fbbf24)">
+          <div style="font-size:14px;font-weight:700;color:var(--amber-dark,#d97706);margin-bottom:3px">⏳ 需要您審核</div>
           <div class="approve-step-label" style="font-size:12px;color:#94a3b8;margin-bottom:12px">您是本關簽核人</div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">簽核意見</label>
-          <textarea class="inp" rows="3" placeholder="填寫意見（退件時必填）..."></textarea>
+          <textarea class="inp" rows="3" placeholder="填寫意見（退件時必填）..." style="border-color:#fcd34d"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="btn btn-g" style="flex:1;justify-content:center" onclick="doApprove()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>核准
@@ -1266,7 +1295,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
 <!-- 送出成功持久卡片 -->
 <div id="submit-result-card" style="display:none;position:fixed;bottom:24px;right:24px;z-index:300;width:300px;background:#fff;border-radius:14px;box-shadow:0 8px 40px rgba(0,0,0,.18);border:1px solid #e2e8f0;overflow:hidden">
-  <div style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
+  <div style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 60%,#1a6e4a 100%);padding:14px 16px;display:flex;align-items:center;justify-content:space-between">
     <div style="display:flex;align-items:center;gap:8px">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       <span style="color:#fff;font-size:14px;font-weight:700">申請已送出</span>
@@ -1301,7 +1330,8 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 // ══════════════════════════════════════════
 //  登入狀態
 // ══════════════════════════════════════════
-let currentUser = null; // { email, name, token }
+let currentUser  = null; // { email, name, token }
+let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
 
 // ── 管理者名單（可依需求擴充）──
 const ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
@@ -1442,20 +1472,8 @@ function initGoogleSignIn() {
       if (btn) btn.innerHTML = _googleBtnHTML + '<div style="font-size:12px;color:#ef4444;margin-top:8px;text-align:center">Google 服務載入逾時，請重新整理</div>';
     }
   } else {
-    document.getElementById('g-signin-btn').innerHTML = `
-      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
-        <div style="display:flex;align-items:center;gap:12px;border:1.5px solid #dadce0;border-radius:10px;padding:10px 16px;background:#fff;cursor:pointer;transition:background .15s" onclick="this.parentElement.querySelector('#manual-email-wrap').style.display='flex';this.style.display='none'">
-          <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
-          <span style="font-size:14px;font-weight:500;color:#3c4043;flex:1;text-align:center">使用 Google 帳戶登入</span>
-        </div>
-        <div id="manual-email-wrap" style="display:none;flex-direction:column;gap:8px">
-          <input id="manual-email" class="inp" placeholder="yourname@tsagroup.com.tw" style="text-align:center">
-          <input id="manual-name" class="inp" placeholder="你的姓名" style="text-align:center">
-          <button onclick="manualLogin()" class="btn btn-p" style="width:100%;justify-content:center;padding:10px">
-            登入系統
-          </button>
-        </div>
-      </div>`;
+    // GOOGLE_CLIENT_ID 未設定，顯示錯誤提示
+    if (btn) btn.innerHTML = '<div style="font-size:13px;color:#ef4444;text-align:center;padding:10px">系統設定錯誤，請聯繫管理員</div>';
   }
 }
 
@@ -1465,7 +1483,7 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // session 8小時過期 → 清除並重新登入
+      // session 24小時過期 → 清除並重新登入（舊資料若是8小時過期也接受延長）
       if (currentUser.sessionExpiry && Date.now() > currentUser.sessionExpiry) {
         localStorage.removeItem('bf_user');
         currentUser = null;
@@ -1480,19 +1498,6 @@ window.onload = function() {
   initGoogleSignIn();
 };
 
-function manualLogin() {
-  const email = document.getElementById('manual-email').value.trim();
-  const name  = document.getElementById('manual-name').value.trim();
-  if (!email.endsWith('@tsagroup.com.tw')) {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱';
-    return;
-  }
-  if (!name) { toast('⚠️ 請輸入姓名'); return; }
-  currentUser = { email, name, token: 'manual_' + Date.now(), sessionExpiry: Date.now() + 8*60*60*1000 };
-  localStorage.setItem('bf_user', JSON.stringify(currentUser));
-  showApp();
-}
 
 function handleGoogleLogin(response) {
   const payload = parseJwt(response.credential);
@@ -1501,11 +1506,50 @@ function handleGoogleLogin(response) {
     document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱登入';
     return;
   }
-  // 以 JWT 本身的 exp 計算 token 實際過期時間（通常 1 小時），session 另外維持 8 小時
+  // 以 JWT 本身的 exp 計算 token 實際過期時間（通常 1 小時），session 延長至 24 小時
   const tokenExpiry = payload.exp ? payload.exp * 1000 : Date.now() + 55 * 60 * 1000;
-  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry: Date.now() + 8*60*60*1000 };
+  // 若已有登入資料，保留原本的 sessionExpiry（避免每次靜默刷新都重設 24 小時）
+  const prevSession = currentUser?.sessionExpiry;
+  const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 24*60*60*1000;
+  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
-  showApp();
+  // 移除過期提示條（如果有）
+  const expBar = document.getElementById('auth-expired-bar');
+  if (expBar) expBar.remove();
+  if (document.getElementById('app').style.display === 'none') {
+    showApp();
+  }
+  startTokenRefreshTimer();
+}
+
+// 主動在 token 快過期前靜默刷新（每 5 分鐘檢查一次）
+let _tokenRefreshTimer = null;
+function startTokenRefreshTimer() {
+  if (_tokenRefreshTimer) clearInterval(_tokenRefreshTimer);
+  _tokenRefreshTimer = setInterval(() => {
+    if (!currentUser) return;
+    const now = Date.now();
+    // session 過期 → 清除
+    if (currentUser.sessionExpiry && now > currentUser.sessionExpiry) {
+      clearInterval(_tokenRefreshTimer);
+      _showAuthExpiredBar();
+      return;
+    }
+    // token 在 10 分鐘內到期 → 嘗試靜默刷新
+    if (currentUser.tokenExpiry && (currentUser.tokenExpiry - now) < 10 * 60 * 1000) {
+      if (window.google?.accounts?.id) {
+        try {
+          google.accounts.id.prompt(n => {
+            // 靜默刷新失敗時不中斷使用，等 token 真正過期再提示
+            if (n.isSkippedMoment?.() || n.isDismissedMoment?.()) {
+              // 如果 token 已過期才顯示提示
+              if (Date.now() > (currentUser?.tokenExpiry || 0)) _showAuthExpiredBar();
+            }
+          });
+        } catch(e) {}
+      }
+    }
+  }, 5 * 60 * 1000); // 每 5 分鐘檢查
 }
 
 function parseJwt(token) {
@@ -1533,6 +1577,7 @@ function showApp() {
     if(menuInfo)menuInfo.textContent=currentUser.email;
     loadDashboard();
     loadAdminFlow(); // 預載簽核流程，讓狀態欄審核人名稱即時顯示
+    startTokenRefreshTimer(); // 主動刷新 token，避免頻繁顯示過期提示
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -1650,7 +1695,7 @@ function _showAuthExpiredBar() {
   bar.style.cssText = isMob
     ? 'position:fixed;top:12px;left:12px;right:12px;background:#1e293b;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.35);white-space:nowrap;justify-content:space-between'
     : 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
-  bar.innerHTML = '⚠️ 登入已過期 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">重新登入</button>';
+  bar.innerHTML = '🔒 登入憑證已過期，請重新登入 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;white-space:nowrap">重新登入</button>';
   document.body.appendChild(bar);
 }
 
@@ -1666,7 +1711,7 @@ function showSessionExpiredModal() {
       <div style="font-size:40px;margin-bottom:12px">⏰</div>
       <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">登入已過期</div>
       <div style="font-size:14px;color:#64748b;margin-bottom:20px;line-height:1.6">
-        您的登入憑證已失效（Google Token 每小時需重新驗證）<br>請重新登入繼續使用。
+        您的登入憑證已過期，請重新登入繼續使用。
       </div>
       <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;font-size:15px" onclick="reLogin()">
         重新登入
@@ -1712,8 +1757,8 @@ async function loadDashboard() {
   const res = await callAPI('list');
   if (!res.ok) { if (!res._authError) toast('❌ 總覽載入失敗：' + res.error); return; }
   const cases = res.cases || [];
-  // 非管理者只統計／顯示自己的案件；管理者看全部
-  const viewCases = isAdmin() ? cases : cases.filter(c => c.email === currentUser?.email);
+  // 所有案件對所有登入者開放（草稿已由後端過濾）
+  const viewCases = cases;
   const pending = viewCases.filter(c => c.status && c.status.includes('待'));
   const done    = viewCases.filter(c => c.status === '已完成');
   const rejected= viewCases.filter(c => c.status === '已退件');
@@ -1768,19 +1813,20 @@ function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
+    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
     const stepApprover = (c.status && (c.status.includes('待') || c.status === '已退件')) ? getStepApproverName(c.step) : '';
     return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
+      <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
+      <td style="padding:12px 16px">${catBadge(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span>${stepApprover?`<span style="font-size:12px;color:#64748b;margin-left:6px;font-weight:500">${stepApprover}</span>`:''}</td>
+      <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap">${stepApprover||'—'}</td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
     </tr>`;
   }).join('');
@@ -1808,8 +1854,8 @@ async function loadApplications() {
     return;
   }
   const allCases = res.cases || [];
-  // 非管理者只顯示自己提交的案件
-  const cases = isAdmin() ? allCases : allCases.filter(c => c.email === currentUser?.email);
+  // 所有登入者皆可看到所有案件（草稿已由後端過濾，僅申請人本人可見）
+  const cases = allCases;
   const tbody = document.getElementById('applications-tbody');
   const countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
@@ -1822,18 +1868,23 @@ async function loadApplications() {
   tbody.innerHTML = sortedCases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
     const stepApprover = (c.status && (c.status.includes('待') || c.status === '已退件')) ? getStepApproverName(c.step) : '';
+    const stepTotal = c.totalSteps || 4;
+    const stepCurrent = c.step || 1;
+    // 狀態欄：badge + 小字關卡進度
+    const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`
+      + (c.status !== '已完成' && c.status !== '草稿' ? `<span style="font-size:11px;color:#94a3b8;margin-left:5px">${stepCurrent}/${stepTotal}</span>` : '');
     const actionBtn = c.status === '已完成'
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
          <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${c.caseId}')">列印</button>`
       : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
     return `<tr class="tr" style="border-bottom:1px solid #f8fafc" data-dept="${c.department||''}">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand)">${c.caseId}</td>
+      <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${c.category?`<span class="tag" style="background:var(--brand-light);color:var(--brand)">${c.category}</span>`:'—'}</td>
+      <td style="padding:12px 16px">${catBadge(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;color:#374151">${c.step||1} / ${c.totalSteps||4}</td>
-      <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span>${stepApprover?`<span style="font-size:12px;color:#64748b;margin-left:6px;font-weight:500">${stepApprover}</span>`:''}</td>
+      <td style="padding:12px 16px;white-space:nowrap">${statusCell}</td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap">${stepApprover||'—'}</td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
       <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
@@ -1856,8 +1907,10 @@ async function loadApprovals() {
     container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">✅ 目前沒有待審核案件</div>';
     return;
   }
-  const myTurnCases = pending.filter(c => isMyTurnToApprove(c));
-  const proxyCases  = isAdmin() ? pending.filter(c => !isMyTurnToApprove(c)) : [];
+  // 依送出時間由新到舊排列
+  const sortByDate = arr => [...arr].sort((a,b) => String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1);
+  const myTurnCases = sortByDate(pending.filter(c => isMyTurnToApprove(c)));
+  const proxyCases  = isAdmin() ? sortByDate(pending.filter(c => !isMyTurnToApprove(c))) : [];
   const countLbl = document.getElementById('approvals-count-label');
   if (countLbl) {
     if (isAdmin() && proxyCases.length > 0) {
@@ -1870,7 +1923,7 @@ async function loadApprovals() {
   function _approvalCardHtml(c, isProxy) {
     const subject  = c.project || c.subject || '';
     const category = c.category || '';
-    const border   = isProxy ? '#94a3b8' : 'var(--brand)';
+    const border   = isProxy ? '#94a3b8' : 'var(--amber,#f59e0b)';
     return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="padding:18px;border-left:4px solid ' + border + ';margin-bottom:10px">'
       + '<div style="display:flex;align-items:start;justify-content:space-between;gap:12px">'
       +   '<div style="display:flex;align-items:start;gap:10px;flex:1;min-width:0">'
@@ -1885,7 +1938,7 @@ async function loadApprovals() {
       // 主旨 + 分類標籤
       +       (subject ? '<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
       +           subject
-      +           + (category ? '&ensp;<span style="font-size:12px;font-weight:600;background:var(--brand-light);color:var(--brand);padding:2px 9px;border-radius:6px">' + category + '</span>' : '')
+      +           + (category ? (function(){var c=catColor(category);return '&ensp;<span style="font-size:12px;font-weight:600;background:'+c.bg+';color:'+c.color+';padding:2px 9px;border-radius:6px;border:1px solid '+c.border+'">'+category+'</span>';})() : '')
       +         '</div>' : '')
       // 申請人 / 部門 / 含稅 / 送出
       +       '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px 16px;font-size:13px">'
@@ -1922,21 +1975,85 @@ async function loadApprovals() {
   container.innerHTML = html;
 }
 
-async function quickApprove(caseId) {
-  if (!confirm('確定核准案件 ' + caseId + '？')) return;
+function quickApprove(caseId) {
+  // 用內建確認 modal，取代 native confirm()
+  _showConfirmModal(
+    '✅ 確認核准',
+    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:13px;color:#64748b">核准後申請人將收到通知，此操作無法撤銷。</span>',
+    '核准',
+    'var(--brand)',
+    async function() {
+      toast('⏳ 處理中...');
+      const res = await callAPI('approve', { caseId, comment: '核准' });
+      if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadApprovals(); loadDashboard(); }
+      else toast('❌ 錯誤：' + res.error);
+    }
+  );
+}
+
+function quickReject(caseId) {
+  // 用內建退件 modal，取代 native prompt()
+  _showRejectModal(caseId);
+}
+
+async function _doQuickReject(caseId, comment) {
   toast('⏳ 處理中...');
-  const res = await callAPI('approve', { caseId, comment: '核准' });
-  if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadApprovals(); loadDashboard(); }
+  const res = await callAPI('reject', { caseId, comment });
+  if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
   else toast('❌ 錯誤：' + res.error);
 }
 
-async function quickReject(caseId) {
-  const comment = prompt('請輸入退件原因（必填）：');
-  if (!comment) { toast('⚠️ 退件原因不可空白'); return; }
-  toast('⏳ 處理中...');
-  const res = await callAPI('reject', { caseId, comment });
-  if (res.ok) { _cacheClear(); toast('❌ 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
-  else toast('❌ 錯誤：' + res.error);
+// ── 通用確認 Modal（取代 native confirm）──
+function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
+  let m = document.getElementById('_confirm_modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = '_confirm_modal';
+    m.className = 'modal-bg';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+    + '<div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:10px">'+title+'</div>'
+    + '<div style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:22px">'+bodyHtml+'</div>'
+    + '<div style="display:flex;gap:10px">'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_confirm_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn" style="flex:1;justify-content:center;background:'+btnColor+';color:#fff" id="_confirm_ok">'+btnLabel+'</button>'
+    + '</div></div>';
+  m.classList.add('open');
+  document.getElementById('_confirm_ok').onclick = function() {
+    m.classList.remove('open');
+    onConfirm();
+  };
+  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
+}
+
+// ── 退件 Modal（取代 native prompt）──
+function _showRejectModal(caseId) {
+  let m = document.getElementById('_reject_modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = '_reject_modal';
+    m.className = 'modal-bg';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+    + '<div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px">🔴 退件確認</div>'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:16px">案件：<strong>'+caseId+'</strong>，退件後申請人將收到通知。</div>'
+    + '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">退件原因 <span style="color:#ef4444">*</span></div>'
+    + '<textarea id="_reject_comment" class="inp" rows="3" placeholder="請填寫退件原因，讓申請人了解需要修改的地方..." style="resize:vertical;margin-bottom:16px"></textarea>'
+    + '<div style="display:flex;gap:10px">'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_reject_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn btn-r" style="flex:1;justify-content:center" id="_reject_ok">確認退件</button>'
+    + '</div></div>';
+  m.classList.add('open');
+  setTimeout(() => document.getElementById('_reject_comment')?.focus(), 100);
+  document.getElementById('_reject_ok').onclick = function() {
+    const comment = document.getElementById('_reject_comment').value.trim();
+    if (!comment) { toast('⚠️ 請填寫退件原因'); return; }
+    m.classList.remove('open');
+    _doQuickReject(caseId, comment);
+  };
+  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
 }
 
 // ══════════════════════════════════════════
@@ -2065,41 +2182,57 @@ function renderDetailItems(items) {
   if (suEl) suEl.textContent = 'NT$ ' + sumTotal.toLocaleString();
 }
 
-async function doApprove() {
+function doApprove() {
   const caseId  = document.getElementById('approve-box').getAttribute('data-caseid');
   const comment = document.querySelector('#approve-box textarea').value;
   if (!caseId) return;
-  toast('⏳ 處理中...');
-  const res = await callAPI('approve', { caseId, comment });
-  if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadDetail(caseId); }
-  else toast('❌ 錯誤：' + res.error);
+  _showConfirmModal(
+    '✅ 確認核准',
+    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:13px;color:#64748b">核准後申請人將收到通知，此操作無法撤銷。</span>',
+    '核准', 'var(--brand)',
+    async function() {
+      toast('⏳ 處理中...');
+      const res = await callAPI('approve', { caseId, comment });
+      if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadDetail(caseId); }
+      else toast('❌ 錯誤：' + res.error);
+    }
+  );
 }
 
-async function doReject() {
+function doReject() {
   const caseId  = document.getElementById('approve-box').getAttribute('data-caseid');
   const comment = document.querySelector('#approve-box textarea').value;
-  if (!comment) { toast('⚠️ 退件必須填寫意見'); return; }
-  toast('⏳ 處理中...');
-  const res = await callAPI('reject', { caseId, comment });
-  if (res.ok) { _cacheClear(); toast('❌ 已退件，申請人將收到通知'); loadDetail(caseId); }
-  else toast('❌ 錯誤：' + res.error);
+  if (!caseId) return;
+  if (!comment) { toast('⚠️ 請先填寫退件原因再送出'); return; }
+  _showConfirmModal(
+    '🔴 確認退件',
+    '確定退件案件 <strong>' + caseId + '</strong>？<br><span style="font-size:13px;color:#64748b">退件原因：' + comment + '</span>',
+    '確認退件', '#dc2626',
+    async function() {
+      toast('⏳ 處理中...');
+      const res = await callAPI('reject', { caseId, comment });
+      if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); }
+      else toast('❌ 錯誤：' + res.error);
+    }
+  );
 }
 
 // ── 退件後重新送出 ──
-async function doResubmit() {
+function doResubmit() {
   const box = document.getElementById('resubmit-box');
   const caseId = box ? box.getAttribute('data-caseid') : null;
   if (!caseId) return;
-  if (!confirm('確定要重新送出案件 ' + caseId + '？\n送出後將重新進入第1關簽核流程。')) return;
-  toast('⏳ 重新送出中...');
-  const res = await callAPI('resubmit', { caseId });
-  if (res.ok) {
-    _cacheClear();
-    toast('✅ 已重新送出！已通知第1關簽核人');
-    setTimeout(() => loadDetail(caseId), 1000);
-  } else {
-    toast('❌ 重新送出失敗：' + res.error);
-  }
+  _showConfirmModal(
+    '🔄 確認重新送出',
+    '確定重新送出案件 <strong>' + caseId + '</strong>？<br><span style="font-size:13px;color:#64748b">送出後將重新進入第1關簽核流程。</span>',
+    '重新送出', 'var(--brand)',
+    async function() {
+      toast('⏳ 重新送出中...');
+      const res = await callAPI('resubmit', { caseId });
+      if (res.ok) { _cacheClear(); toast('✅ 已重新送出！已通知第1關簽核人'); setTimeout(() => loadDetail(caseId), 1000); }
+      else toast('❌ 重新送出失敗：' + res.error);
+    }
+  );
 }
 
 // ══════════════════════════════════════════
@@ -2176,6 +2309,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   const employeeIdEl = document.getElementById('employee-id');
   const applicantEl = document.getElementById('applicant-select');
   const res = await callAPI('submit', {
+    ...( _draftCaseId ? { caseId: _draftCaseId } : {}), // 草稿轉送出
     project:    subjectEl?.value || '',
     subject:    subjectEl?.value || '',   // 同時送 subject，讓後端 Chat 通知顯示主旨
     department: departmentEl?.value || '',
@@ -2188,6 +2322,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   });
 
   if (res.ok) {
+    _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
     localStorage.removeItem('bf_draft');
     _cacheClear();
     const submittedCaseId = res.caseId;
@@ -2228,15 +2363,34 @@ async function saveDraftForm() {
   const pretax = items.reduce((s,i) => s + i.pretax, 0);
   const tax    = items.reduce((s,i) => s + i.tax,    0);
   const total  = items.reduce((s,i) => s + i.total,  0);
+  const applicantEl2 = document.getElementById('applicant-select');
+  const payeeEl2     = document.getElementById('payee-select');
+  const deptEl2      = document.getElementById('form-dept-select');
+  const empIdEl2     = document.getElementById('employee-id');
   toast('⏳ 儲存中...');
-  const res = await callAPI('draft', { project: subjectEl?.value||'', reason: reasonEl?.value||'', pretax, tax, total, items });
-  if (res.ok) toast('💾 草稿已儲存！單號：' + res.caseId);
-  else toast('❌ 儲存失敗：' + res.error);
+  const res = await callAPI('draft', {
+    ...(  _draftCaseId ? { caseId: _draftCaseId } : {}),
+    project:    subjectEl?.value || '',
+    reason:     reasonEl?.value  || '',
+    pretax, tax, total, items,
+    name:       applicantEl2?.value || currentUser?.name || '',
+    payee:      payeeEl2?.value     || '',
+    department: deptEl2?.value      || '',
+    employeeId: empIdEl2?.value     || '',
+  });
+  if (res.ok) {
+    _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
+    _cacheClear();
+    toast('💾 草稿已儲存！單號：' + res.caseId);
+  } else {
+    toast('❌ 儲存失敗：' + res.error);
+  }
 }
 
-function printCase(caseId) {
-  toast('🖨️ 正在準備列印...');
-  setTimeout(() => window.print(), 300);
+async function printCase(caseId) {
+  toast('🖨️ 載入案件中...');
+  await loadDetail(caseId);
+  setTimeout(() => window.print(), 400);
 }
 
 // ── NAVIGATION ──
@@ -2272,6 +2426,7 @@ function sw(name,elOrName){
   if(name==='admin') loadAdminUsers();
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
+    _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
     checkDraftBanner();
     // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
@@ -2357,6 +2512,30 @@ const EMPLOYEE_DEPTS = {
   '鄒馨瑩':'人力資源部','蔡鴻陵':'通路事業發展部','鄭安汝':'財務會計部'
 };
 // 依 email 查中文姓名：優先查本地對照表，再查已載入的管理者表格
+// 分類顏色對照（不同分類顯示不同顏色徽章）
+function catColor(cat) {
+  const map = {
+    '餐飲費':   {bg:'#fff7ed',color:'#c2410c',border:'#fed7aa'},
+    '活動費':   {bg:'#fffbeb',color:'#b45309',border:'#fde68a'},
+    '獎品費':   {bg:'#fdf2f8',color:'#9d174d',border:'#fbcfe8'},
+    '物資費':   {bg:'#e0f9f5',color:'#0f766e',border:'#99f6e4'},
+    '場地設備費':{bg:'#f5f3ff',color:'#6d28d9',border:'#ddd6fe'},
+    '福利費':   {bg:'#f0fdf4',color:'#15803d',border:'#bbf7d0'},
+    '行政費':   {bg:'#eff6ff',color:'#1d4ed8',border:'#bfdbfe'},
+    '薪資':     {bg:'#f0fdf4',color:'#166534',border:'#86efac'},
+    '交通費':   {bg:'#fef9c3',color:'#854d0e',border:'#fde047'},
+    '其他':     {bg:'#f1f5f9',color:'#475569',border:'#cbd5e1'},
+  };
+  const m = map[cat];
+  if (!m) return {bg:'#f1f5f9',color:'#475569',border:'#cbd5e1'};
+  return m;
+}
+function catBadge(cat) {
+  if (!cat) return '—';
+  const c = catColor(cat);
+  return `<span class="tag" style="background:${c.bg};color:${c.color};border:1px solid ${c.border}">${cat}</span>`;
+}
+
 // 取得某關卡的簽核人姓名（供狀態欄顯示用）
 function getStepApproverName(step) {
   const idx = (step || 1) - 1;
@@ -3571,20 +3750,25 @@ function clearSelection(){
   if(sa)sa.checked=false;
   updateBatchBar();
 }
-async function batchApprove(){
+function batchApprove(){
   const checked=document.querySelectorAll('.approval-cb:checked');
   if(checked.length===0){toast('⚠️ 請先勾選要核准的案件');return;}
-  if(!confirm('確定批次核准 '+checked.length+' 件案件？'))return;
-  toast('⏳ 批次處理中...');
-  const ids=Array.from(checked).map(cb=>cb.getAttribute('data-caseid'));
-  let success=0;
-  for(const caseId of ids){
-    const res=await callAPI('approve',{caseId,comment:'批次核准'});
-    if(res.ok)success++;
-  }
-  toast('✅ 已核准 '+success+'/'+ids.length+' 件');
-  clearSelection();
-  loadApprovals();loadDashboard();
+  _showConfirmModal(
+    '✅ 批次核准確認',
+    '確定一次核准 <strong>'+checked.length+' 件</strong>案件？<br><span style="font-size:13px;color:#64748b">核准後申請人將分別收到通知，此操作無法撤銷。</span>',
+    '全部核准','var(--brand)',
+    async function(){
+      const ids=Array.from(document.querySelectorAll('.approval-cb:checked')).map(cb=>cb.getAttribute('data-caseid'));
+      let success=0;
+      for(const caseId of ids){
+        const res=await callAPI('approve',{caseId,comment:'批次核准'});
+        if(res.ok)success++;
+      }
+      toast('✅ 已核准 '+success+'/'+ids.length+' 件');
+      clearSelection();
+      loadApprovals();loadDashboard();
+    }
+  );
 }
 
 // ══════════════════════════════════════════
@@ -3712,7 +3896,7 @@ function setAnalyticsRange(type){
   _analyticsRange=type;
   _resetAnalyticsButtons();
   var activeBtn=document.getElementById('arange-'+type);
-  if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+  if(activeBtn){activeBtn.style.background='var(--amber,#f59e0b)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--amber,#f59e0b)';}
   var cr=document.getElementById('analytics-custom-range');
   if(cr)cr.style.display=type==='custom'?'flex':'none';
   if(type!=='custom'&&_analyticsAllCases!==null){var r=getDateRange(type);renderAnalytics(r.start,r.end);}
@@ -3770,11 +3954,11 @@ async function loadAnalytics(){
     // 恢復上次選取的區間
     var r=getDateRange(_analyticsRange);
     var activeBtn=document.getElementById('arange-'+_analyticsRange);
-    if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+    if(activeBtn){activeBtn.style.background='var(--amber,#f59e0b)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--amber,#f59e0b)';}
     renderAnalytics(r.start,r.end);
   } else if(_analyticsRange==='custom'){
     var activeBtn=document.getElementById('arange-custom');
-    if(activeBtn){activeBtn.style.background='var(--brand)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--brand)';}
+    if(activeBtn){activeBtn.style.background='var(--amber,#f59e0b)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--amber,#f59e0b)';}
     applyCustomRange();
   } else {
     // 預設：不限定區間，顯示全部資料
@@ -3844,7 +4028,7 @@ function renderMonthlyChart(id,moMap){
   el.innerHTML=keys.map(function(k){
     var val=moMap[k];var barH=maxVal>0?Math.max(8,Math.round(val/maxVal*chartH)):8;
     var mo=k.split('-')[1]+'月';var dv=val>=10000?Math.round(val/1000)+'K':val.toLocaleString();
-    return'<div style="flex:1;min-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px" title="'+k+': NT$ '+Number(val).toLocaleString()+'"><div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap">'+dv+'</div><div style="width:80%;max-width:40px;background:var(--brand);border-radius:4px 4px 0 0;height:'+barH+'px;opacity:.8;transition:height .4s ease"></div><div style="font-size:10px;color:#94a3b8;white-space:nowrap">'+mo+'</div></div>';
+    return'<div style="flex:1;min-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px" title="'+k+': NT$ '+Number(val).toLocaleString()+'"><div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap">'+dv+'</div><div style="width:80%;max-width:40px;background:linear-gradient(180deg,var(--amber,#f59e0b) 0%,var(--amber-dark,#d97706) 100%);border-radius:4px 4px 0 0;height:'+barH+'px;opacity:.9;transition:height .4s ease"></div><div style="font-size:10px;color:#94a3b8;white-space:nowrap">'+mo+'</div></div>';
   }).join('');
 }
 function renderApprovedTable(approvedCases){
@@ -3866,18 +4050,18 @@ function renderApprovedTable(approvedCases){
       var cats=[];c.items.forEach(function(it){if(it.category&&cats.indexOf(it.category)===-1)cats.push(it.category);});
       cat=cats.join('、');
     } else {cat=c.category||'';}
-    var catHtml=cat?'<span style="display:inline-block;background:#e6f5ee;color:var(--brand);border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600">'+cat+'</span>':'<span style="color:#d1d5db">—</span>';
+    var catHtml=cat?(function(){var cc=catColor(cat);return '<span style="display:inline-block;background:'+cc.bg+';color:'+cc.color+';border:1px solid '+cc.border+';border-radius:5px;padding:1px 7px;font-size:11px;font-weight:600">'+cat+'</span>';})():'<span style="color:#d1d5db">—</span>';
     var amt='NT$ '+Number(c.total||0).toLocaleString();
     var subj=c.subject||c.project||'（無主旨）';
     var applicant=c.name||c.email||'—';
-    return'<tr class="tr" style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="loadDetail(\''+c.id+'\')">'
+    return'<tr class="tr" style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="loadDetail(\''+c.caseId+'\')">'
       +'<td style="padding:10px 16px;color:#64748b;font-size:13px;white-space:nowrap">'+dateStr+'</td>'
-      +'<td style="padding:10px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">'+c.id+'</td>'
+      +'<td style="padding:10px 16px;font-size:12px;color:var(--brand);font-weight:600;white-space:nowrap">'+c.caseId+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#374151;white-space:nowrap">'+applicant+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#0f172a;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+subj+'">'+subj+'</td>'
       +'<td style="padding:10px 16px">'+catHtml+'</td>'
       +'<td style="padding:10px 16px;text-align:right;font-weight:700;color:var(--brand);white-space:nowrap">'+amt+'</td>'
-      +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail(\''+c.id+'\')">查看</button></td>'
+      +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail(\''+c.caseId+'\')">查看</button></td>'
       +'</tr>';
   }).join('');
 }
