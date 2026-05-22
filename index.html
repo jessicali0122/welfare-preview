@@ -647,15 +647,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">① 主旨 <span style="color:#ef4444">*</span></label>
               <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用">
             </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-              <div>
-                <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">② 單號（自動產生）</label>
-                <input class="inp" value="" readonly style="background:#f8fafc;color:#64748b;font-weight:700;font-family:monospace" placeholder="送出後自動產生">
-              </div>
-              <div>
-                <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">③ 申請日期</label>
-                <input class="inp date-inp" type="text" id="apply-date" placeholder="選擇日期" readonly style="cursor:pointer">
-              </div>
+            <div>
+              <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">② 單號（自動產生）</label>
+              <input class="inp" value="" readonly style="background:#f8fafc;color:#64748b;font-weight:700;font-family:monospace" placeholder="送出後自動產生">
             </div>
           </div>
         </div>
@@ -826,9 +820,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#0f172a">—</div></div>
-            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請日期</div><div id="detail-apply-date" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請時間</div><div id="detail-apply-date" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">付款方式</div><div style="font-weight:600;color:#0f172a">匯款（公司薪轉戶）</div></div>
-            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">送出時間</div><div id="detail-created-at" style="font-weight:600;color:#0f172a">—</div></div>
           </div>
           <div id="detail-reason-wrap" style="margin-top:14px;display:none">
             <div style="color:#94a3b8;font-size:12px;margin-bottom:4px">備註／請款原因</div>
@@ -1638,8 +1631,9 @@ async function loadDashboard() {
   if (balEl) balEl.textContent = 'NT$ ' + approvedTotal.toLocaleString();
   const monthEl = document.getElementById('stat-this-month');
   if (monthEl) monthEl.textContent = thisMonth.length;
-  // 更新最新紀錄表格
-  renderDashboardTable(cases.slice(0, 5));
+  // 更新最新紀錄表格（由近到遠排序）
+  const recentCases = [...cases].sort((a,b)=>(String(b.createdAt||'')>String(a.createdAt||'')?1:-1));
+  renderDashboardTable(recentCases.slice(0, 5));
   // 更新待審核數字：只算「輪到我審核」的件數（與待審核頁面邏輯一致）
   const myPending = cases.filter(c => isMyTurnToApprove(c));
   updateBadge(myPending.length);
@@ -1755,7 +1749,7 @@ async function loadApprovals() {
             <span style="font-size:15px;font-weight:700;color:var(--brand)">${c.caseId}</span>
             <span class="badge bp">${c.status}</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,auto);gap:16px;font-size:13px;margin-bottom:8px">
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px 16px;font-size:13px;margin-bottom:8px">
             <div><span style="color:#94a3b8">申請人：</span><span style="font-weight:600;color:#374151">${localName(c.email,c.name)}</span></div>
             <div><span style="color:#94a3b8">部門：</span><span style="font-weight:600">${localDept(c.email,c.department)}</span></div>
             <div><span style="color:#94a3b8">含稅：</span><span style="font-weight:700;color:#0f172a">NT$ ${Number(c.total||0).toLocaleString()}</span></div>
@@ -1806,7 +1800,6 @@ async function loadDetail(caseId) {
   // 更新申請資訊
   document.getElementById('detail-applicant-name').textContent = localName(c.email, c.name);
   document.getElementById('detail-department').textContent    = localDept(c.email, c.department);
-  document.getElementById('detail-created-at').textContent    = fmtDate(c.createdAt);
   const headerDate = document.getElementById('detail-header-date');
   if (headerDate) headerDate.textContent = '建立於 ' + fmtDate(c.createdAt);
   // 主旨
@@ -1820,9 +1813,8 @@ async function loadDetail(caseId) {
   // 收款人
   const payeeEl = document.getElementById('detail-payee');
   if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
-  // 申請日期（只顯示日期，不顯示時間）
   const applyDateEl = document.getElementById('detail-apply-date');
-  if (applyDateEl) applyDateEl.textContent = c.applyDate ? fmtDateOnly(c.applyDate) : '—';
+  if (applyDateEl) applyDateEl.textContent = fmtDate(c.createdAt);
   // 備註／請款原因
   const reasonWrap = document.getElementById('detail-reason-wrap');
   const reasonEl   = document.getElementById('detail-reason');
@@ -2027,13 +2019,18 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     localStorage.removeItem('bf_draft');
     _cacheClear();
     const submittedCaseId = res.caseId;
+    // 取出待上傳檔案並清空全域清單 & UI
+    const filesToUpload = [...(window._pendingFiles || [])];
+    window._pendingFiles = [];
+    const fileListEl = document.getElementById('file-list');
+    if (fileListEl) fileListEl.innerHTML = '';
     // 顯示持久卡片
-    showSubmitResultCard(submittedCaseId);
+    showSubmitResultCard(submittedCaseId, filesToUpload.length);
     // 跳回案件列表
     sw('applications');
     loadDashboard();
     // 上傳附件（帶進度更新到卡片）
-    uploadPendingFiles(submittedCaseId);
+    uploadPendingFiles(submittedCaseId, filesToUpload);
   } else {
     toast('❌ 送出失敗：' + res.error);
   }
@@ -2054,11 +2051,6 @@ async function saveDraftForm() {
 function printCase(caseId) {
   toast('🖨️ 正在準備列印...');
   setTimeout(() => window.print(), 300);
-}
-
-// ── SIDEBAR COLLAPSE ──
-function toggleSidebar(){
-  document.getElementById('sidebar').classList.toggle('collapsed');
 }
 
 // ── NAVIGATION ──
@@ -2095,13 +2087,6 @@ function sw(name,elOrName){
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     checkDraftBanner();
-    // 預設申請日期為今天
-    const applyDateEl = document.getElementById('apply-date');
-    if (applyDateEl && !applyDateEl.value) {
-      const now = new Date();
-      const todayStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
-      setFpDate(applyDateEl, todayStr);
-    }
     // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
     const payeeSel = document.getElementById('payee-select');
@@ -2336,7 +2321,7 @@ function fileToBase64(file) {
 }
 
 // 顯示送出成功卡片
-function showSubmitResultCard(caseId) {
+function showSubmitResultCard(caseId, fileCount) {
   const card = document.getElementById('submit-result-card');
   const caseIdEl = document.getElementById('src-case-id');
   const statusIcon = document.getElementById('src-status-icon');
@@ -2344,7 +2329,7 @@ function showSubmitResultCard(caseId) {
   const viewBtn = document.getElementById('src-view-btn');
   if (!card) return;
   if (caseIdEl) caseIdEl.textContent = caseId;
-  const hasPending = (window._pendingFiles || []).length > 0;
+  const hasPending = (fileCount || 0) > 0;
   if (statusIcon) statusIcon.textContent = hasPending ? '⏳' : '✅';
   if (statusText) statusText.textContent = hasPending ? '附件上傳中，請稍候...' : '已送出，等待第1關簽核';
   if (viewBtn) viewBtn.onclick = function(){ document.getElementById('submit-result-card').style.display='none'; loadDetail(caseId); };
@@ -2360,8 +2345,8 @@ function updateSubmitCardStatus(icon, text) {
 }
 
 // 送出後實際上傳 Google Drive
-async function uploadPendingFiles(caseId) {
-  const files = window._pendingFiles || [];
+async function uploadPendingFiles(caseId, files) {
+  if (!files) files = window._pendingFiles || [];
   if (!files.length) {
     updateSubmitCardStatus('✅', '已送出，等待第1關簽核');
     setTimeout(function(){
