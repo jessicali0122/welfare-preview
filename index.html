@@ -1046,6 +1046,33 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
   </div>
 </div>
 
+<!-- Edit Flow Step Modal -->
+<div id="edit-flow-modal" class="modal-bg">
+  <div style="background:#fff;border-radius:16px;width:480px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:#0f172a">編輯簽核關卡</div>
+        <div id="edit-flow-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px">修改此關卡的名稱與負責人</div>
+      </div>
+      <button onclick="closeEditFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">關卡名稱 <span style="color:#ef4444">*</span></label>
+        <input class="inp" id="edit-flow-name" placeholder="例：總幹事審核">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">負責人 <span style="color:#ef4444">*</span></label>
+        <select class="inp" id="edit-flow-person"></select>
+      </div>
+    </div>
+    <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-o" onclick="closeEditFlowModal()">取消</button>
+      <button class="btn btn-p" onclick="doSaveFlowStep()">儲存</button>
+    </div>
+  </div>
+</div>
+
 <!-- Edit User Modal -->
 <div id="edit-user-modal" class="modal-bg">
   <div style="background:#fff;border-radius:16px;width:500px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
@@ -1088,60 +1115,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-o" onclick="closeEditUserModal()">取消</button>
       <button class="btn btn-p" onclick="doEditUser()">儲存變更</button>
-    </div>
-  </div>
-</div>
-
-<!-- Edit Flow Modal -->
-<div id="edit-flow-modal" class="modal-bg">
-  <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
-    <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:16px;font-weight:700;color:#0f172a">編輯簽核關卡</div>
-        <div id="edit-flow-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px">修改關卡設定</div>
-      </div>
-      <button onclick="closeEditFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
-    </div>
-    <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">關卡名稱 <span style="color:#ef4444">*</span></label>
-        <input class="inp" id="edit-flow-name" placeholder="例：總幹事">
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">負責人 <span style="color:#ef4444">*</span></label>
-        <select class="inp" id="edit-flow-person"></select>
-      </div>
-    </div>
-    <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-o" onclick="closeEditFlowModal()">取消</button>
-      <button class="btn btn-p" onclick="doEditFlow()">儲存變更</button>
-    </div>
-  </div>
-</div>
-
-<!-- Add Flow Modal -->
-<div id="add-flow-modal" class="modal-bg">
-  <div style="background:#fff;border-radius:16px;width:460px;max-width:95vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
-    <div style="padding:18px 22px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
-      <div>
-        <div style="font-size:16px;font-weight:700;color:#0f172a">新增簽核關卡</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">在流程最後新增一關</div>
-      </div>
-      <button onclick="closeAddFlowModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">&times;</button>
-    </div>
-    <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">關卡名稱 <span style="color:#ef4444">*</span></label>
-        <input class="inp" id="add-flow-name" placeholder="例：執行長">
-      </div>
-      <div>
-        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">負責人 <span style="color:#ef4444">*</span></label>
-        <select class="inp" id="add-flow-person"></select>
-      </div>
-    </div>
-    <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
-      <button class="btn btn-o" onclick="closeAddFlowModal()">取消</button>
-      <button class="btn btn-p" onclick="doAddFlow()">確認新增</button>
     </div>
   </div>
 </div>
@@ -1234,8 +1207,8 @@ let currentUser = null; // { email, name, token }
 // ── 管理者名單（可依需求擴充）──
 const ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
 
-// ── 簽核人清單（順序對應 4 個關卡，必須與 GAS CONFIG.APPROVERS 相同）──
-const APPROVER_EMAILS = [
+// ── 簽核人清單（由 loadAdminFlow 動態載入，初始值為預設值）──
+let APPROVER_EMAILS = [
   'jimmywang@tsagroup.com.tw',    // 第1關
   'stefanie@tsagroup.com.tw',     // 第2關
   'jessica@tsagroup.com.tw',      // 第3關
@@ -1295,18 +1268,7 @@ function applyRolePermissions() {
     }
   });
 
-  // 2. 流程設定：編輯、停用/啟用、+ 新增關卡 按鈕
-  document.querySelectorAll('#admin-panel-flow button').forEach(btn => {
-    if (admin) {
-      btn.disabled = false;
-      btn.style.opacity = '';
-      btn.style.cursor = 'pointer';
-    } else {
-      btn.disabled = true;
-      btn.style.opacity = '0.3';
-      btn.style.cursor = 'not-allowed';
-    }
-  });
+  // 2. 流程設定按鈕由 renderFlowList() 依 isAdmin() 動態生成，無需在此控制
 
   // 3. 新增人員按鈕（Header）
   const addUserBtn = document.getElementById('add-user-btn');
@@ -1488,7 +1450,7 @@ function logout() {
 // ── API 快取（TTL 30 秒，只快取唯讀查詢）──
 const _apiCache = {};
 const _CACHE_TTL = 30000; // 30 秒
-const _CACHEABLE = new Set(['list', 'get', 'listUsers']); // 可快取的 action
+const _CACHEABLE = new Set(['list', 'get', 'listUsers', 'getFlow']); // 可快取的 action
 
 function _cacheKey(action, data) {
   return action + ':' + JSON.stringify(data);
@@ -1503,13 +1465,9 @@ function _cacheSet(key, data) {
   _apiCache[key] = { ts: Date.now(), data };
 }
 // 手動清除快取（送出、核准、退件等寫入操作後呼叫）
-function _cacheClear(action) {
-  if (action) {
-    // 清除相關查詢快取
-    Object.keys(_apiCache).forEach(k => { if (k.startsWith('list')) delete _apiCache[k]; });
-  } else {
-    Object.keys(_apiCache).forEach(k => delete _apiCache[k]);
-  }
+function _cacheClear() {
+  // 寫入操作後清除全部快取（list / get / getFlow 都可能受影響）
+  Object.keys(_apiCache).forEach(k => delete _apiCache[k]);
 }
 
 async function callAPI(action, data = {}, opts = {}) {
@@ -2127,7 +2085,7 @@ function sw(name,elOrName){
   if(name==='dashboard') loadDashboard();
   if(name==='analytics') loadAnalytics();
   if(name==='admin') loadAdminUsers();
-  if(name==='detail')updateDetailFlow('step1');
+  // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     checkDraftBanner();
     // 預設申請日期為今天
@@ -2512,7 +2470,8 @@ function updateDetailFlow(c){
   // 相容舊呼叫（字串形式，如 sw('detail') 時），直接跳過
   if (typeof c === 'string') return;
 
-  const APPROVERS = [
+  // 優先使用動態載入的流程（loadAdminFlow 後填入），否則用預設值
+  const APPROVERS = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [
     { label:'第一關：總幹事審核',     name:'王鈞逸' },
     { label:'第二關：副主任委員審核', name:'邱湘芬' },
     { label:'第三關：主任委員審核',   name:'李潔慧' },
@@ -2585,97 +2544,147 @@ function updateDetailFlow(c){
   tl.innerHTML = html;
 }
 
-// ── FLOW 唯讀提示（流程設定需至後端修改） ──
-function _flowReadOnly(){ toast('⚠️ 流程設定為唯讀顯示，如需修改請聯繫管理員調整後端設定'); }
-function showAddFlowModal(){ _flowReadOnly(); }
+// ══════════════════════════════════════════
+//  流程設定 — 動態載入與編輯
+// ══════════════════════════════════════════
 
-// ── FLOW STATUS TOGGLE ──
-function toggleFlowRow(btn){ _flowReadOnly(); }
+// 目前載入的流程資料（陣列）
+let _flowApprovers = [];
+let _editFlowIndex = -1;
 
-// ── FLOW EDIT / ADD ──
-let _editFlowRow=null;
-
-function getFlowUserOptions(selectedName){
-  const users=[];
-  document.querySelectorAll('#admin-users-tbody tr').forEach(row=>{
-    const nameEl=row.querySelector('td:nth-child(2) span');
-    const name=nameEl?nameEl.textContent.trim():'';
-    const emailEl=row.querySelector('td:nth-child(5)');
-    const email=emailEl?emailEl.textContent.trim():'';
-    if(name&&email)users.push({name,email});
-  });
-  if(users.length===0){
-    // fallback: 當 admin 表格未載入時使用
-    LOCAL_USER_LIST.forEach(u=>users.push(u));
+// 從後端載入流程並渲染
+async function loadAdminFlow() {
+  const list = document.getElementById('flow-list');
+  list.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8">載入中...</div>';
+  const res = await callAPI('getFlow');
+  if (!res || !res.ok) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#ef4444">載入失敗，請稍後再試</div>';
+    return;
   }
-  return users.map(u=>`<option value="${u.name}" data-email="${u.email}"${u.name===selectedName?' selected':''}>${u.name}（${u.email}）</option>`).join('');
+  _flowApprovers = res.approvers || [];
+  // 同步更新 APPROVER_EMAILS（讓 isMyTurnToApprove 用最新資料）
+  APPROVER_EMAILS.length = 0;
+  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  renderFlowList(_flowApprovers);
+  // 唯讀提示
+  const notice = document.getElementById('flow-readonly-notice');
+  if (notice) notice.style.display = isAdmin() ? 'none' : 'block';
 }
 
-function editFlowRow(btn){ _flowReadOnly(); return; }
-function _editFlowRow_orig(btn){
-  const row=btn.closest('.flow-row');
-  if(!row)return;
-  _editFlowRow=row;
-  const stepName=row.children[1]?.children[0]?.textContent.trim()||'';
-  const stepLabel=row.children[1]?.children[1]?.textContent.trim()||'';
-  const personName=row.children[2]?.children[1]?.children[0]?.textContent.trim()||'';
-  document.getElementById('edit-flow-name').value=stepName;
-  document.getElementById('edit-flow-subtitle').textContent='修改 '+stepLabel+' 設定';
-  document.getElementById('edit-flow-person').innerHTML=getFlowUserOptions(personName);
+// 渲染流程列表
+function renderFlowList(approvers) {
+  const list = document.getElementById('flow-list');
+  const admin = isAdmin();
+  const avatarColors = ['#38a3a5','#1e9d6b','#6366f1','#06b6d4','#d97706','#f97316','#8b5cf6','#16a34a'];
+  const numLabels = ['一','二','三','四','五','六','七','八'];
+
+  if (!approvers || approvers.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8">目前無流程設定</div>';
+    return;
+  }
+
+  // 更新標題
+  const title = document.getElementById('flow-list-title');
+  if (title) title.textContent = '目前簽核流程（共 ' + approvers.length + ' 關）';
+
+  list.innerHTML = approvers.map((a, i) => {
+    const color = avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length];
+    const initial = a.name ? a.name.charAt(0) : '?';
+    const stepLabel = '第' + (numLabels[i] || (i+1)) + '關：' + (a.label || a.name);
+    const editBtns = admin
+      ? `<button onclick="showEditFlowModal(${i})" style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500">編輯</button>`
+      : `<button disabled style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:500;opacity:.4">編輯</button>`;
+    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
+      <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
+      <div>
+        <div style="font-size:14px;font-weight:600;color:#0f172a">${a.label || '第'+(i+1)+'關'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">第${i+1}關</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#374151">${a.name}</div>
+          <div style="font-size:11px;color:#94a3b8">${a.email}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <span style="padding:6px 10px;font-size:12px;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-weight:600;white-space:nowrap">啟用中</span>
+        ${editBtns}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// 取得流程負責人下拉選項
+function getFlowUserOptions(selectedEmail) {
+  const users = LOCAL_USER_LIST.slice();
+  // 若 admin 表格已載入，從表格補充
+  const extra = [];
+  document.querySelectorAll('#admin-users-tbody tr').forEach(row => {
+    const nameEl = row.querySelector('td:nth-child(2) span');
+    const emailEl = row.querySelector('td:nth-child(5)');
+    const name = nameEl ? nameEl.textContent.trim() : '';
+    const email = emailEl ? emailEl.textContent.trim() : '';
+    if (name && email && !users.find(u => u.email === email)) extra.push({ name, email });
+  });
+  const all = users.concat(extra);
+  return all.map(u =>
+    `<option value="${u.email}" ${u.email === selectedEmail ? 'selected' : ''}>${u.name}（${u.email}）</option>`
+  ).join('');
+}
+
+// 顯示編輯 modal
+function showEditFlowModal(index) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  const a = _flowApprovers[index];
+  if (!a) return;
+  _editFlowIndex = index;
+  document.getElementById('edit-flow-subtitle').textContent = '修改第' + (index + 1) + '關設定';
+  document.getElementById('edit-flow-name').value = a.label || '';
+  document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email);
   document.getElementById('edit-flow-modal').classList.add('open');
 }
-function closeEditFlowModal(){
+
+function closeEditFlowModal() {
   document.getElementById('edit-flow-modal').classList.remove('open');
-  _editFlowRow=null;
-}
-function doEditFlow(){
-  _flowReadOnly(); closeEditFlowModal(); return;
-  const newName=document.getElementById('edit-flow-name').value.trim();
-  const sel=document.getElementById('edit-flow-person');
-  const newPerson=sel.value;
-  const newEmail=sel.selectedOptions[0]?.dataset.email||'';
-  if(!newName||!newPerson){toast('⚠️ 請填寫關卡名稱和負責人');return;}
-  _editFlowRow.children[1].children[0].textContent=newName;
-  _editFlowRow.children[2].children[0].textContent=newPerson.charAt(0);
-  _editFlowRow.children[2].children[1].children[0].textContent=newPerson;
-  _editFlowRow.children[2].children[1].children[1].textContent=newEmail;
-  const badge=_editFlowRow.querySelector('.flow-status');
-  if(badge)badge.dataset.name=newName;
-  closeEditFlowModal();
-  toast('✅ 已更新「'+newName+'」簽核關卡');
+  _editFlowIndex = -1;
 }
 
-function showAddFlowModal(){
-  document.getElementById('add-flow-name').value='';
-  document.getElementById('add-flow-person').innerHTML=getFlowUserOptions('');
-  document.getElementById('add-flow-modal').classList.add('open');
-}
-function closeAddFlowModal(){
-  document.getElementById('add-flow-modal').classList.remove('open');
-}
-function doAddFlow(){
-  _flowReadOnly(); closeAddFlowModal(); return;
-  const name=document.getElementById('add-flow-name').value.trim();
-  const sel=document.getElementById('add-flow-person');
-  const person=sel.value;
-  const email=sel.selectedOptions[0]?.dataset.email||'';
-  if(!name||!person){toast('⚠️ 請填寫關卡名稱和負責人');return;}
-  const flowRows=document.querySelectorAll('.flow-row');
-  const num=flowRows.length+1;
-  const avatarColors=['#38a3a5','#1e9d6b','#6366f1','#06b6d4','#d97706','#f97316','#8b5cf6','#16a34a'];
-  const color=avatarColors[person.charCodeAt(0)%avatarColors.length];
-  const newRow=document.createElement('div');
-  newRow.className='flow-row';
-  newRow.style.cssText='display:grid;grid-template-columns:44px 1fr 200px auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0';
-  newRow.innerHTML=`<div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700">${num}</div><div><div style="font-size:14px;font-weight:600;color:#0f172a">${name}</div><div style="font-size:12px;color:#94a3b8">第${num}關</div></div><div style="display:flex;align-items:center;gap:8px"><div style="width:26px;height:26px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">${person.charAt(0)}</div><div><div style="font-size:13px;font-weight:500;color:#374151">${person}</div><div style="font-size:11px;color:#94a3b8">${email}</div></div></div><div style="display:flex;gap:6px"><span class="flow-status" data-active="true" data-name="${name}" style="width:64px;padding:6px 0;font-size:13px;text-align:center;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-family:inherit;font-weight:600;display:inline-block">啟用中</span><button style="width:64px;padding:6px 0;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="editFlowRow(this)">編輯</button><button style="width:64px;padding:6px 0;font-size:13px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="toggleFlowRow(this)">停用</button></div>`;
-  if(flowRows.length>0){
-    flowRows[0].parentElement.appendChild(newRow);
+// 儲存單一關卡變更
+async function doSaveFlowStep() {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  const label = document.getElementById('edit-flow-name').value.trim();
+  const sel = document.getElementById('edit-flow-person');
+  const email = sel.value;
+  const nameText = sel.selectedOptions[0] ? sel.selectedOptions[0].text.split('（')[0] : '';
+  if (!label || !email) { toast('⚠️ 請填寫關卡名稱和負責人'); return; }
+
+  // 更新本地資料
+  const updated = _flowApprovers.map((a, i) => {
+    if (i === _editFlowIndex) return { label, name: nameText, email };
+    return a;
+  });
+
+  const btn = document.querySelector('#edit-flow-modal .btn-p');
+  if (btn) { btn.disabled = true; btn.textContent = '儲存中...'; }
+
+  const res = await callAPI('saveFlow', { approvers: updated });
+
+  if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
+
+  if (!res || !res.ok) {
+    toast('❌ 儲存失敗：' + (res && res.error ? res.error : '請稍後再試'));
+    return;
   }
-  const title=document.querySelector('#admin-panel-flow .section-title');
-  if(title)title.textContent='目前簽核流程（共 '+num+' 關）';
-  closeAddFlowModal();
-  toast('✅ 已新增第 '+num+' 關：'+name);
-  setTimeout(applyRolePermissions,50);
+
+  _flowApprovers = updated;
+  APPROVER_EMAILS.length = 0;
+  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  renderFlowList(_flowApprovers);
+  const savedIdx = _editFlowIndex; // 先存，因為 closeEditFlowModal 會重設為 -1
+  closeEditFlowModal();
+  toast('✅ 第' + (savedIdx + 1) + '關已更新：' + label);
+  _cacheClear();
 }
 
 // ── ADMIN TABS ──
@@ -2684,6 +2693,7 @@ function switchAdminTab(tab){
   document.getElementById('admin-panel-flow').style.display=tab==='flow'?'block':'none';
   document.getElementById('tab-users').classList.toggle('active',tab==='users');
   document.getElementById('tab-flow').classList.toggle('active',tab==='flow');
+  if(tab==='flow') loadAdminFlow();
   setTimeout(applyRolePermissions, 50);
 }
 
