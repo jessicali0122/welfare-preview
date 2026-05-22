@@ -381,7 +381,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <div style="font-size:13px;color:rgba(255,255,255,.8);font-weight:600;letter-spacing:.3px">已核准總支出</div>
           </div>
           <div style="font-size:34px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px" id="stat-balance">NT$ —</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.6);margin-top:6px">已完成案件累計</div>
         </div>
       </div>
       <!-- 右側 2x2 統計 -->
@@ -434,21 +433,21 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             </div>
           </div>
         </div>
+        <div class="stat" style="grid-column:1/-1;border-top:3px solid var(--brand);padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div>
+              <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">總申請案件</div>
+              <div style="font-size:26px;font-weight:700;color:#0f172a;line-height:1" id="stat-total-count">—</div>
+              <div style="font-size:11px;color:#94a3b8;margin-top:5px">累計申請件數</div>
+            </div>
+            <div style="width:34px;height:34px;background:var(--brand-light);border-radius:9px;display:flex;align-items:center;justify-content:center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="charts-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
-      <div class="card" style="padding:20px;grid-column:span 2">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:#0f172a">各月請款金額</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:2px" id="chart-year-label"></div>
-          </div>
-          <div id="dashboard-approved-total" style="font-size:14px;font-weight:700;color:var(--brand)">NT$ — <span style="font-size:12px;color:#94a3b8;font-weight:400">已完成總計</span></div>
-        </div>
-        <div id="dashboard-chart-monthly" style="display:flex;align-items:flex-end;gap:10px;height:130px;padding:0 4px">
-          <div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0;width:100%">載入中...</div>
-        </div>
-      </div>
+    <div style="margin-bottom:20px">
       <div class="card" style="padding:20px">
         <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">快速操作</div>
         <div style="display:flex;flex-direction:column;gap:8px">
@@ -723,7 +722,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
               <!-- ⑫ 單據類型 -->
               <div style="margin-bottom:10px">
                 <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label>
-                <select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select>
+                <select class="inp"><option>發票</option><option>收據</option></select>
               </div>
               <!-- ⑪ 金額 -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -1598,8 +1597,6 @@ function fmtDateOnly(s) {
 }
 
 async function loadDashboard() {
-  const yl = document.getElementById('chart-year-label');
-  if (yl) yl.textContent = '已完成案件（含稅）';
   const res = await callAPI('list');
   if (!res.ok) { if (!res._authError) toast('❌ 總覽載入失敗：' + res.error); return; }
   const cases = res.cases || [];
@@ -1631,25 +1628,14 @@ async function loadDashboard() {
   if (balEl) balEl.textContent = 'NT$ ' + approvedTotal.toLocaleString();
   const monthEl = document.getElementById('stat-this-month');
   if (monthEl) monthEl.textContent = thisMonth.length;
+  const totalCountEl = document.getElementById('stat-total-count');
+  if (totalCountEl) totalCountEl.textContent = cases.length + ' 件';
   // 更新最新紀錄表格（由近到遠排序）
   const recentCases = [...cases].sort((a,b)=>(String(b.createdAt||'')>String(a.createdAt||'')?1:-1));
   renderDashboardTable(recentCases.slice(0, 5));
   // 更新待審核數字：只算「輪到我審核」的件數（與待審核頁面邏輯一致）
   const myPending = cases.filter(c => isMyTurnToApprove(c));
   updateBadge(myPending.length);
-  // 渲染各月請款圖表（只顯示已完成案件）
-  const dashTotalEl = document.getElementById('dashboard-approved-total');
-  if (dashTotalEl) dashTotalEl.innerHTML = 'NT$ ' + approvedTotal.toLocaleString() + ' <span style="font-size:12px;color:#94a3b8;font-weight:400">已完成總計</span>';
-  const moMap = {};
-  done.forEach(c => {
-    if (!c.createdAt) return;
-    const ds = String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
-    const d = new Date(ds+'T00:00:00');
-    if (isNaN(d)) return;
-    const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
-    moMap[key] = (moMap[key]||0) + Number(c.total||0);
-  });
-  renderMonthlyChart('dashboard-chart-monthly', moMap);
 }
 
 function renderDashboardTable(cases) {
@@ -1703,7 +1689,8 @@ async function loadApplications() {
     tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
     return;
   }
-  tbody.innerHTML = cases.map(c => {
+  const sortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
+  tbody.innerHTML = sortedCases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
     const actionBtn = c.status === '已完成'
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
@@ -1807,9 +1794,16 @@ async function loadDetail(caseId) {
   if (subjectEl) subjectEl.textContent = c.subject || c.project || '—';
   const headerSubjectEl = document.getElementById('detail-header-subject');
   if (headerSubjectEl) headerSubjectEl.textContent = c.subject || c.project || '—';
-  // 員工編號
+  // 員工編號（有值直接用；空白時從本地清單補）
   const empIdEl = document.getElementById('detail-employee-id');
-  if (empIdEl) empIdEl.textContent = c.employeeId || '—';
+  if (empIdEl) {
+    let empId = c.employeeId || '';
+    if (!empId) {
+      const lu = LOCAL_USER_LIST.find(u => u.email === c.email);
+      if (lu) empId = lu.employeeId || '';
+    }
+    empIdEl.textContent = empId || '—';
+  }
   // 收款人
   const payeeEl = document.getElementById('detail-payee');
   if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
@@ -2237,7 +2231,7 @@ function addItem(){
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 說明用途</label><input class="inp" placeholder="說明用途"></div>
   </div>
   <div style="margin-bottom:10px">
-    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label><select class="inp"><option>發票</option><option>收據</option><option>無憑證</option></select>
+    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label><select class="inp"><option>發票</option><option>收據</option></select>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
