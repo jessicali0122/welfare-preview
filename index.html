@@ -1846,7 +1846,12 @@ function renderDashboardTable(cases) {
   }
   tbody.innerHTML = cases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
-    const stepApprover = (c.status && (c.status.includes('待') || c.status === '已退件')) ? getStepApproverName(c.step) : '';
+    const stepApprover = c.status === '已退件'
+      ? (c.rejectedBy || getStepApproverName(c.step))
+      : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
+    const approverStyle = c.status === '已退件'
+      ? 'padding:12px 16px;color:#dc2626;font-weight:500;white-space:nowrap'
+      : 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
@@ -1854,7 +1859,7 @@ function renderDashboardTable(cases) {
       <td style="padding:12px 16px">${catBadge(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap">${stepApprover||'—'}</td>
+      <td style="${approverStyle}">${stepApprover||'—'}</td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
     </tr>`;
   }).join('');
@@ -1896,7 +1901,12 @@ async function loadApplications() {
   const sortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
   tbody.innerHTML = sortedCases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const stepApprover = (c.status && (c.status.includes('待') || c.status === '已退件')) ? getStepApproverName(c.step) : '';
+    const stepApprover = c.status === '已退件'
+      ? (c.rejectedBy || getStepApproverName(c.step))
+      : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
+    const approverStyle = c.status === '已退件'
+      ? 'padding:12px 16px;color:#dc2626;font-weight:500;white-space:nowrap'
+      : 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
     const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
     const actionBtn = c.status === '已完成'
@@ -1910,7 +1920,7 @@ async function loadApplications() {
       <td style="padding:12px 16px">${catBadge(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap">${statusCell}</td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap">${stepApprover||'—'}</td>
+      <td style="${approverStyle}">${stepApprover||'—'}</td>
       <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
       <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
@@ -2579,9 +2589,13 @@ function catBadge(cat) {
 }
 
 // 取得某關卡的簽核人姓名（供狀態欄顯示用）
+// 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 王鈞逸」這類含職稱的名稱
 function getStepApproverName(step) {
   const idx = (step || 1) - 1;
-  if (_flowApprovers && _flowApprovers[idx]) return _flowApprovers[idx].name || '';
+  if (_flowApprovers && _flowApprovers[idx]) {
+    const a = _flowApprovers[idx];
+    return (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name || '';
+  }
   const email = APPROVER_EMAILS[idx];
   return email ? (LOCAL_EMAIL_TO_NAME[email] || '') : '';
 }
@@ -2923,7 +2937,8 @@ function updateDetailFlow(c){
     let icon = '', statusHtml = '';
 
     // 解析代理操作：comment 可能以 "[ActorName 代理操作] " 開頭
-    let actorName = a.name;
+    // 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定含職稱（如「總幹事 王鈞逸」）
+    let actorName = (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name;
     let displayComment = comment;
     let isProxy = false;
     const proxyMatch = comment ? comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
