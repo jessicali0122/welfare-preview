@@ -33,7 +33,7 @@ aside .sidebar-brand-text{display:none}
 .sl svg{flex-shrink:0}
 
 /* notification dot */
-.sl-badge{position:absolute!important;top:4px!important;right:4px!important;width:7px!important;height:7px!important;border-radius:50%!important;background:#ef4444!important;padding:0!important;min-width:0!important;font-size:0!important;color:transparent!important;margin:0!important;line-height:0!important}
+.sl-badge{position:absolute!important;top:2px!important;right:2px!important;width:auto!important;height:auto!important;border-radius:0!important;background:transparent!important;padding:0!important;min-width:0!important;font-size:0!important;color:transparent!important;margin:0!important;line-height:0!important;pointer-events:none!important}
 
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:12px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
@@ -186,8 +186,17 @@ input[type=checkbox]{accent-color:var(--brand)}
   #main-wrapper{margin-left:0!important}
   .sl{width:56px!important;height:56px!important}
   .sl::after{font-size:10px!important}
-  /* 送出成功卡片：手機版全寬靠底 */
-  #submit-result-card{left:12px!important;right:12px!important;width:auto!important;bottom:16px!important}
+  /* 送出成功卡片：手機版全寬靠底（固定高度，不撐開螢幕）*/
+  #submit-result-card{
+    position:fixed!important;
+    left:12px!important;right:12px!important;
+    width:auto!important;
+    top:auto!important;
+    bottom:80px!important;
+    max-height:none!important;
+    height:auto!important;
+    border-radius:16px!important
+  }
   /* 日期選擇器：手機版自動靠左，不超出螢幕 */
   .dp-panel{width:calc(100vw - 32px)!important;max-width:320px!important;left:0!important;right:auto!important}
 }
@@ -384,7 +393,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <div class="sl" data-view="approvals" data-label="待審核" onclick="sw('approvals')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span class="sl-text">待審核</span>
-      <span class="sl-badge approval-badge" style="margin-left:auto;background:#ef4444;color:#fff;font-size:11px;padding:2px 7px;border-radius:20px;font-weight:700;display:none">0</span>
+      <span class="sl-badge approval-badge" style="display:none"><svg width="13" height="13" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#f59e0b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#f59e0b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#f59e0b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#f59e0b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#f59e0b"/></svg></span>
     </div>
 
 
@@ -418,8 +427,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- TOPBAR -->
   <header style="height:56px;background:#fff;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 1px 4px rgba(0,0,0,.06);z-index:10;position:relative">
-    <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0">
+    <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#f59e0b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#f59e0b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#f59e0b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#f59e0b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#f59e0b"/></svg></span>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
     <!-- 手機版使用者按鈕（桌機隱藏） -->
@@ -1809,18 +1819,16 @@ async function loadDashboard() {
   // 更新最新紀錄表格（由近到遠排序）
   const recentCases = [...viewCases].sort((a,b)=>(String(b.createdAt||'')>String(a.createdAt||'')?1:-1));
   renderDashboardTable(recentCases.slice(0, 5));
-  // 更新待審核 badge：管理者顯示全部待審核件數，一般審核人只顯示輪到自己的
-  const myPending = isAdmin()
-    ? cases.filter(c => c.status && c.status.includes('待'))
-    : cases.filter(c => isMyTurnToApprove(c));
-  updateBadge(myPending.length);
-  // 快速操作：更新待審核提示
+  // 更新待審核 badge：只顯示「真正輪到自己這關」的件數（管理員也一樣）
+  const myTurnPending = cases.filter(c => isMyTurnToApprove(c));
+  updateBadge(myTurnPending.length);
+  // 快速操作：更新待審核提示（同樣只顯示輪到自己的件數）
   const noticeEl = document.getElementById('dash-pending-notice');
   if (noticeEl) {
-    if (myPending.length > 0) {
+    if (myTurnPending.length > 0) {
       noticeEl.style.background = '#fef3c7';
       noticeEl.style.color = '#b45309';
-      noticeEl.textContent = '⏳ 有 ' + myPending.length + ' 件待您審核';
+      noticeEl.textContent = '⏳ 有 ' + myTurnPending.length + ' 件待您審核';
     } else {
       noticeEl.style.background = '#f0fdf4';
       noticeEl.style.color = '#15803d';
@@ -1854,7 +1862,8 @@ function renderDashboardTable(cases) {
 
 function updateBadge(count) {
   const badges = document.querySelectorAll('.approval-badge');
-  badges.forEach(b => { b.textContent = count; b.style.display = count > 0 ? '' : 'none'; });
+  // approval-badge is now a leaf SVG icon — just show/hide, don't overwrite content
+  badges.forEach(b => { b.style.display = count > 0 ? '' : 'none'; });
   const bell = document.getElementById('bell-badge');
   if (bell) { bell.textContent = count; bell.style.display = count > 0 ? '' : 'none'; }
 }
@@ -1891,10 +1900,10 @@ async function loadApplications() {
     // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
     const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
     const actionBtn = c.status === '已完成'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>
-         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="printCase('${c.caseId}')">列印</button>`
-      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="loadDetail('${c.caseId}')">查看</button>`;
-    return `<tr class="tr" style="border-bottom:1px solid #f8fafc" data-dept="${c.department||''}">
+      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
+         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
+      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" data-dept="${c.department||''}" onclick="loadDetail('${c.caseId}')">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
@@ -2192,7 +2201,7 @@ function renderDetailItems(items) {
   if (!items.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">無明細資料</td></tr>'; return; }
   tbody.innerHTML = items.map(it => `
     <tr style="border-bottom:1px solid #f8fafc">
-      <td style="padding:10px 0"><span class="tag" style="background:var(--brand-light);color:var(--brand)">${it.category||'—'}</span></td>
+      <td style="padding:10px 0">${catBadge(it.category)}</td>
       <td style="padding:10px 0;color:#374151">${it.description||'—'}</td>
       <td style="padding:10px 0;color:#64748b">${it.receiptType||'—'}</td>
       <td style="padding:10px 0;color:#64748b">${it.date||'—'}</td>
@@ -2226,7 +2235,7 @@ function doApprove() {
     async function() {
       toast('⏳ 處理中...');
       const res = await callAPI('approve', { caseId, comment });
-      if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadDetail(caseId); }
+      if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadDetail(caseId); loadDashboard(); }
       else toast('❌ 錯誤：' + res.error);
     }
   );
@@ -2244,7 +2253,7 @@ function doReject() {
     async function() {
       toast('⏳ 處理中...');
       const res = await callAPI('reject', { caseId, comment });
-      if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); }
+      if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); loadDashboard(); }
       else toast('❌ 錯誤：' + res.error);
     }
   );
@@ -2913,15 +2922,26 @@ function updateDetailFlow(c){
     const mb     = i < 3 ? 'margin-bottom:24px' : '';
     let icon = '', statusHtml = '';
 
+    // 解析代理操作：comment 可能以 "[ActorName 代理操作] " 開頭
+    let actorName = a.name;
+    let displayComment = comment;
+    let isProxy = false;
+    const proxyMatch = comment ? comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
+    if (proxyMatch) {
+      actorName = proxyMatch[1];
+      displayComment = proxyMatch[2];
+      isProxy = true;
+    }
+
     if (result === '核准') {
       icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#16a34a;display:flex;align-items:center;justify-content:center">' + svgCheck + '</div>';
       statusHtml = '<div style="font-size:13px;color:#15803d;font-weight:600;margin-top:2px">✓ 已核准</div>'
-                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + a.name + at + '</div>';
+                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>';
     } else if (result === '退件') {
       icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center">' + svgX + '</div>';
       statusHtml = '<div style="font-size:13px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div>'
-                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + a.name + at + '</div>'
-                 + (comment ? '<div style="font-size:12px;color:#ef4444;margin-top:2px">原因：' + comment + '</div>' : '');
+                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>'
+                 + (displayComment ? '<div style="font-size:12px;color:#ef4444;margin-top:2px">原因：' + displayComment + '</div>' : '');
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       // 目前待審的關
       icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px var(--brand-light);display:flex;align-items:center;justify-content:center"><span style="color:#fff;font-size:14px;font-weight:700">' + (i+1) + '</span></div>';
@@ -3426,7 +3446,7 @@ function applyAppFilter() {
     const text = r.textContent.toLowerCase();
     const match = (!q || text.includes(q))
       && (!applicant || text.includes(applicant))
-      && (!status || r.cells[6]?.textContent.includes(status))
+      && (!status || r.cells[5]?.textContent.includes(status))
       && (!cat || r.cells[3]?.textContent.includes(cat))
       && (!dept || (r.dataset.dept || '').includes(dept));
     r.style.display = match ? '' : 'none';
@@ -3821,6 +3841,7 @@ function batchApprove(){
         if(res.ok)success++;
       }
       toast('✅ 已核准 '+success+'/'+ids.length+' 件');
+      _cacheClear();
       clearSelection();
       loadApprovals();loadDashboard();
     }
@@ -3837,7 +3858,7 @@ async function exportCSV(){
   const cases=res.cases||[];
   const headers=['單號','申請人','部門','狀態','未稅金額','稅額','含稅總額','申請時間'];
   const rows=cases.map(c=>[
-    c.caseId||'',c.name||'',c.department||'',c.status||'',
+    c.caseId||'',localName(c.email,c.name),localDept(c.email,c.department),c.status||'',
     c.pretax||0,c.tax||0,c.total||0,c.createdAt||''
   ]);
   const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
@@ -4109,7 +4130,7 @@ function renderApprovedTable(approvedCases){
     var catHtml=cat?(function(){var cc=catColor(cat);return '<span style="display:inline-flex;align-items:center;background:'+cc.bg+';color:'+cc.color+';border:1px solid '+cc.border+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600">'+cat+'</span>';})():'<span style="color:#d1d5db">—</span>';
     var amt='NT$ '+Number(c.total||0).toLocaleString();
     var subj=c.subject||c.project||'（無主旨）';
-    var applicant=c.name||c.email||'—';
+    var applicant=localName(c.email, c.name);
     return'<tr class="tr" style="border-bottom:1px solid #f1f5f9;cursor:pointer" onclick="loadDetail(\''+c.caseId+'\')">'
       +'<td style="padding:10px 16px;color:#64748b;font-size:13px;white-space:nowrap">'+dateStr+'</td>'
       +'<td style="padding:10px 16px;font-size:12px;color:var(--brand);font-weight:600;white-space:nowrap">'+c.caseId+'</td>'
