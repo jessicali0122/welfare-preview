@@ -1064,6 +1064,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <span id="batch-count-label">已選 0 件</span>
       <div style="flex:1"></div>
       <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:13px" onclick="batchApprove()">批次核准選取</button>
+      <button class="btn" style="background:#dc2626;color:#fff;padding:5px 14px;font-size:13px" onclick="batchReject()">批次退件選取</button>
       <button class="btn btn-o" style="padding:5px 14px;font-size:13px;color:#fff;border-color:rgba(255,255,255,.3)" onclick="clearSelection()">取消選取</button>
     </div>
     <!-- 我需要審核 -->
@@ -2382,10 +2383,12 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     applyDate:  applyDateEl?.value || '',
     employeeId: employeeIdEl?.value || '',
     pretax, tax, total, items,
+    files: window._uploadedDraftFiles || [], // 草稿已上傳的附件（確保不被清空）
   });
 
   if (res.ok) {
     _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
+    window._uploadedDraftFiles = []; // 清除草稿附件追蹤
     localStorage.removeItem('bf_draft');
     _cacheClear();
     const submittedCaseId = res.caseId;
@@ -2444,7 +2447,20 @@ async function saveDraftForm() {
   if (res.ok) {
     _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
     _cacheClear();
-    toast('💾 草稿已儲存！單號：' + res.caseId);
+    // 若有待上傳的附件，立即上傳至 Drive 並追蹤
+    if (window._pendingFiles && window._pendingFiles.length > 0) {
+      const filesToUp = [...window._pendingFiles];
+      window._pendingFiles = [];
+      const _fle = document.getElementById('file-list');
+      if (_fle) {
+        // 移除 pending 項目（留下已上傳項目）
+        Array.from(_fle.querySelectorAll('[data-pending="1"]')).forEach(el => el.remove());
+      }
+      toast('💾 草稿已儲存，上傳附件中...');
+      await uploadDraftFiles(res.caseId, filesToUp);
+    } else {
+      toast('💾 草稿已儲存！單號：' + res.caseId);
+    }
   } else {
     toast('❌ 儲存失敗：' + res.error);
   }
@@ -2490,6 +2506,11 @@ function sw(name,elOrName){
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
+    window._uploadedDraftFiles = []; // 清除草稿附件追蹤
+    // 清除 file-list UI
+    const _fl = document.getElementById('file-list');
+    if (_fl) _fl.innerHTML = '';
+    window._pendingFiles = [];
     checkDraftBanner();
     // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
@@ -2719,7 +2740,9 @@ function calcTotal(){
 
 // ── FILE UPLOAD ──
 // 儲存待上傳的 File 物件（送出後實際上傳 Drive）
-if (!window._pendingFiles) window._pendingFiles = [];
+if (!window._pendingFiles)       window._pendingFiles = [];
+// 儲存草稿已上傳到 Drive 的檔案資訊（含 fileId, name, url）
+if (!window._uploadedDraftFiles) window._uploadedDraftFiles = [];
 
 function handleFileUpload(files) {
   if (!files || files.length === 0) return;
@@ -2736,6 +2759,7 @@ function handleFileUpload(files) {
     const item = document.createElement('div');
     item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0';
     item.dataset.fileName = file.name;
+    item.dataset.pending = '1'; // 標記為「待上傳」（未存到 Drive）
     item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
       + '<span style="font-size:13px;color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + file.name + '</span>'
       + '<span style="font-size:11px;color:#94a3b8">' + (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + '</span>'
@@ -2755,6 +2779,68 @@ function handleFileUpload(files) {
 
 function removePendingFile(name) {
   window._pendingFiles = window._pendingFiles.filter(f => f.name !== name);
+}
+
+// ── 草稿附件：批次上傳到 Drive ──
+async function uploadDraftFiles(caseId, files) {
+  if (!files || !files.length) return;
+  let ok = 0;
+  for (const file of files) {
+    try {
+      const b64 = await fileToBase64(file);
+      const res = await callAPI('uploadFile', {
+        caseId, fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        fileData: b64,
+      });
+      if (res.ok) {
+        const info = { name: file.name, url: res.url, fileId: res.fileId };
+        window._uploadedDraftFiles.push(info);
+        renderDraftFileItem(info);
+        ok++;
+      } else {
+        toast('⚠️ 暫存失敗：' + file.name + '（' + (res.error || '') + '）');
+      }
+    } catch(e) {
+      toast('⚠️ 暫存失敗：' + file.name);
+    }
+  }
+  if (ok > 0) toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除');
+}
+
+// ── 草稿附件：在 file-list 渲染已存檔案（綠色，含刪除按鈕）──
+function renderDraftFileItem(info) {
+  const list = document.getElementById('file-list');
+  if (!list) return;
+  const ext  = (info.name || '').split('.').pop().toLowerCase();
+  const icon = { pdf:'📄', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', xlsx:'📊', xls:'📊' }[ext] || '📎';
+  const item = document.createElement('div');
+  item.dataset.fileId = info.fileId;
+  item.style.cssText  = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0';
+  item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
+    + '<span style="font-size:13px;color:#15803d;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (info.name || '附件') + '</span>'
+    + '<span style="font-size:11px;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:6px;white-space:nowrap">已存</span>'
+    + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" '
+    + 'onclick="removeDraftFile(\'' + (info.fileId||'').replace(/'/g,"\\'") + '\',\'' + (info.name||'').replace(/'/g,"\\'") + '\',this)">×</button>';
+  list.appendChild(item);
+}
+
+// ── 草稿附件：刪除（Drive + sheet + UI）──
+async function removeDraftFile(fileId, fileName, btn) {
+  if (!_draftCaseId || !fileId) {
+    window._uploadedDraftFiles = window._uploadedDraftFiles.filter(f => f.fileId !== fileId);
+    btn.closest('div').remove();
+    return;
+  }
+  toast('⏳ 刪除中...');
+  const res = await callAPI('deleteFile', { caseId: _draftCaseId, fileId, fileName });
+  if (res.ok) {
+    window._uploadedDraftFiles = window._uploadedDraftFiles.filter(f => f.fileId !== fileId);
+    btn.closest('div').remove();
+    toast('🗑️ 已刪除：' + fileName);
+  } else {
+    toast('❌ 刪除失敗：' + (res.error || '請稍後再試'));
+  }
 }
 
 // 將 File 轉成 base64 字串
@@ -3879,6 +3965,47 @@ function batchApprove(){
       loadApprovals();loadDashboard();
     }
   );
+}
+
+function batchReject(){
+  const checked = document.querySelectorAll('.approval-cb:checked');
+  if (checked.length === 0) { toast('⚠️ 請先勾選要退件的案件'); return; }
+  // 先請使用者填寫退件原因，再執行
+  let m = document.getElementById('_batch_reject_modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = '_batch_reject_modal';
+    m.className = 'modal-bg';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+    + '<div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px">🔴 批次退件確認</div>'
+    + '<div style="font-size:13px;color:#64748b;margin-bottom:16px">共 <strong>' + checked.length + ' 件</strong>將被退件，退件後申請人將分別收到通知。</div>'
+    + '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">退件原因 <span style="color:#ef4444">*</span>（適用所有選取案件）</div>'
+    + '<textarea id="_batch_reject_reason" class="inp" rows="3" placeholder="請填寫退件原因..." style="resize:vertical;margin-bottom:16px"></textarea>'
+    + '<div style="display:flex;gap:10px">'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_batch_reject_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn btn-r" style="flex:1;justify-content:center" id="_batch_reject_ok">確認批次退件</button>'
+    + '</div></div>';
+  m.classList.add('open');
+  setTimeout(() => document.getElementById('_batch_reject_reason')?.focus(), 100);
+  document.getElementById('_batch_reject_ok').onclick = async function() {
+    const reason = (document.getElementById('_batch_reject_reason')?.value || '').trim();
+    if (!reason) { toast('⚠️ 請填寫退件原因'); return; }
+    m.classList.remove('open');
+    const ids = Array.from(document.querySelectorAll('.approval-cb:checked')).map(cb => cb.getAttribute('data-caseid'));
+    toast('⏳ 批次退件中...');
+    let success = 0;
+    for (const caseId of ids) {
+      const res = await callAPI('reject', { caseId, comment: reason });
+      if (res.ok) success++;
+    }
+    toast('🔴 已退件 ' + success + '/' + ids.length + ' 件');
+    _cacheClear();
+    clearSelection();
+    loadApprovals(); loadDashboard();
+  };
+  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
 }
 
 // ══════════════════════════════════════════
