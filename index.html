@@ -978,7 +978,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">分類</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">項目</th>
+              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">說明用途</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">憑證</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">日期</th>
               <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">未稅</th>
@@ -1856,7 +1856,7 @@ function renderDashboardTable(cases) {
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${catBadge(c.category)}</td>
+      <td style="padding:12px 16px">${catAllBadges(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="${approverStyle}">${stepApprover||'—'}</td>
@@ -1917,7 +1917,7 @@ async function loadApplications() {
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${catBadge(c.category)}</td>
+      <td style="padding:12px 16px">${catAllBadges(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap">${statusCell}</td>
       <td style="${approverStyle}">${stepApprover||'—'}</td>
@@ -1974,7 +1974,7 @@ async function loadApprovals() {
       // 主旨 + 分類標籤
       +       (subject ? '<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
       +           subject
-      +           + (category ? (function(){var c=catColor(category);return '&ensp;<span style="font-size:12px;font-weight:600;background:'+c.bg+';color:'+c.color+';padding:3px 10px;border-radius:20px;border:1px solid '+c.border+';letter-spacing:.01em">'+category+'</span>';})() : '')
+      +           + (category ? '&ensp;' + catAllBadges(category) : '')
       +         '</div>' : '')
       // 申請人 / 部門 / 含稅 / 送出
       +       '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px 16px;font-size:13px">'
@@ -2335,6 +2335,17 @@ async function submitForm() {
     toast('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
   }
 
+  // 附件必填驗證
+  if (!(window._pendingFiles && window._pendingFiles.length > 0)) {
+    const dz = document.getElementById('upload-drop-zone');
+    if (dz) {
+      dz.style.borderColor = '#ef4444';
+      dz.style.background  = '#fff5f5';
+      setTimeout(() => { dz.style.borderColor = ''; dz.style.background = '#f9fefe'; }, 2500);
+    }
+    toast('⚠️ 請上傳至少一張附件圖片或憑證'); return;
+  }
+
   // 收據提醒
   const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
   if (needsReceipt) {
@@ -2586,6 +2597,13 @@ function catBadge(cat) {
   if (!cat) return '—';
   const c = catColor(cat);
   return `<span class="tag" style="background:${c.bg};color:${c.color};border:1px solid ${c.border}">${cat}</span>`;
+}
+// 多分類並排 badge（category 可能是「行政費、餐飲費」這樣的字串）
+function catAllBadges(catStr) {
+  if (!catStr) return '—';
+  const cats = catStr.split('、').map(s => s.trim()).filter(Boolean);
+  if (cats.length === 0) return '—';
+  return cats.map(cat => catBadge(cat)).join(' ');
 }
 
 // 取得某關卡的簽核人姓名（供狀態欄顯示用）
@@ -4142,7 +4160,7 @@ function renderApprovedTable(approvedCases){
       var cats=[];c.items.forEach(function(it){if(it.category&&cats.indexOf(it.category)===-1)cats.push(it.category);});
       cat=cats.join('、');
     } else {cat=c.category||'';}
-    var catHtml=cat?(function(){var cc=catColor(cat);return '<span style="display:inline-flex;align-items:center;background:'+cc.bg+';color:'+cc.color+';border:1px solid '+cc.border+';border-radius:20px;padding:2px 8px;font-size:11px;font-weight:600">'+cat+'</span>';})():'<span style="color:#d1d5db">—</span>';
+    var catHtml=catAllBadges(cat);
     var amt='NT$ '+Number(c.total||0).toLocaleString();
     var subj=c.subject||c.project||'（無主旨）';
     var applicant=localName(c.email, c.name);
