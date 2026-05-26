@@ -85,7 +85,7 @@ input[type=checkbox]{accent-color:var(--brand)}
 @media(max-width:768px){
   #view-new-form .card [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
   #view-new-form .card [style*="grid-template-columns:1fr 1fr;gap:12px;margin-top"]{grid-template-columns:1fr!important}
-  .item-card [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
+  .item-card-body [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
   #view-new-form [style*="grid-template-columns:1fr 1fr 1fr"][style*="border:1px solid"]{grid-template-columns:repeat(3,1fr)!important}
 }
 
@@ -242,15 +242,15 @@ input[type=checkbox]{accent-color:var(--brand)}
   #form-grid>div:last-child{position:static!important}
   /* 申請人資料卡 3欄→2欄（排除小計橫幅） */
   #view-new-form .card>div[style*="grid-template-columns:1fr 1fr 1fr"]:not([style*="brand-light"]){grid-template-columns:1fr 1fr!important}
-  /* 明細卡：日期/類別/用途 → 2欄；金額行 → 2欄 */
-  .item-card>div:nth-child(2){grid-template-columns:1fr 1fr!important}
-  .item-card>div:last-child{grid-template-columns:1fr 1fr!important}
+  /* 明細卡：日期/類別/用途 → 2欄；金額行 → 2欄（使用 item-card-body 後代選擇器）*/
+  .item-card-body>div:first-child{grid-template-columns:1fr 1fr!important}
+  .item-card-body>div:last-child{grid-template-columns:1fr 1fr!important}
 }
 @media(max-width:400px){
   /* 極小螢幕：全部單欄 */
   #view-new-form .card>div[style*="grid-template-columns:1fr 1fr 1fr"]:not([style*="brand-light"]){grid-template-columns:1fr!important}
-  .item-card>div:nth-child(2){grid-template-columns:1fr!important}
-  .item-card>div:last-child{grid-template-columns:1fr!important}
+  .item-card-body>div:first-child{grid-template-columns:1fr!important}
+  .item-card-body>div:last-child{grid-template-columns:1fr!important}
 }
 /* ── 管理分頁：手機版加大觸控區域 ── */
 @media(max-width:768px){
@@ -296,6 +296,22 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* 留白避免固定框遮住底部內容 */
   #view-detail{padding-bottom:200px!important}
 }
+/* ── 手機版申請單：底部固定操作列 ── */
+#mobile-form-actions{display:none}
+@media(max-width:768px){
+  #mobile-form-actions{
+    display:flex!important;position:fixed;bottom:0;left:0;right:0;
+    gap:8px;padding:10px 16px;padding-bottom:max(env(safe-area-inset-bottom,0px),10px);
+    background:#fff;border-top:1px solid #e2e8f0;z-index:80;
+    box-shadow:0 -2px 12px rgba(0,0,0,.1)
+  }
+  #mobile-form-actions .btn{flex:1;justify-content:center;padding:12px 8px!important}
+  #view-new-form{padding-bottom:80px!important}
+  /* 右欄取消 sticky，讓底部 bar 取代 */
+  #form-grid>div:last-child{position:static!important}
+  /* toast 上移避免被底部 bar 遮住，尺寸縮小 */
+  #toast{bottom:88px!important;font-size:13px!important;padding:10px 14px!important}
+}
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
 @keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
 .copy-btn{background:none;border:none;cursor:pointer;color:#94a3b8;padding:2px 4px;border-radius:4px;display:inline-flex;align-items:center;transition:color .15s}
@@ -339,6 +355,44 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#e2e8f0!important}
 .date-inp{cursor:pointer!important}
 .date-inp::placeholder{color:#94a3b8}
+
+/* ── 1. 表單進度條 ── */
+#form-progress-bar{display:flex;align-items:center;margin-bottom:16px;background:#f8fafc;border-radius:12px;padding:11px 16px;border:1px solid #e2e8f0;gap:0}
+.fp-step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#94a3b8;transition:color .25s;flex-shrink:0}
+.fp-step.fp-done{color:var(--brand)}
+.fp-step.fp-active{color:#0f172a}
+.fp-dot{width:22px;height:22px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;transition:all .25s}
+.fp-step.fp-done .fp-dot{background:var(--brand);color:#fff}
+.fp-step.fp-active .fp-dot{background:#0f172a;color:#fff;box-shadow:0 0 0 3px rgba(15,23,42,.1)}
+.fp-line{flex:1;height:2px;background:#e2e8f0;margin:0 6px;transition:background .25s;min-width:12px;max-width:48px}
+.fp-line.fp-done{background:var(--brand)}
+@media(max-width:480px){.fp-step .fp-label{display:none}.fp-step{gap:0}.fp-line{max-width:18px;min-width:8px}}
+
+/* ── 2. 送出前預覽 modal ── */
+#submit-preview-modal .preview-row{display:flex;gap:8px;margin-bottom:8px;font-size:13px}
+#submit-preview-modal .preview-label{color:#94a3b8;width:72px;flex-shrink:0}
+#submit-preview-modal .preview-value{color:#0f172a;font-weight:600;flex:1}
+
+/* ── 3. 稅率快速切換 ── */
+.tax-btn{padding:4px 10px;font-size:12px;font-weight:600;border-radius:6px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;transition:all .15s;touch-action:manipulation;font-family:inherit}
+.tax-btn.tax-active{background:var(--brand);color:#fff;border-color:var(--brand)}
+
+/* ── 4. 明細卡片收合 ── */
+.item-card-body{transition:opacity .2s}
+.item-card.ic-collapsed .item-card-body{display:none!important}
+.item-card.ic-collapsed{padding:10px 16px!important}
+.ic-toggle-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:2px 7px;border-radius:6px;transition:all .15s;touch-action:manipulation;font-family:inherit;display:flex;align-items:center;gap:3px}
+.ic-toggle-btn:hover{background:#f1f5f9;color:#374151}
+.ic-summary{font-size:12px;color:#64748b;display:none;margin-left:6px;font-weight:500}
+.item-card.ic-collapsed .ic-summary{display:inline}
+
+/* ── 5. 可排序欄標題 ── */
+.sortable-th{cursor:pointer;user-select:none;white-space:nowrap}
+.sortable-th:hover{color:var(--brand)!important}
+.sortable-th .sort-icon{margin-left:3px;opacity:.35;font-size:10px;transition:opacity .15s}
+.sortable-th.sort-asc .sort-icon::after{content:'▲';opacity:1;color:var(--brand)}
+.sortable-th.sort-desc .sort-icon::after{content:'▼';opacity:1;color:var(--brand)}
+.sortable-th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
 </style>
 </head>
 <body>
@@ -745,14 +799,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <div class="card table-wrap" style="overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:14px">
         <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號</th>
+          <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號<span class="sort-icon"></span></th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請人</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
+          <th class="sortable-th" onclick="sortAppTable(4)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額<span class="sort-icon"></span></th>
+          <th class="sortable-th" onclick="sortAppTable(5)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態<span class="sort-icon"></span></th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
+          <th class="sortable-th" onclick="sortAppTable(7)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間<span class="sort-icon"></span></th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
         </tr></thead>
         <tbody id="applications-tbody">
@@ -764,6 +818,33 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== NEW FORM (費用申請單) ===== -->
   <div class="view" id="view-new-form">
+    <!-- 手機版固定底部操作列 -->
+    <div id="mobile-form-actions">
+      <button class="btn btn-a" onclick="saveDraftForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>儲存草稿
+      </button>
+      <button class="btn btn-p" onclick="submitForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
+      </button>
+    </div>
+    <!-- 表單填寫進度條 -->
+    <div id="form-progress-bar">
+      <div class="fp-step fp-active" id="fp-1">
+        <div class="fp-dot">1</div><span class="fp-label">基本資訊</span>
+      </div>
+      <div class="fp-line" id="fp-line-1"></div>
+      <div class="fp-step" id="fp-2">
+        <div class="fp-dot">2</div><span class="fp-label">費用明細</span>
+      </div>
+      <div class="fp-line" id="fp-line-2"></div>
+      <div class="fp-step" id="fp-3">
+        <div class="fp-dot">3</div><span class="fp-label">附件</span>
+      </div>
+      <div class="fp-line" id="fp-line-3"></div>
+      <div class="fp-step" id="fp-4">
+        <div class="fp-dot">4</div><span class="fp-label">送出</span>
+      </div>
+    </div>
     <div id="draft-banner">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       偵測到上次未完成的草稿，是否要恢復？
@@ -784,13 +865,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div style="display:flex;flex-direction:column;gap:12px">
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">① 主旨 <span style="color:#ef4444">*</span></label>
-              <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用">
+              <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用" oninput="updateFormProgress()">
             </div>
             <div>
               <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">② 單號（自動產生）</label>
               <input class="inp" value="" readonly style="background:#f8fafc;color:#64748b;font-weight:700;font-family:monospace" placeholder="送出後自動產生">
             </div>
           </div>
+          <input type="hidden" id="apply-date">
         </div>
 
         <!-- ⑥ 申請人 + ④ 收款人 + ⑤ 所屬部門 -->
@@ -841,13 +923,20 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
             <!-- Item 1 -->
             <div class="item-card">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:13px;font-weight:700;color:var(--brand)">明細 #1</span>
-                <button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1" onclick="this.closest('.item-card').remove();calcTotal()">×</button>
+                <div style="display:flex;align-items:center;gap:6px">
+                  <span style="font-size:13px;font-weight:700;color:var(--brand)">明細 #1</span>
+                  <span class="ic-summary"></span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px">
+                  <button class="ic-toggle-btn" onclick="toggleItemCard(this)" title="收合/展開">▲ 收合</button>
+                  <button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;touch-action:manipulation" onclick="this.closest('.item-card').remove();calcTotal();updateFormProgress()">×</button>
+                </div>
               </div>
-              <!-- ⑦ 憑證日期 + ⑧ 類別 + ⑨ 說明用途 -->
+              <div class="item-card-body">
+              <!-- ⑦ 憑證日期 + ⑧ 類別 + ⑨ 項目 -->
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期</label>
+                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期 <span style="color:#ef4444">*</span></label>
                   <input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer">
                 </div>
                 <div>
@@ -855,16 +944,21 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
                   <select class="inp"><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select>
                 </div>
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 說明用途</label>
-                  <input class="inp" placeholder="例：慶生聚餐費用" value="">
+                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 項目 <span style="color:#ef4444">*</span></label>
+                  <input class="inp desc-inp" placeholder="例：慶生聚餐費用" value="">
                 </div>
               </div>
               <!-- ⑫ 單據類型 -->
               <div style="margin-bottom:10px">
-                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label>
-                <select class="inp"><option>發票</option><option>收據</option></select>
+                <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型 <span style="color:#ef4444">*</span></label>
+                <select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option></select>
               </div>
-              <!-- ⑪ 金額 -->
+              <!-- ⑪ 金額 + 稅率切換 -->
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+                <span style="font-size:12px;font-weight:600;color:#374151">稅率</span>
+                <button type="button" class="tax-btn tax-active" onclick="setTaxRate(this,0.05)">5%（含稅）</button>
+                <button type="button" class="tax-btn" onclick="setTaxRate(this,0)">免稅</button>
+              </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label>
@@ -876,9 +970,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#ef4444">*</span></label>
-                  <input class="inp withtax" type="number" placeholder="請輸入含稅金額" value="" oninput="calcRowFromTotal(this)" style="font-weight:700">
+                  <input class="inp withtax" type="number" placeholder="請輸入含稅金額" value="" oninput="calcRowFromTotal(this);updateFormProgress()" style="font-weight:700">
                 </div>
               </div>
+              </div><!-- end item-card-body -->
             </div>
           </div>
           <button onclick="addItem()" style="display:flex;align-items:center;gap:6px;color:var(--brand);font-size:14px;font-weight:600;background:none;border:1.5px dashed var(--brand-mid);width:100%;padding:10px;border-radius:9px;cursor:pointer;justify-content:center;font-family:inherit">
@@ -1020,11 +1115,17 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <!-- 退件後重新申請（僅申請人可見） -->
         <div id="resubmit-box" class="card" style="padding:20px;border:2px solid #fca5a5;display:none">
           <div style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:3px">此案件已退件</div>
-          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">您可重新確認內容後送出，將重新進入第1關簽核</div>
-          <button class="btn" style="width:100%;justify-content:center;background:#dc2626;color:#fff;font-size:14px" onclick="doResubmit()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
-            重新申請（送出後通知第1關簽核人）
-          </button>
+          <div style="font-size:12px;color:#94a3b8;margin-bottom:12px">您可選擇在原案件上直接重送，或複製內容建立一張全新申請單。</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn" style="width:100%;justify-content:center;background:#dc2626;color:#fff;font-size:14px" onclick="doResubmit()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>
+              原案重新送出（繼續第1關簽核）
+            </button>
+            <button class="btn btn-o" style="width:100%;justify-content:center;font-size:14px" onclick="copyAndReapply(document.getElementById('resubmit-box').getAttribute('data-caseid'))">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              複製為全新申請單
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1616,6 +1717,16 @@ function showApp() {
     setTimeout(function(){
       document.querySelectorAll('.date-inp').forEach(function(el){ initFlatpickr(el); });
     }, 50);
+    // URL 參數處理：?reapply=CASEID（來自 Chat 退件通知的「重新申請」按鈕）
+    setTimeout(function() {
+      const _urlParams = new URLSearchParams(window.location.search);
+      const _reapplyId = _urlParams.get('reapply');
+      if (_reapplyId) {
+        // 清除 URL 參數避免重新整理再次觸發
+        window.history.replaceState({}, '', window.location.pathname);
+        copyAndReapply(_reapplyId);
+      }
+    }, 800);
   }
 }
 
@@ -1910,11 +2021,15 @@ async function loadApplications() {
       : 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
     const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
-    const actionBtn = c.status === '已完成'
+    const actionBtn = c.status === '草稿'
+      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
+      : c.status === '已完成'
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
          <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
       : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" data-dept="${c.department||''}" onclick="loadDetail('${c.caseId}')">
+    const rowDate = c.applyDate || c.createdAt || '';
+    const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
       <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
@@ -1922,7 +2037,7 @@ async function loadApplications() {
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap">${statusCell}</td>
       <td style="${approverStyle}">${stepApprover||'—'}</td>
-      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
+      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
       <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
   }).join('');
@@ -2110,6 +2225,91 @@ function _showRejectModal(caseId) {
 }
 
 // ══════════════════════════════════════════
+//  開啟草稿（繼續編輯）
+// ══════════════════════════════════════════
+async function openDraft(caseId) {
+  toast('⏳ 載入草稿中...');
+  const res = await callAPI('get', { caseId });
+  if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
+  const c = res.case || res.data || res;
+  // 先切換到新增申請畫面（會清空表單）
+  sw('new-form');
+  // 等 DOM 更新完畢
+  await new Promise(r => setTimeout(r, 80));
+  // 設定 caseId
+  _draftCaseId = caseId;
+  // 申請日期
+  const adEl = document.getElementById('apply-date');
+  if (adEl) adEl.value = c.applyDate || c.createdAt || '';
+  // 主旨
+  const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  if (subjectEl) subjectEl.value = c.project || c.subject || '';
+  // 申請原因
+  const reasonEl = document.querySelector('#view-new-form textarea');
+  if (reasonEl) reasonEl.value = c.reason || '';
+  // 申請人
+  const appSel = document.getElementById('applicant-select');
+  if (appSel && c.name) {
+    let found = Array.from(appSel.options).some(o => o.value === c.name || o.text === c.name);
+    if (!found) { const opt = new Option(c.name, c.name, true, true); appSel.prepend(opt); }
+    appSel.value = c.name;
+    syncApplicantFields();
+  }
+  // 收款人
+  const payeeSel = document.getElementById('payee-select');
+  const sameChk  = document.getElementById('same-as-applicant');
+  if (payeeSel && c.payee) {
+    if (sameChk) { sameChk.checked = (c.payee === c.name); toggleSameAsApplicant(sameChk); }
+    if (payeeSel && !payeeSel.disabled) {
+      let found2 = Array.from(payeeSel.options).some(o => o.value === c.payee || o.text === c.payee);
+      if (!found2) { const opt2 = new Option(c.payee, c.payee, true, true); payeeSel.prepend(opt2); }
+      payeeSel.value = c.payee;
+    }
+  }
+  // 重建費用明細
+  const itemsList = document.getElementById('items-list');
+  if (itemsList && Array.isArray(c.items) && c.items.length > 0) {
+    itemsList.innerHTML = '';
+    iCount = 0;
+    c.items.forEach(function(it) {
+      addItem(); // 追加一張明細卡
+      const card = itemsList.querySelectorAll('.item-card');
+      const card_ = card[card.length - 1];
+      const dateInp = card_.querySelector('.date-inp');
+      if (dateInp) { dateInp.value = it.date || ''; if (dateInp._flatpickr) dateInp._flatpickr.setDate(it.date || ''); }
+      const selects = card_.querySelectorAll('select');
+      if (selects[0]) selects[0].value = it.category || '';
+      if (selects[1]) selects[1].value = it.receiptType || '';
+      const descInp = card_.querySelector('.desc-inp');
+      if (descInp) descInp.value = it.description || '';
+      const pretaxInp = card_.querySelector('.pretax');
+      if (pretaxInp) { pretaxInp.removeAttribute('readonly'); pretaxInp.value = it.pretax || 0; pretaxInp.setAttribute('readonly',''); }
+      const taxInp = card_.querySelector('.taxamt');
+      if (taxInp) { taxInp.removeAttribute('readonly'); taxInp.value = it.tax || 0; taxInp.setAttribute('readonly',''); }
+      const totalInp = card_.querySelector('.withtax');
+      if (totalInp) totalInp.value = it.total || 0;
+    });
+    calcTotal();
+  }
+  // 還原已上傳附件
+  window._uploadedDraftFiles = Array.isArray(c.files) ? c.files : [];
+  const fileListEl = document.getElementById('file-list');
+  if (fileListEl) {
+    fileListEl.innerHTML = '';
+    window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+  }
+  // 同步 localStorage 草稿 banner
+  try {
+    const _sd = { subject: c.project || c.subject || '', reason: c.reason || '',
+      caseId: caseId, uploadedFiles: window._uploadedDraftFiles, ts: Date.now() };
+    localStorage.setItem('bf_draft', JSON.stringify(_sd));
+  } catch(e) {}
+  document.getElementById('draft-banner')?.classList.remove('show');
+  updateFormProgress();
+  toast('✅ 草稿已載入，可繼續編輯');
+}
+
+// ══════════════════════════════════════════
 //  案件詳情載入
 // ══════════════════════════════════════════
 async function loadDetail(caseId) {
@@ -2144,7 +2344,7 @@ async function loadDetail(caseId) {
   const payeeEl = document.getElementById('detail-payee');
   if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
   const applyDateEl = document.getElementById('detail-apply-date');
-  if (applyDateEl) applyDateEl.textContent = fmtDate(c.createdAt);
+  if (applyDateEl) applyDateEl.textContent = fmtDate(c.applyDate || c.createdAt);
   // 備註／請款原因
   const reasonWrap = document.getElementById('detail-reason-wrap');
   const reasonEl   = document.getElementById('detail-reason');
@@ -2336,8 +2536,34 @@ async function submitForm() {
     toast('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
   }
 
-  // 附件必填驗證
-  if (!(window._pendingFiles && window._pendingFiles.length > 0)) {
+  // 憑證日期、項目、單據類型必填驗證
+  let _itemFieldErr = false;
+  document.querySelectorAll('.item-card').forEach((card, idx) => {
+    const dateInp = card.querySelector('.date-inp');
+    const descInp = card.querySelector('.desc-inp');
+    const rcptSel = card.querySelectorAll('select')[1];
+    if (!dateInp?.value) {
+      _itemFieldErr = true;
+      dateInp.style.borderColor = '#ef4444';
+      setTimeout(() => { dateInp.style.borderColor = ''; }, 2500);
+    }
+    if (!descInp?.value?.trim()) {
+      _itemFieldErr = true;
+      descInp.classList.add('inp-error');
+      setTimeout(() => descInp.classList.remove('inp-error'), 2500);
+    }
+    if (!rcptSel?.value) {
+      _itemFieldErr = true;
+      rcptSel.classList.add('inp-error');
+      setTimeout(() => rcptSel.classList.remove('inp-error'), 2500);
+    }
+  });
+  if (_itemFieldErr) { toast('⚠️ 每筆明細的憑證日期、項目和單據類型為必填'); return; }
+
+  // 附件必填驗證（含草稿已上傳的檔案）
+  const _hasPending = window._pendingFiles && window._pendingFiles.length > 0;
+  const _hasDraftFiles = window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0;
+  if (!_hasPending && !_hasDraftFiles) {
     const dz = document.getElementById('upload-drop-zone');
     if (dz) {
       dz.style.borderColor = '#ef4444';
@@ -2354,14 +2580,14 @@ async function submitForm() {
     document.getElementById('receipt-confirm').classList.add('open');
     return;
   }
-  await doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items);
+  showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items);
 }
 
 async function confirmSubmitForm() {
   document.getElementById('receipt-confirm').classList.remove('open');
   const d = window._pendingSubmitData;
   if (!d) return;
-  await doSubmitForm(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items);
+  showSubmitPreview(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items);
 }
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
@@ -2433,6 +2659,7 @@ async function saveDraftForm() {
   const payeeEl2     = document.getElementById('payee-select');
   const deptEl2      = document.getElementById('form-dept-select');
   const empIdEl2     = document.getElementById('employee-id');
+  const applyDateEl2 = document.getElementById('apply-date');
   toast('⏳ 儲存中...');
   const res = await callAPI('draft', {
     ...(  _draftCaseId ? { caseId: _draftCaseId } : {}),
@@ -2443,10 +2670,18 @@ async function saveDraftForm() {
     payee:      payeeEl2?.value     || '',
     department: deptEl2?.value      || '',
     employeeId: empIdEl2?.value     || '',
+    applyDate:  applyDateEl2?.value || '',
   });
   if (res.ok) {
     _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
     _cacheClear();
+    // 把 caseId 和已上傳附件同步到 localStorage，重新開啟表單時才能還原
+    try {
+      const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+      _sd.caseId = res.caseId;
+      _sd.uploadedFiles = window._uploadedDraftFiles || [];
+      localStorage.setItem('bf_draft', JSON.stringify(_sd));
+    } catch(e) {}
     // 若有待上傳的附件，立即上傳至 Drive 並追蹤
     if (window._pendingFiles && window._pendingFiles.length > 0) {
       const filesToUp = [...window._pendingFiles];
@@ -2512,6 +2747,26 @@ function sw(name,elOrName){
     if (_fl) _fl.innerHTML = '';
     window._pendingFiles = [];
     checkDraftBanner();
+    // 從 localStorage 還原草稿 caseId 和已上傳附件
+    try {
+      const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+      if (_sd.caseId) {
+        _draftCaseId = _sd.caseId;
+        window._uploadedDraftFiles = _sd.uploadedFiles || [];
+        const _flr = document.getElementById('file-list');
+        if (_flr && window._uploadedDraftFiles.length > 0) {
+          window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+        }
+      }
+    } catch(e) {}
+    // 申請日期：自動填入今天
+    (function(){
+      var adEl = document.getElementById('apply-date');
+      if (adEl && !adEl.value) {
+        var tw = new Date(Date.now() + 8*3600000);
+        adEl.value = tw.toISOString().slice(0,10).replace(/-/g,'/');
+      }
+    })();
     // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
     const payeeSel = document.getElementById('payee-select');
@@ -2698,19 +2953,31 @@ function addItem(){
   iCount++;
   const d=document.createElement('div');
   d.className='item-card';
-  d.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--brand)">明細 #${iCount}</span><button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1" onclick="this.closest('.item-card').remove();calcTotal()">×</button></div>
+  d.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+  <div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px;font-weight:700;color:var(--brand)">明細 #${iCount}</span><span class="ic-summary"></span></div>
+  <div style="display:flex;align-items:center;gap:4px">
+    <button class="ic-toggle-btn" onclick="toggleItemCard(this)" title="收合/展開">▲ 收合</button>
+    <button style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:18px;line-height:1;touch-action:manipulation" onclick="this.closest('.item-card').remove();calcTotal();updateFormProgress()">×</button>
+  </div></div>
+  <div class="item-card-body">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期</label><input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期 <span style="color:#ef4444">*</span></label><input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer"></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label><select class="inp"><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 說明用途</label><input class="inp" placeholder="說明用途"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 項目 <span style="color:#ef4444">*</span></label><input class="inp desc-inp" placeholder="例：慶生聚餐費用"></div>
   </div>
   <div style="margin-bottom:10px">
-    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型</label><select class="inp"><option>發票</option><option>收據</option></select>
+    <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑫ 單據類型 <span style="color:#ef4444">*</span></label><select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option></select>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span style="font-size:12px;font-weight:600;color:#374151">稅率</span>
+    <button type="button" class="tax-btn tax-active" onclick="setTaxRate(this,0.05)">5%（含稅）</button>
+    <button type="button" class="tax-btn" onclick="setTaxRate(this,0)">免稅</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">稅額 (NT$)</label><input class="inp taxamt" type="number" placeholder="自動計算" readonly style="background:#f8fafc;color:#64748b"></div>
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#ef4444">*</span></label><input class="inp withtax" type="number" placeholder="請輸入含稅金額" oninput="calcRowFromTotal(this)" style="font-weight:700"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#ef4444">*</span></label><input class="inp withtax" type="number" placeholder="請輸入含稅金額" oninput="calcRowFromTotal(this);updateFormProgress()" style="font-weight:700"></div>
+  </div>
   </div>`;
   document.getElementById('items-list').appendChild(d);
   // 初始化新明細的日期選擇器
@@ -2751,6 +3018,8 @@ function handleFileUpload(files) {
   const maxSize = 10 * 1024 * 1024;
   Array.from(files).forEach(function(file) {
     if (file.size > maxSize) { toast('⚠️ 檔案過大：' + file.name + '（上限 10MB）'); return; }
+    // 指派唯一 ID，避免同名檔案被一起刪除（L1 fix）
+    file._uid = 'pf_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     // 儲存 File 物件供送出時上傳
     window._pendingFiles.push(file);
     const ext = file.name.split('.').pop().toLowerCase();
@@ -2758,14 +3027,15 @@ function handleFileUpload(files) {
     const icon = iconMap[ext] || '📎';
     const item = document.createElement('div');
     item.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0';
-    item.dataset.fileName = file.name;
+    item.dataset.fileId = file._uid; // 用唯一 ID 標識，而非檔名
     item.dataset.pending = '1'; // 標記為「待上傳」（未存到 Drive）
     item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
       + '<span style="font-size:13px;color:#374151;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + file.name + '</span>'
       + '<span style="font-size:11px;color:#94a3b8">' + (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + '</span>'
-      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="removePendingFile(\'' + file.name.replace(/'/g,"\\'") + '\');this.closest(\'div\').remove()">×</button>';
+      + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" onclick="removePendingFile(\'' + file._uid + '\');this.closest(\'div\').remove()">×</button>';
     list.appendChild(item);
   });
+  updateFormProgress();
   toast('✅ 已選取 ' + files.length + ' 個檔案（送出時自動上傳）');
   document.getElementById('file-upload-input').value = '';
   // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度與滾動
@@ -2777,8 +3047,9 @@ function handleFileUpload(files) {
   }
 }
 
-function removePendingFile(name) {
-  window._pendingFiles = window._pendingFiles.filter(f => f.name !== name);
+function removePendingFile(uid) {
+  // 用唯一 ID 篩選，避免同名檔案被同時刪除（L1 fix）
+  window._pendingFiles = window._pendingFiles.filter(f => f._uid !== uid);
 }
 
 // ── 草稿附件：批次上傳到 Drive ──
@@ -2805,7 +3076,7 @@ async function uploadDraftFiles(caseId, files) {
       toast('⚠️ 暫存失敗：' + file.name);
     }
   }
-  if (ok > 0) toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除');
+  if (ok > 0) { updateFormProgress(); toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除'); }
 }
 
 // ── 草稿附件：在 file-list 渲染已存檔案（綠色，含刪除按鈕）──
@@ -2817,8 +3088,11 @@ function renderDraftFileItem(info) {
   const item = document.createElement('div');
   item.dataset.fileId = info.fileId;
   item.style.cssText  = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0';
+  const nameHtml = info.url
+    ? `<a href="${info.url}" target="_blank" style="font-size:13px;color:#15803d;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;font-weight:500">${info.name||'附件'}</a>`
+    : `<span style="font-size:13px;color:#15803d;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${info.name||'附件'}</span>`;
   item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
-    + '<span style="font-size:13px;color:#15803d;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (info.name || '附件') + '</span>'
+    + nameHtml
     + '<span style="font-size:11px;background:#dcfce7;color:#15803d;padding:2px 6px;border-radius:6px;white-space:nowrap">已存</span>'
     + '<button style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:0 2px" '
     + 'onclick="removeDraftFile(\'' + (info.fileId||'').replace(/'/g,"\\'") + '\',\'' + (info.name||'').replace(/'/g,"\\'") + '\',this)">×</button>';
@@ -3563,7 +3837,25 @@ function applyAppFilter() {
   rows.forEach(r => {
     if (r.querySelector('td[colspan]')) return;
     const text = r.textContent.toLowerCase();
-    const match = (!q || text.includes(q))
+    // 日期範圍篩選：以 data-date 屬性比對 dpState
+    let dateMatch = true;
+    if (dpState.start || dpState.end) {
+      const rawDate = (r.dataset.date || '').trim();
+      if (rawDate) {
+        const d = new Date(rawDate.replace(/\//g, '-'));
+        if (!isNaN(d.getTime())) {
+          if (dpState.start && d < dpState.start) dateMatch = false;
+          if (dpState.end) {
+            const endDay = new Date(dpState.end); endDay.setHours(23,59,59,999);
+            if (d > endDay) dateMatch = false;
+          }
+        }
+      } else {
+        dateMatch = false; // 無日期資料時，有日期篩選條件就不顯示
+      }
+    }
+    const match = dateMatch
+      && (!q || text.includes(q))
       && (!applicant || text.includes(applicant))
       && (!status || r.cells[5]?.textContent.includes(status))
       && (!cat || r.cells[3]?.textContent.includes(cat))
@@ -3970,6 +4262,8 @@ function batchApprove(){
 function batchReject(){
   const checked = document.querySelectorAll('.approval-cb:checked');
   if (checked.length === 0) { toast('⚠️ 請先勾選要退件的案件'); return; }
+  // 在開啟 modal 時就擷取 ID，避免使用者確認前清單已改變（TOCTOU）
+  const capturedIds = Array.from(checked).map(cb => cb.getAttribute('data-caseid'));
   // 先請使用者填寫退件原因，再執行
   let m = document.getElementById('_batch_reject_modal');
   if (!m) {
@@ -3993,7 +4287,7 @@ function batchReject(){
     const reason = (document.getElementById('_batch_reject_reason')?.value || '').trim();
     if (!reason) { toast('⚠️ 請填寫退件原因'); return; }
     m.classList.remove('open');
-    const ids = Array.from(document.querySelectorAll('.approval-cb:checked')).map(cb => cb.getAttribute('data-caseid'));
+    const ids = capturedIds; // 使用開啟 modal 時已擷取的清單
     toast('⏳ 批次退件中...');
     let success = 0;
     for (const caseId of ids) {
@@ -4016,11 +4310,17 @@ async function exportCSV(){
   const res=await callAPI('list');
   if(!res.ok){toast('❌ 匯出失敗：'+res.error);return;}
   const cases=res.cases||[];
-  const headers=['單號','申請人','部門','狀態','未稅金額','稅額','含稅總額','申請時間'];
-  const rows=cases.map(c=>[
-    c.caseId||'',localName(c.email,c.name),localDept(c.email,c.department),c.status||'',
-    c.pretax||0,c.tax||0,c.total||0,c.createdAt||''
-  ]);
+  const headers=['單號','申請人','員工編號','部門','收款人','狀態','申請日期','建立時間','未稅金額','稅額','含稅總額','費用分類','主旨','備註','明細（項目|類別|日期|未稅|稅|含稅）','附件'];
+  const rows=cases.map(c=>{
+    const itemsStr=(c.items||[]).map(it=>`${it.description||''}|${it.category||''}|${it.date||''}|${it.pretax||0}|${it.tax||0}|${it.total||0}`).join('; ');
+    const filesStr=(c.files||[]).map(f=>f.name||f).join('; ');
+    return [
+      c.caseId||'',localName(c.email,c.name),c.employeeId||'',localDept(c.email,c.department),
+      c.payee||localName(c.email,c.name),c.status||'',c.applyDate||'',c.createdAt||'',
+      c.pretax||0,c.tax||0,c.total||0,c.category||'',c.project||c.subject||'',c.reason||'',
+      itemsStr,filesStr
+    ];
+  });
   const csv=[headers,...rows].map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
   const url=URL.createObjectURL(blob);
@@ -4038,7 +4338,9 @@ async function exportCSV(){
 function autoSaveDraft(){
   const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl=document.querySelector('#view-new-form textarea');
-  const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',ts:Date.now()};
+  const _exist=(() => { try { return JSON.parse(localStorage.getItem('bf_draft')||'{}'); } catch(e) { return {}; } })();
+  const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',ts:Date.now(),
+    caseId:_exist.caseId||null, uploadedFiles:_exist.uploadedFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 }
 function checkDraftBanner(){
@@ -4062,6 +4364,16 @@ function restoreDraft(){
     const reasonEl=document.querySelector('#view-new-form textarea');
     if(subjectEl&&d.subject)subjectEl.value=d.subject;
     if(reasonEl&&d.reason)reasonEl.value=d.reason;
+    // 還原草稿 caseId 和已上傳附件
+    if(d.caseId){
+      _draftCaseId=d.caseId;
+      window._uploadedDraftFiles=d.uploadedFiles||[];
+      const _flr=document.getElementById('file-list');
+      if(_flr){
+        _flr.innerHTML='';
+        window._uploadedDraftFiles.forEach(f=>renderDraftFileItem(f));
+      }
+    }
     document.getElementById('draft-banner').classList.remove('show');
     toast('✅ 草稿已恢復！');
   }catch(e){toast('❌ 草稿恢復失敗');}
@@ -4069,6 +4381,11 @@ function restoreDraft(){
 function clearDraft(){
   localStorage.removeItem('bf_draft');
   document.getElementById('draft-banner').classList.remove('show');
+  _draftCaseId=null;
+  window._uploadedDraftFiles=[];
+  window._pendingFiles=[];
+  const _fl=document.getElementById('file-list');
+  if(_fl)_fl.innerHTML='';
   toast('🗑️ 草稿已捨棄');
 }
 
@@ -4227,7 +4544,7 @@ function renderAnalytics(startDate,endDate){
   var catMap={};
   approvedFiltered.forEach(function(c){
     var items=c.items||[];
-    if(items.length>0){items.forEach(function(it){var cat=it.category||'其他';catMap[cat]=(catMap[cat]||0)+Number(it.amount||it.pretax||0);});}
+    if(items.length>0){items.forEach(function(it){var cat=it.category||'其他';catMap[cat]=(catMap[cat]||0)+Number(it.total||it.pretax||0);});}
     else{var cat=c.category||'其他';catMap[cat]=(catMap[cat]||0)+Number(c.total||0);}
   });
   var deptMap={};
@@ -4302,6 +4619,276 @@ function renderApprovedTable(approvedCases){
       +'</tr>';
   }).join('');
 }
+
+// ══════════════════════════════════════════
+//  1. 表單填寫進度條
+// ══════════════════════════════════════════
+function updateFormProgress() {
+  const subjectEl  = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  const hasSubject = !!(subjectEl && subjectEl.value.trim());
+  const hasItems   = document.querySelectorAll('.item-card .withtax').length > 0
+    && Array.from(document.querySelectorAll('.item-card .withtax')).some(el => parseFloat(el.value) > 0);
+  const hasFiles   = (window._pendingFiles && window._pendingFiles.length > 0)
+    || (window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0);
+
+  const steps = [
+    { id:'fp-1', done: hasSubject, active: !hasSubject },
+    { id:'fp-2', done: hasItems,   active: hasSubject && !hasItems },
+    { id:'fp-3', done: hasFiles,   active: hasSubject && hasItems && !hasFiles },
+    { id:'fp-4', done: false,      active: hasSubject && hasItems && hasFiles },
+  ];
+  steps.forEach(function(s, i) {
+    const el = document.getElementById(s.id);
+    if (!el) return;
+    el.classList.toggle('fp-done',   !!s.done);
+    el.classList.toggle('fp-active', !!s.active && !s.done);
+    const line = document.getElementById('fp-line-' + (i+1));
+    if (line) line.classList.toggle('fp-done', !!s.done);
+  });
+}
+
+// ══════════════════════════════════════════
+//  2. 送出前預覽 modal
+// ══════════════════════════════════════════
+function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
+  const subject    = subjectEl?.value || '';
+  const reason     = reasonEl?.value  || '';
+  const dept       = departmentEl?.value || '';
+  const payee      = payeeEl?.value  || currentUser?.name || '';
+  const applicant  = document.getElementById('applicant-select')?.value || currentUser?.name || '';
+  const total      = items.reduce((s,i) => s + i.total, 0);
+  const pendingCnt = (window._pendingFiles||[]).length;
+  const draftCnt   = (window._uploadedDraftFiles||[]).length;
+  const fileCnt    = pendingCnt + draftCnt;
+  const cats       = [...new Set(items.map(i => i.category).filter(Boolean))].join('、') || '—';
+
+  let m = document.getElementById('_submit_preview_modal');
+  if (!m) {
+    m = document.createElement('div');
+    m.id = '_submit_preview_modal';
+    m.className = 'modal-bg';
+    document.body.appendChild(m);
+  }
+  m.innerHTML = `<div id="submit-preview-modal" style="background:#fff;border-radius:16px;padding:28px 24px;max-width:460px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:4px">📋 送出確認</div>
+    <div style="font-size:13px;color:#94a3b8;margin-bottom:18px">請確認以下資訊正確後再送出</div>
+    <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:13px">
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">主旨</span><span style="color:#0f172a;font-weight:600;flex:1">${subject}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">申請人</span><span style="color:#0f172a;font-weight:600;flex:1">${applicant}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">收款人</span><span style="color:#0f172a;font-weight:600;flex:1">${payee}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">部門</span><span style="color:#0f172a;font-weight:600;flex:1">${dept||'—'}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">分類</span><span style="color:#0f172a;font-weight:600;flex:1">${cats}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">明細</span><span style="color:#0f172a;font-weight:600;flex:1">${items.length} 筆</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">附件</span><span style="color:#0f172a;font-weight:600;flex:1">${fileCnt} 份${pendingCnt > 0 ? '（' + pendingCnt + ' 份送出後上傳）' : ''}</span></div>
+      ${reason ? `<div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">備註</span><span style="color:#374151;flex:1;line-height:1.5">${reason}</span></div>` : ''}
+    </div>
+    <div style="background:var(--amber-light,#fef3c7);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border:1px solid #fcd34d">
+      <div style="font-size:12px;color:#92400e;font-weight:500">含稅總金額</div>
+      <div style="font-size:20px;font-weight:800;color:var(--amber-dark,#d97706)">NT$ ${total.toLocaleString()}</div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById('_submit_preview_modal').closest('.modal-bg').classList.remove('open')">← 返回修改</button>
+      <button class="btn btn-p" style="flex:2;justify-content:center" id="_preview_confirm_btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>確認送出
+      </button>
+    </div>
+  </div>`;
+  m.classList.add('open');
+  document.getElementById('_preview_confirm_btn').onclick = async function() {
+    m.classList.remove('open');
+    await doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items);
+  };
+  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
+}
+
+// ══════════════════════════════════════════
+//  3. 複製退件案件為全新申請單
+// ══════════════════════════════════════════
+async function copyAndReapply(caseId) {
+  if (!caseId) return;
+  toast('⏳ 載入案件資料中...');
+  const res = await callAPI('get', { caseId });
+  if (!res.ok) { toast('❌ 載入失敗：' + (res.error || '')); return; }
+  const c = res.case || {};
+  // 用 openDraft 的邏輯開新表單，但不設定 _draftCaseId（全新申請）
+  sw('new-form');
+  await new Promise(r => setTimeout(r, 80));
+  _draftCaseId = null; // 確保是全新申請，不復用退件案件的 caseId
+  // 填入主旨
+  const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  if (subjectEl) subjectEl.value = (c.project || c.subject || '') + '（重新申請）';
+  // 填入備註
+  const reasonEl = document.querySelector('#view-new-form textarea');
+  if (reasonEl) reasonEl.value = c.reason || '';
+  // 申請人
+  const appSel = document.getElementById('applicant-select');
+  if (appSel && c.name) {
+    let found = Array.from(appSel.options).some(o => o.value === c.name);
+    if (!found) { appSel.prepend(new Option(c.name, c.name, true, true)); }
+    appSel.value = c.name;
+    syncApplicantFields();
+  }
+  // 收款人
+  const payeeSel = document.getElementById('payee-select');
+  const sameChk  = document.getElementById('same-as-applicant');
+  if (payeeSel && c.payee && c.payee !== c.name) {
+    if (sameChk) { sameChk.checked = false; toggleSameAsApplicant(sameChk); }
+    let found2 = Array.from(payeeSel.options).some(o => o.value === c.payee);
+    if (!found2) { payeeSel.prepend(new Option(c.payee, c.payee, true, true)); }
+    payeeSel.value = c.payee;
+  }
+  // 重建費用明細
+  const itemsList = document.getElementById('items-list');
+  if (itemsList && Array.isArray(c.items) && c.items.length > 0) {
+    itemsList.innerHTML = '';
+    iCount = 0;
+    c.items.forEach(function(it) {
+      addItem();
+      const cards = itemsList.querySelectorAll('.item-card');
+      const card_ = cards[cards.length - 1];
+      const dateInp = card_.querySelector('.date-inp');
+      if (dateInp && it.date) { dateInp.value = it.date; if (dateInp._flatpickr) dateInp._flatpickr.setDate(it.date); }
+      const selects = card_.querySelectorAll('select');
+      if (selects[0]) selects[0].value = it.category || '';
+      if (selects[1]) selects[1].value = it.receiptType || '';
+      const descInp = card_.querySelector('.desc-inp');
+      if (descInp) descInp.value = it.description || '';
+      const pretaxInp = card_.querySelector('.pretax');
+      if (pretaxInp) { pretaxInp.removeAttribute('readonly'); pretaxInp.value = it.pretax || 0; pretaxInp.setAttribute('readonly',''); }
+      const taxInp = card_.querySelector('.taxamt');
+      if (taxInp) { taxInp.removeAttribute('readonly'); taxInp.value = it.tax || 0; taxInp.setAttribute('readonly',''); }
+      const totalInp = card_.querySelector('.withtax');
+      if (totalInp) totalInp.value = it.total || 0;
+    });
+    calcTotal();
+  }
+  // 注意：不復製附件（新申請需重新上傳憑證正本）
+  updateFormProgress();
+  toast('✅ 已複製為新申請單，請重新上傳附件後送出');
+}
+
+// ══════════════════════════════════════════
+//  4. 表格排序
+// ══════════════════════════════════════════
+let _appSortCol = -1, _appSortAsc = true;
+function sortAppTable(colIdx) {
+  const tbody = document.getElementById('applications-tbody');
+  if (!tbody) return;
+  const ths   = document.querySelectorAll('#view-applications thead .sortable-th');
+  // 同欄再點→切換方向；換欄→升冪
+  if (_appSortCol === colIdx) { _appSortAsc = !_appSortAsc; }
+  else { _appSortCol = colIdx; _appSortAsc = true; }
+  // 更新 header 樣式
+  ths.forEach(function(th) {
+    th.classList.remove('sort-asc','sort-desc');
+    const thColIdx = parseInt(th.getAttribute('onclick')?.match(/\d+/)?.[0] ?? '-1');
+    if (thColIdx === colIdx) th.classList.add(_appSortAsc ? 'sort-asc' : 'sort-desc');
+  });
+  const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => !r.querySelector('td[colspan]'));
+  rows.sort(function(a, b) {
+    const aText = (a.cells[colIdx]?.textContent || '').trim();
+    const bText = (b.cells[colIdx]?.textContent || '').trim();
+    // 金額欄：去掉 NT$ 和逗號後比數字
+    const aNum = parseFloat(aText.replace(/[^\d.-]/g,''));
+    const bNum = parseFloat(bText.replace(/[^\d.-]/g,''));
+    let cmp;
+    if (!isNaN(aNum) && !isNaN(bNum)) { cmp = aNum - bNum; }
+    else { cmp = aText.localeCompare(bText, 'zh-TW'); }
+    return _appSortAsc ? cmp : -cmp;
+  });
+  rows.forEach(r => tbody.appendChild(r));
+}
+
+// ══════════════════════════════════════════
+//  5. 稅率快速切換
+// ══════════════════════════════════════════
+function setTaxRate(btn, rate) {
+  const card = btn.closest('.item-card');
+  if (!card) return;
+  // 更新按鈕狀態
+  card.querySelectorAll('.tax-btn').forEach(b => b.classList.remove('tax-active'));
+  btn.classList.add('tax-active');
+  card.dataset.taxRate = rate;
+  // 重新計算：依現有含稅金額反推
+  const withtaxEl = card.querySelector('.withtax');
+  const pretaxEl  = card.querySelector('.pretax');
+  const taxEl     = card.querySelector('.taxamt');
+  if (!withtaxEl || !pretaxEl || !taxEl) return;
+  const total = parseFloat(withtaxEl.value) || 0;
+  if (rate === 0) {
+    // 免稅：未稅=含稅，稅=0
+    pretaxEl.removeAttribute('readonly'); pretaxEl.value = total || ''; pretaxEl.setAttribute('readonly','');
+    taxEl.removeAttribute('readonly');    taxEl.value    = 0;           taxEl.setAttribute('readonly','');
+  } else {
+    // 5% 含稅計算
+    const pretax = total > 0 ? Math.round(total / (1 + rate)) : 0;
+    pretaxEl.removeAttribute('readonly'); pretaxEl.value = pretax || ''; pretaxEl.setAttribute('readonly','');
+    taxEl.removeAttribute('readonly');    taxEl.value    = total > 0 ? total - pretax : 0; taxEl.setAttribute('readonly','');
+  }
+  calcTotal();
+}
+
+// 覆寫 calcRowFromTotal，支援稅率切換按鈕
+function calcRowFromTotal(inp) {
+  const card = inp.closest('.item-card');
+  const total = parseFloat(inp.value) || 0;
+  const activeBtn = card?.querySelector('.tax-btn.tax-active');
+  const rate = activeBtn ? parseFloat(activeBtn.getAttribute('onclick').match(/[\d.]+/)?.[0] ?? '0.05') : 0.05;
+  const pretaxEl = card?.querySelector('.pretax');
+  const taxEl    = card?.querySelector('.taxamt');
+  if (!card || !pretaxEl || !taxEl) return;
+  if (rate === 0) {
+    pretaxEl.removeAttribute('readonly'); pretaxEl.value = total || ''; pretaxEl.setAttribute('readonly','');
+    taxEl.removeAttribute('readonly');    taxEl.value    = 0;           taxEl.setAttribute('readonly','');
+  } else {
+    const pretax = total > 0 ? Math.round(total / (1 + rate)) : 0;
+    pretaxEl.removeAttribute('readonly'); pretaxEl.value = pretax || ''; pretaxEl.setAttribute('readonly','');
+    taxEl.removeAttribute('readonly');    taxEl.value    = total > 0 ? total - pretax : 0; taxEl.setAttribute('readonly','');
+  }
+  calcTotal();
+}
+
+// ══════════════════════════════════════════
+//  6. 明細卡片收合／展開
+// ══════════════════════════════════════════
+function toggleItemCard(btn) {
+  const card = btn.closest('.item-card');
+  if (!card) return;
+  const isCollapsed = card.classList.toggle('ic-collapsed');
+  btn.textContent = isCollapsed ? '▼ 展開' : '▲ 收合';
+  // 更新摘要文字
+  const summary = card.querySelector('.ic-summary');
+  if (summary) {
+    if (isCollapsed) {
+      const desc  = card.querySelector('.desc-inp')?.value || '';
+      const total = parseFloat(card.querySelector('.withtax')?.value) || 0;
+      summary.textContent = (desc ? desc.slice(0, 12) + (desc.length > 12 ? '…' : '') : '（未填寫）')
+        + (total > 0 ? '  NT$' + total.toLocaleString() : '');
+    } else {
+      summary.textContent = '';
+    }
+  }
+}
+
+// 新增明細後讓舊卡片自動收合（手機體驗優化）
+const _origAddItem = window.addItem;
+// 在 addItem 呼叫後折疊已填完的卡片（不影響空白卡片）
+document.addEventListener('click', function(e) {
+  if (e.target && e.target.textContent.trim() === '新增明細' || (e.target.closest && e.target.closest('button') && e.target.closest('button').textContent.includes('新增明細'))) {
+    setTimeout(function() {
+      const cards = document.querySelectorAll('#items-list .item-card');
+      if (cards.length <= 1) return;
+      // 將除最後一張以外的已填卡片收合
+      Array.from(cards).slice(0, -1).forEach(function(c) {
+        const withtax = parseFloat(c.querySelector('.withtax')?.value);
+        if (withtax > 0 && !c.classList.contains('ic-collapsed')) {
+          const btn_ = c.querySelector('.ic-toggle-btn');
+          if (btn_) toggleItemCard(btn_);
+        }
+      });
+    }, 50);
+  }
+});
 </script>
 
 <!-- RECEIPT CONFIRM MODAL -->
