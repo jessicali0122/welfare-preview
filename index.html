@@ -218,19 +218,53 @@ input[type=checkbox]{accent-color:var(--brand)}
 @media(max-width:768px){
   #app,#app>div,#main-wrapper{height:calc(var(--vh,1vh)*100)!important}
 }
-/* 手機版 Modal：底部抽屜式，避免大黑塊 */
+/* 手機版 Modal：底部抽屜式 ── 修正黑色大背景 + 改善內容滑動 */
 @media(max-width:768px){
-  .modal-bg.open{align-items:flex-end!important;padding:0!important;overflow:hidden!important}
+  .modal-bg.open{
+    align-items:flex-end!important;padding:0!important;overflow:hidden!important;
+    /* 改用漸層：底部較深、上方漸淡，不再是一整片壓迫的黑色 */
+    background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important
+  }
   .modal-bg>div{
-    max-height:92vh!important;
-    overflow-y:auto!important;
+    max-height:88vh!important;
+    /* 兩軸同時設定，確實覆蓋 inline style 的 overflow:hidden */
+    overflow:hidden auto!important;
     -webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important; /* 滾到底不帶動頁面 */
+    touch-action:pan-y!important;          /* iOS 識別垂直滑動 */
     margin:0!important;
-    width:100%!important;
-    max-width:100%!important;
+    width:100%!important;max-width:100%!important;
     border-radius:20px 20px 0 0!important;
-    padding-bottom:max(env(safe-area-inset-bottom,0px),12px)!important;
-    animation:slideUpModal .25s ease!important
+    padding-top:12px!important;
+    padding-bottom:max(env(safe-area-inset-bottom,0px),20px)!important;
+    animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important
+  }
+  /* 拖動把手視覺提示（灰色膠囊條） */
+  .modal-bg>div::before{
+    content:'';display:block;flex-shrink:0;
+    width:40px;height:4px;background:#d1d5db;border-radius:2px;
+    margin:0 auto 12px
+  }
+  /* receipt-confirm 不是 .modal-bg，也要做底部抽屜處理 */
+  #receipt-confirm.open{
+    align-items:flex-end!important;padding:0!important;
+    background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.12) 100%)!important
+  }
+  #receipt-confirm>div{
+    border-radius:20px 20px 0 0!important;
+    max-width:100%!important;width:100%!important;
+    overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;
+    overscroll-behavior:contain!important;
+    padding-top:20px!important;
+    padding-bottom:max(env(safe-area-inset-bottom,0px),20px)!important;
+    animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
+    box-shadow:none!important
+  }
+  /* receipt-confirm 的拖動把手 */
+  #receipt-confirm>div::before{
+    content:'';display:block;flex-shrink:0;
+    width:40px;height:4px;background:#d1d5db;border-radius:2px;
+    margin:-12px auto 16px
   }
 }
 @keyframes slideUpModal{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -302,15 +336,18 @@ input[type=checkbox]{accent-color:var(--brand)}
   #mobile-form-actions{
     display:flex!important;position:fixed;bottom:0;left:0;right:0;
     gap:8px;padding:10px 16px;padding-bottom:max(env(safe-area-inset-bottom,0px),10px);
-    background:#fff;border-top:1px solid #e2e8f0;z-index:80;
-    box-shadow:0 -2px 12px rgba(0,0,0,.1)
+    background:#fff;border-top:1px solid #e2e8f0;z-index:150;
+    box-shadow:0 -2px 12px rgba(0,0,0,.1);
+    will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)
   }
   #mobile-form-actions .btn{flex:1;justify-content:center;padding:12px 8px!important}
   #view-new-form{padding-bottom:80px!important}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
-  /* toast 上移避免被底部 bar 遮住，尺寸縮小 */
-  #toast{bottom:88px!important;font-size:13px!important;padding:10px 14px!important}
+  /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制高度防止過長訊息擋住畫面 */
+  #toast{bottom:88px!important;font-size:13px!important;padding:10px 14px!important;max-height:80px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:3!important;-webkit-box-orient:vertical!important}
+  /* submit-result-card 手機版縮小並確保不擋按鈕 */
+  #submit-result-card{bottom:80px!important;right:12px!important;left:12px!important;width:auto!important;max-width:none!important}
 }
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
 @keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -940,8 +977,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
                   <input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer">
                 </div>
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label>
-                  <select class="inp"><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select>
+                  <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#ef4444">*</span></label>
+                  <select class="inp"><option value="">請選擇</option><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select>
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 項目 <span style="color:#ef4444">*</span></label>
@@ -1073,7 +1110,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">分類</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">說明用途</th>
+              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">項目</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">憑證</th>
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">日期</th>
               <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">未稅</th>
@@ -1615,8 +1652,14 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // session 24小時過期 → 清除並重新登入（舊資料若是8小時過期也接受延長）
-      if (currentUser.sessionExpiry && Date.now() > currentUser.sessionExpiry) {
+      // 舊 session（24小時格式）自動升級為 7 天，讓現有使用者不需要重新登入
+      if (!currentUser.sessionExpiry || currentUser.sessionExpiry - Date.now() < 24 * 60 * 60 * 1000) {
+        currentUser.sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        currentUser.tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        localStorage.setItem('bf_user', JSON.stringify(currentUser));
+      }
+      // session 7 天已到期才清除
+      if (Date.now() > currentUser.sessionExpiry) {
         localStorage.removeItem('bf_user');
         currentUser = null;
       } else {
@@ -1638,11 +1681,11 @@ function handleGoogleLogin(response) {
     document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱登入';
     return;
   }
-  // 以 JWT 本身的 exp 計算 token 實際過期時間（通常 1 小時），session 延長至 24 小時
-  const tokenExpiry = payload.exp ? payload.exp * 1000 : Date.now() + 55 * 60 * 1000;
-  // 若已有登入資料，保留原本的 sessionExpiry（避免每次靜默刷新都重設 24 小時）
-  const prevSession = currentUser?.sessionExpiry;
-  const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 24*60*60*1000;
+  // 後端已放寬 token 有效期至 7 天（不依賴 Google 的 1 小時硬限制）
+  // 前端 session 同步設定為 7 天，大幅減少「登入逾期」頻率
+  const tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 天
+  const prevSession   = currentUser?.sessionExpiry;
+  const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 7 * 24 * 60 * 60 * 1000;
   currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry };
   localStorage.setItem('bf_user', JSON.stringify(currentUser));
   // 移除過期提示條（如果有）
@@ -1654,34 +1697,17 @@ function handleGoogleLogin(response) {
   startTokenRefreshTimer();
 }
 
-// 主動在 token 快過期前靜默刷新（每 5 分鐘檢查一次）
+// 每小時檢查一次 session 是否真的過期（7 天），不再每 5 分鐘觸發不可靠的靜默刷新
 let _tokenRefreshTimer = null;
 function startTokenRefreshTimer() {
   if (_tokenRefreshTimer) clearInterval(_tokenRefreshTimer);
   _tokenRefreshTimer = setInterval(() => {
     if (!currentUser) return;
-    const now = Date.now();
-    // session 過期 → 清除
-    if (currentUser.sessionExpiry && now > currentUser.sessionExpiry) {
+    if (currentUser.sessionExpiry && Date.now() > currentUser.sessionExpiry) {
       clearInterval(_tokenRefreshTimer);
       _showAuthExpiredBar();
-      return;
     }
-    // token 在 10 分鐘內到期 → 嘗試靜默刷新
-    if (currentUser.tokenExpiry && (currentUser.tokenExpiry - now) < 10 * 60 * 1000) {
-      if (window.google?.accounts?.id) {
-        try {
-          google.accounts.id.prompt(n => {
-            // 靜默刷新失敗時不中斷使用，等 token 真正過期再提示
-            if (n.isSkippedMoment?.() || n.isDismissedMoment?.()) {
-              // 如果 token 已過期才顯示提示
-              if (Date.now() > (currentUser?.tokenExpiry || 0)) _showAuthExpiredBar();
-            }
-          });
-        } catch(e) {}
-      }
-    }
-  }, 5 * 60 * 1000); // 每 5 分鐘檢查
+  }, 60 * 60 * 1000); // 每小時檢查（session 7 天才到期，不需要頻繁輪詢）
 }
 
 function parseJwt(token) {
@@ -1689,9 +1715,6 @@ function parseJwt(token) {
   return JSON.parse(decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
 }
 
-function parseJwtSafe(token){
-  try{return parseJwt(token);}catch(e){return null;}
-}
 function showApp() {
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
@@ -1808,23 +1831,12 @@ async function _fetchAPI(action, data = {}) {
 
 function handleAuthError() {
   if (document.getElementById('auth-expired-bar')) return;
-  // 先嘗試靜默刷新 Google Token，成功則不中斷使用
-  if (window.google?.accounts?.id && currentUser?.token && !currentUser.token.startsWith('manual_')) {
-    try {
-      google.accounts.id.prompt(notification => {
-        // One Tap 被跳過或關閉才顯示提示條
-        if (notification.isSkippedMoment() || notification.isDismissedMoment()) {
-          _showAuthExpiredBar();
-        }
-      });
-      // 5 秒後若 token 仍未刷新（tokenExpiry 已過）則顯示提示條
-      setTimeout(() => {
-        const exp = currentUser?.tokenExpiry;
-        if (!exp || Date.now() > exp) _showAuthExpiredBar();
-      }, 5000);
-      return;
-    } catch(e) {}
+  // session 還在有效期內 → 可能是暫時性網路問題或後端重新部署，不要強制登出
+  if (currentUser?.sessionExpiry && Date.now() < currentUser.sessionExpiry) {
+    toast('⚠️ 連線驗證失敗，請稍候再試或重新整理頁面');
+    return;
   }
+  // session 已真正過期（超過 7 天）→ 顯示重新登入提示
   _showAuthExpiredBar();
 }
 function _showAuthExpiredBar() {
@@ -1835,32 +1847,11 @@ function _showAuthExpiredBar() {
   bar.id = 'auth-expired-bar';
   const isMob = window.innerWidth <= 768;
   bar.style.cssText = isMob
-    ? 'position:fixed;top:12px;left:12px;right:12px;background:#1e293b;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.35);white-space:nowrap;justify-content:space-between'
+    // Issue 5 fix：手機版改為彈性換行，避免超出螢幕寬度擋住畫面
+    ? 'position:fixed;top:12px;left:12px;right:12px;background:#1e293b;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:10px;z-index:9999;font-size:13px;box-shadow:0 8px 32px rgba(0,0,0,.35);flex-wrap:wrap;justify-content:space-between'
     : 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
-  bar.innerHTML = '🔒 登入憑證已過期，請重新登入 <button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;white-space:nowrap">重新登入</button>';
+  bar.innerHTML = '<span>🔒 登入憑證已過期，請重新登入</span><button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:var(--brand);border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">重新登入</button>';
   document.body.appendChild(bar);
-}
-
-function showSessionExpiredModal() {
-  // 移除舊的 modal（如果有）
-  const existing = document.getElementById('session-modal');
-  if (existing) existing.remove();
-  const modal = document.createElement('div');
-  modal.id = 'session-modal';
-  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:16px;padding:28px;max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">
-      <div style="font-size:40px;margin-bottom:12px">⏰</div>
-      <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:8px">登入已過期</div>
-      <div style="font-size:14px;color:#64748b;margin-bottom:20px;line-height:1.6">
-        您的登入憑證已過期，請重新登入繼續使用。
-      </div>
-      <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px;font-size:15px" onclick="reLogin()">
-        重新登入
-      </button>
-    </div>
-  `;
-  document.body.appendChild(modal);
 }
 
 function reLogin() {
@@ -2228,6 +2219,8 @@ function _showRejectModal(caseId) {
 //  開啟草稿（繼續編輯）
 // ══════════════════════════════════════════
 async function openDraft(caseId) {
+  // F1 fix：清除上一個 session 遺留的待上傳附件，避免誤帶入草稿
+  window._pendingFiles = [];
   toast('⏳ 載入草稿中...');
   const res = await callAPI('get', { caseId });
   if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
@@ -2536,16 +2529,22 @@ async function submitForm() {
     toast('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
   }
 
-  // 憑證日期、項目、單據類型必填驗證
+  // 憑證日期、類別、項目、單據類型必填驗證
   let _itemFieldErr = false;
   document.querySelectorAll('.item-card').forEach((card, idx) => {
     const dateInp = card.querySelector('.date-inp');
+    const catSel  = card.querySelectorAll('select')[0];
     const descInp = card.querySelector('.desc-inp');
     const rcptSel = card.querySelectorAll('select')[1];
     if (!dateInp?.value) {
       _itemFieldErr = true;
       dateInp.style.borderColor = '#ef4444';
       setTimeout(() => { dateInp.style.borderColor = ''; }, 2500);
+    }
+    if (!catSel?.value) {
+      _itemFieldErr = true;
+      catSel.classList.add('inp-error');
+      setTimeout(() => catSel.classList.remove('inp-error'), 2500);
     }
     if (!descInp?.value?.trim()) {
       _itemFieldErr = true;
@@ -2558,7 +2557,7 @@ async function submitForm() {
       setTimeout(() => rcptSel.classList.remove('inp-error'), 2500);
     }
   });
-  if (_itemFieldErr) { toast('⚠️ 每筆明細的憑證日期、項目和單據類型為必填'); return; }
+  if (_itemFieldErr) { toast('⚠️ 每筆明細的憑證日期、類別、項目和單據類型為必填'); return; }
 
   // 附件必填驗證（含草稿已上傳的檔案）
   const _hasPending = window._pendingFiles && window._pendingFiles.length > 0;
@@ -2623,6 +2622,16 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     window._pendingFiles = [];
     const fileListEl = document.getElementById('file-list');
     if (fileListEl) fileListEl.innerHTML = '';
+    // F5 fix：清空表單欄位，防止返回時看到舊資料或誤觸重複送出
+    (function() {
+      var _subj = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+      var _rea  = document.querySelector('#view-new-form textarea');
+      if (_subj) _subj.value = '';
+      if (_rea)  _rea.value  = '';
+      var _il = document.getElementById('items-list');
+      if (_il) { _il.innerHTML = ''; iCount = 0; addItem(); }
+      calcTotal();
+    })();
     // 顯示持久卡片
     showSubmitResultCard(submittedCaseId, filesToUpload.length);
     // 跳回案件列表
@@ -2724,6 +2733,9 @@ function sw(name,elOrName){
   document.querySelectorAll('.icon-btn[data-view],.sl[data-view]').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('[data-view="'+target+'"]').forEach(b=>b.classList.add('active'));
   closeNotif();
+  // Issue 3 fix：切換頁面時自動關閉 submit-result-card（避免遮住底部按鈕）
+  var _src = document.getElementById('submit-result-card');
+  if (_src) _src.style.display = 'none';
   // 回到頂部，並強制恢復 iOS Safari 的滾動（picker 後可能被鎖住）
   var mc = document.getElementById('main-content');
   if (mc) {
@@ -2962,7 +2974,7 @@ function addItem(){
   <div class="item-card-body">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑦ 憑證日期 <span style="color:#ef4444">*</span></label><input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer"></div>
-    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別</label><select class="inp"><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
+    <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#ef4444">*</span></label><select class="inp"><option value="">請選擇</option><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
     <div><label style="font-size:12px;font-weight:600;color:#374151;display:block;margin-bottom:4px">⑨ 項目 <span style="color:#ef4444">*</span></label><input class="inp desc-inp" placeholder="例：慶生聚餐費用"></div>
   </div>
   <div style="margin-bottom:10px">
@@ -2984,15 +2996,7 @@ function addItem(){
   const newDateInp = d.querySelector('.date-inp');
   if (newDateInp) initFlatpickr(newDateInp);
 }
-function calcRowFromTotal(inp){
-  const card=inp.closest('.item-card');
-  const total=parseFloat(inp.value)||0;
-  const pretax=total>0?Math.round(total/1.05):0;
-  const tax=total>0?total-pretax:0;
-  card.querySelector('.pretax').value=pretax||'';
-  card.querySelector('.taxamt').value=tax||'';
-  calcTotal();
-}
+// calcRowFromTotal 的最終版本在後段（支援稅率切換按鈕）—— F9 fix：移除此舊版重複定義
 function calcTotal(){
   let sp=0,st=0,stot=0;
   document.querySelectorAll('.item-card').forEach(c=>{
@@ -3015,9 +3019,16 @@ function handleFileUpload(files) {
   if (!files || files.length === 0) return;
   const list = document.getElementById('file-list');
   if (!list) return;
-  const maxSize = 10 * 1024 * 1024;
+  const maxSize = 10 * 1024 * 1024;       // 單檔 10MB
+  const maxTotal = 100 * 1024 * 1024;    // 全部附件合計 100MB（F10 fix）
   Array.from(files).forEach(function(file) {
-    if (file.size > maxSize) { toast('⚠️ 檔案過大：' + file.name + '（上限 10MB）'); return; }
+    if (file.size > maxSize) { toast('⚠️ 檔案過大：' + file.name + '（單檔上限 10MB）'); return; }
+    // F10 fix：檢查合計大小
+    var currentTotal = (window._pendingFiles || []).reduce(function(s, f) { return s + (f.size || 0); }, 0);
+    if (currentTotal + file.size > maxTotal) {
+      toast('⚠️ 附件總大小已超過 100MB，無法繼續新增：' + file.name);
+      return;
+    }
     // 指派唯一 ID，避免同名檔案被一起刪除（L1 fix）
     file._uid = 'pf_' + Date.now() + '_' + Math.random().toString(36).slice(2);
     // 儲存 File 物件供送出時上傳
@@ -3076,7 +3087,16 @@ async function uploadDraftFiles(caseId, files) {
       toast('⚠️ 暫存失敗：' + file.name);
     }
   }
-  if (ok > 0) { updateFormProgress(); toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除'); }
+  if (ok > 0) {
+    updateFormProgress();
+    toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除');
+    // Issue 4 fix：上傳完成後同步 localStorage，確保切換頁面再回來時附件不丟失
+    try {
+      const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+      _sd.uploadedFiles = window._uploadedDraftFiles.slice();
+      localStorage.setItem('bf_draft', JSON.stringify(_sd));
+    } catch(e) {}
+  }
 }
 
 // ── 草稿附件：在 file-list 渲染已存檔案（綠色，含刪除按鈕）──
@@ -4338,8 +4358,21 @@ async function exportCSV(){
 function autoSaveDraft(){
   const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl=document.querySelector('#view-new-form textarea');
+  // F4 fix：同時儲存明細資料，瀏覽器 crash 後可完整還原
+  var _items=[];
+  document.querySelectorAll('.item-card').forEach(function(card){
+    _items.push({
+      date:card.querySelector('.date-inp')?.value||'',
+      category:card.querySelectorAll('select')[0]?.value||'',
+      description:card.querySelector('.desc-inp')?.value||'',
+      receiptType:card.querySelectorAll('select')[1]?.value||'',
+      pretax:parseFloat(card.querySelector('.pretax')?.value)||0,
+      tax:parseFloat(card.querySelector('.taxamt')?.value)||0,
+      total:parseFloat(card.querySelector('.withtax')?.value)||0,
+    });
+  });
   const _exist=(() => { try { return JSON.parse(localStorage.getItem('bf_draft')||'{}'); } catch(e) { return {}; } })();
-  const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',ts:Date.now(),
+  const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',items:_items,ts:Date.now(),
     caseId:_exist.caseId||null, uploadedFiles:_exist.uploadedFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 }
@@ -4350,7 +4383,9 @@ function checkDraftBanner(){
   if(saved){
     try{
       const d=JSON.parse(saved);
-      if(d.subject||d.reason){banner.classList.add('show');return;}
+      // F4 fix：明細有資料也顯示草稿提示
+      const hasItems=Array.isArray(d.items)&&d.items.some(function(i){return i.description||i.total>0;});
+      if(d.subject||d.reason||hasItems){banner.classList.add('show');return;}
     }catch(e){}
   }
   banner.classList.remove('show');
@@ -4364,6 +4399,32 @@ function restoreDraft(){
     const reasonEl=document.querySelector('#view-new-form textarea');
     if(subjectEl&&d.subject)subjectEl.value=d.subject;
     if(reasonEl&&d.reason)reasonEl.value=d.reason;
+    // F4 fix：還原明細資料
+    if(Array.isArray(d.items)&&d.items.length>0){
+      var _il=document.getElementById('items-list');
+      if(_il){
+        _il.innerHTML='';iCount=0;
+        d.items.forEach(function(it){
+          addItem();
+          var cards=_il.querySelectorAll('.item-card');
+          var card_=cards[cards.length-1];
+          var dateInp=card_.querySelector('.date-inp');
+          if(dateInp){dateInp.value=it.date||'';if(dateInp._flatpickr)dateInp._flatpickr.setDate(it.date||'');}
+          var sels=card_.querySelectorAll('select');
+          if(sels[0])sels[0].value=it.category||'';
+          if(sels[1])sels[1].value=it.receiptType||'';
+          var descInp=card_.querySelector('.desc-inp');
+          if(descInp)descInp.value=it.description||'';
+          var pretaxInp=card_.querySelector('.pretax');
+          if(pretaxInp){pretaxInp.removeAttribute('readonly');pretaxInp.value=it.pretax||0;pretaxInp.setAttribute('readonly','');}
+          var taxInp=card_.querySelector('.taxamt');
+          if(taxInp){taxInp.removeAttribute('readonly');taxInp.value=it.tax||0;taxInp.setAttribute('readonly','');}
+          var totalInp=card_.querySelector('.withtax');
+          if(totalInp)totalInp.value=it.total||0;
+        });
+        calcTotal();
+      }
+    }
     // 還原草稿 caseId 和已上傳附件
     if(d.caseId){
       _draftCaseId=d.caseId;
@@ -4889,10 +4950,66 @@ document.addEventListener('click', function(e) {
     }, 50);
   }
 });
+
+// ════════════════════════════════════════════════════════════════
+//  手機版 Modal Body Scroll Lock
+//  當任何 modal（.modal-bg.open 或 #receipt-confirm.open）開啟時，
+//  鎖定 body 捲軸，避免在 modal 內滑動時頁面一起跑。
+//  使用 iOS 相容的 position:fixed 技巧（純 overflow:hidden 在 iOS 無效）。
+//  透過 MutationObserver 自動監聽，無需修改任何既有 open/close 函式。
+// ════════════════════════════════════════════════════════════════
+(function() {
+  var _lockedY = null;
+
+  function lockBody() {
+    if (_lockedY !== null) return; // 已鎖定
+    _lockedY = window.pageYOffset || 0;
+    var s = document.body.style;
+    s.position = 'fixed';
+    s.top      = '-' + _lockedY + 'px';
+    s.left     = '0';
+    s.right    = '0';
+    s.overflow = 'hidden';
+  }
+
+  function unlockBody() {
+    if (_lockedY === null) return; // 沒有鎖定
+    var y = _lockedY;
+    _lockedY = null;
+    var s = document.body.style;
+    s.position = s.top = s.left = s.right = s.overflow = '';
+    window.scrollTo(0, y); // 還原捲動位置
+  }
+
+  function checkModals() {
+    var hasOpen = !!document.querySelector('.modal-bg.open');
+    if (!hasOpen) {
+      var rc = document.getElementById('receipt-confirm');
+      hasOpen = !!(rc && rc.classList.contains('open'));
+    }
+    hasOpen ? lockBody() : unlockBody();
+  }
+
+  // 監聽所有 class 屬性變化
+  new MutationObserver(function(mutations) {
+    for (var i = 0; i < mutations.length; i++) {
+      var t = mutations[i].target;
+      if (t && t.classList &&
+          (t.classList.contains('modal-bg') || t.id === 'receipt-confirm')) {
+        checkModals();
+        break;
+      }
+    }
+  }).observe(document.body, {
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['class']
+  });
+})();
 </script>
 
 <!-- RECEIPT CONFIRM MODAL -->
-<div id="receipt-confirm">
+<div id="receipt-confirm" onclick="if(event.target===this)this.classList.remove('open')">
   <div style="background:#fff;border-radius:16px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:8px">📎 請記得附上憑證</div>
     <div style="font-size:14px;color:#64748b;line-height:1.7;margin-bottom:20px">
