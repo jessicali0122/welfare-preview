@@ -25,7 +25,7 @@ aside .sl-section-label{display:none}
 aside .sidebar-brand-text{display:none}
 
 /* nav items */
-.sl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;color:#94a3b8;transition:background .15s,color .15s;margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;overflow:visible}
+.sl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;color:#94a3b8;transition:background .15s,color .15s;margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;overflow:visible;touch-action:manipulation}
 .sl:hover{background:#f1f5f9;color:#334155}
 .sl.active{background:#1e293b;color:#fff}
 .sl.active svg{stroke:#fff!important}
@@ -61,7 +61,7 @@ input[type=radio]{accent-color:var(--brand)}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* Topbar amber gradient accent strip */
 header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand) 0%,var(--amber-mid,#fbbf24) 55%,var(--amber,#f59e0b) 100%);pointer-events:none;z-index:1}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:160;display:none}
 .modal-bg.open{display:flex}
 /* Approval card mobile: stack buttons in a row below content */
 @media(max-width:520px){
@@ -70,7 +70,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px
   .approval-card>div>div:last-child{flex-direction:row!important;flex-basis:100%!important;gap:6px!important;margin-top:10px!important;border-top:1px solid #f1f5f9;padding-top:10px!important}
   .approval-card>div>div:last-child>button{flex:1;min-width:0;font-size:13px!important;padding:9px 6px!important;justify-content:center!important}
 }
-.notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden}
+.notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden;will-change:transform;transform:translateZ(0)}
 .notif-panel.open{display:block}
 .notif-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s}
 .notif-item:hover{background:#f8fafc}
@@ -142,7 +142,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   main{padding:12px!important}
   header{padding:0 12px!important;gap:8px}
   .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
-  #notif-panel{width:calc(100vw - 32px)!important;right:8px!important;left:8px!important;top:58px!important}
+  #notif-panel{width:calc(100vw - 32px)!important;right:8px!important;left:8px!important;top:58px!important;max-height:calc(100vh - 80px)!important}
+  #notif-list{max-height:min(240px,calc(100vh - 220px))!important}
   #user-menu{min-width:160px!important}
   .stat{padding:14px 16px!important}
   /* 手機：側欄底部使用者區塊隱藏，改在頂端顯示 */
@@ -195,7 +196,8 @@ input[type=checkbox]{accent-color:var(--brand)}
     bottom:80px!important;
     max-height:none!important;
     height:auto!important;
-    border-radius:16px!important
+    border-radius:16px!important;
+    will-change:transform;transform:translateZ(0)
   }
   /* 日期選擇器：手機版自動靠左，不超出螢幕 */
   .dp-panel{width:calc(100vw - 32px)!important;max-width:320px!important;left:0!important;right:auto!important}
@@ -235,15 +237,16 @@ input[type=checkbox]{accent-color:var(--brand)}
     margin:0!important;
     width:100%!important;max-width:100%!important;
     border-radius:20px 20px 0 0!important;
-    padding-top:12px!important;
+    padding-top:8px!important;
     padding-bottom:max(env(safe-area-inset-bottom,0px),20px)!important;
-    animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important
+    animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
+    will-change:transform;transform:translateZ(0)
   }
   /* 拖動把手視覺提示（灰色膠囊條） */
   .modal-bg>div::before{
     content:'';display:block;flex-shrink:0;
     width:40px;height:4px;background:#d1d5db;border-radius:2px;
-    margin:0 auto 12px
+    margin:0 auto 8px
   }
   /* receipt-confirm 不是 .modal-bg，也要做底部抽屜處理 */
   #receipt-confirm.open{
@@ -325,8 +328,11 @@ input[type=checkbox]{accent-color:var(--brand)}
     border-radius:16px 16px 0 0!important;
     box-shadow:0 -4px 24px rgba(0,0,0,.15)!important;
     margin:0!important;
-    padding-bottom:max(env(safe-area-inset-bottom,0px),12px)!important
+    padding-bottom:max(env(safe-area-inset-bottom,0px),12px)!important;
+    will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)
   }
+  /* 審核按鈕最低 44px 確保 iOS 觸控區域足夠 */
+  #approve-box .btn,#resubmit-box .btn{min-height:44px!important}
   /* 留白避免固定框遮住底部內容 */
   #view-detail{padding-bottom:200px!important}
 }
@@ -2164,6 +2170,7 @@ async function _doQuickReject(caseId, comment) {
 
 // ── 通用確認 Modal（取代 native confirm）──
 function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
+  closeNotif(); // 關閉通知面板，避免 z-index 衝突
   let m = document.getElementById('_confirm_modal');
   if (!m) {
     m = document.createElement('div');
@@ -2171,12 +2178,12 @@ function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
     m.className = 'modal-bg';
     document.body.appendChild(m);
   }
-  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
     + '<div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:10px">'+title+'</div>'
-    + '<div style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:22px">'+bodyHtml+'</div>'
+    + '<div style="font-size:14px;color:#475569;line-height:1.7;margin-bottom:16px">'+bodyHtml+'</div>'
     + '<div style="display:flex;gap:10px">'
-    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_confirm_modal\').classList.remove(\'open\')">取消</button>'
-    + '<button class="btn" style="flex:1;justify-content:center;background:'+btnColor+';color:#fff" id="_confirm_ok">'+btnLabel+'</button>'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById(\'_confirm_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn" style="flex:1;justify-content:center;min-height:44px;background:'+btnColor+';color:#fff" id="_confirm_ok">'+btnLabel+'</button>'
     + '</div></div>';
   m.classList.add('open');
   document.getElementById('_confirm_ok').onclick = function() {
@@ -2188,6 +2195,7 @@ function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
 
 // ── 退件 Modal（取代 native prompt）──
 function _showRejectModal(caseId) {
+  closeNotif(); // 關閉通知面板，避免 z-index 衝突
   let m = document.getElementById('_reject_modal');
   if (!m) {
     m = document.createElement('div');
@@ -2195,14 +2203,14 @@ function _showRejectModal(caseId) {
     m.className = 'modal-bg';
     document.body.appendChild(m);
   }
-  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
     + '<div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:6px">🔴 退件確認</div>'
     + '<div style="font-size:13px;color:#64748b;margin-bottom:16px">案件：<strong>'+caseId+'</strong>，退件後申請人將收到通知。</div>'
     + '<div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">退件原因 <span style="color:#ef4444">*</span></div>'
-    + '<textarea id="_reject_comment" class="inp" rows="3" placeholder="請填寫退件原因，讓申請人了解需要修改的地方..." style="resize:vertical;margin-bottom:16px"></textarea>'
+    + '<textarea id="_reject_comment" class="inp" rows="3" placeholder="請填寫退件原因，讓申請人了解需要修改的地方..." style="resize:vertical;margin-bottom:12px"></textarea>'
     + '<div style="display:flex;gap:10px">'
-    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_reject_modal\').classList.remove(\'open\')">取消</button>'
-    + '<button class="btn btn-r" style="flex:1;justify-content:center" id="_reject_ok">確認退件</button>'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById(\'_reject_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn btn-r" style="flex:1;justify-content:center;min-height:44px" id="_reject_ok">確認退件</button>'
     + '</div></div>';
   m.classList.add('open');
   setTimeout(() => document.getElementById('_reject_comment')?.focus(), 100);
@@ -3285,6 +3293,12 @@ document.addEventListener('click',e=>{
   const bell=document.getElementById('bell-btn');
   if(panel&&panel.classList.contains('open')&&!panel.contains(e.target)&&(!bell||!bell.contains(e.target)))closeNotif();
 });
+// iOS Safari：點擊非互動元素不觸發 click，用 touchstart 補足
+document.addEventListener('touchstart',function(e){
+  const panel=document.getElementById('notif-panel');
+  const bell=document.getElementById('bell-btn');
+  if(panel&&panel.classList.contains('open')&&!panel.contains(e.target)&&(!bell||!bell.contains(e.target)))closeNotif();
+},{passive:true});
 
 // ── DETAIL FLOW ──
 function updateDetailFlow(c){
