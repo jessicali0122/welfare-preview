@@ -37,8 +37,13 @@ aside .sidebar-brand-text{display:none}
 
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:12px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
-.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.01em}
-.bd{background:#f1f5f9;color:#64748b}.bp{background:#fef3c7;color:#b45309}.bg{background:#dcfce7;color:#15803d}.br{background:#fee2e2;color:#dc2626}
+/* ── 狀態 Badge：圓點 + 文字（HR dashboard 風格）── */
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
+.badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.bd{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0}.bd::before{background:#94a3b8}
+.bp{background:#fef8ec;color:#92400e;border:1px solid #fde68a}.bp::before{background:var(--amber,#f59e0b)}
+.bg{background:#f0fdf8;color:#065f46;border:1px solid #a7f3d0}.bg::before{background:var(--brand,#1e9d6b)}
+.br{background:#fff1f2;color:#be123c;border:1px solid #fecdd3}.br::before{background:#f43f5e}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;touch-action:manipulation}
 button{touch-action:manipulation}
 .btn-p{background:var(--brand);color:#fff}.btn-p:hover{background:var(--brand-dark)}
@@ -50,12 +55,21 @@ button{touch-action:manipulation}
 .inp:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(30,157,107,.15)}
 .card{background:#fff;border-radius:14px;border:1px solid #e8ddd8;box-shadow:0 2px 8px rgba(80,40,20,.07)}
 select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;appearance:none}
-.tr:hover td{background:#f8fafc}
+/* ── 表格現代化 ── */
+.tr{transition:background .1s}
+.tr:hover td{background:#f8fafc!important}
+/* 表頭：小字、灰色、大寫英文字母間距、無背景 */
+thead th{font-size:12px;color:#94a3b8;font-weight:500;background:transparent!important;border-bottom:1.5px solid #f1f5f9!important;padding:10px 16px;white-space:nowrap}
+/* 資料列：只有底部細線 */
+.tr td{border-bottom:1px solid #f3f4f6!important;vertical-align:middle}
+.tr:last-child td{border-bottom:none!important}
+/* 表格卡片 */
+.card.table-wrap table{border-collapse:collapse}
 .stat{background:#fff;border-radius:14px;padding:20px 22px;border:1px solid #e8ddd8;box-shadow:0 2px 8px rgba(80,40,20,.07)}
 .item-card{background:#f9fafb;border:1.5px solid #e8e2de;border-radius:12px;padding:16px;margin-bottom:10px}
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:500}
 input[type=radio]{accent-color:var(--brand)}
-.tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;letter-spacing:.01em}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:.01em}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:normal;text-align:center;word-break:break-word}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -347,6 +361,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
   #mobile-form-actions .btn{flex:1;justify-content:center;padding:12px 8px!important}
   #view-new-form{padding-bottom:80px!important}
+  /* 手機版：隱藏「注意事項」卡片裡的桌面版送出/草稿按鈕，改用底部固定列 */
+  #form-desktop-btns{display:none!important}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制高度防止過長訊息擋住畫面 */
@@ -663,16 +679,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table style="width:100%;min-width:560px;border-collapse:collapse;font-size:14px">
-        <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
+        <thead><tr>
+          <th style="text-align:left">申請單號</th>
+          <th style="text-align:left">申請人</th>
+          <th style="text-align:left">主旨</th>
+          <th style="text-align:left">分類</th>
+          <th style="text-align:left">含稅金額</th>
+          <th style="text-align:left">狀態</th>
+          <th style="text-align:left">簽核人</th>
+          <th style="text-align:left">申請時間</th>
+          <th style="text-align:left">操作</th>
         </tr></thead>
         <tbody id="dashboard-tbody">
           <tr style="border-bottom:1px solid #f8fafc"><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
@@ -770,14 +786,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       </div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table style="width:100%;min-width:480px;border-collapse:collapse;font-size:14px">
-        <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600;white-space:nowrap">申請時間</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">單號</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">主旨</th>
-          <th style="text-align:left;padding:10px 16px;color:#64748b;font-weight:600">分類</th>
-          <th style="text-align:right;padding:10px 16px;color:#64748b;font-weight:600">含稅金額</th>
-          <th style="padding:10px 16px"></th>
+        <thead><tr>
+          <th style="text-align:left;white-space:nowrap">申請時間</th>
+          <th style="text-align:left">單號</th>
+          <th style="text-align:left">申請人</th>
+          <th style="text-align:left">主旨</th>
+          <th style="text-align:left">分類</th>
+          <th style="text-align:right">含稅金額</th>
+          <th style="text-align:left"></th>
         </tr></thead>
         <tbody id="analytics-approved-tbody">
           <tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
@@ -841,16 +857,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
     <div class="card table-wrap" style="overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:14px">
-        <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
-          <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請單號<span class="sort-icon"></span></th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請人</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">主旨</th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">分類</th>
-          <th class="sortable-th" onclick="sortAppTable(4)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">含稅金額<span class="sort-icon"></span></th>
-          <th class="sortable-th" onclick="sortAppTable(5)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態<span class="sort-icon"></span></th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
-          <th class="sortable-th" onclick="sortAppTable(7)" style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間<span class="sort-icon"></span></th>
-          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
+        <thead><tr>
+          <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:left">申請單號<span class="sort-icon"></span></th>
+          <th style="text-align:left">申請人</th>
+          <th style="text-align:left">主旨</th>
+          <th style="text-align:left">分類</th>
+          <th class="sortable-th" onclick="sortAppTable(4)" style="text-align:left">含稅金額<span class="sort-icon"></span></th>
+          <th class="sortable-th" onclick="sortAppTable(5)" style="text-align:left">狀態<span class="sort-icon"></span></th>
+          <th style="text-align:left">簽核人</th>
+          <th class="sortable-th" onclick="sortAppTable(7)" style="text-align:left">申請時間<span class="sort-icon"></span></th>
+          <th style="text-align:left">操作</th>
         </tr></thead>
         <tbody id="applications-tbody">
           <tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
@@ -1058,7 +1074,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         <div class="card" style="padding:20px">
           <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px">注意事項</div>
           <div style="font-size:13px;color:#64748b;margin-bottom:14px;line-height:2">✓ 固定送件日：每月 10、20、30 日（如遇例假日則順延辦理）<br>✓ 單張請款金額達 $3,000(含)以上，經核准後可不受送件日限制，隨時提出申請<br>✓ 請款時須檢附憑證正本、影本各1份（憑證類型：發票／收據・統編：61409721）</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
+          <div id="form-desktop-btns" style="display:flex;flex-direction:column;gap:8px">
             <button class="btn btn-p" style="width:100%;justify-content:center;padding:11px" onclick="submitForm()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
             </button>
@@ -1268,14 +1284,14 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <div class="card" style="overflow:hidden">
         <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
         <table style="width:100%;min-width:720px;border-collapse:collapse;font-size:14px">
-          <thead style="background:#f8fafc"><tr style="border-bottom:1px solid #e2e8f0">
+          <thead><tr>
             <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="adminToggleSelectAll(this)"></th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">使用者</th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">員工編號</th><th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">部門</th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">Email</th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">標籤</th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">加入時間</th>
-            <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
+            <th style="text-align:left">使用者</th>
+            <th style="text-align:left">員工編號</th><th style="text-align:left">部門</th>
+            <th style="text-align:left">Email</th>
+            <th style="text-align:left">標籤</th>
+            <th style="text-align:left">加入時間</th>
+            <th style="text-align:left">操作</th>
           </tr></thead>
           <tbody id="admin-users-tbody">
             <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
@@ -1961,21 +1977,20 @@ function renderDashboardTable(cases) {
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    const approverStyle = 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     const actionBtn = c.status === '草稿'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
-      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
+      : `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
     const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="${rowClick}">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="${approverStyle}">${stepApprover||'—'}</td>
-      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
-      <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
+    return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}">
+      <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">${c.caseId}</td>
+      <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
+      <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
+      <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
+      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand)">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
+      <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
+      <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
+      <td style="padding:13px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2019,28 +2034,26 @@ async function loadApplications() {
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    const approverStyle = 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
-    // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
-    const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
+    // 狀態欄：badge 帶圓點
     const actionBtn = c.status === '草稿'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>
-         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
+      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>
+         <button style="padding:4px 9px;font-size:12px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;border-radius:6px;cursor:pointer;font-weight:500;margin-left:4px" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
       : c.status === '已完成'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
-         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
-      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
+         <button style="padding:4px 9px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;border-radius:6px;cursor:pointer;font-weight:500;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
+      : `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
     const rowDate = c.applyDate || c.createdAt || '';
     const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
-      <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
-      <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
-      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
-      <td style="padding:12px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:12px 16px;white-space:nowrap">${statusCell}</td>
-      <td style="${approverStyle}">${stepApprover||'—'}</td>
-      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
-      <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
+    return `<tr class="tr" style="cursor:pointer" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
+      <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">${c.caseId}</td>
+      <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
+      <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
+      <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
+      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand)">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
+      <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
+      <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
+      <td style="padding:13px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2944,10 +2957,15 @@ function catAllBadges(catStr) {
 // 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 某員工B」這類含職稱的名稱
 function getStepApproverName(step) {
   const idx = (step || 1) - 1;
-  if (_flowApprovers && _flowApprovers[idx]) {
-    const a = _flowApprovers[idx];
+  // 使用「啟用中」的關卡清單（與後端 getActiveApprovers() 邏輯一致）
+  const activeApprovers = _flowApprovers
+    ? _flowApprovers.filter(function(a){ return a.enabled !== false; })
+    : [];
+  if (activeApprovers.length > 0 && activeApprovers[idx]) {
+    const a = activeApprovers[idx];
     return (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name || '';
   }
+  // Fallback：用全域 APPROVER_EMAILS
   const email = APPROVER_EMAILS[idx];
   return email ? (LOCAL_EMAIL_TO_NAME[email] || '') : '';
 }
@@ -3095,7 +3113,7 @@ function _renderFileItem(f) {
       + '</div>';
 }
 
-// ── 非同步載入 Drive 縮圖（透過 GAS 取得含授權 Token 的 thumbnailLink）──
+// ── 非同步載入 Drive 縮圖（GAS 伺服器端讀取後以 base64 data URL 回傳，無跨域問題）──
 async function loadDriveThumbs(container) {
   const wraps = Array.from((container || document).querySelectorAll('.drive-thumb-wrap[data-fileid]'));
   if (wraps.length === 0) return;
@@ -3578,7 +3596,7 @@ function renderFlowList(approvers) {
       <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
       <div>
         <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || '第'+(i+1)+'關'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '第'+i+'關（啟用）' : '⚠️ 已停用'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '第'+(i+1)+'關（啟用）' : '⚠️ 已停用'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
@@ -4852,7 +4870,7 @@ function renderApprovedTable(approvedCases){
       +'<td style="padding:10px 16px;font-size:12px;color:var(--brand);font-weight:600;white-space:nowrap">'+c.caseId+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#374151;white-space:nowrap">'+applicant+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#0f172a;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+subj+'">'+subj+'</td>'
-      +'<td style="padding:10px 16px">'+catHtml+'</td>'
+      +'<td >'+catHtml+'</td>'
       +'<td style="padding:10px 16px;text-align:right;font-weight:700;color:var(--brand);white-space:nowrap">'+amt+'</td>'
       +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail(\''+c.caseId+'\')">查看</button></td>'
       +'</tr>';
@@ -4933,11 +4951,21 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     </div>
   </div>`;
   m.classList.add('open');
-  document.getElementById('_preview_confirm_btn').onclick = async function() {
+  // 防重複送出：第一次點擊後立即 disable 按鈕
+  const confirmBtn = document.getElementById('_preview_confirm_btn');
+  confirmBtn.onclick = null; // 清除舊 listener
+  confirmBtn.disabled = false;
+  confirmBtn.onclick = async function() {
+    if (confirmBtn.disabled) return; // 防止重複觸發
+    confirmBtn.disabled = true;
+    confirmBtn.style.opacity = '0.6';
     m.classList.remove('open');
     await doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items);
+    confirmBtn.disabled = false;
+    confirmBtn.style.opacity = '';
   };
-  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
+  // 手機版點背景區域不關閉（避免誤觸），只能點「返回修改」關閉
+  m.onclick = null;
 }
 
 // ══════════════════════════════════════════
