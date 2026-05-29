@@ -339,10 +339,41 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* 主旨欄放寬，不截斷太早 */
   #analytics-approved-tbody td:nth-child(4){max-width:120px!important}
 }
-/* ── 手機版詳情頁：右欄取消 sticky；審核框固定底部 ── */
+/* ── 手機版詳情頁 ── */
 @media(max-width:768px){
-  #detail-grid>div:last-child{position:static!important}
-  /* 手機版：審核框改為 inline 卡片，不再固定底部（避免遮住內容）*/
+  /* 整頁寬度收好 */
+  #view-detail{
+    max-width:100%!important;
+    overflow-x:hidden!important;
+    box-sizing:border-box!important;
+    padding-bottom:24px!important;
+  }
+  /* header 列允許換行，避免撐破寬度 */
+  #view-detail>div:first-child{
+    flex-wrap:wrap!important;
+    min-width:0!important;
+    max-width:100%!important;
+  }
+  /* detail-grid：單欄，寬度收好 */
+  #detail-grid{
+    grid-template-columns:1fr!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  /* 右欄：取消 sticky，寬度收好 */
+  #detail-grid>div:last-child{
+    position:static!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+  }
+  /* 所有 card 寬度收好 */
+  #view-detail .card{
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
+  }
+  /* 審核框：inline 卡片 */
   #approve-box,#resubmit-box{
     position:static!important;
     border-radius:12px!important;
@@ -350,11 +381,26 @@ input[type=checkbox]{accent-color:var(--brand)}
     margin:0 0 16px 0!important;
     padding:16px!important;
     border-left:4px solid var(--amber-mid,#fbbf24)!important;
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    overflow:hidden!important;
   }
-  #approve-box .btn,#resubmit-box .btn{min-height:44px!important;width:100%!important;justify-content:center!important}
-  /* approve-box 裡的按鈕列改為垂直排列 */
-  #approve-box>div:last-child,#resubmit-box>div:last-child{flex-direction:column!important;gap:8px!important}
-  #view-detail{padding-bottom:24px!important}
+  #approve-box textarea,#resubmit-box textarea{
+    width:100%!important;
+    box-sizing:border-box!important;
+    max-width:100%!important;
+  }
+  #approve-box .btn,#resubmit-box .btn{
+    min-height:44px!important;
+    width:100%!important;
+    justify-content:center!important;
+    box-sizing:border-box!important;
+  }
+  #approve-box>div:last-child,#resubmit-box>div:last-child{
+    flex-direction:column!important;
+    gap:8px!important;
+  }
 }
 /* ── 手機版申請單：底部固定操作列 ── */
 #mobile-form-actions{display:none}
@@ -1098,7 +1144,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== DETAIL ===== -->
   <div class="view" id="view-detail">
-    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;flex-wrap:nowrap;min-width:0">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;flex-wrap:wrap;min-width:0;max-width:100%">
       <button class="btn btn-o no-print" style="padding:6px 12px;flex-shrink:0" onclick="sw('applications')">← 返回</button>
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
