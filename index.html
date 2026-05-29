@@ -351,7 +351,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制高度防止過長訊息擋住畫面 */
-  #toast{bottom:88px!important;font-size:13px!important;padding:10px 14px!important;max-height:80px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:3!important;-webkit-box-orient:vertical!important}
+  #toast{bottom:88px!important;font-size:13px!important;padding:9px 14px!important;max-height:72px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;max-width:min(240px,calc(100vw - 48px))!important}
   /* submit-result-card 手機版縮小並確保不擋按鈕 */
   #submit-result-card{bottom:80px!important;right:12px!important;left:12px!important;width:auto!important;max-width:none!important}
 }
@@ -897,7 +897,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button class="btn btn-o" style="padding:6px 12px" onclick="sw('applications')">← 返回</button>
-      <div><div style="font-size:20px;font-weight:700;color:#0f172a">費用申請單</div><div style="font-size:13px;color:#94a3b8;margin-top:1px">草稿自動儲存</div></div>
+      <div style="flex:1"><div style="font-size:20px;font-weight:700;color:#0f172a">費用申請單</div><div style="font-size:13px;color:#94a3b8;margin-top:1px">草稿自動儲存</div></div>
+      <button id="delete-draft-btn" class="btn btn-r" style="display:none;padding:6px 12px;font-size:13px;flex-shrink:0" onclick="confirmDeleteDraft()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除草稿
+      </button>
     </div>
     <div id="form-grid" style="display:grid;grid-template-columns:1.6fr 1fr;gap:18px;align-items:start">
       <div style="display:flex;flex-direction:column;gap:14px">
@@ -2019,7 +2022,8 @@ async function loadApplications() {
     // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
     const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
     const actionBtn = c.status === '草稿'
-      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
+      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>
+         <button style="padding:5px 10px;font-size:13px;border:1.5px solid #dc2626;background:#fff;color:#dc2626;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
       : c.status === '已完成'
       ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
          <button style="padding:5px 10px;font-size:13px;border:1.5px solid #64748b;background:#fff;color:#64748b;border-radius:9px;cursor:pointer;font-weight:600;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
@@ -2306,6 +2310,9 @@ async function openDraft(caseId) {
     localStorage.setItem('bf_draft', JSON.stringify(_sd));
   } catch(e) {}
   document.getElementById('draft-banner')?.classList.remove('show');
+  // 顯示刪除草稿按鈕（草稿模式）
+  var _ddb = document.getElementById('delete-draft-btn');
+  if (_ddb) _ddb.style.display = '';
   updateFormProgress();
   toast('✅ 草稿已載入，可繼續編輯');
 }
@@ -2652,6 +2659,37 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   }
 }
 
+// ── 刪除草稿（從表單內） ──
+function confirmDeleteDraft() {
+  if (!_draftCaseId) return;
+  confirmDeleteDraftById(_draftCaseId);
+}
+// ── 刪除草稿（通用，可從清單或表單呼叫） ──
+function confirmDeleteDraftById(caseId) {
+  if (!caseId) return;
+  _showConfirmModal(
+    '🗑️ 刪除草稿',
+    '確定刪除草稿 <strong>' + caseId + '</strong>？<br><span style="font-size:13px;color:#dc2626">此操作無法復原，草稿將被永久刪除。</span>',
+    '確認刪除',
+    '#dc2626',
+    async function() {
+      toast('⏳ 刪除中...');
+      const res = await callAPI('deleteDraft', { caseId });
+      if (res.ok) {
+        _cacheClear();
+        localStorage.removeItem('bf_draft');
+        _draftCaseId = null;
+        var _ddb = document.getElementById('delete-draft-btn');
+        if (_ddb) _ddb.style.display = 'none';
+        toast('🗑️ 草稿已刪除');
+        sw('applications');
+      } else {
+        toast('❌ 刪除失敗：' + (res.error || ''));
+      }
+    }
+  );
+}
+
 async function saveDraftForm() {
   const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl  = document.querySelector('#view-new-form textarea');
@@ -2692,6 +2730,9 @@ async function saveDraftForm() {
   if (res.ok) {
     _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
     _cacheClear();
+    // 草稿儲存成功後顯示「刪除草稿」按鈕（讓使用者可直接在表單刪除）
+    var _ddb = document.getElementById('delete-draft-btn');
+    if (_ddb) _ddb.style.display = '';
     // 把 caseId 和已上傳附件同步到 localStorage，重新開啟表單時才能還原
     try {
       const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
@@ -2741,6 +2782,8 @@ function sw(name,elOrName){
   document.querySelectorAll('.icon-btn[data-view],.sl[data-view]').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('[data-view="'+target+'"]').forEach(b=>b.classList.add('active'));
   closeNotif();
+  // 切換頁面時關閉所有殘留 modal（避免 z-index 干擾下一頁操作）
+  document.querySelectorAll('.modal-bg.open').forEach(function(m){ m.classList.remove('open'); });
   // Issue 3 fix：切換頁面時自動關閉 submit-result-card（避免遮住底部按鈕）
   var _src = document.getElementById('submit-result-card');
   if (_src) _src.style.display = 'none';
@@ -2761,6 +2804,9 @@ function sw(name,elOrName){
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
+    // 隱藏刪除草稿按鈕（新表單不需要）
+    var _ddb = document.getElementById('delete-draft-btn');
+    if (_ddb) _ddb.style.display = 'none';
     window._uploadedDraftFiles = []; // 清除草稿附件追蹤
     // 清除 file-list UI
     const _fl = document.getElementById('file-list');
@@ -4450,6 +4496,9 @@ function restoreDraft(){
       }
     }
     document.getElementById('draft-banner').classList.remove('show');
+    // 有伺服器端草稿 caseId 時顯示「刪除草稿」按鈕
+    var _ddb = document.getElementById('delete-draft-btn');
+    if (_ddb && d.caseId) _ddb.style.display = '';
     toast('✅ 草稿已恢復！');
   }catch(e){toast('❌ 草稿恢復失敗');}
 }
@@ -4762,8 +4811,8 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
       <div style="font-size:20px;font-weight:800;color:var(--amber-dark,#d97706)">NT$ ${total.toLocaleString()}</div>
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById('_submit_preview_modal').closest('.modal-bg').classList.remove('open')">← 返回修改</button>
-      <button class="btn btn-p" style="flex:2;justify-content:center" id="_preview_confirm_btn">
+      <button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById('_submit_preview_modal').closest('.modal-bg').classList.remove('open')">← 返回修改</button>
+      <button class="btn btn-p" style="flex:2;justify-content:center;min-height:44px" id="_preview_confirm_btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>確認送出
       </button>
     </div>
