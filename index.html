@@ -406,12 +406,13 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
 }
 /* ── 手機版申請單：底部固定操作列 ── */
-#mobile-form-actions{display:none}
+#mobile-form-actions{display:none!important}
+#mobile-form-actions.show{display:flex!important}
 @media(max-width:768px){
-  #mobile-form-actions{
-    display:flex!important;position:fixed;bottom:0;left:0;right:0;
+  #mobile-form-actions.show{
+    position:fixed;bottom:0;left:0;right:0;
     gap:8px;padding:10px 16px;padding-bottom:max(env(safe-area-inset-bottom,0px),10px);
-    background:#fff;border-top:1px solid #e2e8f0;z-index:150;
+    background:#fff;border-top:1px solid #e2e8f0;z-index:9999;
     box-shadow:0 -2px 12px rgba(0,0,0,.1);
     will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)
   }
@@ -2889,9 +2890,9 @@ function sw(name,elOrName){
   if(name==='dashboard') loadDashboard();
   if(name==='analytics') loadAnalytics();
   if(name==='admin') loadAdminUsers();
-  // 手機版底部操作列：只在 new-form 頁顯示
+  // 手機版底部操作列：只在 new-form 頁顯示（用 class 控制，避免 !important 衝突）
   var _mfa = document.getElementById('mobile-form-actions');
-  if (_mfa) _mfa.style.display = (name === 'new-form') ? '' : 'none';
+  if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
