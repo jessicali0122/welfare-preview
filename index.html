@@ -73,7 +73,7 @@ thead th{font-size:12px;color:#94a3b8;font-weight:500;background:transparent!imp
 .item-card{background:#f9fafb;border:1.5px solid #e8e2de;border-radius:12px;padding:16px;margin-bottom:10px}
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:500}
 input[type=radio]{accent-color:var(--brand)}
-.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:.01em}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:normal;text-align:center;word-break:break-word}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -266,8 +266,8 @@ input[type=checkbox]{accent-color:var(--brand)}
     margin:0!important;
     width:100%!important;max-width:100%!important;
     border-radius:20px 20px 0 0!important;
-    padding-top:4px!important;
-    padding-bottom:env(safe-area-inset-bottom,0px)!important;
+    padding-top:16px!important;
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)!important;
     animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
     will-change:transform;transform:translateZ(0)
   }
@@ -275,7 +275,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   .modal-bg>div::before{
     content:'';display:block;flex-shrink:0;
     width:36px;height:4px;background:#d1d5db;border-radius:2px;
-    margin:4px auto 4px
+    margin:0 auto 12px
   }
   /* receipt-confirm 不是 .modal-bg，也要做底部抽屜處理 */
   #receipt-confirm.open{
@@ -287,16 +287,16 @@ input[type=checkbox]{accent-color:var(--brand)}
     max-width:100%!important;width:100%!important;
     overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;
     overscroll-behavior:contain!important;
-    padding-top:20px!important;
-    padding-bottom:max(env(safe-area-inset-bottom,0px),20px)!important;
+    padding-top:16px!important;
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)!important;
     animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
     box-shadow:none!important
   }
   /* receipt-confirm 的拖動把手 */
   #receipt-confirm>div::before{
     content:'';display:block;flex-shrink:0;
-    width:40px;height:4px;background:#d1d5db;border-radius:2px;
-    margin:-12px auto 16px
+    width:36px;height:4px;background:#d1d5db;border-radius:2px;
+    margin:0 auto 12px
   }
 }
 @keyframes slideUpModal{from{transform:translateY(100%)}to{transform:translateY(0)}}
@@ -2054,7 +2054,7 @@ function renderDashboardTable(cases) {
       <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
       <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
       <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
+      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
       <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
@@ -2118,7 +2118,7 @@ async function loadApplications() {
       <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
       <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
       <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
+      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
       <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
@@ -2848,7 +2848,8 @@ async function saveDraftForm() {
         });
       }
       toast('💾 草稿已儲存，上傳附件中...');
-      await uploadDraftFiles(res.caseId, filesToUp);
+      window._draftUploadInProgress = true;
+      try { await uploadDraftFiles(res.caseId, filesToUp); } finally { window._draftUploadInProgress = false; }
     } else {
       toast('💾 草稿已儲存！單號：' + res.caseId);
     }
@@ -2901,15 +2902,18 @@ function sw(name,elOrName){
   if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
-    _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
-    // 隱藏刪除草稿按鈕（新表單不需要）
-    var _ddb = document.getElementById('delete-draft-btn');
-    if (_ddb) _ddb.style.display = 'none';
-    window._uploadedDraftFiles = []; // 清除草稿附件追蹤
-    // 清除 file-list UI
-    const _fl = document.getElementById('file-list');
-    if (_fl) _fl.innerHTML = '';
-    window._pendingFiles = [];
+    // 若附件正在上傳中，不清除檔案列表（避免上傳中畫面切換導致附件消失）
+    if (!window._draftUploadInProgress) {
+      _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
+      // 隱藏刪除草稿按鈕（新表單不需要）
+      var _ddb = document.getElementById('delete-draft-btn');
+      if (_ddb) _ddb.style.display = 'none';
+      window._uploadedDraftFiles = []; // 清除草稿附件追蹤
+      // 清除 file-list UI
+      const _fl = document.getElementById('file-list');
+      if (_fl) _fl.innerHTML = '';
+      window._pendingFiles = [];
+    }
     checkDraftBanner();
     // 從 localStorage 還原草稿 caseId 和已上傳附件（僅 sw 直接切換時；openDraft 會自己還原）
     if (!window._openDraftInProgress) {
