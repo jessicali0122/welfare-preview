@@ -2375,6 +2375,7 @@ async function loadDetail(caseId) {
       filesEl.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>';
     } else {
       filesEl.innerHTML = files.map(f => _renderFileItem(f)).join('');
+      loadDriveThumbs(filesEl); // 非同步載入圖片縮圖
     }
   }
   // 更新簽核按鈕：當關簽核人 or 管理員（任何待審案件皆可操作）
@@ -3054,33 +3055,25 @@ function calcTotal(){
   document.getElementById('sum-total').textContent='NT$ '+stot.toLocaleString();
 }
 
-// ── 附件項目渲染（圖檔顯示 Drive 縮圖，失敗時顯示查看按鈕）──
+// ── 附件項目渲染（圖檔透過 GAS 取得有效縮圖 URL，非同步載入）──
 function _renderFileItem(f) {
-  const name = f.name || f.fileName || (typeof f === 'string' ? f : '附件');
-  const url  = f.url  || f.webViewLink || '';
-  const ext  = name.split('.').pop().toLowerCase();
+  const name    = f.name || f.fileName || (typeof f === 'string' ? f : '附件');
+  const url     = f.url  || f.webViewLink || '';
+  const ext     = name.split('.').pop().toLowerCase();
   const isImage = ['png','jpg','jpeg','gif','webp'].includes(ext);
-  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  const fileId = m ? m[1] : null;
-  // Drive 縮圖 API：sz=w400 適合手機；sz=w800 適合桌機
-  const thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400' : '';
+  const m       = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const fileId  = m ? m[1] : null;
   const extIcon = ext === 'pdf' ? '📄' : (['xlsx','xls','csv'].includes(ext) ? '📊' : '📎');
-  const fileIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
 
-  if (isImage && thumbUrl && url) {
-    // 圖片附件：顯示縮圖，失敗時改為「點擊查看」連結
-    const fallbackHtml = encodeURIComponent(
-      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 16px;color:#94a3b8;font-size:13px;min-height:80px;background:#f8fafc">'
-      + '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-      + '<span style="font-weight:600;color:#64748b">縮圖無法顯示</span>'
-      + '<span style="font-size:11px">請確認已登入公司 Google 帳號</span>'
-      + '</div>'
-    );
+  if (isImage && fileId && url) {
+    // 先顯示 loading 佔位，之後由 loadDriveThumbs() 非同步填入縮圖
     return '<div style="border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc">'
       + '<a href="' + url + '" target="_blank" style="display:block">'
-      + '<img src="' + thumbUrl + '" alt="' + name + '" loading="lazy" '
-      + 'style="width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9" '
-      + 'onerror="this.onerror=null;var p=this.parentNode;p.innerHTML=decodeURIComponent(\'' + fallbackHtml + '\')">'
+      + '<div class="drive-thumb-wrap" data-fileid="' + fileId + '" data-href="' + url + '" '
+      + 'style="min-height:160px;display:flex;align-items:center;justify-content:center;background:#f1f5f9;flex-direction:column;gap:8px">'
+      + '<div class="spinner" style="width:22px;height:22px;border:2.5px solid #e2e8f0;border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite"></div>'
+      + '<span style="font-size:12px;color:#94a3b8">縮圖載入中...</span>'
+      + '</div>'
       + '</a>'
       + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #e2e8f0;background:#fff">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
@@ -3089,7 +3082,7 @@ function _renderFileItem(f) {
       + '</div></div>';
   }
 
-  // 非圖片附件：顯示檔名連結
+  // 非圖片附件
   return url
     ? '<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-decoration:none;font-weight:500;transition:background .12s" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#f8fafc\'">'
       + '<span style="font-size:18px;flex-shrink:0">' + extIcon + '</span>'
@@ -3100,6 +3093,38 @@ function _renderFileItem(f) {
       + '<span style="font-size:18px">' + extIcon + '</span>'
       + '<span>' + name + '</span>'
       + '</div>';
+}
+
+// ── 非同步載入 Drive 縮圖（透過 GAS 取得含授權 Token 的 thumbnailLink）──
+async function loadDriveThumbs(container) {
+  const wraps = Array.from((container || document).querySelectorAll('.drive-thumb-wrap[data-fileid]'));
+  if (wraps.length === 0) return;
+  for (const wrap of wraps) {
+    const fileId = wrap.dataset.fileid;
+    const href   = wrap.dataset.href || '';
+    wrap.removeAttribute('data-fileid'); // 防止重複載入
+    try {
+      const res = await callAPI('getThumb', { fileId });
+      if (res.ok && res.url) {
+        wrap.innerHTML = '<img src="' + res.url + '" alt="附件預覽" '
+          + 'style="width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9" '
+          + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+          + '<div style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px;color:#94a3b8;font-size:13px">'
+          + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          + '<span>縮圖無法顯示</span></div>';
+        wrap.style.minHeight = '';
+        wrap.style.flexDirection = '';
+      } else {
+        wrap.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px;color:#94a3b8;font-size:13px;min-height:80px">'
+          + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+          + '<span>縮圖無法取得</span>'
+          + (href ? '<a href="' + href + '" target="_blank" style="font-size:11px;color:var(--brand);text-decoration:none;font-weight:600">在 Drive 查看 ↗</a>' : '')
+          + '</div>';
+      }
+    } catch(e) {
+      wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:20px;color:#94a3b8;font-size:13px;min-height:80px">縮圖載入失敗</div>';
+    }
+  }
 }
 
 // ── FILE UPLOAD ──
@@ -3484,9 +3509,9 @@ async function loadAdminFlow() {
     return;
   }
   _flowApprovers = res.approvers || [];
-  // 同步更新 APPROVER_EMAILS（讓 isMyTurnToApprove 用最新資料）
+  // 同步更新 APPROVER_EMAILS（只包含啟用的關卡，讓 isMyTurnToApprove 用最新資料）
   APPROVER_EMAILS.length = 0;
-  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);
   // 唯讀提示
   const notice = document.getElementById('flow-readonly-notice');
@@ -3505,12 +3530,16 @@ function renderFlowList(approvers) {
     return;
   }
 
-  // 更新標題
+  // 計算啟用數量並更新標題
+  const activeCount = approvers.filter(a => a.enabled !== false).length;
   const title = document.getElementById('flow-list-title');
-  if (title) title.textContent = '目前簽核流程（共 ' + approvers.length + ' 關）';
+  if (title) title.textContent = '目前簽核流程（共 ' + approvers.length + ' 關，' + activeCount + ' 關啟用中）';
 
   list.innerHTML = approvers.map((a, i) => {
-    const color = avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length];
+    const isEnabled = a.enabled !== false;
+    const color   = isEnabled
+      ? avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length]
+      : '#94a3b8';
     const initial = a.name ? a.name.charAt(0) : '?';
     const isFirst = i === 0;
     const isLast  = i === approvers.length - 1;
@@ -3525,26 +3554,73 @@ function renderFlowList(approvers) {
       ? `<button class="flow-edit-btn" onclick="showEditFlowModal(${i})" style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500">編輯</button>`
       : `<button class="flow-edit-btn" disabled style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:500;opacity:.4">編輯</button>`;
 
-    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
-      <div style="width:36px;height:36px;background:var(--brand);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
+    // 啟用/停用切換按鈕（僅管理員可操作）
+    const toggleBtn = admin
+      ? `<button onclick="toggleFlowStep(${i})" title="${isEnabled ? '點擊停用此關卡' : '點擊啟用此關卡'}"
+           style="padding:6px 10px;font-size:12px;border:1px solid ${isEnabled ? '#bbf7d0' : '#fecaca'};
+                  background:${isEnabled ? '#dcfce7' : '#fee2e2'};color:${isEnabled ? '#15803d' : '#dc2626'};
+                  border-radius:8px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit;
+                  transition:all .15s">
+           ${isEnabled ? '✓ 啟用中' : '✗ 已停用'}
+         </button>`
+      : `<span style="padding:6px 10px;font-size:12px;border:1px solid ${isEnabled ? '#bbf7d0' : '#fecaca'};
+                background:${isEnabled ? '#dcfce7' : '#fee2e2'};color:${isEnabled ? '#15803d' : '#dc2626'};
+                border-radius:8px;font-weight:600;white-space:nowrap">
+           ${isEnabled ? '✓ 啟用中' : '✗ 已停用'}
+         </span>`;
+
+    const rowBg     = isEnabled ? '#f8fafc' : '#fff5f5';
+    const rowBorder = isEnabled ? '1px solid #e2e8f0' : '1px solid #fecaca';
+    const numBg     = isEnabled ? 'var(--brand)' : '#94a3b8';
+    const labelColor= isEnabled ? '#0f172a' : '#94a3b8';
+
+    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:${rowBg};border-radius:10px;border:${rowBorder};${isEnabled ? '' : 'opacity:.75'}">
+      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
       <div>
-        <div style="font-size:14px;font-weight:600;color:#0f172a">${a.label || '第'+(i+1)+'關'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">第${i+1}關</div>
+        <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || '第'+(i+1)+'關'}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '第'+i+'關（啟用）' : '⚠️ 已停用'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
         <div>
-          <div style="font-size:13px;font-weight:600;color:#374151">${a.name}</div>
+          <div style="font-size:13px;font-weight:600;color:${labelColor}">${a.name}</div>
           <div style="font-size:11px;color:#94a3b8">${a.email}</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <span class="flow-status-badge" style="padding:6px 10px;font-size:12px;border:1px solid #bbf7d0;background:#dcfce7;color:#15803d;border-radius:8px;font-weight:600;white-space:nowrap">啟用中</span>
+        ${toggleBtn}
         ${orderBtns}
         ${editBtn}
       </div>
     </div>`;
   }).join('');
+}
+
+// ── 切換關卡啟用／停用 ──
+async function toggleFlowStep(index) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  const current = _flowApprovers[index];
+  if (!current) return;
+  const newEnabled = current.enabled === false; // false → true；其他（undefined/true）→ false
+  // 至少保留一個啟用的關卡
+  if (!newEnabled) {
+    const enabledAfter = _flowApprovers.filter((a, i) => i !== index && a.enabled !== false).length;
+    if (enabledAfter === 0) { toast('⚠️ 至少需要保留一個啟用的關卡'); return; }
+  }
+  const updated = _flowApprovers.map((a, i) =>
+    i === index ? Object.assign({}, a, { enabled: newEnabled }) : a
+  );
+  const res = await callAPI('saveFlow', { approvers: updated });
+  if (res.ok) {
+    _flowApprovers = updated;
+    // 同步更新 APPROVER_EMAILS（只包含啟用的關卡）
+    APPROVER_EMAILS.length = 0;
+    _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
+    renderFlowList(_flowApprovers);
+    toast((newEnabled ? '✅ 已啟用' : '🚫 已停用') + '第 ' + (index + 1) + ' 關（' + current.name + '）');
+  } else {
+    toast('❌ 儲存失敗：' + (res.error || ''));
+  }
 }
 
 // 上下移動關卡順序並儲存
