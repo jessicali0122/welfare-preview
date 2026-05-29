@@ -259,24 +259,23 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
   .modal-bg>div{
     max-height:88vh!important;
-    /* 兩軸同時設定，確實覆蓋 inline style 的 overflow:hidden */
     overflow:hidden auto!important;
     -webkit-overflow-scrolling:touch!important;
-    overscroll-behavior:contain!important; /* 滾到底不帶動頁面 */
-    touch-action:pan-y!important;          /* iOS 識別垂直滑動 */
+    overscroll-behavior:contain!important;
+    touch-action:pan-y!important;
     margin:0!important;
     width:100%!important;max-width:100%!important;
     border-radius:20px 20px 0 0!important;
-    padding-top:8px!important;
-    padding-bottom:max(env(safe-area-inset-bottom,0px),20px)!important;
+    padding-top:4px!important;
+    padding-bottom:env(safe-area-inset-bottom,0px)!important;
     animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
     will-change:transform;transform:translateZ(0)
   }
-  /* 拖動把手視覺提示（灰色膠囊條） */
+  /* 拖動把手視覺提示 */
   .modal-bg>div::before{
     content:'';display:block;flex-shrink:0;
-    width:40px;height:4px;background:#d1d5db;border-radius:2px;
-    margin:0 auto 8px
+    width:36px;height:4px;background:#d1d5db;border-radius:2px;
+    margin:4px auto 4px
   }
   /* receipt-confirm 不是 .modal-bg，也要做底部抽屜處理 */
   #receipt-confirm.open{
@@ -2836,10 +2835,17 @@ async function saveDraftForm() {
     if (window._pendingFiles && window._pendingFiles.length > 0) {
       const filesToUp = [...window._pendingFiles];
       window._pendingFiles = [];
+      // 不立即移除 UI，改為顯示「上傳中」狀態，避免附件看起來消失
       const _fle = document.getElementById('file-list');
       if (_fle) {
-        // 移除 pending 項目（留下已上傳項目）
-        Array.from(_fle.querySelectorAll('[data-pending="1"]')).forEach(el => el.remove());
+        Array.from(_fle.querySelectorAll('[data-pending="1"]')).forEach(el => {
+          el.style.opacity = '0.5';
+          el.style.pointerEvents = 'none';
+          const badge = document.createElement('span');
+          badge.style.cssText = 'font-size:11px;color:#f59e0b;padding:2px 6px;border-radius:6px;background:#fef3c7;white-space:nowrap';
+          badge.textContent = '上傳中...';
+          el.appendChild(badge);
+        });
       }
       toast('💾 草稿已儲存，上傳附件中...');
       await uploadDraftFiles(res.caseId, filesToUp);
@@ -3315,6 +3321,15 @@ async function uploadDraftFiles(caseId, files) {
       if (res.ok) {
         const info = { name: file.name, url: res.url, fileId: res.fileId };
         window._uploadedDraftFiles.push(info);
+        // 移除對應的 pending UI 項目（找同檔名的），再新增已存項目
+        const _fle = document.getElementById('file-list');
+        if (_fle) {
+          const pendingEl = Array.from(_fle.querySelectorAll('[data-pending="1"]')).find(el => {
+            const nameEl = el.querySelector('span[style*="color:#374151"],span[style*="ellipsis"]');
+            return nameEl && nameEl.textContent.trim() === file.name;
+          });
+          if (pendingEl) pendingEl.remove();
+        }
         renderDraftFileItem(info);
         ok++;
       } else {
