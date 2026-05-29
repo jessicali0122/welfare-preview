@@ -14,6 +14,7 @@
 
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
+html,body{margin:0;background:#fff;overflow-x:hidden;max-width:100vw}
 body{margin:0;background:#fff}
 :root{--brand:#1e9d6b;--brand-dark:#157a50;--brand-light:#e6f5ee;--brand-mid:#3dba84;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
@@ -156,9 +157,12 @@ input[type=checkbox]{accent-color:var(--brand)}
   #detail-grid{grid-template-columns:1fr!important}
   #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
-  main{padding:12px!important}
-  header{padding:0 12px!important;gap:8px}
-  .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+  /* 防止整頁橫向溢出 */
+  html,body,#app,#main-wrapper,#main-content{overflow-x:hidden!important;max-width:100vw!important}
+  .view,.card,section,[id^="view-"]{max-width:100%!important;box-sizing:border-box!important}
+  main{padding:12px!important;overflow-x:hidden!important}
+  header{padding:0 12px!important;gap:8px;overflow:hidden!important}
+  .table-wrap,div[style*="overflow-x:auto"]{max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
   #notif-panel{width:calc(100vw - 32px)!important;right:8px!important;left:8px!important;top:58px!important;max-height:calc(100vh - 80px)!important}
   #notif-list{max-height:min(240px,calc(100vh - 220px))!important}
   #user-menu{min-width:160px!important}
@@ -565,7 +569,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
   </div>
 
   <!-- CONTENT -->
-  <main id="main-content" style="flex:1;overflow-y:auto;padding:24px;background:#f8f5f3;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain">
+  <main id="main-content" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;background:#f8f5f3;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;max-width:100vw">
 
   <!-- ===== DASHBOARD ===== -->
   <div class="view active" id="view-dashboard">
@@ -1986,7 +1990,7 @@ function renderDashboardTable(cases) {
       <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
       <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
       <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand)">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
       <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
@@ -2049,7 +2053,7 @@ async function loadApplications() {
       <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
       <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
       <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand)">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
       <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
@@ -2132,23 +2136,24 @@ async function loadApprovals() {
   const tabMineCount = document.getElementById('atab-mine-count');
   const tabProxyCount = document.getElementById('atab-proxy-count');
 
-  if (isAdmin() && proxyCases.length > 0) {
-    // 顯示分頁 tab
+  if (isAdmin()) {
+    // 管理員：固定顯示分頁 tab（即使代理案件為 0 也顯示，讓管理員了解結構）
     if (tabsEl) tabsEl.style.display = '';
     if (tabMineCount) tabMineCount.textContent = myTurnCases.length;
     if (tabProxyCount) tabProxyCount.textContent = proxyCases.length;
     // 我需要審核列表
     container.innerHTML = myTurnCases.length > 0
       ? myTurnCases.map(c => _approvalCardHtml(c, false)).join('')
-      : '<div style="text-align:center;padding:40px;color:#94a3b8">目前沒有輪到您的案件</div>';
+      : '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">目前沒有輪到您的案件</div>';
     // 代理列表
     if (proxyContainer) {
-      proxyContainer.innerHTML = proxyCases.map(c => _approvalCardHtml(c, true)).join('');
+      proxyContainer.innerHTML = proxyCases.length > 0
+        ? proxyCases.map(c => _approvalCardHtml(c, true)).join('')
+        : '<div style="text-align:center;padding:40px;color:#94a3b8;font-size:14px">目前沒有可代理審核的案件</div>';
     }
-    // 預設顯示「我需要審核」分頁
     switchApprovalTab('mine');
   } else {
-    // 非管理員或無代理案件：隱藏分頁，直接顯示
+    // 一般審核人：隱藏分頁，直接顯示輪到自己的案件
     if (tabsEl) tabsEl.style.display = 'none';
     if (proxyContainer) proxyContainer.style.display = 'none';
     container.style.display = 'flex';
@@ -3139,8 +3144,12 @@ async function loadDriveThumbs(container) {
         wrap.style.minHeight = '';
         wrap.style.flexDirection = '';
       } else {
-        const errMsg = (res && res.error) ? res.error : '請確認 GAS 已重新部署';
-        console.warn('[Preview] getThumb 失敗:', errMsg);
+        // 把常見的 GAS 錯誤碼轉成中文說明
+        const rawErr = (res && res.error) || '未知錯誤';
+        const errMsg = rawErr === '未知動作' || rawErr === 'Unknown action'
+          ? 'GAS 尚未部署最新版本（缺少 getThumb 功能），請至 GAS 重新部署'
+          : rawErr;
+        console.warn('[Preview] getThumb 失敗:', rawErr);
         wrap.innerHTML = _thumbFallback(href, errMsg);
       }
     } catch(e) {
