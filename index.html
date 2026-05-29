@@ -935,15 +935,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== NEW FORM (費用申請單) ===== -->
   <div class="view" id="view-new-form">
-    <!-- 手機版固定底部操作列 -->
-    <div id="mobile-form-actions">
-      <button class="btn btn-a" onclick="saveDraftForm()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>儲存草稿
-      </button>
-      <button class="btn btn-p" onclick="submitForm()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
-      </button>
-    </div>
     <!-- 表單填寫進度條 -->
     <div id="form-progress-bar">
       <div class="fp-step fp-active" id="fp-1">
@@ -1380,8 +1371,17 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
   </div>
 
   </main>
+</div><!-- end #main-wrapper -->
+<!-- 手機版表單底部固定操作列（在 #app 層，完全不受 overflow:hidden 影響） -->
+<div id="mobile-form-actions">
+  <button class="btn btn-a" onclick="saveDraftForm()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>儲存草稿
+  </button>
+  <button class="btn btn-p" onclick="submitForm()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
+  </button>
 </div>
-</div>
+</div><!-- end #app -->
 
 <!-- Add User Modal -->
 <div id="add-user-modal" class="modal-bg">
@@ -1566,8 +1566,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
   </div>
 </div>
-
-</div><!-- end #app -->
 
 <!-- Google Identity Services -->
 <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -1886,7 +1884,7 @@ async function callAPI(action, data = {}, opts = {}) {
   return json;
 }
 
-async function _fetchAPI(action, data = {}) {
+async function _fetchAPI(action, data = {}, _retry = 0) {
   try {
     const body = { action, token: currentUser?.token, ...data };
     const res = await fetch(API_URL, {
@@ -1907,6 +1905,19 @@ async function _fetchAPI(action, data = {}) {
     }
     return json;
   } catch(err) {
+    // iOS Safari 切換頁面時 fetch 可能被中斷（Load failed / Failed to fetch）
+    // 自動重試最多 2 次
+    const isNetworkAbort = err.message && (
+      err.message.includes('Load failed') ||
+      err.message.includes('Failed to fetch') ||
+      err.message.includes('NetworkError') ||
+      err.message.includes('network')
+    );
+    if (isNetworkAbort && _retry < 2) {
+      console.warn('[API] 網路中斷，' + (_retry + 1) + '秒後重試…', err.message);
+      await new Promise(r => setTimeout(r, (_retry + 1) * 1000));
+      return _fetchAPI(action, data, _retry + 1);
+    }
     console.error('API Error:', err);
     return { ok: false, error: err.message };
   }
@@ -2312,8 +2323,10 @@ async function openDraft(caseId) {
   const res = await callAPI('get', { caseId });
   if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
   const c = res.case || res.data || res;
-  // 先切換到新增申請畫面（會清空表單）
+  // 先切換到新增申請畫面（會清空表單）；旗標避免 sw 重複還原附件
+  window._openDraftInProgress = true;
   sw('new-form');
+  window._openDraftInProgress = false;
   // 等 DOM 更新完畢
   await new Promise(r => setTimeout(r, 80));
   // 設定 caseId
@@ -2371,14 +2384,26 @@ async function openDraft(caseId) {
     });
     calcTotal();
   }
-  // 還原已上傳附件
-  window._uploadedDraftFiles = Array.isArray(c.files) ? c.files : [];
+  // 還原已上傳附件：優先用 GAS 資料，若為空則 fallback 到 localStorage
+  var _gasFiles = Array.isArray(c.files) ? c.files : [];
+  var _lsFiles  = [];
+  try {
+    const _sd2 = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+    if (_sd2.caseId === caseId && Array.isArray(_sd2.uploadedFiles)) {
+      _lsFiles = _sd2.uploadedFiles;
+    }
+  } catch(e) {}
+  // 以 fileId 為 key 合併，GAS 優先（較新），localStorage 補漏
+  var _mergedMap = {};
+  _lsFiles.forEach(f => { if (f.fileId) _mergedMap[f.fileId] = f; });
+  _gasFiles.forEach(f => { if (f.fileId) _mergedMap[f.fileId] = f; });
+  window._uploadedDraftFiles = Object.values(_mergedMap);
   const fileListEl = document.getElementById('file-list');
   if (fileListEl) {
     fileListEl.innerHTML = '';
     window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
   }
-  // 同步 localStorage 草稿 banner
+  // 同步 localStorage
   try {
     const _sd = { subject: c.project || c.subject || '', reason: c.reason || '',
       caseId: caseId, uploadedFiles: window._uploadedDraftFiles, ts: Date.now() };
@@ -2853,20 +2878,20 @@ function sw(name,elOrName){
   // Issue 3 fix：切換頁面時自動關閉 submit-result-card（避免遮住底部按鈕）
   var _src = document.getElementById('submit-result-card');
   if (_src) _src.style.display = 'none';
-  // 回到頂部，並強制恢復 iOS Safari 的滾動（picker 後可能被鎖住）
+  // 回到頂部
   var mc = document.getElementById('main-content');
-  if (mc) {
-    mc.style.overflowY = 'hidden';
-    requestAnimationFrame(function() { mc.style.overflowY = 'auto'; mc.scrollTop = 0; });
-  } else { window.scrollTo(0,0); }
+  if (mc) { mc.scrollTop = 0; } else { window.scrollTo(0,0); }
   updateVH();
-  // 載入對應資料
+  // 載入對應資料（先觸發，之後再做 DOM 調整，避免 iOS fetch 被中斷）
   closeSidebar();
   if(name==='applications') loadApplications();
   if(name==='approvals') loadApprovals();
   if(name==='dashboard') loadDashboard();
   if(name==='analytics') loadAnalytics();
   if(name==='admin') loadAdminUsers();
+  // 手機版底部操作列：只在 new-form 頁顯示
+  var _mfa = document.getElementById('mobile-form-actions');
+  if (_mfa) _mfa.style.display = (name === 'new-form') ? '' : 'none';
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
     _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
@@ -2879,18 +2904,20 @@ function sw(name,elOrName){
     if (_fl) _fl.innerHTML = '';
     window._pendingFiles = [];
     checkDraftBanner();
-    // 從 localStorage 還原草稿 caseId 和已上傳附件
-    try {
-      const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
-      if (_sd.caseId) {
-        _draftCaseId = _sd.caseId;
-        window._uploadedDraftFiles = _sd.uploadedFiles || [];
-        const _flr = document.getElementById('file-list');
-        if (_flr && window._uploadedDraftFiles.length > 0) {
-          window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+    // 從 localStorage 還原草稿 caseId 和已上傳附件（僅 sw 直接切換時；openDraft 會自己還原）
+    if (!window._openDraftInProgress) {
+      try {
+        const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+        if (_sd.caseId) {
+          _draftCaseId = _sd.caseId;
+          window._uploadedDraftFiles = _sd.uploadedFiles || [];
+          const _flr = document.getElementById('file-list');
+          if (_flr && window._uploadedDraftFiles.length > 0) {
+            window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+          }
         }
-      }
-    } catch(e) {}
+      } catch(e) {}
+    }
     // 申請日期：自動填入今天
     (function(){
       var adEl = document.getElementById('apply-date');
@@ -3263,13 +3290,8 @@ function handleFileUpload(files) {
   updateFormProgress();
   toast('✅ 已選取 ' + files.length + ' 個檔案（送出時自動上傳）');
   document.getElementById('file-upload-input').value = '';
-  // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度與滾動
+  // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度
   updateVH();
-  var mc = document.getElementById('main-content');
-  if (mc) {
-    mc.style.overflowY = 'hidden';
-    requestAnimationFrame(function() { mc.style.overflowY = 'auto'; });
-  }
 }
 
 function removePendingFile(uid) {
