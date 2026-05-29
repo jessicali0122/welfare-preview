@@ -1583,8 +1583,8 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 let currentUser  = null; // { email, name, token }
 let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
 
-// ── 管理者名單（可依需求擴充）──
-const ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
+// ── 管理者名單（登入後由 getMembers 動態更新）──
+let ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
 
 // ── 簽核人清單（由 loadAdminFlow 動態載入，初始值為預設值）──
 let APPROVER_EMAILS = [
@@ -1814,6 +1814,7 @@ function showApp() {
     loadDashboard();
     loadAdminFlow(); // 預載簽核流程，讓狀態欄審核人名稱即時顯示
     startTokenRefreshTimer(); // 主動刷新 token，避免頻繁顯示過期提示
+    _syncMembersFromServer(); // 背景同步使用者清單（更新姓名/管理員清單）
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -1846,7 +1847,7 @@ function logout() {
 // ── API 快取（TTL 30 秒，只快取唯讀查詢）──
 const _apiCache = {};
 const _CACHE_TTL = 30000; // 30 秒
-const _CACHEABLE = new Set(['list', 'get', 'listUsers', 'getFlow']); // 可快取的 action
+const _CACHEABLE = new Set(['list', 'get', 'listUsers', 'getFlow', 'getMembers']); // 可快取的 action
 
 function _cacheKey(action, data) {
   return action + ':' + JSON.stringify(data);
@@ -2781,7 +2782,7 @@ function confirmDeleteDraftById(caseId) {
   );
 }
 
-async function saveDraftForm() {
+async function saveDraftForm(silent = false) {
   const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl  = document.querySelector('#view-new-form textarea');
   // 收集明細（與 submitForm 相同邏輯，確保草稿保留所有欄位）
@@ -2806,7 +2807,7 @@ async function saveDraftForm() {
   const deptEl2      = document.getElementById('form-dept-select');
   const empIdEl2     = document.getElementById('employee-id');
   const applyDateEl2 = document.getElementById('apply-date');
-  toast('⏳ 儲存中...');
+  if (!silent) toast('⏳ 儲存中...');
   const res = await callAPI('draft', {
     ...(  _draftCaseId ? { caseId: _draftCaseId } : {}),
     project:    subjectEl?.value || '',
@@ -2847,14 +2848,14 @@ async function saveDraftForm() {
           el.appendChild(badge);
         });
       }
-      toast('💾 草稿已儲存，上傳附件中...');
+      if (!silent) toast('💾 草稿已儲存，上傳附件中...');
       window._draftUploadInProgress = true;
       try { await uploadDraftFiles(res.caseId, filesToUp); } finally { window._draftUploadInProgress = false; }
     } else {
-      toast('💾 草稿已儲存！單號：' + res.caseId);
+      if (!silent) toast('💾 草稿已儲存！單號：' + res.caseId);
     }
   } else {
-    toast('❌ 儲存失敗：' + res.error);
+    if (!silent) toast('❌ 儲存失敗：' + res.error);
   }
 }
 
@@ -2993,6 +2994,32 @@ const LOCAL_USER_LIST = [
 // email → 中文姓名快速查表
 const LOCAL_EMAIL_TO_NAME = {};
 LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
+
+// ── 登入後從 GAS 動態同步成員清單（更新姓名對照表 + 管理員清單）──
+async function _syncMembersFromServer() {
+  try {
+    const res = await callAPI('getMembers');
+    if (!res.ok || !Array.isArray(res.members)) return;
+    res.members.forEach(function(u) {
+      if (!u.email || !u.name) return;
+      // 更新姓名對照表
+      LOCAL_EMAIL_TO_NAME[u.email] = u.name;
+      // 更新 LOCAL_USER_LIST
+      const idx = LOCAL_USER_LIST.findIndex(function(x){ return x.email === u.email; });
+      const entry = { name: u.name, email: u.email, dept: u.department || '', employeeId: u.employeeId || '' };
+      if (idx >= 0) LOCAL_USER_LIST[idx] = entry;
+      else LOCAL_USER_LIST.push(entry);
+    });
+    // 同步管理員清單（只新增，保留原有硬編碼）
+    res.members.forEach(function(u) {
+      if (u.role === '管理者' && !ADMIN_EMAILS.includes(u.email)) {
+        ADMIN_EMAILS.push(u.email);
+      }
+    });
+    // 同步完成後重新套用權限（管理員清單可能更新了）
+    if (typeof applyRolePermissions === 'function') applyRolePermissions();
+  } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
+}
 // 根據 email 查詢本地使用者（名稱 + 部門）
 function getLocalUser(email){
   if(!email)return null;
@@ -4670,6 +4697,8 @@ async function exportCSV(){
 // ══════════════════════════════════════════
 //  草稿自動儲存 / 恢復
 // ══════════════════════════════════════════
+var _autoSaveGasTimer = null; // 自動同步 GAS 的計時器
+
 function autoSaveDraft(){
   const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl=document.querySelector('#view-new-form textarea');
@@ -4690,6 +4719,17 @@ function autoSaveDraft(){
   const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',items:_items,ts:Date.now(),
     caseId:_exist.caseId||null, uploadedFiles:_exist.uploadedFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
+
+  // 有主旨內容才排程自動同步到 GAS（30 秒後靜默儲存）
+  if (subjectEl && subjectEl.value.trim()) {
+    if (_autoSaveGasTimer) clearTimeout(_autoSaveGasTimer);
+    _autoSaveGasTimer = setTimeout(function() {
+      _autoSaveGasTimer = null;
+      // 確認還在 new-form 頁
+      if (!document.getElementById('view-new-form')?.classList.contains('active')) return;
+      saveDraftForm(true); // silent=true，不顯示 toast
+    }, 30000);
+  }
 }
 function checkDraftBanner(){
   const saved=localStorage.getItem('bf_draft');
