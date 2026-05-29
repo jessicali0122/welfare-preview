@@ -862,15 +862,15 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     <div class="card table-wrap" style="overflow:hidden">
       <table style="width:100%;border-collapse:collapse;font-size:14px">
         <thead><tr>
-          <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:left">申請單號<span class="sort-icon"></span></th>
-          <th style="text-align:left">申請人</th>
+          <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:center">申請單號<span class="sort-icon"></span></th>
+          <th style="text-align:center">申請人</th>
           <th style="text-align:left">主旨</th>
-          <th style="text-align:left">分類</th>
-          <th class="sortable-th" onclick="sortAppTable(4)" style="text-align:left">含稅金額<span class="sort-icon"></span></th>
-          <th class="sortable-th" onclick="sortAppTable(5)" style="text-align:left">狀態<span class="sort-icon"></span></th>
-          <th style="text-align:left">簽核人</th>
-          <th class="sortable-th" onclick="sortAppTable(7)" style="text-align:left">申請時間<span class="sort-icon"></span></th>
-          <th style="text-align:left">操作</th>
+          <th style="text-align:center">分類</th>
+          <th class="sortable-th" onclick="sortAppTable(4)" style="text-align:center">含稅金額<span class="sort-icon"></span></th>
+          <th class="sortable-th" onclick="sortAppTable(5)" style="text-align:center">狀態<span class="sort-icon"></span></th>
+          <th style="text-align:center">簽核人</th>
+          <th class="sortable-th" onclick="sortAppTable(7)" style="text-align:center">申請時間<span class="sort-icon"></span></th>
+          <th style="text-align:center">操作</th>
         </tr></thead>
         <tbody id="applications-tbody">
           <tr><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
@@ -1093,19 +1093,19 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== DETAIL ===== -->
   <div class="view" id="view-detail">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="btn btn-o" style="padding:6px 12px" onclick="sw('applications')">← 返回</button>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:10px">
-          <span id="detail-case-no" style="font-size:20px;font-weight:700;color:#0f172a">EWC-202505-0012</span>
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;flex-wrap:nowrap;min-width:0">
+      <button class="btn btn-o no-print" style="padding:6px 12px;flex-shrink:0" onclick="sw('applications')">← 返回</button>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0">
+          <span id="detail-case-no" style="font-size:17px;font-weight:700;color:#0f172a;word-break:break-all">EWC-202505-0012</span>
           <button class="copy-btn no-print" title="複製單號" onclick="copyCaseNo(document.getElementById('detail-case-no').textContent)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
           </button>
           <span id="detail-status-badge" class="badge bp">簽核中</span>
         </div>
-        <div id="detail-header-subject" style="font-size:15px;font-weight:600;color:#374151;margin-top:2px">—</div>
+        <div id="detail-header-subject" style="font-size:14px;font-weight:600;color:#374151;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
       </div>
-      <button class="btn btn-o" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
+      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
       </button>
     </div>
@@ -1986,15 +1986,15 @@ function renderDashboardTable(cases) {
       : `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
     const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
     return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}">
-      <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">${c.caseId}</td>
-      <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
-      <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
-      <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
-      <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
-      <td style="padding:13px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
+      <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
+      <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
+      <td style="padding:10px 14px;white-space:nowrap;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
+      <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
+      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;text-align:center;vertical-align:middle">${fmtDate(c.applyDate||c.createdAt)}</td>
+      <td style="padding:10px 14px;vertical-align:middle"><div style="display:flex;gap:6px;justify-content:center">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2049,15 +2049,15 @@ async function loadApplications() {
     const rowDate = c.applyDate || c.createdAt || '';
     const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
     return `<tr class="tr" style="cursor:pointer" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
-      <td style="padding:13px 16px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap">${c.caseId}</td>
-      <td style="padding:13px 16px;font-size:13px;color:#0f172a;font-weight:500">${localName(c.email,c.name)}</td>
-      <td style="padding:13px 16px;font-size:13px;color:#374151;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.project||c.subject||'—'}</td>
-      <td style="padding:13px 16px">${catAllBadges(c.category)}</td>
-      <td style="padding:13px 16px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:13px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:13px 16px;font-size:13px;color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
-      <td style="padding:13px 16px;font-size:12px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
-      <td style="padding:13px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
+      <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
+      <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
+      <td style="padding:10px 14px;white-space:nowrap;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
+      <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
+      <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
+      <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
+      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;text-align:center;vertical-align:middle">${fmtDate(c.applyDate||c.createdAt)}</td>
+      <td style="padding:10px 14px;vertical-align:middle"><div style="display:flex;gap:6px;justify-content:center">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
