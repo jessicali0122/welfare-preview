@@ -206,17 +206,18 @@ input[type=checkbox]{accent-color:var(--brand)}
   #main-wrapper{margin-left:0!important}
   .sl{width:56px!important;height:56px!important}
   .sl::after{font-size:10px!important}
-  /* 送出成功卡片：手機版全寬靠底（固定高度，不撐開螢幕）*/
+  /* 送出成功卡片：手機版改為頂部橫幅，不遮住底部內容 */
   #submit-result-card{
     position:fixed!important;
     left:12px!important;right:12px!important;
     width:auto!important;
-    top:auto!important;
-    bottom:80px!important;
+    top:12px!important;
+    bottom:auto!important;
     max-height:none!important;
     height:auto!important;
     border-radius:16px!important;
-    will-change:transform;transform:translateZ(0)
+    will-change:transform;transform:translateZ(0);
+    z-index:400!important;
   }
   /* 日期選擇器：手機版自動靠左，不超出螢幕 */
   .dp-panel{width:calc(100vw - 32px)!important;max-width:320px!important;left:0!important;right:auto!important}
@@ -334,20 +335,19 @@ input[type=checkbox]{accent-color:var(--brand)}
 /* ── 手機版詳情頁：右欄取消 sticky；審核框固定底部 ── */
 @media(max-width:768px){
   #detail-grid>div:last-child{position:static!important}
+  /* 手機版：審核框改為 inline 卡片，不再固定底部（避免遮住內容）*/
   #approve-box,#resubmit-box{
-    position:fixed!important;
-    bottom:0;left:0;right:0;top:auto!important;
-    z-index:80;
-    border-radius:16px 16px 0 0!important;
-    box-shadow:0 -4px 24px rgba(0,0,0,.15)!important;
-    margin:0!important;
-    padding-bottom:max(env(safe-area-inset-bottom,0px),12px)!important;
-    will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)
+    position:static!important;
+    border-radius:12px!important;
+    box-shadow:0 2px 12px rgba(0,0,0,.08)!important;
+    margin:0 0 16px 0!important;
+    padding:16px!important;
+    border-left:4px solid var(--amber-mid,#fbbf24)!important;
   }
-  /* 審核按鈕最低 44px 確保 iOS 觸控區域足夠 */
-  #approve-box .btn,#resubmit-box .btn{min-height:44px!important}
-  /* 留白避免固定框遮住底部內容 */
-  #view-detail{padding-bottom:200px!important}
+  #approve-box .btn,#resubmit-box .btn{min-height:44px!important;width:100%!important;justify-content:center!important}
+  /* approve-box 裡的按鈕列改為垂直排列 */
+  #approve-box>div:last-child,#resubmit-box>div:last-child{flex-direction:column!important;gap:8px!important}
+  #view-detail{padding-bottom:24px!important}
 }
 /* ── 手機版申請單：底部固定操作列 ── */
 #mobile-form-actions{display:none}
@@ -3120,29 +3120,42 @@ async function loadDriveThumbs(container) {
   for (const wrap of wraps) {
     const fileId = wrap.dataset.fileid;
     const href   = wrap.dataset.href || '';
-    wrap.removeAttribute('data-fileid'); // 防止重複載入
+    wrap.removeAttribute('data-fileid');
+    console.log('[Preview] 嘗試載入縮圖 fileId:', fileId);
+    if (!fileId) {
+      wrap.innerHTML = _thumbFallback(href, '無法解析 File ID');
+      continue;
+    }
     try {
       const res = await callAPI('getThumb', { fileId });
+      console.log('[Preview] GAS 回傳 ok:', res && res.ok, 'url prefix:', res && res.url ? res.url.substring(0,50) : 'none');
       if (res.ok && res.url) {
         wrap.innerHTML = '<img src="' + res.url + '" alt="附件預覽" '
           + 'style="width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9" '
-          + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+          + 'onerror="this.style.display='none';this.nextSibling.style.display='flex'">'
           + '<div style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px;color:#94a3b8;font-size:13px">'
           + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
           + '<span>縮圖無法顯示</span></div>';
         wrap.style.minHeight = '';
         wrap.style.flexDirection = '';
       } else {
-        wrap.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:20px;color:#94a3b8;font-size:13px;min-height:80px">'
-          + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-          + '<span>縮圖無法取得</span>'
-          + (href ? '<a href="' + href + '" target="_blank" style="font-size:11px;color:var(--brand);text-decoration:none;font-weight:600">在 Drive 查看 ↗</a>' : '')
-          + '</div>';
+        const errMsg = (res && res.error) ? res.error : '請確認 GAS 已重新部署';
+        console.warn('[Preview] getThumb 失敗:', errMsg);
+        wrap.innerHTML = _thumbFallback(href, errMsg);
       }
     } catch(e) {
-      wrap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;padding:20px;color:#94a3b8;font-size:13px;min-height:80px">縮圖載入失敗</div>';
+      console.error('[Preview] getThumb 例外:', e);
+      wrap.innerHTML = _thumbFallback(href, e.message || '請求失敗');
     }
   }
+}
+
+function _thumbFallback(href, errMsg) {
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px;min-height:100px;background:#fff8f8;border-radius:8px">'
+    + '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+    + (errMsg ? '<span style="font-size:11px;color:#ef4444;text-align:center;max-width:220px;line-height:1.4">⚠️ ' + errMsg + '</span>' : '')
+    + (href ? '<a href="' + href + '" target="_blank" style="margin-top:4px;font-size:12px;color:var(--brand);text-decoration:none;font-weight:600;padding:6px 14px;border:1px solid var(--brand);border-radius:6px">在 Drive 開啟 ↗</a>' : '')
+    + '</div>';
 }
 
 // ── FILE UPLOAD ──
@@ -3423,17 +3436,19 @@ function updateDetailFlow(c){
   // 相容舊呼叫（字串形式，如 sw('detail') 時），直接跳過
   if (typeof c === 'string') return;
 
-  // 優先使用動態載入的流程（loadAdminFlow 後填入），否則用預設值
-  const APPROVERS = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [
-    { label:'第一關：總幹事審核',     name:'某員工B' },
-    { label:'第二關：副主任委員審核', name:'某員工C' },
-    { label:'第三關：主任委員審核',   name:'某員工A' },
-    { label:'第四關：財務委員審核',   name:'某員工D' },
+  // 只顯示「啟用中」的關卡（與後端 getActiveApprovers() 一致）
+  const allApprovers = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [
+    { label:'第一關：總幹事審核',     name:'某員工B',   email:'user-b@tsagroup.com.tw',   enabled:true },
+    { label:'第二關：副主任委員審核', name:'某員工C',   email:'user-c@tsagroup.com.tw',    enabled:true },
+    { label:'第三關：主任委員審核',   name:'某員工A',   email:'user-a@tsagroup.com.tw',     enabled:true },
+    { label:'第四關：財務委員審核',   name:'某員工D',   email:'user-d@tsagroup.com.tw',  enabled:true },
   ];
+  // 只取啟用的關卡（enabled !== false）
+  const APPROVERS   = allApprovers.filter(function(a){ return a.enabled !== false; });
   const approvals   = c.approvals || [];
   const isDone      = c.status === '已完成';
   const isRejected  = c.status === '已退件';
-  const currentStep = Number(c.step || 1); // 1-indexed，目前輪到第幾關
+  const currentStep = Number(c.step || 1); // 1-indexed，對應 APPROVERS（啟用清單）
 
   // 更新 badge
   const badge = document.getElementById('detail-status-badge');
