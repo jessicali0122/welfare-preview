@@ -97,6 +97,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* 「啟用中」badge 和「編輯」按鈕：彈性延伸；↑↓ 按鈕：固定正方形，觸控加大 */
   .flow-row>div:nth-child(4)>.flow-order-btn{width:44px!important;height:44px!important;flex:0 0 44px!important;font-size:18px!important}
   .flow-row>div:nth-child(4)>.flow-status-badge{flex:1;text-align:center}
+  .flow-status-badge{cursor:default!important;pointer-events:none!important}
   .flow-row>div:nth-child(4)>.flow-edit-btn{flex:1;justify-content:center;min-width:60px}
 }
 
@@ -133,11 +134,13 @@ input[type=checkbox]{accent-color:var(--brand)}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
-  #dashboard-top-grid{grid-template-columns:1fr!important}
+  #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
+  #dashboard-top-grid>:first-child{grid-column:1/-1!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
   #detail-grid{grid-template-columns:1fr!important}
+  #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
   main{padding:12px!important}
   header{padding:0 12px!important;gap:8px}
@@ -170,10 +173,12 @@ input[type=checkbox]{accent-color:var(--brand)}
   header{padding:0 12px!important}
   #ptitle{font-size:14px!important}
   #detail-grid{grid-template-columns:1fr!important}
+  #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
   #form-grid{grid-template-columns:1fr!important}
   .stat{padding:12px 14px!important}
-  #dashboard-top-grid{grid-template-columns:1fr!important}
+  #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
+  #dashboard-top-grid>:first-child{grid-column:1/-1!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
   main{padding:14px!important}
   .card{border-radius:10px!important}
@@ -298,18 +303,12 @@ input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── 手機版表格列隱藏 ── */
 @media(max-width:768px){
-  /* 案件追蹤：隱藏「簽核人」(7th) 與「申請時間」(8th) */
-  #view-applications thead th:nth-child(7),
-  #applications-tbody td:nth-child(7),
-  #view-applications thead th:nth-child(8),
-  #applications-tbody td:nth-child(8){display:none!important}
-  /* 總覽最新紀錄：隱藏「分類」(4th)、「簽核人」(7th)、「申請時間」(8th) */
-  #view-dashboard thead th:nth-child(4),
-  #dashboard-tbody td:nth-child(4),
-  #view-dashboard thead th:nth-child(7),
-  #dashboard-tbody td:nth-child(7),
-  #view-dashboard thead th:nth-child(8),
-  #dashboard-tbody td:nth-child(8){display:none!important}
+  /* 案件追蹤：啟用橫向捲動以顯示所有欄位 */
+  #view-applications .card.table-wrap table{min-width:780px!important}
+  /* 總覽最新紀錄：橫向捲動顯示所有欄位 */
+  #view-dashboard .card.table-wrap table{min-width:780px!important}
+  /* 申請詳情：申請資訊 3欄 → 2欄 */
+  #view-detail .card [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
   /* 費用分析明細表：手機隱藏「單號」(2nd) 與「申請人」(3rd) */
   #view-analytics .card table thead th:nth-child(2),
   #analytics-approved-tbody td:nth-child(2),
@@ -673,9 +672,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">狀態</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">簽核人</th>
           <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">申請時間</th>
+          <th style="text-align:left;padding:11px 16px;color:#64748b;font-weight:600">操作</th>
         </tr></thead>
         <tbody id="dashboard-tbody">
-          <tr style="border-bottom:1px solid #f8fafc"><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
+          <tr style="border-bottom:1px solid #f8fafc"><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
       </div>
@@ -1210,9 +1210,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
       <span id="batch-count-label">已選 0 件</span>
       <div style="flex:1"></div>
-      <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:13px" onclick="batchApprove()">批次核准選取</button>
-      <button class="btn" style="background:#dc2626;color:#fff;padding:5px 14px;font-size:13px" onclick="batchReject()">批次退件選取</button>
-      <button class="btn btn-o" style="padding:5px 14px;font-size:13px;color:#fff;border-color:rgba(255,255,255,.3)" onclick="clearSelection()">取消選取</button>
+      <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:13px" onclick="batchApprove()">批次核准</button>
+      <button class="btn" style="background:#dc2626;color:#fff;padding:5px 14px;font-size:13px" onclick="batchReject()">批次退件</button>
+      <button class="btn" style="padding:5px 14px;font-size:13px;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)" onclick="clearSelection()">取消</button>
     </div>
     <!-- 我需要審核 -->
     <div id="approvals-list" style="display:flex;flex-direction:column;gap:12px">
@@ -1953,24 +1953,29 @@ function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="8" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
+    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="9" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
     return;
   }
   tbody.innerHTML = cases.map(c => {
-    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : 'bp';
+    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
     const approverStyle = 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
-    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
+    const actionBtn = c.status === '草稿'
+      ? `<button style="padding:5px 12px;font-size:13px;border:1.5px solid #f59e0b;background:#fff;color:#b45309;border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
+      : `<button style="padding:5px 12px;font-size:13px;border:1.5px solid var(--brand);background:#fff;color:var(--brand);border-radius:9px;cursor:pointer;font-weight:600" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+    const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+    return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="${rowClick}">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
-      <td style="padding:12px 16px;color:#374151">${c.project||c.subject||'—'}</td>
+      <td style="padding:12px 16px;color:#374151;font-weight:500">${c.project||c.subject||'—'}</td>
       <td style="padding:12px 16px">${catAllBadges(c.category)}</td>
       <td style="padding:12px 16px;font-weight:700">NT$ ${Number(c.total||0).toLocaleString()}</td>
       <td style="padding:12px 16px;white-space:nowrap"><span class="badge ${statusClass}">${c.status}</span></td>
       <td style="${approverStyle}">${stepApprover||'—'}</td>
-      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt)}</td>
+      <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
+      <td style="padding:12px 16px"><div style="display:flex;gap:6px">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -3049,7 +3054,7 @@ function calcTotal(){
   document.getElementById('sum-total').textContent='NT$ '+stot.toLocaleString();
 }
 
-// ── 附件項目渲染（圖檔顯示內嵌縮圖，其他顯示連結）──
+// ── 附件項目渲染（圖檔顯示 Drive 縮圖，失敗時顯示查看按鈕）──
 function _renderFileItem(f) {
   const name = f.name || f.fileName || (typeof f === 'string' ? f : '附件');
   const url  = f.url  || f.webViewLink || '';
@@ -3057,27 +3062,44 @@ function _renderFileItem(f) {
   const isImage = ['png','jpg','jpeg','gif','webp'].includes(ext);
   const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   const fileId = m ? m[1] : null;
-  const thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800' : '';
+  // Drive 縮圖 API：sz=w400 適合手機；sz=w800 適合桌機
+  const thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400' : '';
+  const extIcon = ext === 'pdf' ? '📄' : (['xlsx','xls','csv'].includes(ext) ? '📊' : '📎');
   const fileIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+
   if (isImage && thumbUrl && url) {
+    // 圖片附件：顯示縮圖，失敗時改為「點擊查看」連結
+    const fallbackHtml = encodeURIComponent(
+      '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:20px 16px;color:#94a3b8;font-size:13px;min-height:80px;background:#f8fafc">'
+      + '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+      + '<span style="font-weight:600;color:#64748b">縮圖無法顯示</span>'
+      + '<span style="font-size:11px">請確認已登入公司 Google 帳號</span>'
+      + '</div>'
+    );
     return '<div style="border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc">'
       + '<a href="' + url + '" target="_blank" style="display:block">'
       + '<img src="' + thumbUrl + '" alt="' + name + '" loading="lazy" '
-      + 'style="width:100%;max-height:280px;object-fit:contain;display:block;background:#f1f5f9" '
-      + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
-      + '<div style="display:none;align-items:center;justify-content:center;padding:24px;color:#94a3b8;font-size:13px">無法載入預覽</div>'
+      + 'style="width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9" '
+      + 'onerror="this.onerror=null;var p=this.parentNode;p.innerHTML=decodeURIComponent(\'' + fallbackHtml + '\')">'
       + '</a>'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid #e2e8f0">'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #e2e8f0;background:#fff">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
-      + '<a href="' + url + '" target="_blank" style="font-size:12px;color:#64748b;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</a>'
-      + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+      + '<a href="' + url + '" target="_blank" style="font-size:12px;color:#64748b;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">' + name + '</a>'
+      + '<a href="' + url + '" target="_blank" style="font-size:11px;color:var(--brand);font-weight:700;white-space:nowrap;flex-shrink:0;text-decoration:none">在 Drive 開啟 ↗</a>'
       + '</div></div>';
   }
+
+  // 非圖片附件：顯示檔名連結
   return url
-    ? '<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:var(--brand);text-decoration:none;font-weight:500">'
-      + fileIcon + name + '</a>'
-    : '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151">'
-      + fileIcon + name + '</div>';
+    ? '<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151;text-decoration:none;font-weight:500;transition:background .12s" onmouseover="this.style.background=\'#f0fdf4\'" onmouseout="this.style.background=\'#f8fafc\'">'
+      + '<span style="font-size:18px;flex-shrink:0">' + extIcon + '</span>'
+      + '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</span>'
+      + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+      + '</a>'
+    : '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#94a3b8">'
+      + '<span style="font-size:18px">' + extIcon + '</span>'
+      + '<span>' + name + '</span>'
+      + '</div>';
 }
 
 // ── FILE UPLOAD ──
