@@ -1961,9 +1961,7 @@ function renderDashboardTable(cases) {
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    const approverStyle = c.status === '已退件'
-      ? 'padding:12px 16px;color:#dc2626;font-weight:500;white-space:nowrap'
-      : 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
+    const approverStyle = 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     return `<tr class="tr" style="cursor:pointer;border-bottom:1px solid #f8fafc" onclick="loadDetail('${c.caseId}')">
       <td style="padding:12px 16px;font-weight:700;color:var(--brand);white-space:nowrap">${c.caseId}</td>
       <td style="padding:12px 16px;color:#374151">${localName(c.email,c.name)}</td>
@@ -2016,9 +2014,7 @@ async function loadApplications() {
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    const approverStyle = c.status === '已退件'
-      ? 'padding:12px 16px;color:#dc2626;font-weight:500;white-space:nowrap'
-      : 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
+    const approverStyle = 'padding:12px 16px;color:#374151;font-weight:500;white-space:nowrap';
     // 狀態欄：只顯示 badge（badge 本身已含關卡資訊，如「待第1關簽核」）
     const statusCell = `<span class="badge ${statusClass}">${c.status}</span>`;
     const actionBtn = c.status === '草稿'
@@ -2373,17 +2369,7 @@ async function loadDetail(caseId) {
     if (files.length === 0) {
       filesEl.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>';
     } else {
-      filesEl.innerHTML = files.map(f => {
-        const name = f.name || f.fileName || f;
-        const url  = f.url  || f.webViewLink || '';
-        return url
-          ? `<a href="${url}" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:var(--brand);text-decoration:none;font-weight:500">
-               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-               ${name}</a>`
-          : `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151">
-               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-               ${name}</div>`;
-      }).join('');
+      filesEl.innerHTML = files.map(f => _renderFileItem(f)).join('');
     }
   }
   // 更新簽核按鈕：當關簽核人 or 管理員（任何待審案件皆可操作）
@@ -3063,6 +3049,37 @@ function calcTotal(){
   document.getElementById('sum-total').textContent='NT$ '+stot.toLocaleString();
 }
 
+// ── 附件項目渲染（圖檔顯示內嵌縮圖，其他顯示連結）──
+function _renderFileItem(f) {
+  const name = f.name || f.fileName || (typeof f === 'string' ? f : '附件');
+  const url  = f.url  || f.webViewLink || '';
+  const ext  = name.split('.').pop().toLowerCase();
+  const isImage = ['png','jpg','jpeg','gif','webp'].includes(ext);
+  const m = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  const fileId = m ? m[1] : null;
+  const thumbUrl = fileId ? 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800' : '';
+  const fileIcon = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+  if (isImage && thumbUrl && url) {
+    return '<div style="border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;background:#f8fafc">'
+      + '<a href="' + url + '" target="_blank" style="display:block">'
+      + '<img src="' + thumbUrl + '" alt="' + name + '" loading="lazy" '
+      + 'style="width:100%;max-height:280px;object-fit:contain;display:block;background:#f1f5f9" '
+      + 'onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+      + '<div style="display:none;align-items:center;justify-content:center;padding:24px;color:#94a3b8;font-size:13px">無法載入預覽</div>'
+      + '</a>'
+      + '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-top:1px solid #e2e8f0">'
+      + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
+      + '<a href="' + url + '" target="_blank" style="font-size:12px;color:#64748b;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + name + '</a>'
+      + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+      + '</div></div>';
+  }
+  return url
+    ? '<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:var(--brand);text-decoration:none;font-weight:500">'
+      + fileIcon + name + '</a>'
+    : '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151">'
+      + fileIcon + name + '</div>';
+}
+
 // ── FILE UPLOAD ──
 // 儲存待上傳的 File 物件（送出後實際上傳 Drive）
 if (!window._pendingFiles)       window._pendingFiles = [];
@@ -3285,17 +3302,7 @@ async function uploadPendingFiles(caseId, files) {
           if (files.length === 0) {
             filesEl.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>';
           } else {
-            filesEl.innerHTML = files.map(function(f) {
-              const name = f.name || f.fileName || f;
-              const url  = f.url  || f.webViewLink || '';
-              return url
-                ? '<a href="' + url + '" target="_blank" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:var(--brand);text-decoration:none;font-weight:500">'
-                  + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
-                  + name + '</a>'
-                : '<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;font-size:13px;color:#374151">'
-                  + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
-                  + name + '</div>';
-            }).join('');
+            filesEl.innerHTML = files.map(function(f) { return _renderFileItem(f); }).join('');
           }
         }
       }
@@ -3520,6 +3527,7 @@ function renderFlowList(approvers) {
 
 // 上下移動關卡順序並儲存
 async function moveFlowStep(index, direction) {
+  try {
   if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
   const newIndex = index + direction;
   if (newIndex < 0 || newIndex >= _flowApprovers.length) return;
@@ -3546,6 +3554,10 @@ async function moveFlowStep(index, direction) {
     toast('✅ 已調整第' + (index+1) + '關與第' + (newIndex+1) + '關的順序');
     _cacheClear();
   }
+  } catch(e) {
+    toast('❌ 移動關卡錯誤：' + e.message);
+    console.error('[moveFlowStep]', e);
+  }
 }
 
 // 取得流程負責人下拉選項
@@ -3568,14 +3580,19 @@ function getFlowUserOptions(selectedEmail) {
 
 // 顯示編輯 modal
 function showEditFlowModal(index) {
-  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
-  const a = _flowApprovers[index];
-  if (!a) return;
-  _editFlowIndex = index;
-  document.getElementById('edit-flow-subtitle').textContent = '修改第' + (index + 1) + '關設定';
-  document.getElementById('edit-flow-name').value = a.label || '';
-  document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email);
-  document.getElementById('edit-flow-modal').classList.add('open');
+  try {
+    if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+    const a = _flowApprovers[index];
+    if (!a) { toast('❌ 找不到關卡資料，請重新整理頁面'); return; }
+    _editFlowIndex = index;
+    document.getElementById('edit-flow-subtitle').textContent = '修改第' + (index + 1) + '關設定';
+    document.getElementById('edit-flow-name').value = a.label || a.name || '';
+    document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email);
+    document.getElementById('edit-flow-modal').classList.add('open');
+  } catch(e) {
+    toast('❌ 編輯視窗錯誤：' + e.message);
+    console.error('[showEditFlowModal]', e);
+  }
 }
 
 function closeEditFlowModal() {
