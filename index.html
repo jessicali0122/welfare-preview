@@ -413,9 +413,9 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* ── 手機版申請單：底部固定操作列 ── */
 #mobile-form-actions{display:none!important}
-#mobile-form-actions.show{display:flex!important}
 @media(max-width:768px){
   #mobile-form-actions.show{
+    display:flex!important;
     position:fixed;bottom:0;left:0;right:0;
     gap:8px;padding:10px 16px;padding-bottom:max(env(safe-area-inset-bottom,0px),10px);
     background:#fff;border-top:1px solid #e2e8f0;z-index:9999;
@@ -442,19 +442,37 @@ input[type=checkbox]{accent-color:var(--brand)}
 .empty-state p{font-size:14px;margin:0}
 .empty-state small{font-size:12px;color:#cbd5e1}
 @media print{
-  #sidebar,#main-wrapper>header,.btn,#toast,#receipt-confirm,#user-menu,#notif-panel,.no-print,#resubmit-box{display:none!important}
-  #audit-log-section{display:block!important}
-  #main-content{margin-left:0!important;padding:16px!important}
+  /* 隱藏 UI 元件 */
+  #sidebar,#main-wrapper>header,.btn,#toast,#receipt-confirm,#user-menu,#notif-panel,.no-print,#resubmit-box,#approve-box{display:none!important}
+  /* 版面還原 */
+  #main-content{margin-left:0!important;padding:0!important}
+  body,html{background:#fff!important}
   .view{display:none!important}
   #view-detail{display:block!important}
-  .card{box-shadow:none!important;border:1px solid #e2e8f0!important;break-inside:avoid;margin-bottom:12px}
+  /* 雙欄改單欄列印 */
+  #detail-grid{grid-template-columns:1fr!important;gap:12px!important}
+  #detail-grid>div:last-child{position:static!important}
+  /* 卡片 */
+  .card{box-shadow:none!important;border:1px solid #e2e8f0!important;break-inside:avoid!important;margin-bottom:10px!important;page-break-inside:avoid!important}
+  /* 列印頁首 */
   .print-header{display:block!important}
-  body{background:#fff!important}
-  #approve-box{display:none!important}
-  table{width:100%!important;font-size:12px!important}
+  /* 表格：解除 overflow，讓明細完整顯示 */
+  .table-wrap{overflow:visible!important;max-width:none!important}
+  table{width:100%!important;font-size:11px!important;border-collapse:collapse!important;table-layout:auto!important}
+  th,td{padding:6px 8px!important;word-break:break-word!important}
   .amount-col,td[data-print-bold]{font-weight:700!important}
+  /* 附件圖片：合適尺寸 */
+  [id^="thumb-"],img{max-width:160px!important;max-height:160px!important;object-fit:contain!important}
+  /* 操作紀錄：有內容才顯示 */
+  #audit-log-section.audit-visible{display:block!important}
+  #audit-log-section:not(.audit-visible){display:none!important}
 }
 .print-header{display:none}
+
+/* ── 待審核雙欄：手機改回單欄 ── */
+@media(max-width:900px){
+  #approvals-list,#approvals-list-proxy{grid-template-columns:1fr!important}
+}
 
 /* ── 手機版案件卡片 ── */
 .case-cards-container{display:flex;flex-direction:column;gap:12px;padding:4px 0}
@@ -549,9 +567,9 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
    ══════════════════════════════════════════════════════════ */
 :root{
   --fs-2xs : 11px;   /* sidebar 標籤、圖表輔助文字 */
-  --fs-xs  : 12px;   /* badge、時間戳、表頭、caption */
-  --fs-sm  : 13px;   /* 次要文字、table body、工具提示 */
-  --fs-base: 14px;   /* 主體文字、表單欄位、按鈕 */
+  --fs-xs  : 12px;   /* 時間戳、caption */
+  --fs-sm  : 13px;   /* 表頭、badge、次要文字 */
+  --fs-base: 14px;   /* 主體文字、table body、表單、按鈕 */
   --fs-md  : 15px;   /* 區塊標題、通知標題、卡片 heading */
   --fs-lg  : 17px;   /* 頁面標題（topbar）、modal title */
   --fs-xl  : 20px;   /* 表單頁大標、登入頁品牌副標 */
@@ -569,13 +587,13 @@ body,input,select,textarea,button{font-size:var(--fs-base)}
 .inp{font-size:var(--fs-base)!important}
 
 /* ── 表格 ── */
-table{font-size:var(--fs-sm)!important}
-thead th{font-size:var(--fs-xs)!important;letter-spacing:.04em}
-tbody td{font-size:var(--fs-sm)!important}
+table{font-size:var(--fs-base)!important}
+thead th{font-size:var(--fs-sm)!important;letter-spacing:.02em;font-weight:600!important}
+tbody td{font-size:var(--fs-base)!important}
 
 /* ── 狀態/分類 badge ── */
-.badge{font-size:var(--fs-xs)!important}
-.tag{font-size:var(--fs-2xs)!important}
+.badge{font-size:var(--fs-sm)!important}
+.tag{font-size:var(--fs-xs)!important}
 
 /* ── 區塊標題 ── */
 .section-title{font-size:var(--fs-md)!important}
@@ -732,11 +750,7 @@ tbody td{font-size:var(--fs-sm)!important}
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#f59e0b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#f59e0b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#f59e0b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#f59e0b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#f59e0b"/></svg></span>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
-    <!-- 通知鈴鐺按鈕 -->
-    <button id="bell-btn" onclick="toggleNotif(event)" title="通知" style="position:relative;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;transition:background .15s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background='none'">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-      <span id="bell-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:0 4px;line-height:16px;text-align:center;pointer-events:none">0</span>
-    </button>
+    <!-- 鈴鐺已移除：側欄已有「待審核」選項 -->
     <!-- 手機版使用者按鈕（桌機隱藏） -->
     <button id="mobile-user-btn" onclick="toggleSidebar()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
       <span class="user-avatar-initial" style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px">潔</span>
@@ -1428,11 +1442,11 @@ tbody td{font-size:var(--fs-sm)!important}
       <button class="btn" style="padding:5px 14px;font-size:13px;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)" onclick="clearSelection()">取消</button>
     </div>
     <!-- 我需要審核 -->
-    <div id="approvals-list" style="display:flex;flex-direction:column;gap:12px">
+    <div id="approvals-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>
     </div>
     <!-- 代理審核（管理員專用）-->
-    <div id="approvals-list-proxy" style="display:none;flex-direction:column;gap:12px">
+    <div id="approvals-list-proxy" style="display:none;grid-template-columns:repeat(2,1fr);gap:14px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有代理審核案件</div>
     </div>
   </div>
@@ -2113,6 +2127,9 @@ function reLogin() {
 function fmtDate(s) {
   if (!s) return '—';
   var str = String(s);
+  // 只有日期（無時間）→ 直接回傳，不加 00:00
+  if (/^\d{4}\/\d{2}\/\d{2}$/.test(str.trim())) return str.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str.trim())) return str.trim().replace(/-/g,'/');
   if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}/.test(str)) return str.substring(0, 16);
   var d = new Date(str);
   if (isNaN(d.getTime())) return str;
@@ -2196,6 +2213,48 @@ async function loadDashboard() {
   }
 }
 
+// ── 共用：渲染單一案件列（總覽 + 案件追蹤 共用，確保完全一致）──
+function _renderCaseRow(c, opts) {
+  opts = opts || {};
+  const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
+  const stepApprover = c.status === '已退件'
+    ? (c.rejectedBy || getStepApproverName(c.step))
+    : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
+  const isDraft = c.status === '草稿';
+  const isDone  = c.status === '已完成';
+  const caseIdColor = isDraft ? '#94a3b8' : isDone ? 'var(--brand,#1e9d6b)' : '#f59e0b';
+  const _btnBase = 'min-width:52px;padding:5px 10px;font-size:13px;border-radius:6px;cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0;text-align:center';
+  const actionBtn = isDraft
+    ? `<button style="${_btnBase};border:1px solid #fde68a;background:#fffbeb;color:#92400e" onclick="event.stopPropagation();openDraft('${c.caseId}')">編輯</button>`
+    + `<button style="${_btnBase};border:1px solid #fecdd3;background:#fff1f2;color:#be123c" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
+    : isDone
+    ? `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
+    + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
+    : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
+    + `<span style="min-width:52px;display:inline-block"></span>`;
+  const rowClick = isDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+  const catCell  = (function(){
+    const cats = (c.category||'').split('、').filter(Boolean);
+    if (!cats.length) return '<span style="color:#cbd5e1">—</span>';
+    const v = cats.slice(0,2).map(x => catBadge(x)).join('');
+    const m = cats.length > 2 ? '<span style="font-size:12px;color:#94a3b8;white-space:nowrap;flex-shrink:0">+'+(cats.length-2)+'</span>' : '';
+    return v + m;
+  })();
+  const tdStyle  = 'padding:10px 14px;vertical-align:middle;text-align:center';
+  return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}">
+    <td style="${tdStyle};font-weight:700;color:${caseIdColor};white-space:nowrap">${c.caseId}</td>
+    <td style="${tdStyle};color:#0f172a;font-weight:500;white-space:nowrap">${localName(c.email,c.name)}</td>
+    <td style="${tdStyle};color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">${c.project||c.subject||'—'}</td>
+    <td style="${tdStyle}"><div style="display:flex;flex-wrap:nowrap;gap:4px;align-items:center;justify-content:center;overflow:hidden">${catCell}</div></td>
+    <td style="${tdStyle};font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
+    <td style="${tdStyle}"><span class="badge ${statusClass}" style="min-width:92px;justify-content:center;display:inline-flex">${c.status}</span></td>
+    <td style="${tdStyle};color:#374151;white-space:nowrap">${stepApprover||'—'}</td>
+    <td style="${tdStyle};color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
+    <td style="${tdStyle};color:#94a3b8;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
+    <td style="${tdStyle}"><div style="display:flex;flex-wrap:nowrap;gap:5px;justify-content:center;align-items:center">${actionBtn}</div></td>
+  </tr>`;
+}
+
 function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
@@ -2208,28 +2267,7 @@ function renderDashboardTable(cases) {
 </div></td></tr>`;
     return;
   }
-  tbody.innerHTML = cases.map(c => {
-    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const stepApprover = c.status === '已退件'
-      ? (c.rejectedBy || getStepApproverName(c.step))
-      : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    const actionBtn = c.status === '草稿'
-      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>`
-      : `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
-    const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
-    return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}">
-      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
-      <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
-      <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
-      <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
-      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${fmtDate(c.createdAt||c.applyDate)}</td>
-      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:5px;justify-content:center;align-items:center">${actionBtn}</div></td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = cases.map(c => _renderCaseRow(c)).join('');
 }
 
 function updateBadge(count) {
@@ -2271,7 +2309,7 @@ async function loadApplications() {
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
   <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">還沒有申請紀錄</p>
   <small>點下方按鈕建立第一筆費用申請</small>
-  <div style="margin-top:16px"><button class="btn btn-p" onclick="sw('new')">＋ 新增申請</button></div>
+  <div style="margin-top:16px"><button class="btn btn-p" onclick="sw('new-form')">＋ 新增申請</button></div>
 </div>`;
     if (isMobile && cardsContainer) { cardsContainer.innerHTML = emptyHtml; }
     else { tbody.innerHTML = '<tr><td colspan="10">' + emptyHtml + '</td></tr>'; }
@@ -2290,10 +2328,11 @@ async function loadApplications() {
           + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
         : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
       const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+      const _cardIdColor = c.status === '草稿' ? '#94a3b8' : c.status === '已完成' ? 'var(--brand,#1e9d6b)' : '#f59e0b';
       return `<div class="case-card" onclick="${rowClick}">
   <div class="case-card-top">
-    <span class="case-card-id">${c.caseId}</span>
-    <span class="badge ${statusClass}">${c.status}</span>
+    <span class="case-card-id" style="color:${_cardIdColor};font-weight:700">${c.caseId}</span>
+    <span class="badge ${statusClass}" style="min-width:92px;justify-content:center;display:inline-flex">${c.status}</span>
   </div>
   <div class="case-card-subject">${c.project||c.subject||'—'}</div>
   <div class="case-card-meta">${localName(c.email,c.name)} · ${localDept(c.email,c.department)}</div>
@@ -2309,34 +2348,12 @@ async function loadApplications() {
     }).join('');
     return;
   }
+  // 案件追蹤表格：使用共用函式，加上 data-dept / data-date 供篩選用
   tbody.innerHTML = sortedCases.map(c => {
-    const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-    const stepApprover = c.status === '已退件'
-      ? (c.rejectedBy || getStepApproverName(c.step))
-      : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
-    // 狀態欄：badge 帶圓點
-    const _btnBase = 'padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0';
-    const actionBtn = c.status === '草稿'
-      ? `<button style="${_btnBase};border:1px solid #fde68a;background:#fffbeb;color:#92400e" onclick="event.stopPropagation();openDraft('${c.caseId}')">編輯</button>`
-      + `<button style="${_btnBase};border:1px solid #fecdd3;background:#fff1f2;color:#be123c" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
-      : c.status === '已完成'
-      ? `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
-      + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
-      : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+    const row = _renderCaseRow(c);
     const rowDate = c.applyDate || c.createdAt || '';
-    const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
-    return `<tr class="tr" style="cursor:pointer" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
-      <td style="padding:10px 14px;font-size:13px;font-weight:600;color:#64748b;white-space:nowrap;text-align:center;vertical-align:middle">${c.caseId}</td>
-      <td style="padding:10px 14px;font-size:13px;color:#0f172a;font-weight:500;white-space:nowrap;text-align:center;vertical-align:middle">${localName(c.email,c.name)}</td>
-      <td style="padding:10px 14px;font-size:13px;color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle">${c.project||c.subject||'—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center">${catAllBadges(c.category)}</div></td>
-      <td style="padding:10px 14px;font-size:13px;font-weight:700;color:var(--brand);white-space:nowrap;text-align:center;vertical-align:middle">NT$ ${Number(c.total||0).toLocaleString()}</td>
-      <td style="padding:10px 14px;white-space:nowrap;text-align:center;vertical-align:middle"><span class="badge ${statusClass}">${c.status}</span></td>
-      <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
-      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${fmtDate(c.createdAt||c.applyDate)}</td>
-      <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:5px;justify-content:center;align-items:center">${actionBtn}</div></td>
-    </tr>`;
+    // 把 data 屬性注入 <tr>
+    return row.replace('<tr class="tr"', `<tr class="tr" data-dept="${c.department||''}" data-date="${rowDate}"`);
   }).join('');
 }
 
@@ -2374,40 +2391,42 @@ async function loadApprovals() {
   }
 
   function _approvalCardHtml(c, isProxy) {
-    const subject  = c.project || c.subject || '';
-    const category = c.category || '';
-    const border   = isProxy ? '#94a3b8' : 'var(--amber,#f59e0b)';
-    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="padding:18px;border-left:4px solid ' + border + ';margin-bottom:10px">'
-      + '<div style="display:flex;align-items:start;justify-content:space-between;gap:12px">'
-      +   '<div style="display:flex;align-items:start;gap:10px;flex:1;min-width:0">'
-      +     '<input type="checkbox" class="cb-item approval-cb" data-caseid="' + c.caseId + '" style="margin-top:5px;flex-shrink:0" onchange="updateBatchBar()">'
-      +     '<div style="flex:1;min-width:0">'
-      // 頂列：單號 + 狀態 badge + 代理標籤
-      +       '<div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap">'
-      +         '<span style="font-size:15px;font-weight:700;color:var(--brand)">' + c.caseId + '</span>'
-      +         '<span class="badge bp">' + c.status + '</span>'
-      +         (isProxy ? '<span style="font-size:11px;font-weight:700;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;border:1px solid #e2e8f0">管理員代理</span>' : '')
-      +       '</div>'
-      // 主旨 + 分類標籤
-      +       (subject ? '<div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-      +           subject
-      +           + (category ? '&ensp;' + catAllBadges(category) : '')
-      +         '</div>' : '')
-      // 申請人 / 部門 / 含稅 / 送出
-      +       '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:5px 16px;font-size:13px">'
-      +         '<div><span style="color:#94a3b8">申請人：</span><span style="font-weight:600;color:#374151">' + localName(c.email,c.name) + '</span></div>'
-      +         '<div><span style="color:#94a3b8">部門：</span><span style="font-weight:600">' + localDept(c.email,c.department) + '</span></div>'
-      +         '<div><span style="color:#94a3b8">含稅：</span><span style="font-weight:700;color:#0f172a">NT$ ' + Number(c.total||0).toLocaleString() + '</span></div>'
-      +         '<div><span style="color:#94a3b8">送出：</span><span style="color:#374151">' + fmtDate(c.createdAt) + '</span></div>'
-      +       '</div>'
-      +     '</div>'
+    // 防止 NaN 顯示：確保 subject / category 都是乾淨字串
+    const subject  = String(c.project || c.subject || '').replace(/\bNaN\b/g,'').trim();
+    const rawCat   = String(c.category || '').replace(/\bNaN\b/g,'').trim();
+    const catHtml  = rawCat ? catAllBadges(rawCat) : '';
+    const accentColor = isProxy ? '#94a3b8' : '#f59e0b';
+    const headerBg    = isProxy
+      ? 'linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%)'
+      : 'linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%)';
+
+    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="overflow:hidden;margin-bottom:0;border-top:3px solid ' + accentColor + '">'
+      // ── 卡片頂部帶色條 + 單號/狀態
+      + '<div style="background:' + headerBg + ';padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'
+      +   '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">'
+      +     '<input type="checkbox" class="cb-item approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="flex-shrink:0;width:16px;height:16px;accent-color:var(--brand)">'
+      +     '<span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:.3px;white-space:nowrap">' + c.caseId + '</span>'
+      +     '<span class="badge bp" style="flex-shrink:0">' + c.status + '</span>'
+      +     (isProxy ? '<span style="font-size:11px;font-weight:700;background:#e2e8f0;color:#64748b;padding:2px 8px;border-radius:20px;flex-shrink:0">代理</span>' : '')
       +   '</div>'
-      // 操作按鈕
-      +   '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">'
-      +     '<button class="btn btn-o" style="padding:6px 12px;font-size:13px" onclick="loadDetail(\'' + c.caseId + '\')">詳情</button>'
-      +     '<button class="btn btn-g" style="padding:6px 12px;font-size:13px" onclick="quickApprove(\'' + c.caseId + '\')">核准</button>'
-      +     '<button class="btn btn-r" style="padding:6px 12px;font-size:13px" onclick="quickReject(\'' + c.caseId + '\')">退件</button>'
+      +   '<button class="btn btn-o" style="padding:5px 12px;font-size:12px;flex-shrink:0" onclick="loadDetail(\'' + c.caseId + '\')">詳情 →</button>'
+      + '</div>'
+      // ── 主旨
+      + '<div style="padding:14px 16px 10px">'
+      +   '<div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.35;word-break:break-word">' + (subject || '（無主旨）') + '</div>'
+      +   (catHtml ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">' + catHtml + '</div>' : '')
+      // ── 資訊 2 欄
+      +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px;color:#374151">'
+      +     '<div><span style="color:#94a3b8;font-size:12px">申請人</span><br><span style="font-weight:600">' + localName(c.email,c.name) + '</span></div>'
+      +     '<div><span style="color:#94a3b8;font-size:12px">部門</span><br><span style="font-weight:500">' + localDept(c.email,c.department) + '</span></div>'
+      +     '<div><span style="color:#94a3b8;font-size:12px">含稅金額</span><br><span style="font-weight:700;color:var(--brand);font-size:15px">NT$ ' + Number(c.total||0).toLocaleString() + '</span></div>'
+      +     '<div><span style="color:#94a3b8;font-size:12px">送出時間</span><br><span>' + fmtDate(c.createdAt) + '</span></div>'
       +   '</div>'
+      + '</div>'
+      // ── 底部操作列
+      + '<div style="padding:10px 16px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">'
+      +   '<button class="btn btn-g" style="padding:7px 18px;font-size:13px" onclick="quickApprove(\'' + c.caseId + '\')">✓ 核准</button>'
+      +   '<button class="btn btn-r" style="padding:7px 18px;font-size:13px" onclick="quickReject(\'' + c.caseId + '\')">✗ 退件</button>'
       + '</div>'
       + '</div>';
   }
@@ -3802,6 +3821,7 @@ function renderAuditLog(c) {
     return;
   }
   section.style.display = 'block';
+  section.classList.add('audit-visible');
   let html = '<div class="section-title" style="margin-bottom:14px">操作紀錄</div>';
   html += '<div style="position:relative;padding-left:28px">';
   doneApprovals.forEach(function(ap, idx) {
@@ -3991,8 +4011,13 @@ function renderFlowList(approvers) {
   const title = document.getElementById('flow-list-title');
   if (title) title.textContent = '目前簽核流程（共 ' + approvers.length + ' 關，' + activeCount + ' 關啟用中）';
 
+  // 計算每個關卡的「啟用序號」（停用的不計入）
+  let _activeSeq = 0;
+  const activeSeqMap = approvers.map(a => a.enabled !== false ? ++_activeSeq : null);
+
   list.innerHTML = approvers.map((a, i) => {
     const isEnabled = a.enabled !== false;
+    const activeNum = activeSeqMap[i]; // 啟用序號（停用者為 null）
     const color   = isEnabled
       ? avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length]
       : '#94a3b8';
@@ -4031,10 +4056,10 @@ function renderFlowList(approvers) {
     const labelColor= isEnabled ? '#0f172a' : '#94a3b8';
 
     return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:${rowBg};border-radius:10px;border:${rowBorder};${isEnabled ? '' : 'opacity:.75'}">
-      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${i+1}</div>
+      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${isEnabled ? activeNum : '—'}</div>
       <div>
-        <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || '第'+(i+1)+'關'}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '第'+(i+1)+'關（啟用）' : '⚠️ 已停用'}</div>
+        <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || (isEnabled ? '第'+activeNum+'關' : '（已停用）')}</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '啟用中・第 '+activeNum+' 關' : '⚠️ 已停用・不計入流程'}</div>
       </div>
       <div style="display:flex;align-items:center;gap:8px">
         <div style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
