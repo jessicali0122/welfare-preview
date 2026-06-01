@@ -147,8 +147,16 @@ input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
-  #sidebar-wrapper{position:fixed!important;left:-80px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:76px!important}
+  #sidebar-wrapper{position:fixed!important;left:-230px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:220px!important}
   #sidebar-wrapper.open{left:0!important}
+  #sidebar-wrapper.open aside{width:220px!important}
+  #sidebar-wrapper.open .sl-text{display:inline!important}
+  #sidebar-wrapper.open .sl-section-label{display:block!important}
+  #sidebar-wrapper.open .sidebar-brand-text{display:block!important}
+  #sidebar-wrapper.open .sl{width:calc(100% - 16px)!important;padding:0 14px!important;justify-content:flex-start!important;gap:10px!important;height:48px!important}
+  #sidebar-wrapper.open .sl::after{display:none!important}
+  #sidebar-wrapper.open #sidebar-mobile-user{display:flex!important}
+  #sidebar-wrapper.open #sidebar-user-section{display:none!important}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
@@ -195,7 +203,7 @@ input[type=checkbox]{accent-color:var(--brand)}
 /* ── MOBILE 優化 ── */
 @media(max-width:768px){
   header{padding:0 12px!important}
-  #ptitle{font-size:14px!important}
+  /* #ptitle 由 Typography System 統一管理 */
   #detail-grid{grid-template-columns:1fr!important}
   #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
@@ -208,9 +216,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   .card{border-radius:10px!important}
   #view-approvals .card{padding:14px!important}
   #batch-bar{flex-wrap:wrap;gap:8px}
-  table{font-size:12px!important}
+  /* table / btn font-size 由 Typography System 統一管理 */
   th,td{padding:8px 10px!important}
-  .btn{padding:7px 12px!important;font-size:13px!important}
   aside{width:64px!important}
   #sidebar-wrapper{width:64px!important}
   #main-wrapper{margin-left:0!important}
@@ -320,7 +327,7 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 /* ── 管理分頁：手機版加大觸控區域 ── */
 @media(max-width:768px){
-  .admin-tab{padding:13px 0!important;font-size:13px!important;flex:1;text-align:center!important;display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px}
+  .admin-tab{padding:13px 0!important;flex:1;text-align:center!important;display:flex;align-items:center;justify-content:center;gap:4px;min-height:44px}
   #view-admin .card>div:first-child{flex-wrap:wrap!important;gap:10px!important}
 }
 .inp-error:focus{box-shadow:0 0 0 3px rgba(239,68,68,.12)!important}
@@ -422,7 +429,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制高度防止過長訊息擋住畫面 */
-  #toast{bottom:88px!important;font-size:13px!important;padding:9px 14px!important;max-height:72px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;max-width:min(240px,calc(100vw - 48px))!important}
+  #toast{bottom:88px!important;padding:9px 14px!important;max-height:72px!important;overflow:hidden!important;display:-webkit-box!important;-webkit-line-clamp:2!important;-webkit-box-orient:vertical!important;max-width:min(240px,calc(100vw - 48px))!important}
   /* submit-result-card 手機版縮小並確保不擋按鈕 */
   #submit-result-card{bottom:80px!important;right:12px!important;left:12px!important;width:auto!important;max-width:none!important}
 }
@@ -435,7 +442,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 .empty-state p{font-size:14px;margin:0}
 .empty-state small{font-size:12px;color:#cbd5e1}
 @media print{
-  #sidebar,#main-wrapper>header,.btn,#toast,#receipt-confirm,#user-menu,#notif-panel,.no-print{display:none!important}
+  #sidebar,#main-wrapper>header,.btn,#toast,#receipt-confirm,#user-menu,#notif-panel,.no-print,#resubmit-box{display:none!important}
+  #audit-log-section{display:block!important}
   #main-content{margin-left:0!important;padding:16px!important}
   .view{display:none!important}
   #view-detail{display:block!important}
@@ -443,8 +451,35 @@ input[type=checkbox]{accent-color:var(--brand)}
   .print-header{display:block!important}
   body{background:#fff!important}
   #approve-box{display:none!important}
+  table{width:100%!important;font-size:12px!important}
+  .amount-col,td[data-print-bold]{font-weight:700!important}
 }
 .print-header{display:none}
+
+/* ── 手機版案件卡片 ── */
+.case-cards-container{display:flex;flex-direction:column;gap:12px;padding:4px 0}
+.case-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer;transition:box-shadow .15s}
+.case-card:active{box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.case-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.case-card-id{font-size:12px;color:#94a3b8;font-weight:600;letter-spacing:.3px}
+.case-card-subject{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.35}
+.case-card-meta{font-size:12px;color:#94a3b8;margin-bottom:8px}
+.case-card-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.case-card-amount{font-size:15px;font-weight:700;color:var(--brand)}
+.case-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f1f5f9}
+.case-card-date{font-size:12px;color:#94a3b8}
+.case-card-actions{display:flex;gap:6px}
+
+/* ── 列印版 print-header ── */
+.print-header-inner{display:flex;flex-direction:column;gap:2px;padding:0 0 12px 0;border-bottom:2px solid #e2e8f0;margin-bottom:16px}
+.print-header-company{font-size:18px;font-weight:700;color:#0f172a}
+.print-header-meta{font-size:12px;color:#64748b}
+@media print{
+  @page{margin:20mm}
+  table{width:100%!important;font-size:12px!important}
+  td[style*="font-weight:700"]{font-weight:700!important}
+}
+
 /* ── Flatpickr 品牌主題 ── */
 .flatpickr-calendar{font-family:'Noto Sans TC',sans-serif!important;border-radius:14px!important;box-shadow:0 8px 32px rgba(0,0,0,.13)!important;border:1px solid #e2e8f0!important;padding:4px}
 .flatpickr-months{background:var(--brand);border-radius:10px 10px 0 0}
@@ -507,6 +542,93 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .sortable-th.sort-asc .sort-icon::after{content:'▲';opacity:1;color:var(--brand)}
 .sortable-th.sort-desc .sort-icon::after{content:'▼';opacity:1;color:var(--brand)}
 .sortable-th:not(.sort-asc):not(.sort-desc) .sort-icon::after{content:'⇅'}
+
+/* ══════════════════════════════════════════════════════════
+   ── 6. Typography System（字型比例系統）──
+   Scale: 11 → 12 → 13 → 14 → 15 → 17 → 20 → 24 → 28px
+   ══════════════════════════════════════════════════════════ */
+:root{
+  --fs-2xs : 11px;   /* sidebar 標籤、圖表輔助文字 */
+  --fs-xs  : 12px;   /* badge、時間戳、表頭、caption */
+  --fs-sm  : 13px;   /* 次要文字、table body、工具提示 */
+  --fs-base: 14px;   /* 主體文字、表單欄位、按鈕 */
+  --fs-md  : 15px;   /* 區塊標題、通知標題、卡片 heading */
+  --fs-lg  : 17px;   /* 頁面標題（topbar）、modal title */
+  --fs-xl  : 20px;   /* 表單頁大標、登入頁品牌副標 */
+  --fs-2xl : 24px;   /* stat card 數字（小卡） */
+  --fs-3xl : 28px;   /* stat card 大數字（hero stat） */
+}
+
+/* ── 全域基礎重設 ── */
+body,input,select,textarea,button{font-size:var(--fs-base)}
+
+/* ── 按鈕 ── */
+.btn{font-size:var(--fs-base)!important}
+
+/* ── 輸入框 ── */
+.inp{font-size:var(--fs-base)!important}
+
+/* ── 表格 ── */
+table{font-size:var(--fs-sm)!important}
+thead th{font-size:var(--fs-xs)!important;letter-spacing:.04em}
+tbody td{font-size:var(--fs-sm)!important}
+
+/* ── 狀態/分類 badge ── */
+.badge{font-size:var(--fs-xs)!important}
+.tag{font-size:var(--fs-2xs)!important}
+
+/* ── 區塊標題 ── */
+.section-title{font-size:var(--fs-md)!important}
+
+/* ── 管理分頁 ── */
+.admin-tab{font-size:var(--fs-base)!important}
+
+/* ── 頁面 topbar 標題 ── */
+#ptitle{font-size:var(--fs-lg)!important}
+
+/* ── 通知面板 ── */
+.notif-item{font-size:var(--fs-sm)!important}
+
+/* ── Dashboard 大數字 ── */
+#stat-balance{font-size:var(--fs-3xl)!important;letter-spacing:-1px}
+#stat-total-count,#stat-this-month,#stat-pending,#stat-done,#stat-rejected{font-size:var(--fs-2xl)!important}
+
+/* ── 費用分析數字 ── */
+#analytics-approved{font-size:var(--fs-2xl)!important}
+#analytics-count,#analytics-pending-count,#analytics-rejected-count{font-size:var(--fs-2xl)!important}
+
+/* ── 表單頁大標 ── */
+#view-new-form h2,#view-new-form [style*="font-size:20px"]{font-size:var(--fs-xl)!important}
+
+/* ── Toast ── */
+#toast{font-size:var(--fs-sm)!important}
+
+/* ══ 手機覆寫（≤768px）══ */
+@media(max-width:768px){
+  :root{
+    --fs-2xs : 11px;
+    --fs-xs  : 12px;
+    --fs-sm  : 13px;
+    --fs-base: 14px;   /* 手機 body 文字不縮小 */
+    --fs-md  : 14px;
+    --fs-lg  : 16px;
+    --fs-xl  : 18px;
+    --fs-2xl : 22px;
+    --fs-3xl : 26px;
+  }
+  /* 手機表格：維持 13px 可讀性，不縮到 12px */
+  table{font-size:13px!important}
+  thead th{font-size:11px!important}
+  tbody td{font-size:13px!important}
+  /* 手機按鈕：維持 14px，不縮小 */
+  .btn{font-size:14px!important}
+  /* 手機 topbar 標題 */
+  #ptitle{font-size:16px!important}
+  /* 手機 sidebar nav 標籤 */
+  .sl::after{font-size:11px!important}
+  /* 手機管理分頁 */
+  .admin-tab{font-size:13px!important}
+}
 </style>
 </head>
 <body>
@@ -577,6 +699,16 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
     </div>
   </nav>
 
+  <!-- 手機版：側欄展開後的用戶資訊區塊 -->
+  <div id="sidebar-mobile-user" style="display:none;padding:14px 16px;border-top:1px solid #f0ede9;flex-direction:column;gap:4px">
+    <div class="user-name-display" style="font-size:14px;font-weight:700;color:#0f172a"></div>
+    <div id="sidebar-mobile-email" style="font-size:12px;color:#94a3b8;word-break:break-all"></div>
+    <button onclick="logout()" style="margin-top:8px;width:100%;padding:8px 12px;border-radius:8px;border:none;background:#fef2f2;color:#dc2626;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      登出
+    </button>
+  </div>
+
   <!-- User (桌機版，手機版隱藏) -->
   <div id="sidebar-user-section" onclick="toggleUserMenu()" title="帳號選項" style="padding:14px 0;border-top:1px solid #f0ede9;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
     <div class="user-avatar-initial" style="width:32px;height:32px;border-radius:50%;background:#1e9d6b;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">潔</div>
@@ -606,7 +738,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <span id="bell-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:0 4px;line-height:16px;text-align:center;pointer-events:none">0</span>
     </button>
     <!-- 手機版使用者按鈕（桌機隱藏） -->
-    <button id="mobile-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
+    <button id="mobile-user-btn" onclick="toggleSidebar()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
       <span class="user-avatar-initial" style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px">潔</span>
     </button>
   </header>
@@ -936,6 +1068,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
         </tbody>
       </table>
     </div>
+    <!-- 手機版卡片列表（mobile only） -->
+    <div id="applications-cards" class="case-cards-container" style="display:none"></div>
   </div>
 
   <!-- ===== NEW FORM (費用申請單) ===== -->
@@ -1143,6 +1277,13 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 
   <!-- ===== DETAIL ===== -->
   <div class="view" id="view-detail">
+    <!-- 列印專用 header（螢幕時隱藏，列印時顯示） -->
+    <div class="print-header">
+      <div class="print-header-inner">
+        <div class="print-header-company" id="print-header-company">TSA Group 福委會</div>
+        <div class="print-header-meta" id="print-header-meta"></div>
+      </div>
+    </div>
     <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:20px;flex-wrap:wrap;min-width:0;max-width:100%">
       <button class="btn btn-o no-print" style="padding:6px 12px;flex-shrink:0" onclick="sw('applications')">← 返回</button>
       <div style="flex:1;min-width:0">
@@ -1214,6 +1355,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
           <div id="flow-title" class="section-title">簽核進度（2 / 3 關）</div>
           <div id="flow-timeline" style="position:relative;padding-left:50px"></div>
         </div>
+        <!-- 操作紀錄 -->
+        <div id="audit-log-section" class="card" style="padding:20px;display:none"></div>
         <div id="approve-box" class="card" style="padding:20px;border:2px solid var(--amber-mid,#fbbf24)">
           <div style="font-size:14px;font-weight:700;color:var(--amber-dark,#d97706);margin-bottom:3px">⏳ 需要您審核</div>
           <div class="approve-step-label" style="font-size:12px;color:#94a3b8;margin-bottom:12px">您是本關簽核人</div>
@@ -1816,6 +1959,9 @@ function showApp() {
     if(greeting)greeting.innerHTML='Hi，'+displayName+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
+    // 同步用戶資訊到手機側欄
+    const sidebarEmail=document.getElementById('sidebar-mobile-email');
+    if(sidebarEmail)sidebarEmail.textContent=currentUser.email;
     loadDashboard();
     loadAdminFlow(); // 預載簽核流程，讓狀態欄審核人名稱即時顯示
     startTokenRefreshTimer(); // 主動刷新 token，避免頻繁顯示過期提示
@@ -1852,7 +1998,7 @@ function logout() {
 // ── API 快取（TTL 30 秒，只快取唯讀查詢）──
 const _apiCache = {};
 const _CACHE_TTL = 30000; // 30 秒
-const _CACHEABLE = new Set(['list', 'get', 'listUsers', 'getFlow', 'getMembers']); // 可快取的 action
+const _CACHEABLE = new Set(['list', 'get']); // 只快取唯讀的 list 和 get
 
 function _cacheKey(action, data) {
   return action + ':' + JSON.stringify(data);
@@ -1987,6 +2133,16 @@ function fmtDateOnly(s) {
 }
 
 async function loadDashboard() {
+  // 顯示骨架屏
+  const _sk = (w,h) => `<span class="skeleton" style="width:${w}px;height:${h}px;display:inline-block"></span>`;
+  const _skEl = (id, w, h) => { const el = document.getElementById(id); if (el) el.innerHTML = _sk(w, h); };
+  _skEl('stat-balance', 140, 32);
+  _skEl('stat-total-count', 60, 24);
+  _skEl('stat-this-month', 60, 24);
+  _skEl('stat-pending', 60, 24);
+  _skEl('stat-done', 60, 24);
+  _skEl('stat-rejected', 60, 24);
+  _skEl('stat-rejected-rate', 60, 14);
   const res = await callAPI('list');
   if (!res.ok) { if (!res._authError) toast('❌ 總覽載入失敗：' + res.error); return; }
   const cases = res.cases || [];
@@ -2044,7 +2200,12 @@ function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr style="border-bottom:1px solid #f8fafc"><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">目前沒有資料</td></tr>';
+    tbody.innerHTML = `<tr style="border-bottom:1px solid #f8fafc"><td colspan="10"><div class="empty-state" style="padding:24px 16px">
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+  <p style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px">目前沒有紀錄</p>
+  <small style="display:block;margin-bottom:12px">建立第一筆費用申請吧</small>
+  <button class="btn btn-p" onclick="sw('new-form')">＋ 新增申請</button>
+</div></td></tr>`;
     return;
   }
   tbody.innerHTML = cases.map(c => {
@@ -2066,7 +2227,7 @@ function renderDashboardTable(cases) {
       <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
       <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${fmtDate(c.createdAt||c.applyDate)}</td>
       <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;gap:6px;justify-content:center">${actionBtn}</div></td>
+      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:5px;justify-content:center;align-items:center">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2097,27 +2258,71 @@ async function loadApplications() {
   // 所有登入者皆可看到所有案件（草稿已由後端過濾，僅申請人本人可見）
   const cases = allCases;
   const tbody = document.getElementById('applications-tbody');
+  const cardsContainer = document.getElementById('applications-cards');
+  const tableWrap = tbody ? tbody.closest('.table-wrap') : null;
   const countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (!tbody) return;
+  const isMobile = window.innerWidth <= 768;
+  if (isMobile && tableWrap) { tableWrap.style.display = 'none'; if (cardsContainer) cardsContainer.style.display = 'flex'; }
+  else { if (tableWrap) tableWrap.style.display = ''; if (cardsContainer) cardsContainer.style.display = 'none'; }
   if (cases.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><p>目前沒有申請紀錄</p><small>點「新增申請」開始第一筆請款</small></div></td></tr>';
+    const emptyHtml = `<div class="empty-state">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">還沒有申請紀錄</p>
+  <small>點下方按鈕建立第一筆費用申請</small>
+  <div style="margin-top:16px"><button class="btn btn-p" onclick="sw('new')">＋ 新增申請</button></div>
+</div>`;
+    if (isMobile && cardsContainer) { cardsContainer.innerHTML = emptyHtml; }
+    else { tbody.innerHTML = '<tr><td colspan="10">' + emptyHtml + '</td></tr>'; }
     return;
   }
   const sortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
+  if (isMobile && cardsContainer) {
+    const _btnBase = 'padding:5px 12px;font-size:12px;border-radius:8px;cursor:pointer;font-weight:500;white-space:nowrap';
+    cardsContainer.innerHTML = sortedCases.map(c => {
+      const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
+      const actionBtns = c.status === '草稿'
+        ? `<button style="${_btnBase};border:1px solid #fde68a;background:#fffbeb;color:#92400e" onclick="event.stopPropagation();openDraft('${c.caseId}')">編輯</button>`
+          + `<button style="${_btnBase};border:1px solid #fecdd3;background:#fff1f2;color:#be123c" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
+        : c.status === '已完成'
+        ? `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
+          + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
+        : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+      const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+      return `<div class="case-card" onclick="${rowClick}">
+  <div class="case-card-top">
+    <span class="case-card-id">${c.caseId}</span>
+    <span class="badge ${statusClass}">${c.status}</span>
+  </div>
+  <div class="case-card-subject">${c.project||c.subject||'—'}</div>
+  <div class="case-card-meta">${localName(c.email,c.name)} · ${localDept(c.email,c.department)}</div>
+  <div class="case-card-row">
+    <span class="case-card-amount">NT$ ${Number(c.total||0).toLocaleString()}</span>
+    <span>${catAllBadges(c.category)}</span>
+  </div>
+  <div class="case-card-footer">
+    <span class="case-card-date">${fmtDate(c.createdAt||c.applyDate)}</span>
+    <div class="case-card-actions">${actionBtns}</div>
+  </div>
+</div>`;
+    }).join('');
+    return;
+  }
   tbody.innerHTML = sortedCases.map(c => {
     const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
     const stepApprover = c.status === '已退件'
       ? (c.rejectedBy || getStepApproverName(c.step))
       : (c.status && c.status.includes('待') ? getStepApproverName(c.step) : '');
     // 狀態欄：badge 帶圓點
+    const _btnBase = 'padding:4px 10px;font-size:12px;border-radius:6px;cursor:pointer;font-weight:500;white-space:nowrap;flex-shrink:0';
     const actionBtn = c.status === '草稿'
-      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #fde68a;background:#fffbeb;color:#92400e;border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();openDraft('${c.caseId}')">繼續編輯</button>
-         <button style="padding:4px 9px;font-size:12px;border:1px solid #fecdd3;background:#fff1f2;color:#be123c;border-radius:6px;cursor:pointer;font-weight:500;margin-left:4px" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
+      ? `<button style="${_btnBase};border:1px solid #fde68a;background:#fffbeb;color:#92400e" onclick="event.stopPropagation();openDraft('${c.caseId}')">編輯</button>`
+      + `<button style="${_btnBase};border:1px solid #fecdd3;background:#fff1f2;color:#be123c" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
       : c.status === '已完成'
-      ? `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>
-         <button style="padding:4px 9px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#64748b;border-radius:6px;cursor:pointer;font-weight:500;margin-left:4px" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
-      : `<button style="padding:4px 11px;font-size:12px;border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand);border-radius:6px;cursor:pointer;font-weight:500" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
+      ? `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
+      + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
+      : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
     const rowDate = c.applyDate || c.createdAt || '';
     const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
     return `<tr class="tr" style="cursor:pointer" data-dept="${c.department||''}" data-date="${rowDate}" onclick="${rowClick}">
@@ -2130,7 +2335,7 @@ async function loadApplications() {
       <td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center;vertical-align:middle">${stepApprover||'—'}</td>
       <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${fmtDate(c.createdAt||c.applyDate)}</td>
       <td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;vertical-align:middle">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
-      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;gap:6px;justify-content:center">${actionBtn}</div></td>
+      <td style="padding:10px 14px;vertical-align:middle;text-align:center"><div style="display:flex;flex-wrap:nowrap;gap:5px;justify-content:center;align-items:center">${actionBtn}</div></td>
     </tr>`;
   }).join('');
 }
@@ -2148,7 +2353,11 @@ async function loadApprovals() {
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
-    container.innerHTML = '<div style="text-align:center;padding:40px;color:#94a3b8">✅ 目前沒有待審核案件</div>';
+    container.innerHTML = `<div class="empty-state">
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><polyline points="20 6 9 17 4 12"/></svg>
+  <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">目前沒有待審核案件</p>
+  <small>所有案件都已處理完畢 🎉</small>
+</div>`;
     return;
   }
   // 依送出時間由新到舊排列
@@ -2439,6 +2648,7 @@ async function loadDetail(caseId) {
   const el = document.getElementById('detail-case-no');
   if (el) el.textContent = c.caseId;
   updateDetailFlow(c);  // 傳入完整 case 物件，正確渲染每關狀態
+  renderAuditLog(c);   // 渲染操作紀錄
   // 更新申請資訊
   document.getElementById('detail-applicant-name').textContent = localName(c.email, c.name);
   document.getElementById('detail-department').textContent    = localDept(c.email, c.department);
@@ -2870,6 +3080,14 @@ async function saveDraftForm(silent = false) {
 async function printCase(caseId) {
   toast('🖨️ 載入案件中...');
   await loadDetail(caseId);
+  // 填入列印 header
+  const phMeta = document.getElementById('print-header-meta');
+  if (phMeta) {
+    const now = new Date();
+    const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0')
+      + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+    phMeta.textContent = '列印時間：' + dateStr + '　案件編號：' + caseId;
+  }
   setTimeout(() => window.print(), 400);
 }
 
@@ -3045,16 +3263,7 @@ function localDept(email,fallback){
   return (u&&u.dept)||fallback||'—';
 }
 
-const EMPLOYEE_IDS = {
-  '某員工F':'T-XXXX','某員工J':'T-XXXX','某員工C':'T-XXXX','某員工A':'T-XXXX',
-  '某員工G':'T-XXXX','某員工H':'T-XXXX','某員工B':'T-XXXX','某員工E':'T-XXXX',
-  '某員工D':'T-XXXX','某員工I':'T-XXXX'
-};
-const EMPLOYEE_DEPTS = {
-  '某員工A':'後勤部','某員工B':'資訊部','某員工E':'數位廣告部','某員工C':'後勤部',
-  '某員工F':'供應鏈部','某員工G':'人力資源部','某員工H':'行銷部',
-  '某員工I':'人力資源部','某員工J':'通路事業發展部','某員工D':'財務會計部'
-};
+// EMPLOYEE_IDS and EMPLOYEE_DEPTS removed — use LOCAL_USER_LIST / getLocalUser(email) instead
 // 依 email 查中文姓名：優先查本地對照表，再查已載入的管理者表格
 // 分類顏色對照（不同分類顯示不同顏色徽章）
 function catColor(cat) {
@@ -3126,8 +3335,10 @@ function syncApplicantFields(){
   const name=sel.value;
 
   // 優先從使用者表格依 email（最可靠）或姓名比對
-  let matchedEmpId=EMPLOYEE_IDS[name]||'';
-  let matchedDept=EMPLOYEE_DEPTS[name]||'';
+  // 嘗試從 LOCAL_USER_LIST 依姓名比對取得員工編號和部門
+  const _luByName = LOCAL_USER_LIST.find(function(u){ return u.name === name; });
+  let matchedEmpId=(_luByName&&_luByName.employeeId)||'';
+  let matchedDept=(_luByName&&_luByName.dept)||'';
 
   document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
     const nameEl=row.querySelector('td:nth-child(2) span');
@@ -3574,6 +3785,50 @@ function _syncApprovalsToNotif(pendingCases) {
   }).join('');
   updateBadge(pendingCases.length);
 }
+// ══════════════════════════════════════════
+//  操作紀錄（Audit Log）
+// ══════════════════════════════════════════
+function renderAuditLog(c) {
+  const section = document.getElementById('audit-log-section');
+  if (!section) return;
+  const approvals = c.approvals || [];
+  const activeApprovers = _flowApprovers
+    ? _flowApprovers.filter(function(a){ return a.enabled !== false; })
+    : [];
+  // 只顯示已有操作結果的步驟（過濾掉尚未審核的空白步驟）
+  const doneApprovals = approvals.filter(function(ap){ return ap.result && String(ap.result).trim(); });
+  if (doneApprovals.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  let html = '<div class="section-title" style="margin-bottom:14px">操作紀錄</div>';
+  html += '<div style="position:relative;padding-left:28px">';
+  doneApprovals.forEach(function(ap, idx) {
+      const isApprove = ap.result === '核准' || ap.result === 'approve' || ap.result === 'approved';
+      const isReject  = ap.result === '退件' || ap.result === 'reject'  || ap.result === 'rejected';
+      const dotColor  = isApprove ? '#16a34a' : isReject ? '#dc2626' : '#94a3b8';
+      const resultLabel = isApprove ? '核准' : isReject ? '退件' : ap.result || '處理';
+      // 取審核人名稱
+      let approverName = ap.name || '';
+      if (!approverName && ap.email) approverName = LOCAL_EMAIL_TO_NAME[ap.email] || ap.email;
+      if (!approverName && activeApprovers[idx]) {
+        const a = activeApprovers[idx];
+        approverName = (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name || '';
+      }
+      html += '<div style="position:relative;padding-bottom:16px">';
+      html += '  <span style="position:absolute;left:-28px;top:3px;width:14px;height:14px;border-radius:50%;background:' + dotColor + ';display:inline-block;border:2px solid #fff;box-shadow:0 0 0 2px ' + dotColor + '"></span>';
+      html += '  <div style="font-size:13px;font-weight:600;color:#0f172a">' + (approverName || '—') + ' <span style="font-weight:400;color:' + dotColor + '">' + resultLabel + '</span></div>';
+      if (ap.at) html += '  <div style="font-size:12px;color:#94a3b8;margin-top:2px">' + fmtDate(ap.at) + '</div>';
+      if (ap.comment && String(ap.comment).trim()) {
+        html += '  <div style="font-size:12px;color:#64748b;margin-top:4px;padding:6px 10px;background:#f8fafc;border-radius:6px;border-left:3px solid ' + dotColor + '">' + ap.comment + '</div>';
+      }
+      html += '</div>';
+  });
+  html += '</div>';
+  section.innerHTML = html;
+}
+
 function markAllRead(){
   document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
   const bellBadge=document.getElementById('bell-badge');
