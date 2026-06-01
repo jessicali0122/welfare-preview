@@ -147,16 +147,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
-  #sidebar-wrapper{position:fixed!important;left:-230px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:220px!important}
+  #sidebar-wrapper{position:fixed!important;left:-80px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:76px!important}
   #sidebar-wrapper.open{left:0!important}
-  #sidebar-wrapper.open aside{width:220px!important}
-  #sidebar-wrapper.open .sl-text{display:inline!important}
-  #sidebar-wrapper.open .sl-section-label{display:block!important}
-  #sidebar-wrapper.open .sidebar-brand-text{display:block!important}
-  #sidebar-wrapper.open .sl{width:calc(100% - 16px)!important;padding:0 14px!important;justify-content:flex-start!important;gap:10px!important;height:48px!important}
-  #sidebar-wrapper.open .sl::after{display:none!important}
-  #sidebar-wrapper.open #sidebar-mobile-user{display:flex!important}
-  #sidebar-wrapper.open #sidebar-user-section{display:none!important}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
@@ -586,14 +578,14 @@ body,input,select,textarea,button{font-size:var(--fs-base)}
 /* ── 輸入框 ── */
 .inp{font-size:var(--fs-base)!important}
 
-/* ── 表格 ── */
-table{font-size:var(--fs-base)!important}
-thead th{font-size:var(--fs-sm)!important;letter-spacing:.02em;font-weight:600!important}
-tbody td{font-size:var(--fs-base)!important}
+/* ── 表格：所有內容統一 13px，視覺整齊一致 ── */
+table{font-size:var(--fs-sm)!important}
+thead th{font-size:var(--fs-sm)!important;letter-spacing:.02em;font-weight:600!important;color:#64748b!important}
+tbody td{font-size:var(--fs-sm)!important}
 
-/* ── 狀態/分類 badge ── */
+/* ── Badge / Tag：跟隨表格 13px ── */
 .badge{font-size:var(--fs-sm)!important}
-.tag{font-size:var(--fs-xs)!important}
+.tag{font-size:var(--fs-sm)!important}
 
 /* ── 區塊標題 ── */
 .section-title{font-size:var(--fs-md)!important}
@@ -752,7 +744,7 @@ tbody td{font-size:var(--fs-base)!important}
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
     <!-- 鈴鐺已移除：側欄已有「待審核」選項 -->
     <!-- 手機版使用者按鈕（桌機隱藏） -->
-    <button id="mobile-user-btn" onclick="toggleSidebar()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
+    <button id="mobile-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
       <span class="user-avatar-initial" style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px">潔</span>
     </button>
   </header>
@@ -1976,6 +1968,8 @@ function showApp() {
     // 同步用戶資訊到手機側欄
     const sidebarEmail=document.getElementById('sidebar-mobile-email');
     if(sidebarEmail)sidebarEmail.textContent=currentUser.email;
+    const sheetEmail=document.getElementById('mobile-sheet-email');
+    if(sheetEmail)sheetEmail.textContent=currentUser.email;
     loadDashboard();
     loadAdminFlow(); // 預載簽核流程，讓狀態欄審核人名稱即時顯示
     startTokenRefreshTimer(); // 主動刷新 token，避免頻繁顯示過期提示
@@ -2341,7 +2335,12 @@ async function loadApplications() {
     <span>${catAllBadges(c.category)}</span>
   </div>
   <div class="case-card-footer">
-    <span class="case-card-date">${fmtDate(c.createdAt||c.applyDate)}</span>
+    <span class="case-card-date">
+      ${c.lastActionAt
+        ? '<span style="color:#b0a9a4;font-size:11px;margin-right:3px">更新</span>' + fmtDate(c.lastActionAt)
+        : '<span style="color:#b0a9a4;font-size:11px;margin-right:3px">申請</span>' + fmtDate(c.createdAt||c.applyDate)
+      }
+    </span>
     <div class="case-card-actions">${actionBtns}</div>
   </div>
 </div>`;
@@ -2391,42 +2390,44 @@ async function loadApprovals() {
   }
 
   function _approvalCardHtml(c, isProxy) {
-    // 防止 NaN 顯示：確保 subject / category 都是乾淨字串
-    const subject  = String(c.project || c.subject || '').replace(/\bNaN\b/g,'').trim();
-    const rawCat   = String(c.category || '').replace(/\bNaN\b/g,'').trim();
-    const catHtml  = rawCat ? catAllBadges(rawCat) : '';
-    const accentColor = isProxy ? '#94a3b8' : '#f59e0b';
-    const headerBg    = isProxy
-      ? 'linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%)'
-      : 'linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%)';
+    const subject = String(c.project || c.subject || '').replace(/\bNaN\b/g,'').trim();
+    const rawCat  = String(c.category || '').replace(/\bNaN\b/g,'').trim();
+    const catCell = (function(){
+      const cats = rawCat.split('、').filter(Boolean);
+      if(!cats.length) return '';
+      return cats.slice(0,2).map(x => catBadge(x)).join('')
+        + (cats.length > 2 ? '<span style="font-size:11px;color:#94a3b8;margin-left:2px">+' + (cats.length-2) + '</span>' : '');
+    })();
+    const borderColor = isProxy ? '#cbd5e1' : '#fcd34d';
 
-    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="overflow:hidden;margin-bottom:0;border-top:3px solid ' + accentColor + '">'
-      // ── 卡片頂部帶色條 + 單號/狀態
-      + '<div style="background:' + headerBg + ';padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">'
-      +   '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">'
-      +     '<input type="checkbox" class="cb-item approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="flex-shrink:0;width:16px;height:16px;accent-color:var(--brand)">'
-      +     '<span style="font-size:12px;font-weight:700;color:#64748b;letter-spacing:.3px;white-space:nowrap">' + c.caseId + '</span>'
-      +     '<span class="badge bp" style="flex-shrink:0">' + c.status + '</span>'
-      +     (isProxy ? '<span style="font-size:11px;font-weight:700;background:#e2e8f0;color:#64748b;padding:2px 8px;border-radius:20px;flex-shrink:0">代理</span>' : '')
+    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="overflow:hidden;border-left:4px solid ' + borderColor + ';padding:0">'
+      // ── 主要內容區
+      + '<div style="padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">'
+      +   '<div style="flex:1;min-width:0">'
+      // 第一行：checkbox + 單號 + 狀態 + 代理標籤
+      +     '<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">'
+      +       '<input type="checkbox" class="cb-item approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="flex-shrink:0;width:15px;height:15px;accent-color:var(--brand)">'
+      +       '<span style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.3px;white-space:nowrap">' + c.caseId + '</span>'
+      +       '<span class="badge bp" style="font-size:12px">' + c.status + '</span>'
+      +       (isProxy ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600">代理</span>' : '')
+      +     '</div>'
+      // 主旨
+      +     '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + (subject || '（無主旨）') + '</div>'
+      // 分類 badge
+      +     (catCell ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' + catCell + '</div>' : '')
+      // 申請人 ・ 部門 ・ 金額 ・ 時間（一行緊湊顯示）
+      +     '<div style="font-size:12px;color:#64748b;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center">'
+      +       '<span>' + localName(c.email,c.name) + '・' + localDept(c.email,c.department) + '</span>'
+      +       '<span style="color:#0f172a;font-weight:700;color:var(--brand)">NT$ ' + Number(c.total||0).toLocaleString() + '</span>'
+      +       '<span style="color:#94a3b8">' + fmtDate(c.createdAt) + '</span>'
+      +     '</div>'
       +   '</div>'
-      +   '<button class="btn btn-o" style="padding:5px 12px;font-size:12px;flex-shrink:0" onclick="loadDetail(\'' + c.caseId + '\')">詳情 →</button>'
-      + '</div>'
-      // ── 主旨
-      + '<div style="padding:14px 16px 10px">'
-      +   '<div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.35;word-break:break-word">' + (subject || '（無主旨）') + '</div>'
-      +   (catHtml ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">' + catHtml + '</div>' : '')
-      // ── 資訊 2 欄
-      +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:13px;color:#374151">'
-      +     '<div><span style="color:#94a3b8;font-size:12px">申請人</span><br><span style="font-weight:600">' + localName(c.email,c.name) + '</span></div>'
-      +     '<div><span style="color:#94a3b8;font-size:12px">部門</span><br><span style="font-weight:500">' + localDept(c.email,c.department) + '</span></div>'
-      +     '<div><span style="color:#94a3b8;font-size:12px">含稅金額</span><br><span style="font-weight:700;color:var(--brand);font-size:15px">NT$ ' + Number(c.total||0).toLocaleString() + '</span></div>'
-      +     '<div><span style="color:#94a3b8;font-size:12px">送出時間</span><br><span>' + fmtDate(c.createdAt) + '</span></div>'
+      // 右側按鈕群（直向排列，緊湊）
+      +   '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch;min-width:68px">'
+      +     '<button onclick="loadDetail(\'' + c.caseId + '\')" style="padding:5px 10px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#374151;border-radius:7px;cursor:pointer;font-weight:500;white-space:nowrap;text-align:center">詳情</button>'
+      +     '<button onclick="quickApprove(\'' + c.caseId + '\')" style="padding:6px 10px;font-size:12px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-weight:600;white-space:nowrap;text-align:center">✓ 核准</button>'
+      +     '<button onclick="quickReject(\'' + c.caseId + '\')" style="padding:6px 10px;font-size:12px;border:none;background:#dc2626;color:#fff;border-radius:7px;cursor:pointer;font-weight:600;white-space:nowrap;text-align:center">✗ 退件</button>'
       +   '</div>'
-      + '</div>'
-      // ── 底部操作列
-      + '<div style="padding:10px 16px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">'
-      +   '<button class="btn btn-g" style="padding:7px 18px;font-size:13px" onclick="quickApprove(\'' + c.caseId + '\')">✓ 核准</button>'
-      +   '<button class="btn btn-r" style="padding:7px 18px;font-size:13px" onclick="quickReject(\'' + c.caseId + '\')">✗ 退件</button>'
       + '</div>'
       + '</div>';
   }
@@ -2457,10 +2458,10 @@ async function loadApprovals() {
     // 一般審核人：隱藏分頁，直接顯示輪到自己的案件
     if (tabsEl) tabsEl.style.display = 'none';
     if (proxyContainer) proxyContainer.style.display = 'none';
-    container.style.display = 'flex';
+    container.style.display = 'grid';
     container.innerHTML = myTurnCases.length > 0
       ? myTurnCases.map(c => _approvalCardHtml(c, false)).join('')
-      : '<div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>';
+      : '<div style="text-align:center;padding:40px;color:#94a3b8;grid-column:1/-1">目前沒有待審核案件</div>';
   }
 
   // ── 同步更新通知面板（待審核 → 通知項目）──
@@ -4055,19 +4056,23 @@ function renderFlowList(approvers) {
     const numBg     = isEnabled ? 'var(--brand)' : '#94a3b8';
     const labelColor= isEnabled ? '#0f172a' : '#94a3b8';
 
-    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:${rowBg};border-radius:10px;border:${rowBorder};${isEnabled ? '' : 'opacity:.75'}">
-      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px">${isEnabled ? activeNum : '—'}</div>
+    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:${rowBg};border-radius:10px;border:${rowBorder};${isEnabled ? '' : 'opacity:.65'}">
+      <!-- 序號 -->
+      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${isEnabled ? activeNum : '—'}</div>
+      <!-- 職稱 -->
       <div>
-        <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || (isEnabled ? '第'+activeNum+'關' : '（已停用）')}</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:2px">${isEnabled ? '啟用中・第 '+activeNum+' 關' : '⚠️ 已停用・不計入流程'}</div>
+        <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || a.name}</div>
+        ${!isEnabled ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">⚠️ 已停用・不計入流程</div>' : ''}
       </div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
-        <div>
-          <div style="font-size:13px;font-weight:600;color:${labelColor}">${a.name}</div>
-          <div style="font-size:11px;color:#94a3b8">${a.email}</div>
+      <!-- 審核人 -->
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:30px;height:30px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
+        <div style="min-width:0">
+          <div style="font-size:13px;font-weight:600;color:${labelColor};white-space:nowrap">${a.name}</div>
+          <div style="font-size:11px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.email}</div>
         </div>
       </div>
+      <!-- 操作 -->
       <div style="display:flex;align-items:center;gap:6px">
         ${toggleBtn}
         ${orderBtns}
@@ -4813,8 +4818,22 @@ function syncPayeeIfSame(){
   }
 }
 
+function closeMobileUserSheet(){
+  const s=document.getElementById('mobile-user-sheet');
+  if(s)s.style.display='none';
+}
 // ── USER MENU ──
 function toggleUserMenu(){
+  const isMobile=window.innerWidth<=768;
+  if(isMobile){
+    // 手機：底部抽屜
+    const sheet=document.getElementById('mobile-user-sheet');
+    if(sheet){
+      sheet.style.display=sheet.style.display==='flex'?'none':'flex';
+      sheet.style.alignItems='flex-end';
+    }
+    return;
+  }
   const m=document.getElementById('user-menu');
   const isOpen=m.style.display==='block';
   if(isOpen){m.style.display='none';return;}
@@ -4823,9 +4842,8 @@ function toggleUserMenu(){
   m.style.position='fixed';
   m.style.display='block';
   const mw=m.offsetWidth||220;
-  const isMobile=window.innerWidth<=768;
-  if(isMobile){
-    // 手機：header 頂端觸發 → 往下顯示，靠右對齊
+  if(false){
+    // 保留舊邏輯（手機不再使用此分支）
     m.style.right='8px';
     m.style.left='auto';
     m.style.top=(rect.bottom+8)+'px';
@@ -4883,13 +4901,13 @@ function switchApprovalTab(tab){
   const tabMine=document.getElementById('atab-mine');
   const tabProxy=document.getElementById('atab-proxy');
   if(tab==='mine'){
-    if(mine){mine.style.display='flex';}
+    if(mine){mine.style.display='grid';}
     if(proxy){proxy.style.display='none';}
     if(tabMine)tabMine.classList.add('active');
     if(tabProxy)tabProxy.classList.remove('active');
   } else {
     if(mine){mine.style.display='none';}
-    if(proxy){proxy.style.display='flex';}
+    if(proxy){proxy.style.display='grid';}
     if(tabMine)tabMine.classList.remove('active');
     if(tabProxy)tabProxy.classList.add('active');
   }
@@ -4898,7 +4916,7 @@ function switchApprovalTab(tab){
 }
 function toggleSelectAll(){
   // 只選目前可見分頁的 checkbox
-  const activePanel = document.getElementById('approvals-list-proxy')?.style.display==='flex'
+  const activePanel = document.getElementById('approvals-list-proxy')?.style.display==='grid'
     ? document.getElementById('approvals-list-proxy')
     : document.getElementById('approvals-list');
   const allCb = activePanel ? activePanel.querySelectorAll('.approval-cb') : document.querySelectorAll('.approval-cb');
@@ -5715,6 +5733,24 @@ document.addEventListener('click', function(e) {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
     登出
   </button>
+</div>
+
+<!-- 手機版用戶底部抽屜（取代浮動選單）-->
+<div id="mobile-user-sheet" style="display:none;position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.45)" onclick="closeMobileUserSheet()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+20px);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
+    <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 20px"></div>
+    <div style="display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;margin-bottom:16px">
+      <div class="user-avatar-initial" style="width:44px;height:44px;border-radius:50%;background:#1e9d6b;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">潔</div>
+      <div>
+        <div class="user-name-display" style="font-size:16px;font-weight:700;color:#0f172a"></div>
+        <div id="mobile-sheet-email" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
+      </div>
+    </div>
+    <button onclick="logout()" style="width:100%;padding:14px;border:none;background:#fef2f2;color:#dc2626;font-size:15px;font-weight:600;border-radius:12px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      登出
+    </button>
+  </div>
 </div>
 
 </body>
