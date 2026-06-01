@@ -124,7 +124,7 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px
   .ac-btn-detail,.ac-btn-approve,.ac-btn-reject{flex:1;padding:9px 6px!important;font-size:13px!important}
   .ac-subject{-webkit-line-clamp:2!important}
 }
-.notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden;will-change:transform;transform:translateZ(0)}
+.notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden}
 .notif-panel.open{display:block}
 .notif-item{padding:12px 16px;border-bottom:1px solid #f1f5f9;cursor:pointer;transition:background .1s}
 .notif-item:hover{background:#f8fafc}
@@ -186,6 +186,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   #sidebar-wrapper{position:fixed!important;left:-80px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:76px!important;overflow:hidden!important}
   #sidebar-wrapper aside{position:relative!important;height:100vh!important;width:76px!important}
   #sidebar-wrapper.open{left:0!important}
+  /* mobile-overlay: 預設隱藏，只在 open class 且 style 未被 JS 強制設 none 時顯示 */
+  #mobile-overlay{display:none}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
@@ -197,10 +199,13 @@ input[type=checkbox]{accent-color:var(--brand)}
   #detail-grid{grid-template-columns:1fr!important}
   #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
-  /* 防止整頁橫向溢出：只鎖最外層，內部 table-wrap 保留橫向捲動 */
-  html,body{overflow-x:hidden!important}
-  #app,#main-wrapper{overflow-x:hidden!important;max-width:100vw!important}
-  #main-content{overflow-x:hidden!important;max-width:100vw!important;min-height:0;touch-action:pan-y}
+  /* ── 防止整頁橫向溢出 ── */
+  html,body{overflow-x:hidden!important;width:100%!important;max-width:100vw!important}
+  #app,#app-inner,#main-wrapper,#main-content{overflow-x:hidden!important;max-width:100vw!important;box-sizing:border-box!important}
+  /* ── 捲動修正：min-height:0 讓 flex 子元素可以比內容小（允許 overflow-y:auto 生效） ── */
+  #main-content{min-height:0!important;touch-action:pan-y!important;overflow-y:auto!important}
+  /* ── 防止任何子元素撐破寬度 ── */
+  .card,.stat,.view{max-width:100%!important;box-sizing:border-box!important}
   main{padding:12px!important}
   header{padding:0 12px!important;gap:8px}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
@@ -263,7 +268,6 @@ input[type=checkbox]{accent-color:var(--brand)}
     max-height:none!important;
     height:auto!important;
     border-radius:16px!important;
-    will-change:transform;transform:translateZ(0);
     z-index:400!important;
   }
   /* 日期選擇器：手機版自動靠左，不超出螢幕 */
@@ -306,7 +310,6 @@ input[type=checkbox]{accent-color:var(--brand)}
     padding-top:16px!important;
     padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)!important;
     animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;
-    will-change:transform;transform:translateZ(0)
   }
   /* 拖動把手視覺提示 */
   .modal-bg>div::before{
@@ -450,7 +453,6 @@ input[type=checkbox]{accent-color:var(--brand)}
     gap:8px;padding:10px 16px;padding-bottom:max(env(safe-area-inset-bottom,0px),10px);
     background:#fff;border-top:1px solid #e2e8f0;z-index:9999;
     box-shadow:0 -2px 12px rgba(0,0,0,.1);
-    will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)
   }
   #mobile-form-actions .btn{flex:1;justify-content:center;padding:12px 8px!important}
   #view-new-form{padding-bottom:80px!important}
@@ -781,8 +783,8 @@ tbody td{font-size:var(--fs-sm)!important}
 .evx-pb:disabled{opacity:.4;cursor:not-allowed}
 .evx-pb.dot{border:none;background:none;cursor:default;color:#94a3b8}
 /* 操作 ... 按鈕 */
-.evx-dot-btn{width:30px;height:30px;border-radius:7px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#64748b;transition:all .12s;font-size:17px;line-height:1}
-.evx-dot-btn:hover{background:#f3f4f6;color:#374151}
+.evx-dot-btn{width:32px;height:32px;border-radius:7px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:#94a3b8;transition:all .12s}
+.evx-dot-btn:hover{background:#f3f4f6;border-color:#d1d5db;color:#374151}
 
 /* ══════════════════════════════════════════
    EvenTix-style: 待審核月份分組
@@ -837,7 +839,7 @@ tbody td{font-size:var(--fs-sm)!important}
 <!-- ===== MAIN APP (hidden until login) ===== -->
 <div id="app" style="display:none;height:100vh;overflow:hidden">
 <div id="mobile-overlay" onclick="closeSidebar()"></div>
-<div style="display:flex;height:100vh;overflow:hidden">
+<div id="app-inner" style="display:flex;height:100vh;overflow:hidden;max-width:100vw">
 
 <!-- SIDEBAR -->
 <div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative">
@@ -845,7 +847,7 @@ tbody td{font-size:var(--fs-sm)!important}
 
   <!-- Header -->
   <div style="padding:14px 0;border-bottom:1px solid #f0ede9;display:flex;align-items:center;justify-content:center">
-    <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent;box-shadow:0 0 0 2px rgba(251,191,36,.35)">
+    <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent">
       <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>
     </div>
     <div class="sidebar-brand-text" style="flex:1;min-width:0">
@@ -882,9 +884,17 @@ tbody td{font-size:var(--fs-sm)!important}
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
       <span class="sl-text">系統管理</span>
     </div>
+
+    <!-- 登出（固定在 nav 底部）-->
+    <div style="flex:1"></div>
+    <div style="width:100%;border-top:1px solid #f0ede9;margin-top:4px"></div>
+    <div class="sl" data-label="登出" onclick="logout()" title="登出" style="color:#dc2626">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      <span class="sl-text">登出</span>
+    </div>
   </nav>
 
-  <!-- 手機版：側欄展開後的用戶資訊區塊 -->
+  <!-- 手機版：側欄展開後的用戶資訊區塊（已整合至 nav，保留供向後相容）-->
   <div id="sidebar-mobile-user" style="display:none;padding:14px 16px;border-top:1px solid #f0ede9;flex-direction:column;gap:4px">
     <div class="user-name-display" style="font-size:14px;font-weight:700;color:#0f172a"></div>
     <div id="sidebar-mobile-email" style="font-size:12px;color:#94a3b8;word-break:break-all"></div>
@@ -1704,6 +1714,7 @@ tbody td{font-size:var(--fs-sm)!important}
 
   </main>
 </div><!-- end #main-wrapper -->
+</div><!-- end #app-inner -->
 <!-- 手機版表單底部固定操作列（在 #app 層，完全不受 overflow:hidden 影響） -->
 <div id="mobile-form-actions">
   <button class="btn btn-a" onclick="saveDraftForm()">
@@ -2432,7 +2443,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span></td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap;font-size:13px">${stepApprover||'—'}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap;font-size:13px">${fmtDate(c.createdAt||c.applyDate)}</td>
-    <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作">···</button></td>
+    <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></td>
   </tr>`;
 }
 
@@ -2686,9 +2697,6 @@ async function loadApprovals() {
       +   '</button>'
       +   '<button class="evx-act evx-act-ng" onclick="quickReject(\'' + c.caseId + '\')" title="退件">'
       +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
-      +   '</button>'
-      +   '<button class="evx-act evx-act-view" onclick="loadDetail(\'' + c.caseId + '\')" title="查看詳情">'
-      +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
       +   '</button>'
       + '</div>'
       + '</div>';
@@ -2973,7 +2981,7 @@ async function loadDetail(caseId) {
   sw('detail', null);
   toast('⏳ 載入中...');
   const res = await callAPI('get', { caseId });
-  if (window._detailReqId !== _reqId) return; // 已被更新的請求取代，丟棄舊結果
+  if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
   if (!res.ok) { toast('❌ ' + res.error); return; }
   const c = res.case;
   // 更新詳情頁面
@@ -3471,8 +3479,12 @@ function sw(name,elOrName){
   document.querySelectorAll('.icon-btn[data-view],.sl[data-view]').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('[data-view="'+target+'"]').forEach(b=>b.classList.add('active'));
   closeNotif();
-  // 切換頁面時關閉所有殘留 modal（避免 z-index 干擾下一頁操作）
+  // 切換頁面時關閉所有殘留 modal 與 overlay（避免 z-index 干擾下一頁操作）
   document.querySelectorAll('.modal-bg.open').forEach(function(m){ m.classList.remove('open'); });
+  // 安全網：確保 mobile-overlay 一定關閉（避免 iOS 延遲渲染殘留）
+  var _ov = document.getElementById('mobile-overlay');
+  if (_ov) { _ov.classList.remove('open'); _ov.style.display = 'none'; }
+  document.getElementById('sidebar-wrapper')?.classList.remove('open');
   // 回到頂部
   var mc = document.getElementById('main-content');
   if (mc) { mc.scrollTop = 0; } else { window.scrollTo(0,0); }
@@ -5230,12 +5242,22 @@ document.addEventListener('click',function(e){
 function toggleSidebar(){
   const sw=document.getElementById('sidebar-wrapper');
   const ov=document.getElementById('mobile-overlay');
-  sw.classList.toggle('open');
-  ov.classList.toggle('open');
+  const isOpen=sw.classList.contains('open');
+  if(isOpen){
+    sw.classList.remove('open');
+    ov.classList.remove('open');
+    ov.style.display='none';
+  } else {
+    ov.style.display='';  // 先清除 inline style，讓 CSS class 生效
+    sw.classList.add('open');
+    ov.classList.add('open');
+  }
 }
 function closeSidebar(){
   document.getElementById('sidebar-wrapper').classList.remove('open');
-  document.getElementById('mobile-overlay').classList.remove('open');
+  const ov=document.getElementById('mobile-overlay');
+  ov.classList.remove('open');
+  ov.style.display='none';  // 強制立即隱藏，避免 iOS 延遲渲染造成黑色殘影
 }
 // ══════════════════════════════════════════
 //  批次核准
