@@ -169,8 +169,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   .table-wrap{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important;max-width:calc(100vw - 24px)!important}
   div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch!important}
-  #notif-panel{width:calc(100vw - 32px)!important;right:8px!important;left:8px!important;top:58px!important;max-height:calc(100vh - 80px)!important}
-  #notif-list{max-height:min(240px,calc(100vh - 220px))!important}
+  #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
+  #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
   #user-menu{min-width:160px!important}
   .stat{padding:14px 16px!important}
   /* 手機：側欄底部使用者區塊隱藏，改在頂端顯示 */
@@ -600,6 +600,11 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#f59e0b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#f59e0b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#f59e0b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#f59e0b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#f59e0b"/></svg></span>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
+    <!-- 通知鈴鐺按鈕 -->
+    <button id="bell-btn" onclick="toggleNotif(event)" title="通知" style="position:relative;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;transition:background .15s" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background='none'">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="bell-badge" style="display:none;position:absolute;top:4px;right:4px;min-width:16px;height:16px;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:8px;padding:0 4px;line-height:16px;text-align:center;pointer-events:none">0</span>
+    </button>
     <!-- 手機版使用者按鈕（桌機隱藏） -->
     <button id="mobile-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
       <span class="user-avatar-initial" style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px">潔</span>
@@ -2229,6 +2234,9 @@ async function loadApprovals() {
       ? myTurnCases.map(c => _approvalCardHtml(c, false)).join('')
       : '<div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>';
   }
+
+  // ── 同步更新通知面板（待審核 → 通知項目）──
+  _syncApprovalsToNotif(myTurnCases);
 }
 
 function quickApprove(caseId) {
@@ -3540,6 +3548,32 @@ function toast(msg){
 // ── NOTIFICATIONS ──
 function toggleNotif(e){e.stopPropagation();document.getElementById('notif-panel').classList.toggle('open');}
 function closeNotif(){document.getElementById('notif-panel').classList.remove('open');}
+
+// 將待審核案件同步為通知項目
+function _syncApprovalsToNotif(pendingCases) {
+  const list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!pendingCases || pendingCases.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#94a3b8;font-size:14px">目前沒有通知</div>';
+    updateBadge(0);
+    return;
+  }
+  list.innerHTML = pendingCases.map(function(c) {
+    const subject = c.project || c.subject || '（無主旨）';
+    const amount  = 'NT$ ' + Number(c.total || 0).toLocaleString();
+    return '<div class="notif-item unread" onclick="notifClick(this,\'approvals\')" style="cursor:pointer">'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      +   '<span style="font-size:18px">📋</span>'
+      +   '<div style="flex:1;min-width:0">'
+      +     '<div style="font-size:13px;font-weight:600;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + subject + '</div>'
+      +     '<div style="font-size:12px;color:#64748b;margin-top:2px">' + localName(c.email, c.name) + '・' + amount + '</div>'
+      +     '<div style="font-size:11px;color:#94a3b8;margin-top:1px">' + fmtDate(c.createdAt) + '</div>'
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+  updateBadge(pendingCases.length);
+}
 function markAllRead(){
   document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
   const bellBadge=document.getElementById('bell-badge');
