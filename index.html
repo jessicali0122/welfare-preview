@@ -81,12 +81,45 @@ input[type=radio]{accent-color:var(--brand)}
 header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand) 0%,var(--amber-mid,#fbbf24) 55%,var(--amber,#f59e0b) 100%);pointer-events:none;z-index:1}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:160;display:none}
 .modal-bg.open{display:flex}
-/* Approval card mobile: stack buttons in a row below content */
-@media(max-width:520px){
-  .approval-card>div{flex-wrap:wrap!important}
-  .approval-card>div>div:first-child{flex-basis:100%!important;flex-grow:1!important}
-  .approval-card>div>div:last-child{flex-direction:row!important;flex-basis:100%!important;gap:6px!important;margin-top:10px!important;border-top:1px solid #f1f5f9;padding-top:10px!important}
-  .approval-card>div>div:last-child>button{flex:1;min-width:0;font-size:13px!important;padding:9px 6px!important;justify-content:center!important}
+/* ── APPROVAL ROW（重新設計：清晰列表行） ── */
+.approval-card{
+  background:#fff;border-radius:12px;border:1px solid #e8ddd8;
+  box-shadow:0 1px 4px rgba(0,0,0,.04);
+  transition:box-shadow .15s,transform .1s;
+  border-left-width:4px!important;
+}
+.approval-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08)}
+/* 內層主容器：左 info + 右 actions */
+.approval-card>.ac-inner{
+  display:flex;align-items:center;gap:0;padding:0
+}
+/* 左側資訊區 */
+.ac-info{flex:1;min-width:0;padding:14px 16px;border-right:1px solid #f1f5f9}
+/* 頂列：checkbox + 單號 + badges */
+.ac-top{display:flex;align-items:center;gap:6px;margin-bottom:7px;flex-wrap:wrap}
+.ac-id{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.4px;white-space:nowrap}
+/* 主旨 */
+.ac-subject{font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
+  margin-bottom:7px}
+/* 底列：分類 + 人員資訊 */
+.ac-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:#64748b}
+.ac-amount{font-weight:700;color:var(--brand);font-size:13px}
+/* 右側按鈕區 */
+.ac-actions{display:flex;flex-direction:column;gap:5px;padding:12px 14px;flex-shrink:0;align-items:stretch;width:80px}
+.ac-btn-detail{padding:5px 8px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#374151;border-radius:7px;cursor:pointer;font-weight:500;text-align:center;white-space:nowrap;font-family:inherit;transition:background .12s}
+.ac-btn-detail:hover{background:#e2e8f0}
+.ac-btn-approve{padding:7px 8px;font-size:12px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;font-family:inherit;transition:background .12s}
+.ac-btn-approve:hover{background:#15803d}
+.ac-btn-reject{padding:7px 8px;font-size:12px;border:none;background:#dc2626;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;font-family:inherit;transition:background .12s}
+.ac-btn-reject:hover{background:#b91c1c}
+/* 手機版：按鈕列移到底部 */
+@media(max-width:640px){
+  .approval-card>.ac-inner{flex-direction:column!important;align-items:stretch!important}
+  .ac-info{border-right:none!important;border-bottom:1px solid #f1f5f9}
+  .ac-actions{flex-direction:row!important;width:auto!important;padding:10px 14px!important;gap:7px!important}
+  .ac-btn-detail,.ac-btn-approve,.ac-btn-reject{flex:1;padding:9px 6px!important;font-size:13px!important}
+  .ac-subject{-webkit-line-clamp:2!important}
 }
 .notif-panel{position:fixed;top:58px;right:16px;width:340px;background:#fff;border-radius:14px;border:1px solid #e2e8f0;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:150;display:none;overflow:hidden;will-change:transform;transform:translateZ(0)}
 .notif-panel.open{display:block}
@@ -461,9 +494,14 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 .print-header{display:none}
 
-/* ── 待審核雙欄：手機改回單欄 ── */
-@media(max-width:900px){
-  #approvals-list,#approvals-list-proxy{grid-template-columns:1fr!important}
+/* ── 待審核列表：固定單欄，避免手機 @900px 仍雙欄 ── */
+#approvals-list,#approvals-list-proxy{grid-template-columns:1fr!important}
+
+/* ── 表單防溢出：確保 #view-new-form 所有子元素不超出螢幕 ── */
+@media(max-width:768px){
+  #view-new-form{overflow-x:hidden!important;max-width:100%!important}
+  #view-new-form .card{max-width:100%!important;overflow-x:hidden!important}
+  #view-new-form input,#view-new-form select,#view-new-form textarea{max-width:100%!important;box-sizing:border-box!important}
 }
 
 /* ── 手機版案件卡片 ── */
@@ -1055,7 +1093,7 @@ tbody td{font-size:var(--fs-sm)!important}
         <button class="btn btn-o" style="padding:8px 12px;font-size:13px" onclick="resetAppFilter()">清除</button>
       </div>
     </div>
-    <div class="card table-wrap" style="overflow:hidden">
+    <div class="card table-wrap" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
       <table style="width:100%;border-collapse:collapse;font-size:14px">
         <thead><tr>
           <th class="sortable-th" onclick="sortAppTable(0)" style="text-align:center">申請單號<span class="sort-icon"></span></th>
@@ -1434,11 +1472,11 @@ tbody td{font-size:var(--fs-sm)!important}
       <button class="btn" style="padding:5px 14px;font-size:13px;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)" onclick="clearSelection()">取消</button>
     </div>
     <!-- 我需要審核 -->
-    <div id="approvals-list" style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px">
+    <div id="approvals-list" style="display:grid;grid-template-columns:1fr;gap:8px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有待審核案件</div>
     </div>
     <!-- 代理審核（管理員專用）-->
-    <div id="approvals-list-proxy" style="display:none;grid-template-columns:repeat(2,1fr);gap:14px">
+    <div id="approvals-list-proxy" style="display:none;grid-template-columns:1fr;gap:8px">
       <div style="text-align:center;padding:40px;color:#94a3b8">目前沒有代理審核案件</div>
     </div>
   </div>
@@ -2295,58 +2333,19 @@ async function loadApplications() {
   const countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (!tbody) return;
-  const isMobile = window.innerWidth <= 768;
-  if (isMobile && tableWrap) { tableWrap.style.display = 'none'; if (cardsContainer) cardsContainer.style.display = 'flex'; }
-  else { if (tableWrap) tableWrap.style.display = ''; if (cardsContainer) cardsContainer.style.display = 'none'; }
+  // 統一用表格（手機橫向捲動），隱藏卡片容器
+  if (tableWrap) tableWrap.style.display = '';
+  if (cardsContainer) cardsContainer.style.display = 'none';
   if (cases.length === 0) {
-    const emptyHtml = `<div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
   <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">還沒有申請紀錄</p>
   <small>點下方按鈕建立第一筆費用申請</small>
   <div style="margin-top:16px"><button class="btn btn-p" onclick="sw('new-form')">＋ 新增申請</button></div>
-</div>`;
-    if (isMobile && cardsContainer) { cardsContainer.innerHTML = emptyHtml; }
-    else { tbody.innerHTML = '<tr><td colspan="10">' + emptyHtml + '</td></tr>'; }
+</div></td></tr>`;
     return;
   }
   const sortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
-  if (isMobile && cardsContainer) {
-    const _btnBase = 'padding:5px 12px;font-size:12px;border-radius:8px;cursor:pointer;font-weight:500;white-space:nowrap';
-    cardsContainer.innerHTML = sortedCases.map(c => {
-      const statusClass = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
-      const actionBtns = c.status === '草稿'
-        ? `<button style="${_btnBase};border:1px solid #fde68a;background:#fffbeb;color:#92400e" onclick="event.stopPropagation();openDraft('${c.caseId}')">編輯</button>`
-          + `<button style="${_btnBase};border:1px solid #fecdd3;background:#fff1f2;color:#be123c" onclick="event.stopPropagation();confirmDeleteDraftById('${c.caseId}')">刪除</button>`
-        : c.status === '已完成'
-        ? `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`
-          + `<button style="${_btnBase};border:1px solid #e2e8f0;background:#f8fafc;color:#64748b" onclick="event.stopPropagation();printCase('${c.caseId}')">列印</button>`
-        : `<button style="${_btnBase};border:1px solid #d1fae5;background:#f0fdf4;color:var(--brand)" onclick="event.stopPropagation();loadDetail('${c.caseId}')">查看</button>`;
-      const rowClick = c.status === '草稿' ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
-      const _cardIdColor = c.status === '草稿' ? '#94a3b8' : c.status === '已完成' ? 'var(--brand,#1e9d6b)' : '#f59e0b';
-      return `<div class="case-card" onclick="${rowClick}">
-  <div class="case-card-top">
-    <span class="case-card-id" style="color:${_cardIdColor};font-weight:700">${c.caseId}</span>
-    <span class="badge ${statusClass}" style="min-width:92px;justify-content:center;display:inline-flex">${c.status}</span>
-  </div>
-  <div class="case-card-subject">${c.project||c.subject||'—'}</div>
-  <div class="case-card-meta">${localName(c.email,c.name)} · ${localDept(c.email,c.department)}</div>
-  <div class="case-card-row">
-    <span class="case-card-amount">NT$ ${Number(c.total||0).toLocaleString()}</span>
-    <span>${catAllBadges(c.category)}</span>
-  </div>
-  <div class="case-card-footer">
-    <span class="case-card-date">
-      ${c.lastActionAt
-        ? '<span style="color:#b0a9a4;font-size:11px;margin-right:3px">更新</span>' + fmtDate(c.lastActionAt)
-        : '<span style="color:#b0a9a4;font-size:11px;margin-right:3px">申請</span>' + fmtDate(c.createdAt||c.applyDate)
-      }
-    </span>
-    <div class="case-card-actions">${actionBtns}</div>
-  </div>
-</div>`;
-    }).join('');
-    return;
-  }
   // 案件追蹤表格：使用共用函式，加上 data-dept / data-date 供篩選用
   tbody.innerHTML = sortedCases.map(c => {
     const row = _renderCaseRow(c);
@@ -2400,33 +2399,27 @@ async function loadApprovals() {
     })();
     const borderColor = isProxy ? '#cbd5e1' : '#fcd34d';
 
-    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="overflow:hidden;border-left:4px solid ' + borderColor + ';padding:0">'
-      // ── 主要內容區
-      + '<div style="padding:14px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px">'
-      +   '<div style="flex:1;min-width:0">'
-      // 第一行：checkbox + 單號 + 狀態 + 代理標籤
-      +     '<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px;flex-wrap:wrap">'
+    return '<div class="card approval-card" data-caseid="' + c.caseId + '" style="border-left-color:' + borderColor + ';padding:0">'
+      + '<div class="ac-inner">'
+      +   '<div class="ac-info">'
+      +     '<div class="ac-top">'
       +       '<input type="checkbox" class="cb-item approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="flex-shrink:0;width:15px;height:15px;accent-color:var(--brand)">'
-      +       '<span style="font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.3px;white-space:nowrap">' + c.caseId + '</span>'
-      +       '<span class="badge bp" style="font-size:12px">' + c.status + '</span>'
-      +       (isProxy ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600">代理</span>' : '')
+      +       '<span class="ac-id">' + c.caseId + '</span>'
+      +       '<span class="badge bp">' + c.status + '</span>'
+      +       (isProxy ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600">代理</span>' : '')
+      +       (catCell ? catCell : '')
       +     '</div>'
-      // 主旨
-      +     '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">' + (subject || '（無主旨）') + '</div>'
-      // 分類 badge
-      +     (catCell ? '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">' + catCell + '</div>' : '')
-      // 申請人 ・ 部門 ・ 金額 ・ 時間（一行緊湊顯示）
-      +     '<div style="font-size:12px;color:#64748b;display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center">'
+      +     '<div class="ac-subject">' + (subject || '（無主旨）') + '</div>'
+      +     '<div class="ac-meta">'
       +       '<span>' + localName(c.email,c.name) + '・' + localDept(c.email,c.department) + '</span>'
-      +       '<span style="color:#0f172a;font-weight:700;color:var(--brand)">NT$ ' + Number(c.total||0).toLocaleString() + '</span>'
+      +       '<span class="ac-amount">NT$ ' + Number(c.total||0).toLocaleString() + '</span>'
       +       '<span style="color:#94a3b8">' + fmtDate(c.createdAt) + '</span>'
       +     '</div>'
       +   '</div>'
-      // 右側按鈕群（直向排列，緊湊）
-      +   '<div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0;align-items:stretch;min-width:68px">'
-      +     '<button onclick="loadDetail(\'' + c.caseId + '\')" style="padding:5px 10px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#374151;border-radius:7px;cursor:pointer;font-weight:500;white-space:nowrap;text-align:center">詳情</button>'
-      +     '<button onclick="quickApprove(\'' + c.caseId + '\')" style="padding:6px 10px;font-size:12px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-weight:600;white-space:nowrap;text-align:center">✓ 核准</button>'
-      +     '<button onclick="quickReject(\'' + c.caseId + '\')" style="padding:6px 10px;font-size:12px;border:none;background:#dc2626;color:#fff;border-radius:7px;cursor:pointer;font-weight:600;white-space:nowrap;text-align:center">✗ 退件</button>'
+      +   '<div class="ac-actions">'
+      +     '<button class="ac-btn-detail" onclick="loadDetail(\'' + c.caseId + '\')">詳情</button>'
+      +     '<button class="ac-btn-approve" onclick="quickApprove(\'' + c.caseId + '\')">✓ 核准</button>'
+      +     '<button class="ac-btn-reject" onclick="quickReject(\'' + c.caseId + '\')">✗ 退件</button>'
       +   '</div>'
       + '</div>'
       + '</div>';
