@@ -20,7 +20,7 @@ body{margin:0;background:#fff}
 .view{display:none}.view.active{display:block}
 
 /* ── SIDEBAR ── */
-aside{width:76px;height:100%;display:flex;flex-direction:column;position:absolute;top:0;left:0;z-index:20;overflow-x:hidden;overflow-y:hidden}
+aside{width:76px;height:100%;display:flex;flex-direction:column;position:absolute;top:0;left:0;z-index:20;overflow-x:hidden;overflow-y:hidden;max-width:100%}
 aside .sl-text{display:none}
 aside .sl-section-label{display:none}
 aside .sidebar-brand-text{display:none}
@@ -182,7 +182,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 
 /* ── MOBILE RESPONSIVE ── */
 @media(max-width:768px){
-  #sidebar-wrapper{position:fixed!important;left:-80px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:76px!important}
+  #sidebar-wrapper{position:fixed!important;left:-80px!important;top:0!important;height:100vh!important;z-index:200!important;transition:left .25s ease!important;width:76px!important;overflow:hidden!important}
+  #sidebar-wrapper aside{position:relative!important;height:100vh!important;width:76px!important}
   #sidebar-wrapper.open{left:0!important}
   #mobile-overlay.open{display:block!important}
   #hamburger-btn{display:flex!important}
@@ -483,6 +484,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   html,body{
     background:#fff!important;margin:0!important;padding:0!important;
     overflow:visible!important;height:auto!important;
+    font-size:12px!important;
   }
   body{overflow:visible!important}
 
@@ -493,10 +495,13 @@ input[type=checkbox]{accent-color:var(--brand)}
     background:#fff!important;
   }
   #main-content{
-    padding:16px 24px!important;
+    padding:8px 16px!important;
     max-width:800px!important;
     margin:0 auto!important;
   }
+
+  /* ── 卡片內距縮小 ── */
+  .card[style*="padding:20px"]{padding:10px 14px!important}
 
   /* ── 只顯示詳情頁 ── */
   .view{display:none!important}
@@ -519,26 +524,40 @@ input[type=checkbox]{accent-color:var(--brand)}
     border:1px solid #e2e8f0!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
-    margin-bottom:10px!important;
+    margin-bottom:6px!important;
   }
 
   /* ── 表格 ── */
   .table-wrap{overflow:visible!important;max-width:none!important}
   table{width:100%!important;font-size:11px!important;border-collapse:collapse!important}
-  th,td{padding:6px 8px!important;word-break:break-word!important}
+  th,td{padding:4px 6px!important;word-break:break-word!important}
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
-  /* ── 附件圖片：放大顯示 ── */
+  /* ── 附件圖片：列印版縮小，避免撐爆一頁 ── */
   #detail-files-list [id^="thumb-"],
   #detail-files-list img{
-    max-width:100%!important;
-    max-height:320px!important;
+    max-width:180px!important;
+    max-height:140px!important;
     width:auto!important;
     height:auto!important;
     object-fit:contain!important;
-    display:block!important;
-    margin:6px auto!important;
-    border-radius:6px!important;
+    display:inline-block!important;
+    margin:4px!important;
+    border-radius:4px!important;
+  }
+  /* 附件列表改橫排，節省垂直空間 */
+  #detail-files-list{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:wrap!important;
+    gap:6px!important;
+  }
+  /* 每個附件項目（含檔名列）也橫排 */
+  #detail-files-list > div{
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    max-width:200px!important;
   }
 
   /* ── 操作紀錄 ── */
@@ -1193,7 +1212,7 @@ tbody td{font-size:var(--fs-sm)!important}
       偵測到上次未完成的草稿，是否要恢復？
       <div style="flex:1"></div>
       <button class="btn btn-p" style="padding:4px 12px;font-size:12px" onclick="restoreDraft()">恢復草稿</button>
-      <button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="clearDraft()">捨棄</button>
+      <button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="(async()=>{try{const _sd=JSON.parse(localStorage.getItem('bf_draft')||'{}');if(_sd.caseId){await callAPI('deleteDraft',{caseId:_sd.caseId});}}catch(e){}clearDraft();})()">捨棄</button>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button class="btn btn-o" style="padding:6px 12px" onclick="sw('applications')">← 返回</button>
@@ -1415,12 +1434,6 @@ tbody td{font-size:var(--fs-sm)!important}
           </div>
         </div>
         <div class="card" style="padding:20px">
-          <div class="section-title">請款附件</div>
-          <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
-            <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
-          </div>
-        </div>
-        <div class="card" style="padding:20px">
           <div class="section-title">請款明細</div>
           <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
           <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
@@ -1443,6 +1456,12 @@ tbody td{font-size:var(--fs-sm)!important}
               <td id="detail-sum-total" style="padding:10px 0;text-align:right;font-size:17px;font-weight:700;color:var(--brand)">NT$ 0</td>
             </tfoot>
           </table>
+          </div>
+        </div>
+        <div class="card" style="padding:20px">
+          <div class="section-title">請款附件</div>
+          <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
           </div>
         </div>
       </div>
@@ -2067,6 +2086,17 @@ function showApp() {
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
+    // 搜尋欄綁 Enter 鍵
+    setTimeout(function(){
+      const searchEl = document.getElementById('app-search');
+      if (searchEl) {
+        searchEl.addEventListener('keydown', function(e){ if(e.key==='Enter') applyAppFilter(); });
+      }
+      const adminSearchEl = document.getElementById('admin-search');
+      if (adminSearchEl) {
+        adminSearchEl.addEventListener('keydown', function(e){ if(e.key==='Enter') applyAdminFilter(); });
+      }
+    }, 200);
     // 初始化所有靜態日期選擇器
     setTimeout(function(){
       document.querySelectorAll('.date-inp').forEach(function(el){ initFlatpickr(el); });
@@ -2325,7 +2355,8 @@ function _renderCaseRow(c, opts) {
     return v + m;
   })();
   const tdStyle  = 'padding:10px 14px;vertical-align:middle;text-align:center';
-  return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}">
+  const _dataCat = (c.category||'').replace(/"/g,'&quot;');
+  return `<tr class="tr" style="cursor:pointer" onclick="${rowClick}" data-cat="${_dataCat}" data-status="${c.status||''}">
     <td style="${tdStyle};font-weight:700;color:${caseIdColor};white-space:nowrap">${c.caseId}</td>
     <td style="${tdStyle};color:#0f172a;font-weight:500;white-space:nowrap">${localName(c.email,c.name)}</td>
     <td style="${tdStyle};color:#374151;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">${c.project||c.subject||'—'}</td>
@@ -2398,13 +2429,27 @@ async function loadApplications() {
     return;
   }
   const sortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
-  // 案件追蹤表格：使用共用函式，加上 data-dept / data-date 供篩選用
-  tbody.innerHTML = sortedCases.map(c => {
-    const row = _renderCaseRow(c);
-    const rowDate = c.applyDate || c.createdAt || '';
-    // 把 data 屬性注入 <tr>
-    return row.replace('<tr class="tr"', `<tr class="tr" data-dept="${c.department||''}" data-date="${rowDate}"`);
-  }).join('');
+  // 案件追蹤表格：分批渲染（每批 30 筆），避免大量資料一次寫入凍結手機 UI
+  tbody.innerHTML = '';
+  const CHUNK = 30;
+  function renderChunk(start) {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(start + CHUNK, sortedCases.length);
+    for (let i = start; i < end; i++) {
+      const c = sortedCases[i];
+      const rowDate = c.applyDate || c.createdAt || '';
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = _renderCaseRow(c).replace('<tr class="tr"',
+        `<tr class="tr" data-dept="${c.department||''}" data-date="${rowDate}"`);
+      const tr = tmp.firstElementChild;
+      if (tr) frag.appendChild(tr);
+    }
+    tbody.appendChild(frag);
+    if (end < sortedCases.length) {
+      setTimeout(() => renderChunk(end), 0);
+    }
+  }
+  renderChunk(0);
 }
 
 // ══════════════════════════════════════════
@@ -2559,9 +2604,17 @@ function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
     + '<button class="btn" style="flex:1;justify-content:center;min-height:44px;background:'+btnColor+';color:#fff" id="_confirm_ok">'+btnLabel+'</button>'
     + '</div></div>';
   m.classList.add('open');
-  document.getElementById('_confirm_ok').onclick = function() {
+  const _okBtn = document.getElementById('_confirm_ok');
+  _okBtn.disabled = false;
+  _okBtn.onclick = async function() {
+    if (_okBtn.disabled) return;
+    _okBtn.disabled = true;
+    _okBtn.style.opacity = '0.6';
     m.classList.remove('open');
-    onConfirm();
+    try { await onConfirm(); } finally {
+      _okBtn.disabled = false;
+      _okBtn.style.opacity = '';
+    }
   };
   m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
 }
@@ -2704,12 +2757,15 @@ async function openDraft(caseId) {
 //  案件詳情載入
 // ══════════════════════════════════════════
 async function loadDetail(caseId) {
+  // Race condition 保護：若上一個請求還沒完成，忽略舊結果
+  const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
   const currentView = document.querySelector('.view.active')?.id?.replace('view-','') || 'applications';
   window._detailReturnView = (currentView === 'detail') ? (window._detailReturnView || 'applications') : currentView;
   sw('detail', null);
   toast('⏳ 載入中...');
   const res = await callAPI('get', { caseId });
+  if (window._detailReqId !== _reqId) return; // 已被更新的請求取代，丟棄舊結果
   if (!res.ok) { toast('❌ ' + res.error); return; }
   const c = res.case;
   // 更新詳情頁面
@@ -4591,14 +4647,18 @@ function applyAppFilter() {
           }
         }
       } else {
-        dateMatch = false; // 無日期資料時，有日期篩選條件就不顯示
+        dateMatch = false;
       }
     }
+    // 分類：用 data-cat 屬性比對（避免 badge HTML 干擾 textContent）
+    const rowCat  = (r.dataset.cat  || '').toLowerCase();
+    // 狀態：用 data-status 屬性比對
+    const rowStatus = (r.dataset.status || '');
     const match = dateMatch
       && (!q || text.includes(q))
-      && (!applicant || text.includes(applicant))
-      && (!status || r.cells[5]?.textContent.includes(status))
-      && (!cat || r.cells[3]?.textContent.includes(cat))
+      && (!applicant || text.includes(applicant.toLowerCase()))
+      && (!status || rowStatus.includes(status))
+      && (!cat || rowCat.includes(cat))
       && (!dept || (r.dataset.dept || '').includes(dept));
     r.style.display = match ? '' : 'none';
     if (match) visible++;
@@ -5106,6 +5166,12 @@ function autoSaveDraft(){
       total:parseFloat(card.querySelector('.withtax')?.value)||0,
     });
   });
+  // 表單完全空白時，不寫入 localStorage，避免下次誤顯示草稿提示
+  const hasSubject=subjectEl&&subjectEl.value.trim().length>0;
+  const hasReason=reasonEl&&reasonEl.value.trim().length>0;
+  const hasItemData=_items.some(function(i){return (i.description&&i.description.trim().length>0)||(i.total>0);});
+  if(!hasSubject&&!hasReason&&!hasItemData){return;}
+
   const _exist=(() => { try { return JSON.parse(localStorage.getItem('bf_draft')||'{}'); } catch(e) { return {}; } })();
   const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',items:_items,ts:Date.now(),
     caseId:_exist.caseId||null, uploadedFiles:_exist.uploadedFiles||[]};
@@ -5129,11 +5195,17 @@ function checkDraftBanner(){
   if(saved){
     try{
       const d=JSON.parse(saved);
-      // F4 fix：明細有資料也顯示草稿提示
-      const hasItems=Array.isArray(d.items)&&d.items.some(function(i){return i.description||i.total>0;});
-      if(d.subject||d.reason||hasItems){banner.classList.add('show');return;}
+      // 必須有主旨或備註，或明細有實際描述/金額，才顯示草稿提示
+      const hasSubject=d.subject&&d.subject.trim().length>0;
+      const hasReason=d.reason&&d.reason.trim().length>0;
+      const hasItems=Array.isArray(d.items)&&d.items.some(function(i){
+        return (i.description&&i.description.trim().length>0)||(i.total&&i.total>0);
+      });
+      if(hasSubject||hasReason||hasItems){banner.classList.add('show');return;}
     }catch(e){}
   }
+  // 沒有有效草稿，確保清掉 localStorage 殘留
+  localStorage.removeItem('bf_draft');
   banner.classList.remove('show');
 }
 function restoreDraft(){
@@ -5194,8 +5266,21 @@ function clearDraft(){
   _draftCaseId=null;
   window._uploadedDraftFiles=[];
   window._pendingFiles=[];
+  // 清除表單欄位
+  const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  if(subjectEl)subjectEl.value='';
+  const reasonEl=document.querySelector('#view-new-form textarea');
+  if(reasonEl)reasonEl.value='';
+  // 清除明細列表，重設為一筆空白
+  const _il=document.getElementById('items-list');
+  if(_il){_il.innerHTML='';iCount=0;addItem();}
+  calcTotal();
+  // 清除附件列表
   const _fl=document.getElementById('file-list');
   if(_fl)_fl.innerHTML='';
+  // 隱藏刪除草稿按鈕
+  var _ddb=document.getElementById('delete-draft-btn');
+  if(_ddb)_ddb.style.display='none';
   toast('🗑️ 草稿已捨棄');
 }
 
