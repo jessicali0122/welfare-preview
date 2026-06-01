@@ -97,23 +97,23 @@ header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px
 .ac-info{flex:1;min-width:0;padding:14px 16px;border-right:1px solid #f1f5f9}
 /* 頂列：checkbox + 單號 + badges */
 .ac-top{display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:nowrap;overflow:hidden}
-.ac-id{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.4px;white-space:nowrap;flex-shrink:0}
+.ac-id{font-size:13px;font-weight:700;color:#64748b;letter-spacing:.4px;white-space:nowrap;flex-shrink:0}
 /* 分類列（獨立一行） */
 .ac-cats{display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-bottom:7px}
 /* 主旨 */
 .ac-subject{font-size:14px;font-weight:700;color:#0f172a;line-height:1.35;
   overflow:hidden;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;
-  margin-bottom:7px}
+  margin-bottom:0}
 /* 底列：分類 + 人員資訊 */
 .ac-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:#64748b}
 .ac-amount{font-weight:700;color:var(--brand);font-size:13px}
 /* 右側按鈕區 */
-.ac-actions{display:flex;flex-direction:column;gap:5px;padding:12px 14px;flex-shrink:0;align-items:stretch;width:80px}
-.ac-btn-detail{padding:5px 8px;font-size:12px;border:1px solid #e2e8f0;background:#f8fafc;color:#374151;border-radius:7px;cursor:pointer;font-weight:500;text-align:center;white-space:nowrap;font-family:inherit;transition:background .12s}
+.ac-actions{display:flex;flex-direction:column;gap:5px;padding:12px 14px;flex-shrink:0;align-items:stretch;width:88px;min-width:88px}
+.ac-btn-detail{padding:5px 8px;font-size:13px;border:1px solid #e2e8f0;background:#f8fafc;color:#374151;border-radius:7px;cursor:pointer;font-weight:500;text-align:center;white-space:nowrap;font-family:inherit;transition:background .12s;width:100%}
 .ac-btn-detail:hover{background:#e2e8f0}
-.ac-btn-approve{padding:7px 8px;font-size:12px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;font-family:inherit;transition:background .12s}
+.ac-btn-approve{padding:7px 8px;font-size:13px;border:none;background:#16a34a;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;white-space:nowrap;font-family:inherit;transition:background .12s;width:100%}
 .ac-btn-approve:hover{background:#15803d}
-.ac-btn-reject{padding:7px 8px;font-size:12px;border:none;background:#dc2626;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;font-family:inherit;transition:background .12s}
+.ac-btn-reject{padding:7px 8px;font-size:13px;border:none;background:#dc2626;color:#fff;border-radius:7px;cursor:pointer;font-weight:700;text-align:center;white-space:nowrap;font-family:inherit;transition:background .12s;width:100%}
 .ac-btn-reject:hover{background:#b91c1c}
 /* 手機版：按鈕列移到底部 */
 @media(max-width:640px){
@@ -526,6 +526,11 @@ input[type=checkbox]{accent-color:var(--brand)}
     page-break-inside:avoid!important;
     margin-bottom:6px!important;
   }
+  /* 附件卡片允許跨頁，確保全部附件都能列印出來 */
+  .card:has(#detail-files-list){
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
 
   /* ── 表格 ── */
   .table-wrap{overflow:visible!important;max-width:none!important}
@@ -533,35 +538,37 @@ input[type=checkbox]{accent-color:var(--brand)}
   th,td{padding:4px 6px!important;word-break:break-word!important}
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
-  /* ── 附件圖片：列印版縮小，避免撐爆一頁 ── */
-  #detail-files-list [id^="thumb-"],
-  #detail-files-list img{
-    max-width:180px!important;
-    max-height:140px!important;
-    width:auto!important;
-    height:auto!important;
-    object-fit:contain!important;
-    display:inline-block!important;
-    margin:4px!important;
-    border-radius:4px!important;
-  }
-  /* 附件列表改橫排，節省垂直空間 */
+  /* ── 附件圖片：列印版，每行兩欄，圖片放大清晰顯示 ── */
   #detail-files-list{
-    display:flex!important;
-    flex-direction:row!important;
-    flex-wrap:wrap!important;
-    gap:6px!important;
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:12px!important;
   }
-  /* 每個附件項目（含檔名列）也橫排 */
+  /* 每個附件項目 */
   #detail-files-list > div{
     display:flex!important;
     flex-direction:column!important;
     align-items:center!important;
-    max-width:200px!important;
+    width:100%!important;
+    max-width:none!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  #detail-files-list [id^="thumb-"],
+  #detail-files-list img{
+    width:100%!important;
+    max-width:100%!important;
+    max-height:300px!important;
+    height:auto!important;
+    object-fit:contain!important;
+    display:block!important;
+    margin:0 0 4px 0!important;
+    border-radius:4px!important;
+    border:1px solid #e2e8f0!important;
   }
 
   /* ── 操作紀錄 ── */
-  #audit-log-section.audit-visible{display:none!important}
+  #audit-log-section{display:none!important}
 }
 .print-header{display:none}
 
@@ -580,11 +587,11 @@ input[type=checkbox]{accent-color:var(--brand)}
 .case-card{background:#fff;border-radius:14px;border:1px solid #e2e8f0;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.05);cursor:pointer;transition:box-shadow .15s}
 .case-card:active{box-shadow:0 2px 8px rgba(0,0,0,.1)}
 .case-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.case-card-id{font-size:12px;color:#94a3b8;font-weight:600;letter-spacing:.3px}
-.case-card-subject{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.35}
+.case-card-id{font-size:13px;color:#94a3b8;font-weight:600;letter-spacing:.3px}
+.case-card-subject{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:6px;line-height:1.35}
 .case-card-meta{font-size:12px;color:#94a3b8;margin-bottom:8px}
 .case-card-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.case-card-amount{font-size:15px;font-weight:700;color:var(--brand)}
+.case-card-amount{font-size:14px;font-weight:700;color:var(--brand)}
 .case-card-footer{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid #f1f5f9}
 .case-card-date{font-size:12px;color:#94a3b8}
 .case-card-actions{display:flex;gap:6px}
@@ -915,7 +922,7 @@ tbody td{font-size:var(--fs-sm)!important}
         <div>
           <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">快速操作</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn btn-p" onclick="sw('new-form')" style="width:100%;justify-content:center;padding:10px">
+            <button class="btn btn-p" onclick="openNewForm()" style="width:100%;justify-content:center;padding:10px">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
             </button>
             <button class="btn btn-a" onclick="sw('approvals')" style="width:100%;justify-content:center">
@@ -1116,7 +1123,7 @@ tbody td{font-size:var(--fs-sm)!important}
   <div class="view" id="view-applications">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div><div id="app-count-label" style="font-size:13px;color:#94a3b8;margin-top:2px">共 0 件</div></div>
-      <button class="btn btn-p" onclick="sw('new-form')">
+      <button class="btn btn-p" onclick="openNewForm()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
@@ -1409,7 +1416,7 @@ tbody td{font-size:var(--fs-sm)!important}
           </button>
           <span id="detail-status-badge" class="badge bp">簽核中</span>
         </div>
-        <div id="detail-header-subject" style="font-size:14px;font-weight:600;color:#374151;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">—</div>
+        <div id="detail-header-subject" style="display:none">—</div>
       </div>
       <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
@@ -2378,7 +2385,7 @@ function renderDashboardTable(cases) {
   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
   <p style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px">目前沒有紀錄</p>
   <small style="display:block;margin-bottom:12px">建立第一筆費用申請吧</small>
-  <button class="btn btn-p" onclick="sw('new-form')">＋ 新增申請</button>
+  <button class="btn btn-p" onclick="openNewForm()">＋ 新增申請</button>
 </div></td></tr>`;
     return;
   }
@@ -2424,7 +2431,7 @@ async function loadApplications() {
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
   <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">還沒有申請紀錄</p>
   <small>點下方按鈕建立第一筆費用申請</small>
-  <div style="margin-top:16px"><button class="btn btn-p" onclick="sw('new-form')">＋ 新增申請</button></div>
+  <div style="margin-top:16px"><button class="btn btn-p" onclick="openNewForm()">＋ 新增申請</button></div>
 </div></td></tr>`;
     return;
   }
@@ -2505,12 +2512,11 @@ async function loadApprovals() {
       +       '<span class="badge bp">' + c.status + '</span>'
       +       (isProxy ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600;flex-shrink:0">代理</span>' : '')
       +     '</div>'
-      +     (catCell ? '<div class="ac-cats">' + catCell + '</div>' : '')
-      +     '<div class="ac-subject">' + (subject || '（無主旨）') + '</div>'
-      +     '<div class="ac-meta">'
-      +       '<span>' + localName(c.email,c.name) + '・' + localDept(c.email,c.department) + '</span>'
+      +     (catCell ? '<div class="ac-cats" style="margin-bottom:5px">' + catCell + '<span style="font-size:12px;color:#64748b;margin-left:6px">' + localName(c.email,c.name) + '・' + localDept(c.email,c.department) + '</span></div>' : '<div class="ac-cats" style="margin-bottom:5px"><span style="font-size:12px;color:#64748b">' + localName(c.email,c.name) + '・' + localDept(c.email,c.department) + '</span></div>')
+      +     '<div style="display:flex;align-items:baseline;flex-wrap:wrap;gap:0 10px;margin-bottom:2px">'
+      +       '<span class="ac-subject" style="margin-bottom:0">' + (subject || '（無主旨）') + '</span>'
       +       '<span class="ac-amount">NT$ ' + Number(c.total||0).toLocaleString() + '</span>'
-      +       '<span style="color:#94a3b8">' + fmtDate(c.lastActionAt || c.createdAt) + '</span>'
+      +       '<span style="color:#94a3b8;font-size:12px">' + fmtDate(c.lastActionAt || c.createdAt) + '</span>'
       +     '</div>'
       +   '</div>'
       +   '<div class="ac-actions">'
@@ -2566,8 +2572,11 @@ function quickApprove(caseId) {
     '核准',
     'var(--brand)',
     async function() {
+      if (window._actionLock) { toast('⏳ 處理中，請稍候...'); return; }
+      window._actionLock = true;
       toast('⏳ 處理中...');
       const res = await callAPI('approve', { caseId, comment: '核准' });
+      window._actionLock = false;
       if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); loadApprovals(); loadDashboard(); }
       else toast('❌ 錯誤：' + res.error);
     }
@@ -2580,8 +2589,11 @@ function quickReject(caseId) {
 }
 
 async function _doQuickReject(caseId, comment) {
+  if (window._actionLock) { toast('⏳ 處理中，請稍候...'); return; }
+  window._actionLock = true;
   toast('⏳ 處理中...');
   const res = await callAPI('reject', { caseId, comment });
+  window._actionLock = false;
   if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
   else toast('❌ 錯誤：' + res.error);
 }
@@ -2667,9 +2679,22 @@ async function openDraft(caseId) {
   await new Promise(r => setTimeout(r, 80));
   // 設定 caseId
   _draftCaseId = caseId;
-  // 申請日期
+  // 申請日期：載入草稿時，若時間為 00:00 或純日期，補上當下台灣時間
   const adEl = document.getElementById('apply-date');
-  if (adEl) adEl.value = c.applyDate || c.createdAt || '';
+  if (adEl) {
+    var _adRaw = c.applyDate || c.createdAt || '';
+    var _adStr = String(_adRaw).trim();
+    // 純日期（無時間）或時間為 00:00 → 補上當下台灣時間
+    var _needFix = /^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(_adStr)
+                || /^\d{4}[\/\-]\d{2}[\/\-]\d{2}[ T]00:00/.test(_adStr);
+    if (_adStr && _needFix) {
+      var _tw2 = new Date(Date.now() + 8*3600000);
+      var _p2 = function(n){ return String(n).padStart(2,'0'); };
+      var _datePart = _adStr.substring(0,10).replace(/-/g,'/');
+      _adStr = _datePart + ' ' + _p2(_tw2.getUTCHours()) + ':' + _p2(_tw2.getUTCMinutes());
+    }
+    adEl.value = _adStr;
+  }
   // 主旨
   const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   if (subjectEl) subjectEl.value = c.project || c.subject || '';
@@ -2933,7 +2958,10 @@ function doResubmit() {
 // ══════════════════════════════════════════
 //  送出申請單
 // ══════════════════════════════════════════
+let _submitLock = false;
 async function submitForm() {
+  if (_submitLock) { toast('⏳ 送出中，請稍候...'); return; }
+  _submitLock = true;
   // 收集明細
   const items = [];
   document.querySelectorAll('.item-card').forEach(card => {
@@ -3046,12 +3074,16 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   const applyDateEl = document.getElementById('apply-date');
   const employeeIdEl = document.getElementById('employee-id');
   const applicantEl = document.getElementById('applicant-select');
-  // 若 applyDate 只有日期（無時間），補上當下台灣時間
+  // 若 applyDate 只有日期（無時間）或時間為 00:00，補上當下台灣時間
   var _applyDateVal = applyDateEl?.value || '';
-  if (_applyDateVal && /^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(_applyDateVal.trim())) {
+  var _applyStr = _applyDateVal.trim();
+  if (_applyStr && (
+    /^\d{4}[\/\-]\d{2}[\/\-]\d{2}$/.test(_applyStr) ||
+    /^\d{4}[\/\-]\d{2}[\/\-]\d{2}[ T]00:00/.test(_applyStr)
+  )) {
     var _tw = new Date(Date.now() + 8*3600000);
     var _p = function(n){ return String(n).padStart(2,'0'); };
-    _applyDateVal = _applyDateVal.trim().replace(/-/g,'/') + ' ' + _p(_tw.getUTCHours()) + ':' + _p(_tw.getUTCMinutes());
+    _applyDateVal = _applyStr.substring(0,10).replace(/-/g,'/') + ' ' + _p(_tw.getUTCHours()) + ':' + _p(_tw.getUTCMinutes());
   }
   const res = await callAPI('submit', {
     ...( _draftCaseId ? { caseId: _draftCaseId } : {}), // 草稿轉送出
@@ -3069,6 +3101,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
 
   if (res.ok) {
     _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
+    _submitLock = false;
     window._uploadedDraftFiles = []; // 清除草稿附件追蹤
     localStorage.removeItem('bf_draft');
     _cacheClear();
@@ -3095,6 +3128,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     // 上傳附件（並行上傳，完成後再刷新總覽）
     uploadPendingFiles(submittedCaseId, filesToUpload);
   } else {
+    _submitLock = false;
     toast('❌ 送出失敗：' + res.error);
   }
 }
@@ -3131,6 +3165,8 @@ function confirmDeleteDraftById(caseId) {
 }
 
 async function saveDraftForm(silent = false) {
+  if (_saveDraftLock) return; // 防止並行呼叫造成重複建立
+  _saveDraftLock = true;
   const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const reasonEl  = document.querySelector('#view-new-form textarea');
   // 收集明細（與 submitForm 相同邏輯，確保草稿保留所有欄位）
@@ -3167,6 +3203,7 @@ async function saveDraftForm(silent = false) {
     employeeId: empIdEl2?.value     || '',
     applyDate:  applyDateEl2?.value || '',
   });
+  _saveDraftLock = false;
   if (res.ok) {
     _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
     _cacheClear();
@@ -3222,6 +3259,19 @@ async function printCase(caseId) {
 }
 
 // ── NAVIGATION ──
+function openNewForm(){
+  // 全新申請：清除 localStorage 草稿 caseId，避免帶入上一筆草稿
+  try {
+    var _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+    delete _sd.caseId;
+    delete _sd.uploadedFiles;
+    localStorage.setItem('bf_draft', JSON.stringify(_sd));
+  } catch(e) {}
+  _draftCaseId = null;
+  window._uploadedDraftFiles = [];
+  window._pendingFiles = [];
+  sw('new-form');
+}
 const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
@@ -3256,6 +3306,11 @@ function sw(name,elOrName){
   if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
   // detail 頁的 flow 由 loadDetail(caseId) → updateDetailFlow(c) 負責渲染
   if(name==='new-form'){
+    // 切換到表單時確保捲到頂部（手機版尤其重要）
+    setTimeout(function(){
+      var mc2 = document.getElementById('main-content');
+      if (mc2) mc2.scrollTop = 0; else window.scrollTo(0,0);
+    }, 50);
     // 若附件正在上傳中，不清除檔案列表（避免上傳中畫面切換導致附件消失）
     if (!window._draftUploadInProgress) {
       _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
@@ -5149,6 +5204,7 @@ async function exportCSV(){
 //  草稿自動儲存 / 恢復
 // ══════════════════════════════════════════
 var _autoSaveGasTimer = null; // 自動同步 GAS 的計時器
+let _saveDraftLock = false;
 
 function autoSaveDraft(){
   const subjectEl=document.querySelector('#view-new-form input[placeholder*="主旨"]');
@@ -5457,6 +5513,20 @@ function renderAnalytics(startDate,endDate){
   renderBarChart('chart-department',deptMap,colors);
   renderMonthlyChart('chart-monthly',moMap);
   renderApprovedTable(approvedFiltered);
+  // 整體無資料提示
+  var _anaEmpty = document.getElementById('analytics-empty-notice');
+  if (!_anaEmpty) {
+    _anaEmpty = document.createElement('div');
+    _anaEmpty.id = 'analytics-empty-notice';
+    _anaEmpty.style.cssText = 'text-align:center;padding:40px 20px;color:#94a3b8;font-size:14px;display:none';
+    _anaEmpty.textContent = '此區間沒有任何案件資料';
+    var _anaWrap = document.getElementById('charts-row');
+    if (_anaWrap && _anaWrap.parentNode) _anaWrap.parentNode.insertBefore(_anaEmpty, _anaWrap);
+  }
+  var _hasAnaData = Object.keys(catMap).length > 0 || Object.keys(deptMap).length > 0;
+  _anaEmpty.style.display = _hasAnaData ? 'none' : 'block';
+  var _chartsRow = document.getElementById('charts-row');
+  if (_chartsRow) _chartsRow.style.display = _hasAnaData ? '' : 'none';
 }
 function renderBarChart(id,dataMap,colors){
   var el=document.getElementById(id);if(!el)return;
@@ -5486,8 +5556,8 @@ function renderApprovedTable(approvedCases){
   if(!tbody)return;
   // 依申請時間新→舊排序
   var sorted=approvedCases.slice().sort(function(a,b){
-    var da=new Date(String(a.createdAt||'').replace(/\//g,'-').split(' ')[0]+'T00:00:00');
-    var db=new Date(String(b.createdAt||'').replace(/\//g,'-').split(' ')[0]+'T00:00:00');
+    var da=new Date(String(a.createdAt||'').replace(/\//g,'-').replace(' ','T'));
+    var db=new Date(String(b.createdAt||'').replace(/\//g,'-').replace(' ','T'));
     return db-da;
   });
   if(lc)lc.textContent='共 '+sorted.length+' 件';
