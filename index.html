@@ -16,7 +16,7 @@
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
-html,body{margin:0;background:#fff;overflow-x:hidden;max-width:100vw}
+html,body{margin:0;background:#fff;overflow-x:hidden;width:100%}
 body{margin:0;background:#fff}
 :root{--brand:#1e9d6b;--brand-dark:#157a50;--brand-light:#e6f5ee;--brand-mid:#3dba84;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
@@ -585,6 +585,14 @@ input[type=checkbox]{accent-color:var(--brand)}
   #view-new-form{overflow-x:hidden!important;max-width:100%!important}
   #view-new-form .card{max-width:100%!important;overflow-x:hidden!important}
   #view-new-form input,#view-new-form select,#view-new-form textarea{max-width:100%!important;box-sizing:border-box!important}
+  #audit-filter-action,#audit-filter-name,#audit-filter-date{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+  #audit-log-pagination{padding:10px 12px!important;gap:4px!important}
+  /* ── iOS 自動放大修正：input font-size < 16px 會觸發 zoom ── */
+  input,select,textarea,.inp{font-size:16px!important}
+  /* ── 主容器手機 padding 縮小，避免內容被擠壓 ── */
+  #main-content{padding:12px 10px!important}
+  /* ── 所有容器防止橫向溢出 ── */
+  .card,.view,.stat{max-width:100%!important;box-sizing:border-box!important}
 }
 
 /* ── 手機版案件卡片 ── */
@@ -661,8 +669,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .item-card-body{transition:opacity .2s}
 .item-card.ic-collapsed .item-card-body{display:none!important}
 .item-card.ic-collapsed{padding:10px 16px!important}
-.ic-toggle-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:2px 7px;border-radius:6px;transition:all .15s;touch-action:manipulation;font-family:inherit;display:flex;align-items:center;gap:3px}
+.ic-toggle-btn{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:12px;padding:6px 10px;min-height:36px;border-radius:6px;transition:all .15s;touch-action:manipulation;font-family:inherit;display:flex;align-items:center;gap:3px}
 .ic-toggle-btn:hover{background:#f1f5f9;color:#374151}
+.audit-text-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s;font-family:inherit;touch-action:manipulation}
+.audit-text-btn:hover{color:#475569;background:#f1f5f9}
 .ic-summary{font-size:12px;color:#64748b;display:none;margin-left:6px;font-weight:500}
 .item-card.ic-collapsed .ic-summary{display:inline}
 
@@ -1070,11 +1080,10 @@ tbody td{font-size:var(--fs-sm)!important}
       <div class="card" style="overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
           <div>
-            <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:2px">登入、申請、審核、系統設定等所有操作（最新 200 筆）</div>
+            <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄（最新 200 筆）</div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <select id="audit-filter-action" class="inp" style="width:140px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
+            <select id="audit-filter-action" class="inp" style="width:130px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
               <option value="">全部動作</option>
               <option value="login">登入</option>
               <option value="submit">送出申請</option>
@@ -1083,11 +1092,16 @@ tbody td{font-size:var(--fs-sm)!important}
               <option value="resubmit">重新送出</option>
               <option value="draft">草稿</option>
               <option value="upload">上傳附件</option>
+              <option value="deleteFile">刪除附件</option>
+              <option value="deleteDraft">刪除草稿</option>
               <option value="addUser">新增使用者</option>
               <option value="editUser">編輯使用者</option>
               <option value="deleteUser">停用使用者</option>
             </select>
-            <button type="button" class="btn btn-o" style="font-size:13px;padding:6px 12px" onclick="loadAuditLogDashboard()">
+            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="width:110px;font-size:13px;padding:6px 10px" oninput="_debouncedAuditFilter()">
+            <input id="audit-filter-date" type="date" class="inp" style="width:140px;font-size:13px;padding:6px 10px;color:#374151" onchange="filterAuditLog()">
+            <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
+            <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
             </button>
           </div>
@@ -1095,17 +1109,18 @@ tbody td{font-size:var(--fs-sm)!important}
         <div style="overflow-x:auto">
         <table class="evx-table" style="min-width:600px">
           <thead><tr>
-            <th style="width:150px">時間</th>
-            <th style="width:80px">動作</th>
-            <th style="width:120px">操作人</th>
-            <th style="width:140px">相關案件</th>
-            <th>說明</th>
+            <th style="width:150px;text-align:center">時間</th>
+            <th style="width:80px;text-align:center">動作</th>
+            <th style="width:120px;text-align:center">操作人</th>
+            <th style="width:140px;text-align:center">相關案件</th>
+            <th style="text-align:center">說明</th>
           </tr></thead>
           <tbody id="audit-log-tbody">
             <tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">載入中...</td></tr>
           </tbody>
         </table>
         </div>
+        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
       </div>
     </div>
   </div>
@@ -1271,7 +1286,7 @@ tbody td{font-size:var(--fs-sm)!important}
       <div style="overflow-x:auto;max-width:100%">
       <table class="evx-table">
         <thead><tr>
-          <th style="width:36px;padding-left:16px"><input type="checkbox" id="app-select-all" onclick="appToggleSelectAll(this)" style="accent-color:var(--brand);width:15px;height:15px"></th>
+          <th style="width:36px;padding-left:16px"><input type="checkbox" id="app-select-all" onclick="appToggleSelectAll(this)" style="accent-color:var(--brand);width:24px;height:24px;cursor:pointer"></th>
           <th class="sortable-th" onclick="sortAppTable(0)">申請單號<span class="sort-icon"></span></th>
           <th>主旨</th>
           <th>申請人</th>
@@ -1941,6 +1956,17 @@ tbody td{font-size:var(--fs-sm)!important}
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
+// ── 共用工具：debounce（防止短時間內重複觸發）──
+function _debounce(fn, delay) {
+  var t;
+  return function() {
+    var ctx = this, args = arguments;
+    clearTimeout(t);
+    t = setTimeout(function(){ fn.apply(ctx, args); }, delay);
+  };
+}
+var _debouncedAuditFilter = _debounce(function(){ filterAuditLog(); }, 300);
+
 // ══════════════════════════════════════════
 //  設定：你的 Apps Script 網址
 // ══════════════════════════════════════════
@@ -2443,6 +2469,9 @@ async function loadDashboard() {
 
 // ── 系統操作紀錄（管理者專用）──
 let _auditAllLogs = [];
+let _auditCurrentLogs = [];
+let _auditPage = 1;
+const _auditPageSize = 20;
 
 const _auditActionLabel = {
   'login'      : { label:'登入',     color:'#0369a1', bg:'#f0f9ff' },
@@ -2475,31 +2504,94 @@ async function loadAuditLogDashboard() {
 
 function filterAuditLog() {
   const action = (document.getElementById('audit-filter-action')?.value || '').trim();
-  const filtered = action ? _auditAllLogs.filter(l => l.action === action || l.action.startsWith(action)) : _auditAllLogs;
+  const name   = (document.getElementById('audit-filter-name')?.value || '').trim().toLowerCase();
+  const date   = (document.getElementById('audit-filter-date')?.value || '').trim(); // yyyy-MM-dd
+  const filtered = _auditAllLogs.filter(function(l) {
+    if (action && !(l.action === action || l.action.startsWith(action))) return false;
+    if (name) {
+      const displayName = localName(l.email, l.name).toLowerCase();
+      if (!displayName.includes(name) && !(l.email||'').toLowerCase().includes(name)) return false;
+    }
+    if (date) {
+      // l.at 格式 'yyyy/MM/dd HH:mm:ss'，取前 10 碼轉為 yyyy-MM-dd 比對
+      const logDate = String(l.at||'').substring(0,10).replace(/\//g,'-');
+      if (logDate !== date) return false;
+    }
+    return true;
+  });
+  _auditPage = 1;
   renderAuditLogTable(filtered);
 }
 
+function clearAuditFilters() {
+  const a = document.getElementById('audit-filter-action');
+  const n = document.getElementById('audit-filter-name');
+  const d = document.getElementById('audit-filter-date');
+  if (a) a.value = '';
+  if (n) n.value = '';
+  if (d) d.value = '';
+  _auditPage = 1;
+  renderAuditLogTable(_auditAllLogs);
+}
+
 function renderAuditLogTable(logs) {
+  _auditCurrentLogs = logs;
   const tbody = document.getElementById('audit-log-tbody');
   if (!tbody) return;
   if (!logs.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">沒有符合的紀錄</td></tr>';
+    renderAuditPagination(0);
     return;
   }
-  tbody.innerHTML = logs.map(function(l) {
+  const totalPages = Math.ceil(logs.length / _auditPageSize);
+  if (_auditPage > totalPages) _auditPage = totalPages;
+  const start = (_auditPage - 1) * _auditPageSize;
+  const pageLogs = logs.slice(start, start + _auditPageSize);
+  tbody.innerHTML = pageLogs.map(function(l) {
     const meta = _auditActionLabel[l.action] || { label: l.action, color:'#64748b', bg:'#f1f5f9' };
     const badge = '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+meta.bg+';color:'+meta.color+';white-space:nowrap">'+meta.label+'</span>';
     const caseLink = l.caseId && l.caseId !== '—'
       ? '<span style="font-size:12px;font-family:monospace;color:#f59e0b;cursor:pointer;text-decoration:underline" onclick="loadDetail(\''+l.caseId+'\')">'+l.caseId+'</span>'
       : '<span style="color:#cbd5e1;font-size:12px">—</span>';
+    const displayName = localName(l.email, l.name);
     return '<tr class="tr">'
-      + '<td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap">'+fmtDate(l.at)+'</td>'
-      + '<td style="padding:10px 14px">'+badge+'</td>'
-      + '<td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap">'+(l.name||l.email||'—')+'</td>'
-      + '<td style="padding:10px 14px">'+caseLink+'</td>'
+      + '<td style="padding:10px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;text-align:center">'+fmtDate(l.at)+'</td>'
+      + '<td style="padding:10px 14px;text-align:center">'+badge+'</td>'
+      + '<td style="padding:10px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center">'+displayName+'</td>'
+      + '<td style="padding:10px 14px;text-align:center">'+caseLink+'</td>'
       + '<td style="padding:10px 14px;font-size:13px;color:#64748b;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+l.desc+'">'+l.desc+'</td>'
       + '</tr>';
   }).join('');
+  renderAuditPagination(totalPages);
+}
+
+function renderAuditPagination(totalPages) {
+  const el = document.getElementById('audit-log-pagination');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  const btn = function(label, page, disabled, active) {
+    const base = 'display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#374151;transition:all .15s;';
+    const activeStyle = active ? 'background:#1e293b;color:#fff;border-color:#1e293b;' : '';
+    const disabledStyle = disabled ? 'opacity:.4;cursor:default;pointer-events:none;' : 'cursor:pointer;';
+    return '<button style="'+base+activeStyle+disabledStyle+'" onclick="'+(disabled?'':'goAuditPage('+page+')')+'">'+label+'</button>';
+  };
+  let html = btn('←', _auditPage - 1, _auditPage === 1, false);
+  const range = 2;
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= _auditPage - range && i <= _auditPage + range)) {
+      html += btn(i, i, false, i === _auditPage);
+    } else if (i === _auditPage - range - 1 || i === _auditPage + range + 1) {
+      html += '<span style="padding:0 4px;color:#94a3b8;align-self:center">…</span>';
+    }
+  }
+  html += btn('→', _auditPage + 1, _auditPage === totalPages, false);
+  html += '<span style="font-size:12px;color:#94a3b8;margin-left:8px">第 '+_auditPage+' / '+totalPages+' 頁，共 '+_auditCurrentLogs.length+' 筆</span>';
+  el.innerHTML = html;
+}
+
+function goAuditPage(page) {
+  _auditPage = page;
+  renderAuditLogTable(_auditCurrentLogs);
 }
 
 // ── 共用：渲染單一案件列（總覽 + 案件追蹤 共用，確保完全一致）──
@@ -2529,7 +2621,7 @@ function _renderCaseRow(c, opts) {
     ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','done')"`
     : `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','pending')"`;
   return `<tr class="tr" onclick="${rowClick}" data-cat="${_dataCat}" data-status="${c.status||''}">
-    <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:var(--brand);width:15px;height:15px"></td>
+    <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:var(--brand);width:24px;height:24px;cursor:pointer"></td>
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:13px;font-family:monospace;letter-spacing:.04em">${c.caseId}</span></td>
     <td style="padding:12px 14px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#0f172a">${c.project||c.subject||'—'}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
@@ -5073,7 +5165,7 @@ function initFlatpickr(el, opts) {
   return flatpickr(el, Object.assign({
     locale: 'zh_tw',
     dateFormat: 'Y-m-d',
-    disableMobile: true,
+    disableMobile: false,
     allowInput: false,
   }, opts || {}));
 }
@@ -6230,6 +6322,57 @@ document.addEventListener('click', function(e) {
     attributes: true,
     attributeFilter: ['class']
   });
+})();
+
+// ── Swipe 下滑關閉：Modal + User Sheet ──
+(function() {
+  var _startY = null;
+  var _target = null;
+  var _THRESHOLD = 80; // px
+
+  function onTouchStart(e) {
+    // 只處理一根手指
+    if (e.touches.length !== 1) return;
+    var el = e.target;
+    // 向上找：是否在 .modal-bg>div 或 #mobile-user-sheet>div 裡
+    var sheet = null;
+    var cur = el;
+    while (cur && cur !== document.body) {
+      var p = cur.parentElement;
+      if (p && p.classList && p.classList.contains('modal-bg') && p.classList.contains('open')) {
+        sheet = p; break;
+      }
+      if (p && p.id === 'mobile-user-sheet' && p.style.display !== 'none') {
+        sheet = p; break;
+      }
+      cur = p;
+    }
+    if (!sheet) return;
+    // 只在 content 區頂部（scrollTop === 0）才允許觸發
+    var inner = sheet.querySelector(':scope > div') || sheet.firstElementChild;
+    if (inner && inner.scrollTop > 0) return;
+    _startY = e.touches[0].clientY;
+    _target = sheet;
+  }
+
+  function onTouchEnd(e) {
+    if (_startY === null || !_target) return;
+    var endY = (e.changedTouches[0] || {}).clientY || _startY;
+    var delta = endY - _startY;
+    _startY = null;
+    if (delta > _THRESHOLD) {
+      // 關閉
+      if (_target.id === 'mobile-user-sheet') {
+        closeMobileUserSheet();
+      } else {
+        _target.classList.remove('open');
+      }
+    }
+    _target = null;
+  }
+
+  document.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchend',   onTouchEnd,   { passive: true });
 })();
 </script>
 
