@@ -256,6 +256,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #mobile-nav-logout{display:flex!important}
   #sidebar-user-section{display:none!important}
   #mobile-user-btn{display:none!important}
+  #sidebar-wrapper aside nav{overflow-y:visible!important}
 }
 
 
@@ -269,7 +270,7 @@ input[type=checkbox]{accent-color:var(--brand)}
 #draft-banner.show{display:flex}
 
 /* ── RECEIPT WARNING ── */
-#receipt-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;align-items:center;justify-content:center}
+#receipt-confirm{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10001;align-items:center;justify-content:center}
 #receipt-confirm.open{display:flex}
 
 /* ── MOBILE 優化 ── */
@@ -884,6 +885,7 @@ tbody td{font-size:var(--fs-sm)!important}
 .evx-id-draft{color:#94a3b8}.evx-id-done{color:var(--brand)}.evx-id-pending{color:#f59e0b}.evx-id-reject{color:#dc2626}
 /* Pagination */
 .evx-pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-top:1px solid #f3f4f6;font-size:13px;color:#6b7280;flex-wrap:wrap;gap:8px}
+.evx-pages{margin-left:auto}
 .evx-page-left{display:flex;align-items:center;gap:8px}
 .evx-page-size{border:1px solid #e5e7eb;border-radius:6px;padding:3px 7px;font-size:13px;color:#374151;background:#fff;cursor:pointer;font-family:inherit}
 .evx-pages{display:flex;align-items:center;gap:3px}
@@ -996,7 +998,7 @@ tbody td{font-size:var(--fs-sm)!important}
     </div>
 
     <!-- 手機版登出按鈕（只在手機顯示，直接在 nav 內，確保可點擊）-->
-    <div id="mobile-nav-logout" class="sl" data-label="登出" onclick="logout()" style="display:none;margin-top:auto;color:#dc2626">
+    <div id="mobile-nav-logout" class="sl" data-label="登出" onclick="logout()" style="display:none;color:#dc2626">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       <span class="sl-text">登出</span>
     </div>
@@ -1089,7 +1091,7 @@ tbody td{font-size:var(--fs-sm)!important}
         <div>
           <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">快速操作</div>
           <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn btn-p" onclick="openNewForm()" style="width:100%;justify-content:center;padding:10px">
+            <button class="btn btn-p" onclick="window._newFormReturnView='applications';openNewForm()" style="width:100%;justify-content:center;padding:10px">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
             </button>
             <button class="btn btn-a" onclick="sw('approvals')" style="width:100%;justify-content:center">
@@ -2732,8 +2734,8 @@ function _renderCaseRow(c, opts) {
   const catCell  = (function(){
     const cats = (c.category||'').split('、').filter(Boolean);
     if (!cats.length) return '<span style="color:#cbd5e1">—</span>';
-    const v = cats.slice(0,2).map(x => catBadge(x)).join('');
-    const m = cats.length > 2 ? '<span style="font-size:11px;color:#94a3b8">+' + (cats.length-2) + '</span>' : '';
+    const v = cats.map(x => catBadge(x)).join('');
+    const m = '';
     return v + m;
   })();
   const rowClick = isDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
@@ -2958,7 +2960,7 @@ async function loadApprovals() {
   function _approvalCardHtml(c, isProxy) {
     const subject = String(c.project || c.subject || '').replace(/\bNaN\b/g,'').trim() || '（無主旨）';
     const cats = String(c.category||'').replace(/\bNaN\b/g,'').trim().split('、').filter(Boolean);
-    const catBadges = cats.slice(0,2).map(x => catBadge(x)).join('') + (cats.length>2?'<span style="font-size:11px;color:#94a3b8">+'+(cats.length-2)+'</span>':'');
+    const catBadges = cats.map(x => catBadge(x)).join('');
     // 日期區塊
     const dateStr = c.createdAt || c.applyDate || '';
     const dateObj = dateStr ? new Date(dateStr.replace(/\//g,'-')) : null;
@@ -6536,8 +6538,8 @@ document.addEventListener('click', function(e) {
       請確認已準備好實體憑證，審核人員將會核對。
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-p" style="flex:1;justify-content:center" onclick="confirmSubmitForm()">確認送出</button>
-      <button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById('receipt-confirm').classList.remove('open')">返回修改</button>
+      <button type="button" class="btn btn-p" style="flex:1;justify-content:center" onclick="confirmSubmitForm()">確認送出</button>
+      <button type="button" class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById('receipt-confirm').classList.remove('open')">返回修改</button>
     </div>
   </div>
 </div>
