@@ -79,7 +79,7 @@ input[type=radio]{accent-color:var(--brand)}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* Topbar amber gradient accent strip */
-header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--brand) 0%,var(--amber-mid,#fbbf24) 55%,var(--amber,#f59e0b) 100%);pointer-events:none;z-index:1}
+header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--brand);pointer-events:none;z-index:1}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:160;display:none}
 .modal-bg.open{display:flex}
 /* ── APPROVAL ROW（重新設計：清晰列表行） ── */
@@ -211,7 +211,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
-  div[style*="overflow-x:auto"]{-webkit-overflow-scrolling:touch!important}
+  /* webkit-overflow-scrolling:touch 已移除，避免建立獨立 scroll context 導致垂直滑動卡住 */
   #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
   #user-menu{min-width:160px!important}
@@ -284,12 +284,14 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 @supports (height: 100dvh) {
   @media(max-width:768px){
-    #app,#app>div{height:100dvh!important}
+    /* 只限 #app 和 #app-inner，避免 #mobile-form-actions 等兄弟元素被撐高 */
+    #app,#app-inner{height:100dvh!important}
   }
 }
-/* iOS Safari 100vh bug fix：用 JS 設定的 --vh 變數取代固定 100vh */
+/* iOS Safari 100vh bug fix */
 @media(max-width:768px){
-  #app,#app>div,#main-wrapper{height:calc(var(--vh,1vh)*100)!important}
+  #app,#app-inner,#main-wrapper{height:calc(var(--vh,1vh)*100)!important}
+  #mobile-form-actions{height:auto!important;min-height:0!important}
 }
 /* 手機版 Modal：底部抽屜式 ── 修正黑色大背景 + 改善內容滑動 */
 @media(max-width:768px){
@@ -301,7 +303,6 @@ input[type=checkbox]{accent-color:var(--brand)}
   .modal-bg>div{
     max-height:88vh!important;
     overflow:hidden auto!important;
-    -webkit-overflow-scrolling:touch!important;
     overscroll-behavior:contain!important;
     touch-action:pan-y!important;
     margin:0!important;
@@ -325,7 +326,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #receipt-confirm>div{
     border-radius:20px 20px 0 0!important;
     max-width:100%!important;width:100%!important;
-    overflow-y:auto!important;-webkit-overflow-scrolling:touch!important;
+    overflow-y:auto!important;
     overscroll-behavior:contain!important;
     padding-top:16px!important;
     padding-bottom:calc(env(safe-area-inset-bottom,0px) + 16px)!important;
@@ -927,11 +928,7 @@ tbody td{font-size:var(--fs-sm)!important}
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#f59e0b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#f59e0b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#f59e0b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#f59e0b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#f59e0b"/></svg></span>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
-    <!-- 鈴鐺已移除：側欄已有「待審核」選項 -->
-    <!-- 手機版使用者按鈕（桌機隱藏） -->
-    <button id="mobile-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:none;width:36px;height:36px;border-radius:50%;background:#1e9d6b;border:none;cursor:pointer;align-items:center;justify-content:center;flex-shrink:0;padding:0">
-      <span class="user-avatar-initial" style="font-size:14px;font-weight:700;color:#fff;letter-spacing:-.5px">潔</span>
-    </button>
+    <!-- 手機版右上角頭像已移除，登出改由側欄處理 -->
   </header>
 
   <!-- NOTIFICATION PANEL -->
@@ -1169,7 +1166,7 @@ tbody td{font-size:var(--fs-sm)!important}
         </div>
         <span id="analytics-list-count" style="font-size:13px;color:#94a3b8;flex-shrink:0">共 0 件</span>
       </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+      <div style="overflow-x:auto">
       <table style="width:100%;min-width:480px;border-collapse:collapse;font-size:14px">
         <thead><tr>
           <th style="text-align:left;white-space:nowrap">申請時間</th>
@@ -1525,7 +1522,7 @@ tbody td{font-size:var(--fs-sm)!important}
         </div>
         <div class="card" style="padding:20px">
           <div class="section-title">請款明細</div>
-          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+          <div style="overflow-x:auto">
           <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
               <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">分類</th>
@@ -1673,16 +1670,16 @@ tbody td{font-size:var(--fs-sm)!important}
         </div>
       </div>
       <div class="card" style="overflow:hidden">
-        <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div style="overflow-x:auto">
         <table style="width:100%;min-width:720px;border-collapse:collapse;font-size:14px">
           <thead><tr>
-            <th style="padding:11px 16px;width:36px"><input type="checkbox" id="select-all" onchange="adminToggleSelectAll(this)"></th>
-            <th style="text-align:left">使用者</th>
-            <th style="text-align:left">員工編號</th><th style="text-align:left">部門</th>
-            <th style="text-align:left">Email</th>
-            <th style="text-align:left">標籤</th>
-            <th style="text-align:left">加入時間</th>
-            <th style="text-align:left">操作</th>
+            <th style="padding:11px 16px;width:36px;text-align:center"><input type="checkbox" id="select-all" onchange="adminToggleSelectAll(this)"></th>
+            <th style="text-align:center">使用者</th>
+            <th style="text-align:center">員工編號</th><th style="text-align:center">部門</th>
+            <th style="text-align:center">Email</th>
+            <th style="text-align:center">標籤</th>
+            <th style="text-align:center">加入時間</th>
+            <th style="text-align:center">操作</th>
           </tr></thead>
           <tbody id="admin-users-tbody">
             <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
@@ -2454,18 +2451,19 @@ function _showRowMenu(btn, caseId, type) {
   const menu = document.createElement('div');
   menu.className = '_evx-row-menu';
   menu.style.cssText = 'position:fixed;background:#fff;border:1px solid #e5e7eb;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;min-width:130px;overflow:hidden;font-size:14px';
-  const items = type === 'draft'
-    ? [['✏️ 編輯草稿', `openDraft('${caseId}')`], ['🗑️ 刪除草稿', `confirmDeleteDraftById('${caseId}')`]]
-    : type === 'done'
-    ? [['👁 查看詳情', `loadDetail('${caseId}')`], ['🖨️ 列印', `printCase('${caseId}')`]]
-    : [['👁 查看詳情', `loadDetail('${caseId}')`]];
-  items.forEach(([label, action]) => {
+  const actionMap = {
+    'draft':   [['✏️ 編輯草稿', () => openDraft(caseId)],      ['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]],
+    'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['🖨️ 列印',     () => printCase(caseId)]],
+    'pending': [['👁 查看詳情',  () => loadDetail(caseId)]],
+  };
+  const items = actionMap[type] || actionMap['pending'];
+  items.forEach(([label, fn]) => {
     const div = document.createElement('div');
     div.style.cssText = 'padding:10px 16px;cursor:pointer;color:#374151;transition:background .1s';
     div.textContent = label;
     div.onmouseenter = () => div.style.background = '#f9fafb';
     div.onmouseleave = () => div.style.background = '';
-    div.onclick = () => { menu.remove(); eval(action); };
+    div.onclick = () => { menu.remove(); fn(); };
     menu.appendChild(div);
   });
   const rect = btn.getBoundingClientRect();
@@ -3179,70 +3177,52 @@ async function submitForm() {
   const tax    = items.reduce((s,i)=>s+i.tax,0);
   const total  = items.reduce((s,i)=>s+i.total,0);
 
-  if (!subjectEl?.value) {
-    if(subjectEl){subjectEl.classList.add('inp-error');subjectEl.focus();setTimeout(()=>subjectEl.classList.remove('inp-error'),2500);}
-    toast('⚠️ 請填寫主旨'); return;
-  }
-  if (items.length === 0) { toast('⚠️ 請至少新增一筆明細'); return; }
+  // 驗證失敗時的 helper：釋放鎖定並回傳
+  const _failValidation = (msg, focusEl) => {
+    _submitLock = false;
+    if (focusEl) { focusEl.classList?.add('inp-error'); focusEl.focus?.(); setTimeout(()=>focusEl.classList?.remove('inp-error'),2500); }
+    toast(msg);
+  };
+
+  if (!subjectEl?.value) { _failValidation('⚠️ 請填寫主旨', subjectEl); return; }
+  if (items.length === 0) { _failValidation('⚠️ 請至少新增一筆明細'); return; }
 
   // 每筆明細的含稅金額必須 > 0
   const hasZeroAmount = items.some(i => !(i.total > 0));
   if (hasZeroAmount) {
     document.querySelectorAll('.withtax').forEach(el => {
-      if (!(parseFloat(el.value) > 0)) {
-        el.classList.add('inp-error');
-        setTimeout(() => el.classList.remove('inp-error'), 2500);
-      }
+      if (!(parseFloat(el.value) > 0)) { el.classList.add('inp-error'); setTimeout(() => el.classList.remove('inp-error'), 2500); }
     });
-    toast('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
+    _failValidation('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
   }
 
   // 憑證日期、類別、項目、單據類型必填驗證
   let _itemFieldErr = false;
-  document.querySelectorAll('.item-card').forEach((card, idx) => {
+  document.querySelectorAll('.item-card').forEach((card) => {
     const dateInp = card.querySelector('.date-inp');
     const catSel  = card.querySelectorAll('select')[0];
     const descInp = card.querySelector('.desc-inp');
     const rcptSel = card.querySelectorAll('select')[1];
-    if (!dateInp?.value) {
-      _itemFieldErr = true;
-      dateInp.style.borderColor = '#ef4444';
-      setTimeout(() => { dateInp.style.borderColor = ''; }, 2500);
-    }
-    if (!catSel?.value) {
-      _itemFieldErr = true;
-      catSel.classList.add('inp-error');
-      setTimeout(() => catSel.classList.remove('inp-error'), 2500);
-    }
-    if (!descInp?.value?.trim()) {
-      _itemFieldErr = true;
-      descInp.classList.add('inp-error');
-      setTimeout(() => descInp.classList.remove('inp-error'), 2500);
-    }
-    if (!rcptSel?.value) {
-      _itemFieldErr = true;
-      rcptSel.classList.add('inp-error');
-      setTimeout(() => rcptSel.classList.remove('inp-error'), 2500);
-    }
+    if (!dateInp?.value) { _itemFieldErr = true; dateInp.style.borderColor='#ef4444'; setTimeout(()=>{dateInp.style.borderColor='';},2500); }
+    if (!catSel?.value)  { _itemFieldErr = true; catSel.classList.add('inp-error'); setTimeout(()=>catSel.classList.remove('inp-error'),2500); }
+    if (!descInp?.value?.trim()) { _itemFieldErr = true; descInp.classList.add('inp-error'); setTimeout(()=>descInp.classList.remove('inp-error'),2500); }
+    if (!rcptSel?.value) { _itemFieldErr = true; rcptSel.classList.add('inp-error'); setTimeout(()=>rcptSel.classList.remove('inp-error'),2500); }
   });
-  if (_itemFieldErr) { toast('⚠️ 每筆明細的憑證日期、類別、項目和單據類型為必填'); return; }
+  if (_itemFieldErr) { _failValidation('⚠️ 每筆明細的憑證日期、類別、項目和單據類型為必填'); return; }
 
   // 附件必填驗證（含草稿已上傳的檔案）
   const _hasPending = window._pendingFiles && window._pendingFiles.length > 0;
   const _hasDraftFiles = window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0;
   if (!_hasPending && !_hasDraftFiles) {
     const dz = document.getElementById('upload-drop-zone');
-    if (dz) {
-      dz.style.borderColor = '#ef4444';
-      dz.style.background  = '#fff5f5';
-      setTimeout(() => { dz.style.borderColor = ''; dz.style.background = '#f9fefe'; }, 2500);
-    }
-    toast('⚠️ 請上傳至少一張附件圖片或憑證'); return;
+    if (dz) { dz.style.borderColor='#ef4444'; dz.style.background='#fff5f5'; setTimeout(()=>{dz.style.borderColor='';dz.style.background='#f9fefe';},2500); }
+    _failValidation('⚠️ 請上傳至少一張附件圖片或憑證'); return;
   }
 
-  // 收據提醒
+  // 收據提醒（暫時釋放鎖，等使用者確認後再鎖）
   const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
   if (needsReceipt) {
+    _submitLock = false;
     window._pendingSubmitData = { subjectEl, reasonEl, departmentEl, applicantEl, payeeEl, items };
     document.getElementById('receipt-confirm').classList.add('open');
     return;
@@ -3258,7 +3238,9 @@ async function confirmSubmitForm() {
 }
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
+  _submitLock = true; // 防止送出中重複觸發
   toast('⏳ 送出中...');
+  try {
   const pretax = items.reduce((s,i)=>s+i.pretax,0);
   const tax    = items.reduce((s,i)=>s+i.tax,0);
   const total  = items.reduce((s,i)=>s+i.total,0);
@@ -3319,8 +3301,12 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     // 上傳附件（並行上傳，完成後再刷新總覽）
     uploadPendingFiles(submittedCaseId, filesToUpload);
   } else {
-    _submitLock = false;
     toast('❌ 送出失敗：' + res.error);
+  }
+  } catch(e) {
+    toast('❌ 送出時發生錯誤：' + e.message);
+  } finally {
+    _submitLock = false; // 無論成功/失敗/例外，一定釋放鎖
   }
 }
 
@@ -5852,7 +5838,7 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
       <div style="font-size:20px;font-weight:800;color:var(--amber-dark,#d97706)">NT$ ${total.toLocaleString()}</div>
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById('_submit_preview_modal').closest('.modal-bg').classList.remove('open')">← 返回修改</button>
+      <button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById('_submit_preview_modal').closest('.modal-bg').classList.remove('open');_submitLock=false;">← 返回修改</button>
       <button class="btn btn-p" style="flex:2;justify-content:center;min-height:44px" id="_preview_confirm_btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>確認送出
       </button>
