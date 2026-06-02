@@ -585,7 +585,9 @@ input[type=checkbox]{accent-color:var(--brand)}
   #view-new-form{overflow-x:hidden!important;max-width:100%!important}
   #view-new-form .card{max-width:100%!important;overflow-x:hidden!important}
   #view-new-form input,#view-new-form select,#view-new-form textarea{max-width:100%!important;box-sizing:border-box!important}
-  #audit-filter-action,#audit-filter-name,#audit-filter-date{width:100%!important;max-width:100%!important;box-sizing:border-box!important}
+  #audit-filter-action{width:120px!important;min-width:0;flex-shrink:1}
+  #audit-filter-name{width:80px!important;min-width:0;flex-shrink:1}
+  #audit-filter-date{width:130px!important;min-width:0;flex-shrink:1}
   #audit-log-pagination{padding:10px 12px!important;gap:4px!important}
   /* ── iOS 自動放大修正：input font-size < 16px 會觸發 zoom ── */
   input,select,textarea,.inp{font-size:16px!important}
@@ -1079,10 +1081,11 @@ tbody td{font-size:var(--fs-sm)!important}
     <div id="audit-log-dashboard" style="display:none;margin-top:20px">
       <div class="card" style="overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄（最新 200 筆）</div>
+          <div style="display:flex;align-items:baseline;gap:6px">
+            <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
+            <div style="font-size:12px;color:#94a3b8">最新 200 筆</div>
           </div>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
             <select id="audit-filter-action" class="inp" style="width:130px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
               <option value="">全部動作</option>
               <option value="login">登入</option>
@@ -2551,7 +2554,7 @@ function renderAuditLogTable(logs) {
     const meta = _auditActionLabel[l.action] || { label: l.action, color:'#64748b', bg:'#f1f5f9' };
     const badge = '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+meta.bg+';color:'+meta.color+';white-space:nowrap">'+meta.label+'</span>';
     const caseLink = l.caseId && l.caseId !== '—'
-      ? '<span style="font-size:12px;font-family:monospace;color:#f59e0b;cursor:pointer;text-decoration:underline" onclick="loadDetail(\''+l.caseId+'\')">'+l.caseId+'</span>'
+      ? '<span style="font-size:12px;font-family:monospace;color:#f59e0b;cursor:pointer;text-decoration:underline;white-space:nowrap" onclick="loadDetail(\''+l.caseId+'\')">'+l.caseId+'</span>'
       : '<span style="color:#cbd5e1;font-size:12px">—</span>';
     const displayName = localName(l.email, l.name);
     return '<tr class="tr">'
