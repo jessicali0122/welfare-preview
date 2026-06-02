@@ -252,8 +252,9 @@ input[type=checkbox]{accent-color:var(--brand)}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
   #user-menu{min-width:160px!important}
   .stat{padding:14px 16px!important}
-  /* 手機：使用者區塊移到側欄底部，頂端頭像按鈕隱藏 */
-  #sidebar-user-section{display:flex!important;margin-top:auto!important}
+  /* 手機：使用者區塊固定在側欄絕對底部，頂端頭像按鈕隱藏 */
+  #sidebar-user-section{display:flex!important;position:absolute!important;bottom:0!important;left:0!important;right:0!important;width:76px!important;background:#fff!important;z-index:10!important}
+  #sidebar-wrapper aside{padding-bottom:62px!important}
   #mobile-user-btn{display:none!important}
 }
 
@@ -626,7 +627,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #audit-filter-date{width:130px!important;min-width:0;flex-shrink:1}
   #audit-log-pagination{padding:10px 12px!important;gap:4px!important}
   /* ── iOS 自動放大修正：input font-size < 16px 會觸發 zoom ── */
-  input,select,textarea,.inp{font-size:16px!important}
+  input,select,textarea,.inp,.flatpickr-input{font-size:16px!important;touch-action:manipulation!important}
   /* ── 主容器手機 padding 縮小，避免內容被擠壓 ── */
   #main-content{padding:12px 10px!important}
   /* ── 所有容器防止橫向溢出 ── */
@@ -662,8 +663,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 @keyframes fpSlideDown{from{opacity:0;transform:translateY(-8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .flatpickr-calendar{
   font-family:'Noto Sans TC',sans-serif!important;
-  border-radius:20px!important;
-  box-shadow:0 24px 64px rgba(0,0,0,.16),0 4px 16px rgba(0,0,0,.08)!important;
+  border-radius:14px!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.15),0 2px 8px rgba(0,0,0,.08)!important;
   border:none!important;
   padding:0!important;
   overflow:hidden!important;
@@ -673,8 +674,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 /* Header 漸層 */
 .flatpickr-months{
   background:linear-gradient(135deg,#1e9d6b 0%,#0f7a4e 100%)!important;
-  border-radius:18px 18px 0 0!important;
-  padding:14px 8px 18px!important;
+  border-radius:12px 12px 0 0!important;
+  padding:12px 8px 16px!important;
 }
 .flatpickr-month{color:#fff!important;fill:#fff!important}
 .flatpickr-prev-month,.flatpickr-next-month{
@@ -701,7 +702,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .dayContainer{padding:6px 8px 8px!important}
 /* 日期格：圓形 */
 .flatpickr-day{
-  border-radius:50%!important;
+  border-radius:8px!important;
   color:#374151!important;
   font-size:13px!important;
   width:36px!important;height:36px!important;line-height:36px!important;
@@ -730,7 +731,7 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#e9ecef!important;transform:none!important;cursor:default!important}
 /* 今天 footer 按鈕 */
 .fp-footer{padding:8px 12px 12px;background:#fff;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f1f5f9}
-.fp-today-btn{font-size:12px;font-weight:700;color:#1e9d6b;background:#e6f5ee;border:1px solid #a7f3d0;border-radius:20px;padding:4px 14px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .15s}
+.fp-today-btn{font-size:12px;font-weight:700;color:#1e9d6b;background:#e6f5ee;border:1px solid #a7f3d0;border-radius:8px;padding:4px 14px;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .15s}
 .fp-today-btn:hover{background:#1e9d6b;color:#fff}
 .fp-clear-btn{font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer;font-family:'Noto Sans TC',sans-serif;padding:4px 8px;border-radius:8px;transition:all .15s}
 .fp-clear-btn:hover{background:#f1f5f9;color:#374151}
@@ -1225,7 +1226,7 @@ tbody td{font-size:var(--fs-sm)!important}
           </tbody>
         </table>
         </div>
-        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
+        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
       </div>
     </div>
   </div>
@@ -2665,11 +2666,11 @@ function renderAuditLogTable(logs) {
       : '<span style="color:#cbd5e1;font-size:12px">—</span>';
     const displayName = localName(l.email, l.name);
     return '<tr class="tr">'
-      + '<td style="padding:12px 14px;font-size:12px;color:#94a3b8;white-space:nowrap;text-align:center">'+fmtDate(l.at)+'</td>'
+      + '<td style="padding:12px 14px;color:#94a3b8;white-space:nowrap;text-align:center">'+fmtDate(l.at)+'</td>'
       + '<td style="padding:12px 14px;text-align:center">'+badge+'</td>'
-      + '<td style="padding:12px 14px;font-size:13px;color:#374151;white-space:nowrap;text-align:center">'+displayName+'</td>'
+      + '<td style="padding:12px 14px;color:#374151;white-space:nowrap;text-align:center">'+displayName+'</td>'
       + '<td style="padding:12px 14px;text-align:center">'+caseLink+'</td>'
-      + '<td style="padding:12px 14px;font-size:13px;color:#64748b;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+l.desc+'">'+l.desc+'</td>'
+      + '<td style="padding:12px 14px;color:#64748b;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+l.desc+'">'+l.desc+'</td>'
       + '</tr>';
   }).join('');
   renderAuditPagination(totalPages);
@@ -2680,23 +2681,27 @@ function renderAuditPagination(totalPages) {
   if (!el) return;
   if (totalPages <= 1) { el.innerHTML = ''; return; }
   const btn = function(label, page, disabled, active) {
-    const base = 'display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid #e2e8f0;background:#fff;color:#374151;transition:all .15s;';
+    const base = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid #e2e8f0;background:#fff;color:#374151;transition:all .15s;flex-shrink:0;';
     const activeStyle = active ? 'background:#1e293b;color:#fff;border-color:#1e293b;' : '';
-    const disabledStyle = disabled ? 'opacity:.4;cursor:default;pointer-events:none;' : 'cursor:pointer;';
+    const disabledStyle = disabled ? 'opacity:.35;cursor:default;pointer-events:none;' : 'cursor:pointer;';
     return '<button style="'+base+activeStyle+disabledStyle+'" onclick="'+(disabled?'':'goAuditPage('+page+')')+'">'+label+'</button>';
   };
-  let html = btn('←', _auditPage - 1, _auditPage === 1, false);
-  const range = 2;
+  // 固定 range=1，頁碼數量穩定（最多 5 個按鈕 + 2 個省略號）
+  const range = 1;
+  let pageBtns = '';
+  pageBtns += btn('←', _auditPage - 1, _auditPage === 1, false);
   for (let i = 1; i <= totalPages; i++) {
     if (i === 1 || i === totalPages || (i >= _auditPage - range && i <= _auditPage + range)) {
-      html += btn(i, i, false, i === _auditPage);
+      pageBtns += btn(i, i, false, i === _auditPage);
     } else if (i === _auditPage - range - 1 || i === _auditPage + range + 1) {
-      html += '<span style="padding:0 4px;color:#94a3b8;align-self:center">…</span>';
+      pageBtns += '<span style="width:24px;text-align:center;color:#94a3b8;font-size:13px;flex-shrink:0;align-self:center">…</span>';
     }
   }
-  html += btn('→', _auditPage + 1, _auditPage === totalPages, false);
-  html += '<span style="font-size:12px;color:#94a3b8;margin-left:8px">第 '+_auditPage+' / '+totalPages+' 頁，共 '+_auditCurrentLogs.length+' 筆</span>';
-  el.innerHTML = html;
+  pageBtns += btn('→', _auditPage + 1, _auditPage === totalPages, false);
+  // 資訊文字左、按鈕右，兩端固定不跳動
+  el.innerHTML =
+    '<span style="font-size:12px;color:#94a3b8;white-space:nowrap">第 '+_auditPage+' / '+totalPages+' 頁，共 '+_auditCurrentLogs.length+' 筆</span>'
+    + '<div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">'+pageBtns+'</div>';
 }
 
 function goAuditPage(page) {
@@ -2738,8 +2743,8 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px"><div style="display:flex;gap:3px;align-items:center;flex-wrap:nowrap">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
     <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span></td>
-    <td style="padding:12px 14px;color:#64748b;white-space:nowrap;font-size:13px">${stepApprover||'—'}</td>
-    <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap;font-size:13px">${fmtDate(c.createdAt||c.applyDate)}</td>
+    <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${stepApprover||'—'}</td>
+    <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
     <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></td>
   </tr>`;
 }
@@ -5270,8 +5275,13 @@ function initFlatpickr(el, opts) {
     dateFormat: 'Y-m-d',
     disableMobile: true,
     allowInput: false,
+    appendTo: document.body,
     onReady: function(sel, str, fp) {
-      // 加入今天 + 清除 footer
+      // ── iOS zoom 防護：所有 flatpickr 建立的 input 強制 font-size:16px ──
+      [fp.input, fp.altInput, fp.element].forEach(function(inp) {
+        if (inp) { inp.style.fontSize = '16px'; inp.setAttribute('readonly', 'readonly'); }
+      });
+      // ── 加入今天 + 清除 footer ──
       var footer = document.createElement('div');
       footer.className = 'fp-footer';
       var todayBtn = document.createElement('button');
@@ -5287,6 +5297,11 @@ function initFlatpickr(el, opts) {
       footer.appendChild(todayBtn);
       footer.appendChild(clearBtn);
       fp.calendarContainer.appendChild(footer);
+    },
+    onOpen: function(sel, str, fp) {
+      // iOS：開啟日曆時立刻讓 input 失焦，防止 viewport 縮放
+      if (fp.altInput) fp.altInput.blur();
+      if (fp.input) fp.input.blur();
     },
   }, opts || {}));
 }
