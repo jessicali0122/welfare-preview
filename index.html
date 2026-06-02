@@ -159,24 +159,60 @@ input[type=checkbox]{accent-color:var(--brand)}
 #user-menu-wrap{position:relative}
 
 /* ── DATE PICKER ── */
-.dp-panel{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:500;background:#fff;border:1px solid #e2e8f0;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.13);padding:14px;width:280px;font-family:'Noto Sans TC',sans-serif}
-.dp-panel.dp-open{display:block}
-.dp-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.dp-nav{width:28px;height:28px;border-radius:8px;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748b;transition:all .15s}
-.dp-nav:hover{background:var(--brand-light);border-color:var(--brand);color:var(--brand)}
-.dp-month-label{font-size:14px;font-weight:700;color:#0f172a;cursor:pointer;padding:4px 8px;border-radius:7px;transition:background .15s}
-.dp-month-label:hover{background:#f1f5f9}
-.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.dp-dow{font-size:11px;font-weight:700;color:#94a3b8;text-align:center;padding:4px 0;letter-spacing:.04em}
-.dp-day{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;cursor:pointer;color:#374151;transition:all .12s;margin:0 auto}
-.dp-day:hover{background:var(--brand-light);color:var(--brand)}
-.dp-day.dp-today{font-weight:700;color:var(--brand)}
-.dp-day.dp-selected{background:var(--brand);color:#fff!important;font-weight:700}
-.dp-day.dp-in-range{background:var(--brand-light);color:var(--brand)}
-.dp-day.dp-other{color:#cbd5e1}
+/* ── 自訂 DP 精緻化（對齊 flatpickr 風格）── */
+@keyframes dpSlideDown{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.dp-panel{
+  display:none;position:absolute;top:calc(100% + 8px);left:0;z-index:500;
+  background:#fff;border:1px solid #e8f5ee;border-radius:16px;
+  box-shadow:0 12px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.07);
+  overflow:hidden;width:288px;font-family:'Noto Sans TC',sans-serif;
+}
+.dp-panel.dp-open{display:block;animation:dpSlideDown .18s cubic-bezier(.32,.72,0,1)}
+/* Header 漸層（同 flatpickr）*/
+.dp-header{
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);
+  padding:12px 14px;margin-bottom:0;
+}
+.dp-nav{
+  width:30px;height:30px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.15);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;transition:background .15s;
+}
+.dp-nav:hover{background:rgba(255,255,255,.28)}
+.dp-month-label{font-size:15px;font-weight:700;color:#fff;letter-spacing:.01em}
+/* 星期列 */
+.dp-dow-row{background:#f8fdf9;padding:6px 14px 4px;display:grid;grid-template-columns:repeat(7,1fr)}
+.dp-dow{font-size:11px;font-weight:700;color:#94a3b8;text-align:center;padding:3px 0;letter-spacing:.04em}
+/* 日期格 */
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:6px 10px 10px}
+.dp-day{
+  width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+  border-radius:10px;font-size:13px;cursor:pointer;color:#374151;
+  transition:all .12s;margin:0 auto;font-weight:500;position:relative;
+}
+.dp-day:hover{background:var(--brand-light);color:var(--brand);transform:scale(1.08)}
+/* 今日小點 */
+.dp-day.dp-today{color:var(--brand);font-weight:800}
+.dp-day.dp-today::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--brand)}
+/* 選中 */
+.dp-day.dp-selected{
+  background:var(--brand);color:#fff!important;font-weight:700;
+  box-shadow:0 2px 8px rgba(30,157,107,.35);transform:scale(1.1);
+}
+/* 範圍 */
+.dp-day.dp-in-range{background:var(--brand-light);color:var(--brand);border-radius:0}
+.dp-day.dp-range-start{border-radius:10px 0 0 10px}
+.dp-day.dp-range-end{border-radius:0 10px 10px 0}
+.dp-day.dp-other{color:#d1d5db;font-weight:400}
 .dp-day.dp-disabled{opacity:.3;pointer-events:none}
-.dp-clear{margin-top:10px;width:100%;text-align:center;font-size:12px;color:#94a3b8;cursor:pointer;padding:5px;border-radius:6px;transition:background .15s;border:none;background:none;font-family:inherit}
+/* 底部按鈕 */
+.dp-footer{display:flex;gap:6px;padding:8px 10px;border-top:1px solid #f1f5f9}
+.dp-clear{flex:1;text-align:center;font-size:12px;color:#94a3b8;cursor:pointer;padding:6px;border-radius:8px;transition:all .15s;border:none;background:none;font-family:inherit}
 .dp-clear:hover{background:#f1f5f9;color:#374151}
+.dp-today-btn{flex:1;text-align:center;font-size:12px;font-weight:600;color:var(--brand);cursor:pointer;padding:6px;border-radius:8px;transition:all .15s;border:1px solid var(--brand-light);background:var(--brand-light);font-family:inherit}
+.dp-today-btn:hover{background:var(--brand);color:#fff}
 
 #mobile-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:190}
 #mobile-overlay.open{display:block}
@@ -622,27 +658,71 @@ input[type=checkbox]{accent-color:var(--brand)}
 }
 
 /* ── Flatpickr 品牌主題 ── */
-.flatpickr-calendar{font-family:'Noto Sans TC',sans-serif!important;border-radius:14px!important;box-shadow:0 8px 32px rgba(0,0,0,.13)!important;border:1px solid #e2e8f0!important;padding:4px}
-.flatpickr-months{background:var(--brand);border-radius:10px 10px 0 0}
+/* ── Flatpickr 精緻化 ── */
+@keyframes fpSlideDown{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.flatpickr-calendar{
+  font-family:'Noto Sans TC',sans-serif!important;
+  border-radius:16px!important;
+  box-shadow:0 12px 40px rgba(0,0,0,.14),0 2px 8px rgba(0,0,0,.07)!important;
+  border:1px solid #e8f5ee!important;
+  padding:0!important;
+  overflow:hidden!important;
+  animation:fpSlideDown .18s cubic-bezier(.32,.72,0,1)!important;
+}
+/* Header 漸層 */
+.flatpickr-months{
+  background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%)!important;
+  border-radius:14px 14px 0 0!important;
+  padding:8px 4px 10px!important;
+}
 .flatpickr-month{color:#fff!important;fill:#fff!important}
-.flatpickr-prev-month,.flatpickr-next-month{color:#fff!important;fill:#fff!important}
-.flatpickr-prev-month:hover svg,.flatpickr-next-month:hover svg{fill:#b2e4ce!important}
-.flatpickr-current-month{color:#fff!important}
-.flatpickr-current-month .flatpickr-monthDropdown-months{background:var(--brand)!important;color:#fff!important;border:none;font-family:'Noto Sans TC',sans-serif;font-weight:700}
-.flatpickr-current-month input.cur-year{color:#fff!important;font-family:'Noto Sans TC',sans-serif;font-weight:700}
+.flatpickr-prev-month,.flatpickr-next-month{
+  color:#fff!important;fill:#fff!important;
+  width:30px!important;height:30px!important;
+  border-radius:50%!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  transition:background .15s!important;
+  top:10px!important;
+}
+.flatpickr-prev-month:hover,.flatpickr-next-month:hover{background:rgba(255,255,255,.18)!important}
+.flatpickr-prev-month svg,.flatpickr-next-month svg{fill:#fff!important}
+.flatpickr-current-month{color:#fff!important;font-size:15px!important;font-weight:700!important;padding-top:2px!important}
+.flatpickr-current-month .flatpickr-monthDropdown-months{background:transparent!important;color:#fff!important;border:none!important;font-family:'Noto Sans TC',sans-serif!important;font-weight:700!important;font-size:15px!important}
+.flatpickr-current-month input.cur-year{color:#fff!important;font-family:'Noto Sans TC',sans-serif!important;font-weight:700!important;font-size:15px!important}
 .numInputWrapper span.arrowUp:after{border-bottom-color:#fff!important}
 .numInputWrapper span.arrowDown:after{border-top-color:#fff!important}
-.flatpickr-weekdays{background:#fff;padding-top:4px}
-span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-size:11px!important}
-.flatpickr-days{border:none!important}
-.dayContainer{padding:2px 4px 4px}
-.flatpickr-day{border-radius:8px!important;color:#374151;font-size:13px;height:34px;line-height:34px;font-family:'Noto Sans TC',sans-serif}
-.flatpickr-day:hover,.flatpickr-day.prevMonthDay:hover,.flatpickr-day.nextMonthDay:hover{background:var(--brand-light)!important;border-color:var(--brand-light)!important;color:var(--brand)!important}
-.flatpickr-day.today{border-color:var(--brand)!important;color:var(--brand)!important;font-weight:700}
+/* 星期列 */
+.flatpickr-weekdays{background:#f8fdf9!important;padding:6px 0 2px!important}
+span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-size:11px!important;letter-spacing:.04em!important}
+.flatpickr-days{border:none!important;padding:4px 8px 8px!important}
+.dayContainer{padding:0!important}
+/* 日期格 */
+.flatpickr-day{
+  border-radius:10px!important;
+  color:#374151!important;
+  font-size:13px!important;
+  height:36px!important;
+  line-height:36px!important;
+  font-family:'Noto Sans TC',sans-serif!important;
+  border:none!important;
+  font-weight:500!important;
+  transition:all .12s!important;
+  position:relative!important;
+}
+.flatpickr-day:hover{background:var(--brand-light)!important;color:var(--brand)!important;transform:scale(1.08)!important}
+/* 今日：底部小點 */
+.flatpickr-day.today{color:var(--brand)!important;font-weight:800!important;background:transparent!important}
+.flatpickr-day.today::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--brand)}
 .flatpickr-day.today:hover{background:var(--brand-light)!important}
-.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.selected.startRange,.flatpickr-day.selected.endRange{background:var(--brand)!important;border-color:var(--brand)!important;color:#fff!important;font-weight:700}
-.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:#cbd5e1!important}
-.flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#e2e8f0!important}
+/* 選中日期 */
+.flatpickr-day.selected,.flatpickr-day.selected:hover,
+.flatpickr-day.selected.startRange,.flatpickr-day.selected.endRange{
+  background:var(--brand)!important;color:#fff!important;font-weight:700!important;
+  box-shadow:0 2px 8px rgba(30,157,107,.35)!important;
+  transform:scale(1.1)!important;
+}
+.flatpickr-day.prevMonthDay,.flatpickr-day.nextMonthDay{color:#d1d5db!important;font-weight:400!important}
+.flatpickr-day.flatpickr-disabled,.flatpickr-day.flatpickr-disabled:hover{color:#e9ecef!important;transform:none!important}
 .date-inp{cursor:pointer!important}
 .date-inp::placeholder{color:#94a3b8}
 
@@ -820,7 +900,7 @@ tbody td{font-size:var(--fs-sm)!important}
 .evx-sl{font-size:12px;color:#94a3b8;font-weight:600;letter-spacing:.02em;margin-bottom:2px}
 .evx-sv{font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap}
 .evx-action-col{display:flex;align-items:center;gap:5px;flex-shrink:0}
-.evx-act{width:32px;height:32px;border-radius:8px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;flex-shrink:0}
+.evx-act{width:36px;height:36px;border-radius:10px;border:1px solid #e5e7eb;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s;flex-shrink:0}
 .evx-act:hover{transform:scale(1.08)}
 .evx-act-ok{background:#dcfce7;border-color:#86efac;color:#15803d}.evx-act-ok:hover{background:#bbf7d0}
 .evx-act-ng{background:#fee2e2;border-color:#fca5a5;color:#b91c1c}.evx-act-ng:hover{background:#fecaca}
@@ -1131,7 +1211,7 @@ tbody td{font-size:var(--fs-sm)!important}
           </tbody>
         </table>
         </div>
-        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
+        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:6px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
       </div>
     </div>
   </div>
@@ -2482,7 +2562,7 @@ async function loadDashboard() {
 let _auditAllLogs = [];
 let _auditCurrentLogs = [];
 let _auditPage = 1;
-const _auditPageSize = 20;
+const _auditPageSize = 10;
 
 const _auditActionLabel = {
   'login'      : { label:'登入',     color:'#0369a1', bg:'#f0f9ff' },
@@ -2859,27 +2939,37 @@ async function loadApprovals() {
       : '';
 
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')">'
-      // checkbox（批次操作用，阻止冒泡避免觸發卡片 onclick）
-      + '<div onclick="event.stopPropagation()" style="display:flex;align-items:center;padding:0 4px 0 0;flex-shrink:0"><input type="checkbox" class="approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="accent-color:var(--brand);width:18px;height:18px;cursor:pointer"></div>'
-      // 日期區塊（放大）
-      + '<div class="evx-date-block" style="width:52px;min-width:52px;padding:8px 4px"><span class="evx-db-m" style="font-size:11px">' + dbMonth + '</span><span class="evx-db-d" style="font-size:22px">' + dbDay + '</span></div>'
-      // 資訊（新排序）
-      + '<div class="evx-case-info" style="flex:1;min-width:0">'
-      +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
-      +     '<span style="font-size:11px;font-family:monospace;color:#94a3b8;white-space:nowrap">' + c.caseId + '</span>'
+      // checkbox
+      + '<div onclick="event.stopPropagation()" style="display:flex;align-items:center;flex-shrink:0">'
+      +   '<input type="checkbox" class="approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="accent-color:var(--brand);width:18px;height:18px;cursor:pointer">'
+      + '</div>'
+      // 日期框 1:1 正方形
+      + '<div style="width:54px;height:54px;min-width:54px;border-radius:12px;background:linear-gradient(135deg,var(--brand) 0%,#15835a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
+      +   '<span style="font-size:10px;font-weight:700;letter-spacing:.08em;opacity:.85;text-transform:uppercase">' + dbMonth + '</span>'
+      +   '<span style="font-size:24px;font-weight:800;line-height:1">' + dbDay + '</span>'
+      + '</div>'
+      // 資訊區
+      + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">'
+      // 單號 + 代理（字體放大）
+      +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +     '<span style="font-size:13px;font-family:monospace;font-weight:700;color:#64748b;white-space:nowrap;letter-spacing:.02em">' + c.caseId + '</span>'
       +     proxyTag
       +   '</div>'
-      +   '<div style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px">' + subject + '</div>'
-      +   (catBadges ? '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">' + catBadges + '</div>' : '')
-      +   '<div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
-      +     '<span>' + localName(c.email,c.name) + '</span>'
-      +     '<span style="color:#e2e8f0">·</span>'
-      +     '<span style="color:#94a3b8">' + lastAt + '</span>'
+      // 主旨 + 分類同一行
+      +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +     '<span style="font-size:15px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px">' + subject + '</span>'
+      +     (catBadges ? catBadges : '')
+      +   '</div>'
+      // 申請人 · 時間
+      +   '<div style="display:flex;align-items:center;gap:5px;font-size:12px;color:#94a3b8">'
+      +     '<span style="color:#64748b">' + localName(c.email,c.name) + '</span>'
+      +     '<span>·</span>'
+      +     '<span>' + lastAt + '</span>'
       +   '</div>'
       + '</div>'
-      // 操作按鈕：查看 + 核准 + 退件
-      + '<div class="evx-action-col" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
-      +   '<button class="evx-act" onclick="loadDetail(\'' + c.caseId + '\')" title="查看案件" style="background:#f1f5f9;color:#475569;border:none">'
+      // 操作按鈕
+      + '<div class="evx-action-col" onclick="event.stopPropagation()">'
+      +   '<button class="evx-act" onclick="loadDetail(\'' + c.caseId + '\')" title="查看案件" style="background:#f8fafc;color:#64748b;border-color:#e2e8f0">'
       +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
       +   '</button>'
       +   '<button class="evx-act evx-act-ok" onclick="quickApprove(\'' + c.caseId + '\')" title="核准">'
@@ -5206,8 +5296,6 @@ function renderDp(which) {
   const other = dpState[which === 'start' ? 'end' : 'start'];
 
   let cells = '';
-  const dow = ['日','一','二','三','四','五','六'];
-  for (const d of dow) cells += `<div class="dp-dow">${d}</div>`;
   for (let i = 0; i < first; i++) cells += '<div></div>';
   for (let d = 1; d <= days; d++) {
     const dt = new Date(y, m, d);
@@ -5228,8 +5316,12 @@ function renderDp(which) {
       <span class="dp-month-label">${y} 年 ${monthNames[m]}</span>
       <button class="dp-nav" onclick="dpNav('${which}',1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg></button>
     </div>
+    <div class="dp-dow-row">${['日','一','二','三','四','五','六'].map(d=>`<div class="dp-dow">${d}</div>`).join('')}</div>
     <div class="dp-grid">${cells}</div>
-    <button class="dp-clear" onclick="clearDate('${which}')">清除選取</button>
+    <div class="dp-footer">
+      <button class="dp-today-btn" onclick="selectDate('${which}','${new Date().toISOString().slice(0,10)}')">今天</button>
+      <button class="dp-clear" onclick="clearDate('${which}')">清除</button>
+    </div>
   `;
 }
 
