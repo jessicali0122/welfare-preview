@@ -216,9 +216,9 @@ input[type=checkbox]{accent-color:var(--brand)}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
   #user-menu{min-width:160px!important}
   .stat{padding:14px 16px!important}
-  /* 手機：側欄底部使用者區塊隱藏，改在頂端顯示 */
-  #sidebar-user-section{display:none!important}
-  #mobile-user-btn{display:flex!important}
+  /* 手機：使用者區塊移到側欄底部，頂端頭像按鈕隱藏 */
+  #sidebar-user-section{display:flex!important}
+  #mobile-user-btn{display:none!important}
 }
 
 
@@ -675,6 +675,8 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .ic-toggle-btn:hover{background:#f1f5f9;color:#374151}
 .audit-text-btn{display:inline-flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;font-size:12px;color:#94a3b8;padding:4px 8px;border-radius:6px;transition:color .15s,background .15s;font-family:inherit;touch-action:manipulation}
 .audit-text-btn:hover{color:#475569;background:#f1f5f9}
+/* Dashboard：隱藏 checkbox 欄（第1欄 th/td）*/
+.dashboard-table th:first-child,.dashboard-table td:first-child{display:none!important}
 .ic-summary{font-size:12px;color:#64748b;display:none;margin-left:6px;font-weight:500}
 .item-card.ic-collapsed .ic-summary{display:inline}
 
@@ -1057,7 +1059,7 @@ tbody td{font-size:var(--fs-sm)!important}
         <span onclick="sw('applications')" style="font-size:13px;color:var(--brand);cursor:pointer;font-weight:600">查看全部 →</span>
       </div>
       <div style="overflow-x:auto;max-width:100%">
-      <table class="evx-table" style="min-width:640px">
+      <table class="evx-table dashboard-table" style="min-width:640px">
         <thead><tr>
           <th></th>
           <th>申請單號</th>
@@ -1080,13 +1082,23 @@ tbody td{font-size:var(--fs-sm)!important}
     <!-- 系統操作紀錄（僅管理者可見）-->
     <div id="audit-log-dashboard" style="display:none;margin-top:20px">
       <div class="card" style="overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-          <div style="display:flex;align-items:baseline;gap:6px">
-            <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
-            <div style="font-size:12px;color:#94a3b8">最新 200 筆</div>
+        <div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;flex-direction:column;gap:10px">
+          <!-- 第一列：標題 + 操作按鈕 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
+              <div style="font-size:12px;color:#94a3b8">最新 200 筆</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+              <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
+              <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
+              </button>
+            </div>
           </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
-            <select id="audit-filter-action" class="inp" style="width:130px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
+          <!-- 第二列：篩選輸入 -->
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
               <option value="">全部動作</option>
               <option value="login">登入</option>
               <option value="submit">送出申請</option>
@@ -1101,12 +1113,8 @@ tbody td{font-size:var(--fs-sm)!important}
               <option value="editUser">編輯使用者</option>
               <option value="deleteUser">停用使用者</option>
             </select>
-            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="width:110px;font-size:13px;padding:6px 10px" oninput="_debouncedAuditFilter()">
-            <input id="audit-filter-date" type="date" class="inp" style="width:140px;font-size:13px;padding:6px 10px;color:#374151" onchange="filterAuditLog()">
-            <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
-            <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
-            </button>
+            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:13px;padding:6px 10px" oninput="_debouncedAuditFilter()">
+            <input id="audit-filter-date" type="date" class="inp" style="flex:1;min-width:130px;font-size:13px;padding:6px 10px;color:#374151" onchange="filterAuditLog()">
           </div>
         </div>
         <div style="overflow-x:auto">
@@ -2838,51 +2846,42 @@ async function loadApprovals() {
     const subject = String(c.project || c.subject || '').replace(/\bNaN\b/g,'').trim() || '（無主旨）';
     const cats = String(c.category||'').replace(/\bNaN\b/g,'').trim().split('、').filter(Boolean);
     const catBadges = cats.slice(0,2).map(x => catBadge(x)).join('') + (cats.length>2?'<span style="font-size:11px;color:#94a3b8">+'+(cats.length-2)+'</span>':'');
-    // 日期區塊：解析申請日期取月/日
+    // 日期區塊
     const dateStr = c.createdAt || c.applyDate || '';
     const dateObj = dateStr ? new Date(dateStr.replace(/\//g,'-')) : null;
     const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     const dbMonth = (dateObj && !isNaN(dateObj)) ? monthNames[dateObj.getMonth()] : '—';
     const dbDay   = (dateObj && !isNaN(dateObj)) ? dateObj.getDate() : '—';
-    // 狀態徽章顏色
-    const stepNum = c.step || 1;
-    const catIconColors = ['#1e9d6b','#6366f1','#d97706','#8b5cf6','#0ea5e9','#ec4899'];
-    const iconBg = catIconColors[(subject.charCodeAt(0)||0) % catIconColors.length];
+    // 最後更新時間
+    const lastAt = fmtDate(c.lastActionAt || c.createdAt || '');
     const proxyTag = isProxy
-      ? '<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:2px 8px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600;flex-shrink:0;margin-left:6px">代理</span>'
+      ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:2px 7px;border-radius:20px;border:1px solid #e2e8f0;font-weight:600;flex-shrink:0;white-space:nowrap">代理</span>'
       : '';
 
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')">'
-      // 日期區塊
-      + '<div class="evx-date-block"><span class="evx-db-m">' + dbMonth + '</span><span class="evx-db-d">' + dbDay + '</span></div>'
-      // 圖示
-      + '<div class="evx-case-icon" style="background:' + iconBg + '20">'
-      +   '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="' + iconBg + '" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>'
-      + '</div>'
-      // 資訊
-      + '<div class="evx-case-info">'
-      +   '<div class="evx-ci-title">' + subject + proxyTag + '</div>'
-      +   '<div class="evx-ci-sub">'
-      +     '<span style="font-size:12px;font-family:monospace;color:#94a3b8">' + c.caseId + '</span>'
-      +     '<span style="color:#cbd5e1">·</span>'
-      +     '<span>' + localName(c.email,c.name) + '</span>'
-      +     '<span style="color:#cbd5e1">·</span>'
-      +     '<span>' + localDept(c.email,c.department) + '</span>'
+      // checkbox（批次操作用，阻止冒泡避免觸發卡片 onclick）
+      + '<div onclick="event.stopPropagation()" style="display:flex;align-items:center;padding:0 4px 0 0;flex-shrink:0"><input type="checkbox" class="approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="accent-color:var(--brand);width:18px;height:18px;cursor:pointer"></div>'
+      // 日期區塊（放大）
+      + '<div class="evx-date-block" style="width:52px;min-width:52px;padding:8px 4px"><span class="evx-db-m" style="font-size:11px">' + dbMonth + '</span><span class="evx-db-d" style="font-size:22px">' + dbDay + '</span></div>'
+      // 資訊（新排序）
+      + '<div class="evx-case-info" style="flex:1;min-width:0">'
+      +   '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">'
+      +     '<span style="font-size:11px;font-family:monospace;color:#94a3b8;white-space:nowrap">' + c.caseId + '</span>'
+      +     proxyTag
       +   '</div>'
-      +   (catBadges ? '<div style="margin-top:4px;display:flex;gap:3px;flex-wrap:wrap">' + catBadges + '</div>' : '')
+      +   '<div style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px">' + subject + '</div>'
+      +   (catBadges ? '<div style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:4px">' + catBadges + '</div>' : '')
+      +   '<div style="font-size:12px;color:#64748b;display:flex;align-items:center;gap:6px;flex-wrap:wrap">'
+      +     '<span>' + localName(c.email,c.name) + '</span>'
+      +     '<span style="color:#e2e8f0">·</span>'
+      +     '<span style="color:#94a3b8">' + lastAt + '</span>'
+      +   '</div>'
       + '</div>'
-      // 金額欄
-      + '<div class="evx-stat-col">'
-      +   '<span class="evx-sl">金額</span>'
-      +   '<span class="evx-sv" style="color:var(--brand)">NT$ ' + Number(c.total||0).toLocaleString() + '</span>'
-      + '</div>'
-      // 狀態欄
-      + '<div class="evx-stat-col">'
-      +   '<span class="evx-sl">關卡</span>'
-      +   '<span class="evx-sv"><span class="badge bp" style="font-size:11px">第' + stepNum + '關</span></span>'
-      + '</div>'
-      // 操作按鈕
-      + '<div class="evx-action-col" onclick="event.stopPropagation()">'
+      // 操作按鈕：查看 + 核准 + 退件
+      + '<div class="evx-action-col" onclick="event.stopPropagation()" style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
+      +   '<button class="evx-act" onclick="loadDetail(\'' + c.caseId + '\')" title="查看案件" style="background:#f1f5f9;color:#475569;border:none">'
+      +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
+      +   '</button>'
       +   '<button class="evx-act evx-act-ok" onclick="quickApprove(\'' + c.caseId + '\')" title="核准">'
       +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>'
       +   '</button>'
@@ -4596,30 +4595,22 @@ function renderFlowList(approvers) {
     const isFirst = i === 0;
     const isLast  = i === approvers.length - 1;
 
+    // 排序按鈕：簡潔 icon 風格
+    const _obStyle = (disabled) => `width:34px;height:34px;border-radius:8px;border:1px solid ${disabled?'#f1f5f9':'#e2e8f0'};background:${disabled?'#f8fafc':'#fff'};color:${disabled?'#e2e8f0':'#64748b'};cursor:${disabled?'not-allowed':'pointer'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s`;
     const orderBtns = admin
-      ? `<button class="flow-order-btn" onclick="moveFlowStep(${i},-1)" title="往上移" ${isFirst ? 'disabled' : ''} style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:${isFirst?'#f8fafc':'#fff'};color:${isFirst?'#cbd5e1':'#374151'};cursor:${isFirst?'not-allowed':'pointer'};font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↑</button>
-         <button class="flow-order-btn" onclick="moveFlowStep(${i},1)"  title="往下移" ${isLast  ? 'disabled' : ''} style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:${isLast?'#f8fafc':'#fff'};color:${isLast?'#cbd5e1':'#374151'};cursor:${isLast?'not-allowed':'pointer'};font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0">↓</button>`
-      : `<button class="flow-order-btn" disabled style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.4">↑</button>
-         <button class="flow-order-btn" disabled style="width:30px;height:30px;border-radius:7px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;opacity:.4">↓</button>`;
+      ? `<button class="flow-order-btn" onclick="moveFlowStep(${i},-1)" title="往上移" ${isFirst?'disabled':''} style="${_obStyle(isFirst)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+         <button class="flow-order-btn" onclick="moveFlowStep(${i},1)"  title="往下移" ${isLast?'disabled':''}  style="${_obStyle(isLast)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>`
+      : `<button disabled style="${_obStyle(true)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg></button>
+         <button disabled style="${_obStyle(true)}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button>`;
 
     const editBtn = admin
-      ? `<button class="flow-edit-btn" onclick="showEditFlowModal(${i})" style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500">編輯</button>`
-      : `<button class="flow-edit-btn" disabled style="padding:6px 12px;font-size:13px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:500;opacity:.4">編輯</button>`;
+      ? `<button class="flow-edit-btn" onclick="showEditFlowModal(${i})" style="height:34px;padding:0 14px;font-size:13px;border:1px solid #e2e8f0;background:#fff;color:#374151;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s;white-space:nowrap">編輯</button>`
+      : `<button disabled style="height:34px;padding:0 14px;font-size:13px;border:1px solid #f1f5f9;background:#f8fafc;color:#cbd5e1;border-radius:8px;cursor:not-allowed;font-family:inherit;font-weight:600;white-space:nowrap">編輯</button>`;
 
-    // 啟用/停用切換按鈕（僅管理員可操作）
+    // 啟用/停用切換（pill 樣式）
     const toggleBtn = admin
-      ? `<button onclick="toggleFlowStep(${i})" title="${isEnabled ? '點擊停用此關卡' : '點擊啟用此關卡'}"
-           style="padding:6px 10px;font-size:12px;border:1px solid ${isEnabled ? '#bbf7d0' : '#fecaca'};
-                  background:${isEnabled ? '#dcfce7' : '#fee2e2'};color:${isEnabled ? '#15803d' : '#dc2626'};
-                  border-radius:8px;font-weight:600;white-space:nowrap;cursor:pointer;font-family:inherit;
-                  transition:all .15s">
-           ${isEnabled ? '✓ 啟用中' : '✗ 已停用'}
-         </button>`
-      : `<span style="padding:6px 10px;font-size:12px;border:1px solid ${isEnabled ? '#bbf7d0' : '#fecaca'};
-                background:${isEnabled ? '#dcfce7' : '#fee2e2'};color:${isEnabled ? '#15803d' : '#dc2626'};
-                border-radius:8px;font-weight:600;white-space:nowrap">
-           ${isEnabled ? '✓ 啟用中' : '✗ 已停用'}
-         </span>`;
+      ? `<button onclick="toggleFlowStep(${i})" title="${isEnabled?'點擊停用':'點擊啟用'}" style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s">${isEnabled?'● 啟用中':'○ 已停用'}</button>`
+      : `<span style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;display:inline-flex;align-items:center;white-space:nowrap">${isEnabled?'● 啟用中':'○ 已停用'}</span>`;
 
     const rowBg     = isEnabled ? '#f8fafc' : '#fff5f5';
     const rowBorder = isEnabled ? '1px solid #e2e8f0' : '1px solid #fecaca';
