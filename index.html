@@ -3476,6 +3476,9 @@ async function loadDetail(caseId) {
     const canApprove  = isMyTurnToApprove(c) || (isAdmin() && isPending);
     approveBox.style.display = canApprove ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
+    // 每次切換案件時清空退件原因，避免帶入上一筆的內容
+    const _ta = approveBox.querySelector('textarea');
+    if (_ta) _ta.value = '';
     // 動態更新標籤
     const stepLabel = approveBox.querySelector('.approve-step-label');
     if (stepLabel) {
