@@ -80,7 +80,7 @@ input[type=radio]{accent-color:var(--brand)}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* Topbar amber gradient accent strip */
 header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:var(--brand);pointer-events:none;z-index:1}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:160;display:none}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:10000;display:none}
 .modal-bg.open{display:flex}
 /* ── APPROVAL ROW（重新設計：清晰列表行） ── */
 .approval-card{
@@ -228,7 +228,10 @@ input[type=checkbox]{accent-color:var(--brand)}
   #hamburger-btn{display:flex!important}
   #main-wrapper{margin-left:0!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
-  #dashboard-top-grid>:first-child{grid-column:1/-1!important}
+  #dashboard-top-grid>:first-child{grid-column:1/-1!important;padding:12px 16px!important}
+  #dashboard-top-grid>:first-child [style*="width:48px"]{width:36px!important;height:36px!important}
+  #dashboard-top-grid>:first-child [style*="font-size:32px"]{font-size:22px!important}
+  #dashboard-top-grid>:first-child [style*="gap:16px"]{gap:10px!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
@@ -247,7 +250,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
-  .app-cat-cell{display:flex!important;flex-wrap:wrap!important;gap:4px!important;justify-content:center!important;max-width:180px!important;margin:0 auto!important}
+  .app-cat-cell{display:flex!important;flex-direction:column!important;gap:2px!important;align-items:center!important;max-width:180px!important;margin:0 auto!important}
   /* webkit-overflow-scrolling:touch 已移除，避免建立獨立 scroll context 導致垂直滑動卡住 */
   #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
@@ -2844,9 +2847,11 @@ function _renderCaseRow(c, opts) {
   const catCell  = (function(){
     const cats = (c.category||'').split('、').filter(Boolean);
     if (!cats.length) return '<span style="color:#cbd5e1">—</span>';
-    const v = cats.map(x => catBadge(x)).join('');
-    const m = '';
-    return v + m;
+    const rows = [];
+    for (let i = 0; i < cats.length; i += 2) {
+      rows.push('<div style="display:flex;gap:4px;align-items:center">' + cats.slice(i,i+2).map(x => catBadge(x)).join('') + '</div>');
+    }
+    return rows.join('');
   })();
   const rowClick = isDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
   const _dataCat = (c.category||'').replace(/"/g,'&quot;');
@@ -2861,7 +2866,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:13px;font-family:monospace;letter-spacing:.04em">${c.caseId}</span></td>
     <td style="padding:12px 14px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#0f172a;text-align:left">${c.project||c.subject||'—'}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
-    <td style="padding:12px 14px"><div class="app-cat-cell" style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap;justify-content:center;max-width:200px;margin:0 auto">${catCell}</div></td>
+    <td style="padding:12px 14px"><div class="app-cat-cell" style="display:flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
     <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span></td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${stepApprover||'—'}</td>
@@ -4355,12 +4360,22 @@ function removePendingFile(uid) {
   window._pendingFiles = window._pendingFiles.filter(f => f._uid !== uid);
 }
 
-// ── 草稿附件：批次上傳到 Drive ──
+// ── 草稿附件：批次上傳到 Drive（並行 + 壓縮）──
 async function uploadDraftFiles(caseId, files) {
   if (!files || !files.length) return;
+  // 先並行壓縮所有圖片
+  const compressed = await Promise.all(files.map(f => compressImageFile(f)));
   let ok = 0;
-  for (const file of files) {
+  await Promise.all(compressed.map(async function(file) {
     try {
+      // 更新 UI 顯示上傳中
+      const _fle = document.getElementById('file-list');
+      if (_fle) {
+        const el = Array.from(_fle.querySelectorAll('[data-pending="1"]')).find(function(e) {
+          return e.dataset.fileId === file._uid;
+        });
+        if (el) { const s = el.querySelector('span[style*="color:#94a3b8"]'); if (s) s.textContent = '上傳中…'; }
+      }
       const b64 = await fileToBase64(file);
       const res = await callAPI('uploadFile', {
         caseId, fileName: file.name,
@@ -4370,13 +4385,9 @@ async function uploadDraftFiles(caseId, files) {
       if (res.ok) {
         const info = { name: file.name, url: res.url, fileId: res.fileId };
         window._uploadedDraftFiles.push(info);
-        // 移除對應的 pending UI 項目（找同檔名的），再新增已存項目
-        const _fle = document.getElementById('file-list');
-        if (_fle) {
-          const pendingEl = Array.from(_fle.querySelectorAll('[data-pending="1"]')).find(el => {
-            const nameEl = el.querySelector('span[style*="color:#374151"],span[style*="ellipsis"]');
-            return nameEl && nameEl.textContent.trim() === file.name;
-          });
+        const _fle2 = document.getElementById('file-list');
+        if (_fle2) {
+          const pendingEl = _fle2.querySelector('[data-file-id="' + file._uid + '"]');
           if (pendingEl) pendingEl.remove();
         }
         renderDraftFileItem(info);
@@ -4387,11 +4398,10 @@ async function uploadDraftFiles(caseId, files) {
     } catch(e) {
       toast('⚠️ 暫存失敗：' + file.name);
     }
-  }
+  }));
   if (ok > 0) {
     updateFormProgress();
     toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除');
-    // Issue 4 fix：上傳完成後同步 localStorage，確保切換頁面再回來時附件不丟失
     try {
       const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
       _sd.uploadedFiles = window._uploadedDraftFiles.slice();
@@ -4448,6 +4458,40 @@ function fileToBase64(file) {
   });
 }
 
+// 圖片壓縮：最長邊縮到 1920px，JPEG 品質 82%
+// 對非圖片（PDF、xlsx）直接回傳原檔
+function compressImageFile(file) {
+  const imageExts = ['jpg','jpeg','png','gif','webp','bmp','heic','heif'];
+  const ext = (file.name||'').split('.').pop().toLowerCase();
+  if (imageExts.indexOf(ext) === -1) return Promise.resolve(file);
+  return new Promise(function(resolve) {
+    const img = new Image();
+    const objUrl = URL.createObjectURL(file);
+    img.onload = function() {
+      URL.revokeObjectURL(objUrl);
+      const MAX = 1920;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
+        else        { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(function(blob) {
+        if (!blob || blob.size >= file.size) { resolve(file); return; }
+        const outName = file.name.replace(/\.[^.]+$/, '.jpg');
+        const compressed = new File([blob], outName, { type: 'image/jpeg' });
+        compressed._uid = file._uid;
+        compressed._originalSize = file.size;
+        resolve(compressed);
+      }, 'image/jpeg', 0.82);
+    };
+    img.onerror = function() { URL.revokeObjectURL(objUrl); resolve(file); };
+    img.src = objUrl;
+  });
+}
+
 // 顯示送出成功卡片
 function showSubmitResultCard(caseId, fileCount) {
   const card = document.getElementById('submit-result-card');
@@ -4483,12 +4527,13 @@ async function uploadPendingFiles(caseId, files) {
     }, 5000);
     return;
   }
-  updateSubmitCardStatus('⏳', '上傳附件中（共 ' + files.length + ' 個）...');
+  updateSubmitCardStatus('⏳', '壓縮 & 上傳附件中（共 ' + files.length + ' 個）...');
   let ok = 0, fail = 0;
   const failedNames = [];
 
-  // ── 並行上傳：所有檔案同時送出，不再序列等待 ──
-  await Promise.all(files.map(async function(file) {
+  // ── 並行壓縮 + 上傳 ──
+  const _compressed = await Promise.all(files.map(f => compressImageFile(f)));
+  await Promise.all(_compressed.map(async function(file) {
     try {
       const b64 = await fileToBase64(file);
       const res = await callAPI('uploadFile', {
@@ -5891,7 +5936,15 @@ function autoSaveDraft(){
   if(!hasSubject&&!hasReason&&!hasItemData){return;}
 
   const _exist=(() => { try { return JSON.parse(localStorage.getItem('bf_draft')||'{}'); } catch(e) { return {}; } })();
+  const _applicantEl2=document.getElementById('applicant-select');
+  const _payeeEl2=document.getElementById('payee-select');
+  const _deptEl2=document.getElementById('form-dept-select');
+  const _empIdEl2=document.getElementById('employee-id');
+  const _applyDateEl2=document.getElementById('apply-date');
   const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',items:_items,ts:Date.now(),
+    name:_applicantEl2?.value||'', payee:_payeeEl2?.value||'',
+    department:_deptEl2?.value||'', employeeId:_empIdEl2?.value||'',
+    applyDate:_applyDateEl2?.value||'',
     caseId:_exist.caseId||null, uploadedFiles:_exist.uploadedFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 
@@ -5935,6 +5988,16 @@ function restoreDraft(){
     const reasonEl=document.querySelector('#view-new-form textarea');
     if(subjectEl&&d.subject)subjectEl.value=d.subject;
     if(reasonEl&&d.reason)reasonEl.value=d.reason;
+    const _applicantREl=document.getElementById('applicant-select');
+    const _payeeREl=document.getElementById('payee-select');
+    const _deptREl=document.getElementById('form-dept-select');
+    const _empIdREl=document.getElementById('employee-id');
+    const _applyDateREl=document.getElementById('apply-date');
+    if(_applicantREl&&d.name)_applicantREl.value=d.name;
+    if(_payeeREl&&d.payee)_payeeREl.value=d.payee;
+    if(_deptREl&&d.department)_deptREl.value=d.department;
+    if(_empIdREl&&d.employeeId)_empIdREl.value=d.employeeId;
+    if(_applyDateREl&&d.applyDate)_applyDateREl.value=d.applyDate;
     // F4 fix：還原明細資料
     if(Array.isArray(d.items)&&d.items.length>0){
       var _il=document.getElementById('items-list');
