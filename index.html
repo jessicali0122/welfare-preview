@@ -568,16 +568,55 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* ── 列印頁首 ── */
   .print-header{display:block!important}
 
-  /* ── detail-grid：左欄盡量寬，右欄（簽核進度）縮到最小 ── */
+  /* ── detail-grid：列印改單欄，簽核進度移到下方 ── */
   #detail-grid{
-    display:grid!important;
-    grid-template-columns:2.4fr 0.65fr!important;
-    gap:8px!important;
-    align-items:start!important;
+    display:block!important;
+  }
+  /* 左欄（申請資訊+明細）和右欄（簽核進度）各自 block */
+  #detail-grid > div{
+    display:block!important;
+    width:100%!important;
   }
 
-  /* ── 簽核進度右欄：內容不斷行 ── */
-  #flow-timeline,#flow-timeline *{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  /* ── 簽核進度：橫列顯示 ── */
+  #flow-timeline{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:flex-start!important;
+    padding:0!important;
+    gap:0!important;
+    position:static!important;
+  }
+  /* 隱藏直線 */
+  #flow-timeline > div:first-child{display:none!important}
+  /* 每個步驟 */
+  #flow-timeline > div:not(:first-child){
+    flex:1!important;
+    position:relative!important;
+    margin-bottom:0!important;
+    text-align:center!important;
+    padding:28px 4px 4px!important;
+    border-top:2px solid #e2e8f0!important;
+  }
+  /* 圓形 icon 移到正上方 */
+  #flow-timeline > div:not(:first-child) > div:first-child{
+    position:absolute!important;
+    left:50%!important;
+    top:-18px!important;
+    transform:translateX(-50%)!important;
+    width:32px!important;height:32px!important;
+  }
+  /* 文字區 */
+  #flow-timeline > div:not(:first-child) > div:last-child{
+    padding-top:0!important;
+  }
+  #flow-timeline *{
+    white-space:normal!important;
+    overflow:visible!important;
+    text-overflow:clip!important;
+    font-size:10px!important;
+  }
+  #flow-timeline > div:not(:first-child) > div:first-child *{font-size:12px!important}
 
   /* ── 卡片 ── */
   .card{
