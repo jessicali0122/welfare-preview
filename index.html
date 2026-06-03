@@ -247,7 +247,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
-  .app-cat-cell{flex-wrap:wrap!important}
+  .app-cat-cell{display:grid!important;grid-template-columns:auto auto!important;gap:4px!important;justify-content:start!important}
   /* webkit-overflow-scrolling:touch 已移除，避免建立獨立 scroll context 導致垂直滑動卡住 */
   #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
@@ -590,7 +590,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 
   /* ── 表格 ── */
   .table-wrap{overflow:visible!important;max-width:none!important}
-  table{width:100%!important;font-size:11px!important;border-collapse:collapse!important}
+  div[style*="overflow-x:auto"]{overflow:visible!important;max-width:none!important}
+  table{width:100%!important;min-width:0!important;font-size:11px!important;border-collapse:collapse!important}
   th,td{padding:4px 6px!important;word-break:break-word!important;white-space:normal!important}
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
@@ -1712,12 +1713,6 @@ tbody td{font-size:var(--fs-sm)!important}
           </table>
           </div>
         </div>
-        <div class="card" style="padding:20px;page-break-before:always;break-before:page">
-          <div class="section-title">請款附件</div>
-          <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
-            <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
-          </div>
-        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div class="card" style="padding:20px">
@@ -1755,6 +1750,12 @@ tbody td{font-size:var(--fs-sm)!important}
             </button>
           </div>
         </div>
+      </div>
+    </div>
+    <div class="card" style="padding:20px;margin-top:18px;page-break-before:always;break-before:page">
+      <div class="section-title">請款附件</div>
+      <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
+        <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
       </div>
     </div>
   </div>
