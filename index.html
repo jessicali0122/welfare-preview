@@ -1250,10 +1250,11 @@ tbody td{font-size:var(--fs-sm)!important}
           <th>狀態</th>
           <th>簽核人</th>
           <th>申請時間</th>
+          <th>最新更新</th>
           <th></th>
         </tr></thead>
         <tbody id="dashboard-tbody">
-          <tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
+          <tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
       </div>
@@ -1486,10 +1487,11 @@ tbody td{font-size:var(--fs-sm)!important}
           <th class="sortable-th" onclick="sortAppTable(5)">狀態<span class="sort-icon"></span></th>
           <th>簽核人</th>
           <th class="sortable-th" onclick="sortAppTable(7)">申請時間<span class="sort-icon"></span></th>
+          <th class="sortable-th" onclick="sortAppTable(8)">最新更新<span class="sort-icon"></span></th>
           <th></th>
         </tr></thead>
         <tbody id="applications-tbody">
-          <tr><td colspan="10" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
+          <tr><td colspan="11" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
       </div>
@@ -2871,6 +2873,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span></td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${stepApprover||'—'}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
+    <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
     <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></td>
   </tr>`;
 }
@@ -2908,7 +2911,7 @@ function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
   if (!tbody) return;
   if (cases.length === 0) {
-    tbody.innerHTML = `<tr style="border-bottom:1px solid #f8fafc"><td colspan="10"><div class="empty-state" style="padding:24px 16px">
+    tbody.innerHTML = `<tr style="border-bottom:1px solid #f8fafc"><td colspan="11"><div class="empty-state" style="padding:24px 16px">
   <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
   <p style="font-size:14px;font-weight:600;color:#374151;margin-bottom:4px">目前沒有紀錄</p>
   <small style="display:block;margin-bottom:12px">建立第一筆費用申請吧</small>
@@ -2931,12 +2934,12 @@ function updateBadge(count) {
 //  案件清單載入
 // ══════════════════════════════════════════
 async function loadApplications() {
-  showTableSkeleton('applications-tbody', 10, 5);
+  showTableSkeleton('applications-tbody', 11, 5);
   const res = await callAPI('list');
   if (!res.ok) {
     if(!res._authError) toast('❌ 載入失敗：' + res.error);
     const tb = document.getElementById('applications-tbody');
-    if(tb) tb.innerHTML = '<tr><td colspan="10"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後重新整理</small></div></td></tr>';
+    if(tb) tb.innerHTML = '<tr><td colspan="11"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後重新整理</small></div></td></tr>';
     const cl = document.getElementById('app-count-label');
     if(cl) cl.textContent = '共 0 件';
     return;
@@ -2955,7 +2958,7 @@ async function loadApplications() {
   // 清除舊的篩選快取（新資料載入時重置）
   window._appFilteredCases = null;
   if (cases.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
   <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">還沒有申請紀錄</p>
   <small>點下方按鈕建立第一筆費用申請</small>
@@ -2999,7 +3002,7 @@ function _renderAppPage(page) {
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
   if (slice.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state">
+    tbody.innerHTML = `<tr><td colspan="11"><div class="empty-state">
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
       <p style="font-size:15px;font-weight:600;color:#374151;margin-bottom:6px">沒有符合條件的申請紀錄</p>
       <small>試試調整篩選條件</small>
@@ -3651,22 +3654,17 @@ async function submitForm() {
     _failValidation('⚠️ 請上傳至少一張附件圖片或憑證'); return;
   }
 
-  // 收據提醒（暫時釋放鎖，等使用者確認後再鎖）
+  // 直接進預覽（收據提醒已整合進摘要 modal）
   const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
-  if (needsReceipt) {
-    _submitLock = false;
-    window._pendingSubmitData = { subjectEl, reasonEl, departmentEl, applicantEl, payeeEl, items };
-    document.getElementById('receipt-confirm').classList.add('open');
-    return;
-  }
-  showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items);
+  showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, needsReceipt);
 }
 
 async function confirmSubmitForm() {
+  // 保留相容性（舊 receipt-confirm 按鈕仍可能呼叫此函式）
   document.getElementById('receipt-confirm').classList.remove('open');
   const d = window._pendingSubmitData;
   if (!d) return;
-  showSubmitPreview(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items);
+  showSubmitPreview(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items, false);
 }
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
@@ -3774,11 +3772,17 @@ function confirmDeleteDraftById(caseId) {
 }
 
 async function saveDraftForm(silent = false) {
-  if (_saveDraftLock) return; // 防止並行呼叫造成重複建立
+  if (_saveDraftLock) return;
   _saveDraftLock = true;
-  const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
-  const reasonEl  = document.querySelector('#view-new-form textarea');
-  // 收集明細（與 submitForm 相同邏輯，確保草稿保留所有欄位）
+
+  const subjectEl    = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  const reasonEl     = document.querySelector('#view-new-form textarea');
+  const applicantEl2 = document.getElementById('applicant-select');
+  const payeeEl2     = document.getElementById('payee-select');
+  const deptEl2      = document.getElementById('form-dept-select');
+  const empIdEl2     = document.getElementById('employee-id');
+  const applyDateEl2 = document.getElementById('apply-date');
+
   const items = [];
   document.querySelectorAll('.item-card').forEach(card => {
     items.push({
@@ -3795,14 +3799,9 @@ async function saveDraftForm(silent = false) {
   const pretax = items.reduce((s,i) => s + i.pretax, 0);
   const tax    = items.reduce((s,i) => s + i.tax,    0);
   const total  = items.reduce((s,i) => s + i.total,  0);
-  const applicantEl2 = document.getElementById('applicant-select');
-  const payeeEl2     = document.getElementById('payee-select');
-  const deptEl2      = document.getElementById('form-dept-select');
-  const empIdEl2     = document.getElementById('employee-id');
-  const applyDateEl2 = document.getElementById('apply-date');
-  if (!silent) toast('⏳ 儲存中...');
-  const res = await callAPI('draft', {
-    ...(  _draftCaseId ? { caseId: _draftCaseId } : {}),
+
+  const payload = {
+    ...(_draftCaseId ? { caseId: _draftCaseId } : {}),
     project:    subjectEl?.value || '',
     reason:     reasonEl?.value  || '',
     pretax, tax, total, items,
@@ -3811,46 +3810,55 @@ async function saveDraftForm(silent = false) {
     department: deptEl2?.value      || '',
     employeeId: empIdEl2?.value     || '',
     applyDate:  applyDateEl2?.value || '',
-  });
-  _saveDraftLock = false;
-  if (res.ok) {
-    _draftCaseId = res.caseId; // 記住這次的 caseId，下次儲存時更新同一筆
-    _cacheClear();
-    // 草稿儲存成功後顯示「刪除草稿」按鈕（讓使用者可直接在表單刪除）
-    var _ddb = document.getElementById('delete-draft-btn');
-    if (_ddb) _ddb.style.display = '';
-    // 把 caseId 和已上傳附件同步到 localStorage，重新開啟表單時才能還原
-    try {
-      const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
-      _sd.caseId = res.caseId;
-      _sd.uploadedFiles = window._uploadedDraftFiles || [];
-      localStorage.setItem('bf_draft', JSON.stringify(_sd));
-    } catch(e) {}
-    // 若有待上傳的附件，立即上傳至 Drive 並追蹤
-    if (window._pendingFiles && window._pendingFiles.length > 0) {
-      const filesToUp = [...window._pendingFiles];
-      window._pendingFiles = [];
-      // 不立即移除 UI，改為顯示「上傳中」狀態，避免附件看起來消失
-      const _fle = document.getElementById('file-list');
-      if (_fle) {
-        Array.from(_fle.querySelectorAll('[data-pending="1"]')).forEach(el => {
-          el.style.opacity = '0.5';
-          el.style.pointerEvents = 'none';
-          const badge = document.createElement('span');
-          badge.style.cssText = 'font-size:11px;color:#f59e0b;padding:2px 6px;border-radius:6px;background:#fef3c7;white-space:nowrap';
-          badge.textContent = '上傳中...';
-          el.appendChild(badge);
-        });
-      }
-      if (!silent) toast('💾 草稿已儲存，上傳附件中...');
-      window._draftUploadInProgress = true;
-      try { await uploadDraftFiles(res.caseId, filesToUp); } finally { window._draftUploadInProgress = false; }
-    } else {
-      if (!silent) toast('💾 草稿已儲存！單號：' + res.caseId);
+  };
+
+  // ── 樂觀更新：先存 localStorage 並立即顯示成功，API 在背景同步 ──
+  autoSaveDraft(); // 確保 localStorage 是最新狀態
+  if (!silent) toast('💾 草稿已儲存！');
+
+  // 若有待上傳的附件，先標記「上傳中」UI（不等 GAS 回應）
+  const filesToUp = window._pendingFiles && window._pendingFiles.length > 0
+    ? [...window._pendingFiles] : [];
+  if (filesToUp.length > 0) {
+    window._pendingFiles = [];
+    const _fle = document.getElementById('file-list');
+    if (_fle) {
+      Array.from(_fle.querySelectorAll('[data-pending="1"]')).forEach(el => {
+        el.style.opacity = '0.5'; el.style.pointerEvents = 'none';
+        const badge = document.createElement('span');
+        badge.style.cssText = 'font-size:11px;color:#f59e0b;padding:2px 6px;border-radius:6px;background:#fef3c7;white-space:nowrap';
+        badge.textContent = '上傳中...';
+        el.appendChild(badge);
+      });
     }
-  } else {
-    if (!silent) toast('❌ 儲存失敗：' + res.error);
   }
+
+  _saveDraftLock = false; // 立即釋放鎖，讓使用者可以繼續操作
+
+  // 背景同步到 GAS（不 await，不阻塞 UI）
+  callAPI('draft', payload).then(res => {
+    if (res.ok) {
+      _draftCaseId = res.caseId;
+      _cacheClear();
+      var _ddb = document.getElementById('delete-draft-btn');
+      if (_ddb) _ddb.style.display = '';
+      try {
+        const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
+        _sd.caseId = res.caseId;
+        _sd.uploadedFiles = window._uploadedDraftFiles || [];
+        localStorage.setItem('bf_draft', JSON.stringify(_sd));
+      } catch(e) {}
+      // 附件上傳（需要 caseId 才能上傳）
+      if (filesToUp.length > 0) {
+        window._draftUploadInProgress = true;
+        uploadDraftFiles(res.caseId, filesToUp).finally(() => { window._draftUploadInProgress = false; });
+      }
+    } else if (!silent) {
+      toast('⚠️ 雲端同步失敗，資料已暫存本機（' + (res.error || '') + '）');
+    }
+  }).catch(() => {
+    if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機');
+  });
 }
 
 async function printCase(caseId) {
@@ -3869,11 +3877,10 @@ async function printCase(caseId) {
 
 // ── NAVIGATION ──
 function openNewForm(){
-  // 全新申請：清除 localStorage 草稿 caseId，避免帶入上一筆草稿
+  // 全新申請：只清除 caseId（避免新表單蓋掉舊草稿），保留 uploadedFiles 讓恢復草稿能還原附件
   try {
     var _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
     delete _sd.caseId;
-    delete _sd.uploadedFiles;
     localStorage.setItem('bf_draft', JSON.stringify(_sd));
   } catch(e) {}
   _draftCaseId = null;
@@ -5695,16 +5702,6 @@ function closeMobileUserSheet(){
 }
 // ── USER MENU ──
 function toggleUserMenu(){
-  const isMobile=window.innerWidth<=768;
-  if(isMobile){
-    // 手機：底部抽屜
-    const sheet=document.getElementById('mobile-user-sheet');
-    if(sheet){
-      sheet.style.display=sheet.style.display==='flex'?'none':'flex';
-      sheet.style.alignItems='flex-end';
-    }
-    return;
-  }
   const m=document.getElementById('user-menu');
   const isOpen=m.style.display==='block';
   if(isOpen){m.style.display='none';return;}
@@ -5713,12 +5710,14 @@ function toggleUserMenu(){
   m.style.position='fixed';
   m.style.display='block';
   const mw=m.offsetWidth||220;
-  if(false){
-    // 保留舊邏輯（手機不再使用此分支）
-    m.style.right='8px';
-    m.style.left='auto';
-    m.style.top=(rect.bottom+8)+'px';
-    m.style.bottom='auto';
+  const isMobile=window.innerWidth<=768;
+  if(isMobile){
+    // 手機：頭像上方彈出，水平對齊頭像中心，確保不超出螢幕邊界
+    const leftPos=rect.left+rect.width/2-mw/2;
+    m.style.left=Math.max(8,Math.min(leftPos,window.innerWidth-mw-8))+'px';
+    m.style.right='auto';
+    m.style.bottom=(window.innerHeight-rect.top+8)+'px';
+    m.style.top='auto';
   } else {
     // 電腦：頭像右方，超出右邊界則靠右
     const leftPos=rect.right+8;
@@ -6025,9 +6024,9 @@ function restoreDraft(){
       }
     }
     // 還原草稿 caseId 和已上傳附件
-    if(d.caseId){
-      _draftCaseId=d.caseId;
-      window._uploadedDraftFiles=d.uploadedFiles||[];
+    if(d.caseId) _draftCaseId=d.caseId;
+    if(d.uploadedFiles&&d.uploadedFiles.length>0){
+      window._uploadedDraftFiles=d.uploadedFiles;
       const _flr=document.getElementById('file-list');
       if(_flr){
         _flr.innerHTML='';
@@ -6340,7 +6339,7 @@ function updateFormProgress() {
 // ══════════════════════════════════════════
 //  2. 送出前預覽 modal
 // ══════════════════════════════════════════
-function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
+function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, needsReceipt) {
   const subject    = subjectEl?.value || '';
   const reason     = reasonEl?.value  || '';
   const dept       = departmentEl?.value || '';
@@ -6372,6 +6371,7 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items) {
       <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">附件</span><span style="color:#0f172a;font-weight:600;flex:1">${fileCnt} 份${pendingCnt > 0 ? '（' + pendingCnt + ' 份送出後上傳）' : ''}</span></div>
       ${reason ? `<div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">備註</span><span style="color:#374151;flex:1;line-height:1.5">${reason}</span></div>` : ''}
     </div>
+    ${needsReceipt ? `<div style="background:#fff7ed;border-radius:10px;padding:10px 14px;margin-bottom:12px;border:1px solid #fed7aa;font-size:12px;color:#9a3412;display:flex;align-items:center;gap:8px">📎 請確認已準備好實體發票或收據，審核人員將會核對。</div>` : ''}
     <div style="background:var(--amber-light,#fef3c7);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border:1px solid #fcd34d">
       <div style="font-size:12px;color:#92400e;font-weight:500">含稅總金額</div>
       <div style="font-size:20px;font-weight:800;color:var(--amber-dark,#d97706)">NT$ ${total.toLocaleString()}</div>
@@ -6731,17 +6731,17 @@ document.addEventListener('click', function(e) {
 
 <!-- 手機版用戶底部抽屜（取代浮動選單）-->
 <div id="mobile-user-sheet" style="display:none;position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.45)" onclick="closeMobileUserSheet()">
-  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+20px);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
-    <div style="width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 20px"></div>
-    <div style="display:flex;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid #f1f5f9;margin-bottom:16px">
-      <div class="user-avatar-initial" style="width:44px;height:44px;border-radius:50%;background:#1e9d6b;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#fff;flex-shrink:0">潔</div>
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:12px 16px calc(env(safe-area-inset-bottom,0px)+12px);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
+    <div style="width:32px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 12px"></div>
+    <div style="display:flex;align-items:center;gap:10px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;margin-bottom:10px">
+      <div class="user-avatar-initial" style="width:36px;height:36px;border-radius:50%;background:#1e9d6b;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;flex-shrink:0">潔</div>
       <div>
-        <div class="user-name-display" style="font-size:16px;font-weight:700;color:#0f172a"></div>
-        <div id="mobile-sheet-email" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
+        <div class="user-name-display" style="font-size:14px;font-weight:700;color:#0f172a"></div>
+        <div id="mobile-sheet-email" style="font-size:12px;color:#94a3b8;margin-top:1px"></div>
       </div>
     </div>
-    <button onclick="logout()" style="width:100%;padding:10px 16px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:14px;font-weight:500;border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:8px;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <button onclick="logout()" style="width:100%;padding:8px 14px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:13px;font-weight:500;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:8px;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       登出
     </button>
   </div>
