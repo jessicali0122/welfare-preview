@@ -568,13 +568,16 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* ── 列印頁首 ── */
   .print-header{display:block!important}
 
-  /* ── detail-grid：雙欄（左:申請資訊+明細 / 右:簽核進度縮窄）── */
+  /* ── detail-grid：左欄盡量寬，右欄（簽核進度）縮到最小 ── */
   #detail-grid{
     display:grid!important;
-    grid-template-columns:1.8fr 1fr!important;
-    gap:10px!important;
+    grid-template-columns:2.4fr 0.65fr!important;
+    gap:8px!important;
     align-items:start!important;
   }
+
+  /* ── 簽核進度右欄：內容不斷行 ── */
+  #flow-timeline,#flow-timeline *{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
   /* ── 卡片 ── */
   .card{
@@ -585,7 +588,7 @@ input[type=checkbox]{accent-color:var(--brand)}
     margin-bottom:6px!important;
   }
   /* 附件卡片允許跨頁，確保全部附件都能列印出來 */
-  .card:has(#detail-files-list){
+  #detail-files-card{
     break-inside:auto!important;
     page-break-inside:auto!important;
   }
@@ -594,9 +597,15 @@ input[type=checkbox]{accent-color:var(--brand)}
   .table-wrap{overflow:visible!important;max-width:none!important}
   div[style*="overflow-x:auto"]{overflow:visible!important;max-width:none!important}
   table{width:100%!important;min-width:0!important;font-size:11px!important;border-collapse:collapse!important}
-  th,td{padding:4px 6px!important;white-space:nowrap!important}
-  /* 請款明細欄位不換行，日期/金額保持一行 */
-  #detail-items-tbody td,#detail-items-tbody th{white-space:nowrap!important}
+  /* 所有欄位預設不斷行（分類/憑證/日期/金額）*/
+  th,td{padding:4px 5px!important;white-space:nowrap!important}
+  /* 項目欄（第2欄）允許斷行，超過約10字自動換行 */
+  #detail-items-tbody td:nth-child(2){
+    white-space:normal!important;
+    word-break:break-all!important;
+    max-width:90px!important;
+    min-width:40px!important;
+  }
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
   /* ── 附件卡片：允許跨頁、完整顯示所有圖片 ── */
@@ -1703,13 +1712,13 @@ tbody td{font-size:var(--fs-sm)!important}
           <div style="overflow-x:auto">
           <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">分類</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">項目</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">憑證</th>
-              <th style="text-align:left;padding:6px 0;color:#94a3b8;font-weight:500">日期</th>
-              <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">未稅</th>
-              <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">稅額</th>
-              <th style="text-align:right;padding:6px 0;color:#94a3b8;font-weight:500">含稅</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">分類</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">項目</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">憑證</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">日期</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">未稅</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">稅額</th>
+              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
               <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">無明細資料</td></tr>
