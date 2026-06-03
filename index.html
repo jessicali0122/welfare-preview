@@ -1713,6 +1713,12 @@ tbody td{font-size:var(--fs-sm)!important}
           </table>
           </div>
         </div>
+        <div id="detail-files-card" class="card" style="padding:20px">
+          <div class="section-title">請款附件</div>
+          <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
+            <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
+          </div>
+        </div>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div class="card" style="padding:20px">
@@ -1750,12 +1756,6 @@ tbody td{font-size:var(--fs-sm)!important}
             </button>
           </div>
         </div>
-      </div>
-    </div>
-    <div class="card" style="padding:20px;margin-top:18px;page-break-before:always;break-before:page">
-      <div class="section-title">請款附件</div>
-      <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
-        <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無附件</div>
       </div>
     </div>
   </div>
@@ -2103,15 +2103,10 @@ let currentUser  = null; // { email, name, token }
 let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
 
 // ── 管理者名單（登入後由 getMembers 動態更新）──
-let ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
+let ADMIN_EMAILS = [];
 
-// ── 簽核人清單（由 loadAdminFlow 動態載入，初始值為預設值）──
-let APPROVER_EMAILS = [
-  'jimmywang@tsagroup.com.tw',    // 第1關
-  'stefanie@tsagroup.com.tw',     // 第2關
-  'jessica@tsagroup.com.tw',      // 第3關
-  'reneecheng@tsagroup.com.tw',   // 第4關
-];
+// ── 簽核人清單（由 loadAdminFlow 動態載入）──
+let APPROVER_EMAILS = [];
 
 function isAdmin() {
   return currentUser && ADMIN_EMAILS.includes(currentUser.email);
@@ -2252,7 +2247,16 @@ window.onload = function() {
   if (saved) {
     try {
       currentUser = JSON.parse(saved);
-      // 舊 session（24小時格式）自動升級為 7 天，讓現有使用者不需要重新登入
+      // token 存在 sessionStorage（關閉瀏覽器即清除），localStorage 不存敏感 JWT
+      const storedToken = sessionStorage.getItem('bf_token') || currentUser.token || null;
+      // 舊版 localStorage 含 token 的資料：升級時移除，改存 sessionStorage
+      if (currentUser.token) {
+        sessionStorage.setItem('bf_token', currentUser.token);
+        delete currentUser.token;
+        localStorage.setItem('bf_user', JSON.stringify(currentUser));
+      }
+      currentUser.token = storedToken;
+      // 舊 session（24小時格式）自動升級為 7 天
       if (!currentUser.sessionExpiry || currentUser.sessionExpiry - Date.now() < 24 * 60 * 60 * 1000) {
         currentUser.sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
         currentUser.tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000;
@@ -2261,6 +2265,11 @@ window.onload = function() {
       // session 7 天已到期才清除
       if (Date.now() > currentUser.sessionExpiry) {
         localStorage.removeItem('bf_user');
+        sessionStorage.removeItem('bf_token');
+        currentUser = null;
+      } else if (!currentUser.token) {
+        // session 有效但 token 不在 sessionStorage（新開瀏覽器）→ 重新登入
+        localStorage.removeItem('bf_user');
         currentUser = null;
       } else {
         showApp();
@@ -2268,6 +2277,7 @@ window.onload = function() {
       }
     } catch(e) {
       localStorage.removeItem('bf_user');
+      sessionStorage.removeItem('bf_token');
     }
   }
   initGoogleSignIn();
@@ -2287,7 +2297,9 @@ function handleGoogleLogin(response) {
   const prevSession   = currentUser?.sessionExpiry;
   const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 7 * 24 * 60 * 60 * 1000;
   currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry };
-  localStorage.setItem('bf_user', JSON.stringify(currentUser));
+  sessionStorage.setItem('bf_token', response.credential);
+  const { token: _t, ...userToSave } = currentUser;
+  localStorage.setItem('bf_user', JSON.stringify(userToSave));
   // 移除過期提示條（如果有）
   const expBar = document.getElementById('auth-expired-bar');
   if (expBar) expBar.remove();
@@ -2374,8 +2386,43 @@ function showApp() {
   }
 }
 
+// ── 列印：附件移出 grid → page-break 才能生效 ──
+(function(){
+  var _filesCard = null, _leftCol = null, _viewDetail = null, _placeholder = null;
+  function beforePrint() {
+    var card = document.getElementById('detail-files-card');
+    if (!card) return;
+    var parent = card.parentNode;
+    // 記住原本位置（用空白占位符）
+    _placeholder = document.createComment('files-card-placeholder');
+    parent.insertBefore(_placeholder, card);
+    _leftCol = parent;
+    // 移到 view-detail 最末（grid 外）
+    _viewDetail = document.getElementById('view-detail');
+    if (_viewDetail) {
+      card.style.pageBreakBefore = 'always';
+      card.style.breakBefore = 'page';
+      card.style.marginTop = '0';
+      _viewDetail.appendChild(card);
+    }
+  }
+  function afterPrint() {
+    var card = document.getElementById('detail-files-card');
+    if (!card || !_placeholder || !_leftCol) return;
+    card.style.pageBreakBefore = '';
+    card.style.breakBefore = '';
+    card.style.marginTop = '';
+    _leftCol.insertBefore(card, _placeholder.nextSibling);
+    _placeholder.parentNode.removeChild(_placeholder);
+    _placeholder = null; _leftCol = null; _viewDetail = null;
+  }
+  window.addEventListener('beforeprint', beforePrint);
+  window.addEventListener('afterprint', afterPrint);
+})();
+
 function logout() {
   localStorage.removeItem('bf_user');
+  sessionStorage.removeItem('bf_token');
   currentUser = null;
   location.reload();
 }
