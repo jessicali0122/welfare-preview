@@ -247,7 +247,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
-  .app-cat-cell{display:grid!important;grid-template-columns:auto auto!important;gap:4px!important;justify-content:center!important}
+  .app-cat-cell{display:flex!important;flex-wrap:wrap!important;gap:4px!important;justify-content:center!important;max-width:180px!important;margin:0 auto!important}
   /* webkit-overflow-scrolling:touch 已移除，避免建立獨立 scroll context 導致垂直滑動卡住 */
   #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
@@ -544,8 +544,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
   body{overflow:visible!important}
 
-  /* ── 版面置中（改 block 確保 page-break 可生效）── */
-  #app,#main-wrapper,#main-content{
+  /* ── 版面置中（整條鏈改 block，page-break 才能生效）── */
+  #app,#app-inner,#main-wrapper,#main-content{
     display:block!important;
     margin:0!important;padding:0!important;
     overflow:visible!important;height:auto!important;
@@ -2396,25 +2396,27 @@ function showApp() {
   }
 }
 
-// ── 列印：先把附件 card 移出 grid，呼叫 print()，再移回 ──
+// ── 列印：移出 grid → print() → afterprint 再還原 ──
+// Chrome 的 window.print() 是非同步的，不能同步還原，否則 preview 渲染時 card 已被移回
 function _doPrint() {
   var card   = document.getElementById('detail-files-card');
   var detail = document.getElementById('view-detail');
   if (!card || !detail) { window.print(); return; }
   var parent  = card.parentNode;
   var nextSib = card.nextSibling;
-  // 移到 view-detail 最末（block 層，page-break 才有效）
   card.style.pageBreakBefore = 'always';
   card.style.breakBefore     = 'page';
   card.style.marginTop       = '0';
   detail.appendChild(card);
-  // window.print() 在 Chrome 是同步的，dialog 關掉後才繼續執行
+  function restore() {
+    card.style.pageBreakBefore = '';
+    card.style.breakBefore     = '';
+    card.style.marginTop       = '';
+    if (card.parentNode !== parent) parent.insertBefore(card, nextSib);
+    window.removeEventListener('afterprint', restore);
+  }
+  window.addEventListener('afterprint', restore);
   window.print();
-  // 還原位置
-  card.style.pageBreakBefore = '';
-  card.style.breakBefore     = '';
-  card.style.marginTop       = '';
-  parent.insertBefore(card, nextSib);
 }
 
 function logout() {
