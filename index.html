@@ -517,8 +517,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #form-grid>div:last-child{position:static!important}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制防止過長訊息擋住畫面 */
   #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(280px,calc(100vw - 48px))!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  /* submit-result-card 手機版縮小並確保不擋按鈕 */
-  #submit-result-card{bottom:80px!important;right:12px!important;left:12px!important;width:auto!important;max-width:none!important}
+  /* submit-result-card 手機版由上方那段 CSS 控制（top:12px），此處不重複設定 bottom */
 }
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
 @keyframes skwave{0%{background-position:200% 0}100%{background-position:-200% 0}}
@@ -1801,7 +1800,7 @@ tbody td{font-size:var(--fs-sm)!important}
           <div style="font-size:14px;font-weight:700;color:var(--amber-dark,#d97706);margin-bottom:3px">⏳ 需要您審核</div>
           <div class="approve-step-label" style="font-size:12px;color:#94a3b8;margin-bottom:12px">您是本關簽核人</div>
           <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">簽核意見</label>
-          <textarea class="inp" rows="3" placeholder="填寫意見（退件時必填）..." style="border-color:#fcd34d"></textarea>
+          <textarea id="approve-box-comment" autocomplete="off" class="inp" rows="3" placeholder="填寫意見（退件時必填）..." style="border-color:#fcd34d"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px">
             <button class="btn btn-g" style="flex:1;justify-content:center" onclick="doApprove()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>核准
@@ -3412,6 +3411,9 @@ async function loadDetail(caseId) {
   const currentView = document.querySelector('.view.active')?.id?.replace('view-','') || 'applications';
   window._detailReturnView = (currentView === 'detail') ? (window._detailReturnView || 'applications') : currentView;
   sw('detail', null);
+  // 立即清空退件原因，不等 API 回應，避免顯示上一筆殘留內容
+  const _commentTa = document.getElementById('approve-box-comment');
+  if (_commentTa) _commentTa.value = '';
   toast('⏳ 載入中...');
   const res = await callAPI('get', { caseId });
   if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
