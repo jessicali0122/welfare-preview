@@ -252,11 +252,23 @@ input[type=checkbox]{accent-color:var(--brand)}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
   #user-menu{min-width:160px!important}
   .stat{padding:14px 16px!important}
-  /* 手機：nav 內登出按鈕顯示、頂端頭像和 sidebar user section 隱藏 */
-  #mobile-nav-logout{display:flex!important}
-  #sidebar-user-section{display:none!important}
+  /* 手機：側欄底部頭像固定定位，頂端按鈕隱藏 */
+  #mobile-nav-logout{display:none!important}
   #mobile-user-btn{display:none!important}
-  #sidebar-wrapper aside nav{overflow-y:visible!important}
+  #sidebar-user-section{
+    display:flex!important;
+    position:fixed!important;
+    bottom:0!important;left:0!important;
+    width:76px!important;
+    background:#fff!important;
+    border-top:1px solid #f0ede9!important;
+    z-index:201!important;
+    padding:12px 0!important;
+    transform:translateX(-80px);
+    transition:transform .25s ease!important;
+  }
+  #sidebar-wrapper.open #sidebar-user-section{transform:translateX(0)!important}
+  #sidebar-wrapper aside nav{padding-bottom:60px!important}
 }
 
 
@@ -771,8 +783,6 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 /* Dashboard 和案件追蹤：隱藏 checkbox 欄 */
 .dashboard-table th:first-child,.dashboard-table td:first-child,
 .app-table th:first-child,.app-table td:first-child{display:none!important}
-/* Dashboard：欄位標題置中 */
-.dashboard-table thead th{text-align:center!important}
 .ic-summary{font-size:12px;color:#64748b;display:none;margin-left:6px;font-weight:500}
 .item-card.ic-collapsed .ic-summary{display:inline}
 
@@ -876,11 +886,12 @@ tbody td{font-size:var(--fs-sm)!important}
    ══════════════════════════════════════════ */
 .evx-table{width:100%;border-collapse:collapse;font-size:14px}
 .evx-table thead tr{border-bottom:1.5px solid #e5e7eb}
-.evx-table thead th{padding:10px 14px;text-align:left;font-size:12px;font-weight:600;color:#6b7280;background:transparent;white-space:nowrap;letter-spacing:.03em;user-select:none}
+.evx-table thead th{padding:10px 14px;text-align:center;font-size:13px;font-weight:600;color:#6b7280;background:transparent;white-space:nowrap;letter-spacing:.03em;user-select:none}
 .evx-table thead th.sortable-th{cursor:pointer}.evx-table thead th.sortable-th:hover{color:#374151}
 .evx-table tbody tr{border-bottom:1px solid #f3f4f6;cursor:pointer;transition:background .08s}
 .evx-table tbody tr:hover td{background:#f9fafb!important}
-.evx-table tbody td{padding:12px 14px;vertical-align:middle;font-size:14px;color:#374151;height:48px}
+.evx-table tbody td{padding:10px 14px;vertical-align:middle;color:#374151;height:48px;box-sizing:border-box}
+#audit-log-tbody tr{height:48px}
 /* 案件 ID 顏色 */
 .evx-id-draft{color:#94a3b8}.evx-id-done{color:var(--brand)}.evx-id-pending{color:#f59e0b}.evx-id-reject{color:#dc2626}
 /* Pagination */
@@ -1220,7 +1231,7 @@ tbody td{font-size:var(--fs-sm)!important}
             <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:13px;padding:6px 10px;color:#374151;cursor:pointer">
           </div>
         </div>
-        <div style="overflow-x:auto">
+        <div style="overflow-x:auto;min-height:490px">
         <table class="evx-table" style="min-width:600px">
           <thead><tr>
             <th style="width:150px;text-align:center">時間</th>
@@ -2671,7 +2682,7 @@ function renderAuditLogTable(logs) {
   const pageLogs = logs.slice(start, start + _auditPageSize);
   tbody.innerHTML = pageLogs.map(function(l) {
     const meta = _auditActionLabel[l.action] || { label: l.action, color:'#64748b', bg:'#f1f5f9' };
-    const badge = '<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:'+meta.bg+';color:'+meta.color+';white-space:nowrap">'+meta.label+'</span>';
+    const badge = '<span class="tag" style="font-weight:700;background:'+meta.bg+';color:'+meta.color+';border:1px solid '+meta.color+'22;white-space:nowrap">'+meta.label+'</span>';
     const caseLink = l.caseId && l.caseId !== '—'
       ? '<span style="font-size:12px;font-family:monospace;color:#f59e0b;cursor:pointer;text-decoration:underline;white-space:nowrap" onclick="loadDetail(\''+l.caseId+'\')">'+l.caseId+'</span>'
       : '<span style="color:#cbd5e1;font-size:12px">—</span>';
