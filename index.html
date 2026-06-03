@@ -247,7 +247,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
-  .app-cat-cell{display:grid!important;grid-template-columns:auto auto!important;gap:4px!important;justify-content:start!important}
+  .app-cat-cell{display:grid!important;grid-template-columns:auto auto!important;gap:4px!important;justify-content:center!important}
   /* webkit-overflow-scrolling:touch 已移除，避免建立獨立 scroll context 導致垂直滑動卡住 */
   #notif-panel{width:min(320px,calc(100vw - 32px))!important;right:8px!important;left:auto!important;top:58px!important;max-height:min(380px,calc(100vh - 80px))!important}
   #notif-list{max-height:min(200px,calc(100vh - 260px))!important}
@@ -544,11 +544,13 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
   body{overflow:visible!important}
 
-  /* ── 版面置中 ── */
+  /* ── 版面置中（改 block 確保 page-break 可生效）── */
   #app,#main-wrapper,#main-content{
+    display:block!important;
     margin:0!important;padding:0!important;
     overflow:visible!important;height:auto!important;
     background:#fff!important;
+    flex:none!important;
   }
   #main-content{
     padding:8px 16px!important;
@@ -566,11 +568,11 @@ input[type=checkbox]{accent-color:var(--brand)}
   /* ── 列印頁首 ── */
   .print-header{display:block!important}
 
-  /* ── detail-grid：雙欄（左:申請資訊+附件+明細 / 右:簽核進度）── */
+  /* ── detail-grid：雙欄（左:申請資訊+明細 / 右:簽核進度縮窄）── */
   #detail-grid{
     display:grid!important;
-    grid-template-columns:1.4fr 1fr!important;
-    gap:14px!important;
+    grid-template-columns:1.8fr 1fr!important;
+    gap:10px!important;
     align-items:start!important;
   }
 
@@ -592,16 +594,24 @@ input[type=checkbox]{accent-color:var(--brand)}
   .table-wrap{overflow:visible!important;max-width:none!important}
   div[style*="overflow-x:auto"]{overflow:visible!important;max-width:none!important}
   table{width:100%!important;min-width:0!important;font-size:11px!important;border-collapse:collapse!important}
-  th,td{padding:4px 6px!important;word-break:break-word!important;white-space:normal!important}
+  th,td{padding:4px 6px!important;white-space:nowrap!important}
+  /* 請款明細欄位不換行，日期/金額保持一行 */
+  #detail-items-tbody td,#detail-items-tbody th{white-space:nowrap!important}
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
-  /* ── 附件圖片：列印版，每行兩欄，圖片放大清晰顯示 ── */
+  /* ── 附件卡片：允許跨頁、完整顯示所有圖片 ── */
+  #detail-files-card{
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+  /* ── 附件圖片：每行兩欄 ── */
   #detail-files-list{
     display:grid!important;
     grid-template-columns:1fr 1fr!important;
-    gap:12px!important;
+    gap:16px!important;
+    break-inside:auto!important;
   }
-  /* 每個附件項目 */
+  /* 每個附件項目不跨頁切斷 */
   #detail-files-list > div{
     display:flex!important;
     flex-direction:column!important;
@@ -615,7 +625,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #detail-files-list img{
     width:100%!important;
     max-width:100%!important;
-    max-height:300px!important;
+    max-height:280px!important;
     height:auto!important;
     object-fit:contain!important;
     display:block!important;
@@ -1666,7 +1676,7 @@ tbody td{font-size:var(--fs-sm)!important}
         </div>
         <div id="detail-header-subject" style="display:none">—</div>
       </div>
-      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(()=>window.print(),300)">
+      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(_doPrint,300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
       </button>
     </div>
@@ -2386,39 +2396,26 @@ function showApp() {
   }
 }
 
-// ── 列印：附件移出 grid → page-break 才能生效 ──
-(function(){
-  var _filesCard = null, _leftCol = null, _viewDetail = null, _placeholder = null;
-  function beforePrint() {
-    var card = document.getElementById('detail-files-card');
-    if (!card) return;
-    var parent = card.parentNode;
-    // 記住原本位置（用空白占位符）
-    _placeholder = document.createComment('files-card-placeholder');
-    parent.insertBefore(_placeholder, card);
-    _leftCol = parent;
-    // 移到 view-detail 最末（grid 外）
-    _viewDetail = document.getElementById('view-detail');
-    if (_viewDetail) {
-      card.style.pageBreakBefore = 'always';
-      card.style.breakBefore = 'page';
-      card.style.marginTop = '0';
-      _viewDetail.appendChild(card);
-    }
-  }
-  function afterPrint() {
-    var card = document.getElementById('detail-files-card');
-    if (!card || !_placeholder || !_leftCol) return;
-    card.style.pageBreakBefore = '';
-    card.style.breakBefore = '';
-    card.style.marginTop = '';
-    _leftCol.insertBefore(card, _placeholder.nextSibling);
-    _placeholder.parentNode.removeChild(_placeholder);
-    _placeholder = null; _leftCol = null; _viewDetail = null;
-  }
-  window.addEventListener('beforeprint', beforePrint);
-  window.addEventListener('afterprint', afterPrint);
-})();
+// ── 列印：先把附件 card 移出 grid，呼叫 print()，再移回 ──
+function _doPrint() {
+  var card   = document.getElementById('detail-files-card');
+  var detail = document.getElementById('view-detail');
+  if (!card || !detail) { window.print(); return; }
+  var parent  = card.parentNode;
+  var nextSib = card.nextSibling;
+  // 移到 view-detail 最末（block 層，page-break 才有效）
+  card.style.pageBreakBefore = 'always';
+  card.style.breakBefore     = 'page';
+  card.style.marginTop       = '0';
+  detail.appendChild(card);
+  // window.print() 在 Chrome 是同步的，dialog 關掉後才繼續執行
+  window.print();
+  // 還原位置
+  card.style.pageBreakBefore = '';
+  card.style.breakBefore     = '';
+  card.style.marginTop       = '';
+  parent.insertBefore(card, nextSib);
+}
 
 function logout() {
   localStorage.removeItem('bf_user');
@@ -3805,7 +3802,7 @@ async function printCase(caseId) {
       + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
     phMeta.textContent = '列印時間：' + dateStr + '　案件編號：' + caseId;
   }
-  setTimeout(() => window.print(), 400);
+  setTimeout(_doPrint, 400);
 }
 
 // ── NAVIGATION ──
