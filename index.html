@@ -2690,7 +2690,7 @@ async function loadDashboard() {
       noticeEl.textContent = '✅ 目前沒有待審核案件';
     }
   }
-  // 管理者：顯示系統操作紀錄區塊並載入
+  // 管理者才顯示系統操作紀錄
   if (isAdmin()) {
     const auditBlock = document.getElementById('audit-log-dashboard');
     if (auditBlock) auditBlock.style.display = 'block';
@@ -4060,6 +4060,13 @@ async function _syncMembersFromServer() {
     });
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
+    // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（首次載入時可能尚未就緒）
+    var _auditBlock = document.getElementById('audit-log-dashboard');
+    var _onDashboard = document.getElementById('view-dashboard')?.classList.contains('active');
+    if (_auditBlock && _onDashboard && _auditBlock.style.display === 'none') {
+      _auditBlock.style.display = 'block';
+      loadAuditLogDashboard();
+    }
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
 }
 // 根據 email 查詢本地使用者（名稱 + 部門）
