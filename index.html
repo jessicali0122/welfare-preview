@@ -1058,7 +1058,7 @@ tbody td{font-size:var(--fs-base)!important}
       <span class="sl-text">總覽</span>
     </div>
     <div class="sl" data-view="applications" data-label="案件追蹤" onclick="sw('applications')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       <span class="sl-text">案件追蹤</span>
     </div>
     <div class="sl" data-view="approvals" data-label="待審核" onclick="sw('approvals')">
@@ -1434,7 +1434,7 @@ tbody td{font-size:var(--fs-base)!important}
       </button>
     </div>
     <!-- 草稿 / 申請案件 Tab -->
-    <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;margin-bottom:16px">
+    <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
       <button id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px;border:none;background:none;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>申請案件</button>
       <button id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px;border:none;background:none;font-family:inherit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>草稿 <span id="tab-drafts-count" style="font-size:12px;background:#f1f5f9;color:#64748b;padding:1px 7px;border-radius:20px;margin-left:4px">0</span></button>
     </div>
@@ -3013,15 +3013,15 @@ function switchAppTab(tab) {
   _currentAppTab = tab;
   document.getElementById('app-tab-drafts').style.display = tab === 'drafts' ? '' : 'none';
   document.getElementById('app-tab-cases').style.display  = tab === 'cases'  ? '' : 'none';
-  // tab 按鈕樣式
+  // tab 按鈕樣式（使用 .admin-tab.active class，與待審核/系統管理一致）
   var btnCases  = document.getElementById('tab-btn-cases');
   var btnDrafts = document.getElementById('tab-btn-drafts');
+  btnCases.style.color  = ''; btnCases.style.borderBottomColor  = '';
+  btnDrafts.style.color = ''; btnDrafts.style.borderBottomColor = '';
   if (tab === 'cases') {
-    btnCases.style.color  = 'var(--brand)'; btnCases.style.borderBottomColor  = 'var(--brand)';
-    btnDrafts.style.color = '#94a3b8';      btnDrafts.style.borderBottomColor = 'transparent';
+    btnCases.classList.add('active');  btnDrafts.classList.remove('active');
   } else {
-    btnDrafts.style.color = 'var(--brand)'; btnDrafts.style.borderBottomColor = 'var(--brand)';
-    btnCases.style.color  = '#94a3b8';      btnCases.style.borderBottomColor  = 'transparent';
+    btnDrafts.classList.add('active'); btnCases.classList.remove('active');
   }
   if (tab === 'drafts') renderDraftsTab();
 }
