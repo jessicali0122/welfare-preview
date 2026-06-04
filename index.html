@@ -3094,8 +3094,8 @@ async function loadApplications() {
   if (countEl) countEl.textContent = myDraftCount;
   // 如果目前在草稿 Tab，重新渲染
   if (_currentAppTab === 'drafts') renderDraftsTab();
-  // 所有登入者皆可看到所有案件（草稿已由後端過濾，僅申請人本人可見）
-  const cases = allCases;
+  // 申請案件 tab 只顯示非草稿案件，草稿獨立顯示在「草稿」tab
+  const cases = allCases.filter(c => c.status !== '草稿');
   const tbody = document.getElementById('applications-tbody');
   const cardsContainer = document.getElementById('applications-cards');
   const tableWrap = tbody ? tbody.closest('.table-wrap') : null;
