@@ -3052,24 +3052,25 @@ function renderDraftsTab() {
     container.innerHTML = '<div class="empty-state"><p>目前沒有草稿</p><small>按「新增申請」開始填寫</small></div>';
     return;
   }
-  container.innerHTML = myDrafts.map(c => {
-    const dateStr = fmtDate(c.createdAt || c.applyDate || '');
-    const ownerLabel = isAdmin() && c.email !== currentUser?.email
-      ? '<span style="font-size:11px;background:#f1f5f9;color:#64748b;padding:1px 7px;border-radius:20px;margin-left:6px">' + (c.name || c.email) + '</span>' : '';
-    return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #e5e7eb;border-left:3px solid var(--amber);border-radius:10px;padding:12px 16px;margin-bottom:8px;cursor:pointer" onclick="openDraft(\'' + c.caseId + '\')">'
-      + '<div style="flex:1;min-width:0">'
-      +   '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">'
-      +     '<span style="font-size:13px;font-family:monospace;font-weight:700;color:#64748b">' + c.caseId + '</span>' + ownerLabel
-      +   '</div>'
-      +   '<div style="font-size:14px;font-weight:600;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + (c.project || c.subject || '（無主旨）') + '</div>'
-      +   '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + dateStr + (c.total ? '　NT$ ' + Number(c.total).toLocaleString() : '') + '</div>'
-      + '</div>'
-      + '<div style="display:flex;gap:6px;flex-shrink:0" onclick="event.stopPropagation()">'
-      +   '<button class="btn btn-p" style="padding:5px 12px;font-size:13px" onclick="openDraft(\'' + c.caseId + '\')">繼續填</button>'
-      +   '<button class="btn btn-r" style="padding:5px 10px;font-size:13px" onclick="confirmDeleteDraftById(\'' + c.caseId + '\')">刪除</button>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+  // 與申請案件相同的表格結構，重用 _renderCaseRow
+  container.innerHTML =
+    '<div class="card table-wrap" style="overflow-x:auto">'
+    + '<table class="evx-table app-table" style="width:100%;border-collapse:collapse">'
+    + '<thead><tr>'
+    + '<th style="width:36px;padding-left:16px"></th>'
+    + '<th>申請單號</th>'
+    + '<th>主旨</th>'
+    + '<th>申請人</th>'
+    + '<th>分類</th>'
+    + '<th>金額</th>'
+    + '<th>狀態</th>'
+    + '<th>簽核人</th>'
+    + '<th>申請時間</th>'
+    + '<th>最新更新</th>'
+    + '<th></th>'
+    + '</tr></thead>'
+    + '<tbody>' + myDrafts.map(c => _renderCaseRow(c)).join('') + '</tbody>'
+    + '</table></div>';
 }
 
 async function loadApplications() {
