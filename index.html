@@ -22,7 +22,7 @@ body{margin:0;background:#fff}
 .view{display:none}.view.active{display:block}
 
 /* ── SIDEBAR ── */
-aside{width:76px;height:100%;display:flex;flex-direction:column;position:absolute;top:0;left:0;z-index:20;overflow-x:hidden;overflow-y:hidden;max-width:100%}
+aside{width:76px;min-height:100%;height:100%;display:flex;flex-direction:column;position:absolute;top:0;left:0;z-index:20;overflow-x:hidden;overflow-y:hidden;max-width:100%}
 aside .sl-text{display:none}
 aside .sl-section-label{display:none}
 aside .sidebar-brand-text{display:none}
@@ -1034,7 +1034,7 @@ tbody td{font-size:var(--fs-sm)!important}
 <div id="app-inner" style="display:flex;height:100vh;overflow:hidden;max-width:100vw">
 
 <!-- SIDEBAR -->
-<div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative">
+<div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative;height:100%">
 <aside id="sidebar" style="background:#fff;border-right:1px solid #e8ddd8;display:flex;flex-direction:column">
 
   <!-- Header -->
@@ -2131,13 +2131,13 @@ tbody td{font-size:var(--fs-sm)!important}
     </div>
     <button onclick="document.getElementById('submit-result-card').style.display='none'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:18px;cursor:pointer;line-height:1;padding:0">×</button>
   </div>
-  <div style="padding:14px 16px">
+  <div style="padding:12px 16px 8px">
     <div style="font-size:12px;color:#94a3b8;margin-bottom:2px">案件單號</div>
     <div id="src-case-id" style="font-size:16px;font-weight:700;color:#0f172a;font-family:monospace;letter-spacing:.05em">—</div>
-    <div id="src-status" style="margin-top:10px;font-size:13px;color:#374151;display:flex;align-items:center;gap:6px">
+    <div id="src-status" style="margin-top:6px;font-size:13px;color:#374151;display:flex;align-items:center;gap:6px">
       <span id="src-status-icon">⏳</span><span id="src-status-text">上傳附件中...</span>
     </div>
-    <div style="margin-top:12px;display:flex;gap:8px">
+    <div style="margin-top:8px;display:flex;gap:8px">
       <button id="src-view-btn" class="btn btn-p" style="flex:1;justify-content:center;font-size:13px;padding:7px 0" onclick="">查看案件</button>
       <button class="btn btn-o" style="font-size:13px;padding:7px 12px" onclick="document.getElementById('submit-result-card').style.display='none'">關閉</button>
     </div>
@@ -3882,13 +3882,14 @@ async function printCase(caseId) {
 
 // ── NAVIGATION ──
 function openNewForm(){
-  // 全新申請：只清除 caseId（避免新表單蓋掉舊草稿），保留 uploadedFiles 讓恢復草稿能還原附件
+  // 全新申請：保留草稿 caseId，讓後續儲存繼續更新同一份草稿（避免產生多份草稿）
+  // 各帳號在 localStorage 儲存自己的草稿，互不影響
   try {
     var _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
-    delete _sd.caseId;
-    localStorage.setItem('bf_draft', JSON.stringify(_sd));
-  } catch(e) {}
-  _draftCaseId = null;
+    _draftCaseId = _sd.caseId || null; // 繼承舊草稿 caseId，避免重複建立
+  } catch(e) {
+    _draftCaseId = null;
+  }
   window._uploadedDraftFiles = [];
   window._pendingFiles = [];
   sw('new-form');
@@ -3967,6 +3968,9 @@ function sw(name,elOrName){
           if (_flr && window._uploadedDraftFiles.length > 0) {
             window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
           }
+          // 有伺服器端草稿時顯示「刪除草稿」按鈕
+          var _ddb2 = document.getElementById('delete-draft-btn');
+          if (_ddb2) _ddb2.style.display = '';
         }
       } catch(e) {}
     }
@@ -4387,14 +4391,6 @@ async function uploadDraftFiles(caseId, files) {
   let ok = 0;
   await Promise.all(compressed.map(async function(file) {
     try {
-      // 更新 UI 顯示上傳中
-      const _fle = document.getElementById('file-list');
-      if (_fle) {
-        const el = Array.from(_fle.querySelectorAll('[data-pending="1"]')).find(function(e) {
-          return e.dataset.fileId === file._uid;
-        });
-        if (el) { const s = el.querySelector('span[style*="color:#94a3b8"]'); if (s) s.textContent = '上傳中…'; }
-      }
       const b64 = await fileToBase64(file);
       const res = await callAPI('uploadFile', {
         caseId, fileName: file.name,
