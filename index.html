@@ -40,7 +40,7 @@ aside .sidebar-brand-text{display:none}
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:13px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
 /* ── 狀態 Badge：圓點 + 文字（HR dashboard 風格）── */
-.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 .badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .bd{background:#f8fafc;color:#64748b;border:1px solid #e2e8f0}.bd::before{background:#94a3b8}
 .bp{background:#fef8ec;color:#92400e;border:1px solid #fde68a}.bp::before{background:var(--amber,#f59e0b)}
@@ -75,7 +75,7 @@ thead th{font-size:14px;color:#94a3b8;font-weight:500;background:transparent!imp
 .item-card{background:#f9fafb;border:1.5px solid #e8e2de;border-radius:12px;padding:16px;margin-bottom:10px}
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#374151;font-weight:500}
 input[type=radio]{accent-color:var(--brand)}
-.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:5px;font-size:11px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#0f172a;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -1435,8 +1435,8 @@ tbody td{font-size:var(--fs-base)!important}
     </div>
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
-      <button id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件</button>
-      <button id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿 <span id="tab-drafts-count" style="font-size:12px;background:#f1f5f9;color:#64748b;padding:1px 7px;border-radius:20px;margin-left:4px">0</span></button>
+      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件 <span id="tab-cases-count" style="background:var(--brand);color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿 <span id="tab-drafts-count" style="background:#94a3b8;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
     </div>
     <!-- 草稿列表 -->
     <div id="app-tab-drafts" style="display:none">
@@ -1855,11 +1855,11 @@ tbody td{font-size:var(--fs-base)!important}
       <div style="display:flex;gap:0">
         <div class="admin-tab active" id="atab-mine" onclick="switchApprovalTab('mine')" style="display:flex;align-items:center;gap:6px">
           🔑 我需要審核
-          <span id="atab-mine-count" style="background:var(--amber,#f59e0b);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
+          <span id="atab-mine-count" style="background:var(--amber,#f59e0b);color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
         </div>
         <div class="admin-tab" id="atab-proxy" onclick="switchApprovalTab('proxy')" style="display:flex;align-items:center;gap:6px">
           🛡️ 代理審核
-          <span id="atab-proxy-count" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
+          <span id="atab-proxy-count" style="background:#94a3b8;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
         </div>
       </div>
     </div>
@@ -2962,7 +2962,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
     <td style="padding:12px 14px"><div class="app-cat-cell" style="display:flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-    <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;margin-left:4px;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:20px;padding:1px 6px;font-size:10px;font-weight:700;white-space:nowrap">🔄重送×'+(c.resubmitCount)+'</span>':''}</td>
+    <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;margin-left:4px;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:20px;padding:1px 6px;font-size:12px;font-weight:700;white-space:nowrap">🔄重送×'+(c.resubmitCount)+'</span>':''}</td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${stepApprover||'—'}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
@@ -3103,6 +3103,8 @@ async function loadApplications() {
   const tableWrap = tbody ? tbody.closest('.table-wrap') : null;
   const countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
+  const tabCasesCount = document.getElementById('tab-cases-count');
+  if (tabCasesCount) tabCasesCount.textContent = cases.length;
   if (!tbody) return;
   // 隱藏卡片容器
   if (cardsContainer) cardsContainer.style.display = 'none';
