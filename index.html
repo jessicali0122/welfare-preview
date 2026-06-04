@@ -2306,11 +2306,27 @@ function initGoogleSignIn() {
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleLogin,
       auto_select: true,
-      use_fedcm_for_prompt: true,
+      // use_fedcm_for_prompt 在無痕模式下會靜默失敗，改用舊版 prompt 相容性較好
     });
-    // 顯示自訂按鈕（比 renderButton iframe 更可靠）
-    if (btn) btn.innerHTML = _googleBtnHTML;
-    // 不自動彈出選帳號框，等使用者點擊按鈕再觸發（auto_select:true 仍可靜默登入單一帳號）
+    // 優先用官方 renderButton（無痕模式也能正常顯示），失敗才 fallback 自訂按鈕
+    if (btn) {
+      try {
+        btn.innerHTML = '';
+        google.accounts.id.renderButton(btn, {
+          type: 'standard',
+          shape: 'rectangular',
+          theme: 'outline',
+          text: 'signin_with',
+          size: 'large',
+          locale: 'zh-TW',
+          width: 280,
+        });
+      } catch(e) {
+        btn.innerHTML = _googleBtnHTML;
+      }
+    }
+    // 靜默登入（已登入的帳號可自動帶入）
+    google.accounts.id.prompt();
   } else if (GOOGLE_CLIENT_ID) {
     // GSI 尚未載入，200ms 後重試（最多 25 次 = 5 秒）
     if ((window._gsiRetry || 0) < 25) {
