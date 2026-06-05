@@ -2685,15 +2685,33 @@ function _acmZoom(newScale) {
   _acmDraw();
 }
 
-// ── 大頭貼：處理上傳 → 開啟裁切 Modal ──
+// ── 大頭貼：處理上傳 → 先縮圖再開裁切 Modal ──
 function handleAvatarUpload(input) {
   var file = input.files && input.files[0];
   if (!file) return;
   if (file.size > 25 * 1024 * 1024) { toast('⚠️ 圖片請小於 25MB'); input.value = ''; return; }
+  toast('⏳ 讀取中…');
   var reader = new FileReader();
   reader.onload = function(e) {
     var img = new Image();
-    img.onload = function() { _acm.img = img; openAvatarCrop(img); };
+    img.onload = function() {
+      // 先把超大圖縮成最多 1200px（裁切夠用、又不卡）
+      var MAX = 1200;
+      if (img.naturalWidth <= MAX && img.naturalHeight <= MAX) {
+        toast('');
+        _acm.img = img;
+        openAvatarCrop(img);
+        return;
+      }
+      var scale = Math.min(MAX / img.naturalWidth, MAX / img.naturalHeight);
+      var cvs = document.createElement('canvas');
+      cvs.width  = Math.round(img.naturalWidth  * scale);
+      cvs.height = Math.round(img.naturalHeight * scale);
+      cvs.getContext('2d').drawImage(img, 0, 0, cvs.width, cvs.height);
+      var small = new Image();
+      small.onload = function() { toast(''); _acm.img = small; openAvatarCrop(small); };
+      small.src = cvs.toDataURL('image/jpeg', 0.92);
+    };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
@@ -2812,12 +2830,11 @@ function confirmAvatarCrop() {
     localStorage.setItem('bf_avatar_' + currentUser.email, dataUrl);
   }
   applyAvatar(dataUrl);
-  toast('✅ 大頭貼已更新！正在同步…');
-  // 同步到伺服器
-  _fetchAPI('saveAvatar', { avatar: dataUrl }).then(function(r) {
-    if (r && r.ok) toast('☁️ 大頭貼已同步到雲端');
-    else toast('⚠️ 本機已儲存，雲端同步失敗');
-  });
+  toast('✅ 大頭貼已更新！');
+  // 背景靜默同步到伺服器（不卡 UI）
+  setTimeout(function() {
+    _fetchAPI('saveAvatar', { avatar: dataUrl }).catch(function(){});
+  }, 300);
 }
 
 // ── 大頭貼：套用到所有頭像元素 ──
