@@ -473,9 +473,9 @@ input[type=checkbox]{accent-color:var(--brand)}
 /* ── 手機版表格列隱藏 ── */
 @media(max-width:768px){
   /* 案件追蹤：啟用橫向捲動以顯示所有欄位 */
-  #view-applications .card.table-wrap table{min-width:780px!important}
+  #view-applications .card.table-wrap table{min-width:960px!important}
   /* 總覽最新紀錄：橫向捲動顯示所有欄位 */
-  #view-dashboard .card.table-wrap table{min-width:780px!important}
+  #view-dashboard .card.table-wrap table{min-width:960px!important}
   /* 申請詳情：申請資訊 3欄 → 2欄 */
   #view-detail .card [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
   /* 費用分析：KPI 改 2x2、圖表改上下排列 */
@@ -1263,11 +1263,11 @@ tbody td{font-size:var(--fs-base)!important}
         <span onclick="sw('applications')" style="font-size:13px;color:var(--brand);cursor:pointer;font-weight:600">查看全部 →</span>
       </div>
       <div style="overflow-x:auto;max-width:100%">
-      <table class="evx-table dashboard-table" style="min-width:640px">
+      <table class="evx-table dashboard-table" style="min-width:860px">
         <thead><tr>
           <th></th>
           <th>申請單號</th>
-          <th>主旨</th>
+          <th style="min-width:200px">主旨</th>
           <th>申請人</th>
           <th>分類</th>
           <th>金額</th>
@@ -1527,7 +1527,7 @@ tbody td{font-size:var(--fs-base)!important}
         <thead><tr>
           <th style="width:36px;padding-left:16px"><input type="checkbox" id="app-select-all" onclick="appToggleSelectAll(this)" style="accent-color:var(--brand);width:24px;height:24px;cursor:pointer"></th>
           <th class="sortable-th" onclick="sortAppTable(0)">申請單號<span class="sort-icon"></span></th>
-          <th>主旨</th>
+          <th style="min-width:200px">主旨</th>
           <th>申請人</th>
           <th>分類</th>
           <th class="sortable-th" onclick="sortAppTable(4)">金額<span class="sort-icon"></span></th>
@@ -3202,7 +3202,7 @@ function _renderCaseRow(c, opts) {
   return `<tr class="tr" onclick="${rowClick}" data-cat="${_dataCat}" data-status="${c.status||''}">
     <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:var(--brand);width:24px;height:24px;cursor:pointer"></td>
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:13px;font-family:monospace;letter-spacing:.04em">${c.caseId}</span></td>
-    <td style="padding:12px 14px;max-width:220px;font-weight:600;color:#0f172a;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${c.project||c.subject||'—'}</td>
+    <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#0f172a;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${c.project||c.subject||'—'}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
     <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
@@ -3300,11 +3300,11 @@ function renderDraftsTab() {
   // 與申請案件相同的表格結構，重用 _renderCaseRow
   container.innerHTML =
     '<div class="card table-wrap" style="overflow-x:auto">'
-    + '<table class="evx-table app-table" style="width:100%;border-collapse:collapse;min-width:780px">'
+    + '<table class="evx-table app-table" style="width:100%;border-collapse:collapse;min-width:960px">'
     + '<thead><tr>'
     + '<th style="width:36px;padding-left:16px"></th>'
     + '<th>申請單號</th>'
-    + '<th>主旨</th>'
+    + '<th style="min-width:200px">主旨</th>'
     + '<th>申請人</th>'
     + '<th>分類</th>'
     + '<th>金額</th>'
@@ -6760,9 +6760,10 @@ function renderAnalytics(startDate,endDate){
   var rejectedFiltered=filtered.filter(function(c){return c.status==='已退件';});
   var apv=approvedFiltered.reduce(function(s,c){return s+Number(c.total||0);},0);
   var avgAmt=approvedFiltered.length>0?Math.round(apv/approvedFiltered.length):0;
-  // 退件率：曾被退過的案件（包含退件重送後核准的）/ 所有有結果的案件
-  var everRejected=filtered.filter(function(c){return c.status==='已退件'||(Number(c.resubmitCount)||0)>0;});
-  var totalDone=filtered.filter(function(c){return c.status==='已完成'||c.status==='已退件';}).length;
+  // 退件率：已結案的案件中，曾被退件過的比例（進行中案件不納入）
+  var doneFiltered=filtered.filter(function(c){return c.status==='已完成'||c.status==='已退件';});
+  var totalDone=doneFiltered.length;
+  var everRejected=doneFiltered.filter(function(c){return c.status==='已退件'||(Number(c.resubmitCount)||0)>0;});
   var rejectRate=totalDone>0?Math.round(everRejected.length/totalDone*100):0;
   var cEl=document.getElementById('analytics-count');var aEl=document.getElementById('analytics-approved');
   var avgEl=document.getElementById('analytics-avg-amount');var rateEl=document.getElementById('analytics-reject-rate');
