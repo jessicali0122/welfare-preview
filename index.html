@@ -250,7 +250,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   }
   .bn-item svg{width:22px;height:22px;flex-shrink:0;transition:stroke .2s;position:relative;z-index:1}
   .bn-item span{position:relative;z-index:1}
-  .bn-item>.bn-label{position:relative;z-index:1;font-size:10px;font-weight:500;letter-spacing:.01em}
+  .bn-item>.bn-label{position:relative;z-index:1;font-size:10px;font-weight:500;letter-spacing:-.02em;white-space:nowrap}
   /* active：淡橘膠囊背景包住 icon + 文字 */
   .bn-item.active{color:#f59e0b}
   .bn-item.active svg{stroke:#f59e0b}
@@ -261,8 +261,9 @@ input[type=checkbox]{accent-color:var(--brand)}
     width:58px;height:52px;
     border-radius:14px;
     background:#fef3c7;
-    z-index:0;
+    z-index:-1;
   }
+  .bn-item{isolation:isolate}
   .bn-badge{position:absolute;top:6px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid #fff;z-index:3}
 }
 
@@ -2005,7 +2006,7 @@ tbody td{font-size:var(--fs-base)!important}
   </button>
   <button class="bn-item" data-view="applications" onclick="sw('applications')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
-    <span class="bn-label">案件</span>
+    <span class="bn-label">案件追蹤</span>
   </button>
   <button class="bn-item" data-view="approvals" onclick="sw('approvals')">
     <div class="bn-icon-wrap" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
@@ -2014,11 +2015,11 @@ tbody td{font-size:var(--fs-base)!important}
   </button>
   <button class="bn-item" data-view="analytics" onclick="sw('analytics')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-    <span class="bn-label">分析</span>
+    <span class="bn-label">費用分析</span>
   </button>
   <button class="bn-item" data-view="admin" onclick="sw('admin')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
-    <span class="bn-label">管理</span>
+    <span class="bn-label">系統管理</span>
   </button>
 </nav>
 
@@ -2497,16 +2498,22 @@ function showApp() {
     // ── 路由還原：若 URL 有 hash 就跳到對應頁面，否則預設總覽 ──
     const _initHash = location.hash ? location.hash.slice(1) : '';
     const _validViews = ['dashboard','applications','approvals','analytics','admin'];
-    const _initView = _validViews.includes(_initHash) ? _initHash : 'dashboard';
-    if (_initView !== 'dashboard') {
-      // 先載入 dashboard 資料（badge 計算需要），再切到目標頁
+    // detail 頁：#detail/EWC-202506-1001
+    if (_initHash.startsWith('detail/')) {
+      const _detailId = _initHash.slice(7);
       loadDashboard();
-      setTimeout(function(){ sw(_initView); }, 300);
+      setTimeout(function(){ loadDetail(_detailId, true); }, 400);
+      history.replaceState({ view: 'detail', caseId: _detailId }, '', '#' + _initHash);
     } else {
-      loadDashboard(); // 優先載入主要資料
+      const _initView = _validViews.includes(_initHash) ? _initHash : 'dashboard';
+      if (_initView !== 'dashboard') {
+        loadDashboard();
+        setTimeout(function(){ sw(_initView); }, 300);
+      } else {
+        loadDashboard();
+      }
+      history.replaceState({ view: _initView }, '', _initView !== 'dashboard' ? '#' + _initView : location.pathname + location.search);
     }
-    // 設定初始 history state
-    history.replaceState({ view: _initView }, '', _initView !== 'dashboard' ? '#' + _initView : location.pathname + location.search);
     startTokenRefreshTimer();
     // 非關鍵呼叫延遲執行，避免跟主資料搶 GAS 執行緒
     setTimeout(function(){ loadAdminFlow(); }, 1500);
@@ -3632,13 +3639,17 @@ async function openDraft(caseId) {
 // ══════════════════════════════════════════
 //  案件詳情載入
 // ══════════════════════════════════════════
-async function loadDetail(caseId) {
+async function loadDetail(caseId, _fromPop) {
   // Race condition 保護：若上一個請求還沒完成，忽略舊結果
   const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
   const currentView = document.querySelector('.view.active')?.id?.replace('view-','') || 'applications';
   window._detailReturnView = (currentView === 'detail') ? (window._detailReturnView || 'applications') : currentView;
-  sw('detail', null);
+  // ── 瀏覽器歷史紀錄：pushState 讓重整 / 上一頁正確還原 ──
+  if (!_fromPop && window._appReady) {
+    history.pushState({ view: 'detail', caseId: caseId }, '', '#detail/' + caseId);
+  }
+  sw('detail', null, true); // _fromPop=true 避免 sw 內部再次 pushState
   // 立即清空退件原因，不等 API 回應，避免顯示上一筆殘留內容
   const _commentTa = document.getElementById('approve-box-comment');
   if (_commentTa) _commentTa.value = '';
@@ -4180,7 +4191,13 @@ const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
 window.addEventListener('popstate', function(e) {
   if (!window._appReady) return;
-  const view = (e.state && e.state.view) || (location.hash ? location.hash.slice(1) : 'dashboard');
+  const hash = location.hash ? location.hash.slice(1) : '';
+  const state = e.state || {};
+  // detail 頁：#detail/EWC-xxx
+  if (state.view === 'detail' && state.caseId) { loadDetail(state.caseId, true); return; }
+  if (hash.startsWith('detail/')) { loadDetail(hash.slice(7), true); return; }
+  // 主頁面
+  const view = state.view || hash;
   const validViews = ['dashboard','applications','approvals','analytics','admin'];
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
