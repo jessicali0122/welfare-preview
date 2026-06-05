@@ -28,11 +28,17 @@ aside .sl-section-label{display:none}
 aside .sidebar-brand-text{display:none}
 
 /* nav items */
-.sl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;color:#94a3b8;transition:background .15s,color .15s;margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;overflow:visible;touch-action:manipulation}
-.sl:hover{background:#f1f5f9;color:#334155}
-.sl.active{background:rgba(245,158,11,.10);color:var(--amber);box-shadow:none}
-.sl.active svg{stroke:var(--amber)!important}
-.sl.active::after{color:var(--amber)!important}
+.sl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;color:#94a3b8;transition:background .18s ease,color .18s ease,transform .15s ease;margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;overflow:visible;touch-action:manipulation}
+.sl:hover{background:#f8fafc;color:#475569;transform:translateY(-1px)}
+.sl:hover svg{transform:scale(1.1);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.sl:active{transform:scale(.93)}
+.sl svg{transition:transform .2s ease,stroke .18s ease}
+/* active：橘色左側指示條 + 淡橘背景 + icon 放大 */
+.sl.active{background:rgba(245,158,11,.08);color:var(--amber);box-shadow:none}
+.sl.active svg{stroke:var(--amber)!important;transform:scale(1.08);filter:drop-shadow(0 0 4px rgba(245,158,11,.35))}
+.sl.active::after{color:var(--amber)!important;font-weight:700!important}
+/* 左側指示條 */
+.sl.active::before{content:'';position:absolute;left:-4px;top:50%;transform:translateY(-50%);width:3px;height:28px;background:var(--amber);border-radius:0 3px 3px 0;box-shadow:0 0 8px rgba(245,158,11,.4)}
 .sl svg{flex-shrink:0;width:22px!important;height:22px!important}
 
 /* notification dot */
@@ -227,44 +233,59 @@ input[type=checkbox]{accent-color:var(--brand)}
   #bottom-nav{
     display:flex!important;
     position:fixed;bottom:0;left:0;right:0;
-    height:calc(64px + env(safe-area-inset-bottom,0px));
+    height:calc(66px + env(safe-area-inset-bottom,0px));
     padding-bottom:env(safe-area-inset-bottom,0px);
-    background:rgba(255,255,255,.82);
-    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
-    border-top:1px solid rgba(255,255,255,.4);
-    z-index:200;box-shadow:0 -1px 0 rgba(0,0,0,.06);
+    background:rgba(255,255,255,.88);
+    backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+    border-top:1px solid rgba(0,0,0,.06);
+    z-index:200;
+    box-shadow:0 -4px 20px rgba(0,0,0,.07);
     align-items:stretch;
   }
   .bn-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:3px;padding:0;
     cursor:pointer;border:none;background:none;
-    color:#b0bec5;font-size:10px;font-weight:500;letter-spacing:.01em;font-family:inherit;
-    transition:color .2s;position:relative;
+    color:#94a3b8;font-size:10px;font-weight:500;font-family:inherit;
+    transition:color .22s ease, transform .12s ease;
+    position:relative;isolation:isolate;
     -webkit-tap-highlight-color:transparent;
   }
+  /* 按下瞬間縮小回饋 */
+  .bn-item:active{transform:scale(.88);}
   .bn-icon-wrap{
     width:28px;height:28px;
     display:flex;align-items:center;justify-content:center;
     flex-shrink:0;position:relative;z-index:1;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
   }
-  .bn-item svg{width:22px;height:22px;flex-shrink:0;transition:stroke .2s;position:relative;z-index:1}
+  /* active icon 往上彈跳 */
+  .bn-item.active .bn-icon-wrap{transform:translateY(-2px) scale(1.12);}
+  .bn-item svg{width:22px;height:22px;flex-shrink:0;transition:stroke .22s;position:relative;z-index:1}
   .bn-item span{position:relative;z-index:1}
-  .bn-item>.bn-label{position:relative;z-index:1;font-size:10px;font-weight:500;letter-spacing:-.02em;white-space:nowrap}
-  /* active：淡橘膠囊背景包住 icon + 文字 */
+  .bn-item>.bn-label{position:relative;z-index:1;font-size:10px;font-weight:500;letter-spacing:-.02em;white-space:nowrap;transition:color .22s,font-weight .22s}
+  /* active 文字加粗 */
+  .bn-item.active>.bn-label{font-weight:700}
+  /* active 狀態 */
   .bn-item.active{color:#f59e0b}
   .bn-item.active svg{stroke:#f59e0b}
-  .bn-item.active::before{
+  /* 膠囊背景：平滑縮放出現 */
+  .bn-item::before{
     content:'';position:absolute;
     top:50%;left:50%;
-    transform:translate(-50%,-50%);
-    width:58px;height:52px;
-    border-radius:14px;
+    transform:translate(-50%,-50%) scale(.5);
+    width:62px;height:52px;
+    border-radius:16px;
     background:#fef3c7;
     z-index:-1;
+    opacity:0;
+    transition:transform .28s cubic-bezier(.34,1.4,.64,1), opacity .2s ease;
   }
-  .bn-item{isolation:isolate}
-  .bn-badge{position:absolute;top:6px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid #fff;z-index:3}
+  .bn-item.active::before{
+    transform:translate(-50%,-50%) scale(1);
+    opacity:1;
+  }
+  .bn-badge{position:absolute;top:4px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid #fff;z-index:3}
 }
 
 /* ── MOBILE RESPONSIVE ── */
@@ -4376,12 +4397,16 @@ async function _syncMembersFromServer() {
     });
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
-    // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（首次載入時可能尚未就緒）
+    // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（僅管理員）
     var _auditBlock = document.getElementById('audit-log-dashboard');
     var _onDashboard = document.getElementById('view-dashboard')?.classList.contains('active');
-    if (_auditBlock && _onDashboard && _auditBlock.style.display === 'none') {
-      _auditBlock.style.display = 'block';
-      loadAuditLogDashboard();
+    if (_auditBlock && _onDashboard && isAdmin()) {
+      if (_auditBlock.style.display === 'none') {
+        _auditBlock.style.display = 'block';
+        loadAuditLogDashboard();
+      }
+    } else if (_auditBlock && !isAdmin()) {
+      _auditBlock.style.display = 'none';
     }
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
 }
