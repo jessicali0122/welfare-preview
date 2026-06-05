@@ -37,8 +37,6 @@ aside .sidebar-brand-text{display:none}
 .sl.active{background:rgba(245,158,11,.08);color:var(--amber);box-shadow:none}
 .sl.active svg{stroke:var(--amber)!important;transform:scale(1.08);filter:drop-shadow(0 0 4px rgba(245,158,11,.35))}
 .sl.active::after{color:var(--amber)!important;font-weight:700!important}
-/* 右側綠色葉子指示 */
-.sl.active::before{content:'';position:absolute;right:-3px;top:4px;width:18px;height:26px;background:none;box-shadow:none;background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="%231e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="%231e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="%231e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="%231e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="%231e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="%231e9d6b"/></svg>');background-size:contain;background-repeat:no-repeat;background-position:center}
 .sl svg{flex-shrink:0;width:22px!important;height:22px!important}
 
 /* notification dot */
@@ -284,24 +282,6 @@ input[type=checkbox]{accent-color:var(--brand)}
   .bn-item.active::before{
     transform:translate(-50%,-50%) scale(1);
     opacity:1;
-  }
-  /* 右上角綠色葉子（active 時出現） */
-  .bn-item::after{
-    content:'';
-    position:absolute;
-    left:calc(50% + 10px);
-    top:6px;
-    width:16px;height:22px;
-    background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="%231e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="%231e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="%231e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="%231e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="%231e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="%231e9d6b"/></svg>');
-    background-size:contain;background-repeat:no-repeat;background-position:center;
-    opacity:0;
-    transform:scale(.3) translate(0,8px);
-    transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
-    z-index:2;pointer-events:none;
-  }
-  .bn-item.active::after{
-    opacity:1;
-    transform:scale(1) translate(0,0);
   }
   .bn-badge{position:absolute;top:4px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;background:#f59e0b;border:1.5px solid #fff;z-index:3}
 }
@@ -1203,105 +1183,68 @@ tbody td{font-size:var(--fs-base)!important}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="view active" id="view-dashboard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+    <!-- 頁面標題列 + 新增申請 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div>
         <div id="dashboard-greeting" style="font-size:20px;font-weight:700;color:#0f172a;display:flex;align-items:center;gap:8px">Hi，你好 <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg></div>
         <div id="tw-datetime" style="font-size:14px;color:#64748b;margin-top:2px">載入中...</div>
       </div>
+      <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:9px 16px;font-size:14px;flex-shrink:0">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
+      </button>
     </div>
-    <!-- 頂部三欄：已核准總支出 + 總申請案件 + 快速操作 -->
-    <div id="dashboard-top-grid" style="display:grid;grid-template-columns:2fr 1fr 1.5fr;gap:14px;margin-bottom:14px;align-items:stretch">
-      <!-- 已核准總支出 -->
-      <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 60%,#1a6e4a 100%);border:none;padding:20px 24px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:-20px;right:-20px;width:90px;height:90px;border-radius:50%;background:rgba(251,191,36,.18)"></div>
-        <div style="position:absolute;bottom:-30px;right:30px;width:60px;height:60px;border-radius:50%;background:rgba(245,158,11,.12)"></div>
-        <div style="width:48px;height:48px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
-        </div>
-        <div style="min-width:0">
-          <div style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;letter-spacing:.3px;margin-bottom:4px">已核准總支出</div>
-          <div style="font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px;white-space:nowrap" id="stat-balance">NT$ —</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:6px">累計已完成案件金額</div>
-        </div>
+    <!-- 已核准總支出（全寬橫幅） -->
+    <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 60%,#1a6e4a 100%);border:none;padding:20px 24px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;margin-bottom:14px">
+      <div style="position:absolute;top:-20px;right:-20px;width:110px;height:110px;border-radius:50%;background:rgba(251,191,36,.15)"></div>
+      <div style="position:absolute;bottom:-30px;right:80px;width:70px;height:70px;border-radius:50%;background:rgba(245,158,11,.10)"></div>
+      <div style="position:absolute;top:10px;right:140px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.07)"></div>
+      <div style="width:48px;height:48px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       </div>
-      <!-- 總申請案件 -->
-      <div class="stat" style="border-top:3px solid var(--brand);padding:18px 16px;display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:8px">總申請案件</div>
-          <div style="font-size:32px;font-weight:700;color:#0f172a;line-height:1" id="stat-total-count">—</div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:10px">
-          <div style="width:34px;height:34px;background:var(--brand-light);border-radius:9px;display:flex;align-items:center;justify-content:center">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-        </div>
-      </div>
-      <!-- 快速操作 -->
-      <div class="card" style="padding:18px 20px;display:flex;flex-direction:column;justify-content:space-between">
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">快速操作</div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn btn-p" onclick="window._newFormReturnView='applications';openNewForm()" style="width:100%;justify-content:center;padding:10px">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
-            </button>
-            <button class="btn btn-a" onclick="sw('approvals')" style="width:100%;justify-content:center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/></svg>待審核
-            </button>
-          </div>
-        </div>
-        <div id="dash-pending-notice" style="margin-top:10px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#15803d">
-          ✅ 目前沒有待審核案件
-        </div>
+      <div style="min-width:0">
+        <div style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;letter-spacing:.3px;margin-bottom:4px">已核准總支出</div>
+        <div style="font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px;white-space:nowrap" id="stat-balance">NT$ —</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:6px">累計已完成案件金額</div>
       </div>
     </div>
-    <!-- 4 統計格：本月→簽核中→已完成→已退件 -->
-    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-      <!-- 本月申請 -->
-      <div class="stat" style="border-top:3px solid #f59e0b;padding:16px 14px">
+    <!-- 3 張即時狀態卡 -->
+    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+      <!-- 待簽核 -->
+      <div class="stat" style="border-top:3px solid #f59e0b;padding:18px 16px">
         <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div>
-            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">本月申請</div>
-            <div style="font-size:24px;font-weight:700;color:#0f172a;line-height:1" id="stat-this-month">—</div>
+          <div style="min-width:0">
+            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">待簽核</div>
+            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-pending">—</div>
+            <div style="font-size:11px;color:#d97706;margin-top:6px;font-weight:500;min-height:16px" id="stat-my-turn"></div>
           </div>
-          <div style="width:30px;height:30px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          </div>
-        </div>
-      </div>
-      <!-- 簽核中 -->
-      <div class="stat" style="border-top:3px solid #f59e0b;padding:16px 14px">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div>
-            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">簽核中</div>
-            <div style="font-size:24px;font-weight:700;color:#0f172a;line-height:1" id="stat-pending">—</div>
-          </div>
-          <div style="width:30px;height:30px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div style="width:32px;height:32px;background:#fef3c7;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
         </div>
       </div>
       <!-- 已完成 -->
-      <div class="stat" style="border-top:3px solid var(--brand);padding:16px 14px">
+      <div class="stat" style="border-top:3px solid var(--brand);padding:18px 16px">
         <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div>
+          <div style="min-width:0">
             <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">已完成</div>
-            <div style="font-size:24px;font-weight:700;color:#0f172a;line-height:1" id="stat-done">—</div>
+            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-done">—</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:6px;min-height:16px">累計核准件數</div>
           </div>
-          <div style="width:30px;height:30px;background:var(--brand-light);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <div style="width:32px;height:32px;background:var(--brand-light);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
         </div>
       </div>
       <!-- 已退件 -->
-      <div class="stat" style="border-top:3px solid #f97316;padding:16px 14px">
+      <div class="stat" style="border-top:3px solid #f97316;padding:18px 16px">
         <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div>
+          <div style="min-width:0">
             <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">已退件</div>
-            <div style="font-size:24px;font-weight:700;color:#0f172a;line-height:1" id="stat-rejected">0</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:5px" id="stat-rejected-rate">退件率 0%</div>
+            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-rejected">—</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:6px;min-height:16px" id="stat-rejected-history"></div>
           </div>
-          <div style="width:30px;height:30px;background:#ffedd5;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+          <div style="width:32px;height:32px;background:#ffedd5;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
         </div>
       </div>
@@ -3022,63 +2965,40 @@ async function loadDashboard() {
   const _sk = (w,h) => `<span class="skeleton" style="width:${w}px;height:${h}px;display:inline-block"></span>`;
   const _skEl = (id, w, h) => { const el = document.getElementById(id); if (el) el.innerHTML = _sk(w, h); };
   _skEl('stat-balance', 140, 32);
-  _skEl('stat-total-count', 60, 24);
-  _skEl('stat-this-month', 60, 24);
   _skEl('stat-pending', 60, 24);
   _skEl('stat-done', 60, 24);
   _skEl('stat-rejected', 60, 24);
-  _skEl('stat-rejected-rate', 60, 14);
   const res = await callAPI('list');
   if (!res.ok) { if (!res._authError) toast('❌ 總覽載入失敗：' + res.error); return; }
   const cases = res.cases || [];
-  // 所有案件對所有登入者開放（草稿已由後端過濾）
   const viewCases = cases;
-  const pending = viewCases.filter(c => c.status && c.status.includes('待'));
-  const done    = viewCases.filter(c => c.status === '已完成');
-  const rejected= viewCases.filter(c => c.status === '已退件');
-  // 已完成案件累計（不限年度）
+  const pending  = viewCases.filter(c => c.status && c.status.includes('待'));
+  const done     = viewCases.filter(c => c.status === '已完成');
+  const rejected = viewCases.filter(c => c.status === '已退件');
+  // 已完成累計金額
   const approvedTotal = done.reduce((s,c) => s + Number(c.total||0), 0);
-  const now = new Date();
-  const thisMonth = viewCases.filter(c => {
-    if (!c.createdAt) return false;
-    const ds = String(c.createdAt).replace(/\//g,'-').split(' ')[0].split('T')[0];
-    const d = new Date(ds+'T00:00:00');
-    return !isNaN(d) && d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth();
-  });
+  // 歷史總退件次數 = 所有案件的重送次數（每次重送 = 曾退件一次）+ 目前退件中件數
+  const historyRejTotal = viewCases.reduce((s,c) => s + (Number(c.resubmitCount)||0), 0) + rejected.length;
   // 更新統計數字
   const pendEl = document.getElementById('stat-pending');
   const doneEl = document.getElementById('stat-done');
+  const rejEl  = document.getElementById('stat-rejected');
+  const balEl  = document.getElementById('stat-balance');
   if (pendEl) pendEl.textContent = pending.length;
   if (doneEl) doneEl.textContent = done.length;
-  const rejEl = document.getElementById('stat-rejected');
-  if (rejEl) rejEl.textContent = rejected.length;
-  const rejRate = document.getElementById('stat-rejected-rate');
-  if (rejRate) rejRate.textContent = '退件率 ' + (viewCases.length>0 ? Math.round(rejected.length/viewCases.length*100) : 0) + '%';
-  const balEl = document.getElementById('stat-balance');
-  if (balEl) balEl.textContent = 'NT$ ' + approvedTotal.toLocaleString();
-  const monthEl = document.getElementById('stat-this-month');
-  if (monthEl) monthEl.textContent = thisMonth.length;
-  const totalCountEl = document.getElementById('stat-total-count');
-  if (totalCountEl) totalCountEl.textContent = viewCases.length + ' 件';
-  // 更新最新紀錄表格（由近到遠排序）
+  if (rejEl)  rejEl.textContent  = rejected.length;
+  if (balEl)  balEl.textContent  = 'NT$ ' + approvedTotal.toLocaleString();
+  // 已退件：歷史總次數小字
+  const rejHistEl = document.getElementById('stat-rejected-history');
+  if (rejHistEl) rejHistEl.textContent = historyRejTotal > 0 ? '歷史共退件 ' + historyRejTotal + ' 次' : '';
+  // 更新最新紀錄表格
   const recentCases = [...viewCases].sort((a,b)=>(String(b.createdAt||'')>String(a.createdAt||'')?1:-1));
   renderDashboardTable(recentCases.slice(0, 5));
-  // 更新待審核 badge：只顯示「真正輪到自己這關」的件數（管理員也一樣）
+  // 待審核 badge + 卡片小字（有輪到自己才顯示）
   const myTurnPending = cases.filter(c => isMyTurnToApprove(c));
   updateBadge(myTurnPending.length);
-  // 快速操作：更新待審核提示（同樣只顯示輪到自己的件數）
-  const noticeEl = document.getElementById('dash-pending-notice');
-  if (noticeEl) {
-    if (myTurnPending.length > 0) {
-      noticeEl.style.background = '#fef3c7';
-      noticeEl.style.color = '#b45309';
-      noticeEl.textContent = '⏳ 有 ' + myTurnPending.length + ' 件待您審核';
-    } else {
-      noticeEl.style.background = '#f0fdf4';
-      noticeEl.style.color = '#15803d';
-      noticeEl.textContent = '✅ 目前沒有待審核案件';
-    }
-  }
+  const myTurnEl = document.getElementById('stat-my-turn');
+  if (myTurnEl) myTurnEl.textContent = myTurnPending.length > 0 ? '其中 ' + myTurnPending.length + ' 件輪到您審核' : '';
   // 管理者才顯示系統操作紀錄；非管理者強制隱藏
   const auditBlock = document.getElementById('audit-log-dashboard');
   if (isAdmin()) {
