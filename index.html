@@ -289,13 +289,13 @@ input[type=checkbox]{accent-color:var(--brand)}
   .bn-item::after{
     content:'';
     position:absolute;
-    left:calc(50% + 5px);
-    top:8px;
-    width:11px;height:16px;
+    left:calc(50% + 10px);
+    top:6px;
+    width:16px;height:22px;
     background-image:url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="%231e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="%231e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="%231e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="%231e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="%231e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="%231e9d6b"/></svg>');
     background-size:contain;background-repeat:no-repeat;background-position:center;
     opacity:0;
-    transform:scale(.3) translate(-4px,6px);
+    transform:scale(.3) translate(0,8px);
     transition:opacity .25s ease, transform .35s cubic-bezier(.34,1.56,.64,1);
     z-index:2;pointer-events:none;
   }
@@ -2524,6 +2524,16 @@ function showApp() {
     // 套用已儲存的大頭貼（若有）
     const _savedAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
     if (_savedAvatar) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
+    // 從伺服器同步大頭貼（跨裝置）
+    _fetchAPI('getAvatar', {}).then(function(r) {
+      if (r && r.ok && r.avatar) {
+        // 若伺服器版本與本機不同（或本機沒有），更新本機並套用
+        if (r.avatar !== localStorage.getItem('bf_avatar_' + currentUser.email)) {
+          localStorage.setItem('bf_avatar_' + currentUser.email, r.avatar);
+          applyAvatar(r.avatar);
+        }
+      }
+    }).catch(function(){});  // 同步失敗不影響登入
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
     if(greeting)greeting.innerHTML='Hi，'+displayName+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';
@@ -2623,7 +2633,10 @@ function triggerAvatarUpload() {
   if (m) m.style.display = 'none';
 }
 
-// ── 大頭貼：處理上傳 + 壓縮 ──
+// ── 大頭貼：裁切 Modal 狀態 ──
+var _acm = { img: null, x: 0, y: 0, scale: 1, dragging: false, lastX: 0, lastY: 0, lastDist: 0 };
+
+// ── 大頭貼：處理上傳 → 開啟裁切 Modal ──
 function handleAvatarUpload(input) {
   var file = input.files && input.files[0];
   if (!file) return;
@@ -2632,24 +2645,144 @@ function handleAvatarUpload(input) {
   reader.onload = function(e) {
     var img = new Image();
     img.onload = function() {
-      var canvas = document.createElement('canvas');
-      var size = 200;
-      var scale = Math.min(size / img.width, size / img.height, 1);
-      canvas.width  = Math.round(img.width  * scale);
-      canvas.height = Math.round(img.height * scale);
-      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      if (currentUser && currentUser.email) {
-        localStorage.setItem('bf_avatar_' + currentUser.email, dataUrl);
-      }
-      applyAvatar(dataUrl);
-      toast('✅ 大頭貼已更新！');
+      _acm.img = img;
+      openAvatarCrop(img);
     };
     img.src = e.target.result;
   };
   reader.readAsDataURL(file);
   input.value = '';
 }
+
+function openAvatarCrop(img) {
+  var modal = document.getElementById('avatar-crop-modal');
+  var stage = document.getElementById('acm-stage');
+  var el    = document.getElementById('acm-img');
+  var zoom  = document.getElementById('acm-zoom');
+  var sw = 260, sh = 260; // stage size
+
+  // 初始 scale：讓圖片最短邊填滿 236px（circle diameter）
+  var fit = Math.max(236 / img.naturalWidth, 236 / img.naturalHeight);
+  _acm.scale = fit;
+  zoom.min = String(Math.max(0.3, fit * 0.5));
+  zoom.max = String(fit * 4);
+  zoom.value = String(fit);
+
+  // 初始位置：置中
+  _acm.x = (sw - img.naturalWidth * _acm.scale) / 2;
+  _acm.y = (sh - img.naturalHeight * _acm.scale) / 2;
+
+  el.src = img.src;
+  _applyAcmTransform();
+
+  // 縮放滑桿
+  zoom.oninput = function() {
+    var newScale = parseFloat(this.value);
+    // 以圓心為基準縮放
+    var cx = sw / 2, cy = sh / 2;
+    _acm.x = cx - (cx - _acm.x) * (newScale / _acm.scale);
+    _acm.y = cy - (cy - _acm.y) * (newScale / _acm.scale);
+    _acm.scale = newScale;
+    _applyAcmTransform();
+  };
+
+  // 滑鼠拖曳
+  stage.onmousedown = function(e) { _acm.dragging = true; _acm.lastX = e.clientX; _acm.lastY = e.clientY; stage.style.cursor = 'grabbing'; };
+  window.onmousemove = function(e) {
+    if (!_acm.dragging) return;
+    _acm.x += e.clientX - _acm.lastX; _acm.y += e.clientY - _acm.lastY;
+    _acm.lastX = e.clientX; _acm.lastY = e.clientY;
+    _applyAcmTransform();
+  };
+  window.onmouseup = function() { _acm.dragging = false; stage.style.cursor = 'grab'; };
+
+  // 滑鼠滾輪縮放
+  stage.onwheel = function(e) {
+    e.preventDefault();
+    var delta = e.deltaY > 0 ? 0.9 : 1.1;
+    var newScale = Math.min(Math.max(_acm.scale * delta, parseFloat(zoom.min)), parseFloat(zoom.max));
+    var cx = sw / 2, cy = sh / 2;
+    _acm.x = cx - (cx - _acm.x) * (newScale / _acm.scale);
+    _acm.y = cy - (cy - _acm.y) * (newScale / _acm.scale);
+    _acm.scale = newScale;
+    zoom.value = String(newScale);
+    _applyAcmTransform();
+  };
+
+  // 觸控拖曳 + 捏合
+  stage.ontouchstart = function(e) {
+    e.preventDefault();
+    if (e.touches.length === 1) { _acm.dragging = true; _acm.lastX = e.touches[0].clientX; _acm.lastY = e.touches[0].clientY; }
+    if (e.touches.length === 2) { _acm.dragging = false; _acm.lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); }
+  };
+  stage.ontouchmove = function(e) {
+    e.preventDefault();
+    if (e.touches.length === 1 && _acm.dragging) {
+      _acm.x += e.touches[0].clientX - _acm.lastX; _acm.y += e.touches[0].clientY - _acm.lastY;
+      _acm.lastX = e.touches[0].clientX; _acm.lastY = e.touches[0].clientY;
+      _applyAcmTransform();
+    }
+    if (e.touches.length === 2) {
+      var dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      var delta = dist / _acm.lastDist;
+      var newScale = Math.min(Math.max(_acm.scale * delta, parseFloat(zoom.min)), parseFloat(zoom.max));
+      var cx = sw / 2, cy = sh / 2;
+      _acm.x = cx - (cx - _acm.x) * (newScale / _acm.scale);
+      _acm.y = cy - (cy - _acm.y) * (newScale / _acm.scale);
+      _acm.scale = newScale;
+      zoom.value = String(newScale);
+      _acm.lastDist = dist;
+      _applyAcmTransform();
+    }
+  };
+  stage.ontouchend = function() { _acm.dragging = false; };
+
+  modal.style.display = 'flex';
+}
+
+function _applyAcmTransform() {
+  var el = document.getElementById('acm-img');
+  if (el) el.style.transform = 'translate(' + _acm.x + 'px,' + _acm.y + 'px) scale(' + _acm.scale + ')';
+}
+
+function closeAvatarCrop() {
+  var modal = document.getElementById('avatar-crop-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function confirmAvatarCrop() {
+  var img = _acm.img;
+  if (!img) return;
+  var size = 236; // output canvas 直徑
+  var sw = 260, sh = 260; // stage size
+  var canvas = document.createElement('canvas');
+  canvas.width = size; canvas.height = size;
+  var ctx = canvas.getContext('2d');
+  // 圓形裁切
+  ctx.beginPath(); ctx.arc(size/2, size/2, size/2, 0, Math.PI*2); ctx.clip();
+  // 圖片在 stage 中的位置（圓心在 stage 130,130）
+  var cx = sw/2, cy = sh/2;
+  // img 在 stage 的實際 left/top = _acm.x, _acm.y（以圖片原始尺寸 * scale）
+  // 在輸出 canvas 中，圓中心對應 stage 中心
+  var ox = _acm.x - (cx - size/2);
+  var oy = _acm.y - (cy - size/2);
+  ctx.drawImage(img, ox, oy, img.naturalWidth * _acm.scale, img.naturalHeight * _acm.scale);
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+  closeAvatarCrop();
+  // 存 localStorage
+  if (currentUser && currentUser.email) {
+    localStorage.setItem('bf_avatar_' + currentUser.email, dataUrl);
+  }
+  applyAvatar(dataUrl);
+  toast('✅ 大頭貼已更新！正在同步…');
+  // 同步到伺服器
+  _fetchAPI('saveAvatar', { avatar: dataUrl }).then(function(r) {
+    if (r && r.ok) toast('☁️ 大頭貼已同步到雲端');
+    else toast('⚠️ 本機已儲存，雲端同步失敗');
+  });
+}
+
+// ── 大頭貼：套用到所有頭像元素 ──
 
 // ── 大頭貼：套用到所有頭像元素 ──
 function applyAvatar(dataUrl) {
@@ -5146,8 +5279,8 @@ function updateDetailFlow(c){
   const tl = document.getElementById('flow-timeline');
   if (!tl) return;
 
-  // 每關的漸層顏色（淺綠 → 深綠）
-  const stepColors = ['#34d399','#10b981','#059669','#047857'];
+  // 每關的漸層顏色（品牌綠系：淺 → 深）
+  const stepColors = ['#3dba84','#1e9d6b','#157a50','#0f5c3a'];
   // 中文葉數標籤
   const leafLabels = ['一葉','二葉','三葉','四葉'];
   // 葉子 SVG（白色，用於 icon 內）
@@ -5164,7 +5297,7 @@ function updateDetailFlow(c){
       + '</svg>';
   }
 
-  let html = '<div style="position:absolute;left:18px;top:18px;bottom:18px;width:2px;background:linear-gradient(to bottom,#34d399,#047857)"></div>';
+  let html = '<div style="position:absolute;left:18px;top:18px;bottom:18px;width:2px;background:linear-gradient(to bottom,#3dba84,#0f5c3a)"></div>';
 
   APPROVERS.forEach(function(a, i) {
     const apv    = approvals[i] || {};
@@ -7132,6 +7265,42 @@ document.addEventListener('click', function(e) {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       登出
     </button>
+  </div>
+</div>
+
+<!-- ══ 大頭貼裁切 Modal ══ -->
+<div id="avatar-crop-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center" onclick="closeAvatarCrop()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:20px 20px 16px;width:min(340px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;align-items:center;gap:12px">
+    <div style="font-size:16px;font-weight:700;color:#0f172a;align-self:flex-start">調整大頭貼</div>
+    <div style="font-size:12px;color:#94a3b8;align-self:flex-start;margin-top:-8px">拖曳移動 · 滑鼠滾輪或捏合縮放</div>
+    <!-- 裁切舞台 -->
+    <div id="acm-stage" style="position:relative;width:260px;height:260px;overflow:hidden;border-radius:8px;background:#000;cursor:grab;user-select:none;touch-action:none">
+      <img id="acm-img" draggable="false" style="position:absolute;transform-origin:0 0;will-change:transform;pointer-events:none;max-width:none">
+      <!-- 圓形窗口遮罩 -->
+      <div style="position:absolute;inset:0;pointer-events:none">
+        <svg width="260" height="260" style="display:block">
+          <defs>
+            <mask id="acm-mask">
+              <rect width="260" height="260" fill="white"/>
+              <circle cx="130" cy="130" r="118" fill="black"/>
+            </mask>
+          </defs>
+          <rect width="260" height="260" fill="rgba(0,0,0,.55)" mask="url(#acm-mask)"/>
+          <circle cx="130" cy="130" r="118" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="1.5"/>
+        </svg>
+      </div>
+    </div>
+    <!-- 縮放滑桿 -->
+    <div style="width:100%;display:flex;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      <input id="acm-zoom" type="range" min="0.3" max="3" step="0.01" value="1" style="flex:1;accent-color:#1e9d6b;height:4px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </div>
+    <!-- 按鈕 -->
+    <div style="display:flex;gap:8px;width:100%;margin-top:2px">
+      <button onclick="closeAvatarCrop()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
+      <button onclick="confirmAvatarCrop()" style="flex:2;padding:10px;border:none;background:#1e9d6b;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">✓ 確認使用</button>
+    </div>
   </div>
 </div>
 
