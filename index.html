@@ -478,6 +478,9 @@ input[type=checkbox]{accent-color:var(--brand)}
   #view-dashboard .card.table-wrap table{min-width:780px!important}
   /* 申請詳情：申請資訊 3欄 → 2欄 */
   #view-detail .card [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
+  /* 費用分析：KPI 改 2x2、圖表改上下排列 */
+  #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
+  #charts-row{grid-template-columns:1fr!important}
   /* 費用分析明細表：手機隱藏「單號」(2nd) 與「申請人」(3rd) */
   #view-analytics .card table thead th:nth-child(2),
   #analytics-approved-tbody td:nth-child(2),
@@ -958,12 +961,11 @@ tbody td{font-size:var(--fs-base)!important}
 .notif-item{font-size:var(--fs-base)!important}
 
 /* ── Dashboard 大數字 ── */
-#stat-balance{font-size:var(--fs-3xl)!important;letter-spacing:-1px}
-#stat-total-count,#stat-this-month,#stat-pending,#stat-done,#stat-rejected{font-size:var(--fs-2xl)!important}
+#stat-balance{font-size:34px!important;letter-spacing:-1px}
+#stat-pending,#stat-done,#stat-rejected{font-size:38px!important;letter-spacing:-1px}
 
 /* ── 費用分析數字 ── */
-#analytics-approved{font-size:var(--fs-2xl)!important}
-#analytics-count,#analytics-pending-count,#analytics-rejected-count{font-size:var(--fs-2xl)!important}
+#analytics-approved,#analytics-avg-amount,#analytics-count,#analytics-reject-rate{font-size:var(--fs-2xl)!important}
 
 /* ── 表單頁大標 ── */
 #view-new-form h2,#view-new-form [style*="font-size:20px"]{font-size:var(--fs-xl)!important}
@@ -999,6 +1001,9 @@ tbody td{font-size:var(--fs-base)!important}
   .sl::after{font-size:11px!important}
   /* 手機管理分頁 */
   .admin-tab{font-size:13px!important}
+  /* 總覽 stat 卡片數字在手機縮小一點 */
+  #stat-pending,#stat-done,#stat-rejected{font-size:30px!important}
+  #stat-balance{font-size:26px!important}
 }
 
 /* ══════════════════════════════════════════
@@ -1193,60 +1198,62 @@ tbody td{font-size:var(--fs-base)!important}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
-    <!-- 已核准總支出（全寬橫幅） -->
-    <div class="card" style="background:linear-gradient(135deg,var(--brand) 0%,#15835a 60%,#1a6e4a 100%);border:none;padding:20px 24px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;margin-bottom:14px">
-      <div style="position:absolute;top:-20px;right:-20px;width:110px;height:110px;border-radius:50%;background:rgba(251,191,36,.15)"></div>
-      <div style="position:absolute;bottom:-30px;right:80px;width:70px;height:70px;border-radius:50%;background:rgba(245,158,11,.10)"></div>
-      <div style="position:absolute;top:10px;right:140px;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.07)"></div>
-      <div style="width:48px;height:48px;background:rgba(255,255,255,.18);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
+    <!-- 已核准總支出 -->
+    <div class="card" style="padding:20px 24px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:16px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:linear-gradient(120deg,#f0fdf8 0%,#e6faf2 60%,#f8fffe 100%);z-index:0"></div>
+      <div style="position:absolute;right:-18px;top:50%;transform:translateY(-50%);width:110px;height:110px;border-radius:50%;background:rgba(61,186,132,.10);z-index:0"></div>
+      <div style="position:absolute;right:60px;bottom:-20px;width:60px;height:60px;border-radius:50%;background:rgba(30,157,107,.07);z-index:0"></div>
+      <div style="position:relative;z-index:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <div style="width:28px;height:28px;background:linear-gradient(135deg,#3dba84,#1e9d6b);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+          </div>
+          <span style="font-size:12px;color:#64748b;font-weight:600;letter-spacing:.3px">已核准總支出</span>
+        </div>
+        <div style="font-size:34px;font-weight:800;color:#0f172a;line-height:1;letter-spacing:-1px;white-space:nowrap" id="stat-balance">NT$ —</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:6px">累計已完成案件金額</div>
       </div>
-      <div style="min-width:0">
-        <div style="font-size:12px;color:rgba(255,255,255,.75);font-weight:600;letter-spacing:.3px;margin-bottom:4px">已核准總支出</div>
-        <div style="font-size:32px;font-weight:800;color:#fff;line-height:1;letter-spacing:-1px;white-space:nowrap" id="stat-balance">NT$ —</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:6px">累計已完成案件金額</div>
+      <div style="position:relative;z-index:1;flex-shrink:0;opacity:.18">
+        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="1.2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg>
       </div>
     </div>
     <!-- 3 張即時狀態卡 -->
     <div id="stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
       <!-- 待簽核 -->
-      <div class="stat" style="border-top:3px solid #f59e0b;padding:18px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div style="min-width:0">
-            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">待簽核</div>
-            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-pending">—</div>
-            <div style="font-size:11px;color:#d97706;margin-top:6px;font-weight:500;min-height:16px" id="stat-my-turn"></div>
+      <div class="stat" style="padding:20px 18px;border:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="width:38px;height:38px;background:#fffbeb;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
-          <div style="width:32px;height:32px;background:#fef3c7;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
+          <div style="font-size:11px;font-weight:600;color:#d97706;background:#fffbeb;padding:3px 8px;border-radius:20px;letter-spacing:.2px">進行中</div>
         </div>
+        <div style="font-size:38px;font-weight:800;color:#0f172a;line-height:1;letter-spacing:-1px" id="stat-pending">—</div>
+        <div style="font-size:12px;color:#64748b;font-weight:500;margin-top:6px">待簽核案件</div>
+        <div style="font-size:11px;color:#d97706;margin-top:4px;font-weight:500;min-height:15px" id="stat-my-turn"></div>
       </div>
       <!-- 已完成 -->
-      <div class="stat" style="border-top:3px solid var(--brand);padding:18px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div style="min-width:0">
-            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">已完成</div>
-            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-done">—</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:6px;min-height:16px">累計核准件數</div>
+      <div class="stat" style="padding:20px 18px;border:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="width:38px;height:38px;background:#f0fdf8;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1e9d6b" stroke-width="2.2"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <div style="width:32px;height:32px;background:var(--brand-light);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-          </div>
+          <div style="font-size:11px;font-weight:600;color:#1e9d6b;background:#f0fdf8;padding:3px 8px;border-radius:20px;letter-spacing:.2px">核准</div>
         </div>
+        <div style="font-size:38px;font-weight:800;color:#0f172a;line-height:1;letter-spacing:-1px" id="stat-done">—</div>
+        <div style="font-size:12px;color:#64748b;font-weight:500;margin-top:6px">已完成案件</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;min-height:15px">累計核准件數</div>
       </div>
       <!-- 已退件 -->
-      <div class="stat" style="border-top:3px solid #f97316;padding:18px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:start;gap:4px">
-          <div style="min-width:0">
-            <div style="font-size:12px;color:#64748b;font-weight:500;margin-bottom:6px">已退件</div>
-            <div style="font-size:28px;font-weight:700;color:#0f172a;line-height:1" id="stat-rejected">—</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:6px;min-height:16px" id="stat-rejected-history"></div>
+      <div class="stat" style="padding:20px 18px;border:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div style="width:38px;height:38px;background:#fff7ed;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
           </div>
-          <div style="width:32px;height:32px;background:#ffedd5;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-          </div>
+          <div style="font-size:11px;font-weight:600;color:#f97316;background:#fff7ed;padding:3px 8px;border-radius:20px;letter-spacing:.2px">退件</div>
         </div>
+        <div style="font-size:38px;font-weight:800;color:#0f172a;line-height:1;letter-spacing:-1px" id="stat-rejected">—</div>
+        <div style="font-size:12px;color:#64748b;font-weight:500;margin-top:6px">已退件案件</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;min-height:15px" id="stat-rejected-history"></div>
       </div>
     </div>
     <div class="card table-wrap" style="overflow:hidden">
@@ -1367,17 +1374,18 @@ tbody td{font-size:var(--fs-base)!important}
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">已核准總金額</div>
         <div id="analytics-approved" style="font-size:22px;font-weight:800;color:var(--brand);line-height:1.2;word-break:break-word">—</div>
       </div>
-      <div class="stat" style="border-top:3px solid var(--brand);padding:16px 14px;text-align:center">
+      <div class="stat" style="border-top:3px solid #3dba84;background:linear-gradient(135deg,#f0fdf8 0%,#fff 100%);padding:16px 14px;text-align:center">
         <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">已核准件數</div>
-        <div id="analytics-count" style="font-size:26px;font-weight:800;color:var(--brand);line-height:1">—</div>
+        <div id="analytics-count" style="font-size:26px;font-weight:800;color:#3dba84;line-height:1">—</div>
       </div>
       <div class="stat" style="border-top:3px solid var(--amber,#f59e0b);background:linear-gradient(135deg,#fffbf0 0%,#fff 100%);padding:16px 14px;text-align:center">
-        <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">簽核中件數</div>
-        <div id="analytics-pending-count" style="font-size:26px;font-weight:800;color:var(--amber-dark,#d97706);line-height:1">—</div>
+        <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">平均每件金額</div>
+        <div id="analytics-avg-amount" style="font-size:22px;font-weight:800;color:var(--amber-dark,#d97706);line-height:1.2;word-break:break-word">—</div>
       </div>
-      <div class="stat" style="border-top:3px solid #f97316;background:linear-gradient(135deg,#fff8f3 0%,#fff 100%);padding:16px 14px;text-align:center">
-        <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">退件件數</div>
-        <div id="analytics-rejected-count" style="font-size:26px;font-weight:800;color:#f97316;line-height:1">—</div>
+      <div class="stat" style="border-top:3px solid #f97316;background:linear-gradient(135deg,#fff8f3 0%,#fff 100%);padding:16px 14px;text-align:center" title="曾被退件的案件（含退件重送後核准）÷ 所有已結案案件">
+        <div style="font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.4px;margin-bottom:6px">退件率</div>
+        <div id="analytics-reject-rate" style="font-size:26px;font-weight:800;color:#f97316;line-height:1">—</div>
+        <div style="font-size:10px;color:#fdba74;margin-top:4px">含退件重送</div>
       </div>
     </div>
 
@@ -1435,6 +1443,7 @@ tbody td{font-size:var(--fs-base)!important}
         </tbody>
       </table>
       </div><!-- /overflow-x:auto -->
+      <div id="analytics-table-pager"></div>
     </div>
   </div>
 
@@ -1459,22 +1468,27 @@ tbody td{font-size:var(--fs-base)!important}
     <div id="app-tab-cases">
     <div class="card" style="padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-        <input class="inp" id="app-search" style="width:190px" placeholder="搜尋單號或主旨...">
-        <select class="inp" id="app-filter-applicant" style="width:130px">
+        <div style="position:relative;display:inline-flex;align-items:center">
+          <input class="inp" id="app-search" style="width:190px;padding-right:28px" placeholder="搜尋單號或主旨..." oninput="_debouncedAppSearch()">
+          <button id="app-search-clear" onclick="document.getElementById('app-search').value='';applyAppFilter();document.getElementById('app-search-clear').style.display='none'" style="display:none;position:absolute;right:7px;background:none;border:none;cursor:pointer;padding:2px;color:#94a3b8;line-height:1" title="清除">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <select class="inp" id="app-filter-applicant" style="width:130px" onchange="applyAppFilter()">
           <option value="" disabled selected hidden>申請人</option>
         </select>
-        <select class="inp" id="app-filter-status" style="width:120px">
+        <select class="inp" id="app-filter-status" style="width:120px" onchange="applyAppFilter()">
           <option value="" disabled selected hidden>狀態</option>
           <option value="草稿">草稿</option>
           <option value="待">簽核中</option>
           <option value="已完成">已完成</option>
           <option value="已退件">已退件</option>
         </select>
-        <select class="inp" id="app-filter-cat" style="width:120px">
+        <select class="inp" id="app-filter-cat" style="width:120px" onchange="applyAppFilter()">
           <option value="" disabled selected hidden>分類</option>
           <option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option>
         </select>
-        <select class="inp" id="app-filter-dept" style="width:130px">
+        <select class="inp" id="app-filter-dept" style="width:130px" onchange="applyAppFilter()">
           <option value="" disabled selected hidden>部門</option>
           <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
         </select>
@@ -1500,6 +1514,11 @@ tbody td{font-size:var(--fs-base)!important}
         </button>
         <button class="btn btn-o" style="padding:8px 12px;font-size:13px" onclick="resetAppFilter()">清除</button>
       </div>
+    </div>
+    <div id="app-filter-notice" style="display:none;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:8px 14px;margin-bottom:10px;font-size:13px;color:#92400e;display:none;align-items:center;gap:8px">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      <span id="app-filter-notice-text"></span>
+      <button onclick="resetAppFilter()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#d97706;font-size:12px;font-weight:600;padding:2px 6px">清除篩選</button>
     </div>
     <div class="card" style="overflow:hidden">
       <div style="overflow-x:auto;max-width:100%">
@@ -2214,6 +2233,7 @@ function _debounce(fn, delay) {
   };
 }
 var _debouncedAuditFilter = _debounce(function(){ filterAuditLog(); }, 300);
+var _debouncedAppSearch   = _debounce(function(){ applyAppFilter(); }, 280);
 
 // ══════════════════════════════════════════
 //  設定：你的 Apps Script 網址
@@ -3181,7 +3201,7 @@ function _renderCaseRow(c, opts) {
   return `<tr class="tr" onclick="${rowClick}" data-cat="${_dataCat}" data-status="${c.status||''}">
     <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:var(--brand);width:24px;height:24px;cursor:pointer"></td>
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:13px;font-family:monospace;letter-spacing:.04em">${c.caseId}</span></td>
-    <td style="padding:12px 14px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:#0f172a;text-align:left">${c.project||c.subject||'—'}</td>
+    <td style="padding:12px 14px;max-width:220px;font-weight:600;color:#0f172a;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${c.project||c.subject||'—'}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
     <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
@@ -3800,6 +3820,13 @@ async function loadDetail(caseId, _fromPop) {
   // 立即清空退件原因，不等 API 回應，避免顯示上一筆殘留內容
   const _commentTa = document.getElementById('approve-box-comment');
   if (_commentTa) _commentTa.value = '';
+  // 立即顯示 skeleton 佔位，避免空白感
+  (function(){
+    var _sk = function(w){ return '<span class="skeleton" style="display:inline-block;width:'+w+'px;height:14px;border-radius:4px">&nbsp;</span>'; };
+    var _skFields = {'detail-case-no':90,'detail-applicant-name':70,'detail-department':60,'detail-subject':160,'detail-total':80};
+    Object.keys(_skFields).forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=_sk(_skFields[id]); });
+    var flowEl=document.getElementById('detail-flow'); if(flowEl) flowEl.innerHTML='<span class="skeleton" style="display:inline-block;width:100%;height:60px;border-radius:8px">&nbsp;</span>';
+  })();
   toast('⏳ 載入中...');
   const res = await callAPI('get', { caseId });
   if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
@@ -4349,6 +4376,13 @@ window.addEventListener('popstate', function(e) {
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 function sw(name,elOrName,_fromPop){
+  // ── 離開表單時提示草稿已儲存 ──
+  var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
+  if (_leavingForm && name !== 'new-form') {
+    var _hasDraft = false;
+    try { var _d = JSON.parse(localStorage.getItem('bf_draft')||'{}'); _hasDraft = !!(_d.subject||_d.reason||(_d.items&&_d.items.length)); } catch(e){}
+    if (_hasDraft) toast('💾 草稿已自動儲存');
+  }
   // ── 在切換前記住當前視圖（views 還未變動，此時 active 仍是上一頁）──
   // new-form 的返回路徑：必須在 view 切換前記錄，否則 active view 已經是 new-form
   if (name === 'new-form') {
@@ -5885,7 +5919,26 @@ function applyAppFilter() {
   _renderAppPage(1);
   const label = document.getElementById('app-count-label');
   if (label) label.textContent = '共 ' + window._appFilteredCases.length + ' 件';
-  toast('🔍 顯示 ' + window._appFilteredCases.length + ' 筆結果');
+  // 搜尋框清除鍵
+  var clearBtn = document.getElementById('app-search-clear');
+  if (clearBtn) clearBtn.style.display = q ? 'flex' : 'none';
+  // 篩選中提示
+  var hasFilter = q || applicant || status || cat || dept || dpState.start || dpState.end;
+  var notice = document.getElementById('app-filter-notice');
+  var noticeText = document.getElementById('app-filter-notice-text');
+  if (notice) notice.style.display = hasFilter ? 'flex' : 'none';
+  if (noticeText && hasFilter) {
+    var total = (window._appSortedCases||[]).length;
+    var filtered = window._appFilteredCases.length;
+    var tags = [];
+    if (q) tags.push('關鍵字「' + q + '」');
+    if (status) tags.push('狀態');
+    if (cat) tags.push('分類');
+    if (dept) tags.push('部門');
+    if (applicant) tags.push('申請人');
+    if (dpState.start || dpState.end) tags.push('日期區間');
+    noticeText.textContent = '篩選中：' + tags.join('、') + '｜顯示 ' + filtered + ' / ' + total + ' 件';
+  }
 }
 
 function resetAppFilter() {
@@ -5900,9 +5953,11 @@ function resetAppFilter() {
   window._appCurrentPage = 1;
   _renderAppPage(1);
   const label = document.getElementById('app-count-label');
-  if (label) {
-    label.textContent = '共 ' + (window._appSortedCases||[]).length + ' 件';
-  }
+  if (label) label.textContent = '共 ' + (window._appSortedCases||[]).length + ' 件';
+  var clearBtn2 = document.getElementById('app-search-clear');
+  if (clearBtn2) clearBtn2.style.display = 'none';
+  var notice2 = document.getElementById('app-filter-notice');
+  if (notice2) notice2.style.display = 'none';
   toast('🔄 已清除篩選條件');
 }
 
@@ -6640,7 +6695,7 @@ async function loadAnalytics(){
   _analyticsAllCases=null;
   var ids=['chart-category','chart-department','chart-monthly'];
   ids.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px 0;width:100%">載入中...</div>';});
-  ['analytics-count','analytics-approved','analytics-pending-count','analytics-rejected-count'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
+  ['analytics-count','analytics-approved','analytics-avg-amount','analytics-reject-rate'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
   var ab=document.getElementById('analytics-approved-tbody');if(ab)ab.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>';
   var lc=document.getElementById('analytics-list-count');if(lc)lc.textContent='共 0 件';
   var lbl=document.getElementById('analytics-range-label');if(lbl)lbl.textContent='資料載入中...';
@@ -6648,7 +6703,7 @@ async function loadAnalytics(){
   if(!res.ok){
     ids.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div style="color:#ef4444;font-size:13px;text-align:center;padding:20px 0;width:100%">載入失敗，請確認網路連線後重試</div>';});
     if(lbl)lbl.textContent='載入失敗';
-    ['analytics-count','analytics-approved','analytics-pending-count','analytics-rejected-count'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
+    ['analytics-count','analytics-approved','analytics-avg-amount','analytics-reject-rate'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
     var ab2=document.getElementById('analytics-approved-tbody');if(ab2)ab2.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#ef4444">載入失敗</td></tr>';
     return;
   }
@@ -6672,8 +6727,12 @@ async function loadAnalytics(){
     if(activeBtn){activeBtn.style.background='var(--amber,#f59e0b)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--amber,#f59e0b)';}
     applyCustomRange();
   } else {
-    // 預設：不限定區間，顯示全部資料
-    renderAnalytics(new Date('2000-01-01'),new Date('2099-12-31'));
+    // 預設：本年
+    _analyticsRange='year';
+    var r=getDateRange('year');
+    var activeBtn=document.getElementById('arange-year');
+    if(activeBtn){activeBtn.style.background='var(--amber,#f59e0b)';activeBtn.style.color='#fff';activeBtn.style.borderColor='var(--amber,#f59e0b)';}
+    renderAnalytics(r.start,r.end);
   }
 }
 function renderAnalytics(startDate,endDate){
@@ -6692,12 +6751,17 @@ function renderAnalytics(startDate,endDate){
   var pendingFiltered=filtered.filter(function(c){return c.status&&c.status.includes('待');});
   var rejectedFiltered=filtered.filter(function(c){return c.status==='已退件';});
   var apv=approvedFiltered.reduce(function(s,c){return s+Number(c.total||0);},0);
+  var avgAmt=approvedFiltered.length>0?Math.round(apv/approvedFiltered.length):0;
+  // 退件率：曾被退過的案件（包含退件重送後核准的）/ 所有有結果的案件
+  var everRejected=filtered.filter(function(c){return c.status==='已退件'||(Number(c.resubmitCount)||0)>0;});
+  var totalDone=filtered.filter(function(c){return c.status==='已完成'||c.status==='已退件';}).length;
+  var rejectRate=totalDone>0?Math.round(everRejected.length/totalDone*100):0;
   var cEl=document.getElementById('analytics-count');var aEl=document.getElementById('analytics-approved');
-  var pEl=document.getElementById('analytics-pending-count');var rEl=document.getElementById('analytics-rejected-count');
+  var avgEl=document.getElementById('analytics-avg-amount');var rateEl=document.getElementById('analytics-reject-rate');
   if(cEl)cEl.textContent=approvedFiltered.length+' 件';
   if(aEl)aEl.textContent='NT$ '+apv.toLocaleString();
-  if(pEl)pEl.textContent=pendingFiltered.length+' 件';
-  if(rEl)rEl.textContent=rejectedFiltered.length+' 件';
+  if(avgEl)avgEl.textContent=approvedFiltered.length>0?'NT$ '+avgAmt.toLocaleString():'—';
+  if(rateEl)rateEl.textContent=totalDone>0?rejectRate+'%':'—';
   var catMap={};
   approvedFiltered.forEach(function(c){
     var items=c.items||[];
@@ -6756,19 +6820,31 @@ function renderMonthlyChart(id,moMap){
     return'<div style="flex:1;min-width:36px;display:flex;flex-direction:column;align-items:center;gap:4px" title="'+k+': NT$ '+Number(val).toLocaleString()+'"><div style="font-size:10px;color:#64748b;font-weight:600;white-space:nowrap">'+dv+'</div><div style="width:80%;max-width:40px;background:linear-gradient(180deg,var(--amber,#f59e0b) 0%,var(--amber-dark,#d97706) 100%);border-radius:4px 4px 0 0;height:'+barH+'px;opacity:.9;transition:height .4s ease"></div><div style="font-size:10px;color:#94a3b8;white-space:nowrap">'+mo+'</div></div>';
   }).join('');
 }
+var _anaTableData=[];var _anaTablePage=1;var _ANA_PAGE_SIZE=15;
 function renderApprovedTable(approvedCases){
-  var tbody=document.getElementById('analytics-approved-tbody');
   var lc=document.getElementById('analytics-list-count');
-  if(!tbody)return;
   // 依申請時間新→舊排序
-  var sorted=approvedCases.slice().sort(function(a,b){
+  _anaTableData=approvedCases.slice().sort(function(a,b){
     var da=new Date(String(a.createdAt||'').replace(/\//g,'-').replace(' ','T'));
     var db=new Date(String(b.createdAt||'').replace(/\//g,'-').replace(' ','T'));
     return db-da;
   });
-  if(lc)lc.textContent='共 '+sorted.length+' 件';
-  if(sorted.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">此區間尚無已核准費用</td></tr>';return;}
-  tbody.innerHTML=sorted.map(function(c){
+  _anaTablePage=1;
+  if(lc)lc.textContent='共 '+_anaTableData.length+' 件';
+  _renderAnaTablePage();
+}
+function _renderAnaTablePage(){
+  var tbody=document.getElementById('analytics-approved-tbody');
+  if(!tbody)return;
+  var total=_anaTableData.length;
+  var totalPages=Math.max(1,Math.ceil(total/_ANA_PAGE_SIZE));
+  if(_anaTablePage<1)_anaTablePage=1;
+  if(_anaTablePage>totalPages)_anaTablePage=totalPages;
+  if(total===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">此區間尚無已核准費用</td></tr>';
+    _renderAnaTablePager(0,1,1);return;}
+  var start=(_anaTablePage-1)*_ANA_PAGE_SIZE;
+  var page=_anaTableData.slice(start,start+_ANA_PAGE_SIZE);
+  tbody.innerHTML=page.map(function(c){
     var dateStr=c.createdAt?String(c.createdAt).split(' ')[0]:'—';
     var cat='';
     if(c.items&&c.items.length>0){
@@ -6784,11 +6860,26 @@ function renderApprovedTable(approvedCases){
       +'<td style="padding:10px 16px;font-size:12px;color:var(--brand);font-weight:600;white-space:nowrap">'+c.caseId+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#374151;white-space:nowrap">'+applicant+'</td>'
       +'<td style="padding:10px 16px;font-size:13px;color:#0f172a;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+subj+'">'+subj+'</td>'
-      +'<td >'+catHtml+'</td>'
+      +'<td>'+catHtml+'</td>'
       +'<td style="padding:10px 16px;text-align:right;font-weight:700;color:var(--brand);white-space:nowrap">'+amt+'</td>'
       +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail(\''+c.caseId+'\')">查看</button></td>'
       +'</tr>';
   }).join('');
+  _renderAnaTablePager(total,_anaTablePage,totalPages);
+}
+function _renderAnaTablePager(total,cur,totalPages){
+  var wrap=document.getElementById('analytics-table-pager');
+  if(!wrap)return;
+  if(totalPages<=1){wrap.innerHTML='';return;}
+  var s='<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9">';
+  s+='<button class="btn btn-o" style="font-size:13px;padding:5px 12px"'+(cur<=1?' disabled':'')+' onclick="_anaGoPage('+(cur-1)+')">← 上一頁</button>';
+  s+='<span style="font-size:13px;color:#64748b">第 '+cur+' / '+totalPages+' 頁・共 '+total+' 件</span>';
+  s+='<button class="btn btn-o" style="font-size:13px;padding:5px 12px"'+(cur>=totalPages?' disabled':'')+' onclick="_anaGoPage('+(cur+1)+')">下一頁 →</button>';
+  s+='</div>';
+  wrap.innerHTML=s;
+}
+function _anaGoPage(p){_anaTablePage=p;_renderAnaTablePage();
+  var el=document.getElementById('analytics-approved-tbody');if(el)el.closest('.card').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 // ══════════════════════════════════════════
