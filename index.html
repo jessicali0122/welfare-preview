@@ -1775,8 +1775,8 @@ tbody td{font-size:var(--fs-base)!important}
         </div>
         <div class="card" style="padding:20px">
           <div class="section-title">請款明細</div>
-          <div style="overflow-x:auto">
-          <table style="width:100%;min-width:480px;font-size:14px;border-collapse:collapse">
+          <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%">
+          <table style="width:100%;min-width:520px;font-size:14px;border-collapse:collapse;white-space:nowrap">
             <thead><tr style="border-bottom:1px solid #f1f5f9">
               <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">分類</th>
               <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">項目</th>
@@ -1790,10 +1790,10 @@ tbody td{font-size:var(--fs-base)!important}
               <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">無明細資料</td></tr>
             </tbody>
             <tfoot><tr style="border-top:2px solid #e2e8f0">
-              <td colspan="4" style="padding:10px 0;font-weight:700;color:#0f172a">合計</td>
-              <td id="detail-sum-pretax" style="padding:10px 8px;text-align:center;font-weight:700">NT$ 0</td>
-              <td id="detail-sum-tax" style="padding:10px 8px;text-align:center;font-weight:700;color:#64748b">NT$ 0</td>
-              <td id="detail-sum-total" style="padding:10px 8px;text-align:center;font-size:17px;font-weight:700;color:var(--brand)">NT$ 0</td>
+              <td colspan="4" style="padding:10px 0;font-weight:700;color:#0f172a;white-space:nowrap">合計</td>
+              <td id="detail-sum-pretax" style="padding:10px 8px;text-align:center;font-weight:700;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-tax" style="padding:10px 8px;text-align:center;font-weight:700;color:#64748b;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-total" style="padding:10px 8px;text-align:center;font-size:14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ 0</td>
             </tfoot>
           </table>
           </div>
@@ -2453,11 +2453,12 @@ function showApp() {
     if(sidebarEmail)sidebarEmail.textContent=currentUser.email;
     const sheetEmail=document.getElementById('mobile-sheet-email');
     if(sheetEmail)sheetEmail.textContent=currentUser.email;
-    loadDashboard();
-    loadAdminFlow(); // 預載簽核流程，讓狀態欄審核人名稱即時顯示
-    startTokenRefreshTimer(); // 主動刷新 token，避免頻繁顯示過期提示
-    _syncMembersFromServer(); // 背景同步使用者清單（更新姓名/管理員清單）
-    callAPI('logLogin', {}).catch(function(){}); // 非同步記錄登入（不阻塞 UI）
+    loadDashboard(); // 優先載入主要資料
+    startTokenRefreshTimer();
+    // 非關鍵呼叫延遲執行，避免跟主資料搶 GAS 執行緒
+    setTimeout(function(){ loadAdminFlow(); }, 1500);
+    setTimeout(function(){ _syncMembersFromServer(); }, 2500);
+    setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -2962,7 +2963,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;white-space:nowrap;color:#374151">${localName(c.email,c.name)}</td>
     <td style="padding:12px 14px"><div class="app-cat-cell" style="display:flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:var(--brand);white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-    <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span class="badge" style="margin-left:4px;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;line-height:1">🔄 重送×'+(c.resubmitCount)+'</span>':''}</td>
+    <td style="padding:12px 14px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span class="badge" style="margin-left:4px;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;padding:4px 7px">重送×'+(c.resubmitCount)+'</span>':''}</td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${stepApprover||'—'}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
@@ -4499,26 +4500,26 @@ function _renderFileItem(f) {
 function loadDriveThumbs(container) {
   const wraps = Array.from((container || document).querySelectorAll('.drive-thumb-wrap[data-fileid]'));
   if (wraps.length === 0) return;
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
   for (const wrap of wraps) {
     const fileId = wrap.dataset.fileid;
     const href   = wrap.dataset.href || '';
     wrap.removeAttribute('data-fileid');
-    if (!fileId) { wrap.innerHTML = _thumbFallback(href, '無法解析 File ID'); continue; }
+    if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); continue; }
+    // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
+    if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); continue; }
     const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    const img = document.createElement('img');
-    img.alt = '附件預覽';
-    img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9';
+    // 先保留 loading spinner（不清空 wrap），圖片載入後才替換
+    const img = new Image();
     img.onload = function() {
+      img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#f1f5f9';
+      wrap.innerHTML = '';
+      wrap.appendChild(img);
       wrap.style.minHeight = '';
       wrap.style.flexDirection = '';
     };
-    img.onerror = function() {
-      // 直接 URL 失敗（第三方 cookie 被封鎖）→ fallback 回 GAS
-      _loadThumbViaGAS(wrap, fileId, href);
-    };
+    img.onerror = function() { _loadThumbViaGAS(wrap, fileId, href); };
     img.src = thumbUrl;
-    wrap.innerHTML = '';
-    wrap.appendChild(img);
   }
 }
 
