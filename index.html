@@ -586,7 +586,8 @@ input[type=checkbox]{accent-color:var(--brand)}
   .btn,.no-print,#toast,#receipt-confirm,
   #user-menu,#notif-panel,
   #resubmit-box,#approve-box,
-  #audit-log-section,
+  #audit-log-section,#resubmit-history-section,
+  #bottom-nav,
   #mobile-overlay,#mobile-user-sheet,
   #submit-result-card{display:none!important}
 
@@ -3836,7 +3837,9 @@ async function loadDetail(caseId, _fromPop) {
   const el = document.getElementById('detail-case-no');
   if (el) el.textContent = c.caseId;
   updateDetailFlow(c);  // 傳入完整 case 物件，正確渲染每關狀態
-  renderAuditLog(c);   // 渲染操作紀錄
+  // 隱藏操作紀錄區塊（只保留歷史退件紀錄）
+  const _auditSec = document.getElementById('audit-log-section');
+  if (_auditSec) _auditSec.style.display = 'none';
   // 更新申請資訊
   document.getElementById('detail-applicant-name').textContent = localName(c.email, c.name);
   document.getElementById('detail-department').textContent    = localDept(c.email, c.department);
@@ -3980,17 +3983,22 @@ function _renderResubmitHistory(c) {
   histEl.innerHTML = '<div class="card" style="padding:20px;margin-bottom:0;border-left:4px solid #f59e0b">'
     + '<div class="section-title" style="margin-bottom:14px">📜 歷史退件紀錄（共 ' + history.length + ' 次重送）</div>'
     + history.map(function(h, hi) {
-        const rejApprovals = (h.approvals || []).filter(function(a){ return a.result === '退件'; });
-        const rejEntry = rejApprovals[rejApprovals.length - 1] || {};
+        const rejIdx = (h.approvals || []).findIndex(function(a){ return a.result === '退件'; });
+        const rejEntry = rejIdx >= 0 ? (h.approvals[rejIdx] || {}) : {};
         const proxyMatch = rejEntry.comment ? rejEntry.comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
-        const rejector = proxyMatch ? proxyMatch[1] : (APPROVERS_LOCAL[h.approvals ? h.approvals.findIndex(function(a){ return a.result==='退件'; }) : 0] || {}).name || '—';
-        const reason   = proxyMatch ? proxyMatch[2] : (rejEntry.comment || '');
+        const isProxy  = !!proxyMatch;
+        const rejector = isProxy ? proxyMatch[1] : ((APPROVERS_LOCAL[rejIdx] || {}).name || '—');
+        const reason   = isProxy ? proxyMatch[2] : (rejEntry.comment || '');
+        const stepNum  = rejIdx >= 0 ? rejIdx + 1 : null;
+        const stepLabel= stepNum ? ('第 ' + stepNum + ' 關') : '—';
+        var rejTime = rejEntry.at || h.resubmittedAt || '';
         return '<div style="padding:12px 14px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a;margin-bottom:10px">'
-          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-          + '<span style="font-size:12px;font-weight:700;background:#f59e0b;color:#fff;padding:1px 8px;border-radius:20px">第 ' + (hi+1) + ' 次退件</span>'
-          + '<span style="font-size:12px;color:#94a3b8">重送時間：' + fmtDate(h.resubmittedAt) + '</span>'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">'
+          + '<span style="font-size:12px;font-weight:700;background:#f59e0b;color:#fff;padding:2px 9px;border-radius:20px">第 ' + (hi+1) + ' 次退件</span>'
+          + '<span style="font-size:12px;font-weight:600;background:#fee2e2;color:#dc2626;padding:2px 9px;border-radius:20px">' + stepLabel + ' 退件</span>'
           + '</div>'
-          + (rejector ? '<div style="font-size:13px;color:#374151;margin-bottom:3px">退件人：<strong>' + rejector + '</strong></div>' : '')
+          + '<div style="font-size:13px;color:#94a3b8;margin-bottom:4px">退件時間：' + fmtDate(rejTime) + '</div>'
+          + (rejector ? '<div style="font-size:13px;color:#374151;margin-bottom:4px;display:flex;align-items:center;gap:6px">退件人：<strong>' + rejector + '</strong>' + (isProxy ? '<span style="font-size:11px;font-weight:600;background:#ede9fe;color:#7c3aed;padding:1px 7px;border-radius:20px">代理</span>' : '') + '</div>' : '')
           + (reason   ? '<div style="font-size:13px;color:#dc2626">退件原因：' + reason + '</div>' : '<div style="font-size:13px;color:#94a3b8">（未填寫退件原因）</div>')
           + '</div>';
       }).join('')
