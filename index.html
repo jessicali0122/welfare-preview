@@ -298,7 +298,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   #dashboard-top-grid>:first-child [style*="width:48px"]{width:36px!important;height:36px!important}
   #dashboard-top-grid>:first-child [style*="font-size:32px"]{font-size:22px!important}
   #dashboard-top-grid>:first-child [style*="gap:16px"]{gap:10px!important}
-  #stats-grid{grid-template-columns:repeat(2,1fr)!important}
+  #stats-grid{grid-template-columns:repeat(3,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
   #detail-grid{grid-template-columns:1fr!important}
@@ -353,7 +353,7 @@ input[type=checkbox]{accent-color:var(--brand)}
   .stat{padding:12px 14px!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
   #dashboard-top-grid>:first-child{grid-column:1/-1!important}
-  #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
+  #stats-grid{grid-template-columns:repeat(3,1fr)!important;gap:10px!important}
   main{padding:14px!important}
   .card{border-radius:10px!important}
   #view-approvals .card{padding:14px!important}
@@ -616,14 +616,8 @@ input[type=checkbox]{accent-color:var(--brand)}
 
   /* ── 卡片內距縮小 ── */
   .card[style*="padding:20px"]{padding:8px 12px!important}
-  /* ── 申請資訊：壓縮間距 ── */
-  #detail-grid .section-title{font-size:12px!important;margin-bottom:6px!important;padding-bottom:4px!important}
-  #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{gap:6px 12px!important;font-size:12px!important}
-  #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] [style*="font-size:12px"]{font-size:10px!important;margin-bottom:1px!important}
-  #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] [style*="font-weight:600"]{font-size:12px!important}
-  #detail-reason-wrap{margin-top:6px!important}
-  #detail-reason{padding:5px 8px!important;font-size:12px!important;line-height:1.4!important;border-radius:4px!important}
-  #detail-grid{gap:8px!important}
+  /* ── 申請資訊：3欄改4欄節省版面，不動字體間距 ── */
+  #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:repeat(4,1fr)!important}
 
   /* ── 只顯示詳情頁 ── */
   .view{display:none!important}
@@ -5306,9 +5300,7 @@ function updateDetailFlow(c){
 
   // 每關的漸層顏色（品牌綠系：淺 → 深）
   const stepColors = ['#3dba84','#1e9d6b','#157a50','#0f5c3a'];
-  // 中文葉數標籤
-  const leafLabels = ['一葉','二葉','三葉','四葉'];
-  // 葉子 SVG（白色，用於 icon 內）
+  // 葉子 SVG（用於 icon 內）
   function leafSvg(color, size) {
     size = size || 20;
     var c = color || '#fff';
@@ -5321,6 +5313,13 @@ function updateDetailFlow(c){
       + '<path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="'+c+'"/>'
       + '</svg>';
   }
+  // 依關卡數回傳 N 片葉子組合（塞進 36×36 圓內）
+  function leafIconsHtml(count, color) {
+    var c = color || '#fff';
+    if (count <= 1) return leafSvg(c, 20);
+    if (count === 2) return '<div style="display:flex;align-items:center;gap:1px">' + leafSvg(c,15) + leafSvg(c,15) + '</div>';
+    return '<div style="display:flex;align-items:center;gap:0px">' + leafSvg(c,12) + leafSvg(c,12) + leafSvg(c,12) + '</div>';
+  }
 
   let html = '<div style="position:absolute;left:18px;top:18px;bottom:18px;width:2px;background:linear-gradient(to bottom,#3dba84,#0f5c3a)"></div>';
 
@@ -5331,7 +5330,7 @@ function updateDetailFlow(c){
     const comment= apv.comment ? apv.comment : '';
     const mb     = i < APPROVERS.length - 1 ? 'margin-bottom:24px' : '';
     const stepColor = stepColors[Math.min(i, stepColors.length - 1)];
-    const leafLabel = leafLabels[Math.min(i, leafLabels.length - 1)];
+    const leafCount = i + 1; // 第1關1片、第2關2片、第3關3片
     let icon = '', statusHtml = '';
 
     let actorName = (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name;
@@ -5341,29 +5340,29 @@ function updateDetailFlow(c){
     if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
 
     if (result === '核准') {
-      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:'+stepColor+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px '+stepColor+'66">' + leafSvg('#fff', 20) + '</div>';
+      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:'+stepColor+';display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px '+stepColor+'66">' + leafIconsHtml(leafCount,'#fff') + '</div>';
       statusHtml = '<div style="font-size:13px;color:'+stepColor+';font-weight:600;margin-top:2px">✓ 已核准</div>'
                  + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>';
     } else if (result === '退件') {
-      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center">' + leafSvg('#fff', 20) + '</div>';
+      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#dc2626;display:flex;align-items:center;justify-content:center">' + leafIconsHtml(leafCount,'#fff') + '</div>';
       statusHtml = '<div style="font-size:13px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div>'
                  + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>'
                  + (displayComment ? '<div style="font-size:12px;color:#ef4444;margin-top:2px">原因：' + displayComment + '</div>' : '');
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       // 目前待審的關：葉子 + 光暈脈衝
-      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:'+stepColor+';display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px '+stepColor+'33,0 2px 10px '+stepColor+'55">' + leafSvg('#fff', 20) + '</div>';
+      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:'+stepColor+';display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 5px '+stepColor+'33,0 2px 10px '+stepColor+'55">' + leafIconsHtml(leafCount,'#fff') + '</div>';
       statusHtml = '<div style="font-size:13px;color:#d97706;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
                  + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + a.name + '</div>';
     } else {
       // 尚未到達：灰色輪廓葉子
-      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#f8fafc;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center">' + leafSvg('#cbd5e1', 18) + '</div>';
+      icon = '<div style="position:absolute;left:-50px;width:36px;height:36px;border-radius:50%;background:#f8fafc;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center">' + leafIconsHtml(leafCount,'#cbd5e1') + '</div>';
       statusHtml = '<div style="font-size:13px;color:#cbd5e1;margin-top:2px">等待前一關完成</div>'
                  + '<div style="font-size:12px;color:#cbd5e1;margin-top:3px">' + a.name + '</div>';
     }
     var isActive = result || (!isDone && !isRejected && i === currentStep-1);
     var titleColor = isActive ? stepColor : '#94a3b8';
     html += '<div style="position:relative;' + mb + '">' + icon
-          + '<div style="padding-top:2px"><div style="font-size:14px;font-weight:700;color:' + titleColor + '">' + leafLabel + '</div>' + statusHtml + '</div></div>';
+          + '<div style="padding-top:2px"><div style="font-size:14px;font-weight:700;color:' + titleColor + '">' + a.label + '</div>' + statusHtml + '</div></div>';
   });
 
   if (isDone) html += '<div style="margin-top:16px;padding:12px 14px;background:#f0fdf4;border-radius:8px;font-size:14px;font-weight:600;color:#059669;text-align:center;border:1px solid #a7f3d0">🌿 已完成全部簽核，款項處理中</div>';
