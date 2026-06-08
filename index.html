@@ -677,8 +677,8 @@ input[type=checkbox]{accent-color:#ec4899}
     position:relative!important;
     margin-bottom:0!important;
     text-align:center!important;
-    padding:28px 4px 4px!important;
-    border-top:2px solid #e2e8f0!important;
+    padding:36px 8px 8px!important;
+    border-top:2px dashed #f59e0b!important;
   }
   /* 圓形 icon 移到正上方 */
   #flow-timeline > div:not(:first-child) > div:first-child{
@@ -1221,24 +1221,22 @@ tbody td{font-size:var(--fs-base)!important}
       </button>
     </div>
     <!-- 已核准總支出 -->
-    <div class="card" style="padding:0;margin-bottom:14px;border-radius:20px;border:none;overflow:hidden;position:relative;box-shadow:0 4px 16px rgba(0,0,0,.08)">
-      <div style="position:absolute;inset:0;background:linear-gradient(135deg,#f9a8d4 0%,#e879f9 50%,#c084fc 100%);opacity:.75"></div>
-      <div style="position:absolute;right:-30px;top:-30px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.1)"></div>
-      <div style="position:absolute;right:60px;bottom:-40px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.07)"></div>
-      <div style="position:relative;z-index:1;padding:20px 22px;display:flex;align-items:center;gap:16px">
+    <div class="card" style="padding:0;margin-bottom:14px;border-radius:20px;border:none;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.07);background:#fff;border-left:5px solid #ec4899">
+      <div style="display:none"></div>
+      <div style="padding:20px 22px;display:flex;align-items:center;gap:16px">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
             <span style="font-size:16px;line-height:1">💵</span>
-            <span style="font-size:12px;color:rgba(255,255,255,.9);font-weight:600;letter-spacing:.5px">已核准總支出</span>
+            <span style="font-size:12px;color:#ec4899;font-weight:600;letter-spacing:.5px">已核准總支出</span>
           </div>
-          <div style="font-size:36px;font-weight:900;color:#fff;letter-spacing:-2px;line-height:1;text-shadow:0 2px 12px rgba(0,0,0,.15)" id="stat-balance">NT$ —</div>
-          <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:7px;display:flex;align-items:center;gap:4px">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.75)" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+          <div style="font-size:36px;font-weight:900;color:#0f172a;letter-spacing:-2px;line-height:1" id="stat-balance">NT$ —</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:7px;display:flex;align-items:center;gap:4px">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
             累計已完成案件金額
           </div>
         </div>
-        <div style="width:1px;height:52px;background:rgba(255,255,255,.2)"></div>
-        <button onclick="window._newFormReturnView='dashboard';openNewForm()" style="background:linear-gradient(120deg,#fff,#fce7f3 40%,#f5f3ff);color:#555;border:1px solid rgba(200,150,200,.3);border-radius:50px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0">
+        <div style="width:1px;height:52px;background:#f1f5f9"></div>
+        <button onclick="window._newFormReturnView='dashboard';openNewForm()" style="background:#ec4899;color:#fff;border:none;border-radius:50px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 10px rgba(236,72,153,.3)">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           新增申請
         </button>
@@ -3142,7 +3140,7 @@ function renderAuditLogTable(logs) {
     const displayName = localName(l.email, l.name);
     return '<tr class="tr">'
       + '<td style="padding:12px 14px;color:#94a3b8;white-space:nowrap;text-align:center">'+fmtDate(l.at)+'</td>'
-      + '<td style="padding:12px 14px;white-space:nowrap;text-align:center">'+nameChip(displayName)+'</td>'
+      + '<td style="padding:12px 14px;white-space:nowrap;text-align:center">'+nameChip(displayName,24,l.email)+'</td>'
       + '<td style="padding:12px 14px;text-align:center">'+badge+'</td>'
       + '<td style="padding:12px 14px;text-align:center">'+caseLink+'</td>'
       + '<td style="padding:12px 14px;color:#64748b;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left" title="'+l.desc+'">'+l.desc+'</td>'
@@ -3216,7 +3214,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:#ec4899;width:24px;height:24px;cursor:pointer"></td>
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:13px;font-family:monospace;letter-spacing:.04em">${c.caseId}</span></td>
     <td style="padding:12px 14px;color:#94a3b8;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
-    <td style="padding:12px 14px;white-space:nowrap;color:#374151">${nameChip(localName(c.email,c.name))}</td>
+    <td style="padding:12px 14px;white-space:nowrap;color:#374151">${nameChip(localName(c.email,c.name),24,c.email)}</td>
     <td style="padding:12px 14px;color:#64748b;white-space:nowrap">${c.department||'—'}</td>
     <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#0f172a;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${c.project||c.subject||'—'}</td>
     <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
@@ -4570,6 +4568,10 @@ async function _syncMembersFromServer() {
       const entry = { name: u.name, email: u.email, dept: u.department || '', employeeId: u.employeeId || '' };
       if (idx >= 0) LOCAL_USER_LIST[idx] = entry;
       else LOCAL_USER_LIST.push(entry);
+      // 儲存其他成員頭像到 localStorage（供 nameChip 顯示）
+      if (u.avatar) {
+        localStorage.setItem('bf_avatar_' + u.email, u.avatar);
+      }
     });
     // 同步管理員清單（只新增，保留原有硬編碼）
     res.members.forEach(function(u) {
@@ -5331,7 +5333,7 @@ function updateDetailFlow(c){
     return leafSvg(c, 22);
   }
 
-  let html = '<div style="position:absolute;left:18px;top:18px;bottom:18px;width:2px;background:linear-gradient(to bottom,#fbbf24,#f59e0b)"></div>';
+  let html = '<div style="position:absolute;left:19px;top:36px;bottom:36px;width:2px;background:repeating-linear-gradient(to bottom,#f59e0b 0px,#f59e0b 6px,transparent 6px,transparent 13px)"></div>';
 
   APPROVERS.forEach(function(a, i) {
     const apv    = approvals[i] || {};
@@ -5642,14 +5644,19 @@ function adminUserAvatarColor(name) {
   return ADMIN_USER_AVATAR_COLORS[(name||'?').charCodeAt(0) % ADMIN_USER_AVATAR_COLORS.length];
 }
 // ── 共用：頭像 chip（小圓 + 姓名）──
-function nameChip(name, size) {
+function nameChip(name, size, email) {
   size = size || 24;
   var n = name || '—';
   var color = adminUserAvatarColor(n);
   var initial = n.charAt(0);
   var fs = Math.round(size * 0.5);
+  // 嘗試從 localStorage 取頭像（自己或其他人）
+  var avatarUrl = email ? localStorage.getItem('bf_avatar_' + email) : null;
+  var avatarHtml = avatarUrl
+    ? '<img src="'+avatarUrl+'" style="width:'+size+'px;height:'+size+'px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0">'
+    : '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';display:inline-flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">'+initial+'</div>';
   return '<div style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">'
-    + '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';display:inline-flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">'+initial+'</div>'
+    + avatarHtml
     + '<span>'+n+'</span>'
     + '</div>';
 }
@@ -5661,7 +5668,7 @@ function buildAdminUserRow(u) {
   const firstChar = (u.name || '?').charAt(0);
   return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" style="border-bottom:1px solid #f8fafc">
     <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
-    <td style="padding:12px 16px">${nameChip(u.name||'—', 28)}</td>
+    <td style="padding:12px 16px">${nameChip(u.name||'—', 28, u.email)}</td>
     <td style="padding:12px 16px;font-size:13px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${u.employeeId||'—'}</td>
     <td style="padding:12px 16px;font-size:13px;color:#374151;white-space:nowrap">${u.department||'—'}</td>
     <td style="padding:12px 16px;color:#64748b">${u.email||'—'}</td>
