@@ -299,7 +299,7 @@ input[type=checkbox]{accent-color:#ec4899}
   #dashboard-top-grid>:first-child [style*="width:48px"]{width:36px!important;height:36px!important}
   #dashboard-top-grid>:first-child [style*="font-size:32px"]{font-size:22px!important}
   #dashboard-top-grid>:first-child [style*="gap:16px"]{gap:10px!important}
-  #stats-grid{grid-template-columns:repeat(3,1fr)!important}
+  #stats-grid{grid-template-columns:repeat(2,1fr)!important}
   #charts-row{grid-template-columns:1fr!important}
   #form-grid{grid-template-columns:1fr!important}
   #detail-grid{grid-template-columns:1fr!important}
@@ -1221,49 +1221,45 @@ tbody td{font-size:var(--fs-base)!important}
       </button>
     </div>
     <!-- 已核准總支出 -->
-    <div class="card" style="padding:0;margin-bottom:14px;border-radius:20px;border:none;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(0,0,0,.07);background:#fff;border-left:5px solid #ec4899">
-      <div style="display:none"></div>
-      <div style="padding:20px 22px;display:flex;align-items:center;gap:16px">
-        <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-            <span style="font-size:16px;line-height:1">💵</span>
-            <span style="font-size:12px;color:#ec4899;font-weight:600;letter-spacing:.5px">已核准總支出</span>
-          </div>
-          <div style="font-size:36px;font-weight:900;color:#0f172a;letter-spacing:-2px;line-height:1" id="stat-balance">NT$ —</div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:7px;display:flex;align-items:center;gap:4px">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
-            累計已完成案件金額
-          </div>
+    <!-- 4 張統計卡：桌面 4 欄一列，手機 2x2 -->
+    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px">
+      <!-- 已核准總支出（粉色漸層） -->
+      <div class="stat" style="border-radius:16px;padding:18px 20px;overflow:hidden;position:relative;background:linear-gradient(135deg,#ec4899 0%,#db2777 100%);box-shadow:0 4px 16px rgba(236,72,153,.28);display:flex;flex-direction:column;justify-content:space-between;min-height:110px;box-sizing:border-box">
+        <div>
+          <div style="font-size:11px;color:rgba(255,255,255,.85);font-weight:600;letter-spacing:.4px;margin-bottom:8px;display:flex;align-items:center;gap:5px">💵 已核准總支出</div>
+          <div style="font-size:30px;font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1" id="stat-balance">NT$ —</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.7);margin-top:6px">↑ 累計已完成案件金額</div>
         </div>
-        <div style="width:1px;height:52px;background:#f1f5f9"></div>
-        <button onclick="window._newFormReturnView='dashboard';openNewForm()" style="background:#ec4899;color:#fff;border:none;border-radius:50px;padding:11px 22px;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 10px rgba(236,72,153,.3)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          新增申請
+        <button onclick="window._newFormReturnView='dashboard';openNewForm()" style="margin-top:12px;background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4);border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:5px;align-self:flex-start;font-family:inherit">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
         </button>
       </div>
-    </div>
-    <!-- 3 張即時狀態卡 -->
-    <div id="stats-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
-      <!-- 待簽核 -->
-      <div class="stat" style="border-radius:16px;background:linear-gradient(150deg,#fff 30%,#fdf2f8 100%);border:1.5px solid #f3f4f6;padding:10px 14px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box">
-        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#fce7f3;color:#db2777;font-size:11px;font-weight:700;margin-bottom:8px">進行中</div>
-        <div style="font-size:36px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px" id="stat-pending">—</div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:5px;font-weight:500">待簽核案件</div>
-        <div style="font-size:11px;color:#db2777;font-weight:500;margin-top:3px;min-height:14px" id="stat-my-turn"></div>
+      <!-- 進行中（白卡＋橘色左邊條） -->
+      <div class="stat" style="border-radius:16px;background:#fff;border-left:5px solid #f59e0b;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
+        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#fef3c7;color:#d97706;font-size:11px;font-weight:700">進行中</div>
+        <div style="font-size:32px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;margin-top:10px" id="stat-pending">—</div>
+        <div style="margin-top:auto;padding-top:8px">
+          <div style="font-size:11px;color:#9ca3af;font-weight:500">待簽核案件</div>
+          <div style="font-size:11px;color:#f59e0b;font-weight:500;margin-top:3px;min-height:14px" id="stat-my-turn"></div>
+        </div>
       </div>
-      <!-- 已完成 -->
-      <div class="stat" style="border-radius:16px;background:linear-gradient(150deg,#fff 30%,#f5f3ff 100%);border:1.5px solid #f3f4f6;padding:10px 14px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box">
-        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#ede9fe;color:#7c3aed;font-size:11px;font-weight:700;margin-bottom:8px">已核准</div>
-        <div style="font-size:36px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px" id="stat-done">—</div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:5px;font-weight:500">已完成案件</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:3px;min-height:14px">累計核准件數</div>
+      <!-- 已核准（白卡＋綠色左邊條） -->
+      <div class="stat" style="border-radius:16px;background:#fff;border-left:5px solid #1e9d6b;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
+        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#d1fae5;color:#065f46;font-size:11px;font-weight:700">已核准</div>
+        <div style="font-size:32px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;margin-top:10px" id="stat-done">—</div>
+        <div style="margin-top:auto;padding-top:8px">
+          <div style="font-size:11px;color:#9ca3af;font-weight:500">已完成案件</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:3px;min-height:14px">累計核准件數</div>
+        </div>
       </div>
-      <!-- 已退件 -->
-      <div id="stat-rejected-card" class="stat" style="border-radius:16px;background:linear-gradient(150deg,#fff 30%,#fdf4ff 100%);border:1.5px solid #f3f4f6;padding:10px 14px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06);display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box">
-        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#fae8ff;color:#a21caf;font-size:11px;font-weight:700;margin-bottom:8px">需修正</div>
-        <div style="font-size:36px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px" id="stat-rejected">—</div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:5px;font-weight:500">已退件案件</div>
-        <div style="font-size:11px;color:#94a3b8;margin-top:3px;min-height:14px" id="stat-rejected-history"></div>
+      <!-- 需修正（白卡＋深灰色左邊條） -->
+      <div id="stat-rejected-card" class="stat" style="border-radius:16px;background:#fff;border-left:5px solid #6b7280;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
+        <div style="display:inline-block;padding:3px 10px;border-radius:20px;background:#f3f4f6;color:#374151;font-size:11px;font-weight:700">需修正</div>
+        <div style="font-size:32px;font-weight:900;color:#111827;line-height:1;letter-spacing:-1px;margin-top:10px" id="stat-rejected">—</div>
+        <div style="margin-top:auto;padding-top:8px">
+          <div style="font-size:11px;color:#9ca3af;font-weight:500">已退件案件</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:3px;min-height:14px" id="stat-rejected-history"></div>
+        </div>
       </div>
     </div>
     <div class="card table-wrap" style="overflow:hidden">
