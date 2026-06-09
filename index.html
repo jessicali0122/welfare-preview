@@ -574,7 +574,7 @@ input[type=checkbox]{accent-color:#e16b8c}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制防止過長訊息擋住畫面 */
-  #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(280px,calc(100vw - 48px))!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(300px,calc(100vw - 48px))!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;text-align:center!important;line-height:1.4!important}
   /* submit-result-card 手機版由上方那段 CSS 控制（top:12px），此處不重複設定 bottom */
 }
 .skeleton{background:linear-gradient(90deg,#f1f5f9 25%,#e8edf3 50%,#f1f5f9 75%);background-size:200% 100%;animation:skwave 1.4s infinite;border-radius:6px;display:inline-block}
@@ -4369,11 +4369,11 @@ async function saveDraftForm(silent = false) {
 
   // ── 樂觀更新：先存 localStorage 並立即顯示成功，API 在背景同步 ──
   autoSaveDraft(); // 確保 localStorage 是最新狀態
-  if (!silent) toast('💾 草稿已儲存！');
-
-  // 若有待上傳的附件，先標記「上傳中」UI（不等 GAS 回應）
   const filesToUp = window._pendingFiles && window._pendingFiles.length > 0
     ? [...window._pendingFiles] : [];
+  if (!silent) toast(filesToUp.length > 0 ? '💾 草稿已儲存，附件上傳中...' : '💾 草稿已儲存！');
+
+  // 若有待上傳的附件，先標記「上傳中」UI（不等 GAS 回應）
   if (filesToUp.length > 0) {
     window._pendingFiles = [];
     const _fle = document.getElementById('file-list');
@@ -5009,7 +5009,7 @@ async function uploadDraftFiles(caseId, files) {
   }));
   if (ok > 0) {
     updateFormProgress();
-    toast('✅ 草稿附件已暫存（' + ok + ' 個），送出前可刪除');
+    toast('✅ 附件已存至雲端（' + ok + ' 個）');
     try {
       const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
       _sd.uploadedFiles = window._uploadedDraftFiles.slice();
