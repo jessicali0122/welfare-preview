@@ -5077,7 +5077,7 @@ function compressImageFile(file) {
     const objUrl = URL.createObjectURL(file);
     img.onload = function() {
       URL.revokeObjectURL(objUrl);
-      const MAX = 1920;
+      const MAX = 1280;
       let w = img.width, h = img.height;
       if (w > MAX || h > MAX) {
         if (w >= h) { h = Math.round(h * MAX / w); w = MAX; }
@@ -5093,7 +5093,7 @@ function compressImageFile(file) {
         compressed._uid = file._uid;
         compressed._originalSize = file.size;
         resolve(compressed);
-      }, 'image/jpeg', 0.82);
+      }, 'image/jpeg', 0.72);
     };
     img.onerror = function() { URL.revokeObjectURL(objUrl); resolve(file); };
     img.src = objUrl;
@@ -7163,15 +7163,15 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, ne
   m.innerHTML = `<div id="submit-preview-modal" style="background:#fff;border-radius:16px;padding:28px 24px;max-width:460px;width:94%;box-shadow:0 20px 60px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto">
     <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:4px">📋 送出確認</div>
     <div style="font-size:13px;color:#94a3b8;margin-bottom:18px">請確認以下資訊正確後再送出</div>
-    <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:13px">
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">主旨</span><span style="color:#0f172a;font-weight:600;flex:1">${subject}</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">申請人</span><span style="color:#0f172a;font-weight:600;flex:1">${applicant}</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">收款人</span><span style="color:#0f172a;font-weight:600;flex:1">${payee}</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">部門</span><span style="color:#0f172a;font-weight:600;flex:1">${dept||'—'}</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">分類</span><span style="color:#0f172a;font-weight:600;flex:1">${cats}</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">明細</span><span style="color:#0f172a;font-weight:600;flex:1">${items.length} 筆</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">附件</span><span style="color:#0f172a;font-weight:600;flex:1">${fileCnt} 份${pendingCnt > 0 ? '（' + pendingCnt + ' 份送出後上傳）' : ''}</span></div>
-      ${reason ? `<div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">備註</span><span style="color:#374151;flex:1;line-height:1.5">${reason}</span></div>` : ''}
+    <div style="background:#f8fafc;border-radius:10px;padding:14px 16px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;font-size:14px">
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">主旨</span><span style="color:#e16b8c;font-weight:600;flex:1">${subject}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">申請人</span><span style="color:#e16b8c;font-weight:600;flex:1">${applicant}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">收款人</span><span style="color:#e16b8c;font-weight:600;flex:1">${payee}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">部門</span><span style="color:#e16b8c;font-weight:600;flex:1">${dept||'—'}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">分類</span><span style="color:#e16b8c;font-weight:600;flex:1">${cats}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">明細</span><span style="color:#e16b8c;font-weight:600;flex:1">${items.length} 筆</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">附件</span><span style="color:#e16b8c;font-weight:600;flex:1">${fileCnt} 份${pendingCnt > 0 ? '（' + pendingCnt + ' 份送出後上傳）' : ''}</span></div>
+      ${reason ? `<div style="display:flex;gap:10px"><span style="color:#94a3b8;width:60px;flex-shrink:0">備註</span><span style="color:#e16b8c;flex:1;line-height:1.5">${reason}</span></div>` : ''}
     </div>
     ${needsReceipt ? `<div style="font-size:12px;color:#64748b;margin-bottom:12px;display:flex;align-items:center;gap:6px">📎 請確認已準備好實體發票或收據，審核人員將會核對。</div>` : ''}
     <div style="padding:12px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9">
