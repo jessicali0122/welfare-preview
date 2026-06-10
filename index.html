@@ -352,7 +352,7 @@ input[type=checkbox]{accent-color:#e16b8c}
   #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
   #form-grid{grid-template-columns:1fr!important}
-  #stats-grid .stat{padding:16px 16px!important;min-height:130px!important}
+  #stats-grid .stat{padding:14px 14px!important;min-height:110px!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
   #dashboard-top-grid>:first-child{grid-column:1/-1!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
@@ -660,10 +660,8 @@ input[type=checkbox]{accent-color:#e16b8c}
 
   /* ── 卡片內距縮小 ── */
   .card[style*="padding:20px"]{padding:8px 12px!important}
-  /* ── 申請資訊：3欄改4欄，欄位重新排序，不動字體間距 ── */
-  /* 雙 ID 提高 specificity，蓋過 @media(max-width:768px) 的 1fr 1fr 規則 */
-  #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:repeat(4,1fr)!important;gap:10px 16px!important}
-  /* 欄位順序：主旨(1/-1) → 申請時間 → 申請人 → 部門 → 員工編號 → 收款人 → 付款方式 */
+  /* ── 申請資訊：維持3欄，欄位重新排序 ── */
+  #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:repeat(3,1fr)!important;gap:10px 16px!important}
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(1){order:1}  /* 主旨 */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(6){order:2}  /* 申請時間 */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(2){order:3}  /* 申請人 */
@@ -671,8 +669,12 @@ input[type=checkbox]{accent-color:#e16b8c}
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(3){order:5}  /* 員工編號 */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(5){order:6}  /* 收款人 */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(7){order:7}  /* 付款方式 */
+  /* ── 頂部按鈕列（案件單號列）：清除間距 ── */
+  #view-detail > div[style*="margin-bottom:20px"]{margin-bottom:6px!important}
   /* ── 左欄各卡片間距統一 ── */
   #detail-grid > div:first-child{gap:6px!important}
+  /* ── detail-grid 整體 gap 縮小 ── */
+  #detail-grid{gap:6px!important}
 
   /* ── 只顯示詳情頁 ── */
   .view{display:none!important}
@@ -692,51 +694,63 @@ input[type=checkbox]{accent-color:#e16b8c}
     order:2!important;
     width:100%!important;
   }
-  /* 右欄（簽核進度）排第一，與上方留間距 */
+  /* 右欄（簽核進度）排第一 */
   #detail-grid > div:last-child{
     order:1!important;
     width:100%!important;
-    margin-top:12px!important;
+    margin-top:0!important;
   }
 
-  /* ── 簽核進度：列印保持直列，緊縮尺寸 ── */
+  /* ── 簽核進度：橫列顯示 ── */
   #flow-timeline{
     display:flex!important;
-    flex-direction:column!important;
-    gap:4px!important;
-    padding:0!important;
-  }
-  /* 每個關卡 row */
-  #flow-timeline > div{
-    display:flex!important;
-    gap:8px!important;
+    flex-direction:row!important;
     align-items:flex-start!important;
-    padding-bottom:2px!important;
+    padding:0!important;
+    gap:0!important;
+    position:static!important;
   }
-  /* 左欄（icon + 虛線容器）縮小 */
+  /* 每個步驟等寬，icon 置中上方 */
+  #flow-timeline > div{
+    flex:1!important;
+    display:flex!important;
+    flex-direction:column!important;
+    align-items:center!important;
+    text-align:center!important;
+    position:relative!important;
+    padding:34px 6px 8px!important;
+    border-top:2px dashed #cbd5e1!important;
+    gap:0!important;
+  }
+  /* 左欄（icon 容器）絕對定位置頂部中央 */
   #flow-timeline > div > div:first-child{
-    width:28px!important;
-    flex-shrink:0!important;
+    position:absolute!important;
+    top:-16px!important;
+    left:50%!important;
+    transform:translateX(-50%)!important;
+    width:32px!important;
+    flex-direction:column!important;
   }
-  /* icon 本身縮小 */
+  /* icon 本身 */
   #flow-timeline > div > div:first-child > div:first-child{
-    width:28px!important;
-    height:28px!important;
+    width:32px!important;
+    height:32px!important;
   }
-  /* 隱藏虛線連接段 */
+  /* 隱藏直欄虛線 */
   #flow-timeline > div > div:first-child > div:nth-child(2){
     display:none!important;
   }
-  /* 右欄文字 */
+  /* 右欄文字改為全寬置中 */
   #flow-timeline > div > div:last-child{
-    padding-top:4px!important;
-    padding-bottom:4px!important;
+    width:100%!important;
+    text-align:center!important;
+    padding-top:0!important;
   }
   #flow-timeline *{
     white-space:normal!important;
     overflow:visible!important;
     text-overflow:clip!important;
-    font-size:11px!important;
+    font-size:10px!important;
   }
 
   /* ── 申請資訊：列印順序同畫面（主旨、申請人、收款人、部門、員工編號、付款方式、申請時間）── */
@@ -1265,7 +1279,7 @@ tbody td{font-size:var(--fs-base)!important}
     <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
 
       <!-- ① 已核准總支出（玫瑰紅漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#f77aaa 0%,#e16b8c 45%,#c2185b 100%);box-shadow:0 8px 28px rgba(225,107,140,.38);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#f77aaa 0%,#e16b8c 45%,#c2185b 100%);box-shadow:0 8px 28px rgba(225,107,140,.38);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准總支出</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-balance">NT$ —</div>
@@ -1278,7 +1292,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ② 進行中（琥珀橘漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#ffcc5c 0%,#f59e0b 45%,#d97706 100%);box-shadow:0 8px 28px rgba(245,158,11,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#ffcc5c 0%,#f59e0b 45%,#d97706 100%);box-shadow:0 8px 28px rgba(245,158,11,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">進行中</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-pending">—</div>
@@ -1289,7 +1303,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ③ 已核准（品牌綠漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#2ee89a 0%,#1e9d6b 50%,#157a50 100%);box-shadow:0 8px 28px rgba(30,157,107,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#2ee89a 0%,#1e9d6b 50%,#157a50 100%);box-shadow:0 8px 28px rgba(30,157,107,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-done">—</div>
@@ -1300,7 +1314,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ④ 需修正（深藍灰漸層） -->
-      <div id="stat-rejected-card" class="stat" style="background:linear-gradient(135deg,#94a3b8 0%,#64748b 50%,#475569 100%);box-shadow:0 8px 28px rgba(100,116,139,.28);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
+      <div id="stat-rejected-card" class="stat" style="background:linear-gradient(135deg,#94a3b8 0%,#64748b 50%,#475569 100%);box-shadow:0 8px 28px rgba(100,116,139,.28);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">需修正</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-rejected">—</div>
@@ -1859,7 +1873,6 @@ tbody td{font-size:var(--fs-base)!important}
             <div style="grid-column:1/-1"><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">主旨</div><div id="detail-subject" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請人</div><div id="detail-applicant-name" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#0f172a">—</div></div>
-            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">銀行帳號</div><div id="detail-bank-account" style="font-weight:600;color:#0f172a;font-family:monospace;letter-spacing:.5px">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">付款方式</div><div style="font-weight:600;color:#0f172a">匯款（公司薪轉戶）</div></div>
@@ -3959,9 +3972,6 @@ async function loadDetail(caseId, _fromPop) {
   // 收款人
   const payeeEl = document.getElementById('detail-payee');
   if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
-  // 銀行帳號
-  const bankEl = document.getElementById('detail-bank-account');
-  if (bankEl) bankEl.textContent = c.bankAccount || '—';
   const applyDateEl = document.getElementById('detail-apply-date');
   if (applyDateEl) applyDateEl.textContent = fmtDate(c.applyDate || c.createdAt);
   // 備註／請款原因
@@ -5629,7 +5639,7 @@ function renderFlowList(approvers) {
       ? `<button onclick="toggleFlowStep(${i})" title="${isEnabled?'點擊停用':'點擊啟用'}" style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s">${isEnabled?'● 啟用中':'○ 已停用'}</button>`
       : `<span style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;display:inline-flex;align-items:center;white-space:nowrap">${isEnabled?'● 啟用中':'○ 已停用'}</span>`;
 
-    const rowBg      = isEnabled ? '#fff' : '#f8fafc';
+    const rowBg      = isEnabled ? '#fdf5f7' : '#f8fafc';
     const rowBorder  = isEnabled ? '1px solid #fcd5e0' : '1px solid #e8edf3';
     const rowAccent  = isEnabled ? 'border-left:4px solid #e16b8c;' : 'border-left:4px solid #d1d5db;';
     const numBg      = isEnabled ? 'linear-gradient(135deg,#f77aaa,#c2185b)' : '#e2e8f0';
