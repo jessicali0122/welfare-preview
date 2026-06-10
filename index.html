@@ -2830,8 +2830,10 @@ function closeAvatarCrop() {
 }
 
 function confirmAvatarCrop() {
+  if (window._avatarCropLock) return;
+  window._avatarCropLock = true;
   var img = _acm.img;
-  if (!img) return;
+  if (!img) { window._avatarCropLock = false; return; }
   var R    = ACM_R;        // 118
   var size = R * 2;        // 236 輸出直徑
   var cx   = ACM_SIZE / 2; // 130 stage 圓心
@@ -2856,6 +2858,7 @@ function confirmAvatarCrop() {
   // 背景靜默同步到伺服器（不卡 UI）
   setTimeout(function() {
     _fetchAPI('saveAvatar', { avatar: dataUrl }).catch(function(){});
+    window._avatarCropLock = false;
   }, 300);
 }
 
@@ -2863,11 +2866,15 @@ function confirmAvatarCrop() {
 
 // ── 大頭貼：套用到所有頭像元素 ──
 function applyAvatar(dataUrl) {
+  // ★ Fix：改用 createElement 避免 XSS（dataUrl 若被竄改可注入任意 HTML）
+  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return;
   document.querySelectorAll('.user-avatar-wrap').forEach(function(wrap) {
-    if (dataUrl) {
-      wrap.style.background = 'transparent';
-      wrap.innerHTML = '<img src="' + dataUrl + '" style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block">';
-    }
+    wrap.style.background = 'transparent';
+    var img = document.createElement('img');
+    img.src = dataUrl;
+    img.style.cssText = 'width:100%;height:100%;border-radius:50%;object-fit:cover;display:block';
+    wrap.innerHTML = '';
+    wrap.appendChild(img);
   });
 }
 
@@ -3048,6 +3055,7 @@ async function loadDashboard() {
   _skEl('stat-done', 60, 24);
   _skEl('stat-rejected', 60, 24);
   const res = await callAPI('list');
+  if (res.ok && res.cases) window._allCasesCache = res.cases;
   if (!res.ok) {
     if (!res._authError) toast('❌ 總覽載入失敗：' + res.error);
     // 清除骨架屏，顯示 fallback，避免 loading 動畫永遠卡住
@@ -3133,7 +3141,13 @@ async function loadAuditLogDashboard() {
     }
   }
   tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#94a3b8">⏳ 載入中...</td></tr>';
+  const _auditTimeoutId = setTimeout(function() {
+    if (tbody.innerHTML.includes('載入中')) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#ef4444">載入逾時，請重新整理後再試</td></tr>';
+    }
+  }, 15000);
   const res = await callAPI('getAuditLog', { limit: 200 }, { noCache: true });
+  clearTimeout(_auditTimeoutId);
   if (!res.ok) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#ef4444">載入失敗：' + (res.error||'請稍後再試') + '</td></tr>';
     return;
@@ -3518,6 +3532,7 @@ function _pageRange(cur, total) {
 async function loadApprovals() {
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
+  if (res.cases) window._allCasesCache = res.cases;
   // 管理者：顯示全部待審核案件（可代理任一關）；一般審核人：只顯示輪到自己那關
   const pending = (res.cases || []).filter(c =>
     isMyTurnToApprove(c) || (isAdmin() && c.status && c.status.includes('待'))
@@ -4388,9 +4403,8 @@ async function saveDraftForm(silent = false) {
     }
   }
 
-  _saveDraftLock = false; // 立即釋放鎖，讓使用者可以繼續操作
-
   // 背景同步到 GAS（不 await，不阻塞 UI）
+  // ★ Fix：鎖必須等 API 回應後才釋放，避免重複點擊時 _draftCaseId 仍為 null 而建立多份草稿
   callAPI('draft', payload).then(res => {
     if (res.ok) {
       _draftCaseId = res.caseId;
@@ -4414,6 +4428,8 @@ async function saveDraftForm(silent = false) {
     }
   }).catch(() => {
     if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機');
+  }).finally(() => {
+    _saveDraftLock = false; // API 回應後才釋放，防止重複點擊建立多份草稿
   });
 }
 
@@ -4540,15 +4556,20 @@ function sw(name,elOrName,_fromPop){
     }
     checkDraftBanner();
     // 從 localStorage 還原草稿 caseId 和已上傳附件（僅 sw 直接切換時；openDraft 會自己還原）
-    if (!window._openDraftInProgress && !window._newFormFreshStart) {
+    // ★ Fix：_newFormFreshStart 只阻止填入表單內容，仍需還原 caseId 追蹤，
+    //        否則點「新增申請」後儲存草稿會以 caseId=null 建立新草稿
+    if (!window._openDraftInProgress) {
       try {
         const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
         if (_sd.caseId) {
           _draftCaseId = _sd.caseId;
           window._uploadedDraftFiles = _sd.uploadedFiles || [];
-          const _flr = document.getElementById('file-list');
-          if (_flr && window._uploadedDraftFiles.length > 0) {
-            window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+          // 只有非 fresh start 才渲染附件列表（避免新表單預設帶入舊附件 UI）
+          if (!window._newFormFreshStart) {
+            const _flr = document.getElementById('file-list');
+            if (_flr && window._uploadedDraftFiles.length > 0) {
+              window._uploadedDraftFiles.forEach(f => renderDraftFileItem(f));
+            }
           }
           // 有伺服器端草稿時顯示「刪除草稿」按鈕
           var _ddb2 = document.getElementById('delete-draft-btn');
@@ -6807,6 +6828,12 @@ function restoreDraft(){
   }catch(e){toast('❌ 草稿恢復失敗');}
 }
 function clearDraft(){
+  // ★ Fix：若有 server 端草稿，一併刪除，避免殘留在草稿列表
+  const _oldDraftId = _draftCaseId;
+  if (_oldDraftId) {
+    callAPI('deleteDraft', { caseId: _oldDraftId }).catch(() => {});
+    _cacheClear();
+  }
   localStorage.removeItem('bf_draft');
   document.getElementById('draft-banner').classList.remove('show');
   _draftCaseId=null;
