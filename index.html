@@ -5,7 +5,56 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light only">
 <title>福委會請款簽核系統</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='%231e9d6b' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='%231e9d6b'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='%231e9d6b'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='%231e9d6b'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='%231e9d6b'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='%231e9d6b'/></svg>">
+<link rel="icon" id="main-favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='%231e9d6b' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='%231e9d6b'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='%231e9d6b'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='%231e9d6b'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='%231e9d6b'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='%231e9d6b'/></svg>">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BeneFlow">
+<meta name="theme-color" content="#1e9d6b">
+<script>
+(function(){
+  try{
+    var s=180,r=40;
+    var cv=document.createElement('canvas');cv.width=cv.height=s;
+    var x=cv.getContext('2d');
+    /* rounded rect background */
+    x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.arcTo(s,0,s,r,r);
+    x.lineTo(s,s-r);x.arcTo(s,s,s-r,s,r);
+    x.lineTo(r,s);x.arcTo(0,s,0,s-r,r);
+    x.lineTo(0,r);x.arcTo(0,0,r,0,r);x.closePath();
+    var g=x.createLinearGradient(0,0,s,s);
+    g.addColorStop(0,'#2ee89a');g.addColorStop(.5,'#1e9d6b');g.addColorStop(1,'#157a50');
+    x.fillStyle=g;x.fill();
+    /* leaf paths — scaled from 48x48 to 108px, offset 36px */
+    var sc=108/48,ox=36,oy=36;
+    x.save();x.translate(ox,oy);x.scale(sc,sc);
+    x.fillStyle='rgba(255,255,255,.92)';
+    x.strokeStyle='rgba(255,255,255,.92)';
+    x.lineWidth=2.5;x.lineCap='round';
+    /* stem */
+    x.beginPath();x.moveTo(18,44);x.bezierCurveTo(18,44,19,35,20,26);x.bezierCurveTo(21,18,24,10,27,4);x.stroke();
+    /* leaves: [sx,sy, cp1x,cp1y, cp2x,cp2y, ex,ey, cp3x,cp3y, cp4x,cp4y] */
+    [[20,37,16,33,9,34,8,39,13,41,18,39],
+     [21,28,25,24,32,25,32,30,27,32,22,30],
+     [21,21,17,16,10,17,10,22,15,24,20,22],
+     [23,14,27,10,34,11,33,16,28,17,24,15],
+     [25,7,23,3,17,4,18,8,21,10,24,8],
+     [27,4,29,1,34,2,33,6,30,7,27,5]
+    ].forEach(function(p){
+      x.beginPath();x.moveTo(p[0],p[1]);
+      x.bezierCurveTo(p[2],p[3],p[4],p[5],p[6],p[7]);
+      x.bezierCurveTo(p[8],p[9],p[10],p[11],p[0],p[1]);
+      x.closePath();x.fill();
+    });
+    x.restore();
+    var d=cv.toDataURL('image/png');
+    /* apple-touch-icon */
+    var l=document.createElement('link');l.rel='apple-touch-icon';l.sizes='180x180';l.href=d;
+    document.head.insertBefore(l,document.head.firstChild);
+    /* update favicon too */
+    var f=document.getElementById('main-favicon');if(f)f.href=d;
+  }catch(e){}
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -707,6 +756,7 @@ input[type=checkbox]{accent-color:#e16b8c}
     flex-direction:row!important;
     align-items:flex-start!important;
     padding:0!important;
+    margin-top:20px!important;
     gap:0!important;
     position:static!important;
   }
@@ -1279,7 +1329,7 @@ tbody td{font-size:var(--fs-base)!important}
     <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
 
       <!-- ① 已核准總支出（玫瑰紅漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#f77aaa 0%,#e16b8c 45%,#c2185b 100%);box-shadow:0 8px 28px rgba(225,107,140,.38);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#f77aaa 0%,#e16b8c 45%,#c2185b 100%);box-shadow:0 8px 28px rgba(225,107,140,.38);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:96px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准總支出</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-balance">NT$ —</div>
@@ -1292,7 +1342,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ② 進行中（琥珀橘漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#ffcc5c 0%,#f59e0b 45%,#d97706 100%);box-shadow:0 8px 28px rgba(245,158,11,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#ffcc5c 0%,#f59e0b 45%,#d97706 100%);box-shadow:0 8px 28px rgba(245,158,11,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:96px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">進行中</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-pending">—</div>
@@ -1303,7 +1353,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ③ 已核准（品牌綠漸層） -->
-      <div class="stat" style="background:linear-gradient(135deg,#2ee89a 0%,#1e9d6b 50%,#157a50 100%);box-shadow:0 8px 28px rgba(30,157,107,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
+      <div class="stat" style="background:linear-gradient(135deg,#2ee89a 0%,#1e9d6b 50%,#157a50 100%);box-shadow:0 8px 28px rgba(30,157,107,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:96px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-done">—</div>
@@ -1314,7 +1364,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
 
       <!-- ④ 需修正（深藍灰漸層） -->
-      <div id="stat-rejected-card" class="stat" style="background:linear-gradient(135deg,#94a3b8 0%,#64748b 50%,#475569 100%);box-shadow:0 8px 28px rgba(100,116,139,.28);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:120px;position:relative;overflow:hidden">
+      <div id="stat-rejected-card" class="stat" style="background:linear-gradient(135deg,#94a3b8 0%,#64748b 50%,#475569 100%);box-shadow:0 8px 28px rgba(100,116,139,.28);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:96px;position:relative;overflow:hidden">
         <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">需修正</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-rejected">—</div>
@@ -1892,18 +1942,18 @@ tbody td{font-size:var(--fs-base)!important}
               <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">項目</th>
               <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">憑證</th>
               <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">日期</th>
-              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">未稅</th>
-              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">稅額</th>
-              <th style="text-align:center;padding:6px 8px;color:#94a3b8;font-weight:500">含稅</th>
+              <th style="text-align:right;padding:6px 8px;color:#94a3b8;font-weight:500">未稅</th>
+              <th style="text-align:right;padding:6px 8px;color:#94a3b8;font-weight:500">稅額</th>
+              <th style="text-align:right;padding:6px 8px;color:#94a3b8;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
               <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">無明細資料</td></tr>
             </tbody>
             <tfoot><tr style="border-top:2px solid #e2e8f0">
               <td colspan="4" style="padding:10px 0;font-weight:700;color:#0f172a;white-space:nowrap">合計</td>
-              <td id="detail-sum-pretax" style="padding:10px 8px;text-align:center;font-weight:700;white-space:nowrap">NT$ 0</td>
-              <td id="detail-sum-tax" style="padding:10px 8px;text-align:center;font-weight:700;color:#64748b;white-space:nowrap">NT$ 0</td>
-              <td id="detail-sum-total" style="padding:10px 8px;text-align:center;font-size:14px;font-weight:700;color:#e16b8c;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-pretax" style="padding:10px 8px;text-align:right;font-weight:700;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-tax" style="padding:10px 8px;text-align:right;font-weight:700;color:#64748b;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-total" style="padding:10px 8px;text-align:right;font-size:14px;font-weight:700;color:#e16b8c;white-space:nowrap">NT$ 0</td>
             </tfoot>
           </table>
           </div>
@@ -4057,9 +4107,9 @@ function renderDetailItems(items) {
       <td style="padding:10px 8px;color:#374151;white-space:nowrap">${it.description||'—'}</td>
       <td style="padding:10px 8px;text-align:center;color:#64748b;white-space:nowrap">${it.receiptType||'—'}</td>
       <td style="padding:10px 8px;text-align:center;color:#64748b;white-space:nowrap">${it.date||'—'}</td>
-      <td style="padding:10px 8px;text-align:center;white-space:nowrap">NT$ ${Number(it.pretax||0).toLocaleString()}</td>
-      <td style="padding:10px 8px;text-align:center;color:#64748b;white-space:nowrap">NT$ ${Number(it.tax||0).toLocaleString()}</td>
-      <td style="padding:10px 8px;text-align:center;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
+      <td style="padding:10px 8px;text-align:right;white-space:nowrap">NT$ ${Number(it.pretax||0).toLocaleString()}</td>
+      <td style="padding:10px 8px;text-align:right;color:#64748b;white-space:nowrap">NT$ ${Number(it.tax||0).toLocaleString()}</td>
+      <td style="padding:10px 8px;text-align:right;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
     </tr>`).join('');
   // 動態更新 tfoot 合計（用ID直接定位，最穩定）
   let sumPretax = 0, sumTax = 0, sumTotal = 0;
