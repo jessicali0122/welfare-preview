@@ -353,7 +353,6 @@ input[type=checkbox]{accent-color:#e16b8c}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
   #form-grid{grid-template-columns:1fr!important}
   #stats-grid .stat{padding:16px 16px!important;min-height:130px!important}
-  #stats-grid .stat svg[width="120"]{width:72px!important;height:72px!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
   #dashboard-top-grid>:first-child{grid-column:1/-1!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
@@ -700,45 +699,45 @@ input[type=checkbox]{accent-color:#e16b8c}
     margin-top:12px!important;
   }
 
-  /* ── 簽核進度：橫列顯示 ── */
+  /* ── 簽核進度：列印保持直列，緊縮尺寸 ── */
   #flow-timeline{
     display:flex!important;
-    flex-direction:row!important;
-    align-items:flex-start!important;
+    flex-direction:column!important;
+    gap:4px!important;
     padding:0!important;
-    gap:0!important;
-    position:static!important;
   }
-  /* 隱藏直線 */
-  #flow-timeline > div:first-child{display:none!important}
-  /* 每個步驟 */
-  #flow-timeline > div:not(:first-child){
-    flex:1!important;
-    position:relative!important;
-    margin-bottom:0!important;
-    text-align:center!important;
-    padding:36px 8px 8px!important;
-    border-top:2px dashed #cbd5e1!important;
+  /* 每個關卡 row */
+  #flow-timeline > div{
+    display:flex!important;
+    gap:8px!important;
+    align-items:flex-start!important;
+    padding-bottom:2px!important;
   }
-  /* 圓形 icon 移到正上方 */
-  #flow-timeline > div:not(:first-child) > div:first-child{
-    position:absolute!important;
-    left:50%!important;
-    top:-18px!important;
-    transform:translateX(-50%)!important;
-    width:32px!important;height:32px!important;
+  /* 左欄（icon + 虛線容器）縮小 */
+  #flow-timeline > div > div:first-child{
+    width:28px!important;
+    flex-shrink:0!important;
   }
-  /* 文字區 */
-  #flow-timeline > div:not(:first-child) > div:last-child{
-    padding-top:0!important;
+  /* icon 本身縮小 */
+  #flow-timeline > div > div:first-child > div:first-child{
+    width:28px!important;
+    height:28px!important;
+  }
+  /* 隱藏虛線連接段 */
+  #flow-timeline > div > div:first-child > div:nth-child(2){
+    display:none!important;
+  }
+  /* 右欄文字 */
+  #flow-timeline > div > div:last-child{
+    padding-top:4px!important;
+    padding-bottom:4px!important;
   }
   #flow-timeline *{
     white-space:normal!important;
     overflow:visible!important;
     text-overflow:clip!important;
-    font-size:10px!important;
+    font-size:11px!important;
   }
-  #flow-timeline > div:not(:first-child) > div:first-child *{font-size:12px!important}
 
   /* ── 申請資訊：列印順序同畫面（主旨、申請人、收款人、部門、員工編號、付款方式、申請時間）── */
 
@@ -1267,8 +1266,7 @@ tbody td{font-size:var(--fs-base)!important}
 
       <!-- ① 已核准總支出（玫瑰紅漸層） -->
       <div class="stat" style="background:linear-gradient(135deg,#f77aaa 0%,#e16b8c 45%,#c2185b 100%);box-shadow:0 8px 28px rgba(225,107,140,.38);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
-        <svg style="position:absolute;bottom:-28px;right:-20px;opacity:.08;pointer-events:none;flex-shrink:0" width="120" height="120" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg>
-        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0;font-size:20px">💰</div>
+        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准總支出</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-balance">NT$ —</div>
         <div style="margin-top:auto;padding-top:10px">
@@ -1281,8 +1279,7 @@ tbody td{font-size:var(--fs-base)!important}
 
       <!-- ② 進行中（琥珀橘漸層） -->
       <div class="stat" style="background:linear-gradient(135deg,#ffcc5c 0%,#f59e0b 45%,#d97706 100%);box-shadow:0 8px 28px rgba(245,158,11,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
-        <svg style="position:absolute;bottom:-28px;right:-20px;opacity:.08;pointer-events:none;flex-shrink:0" width="120" height="120" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg>
-        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0;font-size:20px">⏳</div>
+        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">進行中</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-pending">—</div>
         <div style="margin-top:auto;padding-top:10px">
@@ -1293,8 +1290,7 @@ tbody td{font-size:var(--fs-base)!important}
 
       <!-- ③ 已核准（品牌綠漸層） -->
       <div class="stat" style="background:linear-gradient(135deg,#2ee89a 0%,#1e9d6b 50%,#157a50 100%);box-shadow:0 8px 28px rgba(30,157,107,.32);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
-        <svg style="position:absolute;bottom:-28px;right:-20px;opacity:.08;pointer-events:none;flex-shrink:0" width="120" height="120" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg>
-        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0;font-size:20px">✅</div>
+        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">已核准</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-done">—</div>
         <div style="margin-top:auto;padding-top:10px">
@@ -1305,8 +1301,7 @@ tbody td{font-size:var(--fs-base)!important}
 
       <!-- ④ 需修正（深藍灰漸層） -->
       <div id="stat-rejected-card" class="stat" style="background:linear-gradient(135deg,#94a3b8 0%,#64748b 50%,#475569 100%);box-shadow:0 8px 28px rgba(100,116,139,.28);padding:22px;display:flex;flex-direction:column;box-sizing:border-box;min-height:148px;position:relative;overflow:hidden">
-        <svg style="position:absolute;bottom:-28px;right:-20px;opacity:.08;pointer-events:none;flex-shrink:0" width="120" height="120" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg>
-        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0;font-size:20px">⚠️</div>
+        <div style="width:38px;height:38px;border-radius:12px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:12px;flex-shrink:0"><svg width="22" height="22" viewBox="0 0 34 34" fill="none"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#fff" stroke-width="2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#fff"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#fff"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#fff"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#fff"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#fff"/></svg></div>
         <div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.82);letter-spacing:.5px;text-transform:uppercase">需修正</div>
         <div style="font-weight:900;color:#fff;letter-spacing:-1.5px;line-height:1.1;margin-top:5px" id="stat-rejected">—</div>
         <div style="margin-top:auto;padding-top:10px">
@@ -1864,6 +1859,7 @@ tbody td{font-size:var(--fs-base)!important}
             <div style="grid-column:1/-1"><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">主旨</div><div id="detail-subject" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">申請人</div><div id="detail-applicant-name" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#0f172a">—</div></div>
+            <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">銀行帳號</div><div id="detail-bank-account" style="font-weight:600;color:#0f172a;font-family:monospace;letter-spacing:.5px">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#0f172a">—</div></div>
             <div><div style="color:#94a3b8;font-size:12px;margin-bottom:3px">付款方式</div><div style="font-weight:600;color:#0f172a">匯款（公司薪轉戶）</div></div>
@@ -2601,7 +2597,10 @@ function showApp() {
     }
     startTokenRefreshTimer();
     // 非關鍵呼叫延遲執行，避免跟主資料搶 GAS 執行緒
-    setTimeout(function(){ loadAdminFlow(); }, 1500);
+    // 所有使用者都先載入流程資訊（讓 updateDetailFlow 知道正確關卡數）
+    setTimeout(function(){ _preloadFlowInfo(); }, 800);
+    // Admin 才額外載入完整流程設定 UI
+    setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
     setTimeout(function(){ _syncMembersFromServer(); }, 2500);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     setTimeout(() => { window._appReady = true; }, 1500);
@@ -3960,6 +3959,9 @@ async function loadDetail(caseId, _fromPop) {
   // 收款人
   const payeeEl = document.getElementById('detail-payee');
   if (payeeEl) payeeEl.textContent = c.payee || localName(c.email, c.name);
+  // 銀行帳號
+  const bankEl = document.getElementById('detail-bank-account');
+  if (bankEl) bankEl.textContent = c.bankAccount || '—';
   const applyDateEl = document.getElementById('detail-apply-date');
   if (applyDateEl) applyDateEl.textContent = fmtDate(c.applyDate || c.createdAt);
   // 備註／請款原因
@@ -4887,10 +4889,10 @@ function _renderFileItem(f) {
       + '<span style="font-size:12px;color:#94a3b8">縮圖載入中...</span>'
       + '</div>'
       + '</a>'
-      + '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #e2e8f0;background:#fff">'
+      + '<div class="no-print" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid #e2e8f0;background:#fff">'
       + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'
       + '<a href="' + url + '" target="_blank" style="font-size:12px;color:#374151;text-decoration:none;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">' + name + '</a>'
-      + '<a href="' + url + '" target="_blank" class="no-print" style="font-size:11px;color:#374151;font-weight:700;white-space:nowrap;flex-shrink:0;text-decoration:none">在 Drive 開啟 ↗</a>'
+      + '<a href="' + url + '" target="_blank" style="font-size:11px;color:#374151;font-weight:700;white-space:nowrap;flex-shrink:0;text-decoration:none">在 Drive 開啟 ↗</a>'
       + '</div></div>';
   }
 
@@ -5545,6 +5547,19 @@ function updateDetailFlow(c){
 
 // 目前載入的流程資料（陣列）
 let _flowApprovers = [];
+
+// 所有登入使用者都能呼叫：從後端拉取流程資訊，讓 updateDetailFlow 正確顯示關卡數
+async function _preloadFlowInfo() {
+  if (_flowApprovers && _flowApprovers.length > 0) return; // 已載入就跳過
+  try {
+    const res = await callAPI('getFlowInfo');
+    if (res && res.ok && Array.isArray(res.approvers) && res.approvers.length > 0) {
+      _flowApprovers = res.approvers;
+      APPROVER_EMAILS.length = 0;
+      _flowApprovers.filter(function(a){ return a.enabled !== false; }).forEach(function(a){ APPROVER_EMAILS.push(a.email); });
+    }
+  } catch(e) { /* 非關鍵，失敗靜默 */ }
+}
 let _editFlowIndex = -1;
 
 // 從後端載入流程並渲染
@@ -5614,14 +5629,17 @@ function renderFlowList(approvers) {
       ? `<button onclick="toggleFlowStep(${i})" title="${isEnabled?'點擊停用':'點擊啟用'}" style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s">${isEnabled?'● 啟用中':'○ 已停用'}</button>`
       : `<span style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${isEnabled?'#bbf7d0':'#fecaca'};background:${isEnabled?'#f0fdf4':'#fff5f5'};color:${isEnabled?'#15803d':'#dc2626'};border-radius:20px;display:inline-flex;align-items:center;white-space:nowrap">${isEnabled?'● 啟用中':'○ 已停用'}</span>`;
 
-    const rowBg     = isEnabled ? '#fff' : '#f1f5f9';
-    const rowBorder = isEnabled ? '1.5px solid #e16b8c' : '1px solid #cbd5e1';
-    const numBg     = isEnabled ? '#e16b8c' : '#94a3b8';
-    const labelColor= isEnabled ? '#0f172a' : '#94a3b8';
+    const rowBg      = isEnabled ? '#fff' : '#f8fafc';
+    const rowBorder  = isEnabled ? '1px solid #fcd5e0' : '1px solid #e8edf3';
+    const rowAccent  = isEnabled ? 'border-left:4px solid #e16b8c;' : 'border-left:4px solid #d1d5db;';
+    const numBg      = isEnabled ? 'linear-gradient(135deg,#f77aaa,#c2185b)' : '#e2e8f0';
+    const numColor   = isEnabled ? '#fff' : '#94a3b8';
+    const labelColor = isEnabled ? '#0f172a' : '#94a3b8';
+    const rowShadow  = isEnabled ? 'box-shadow:0 1px 6px rgba(225,107,140,.08);' : '';
 
-    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 16px;background:${rowBg};border-radius:10px;border:${rowBorder};${isEnabled ? '' : 'opacity:.65'}">
+    return `<div class="flow-row" data-index="${i}" style="display:grid;grid-template-columns:44px 1fr 1fr auto;gap:14px;align-items:center;padding:14px 18px;background:${rowBg};border-radius:10px;border:${rowBorder};${rowAccent}${rowShadow}${isEnabled ? '' : 'opacity:.6'}">
       <!-- 序號 -->
-      <div style="width:36px;height:36px;background:${numBg};color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${isEnabled ? activeNum : '—'}</div>
+      <div style="width:36px;height:36px;background:${numBg};color:${numColor};border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${isEnabled ? activeNum : '—'}</div>
       <!-- 職稱 -->
       <div>
         <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || a.name}</div>
