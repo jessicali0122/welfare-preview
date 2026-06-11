@@ -2534,52 +2534,40 @@ const _googleBtnHTML = `
   </button>`;
 
 function triggerGoogleLogin() {
-  if (window.google?.accounts?.id) {
-    // prompt() 在許多瀏覽器/情境下會被靜默壓制，改用 renderButton 已是官方建議
-    // 此函式保留供相容，但實際登入由 renderButton 產生的官方按鈕觸發
-    google.accounts.id.prompt();
-  }
+  if (!GOOGLE_CLIENT_ID) return;
+  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  sessionStorage.setItem('oauth_nonce', nonce);
+  const redirectUri = location.origin + location.pathname;
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'id_token',
+    scope: 'openid email profile',
+    nonce: nonce,
+    prompt: 'select_account',
+    hd: 'tsagroup.com.tw',
+  });
+  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
 }
 
 function initGoogleSignIn() {
   if (new URLSearchParams(location.search).get('demo')) return; // demo 模式跳過
   const btn = document.getElementById('g-signin-btn');
-  if (GOOGLE_CLIENT_ID && window.google?.accounts?.id) {
-    google.accounts.id.initialize({
-      client_id: GOOGLE_CLIENT_ID,
-      callback: handleGoogleLogin,
-      auto_select: false,
-      use_fedcm_for_prompt: false,
-      ux_mode: 'popup',
-    });
-    if (btn) {
-      btn.innerHTML = '';
-      google.accounts.id.renderButton(btn, {
-        theme: 'outline',
-        size: 'large',
-        text: 'signin_with',
-        locale: 'zh-TW',
-        width: 280,
-        shape: 'rectangular',
-      });
-    }
-  } else if (GOOGLE_CLIENT_ID) {
-    // GSI 尚未載入，200ms 後重試（最多 25 次 = 5 秒）
-    if ((window._gsiRetry || 0) < 25) {
-      window._gsiRetry = (window._gsiRetry || 0) + 1;
-      setTimeout(initGoogleSignIn, 200);
-    } else {
-      // 超時：顯示按鈕並給提示
-      if (btn) btn.innerHTML = _googleBtnHTML + '<div style="font-size:12px;color:#ef4444;margin-top:8px;text-align:center">Google 服務載入逾時，請重新整理</div>';
-    }
-  } else {
-    // GOOGLE_CLIENT_ID 未設定，顯示錯誤提示
-    if (btn) btn.innerHTML = '<div style="font-size:13px;color:#ef4444;text-align:center;padding:10px">系統設定錯誤，請聯繫管理員</div>';
-  }
+  if (btn) btn.innerHTML = _googleBtnHTML;
 }
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
+  // OAuth2 redirect 回調：從 URL hash 取得 id_token
+  if (location.hash) {
+    const hashParams = new URLSearchParams(location.hash.slice(1));
+    const idToken = hashParams.get('id_token');
+    if (idToken) {
+      history.replaceState({}, '', location.pathname + location.search);
+      handleGoogleLogin({ credential: idToken });
+      return;
+    }
+  }
   const saved = localStorage.getItem('bf_user');
   if (saved) {
     try {
