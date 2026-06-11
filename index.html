@@ -1265,7 +1265,6 @@ tbody td{font-size:var(--fs-base)!important}
       </a>
     </div>
     <script>
-    // 按鈕渲染完就立刻設定 href，不依賴 window.onload 或任何底層 JS 是否載入完畢
     (function(){
       try {
         var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -1279,8 +1278,14 @@ tbody td{font-size:var(--fs-base)!important}
           + '&nonce=' + nonce
           + '&prompt=select_account'
           + '&hd=tsagroup.com.tw';
-        document.getElementById('google-login-link').href = url;
-      } catch(e){}
+        var link = document.getElementById('google-login-link');
+        if (link) {
+          link.href = url;
+          console.log('[BeneFlow] 登入連結已設定:', url);
+        } else {
+          console.error('[BeneFlow] 找不到 google-login-link 元素');
+        }
+      } catch(e){ console.error('[BeneFlow] inline script 錯誤:', e); }
     })();
     </script>
     <div id="login-error" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
