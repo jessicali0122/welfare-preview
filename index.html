@@ -52,8 +52,9 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js" defer></script>
 
@@ -1249,7 +1250,7 @@ tbody td{font-size:var(--fs-base)!important}
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%)">
-  <div style="background:#fff;border-radius:24px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 48px rgba(0,0,0,.10),0 2px 12px rgba(0,0,0,.06);border:none;text-align:center;overflow:hidden;position:relative">
+  <div style="background:#fff;border-radius:24px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 48px rgba(0,0,0,.10),0 2px 12px rgba(0,0,0,.06);border:none;text-align:center;position:relative;-webkit-transform:translateZ(0);transform:translateZ(0)">
     <!-- amber gradient top accent -->
     <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#1e9d6b 0%,#3dba84 25%,#f59e0b 70%,#f59e0b 100%)"></div>
     <div style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;overflow:hidden;background:#fff">
@@ -2604,17 +2605,29 @@ window.onload = function() {
     sessionStorage.removeItem('bf_token');
     history.replaceState({}, '', location.pathname);
   }
-  // OAuth2 redirect 回調：從 URL hash 取得 id_token
+  // OAuth2 redirect 回調：從 URL hash 取得 id_token 或錯誤
   if (location.hash) {
     const hashParams = new URLSearchParams(location.hash.slice(1));
     const idToken = hashParams.get('id_token');
+    const oauthError = hashParams.get('error');
+    history.replaceState({}, '', location.pathname + location.search);
     if (idToken) {
-      history.replaceState({}, '', location.pathname + location.search);
       handleGoogleLogin({ credential: idToken });
       return;
     }
-    // hash 存在但沒有 id_token（殘留 fragment）→ 清除後繼續正常流程
-    history.replaceState({}, '', location.pathname + location.search);
+    if (oauthError) {
+      const errEl = document.getElementById('login-error');
+      if (errEl) {
+        errEl.style.display = 'block';
+        if (oauthError === 'redirect_uri_mismatch') {
+          errEl.textContent = '登入設定錯誤：redirect_uri 未在 Google Cloud Console 登記（' + location.origin + location.pathname + '）';
+        } else if (oauthError === 'access_denied') {
+          errEl.textContent = '登入被拒絕：請使用 @tsagroup.com.tw 公司帳號';
+        } else {
+          errEl.textContent = 'Google 登入失敗：' + oauthError;
+        }
+      }
+    }
   }
   const saved = localStorage.getItem('bf_user');
   if (saved) {
