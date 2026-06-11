@@ -50,21 +50,9 @@
   }catch(e){}
 })();
 </script>
-<!-- 字型與 flatpickr CSS 於執行階段載入，避免 CDN 連線逾時阻塞頁面 -->
-<script>
-(function(){
-  // 字型
-  var lf = document.createElement('link');
-  lf.rel = 'stylesheet';
-  lf.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap';
-  document.head.appendChild(lf);
-  // flatpickr CSS
-  var lp = document.createElement('link');
-  lp.rel = 'stylesheet';
-  lp.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
-  document.head.appendChild(lp);
-})();
-</script>
+<!-- 字型與 flatpickr CSS：用 media=print 方式非同步載入，不阻塞 window.onload -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
 <!-- flatpickr 改為按需載入，避免 CDN 超時卡住整個頁面 -->
 <script>
 var _flatpickrLoaded = false;
@@ -1276,10 +1264,16 @@ tbody td{font-size:var(--fs-base)!important}
 </style>
 </head>
 <body>
-<!-- ===== 緊急重置按鈕（永遠在最頂層）===== -->
-<div id="_emergency_reset" style="position:fixed;top:8px;right:8px;z-index:2147483647;background:#e16b8c;color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer!important;box-shadow:0 2px 12px rgba(0,0,0,.25);font-family:sans-serif" onclick="localStorage.clear();sessionStorage.clear();location.href=location.pathname">⟳ 重置登入</div>
-<!-- ===== 診斷條（頁面載入後自動顯示）===== -->
-<div id="_diag_bar" style="position:fixed;bottom:8px;left:8px;right:8px;z-index:2147483647;background:#1e293b;color:#a3e635;padding:8px 12px;border-radius:8px;font-size:11px;font-family:monospace;pointer-events:none;display:none;word-break:break-all"></div>
+<script>
+/* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
+(function(){
+  if (localStorage.getItem('_bfv') !== '4') {
+    localStorage.clear();
+    sessionStorage.clear();
+    localStorage.setItem('_bfv', '4');
+  }
+})();
+</script>
 <script>
 (function(){
   function _diag(){
