@@ -50,9 +50,7 @@
   }catch(e){}
 })();
 </script>
-<!-- 字型與 flatpickr CSS：用 media=print 方式非同步載入，不阻塞 window.onload -->
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
+<!-- 字型與 flatpickr CSS 在 window.onload 後動態注入，完全不阻塞頁面 -->
 <!-- flatpickr 改為按需載入，避免 CDN 超時卡住整個頁面 -->
 <script>
 var _flatpickrLoaded = false;
@@ -2590,6 +2588,15 @@ function initGoogleSignIn() {} // no-op: button calls doGoogleLogin() directly
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
+  // 字型與 flatpickr CSS：在 onload 後才注入，確保不阻塞頁面載入
+  (function(){
+    var lf=document.createElement('link');lf.rel='stylesheet';
+    lf.href='https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap';
+    document.head.appendChild(lf);
+    var lp=document.createElement('link');lp.rel='stylesheet';
+    lp.href='https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
+    document.head.appendChild(lp);
+  })();
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'), '| hash:', location.hash ? location.hash.slice(0,30) + '...' : '(無)');
   // ?logout=1 強制清除 session
   if (new URLSearchParams(location.search).get('logout') === '1') {
