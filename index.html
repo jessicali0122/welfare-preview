@@ -1247,7 +1247,7 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 
 <!-- 診斷用：固定在螢幕右下角的測試連結，確認點擊是否能跳轉 -->
-<a id="debug-link" href="https://www.google.com" style="position:fixed;bottom:20px;right:20px;z-index:999999;background:#e11d48;color:#fff;padding:14px 20px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.4)">點我測試</a>
+<a id="debug-link" href="?logout=1" style="position:fixed;bottom:20px;right:20px;z-index:999999;background:#e11d48;color:#fff;padding:14px 20px;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;box-shadow:0 4px 20px rgba(0,0,0,.4)">重新登入</a>
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%)">
@@ -2579,6 +2579,13 @@ function initGoogleSignIn() {
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
+  // ?logout=1 強制清除 session
+  if (new URLSearchParams(location.search).get('logout') === '1') {
+    localStorage.removeItem('bf_user');
+    localStorage.removeItem('bf_token');
+    sessionStorage.removeItem('bf_token');
+    history.replaceState({}, '', location.pathname);
+  }
   // OAuth2 redirect 回調：從 URL hash 取得 id_token
   if (location.hash) {
     const hashParams = new URLSearchParams(location.hash.slice(1));
