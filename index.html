@@ -1257,10 +1257,10 @@ tbody td{font-size:var(--fs-base)!important}
     <div style="font-size:22px;font-weight:700;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px">Bene<span style="color:#f59e0b">Flow</span></div>
     <div style="font-size:14px;color:#64748b;margin-bottom:28px">福委會請款簽核系統<br>請使用公司帳號登入</div>
     <div id="g-signin-btn" style="display:flex;justify-content:center;margin-bottom:16px">
-      <button onclick="triggerGoogleLogin()" id="google-login-btn" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s" onmouseover="this.style.boxShadow='0 2px 10px rgba(0,0,0,.10)';this.style.borderColor='#cbd5e1'" onmouseout="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
+      <a id="google-login-link" href="#" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;text-decoration:none;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box" onmouseover="this.style.boxShadow='0 2px 10px rgba(0,0,0,.10)';this.style.borderColor='#cbd5e1'" onmouseout="this.style.boxShadow='';this.style.borderColor='#e2e8f0'">
         <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
         <span style="font-size:14px;font-weight:500;color:#374151;font-family:'Noto Sans TC',sans-serif;letter-spacing:.01em">以 Google 帳戶登入</span>
-      </button>
+      </a>
     </div>
     <div id="login-error" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
     <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域</div>
@@ -2555,9 +2555,23 @@ function triggerGoogleLogin() {
 }
 
 function initGoogleSignIn() {
-  if (new URLSearchParams(location.search).get('demo')) return; // demo 模式跳過
-  const btn = document.getElementById('g-signin-btn');
-  if (btn) btn.innerHTML = _googleBtnHTML;
+  if (!GOOGLE_CLIENT_ID) return;
+  if (new URLSearchParams(location.search).get('demo')) return;
+  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  sessionStorage.setItem('oauth_nonce', nonce);
+  const redirectUri = location.origin + location.pathname;
+  const params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'id_token',
+    scope: 'openid email profile',
+    nonce: nonce,
+    prompt: 'select_account',
+    hd: 'tsagroup.com.tw',
+  });
+  const oauthUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  const link = document.getElementById('google-login-link');
+  if (link) link.href = oauthUrl;
 }
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
