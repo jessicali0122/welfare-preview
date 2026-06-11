@@ -50,13 +50,39 @@
   }catch(e){}
 })();
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap" rel="stylesheet"></noscript>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" media="print" onload="this.media='all'">
-<script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js" defer></script>
+<!-- 字型與 flatpickr CSS 於執行階段載入，避免 CDN 連線逾時阻塞頁面 -->
+<script>
+(function(){
+  // 字型
+  var lf = document.createElement('link');
+  lf.rel = 'stylesheet';
+  lf.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap';
+  document.head.appendChild(lf);
+  // flatpickr CSS
+  var lp = document.createElement('link');
+  lp.rel = 'stylesheet';
+  lp.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
+  document.head.appendChild(lp);
+})();
+</script>
+<!-- flatpickr 改為按需載入，避免 CDN 超時卡住整個頁面 -->
+<script>
+var _flatpickrLoaded = false;
+function _loadFlatpickr(cb) {
+  if (typeof flatpickr !== 'undefined') { if(cb) cb(); return; }
+  if (_flatpickrLoaded) { var t=setInterval(function(){if(typeof flatpickr!=='undefined'){clearInterval(t);if(cb)cb();}},50); return; }
+  _flatpickrLoaded = true;
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
+  s.onload = function() {
+    var s2 = document.createElement('script');
+    s2.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js';
+    s2.onload = function(){ if(cb) cb(); };
+    document.head.appendChild(s2);
+  };
+  document.head.appendChild(s);
+}
+</script>
 
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
@@ -6456,6 +6482,10 @@ function resetAdminFilter() {
 // ══════════════════════════════════════════
 function initFlatpickr(el, opts) {
   if (!el || el._flatpickr) return el && el._flatpickr;
+  if (typeof flatpickr === 'undefined') {
+    _loadFlatpickr(function(){ initFlatpickr(el, opts); });
+    return null;
+  }
   return flatpickr(el, Object.assign({
     locale: 'zh_tw',
     dateFormat: 'Y-m-d',
