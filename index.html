@@ -1301,9 +1301,9 @@ tbody td{font-size:var(--fs-base)!important}
     </div>
 
 
-    <div class="sl" data-view="analytics" data-label="費用分析" onclick="sw('analytics')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-      <span class="sl-text">費用分析</span>
+    <div class="sl" data-view="hightea" data-label="午茶日" onclick="sw('hightea')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      <span class="sl-text">午茶日</span>
     </div>
 
     <div class="sl-section-label" style="color:#b0a9a4;font-size:11px;font-weight:700;padding:14px 4px 6px;letter-spacing:.09em;text-transform:uppercase">管理</div>
@@ -1454,112 +1454,47 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
     </div>
 
-    <!-- 系統操作紀錄（僅管理者可見）-->
-    <div id="audit-log-dashboard" style="display:none;margin-top:20px">
-      <div class="card" style="overflow:hidden">
-        <div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;flex-direction:column;gap:10px">
-          <!-- 第一列：標題 + 操作按鈕 -->
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-            <div style="display:flex;align-items:baseline;gap:6px">
-              <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
-              <div style="font-size:12px;color:#94a3b8">最新 200 筆</div>
-            </div>
-            <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-              <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
-              <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
-              </button>
-            </div>
-          </div>
-          <!-- 第二列：篩選輸入 -->
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
-              <option value="">全部動作</option>
-              <option value="login">登入</option>
-              <option value="submit">送出申請</option>
-              <option value="approve">核准</option>
-              <option value="reject">退件</option>
-              <option value="resubmit">重新送出</option>
-              <option value="draft">草稿</option>
-              <option value="upload">上傳附件</option>
-              <option value="deleteFile">刪除附件</option>
-              <option value="deleteDraft">刪除草稿</option>
-              <option value="addUser">新增使用者</option>
-              <option value="editUser">編輯使用者</option>
-              <option value="deleteUser">停用使用者</option>
-            </select>
-            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:13px;padding:6px 10px" oninput="_debouncedAuditFilter()">
-            <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:13px;padding:6px 10px;color:#374151;cursor:pointer">
-          </div>
+    <!-- ── 費用分析（併入總覽）── -->
+    <div style="display:flex;align-items:center;gap:10px;margin:24px 0 14px">
+      <div style="font-size:16px;font-weight:800;color:#0f172a">費用分析</div>
+      <div style="flex:1;height:1px;background:#f1f5f9"></div>
+      <!-- 篩選區間 -->
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <button id="arange-month" class="btn btn-o" style="font-size:13px;padding:5px 12px" onclick="setAnalyticsRange('month')">本月</button>
+        <button id="arange-quarter" class="btn btn-o" style="font-size:13px;padding:5px 12px" onclick="setAnalyticsRange('quarter')">本季</button>
+        <button id="arange-year" class="btn btn-o" style="font-size:13px;padding:5px 12px" onclick="setAnalyticsRange('year')">本年</button>
+        <button id="arange-custom" class="btn btn-o" style="font-size:13px;padding:5px 12px" onclick="setAnalyticsRange('custom')">自訂</button>
+        <div id="analytics-custom-range" style="display:none;align-items:center;gap:6px">
+          <input type="text" id="analytics-date-start" class="inp date-inp" placeholder="開始日期" style="width:130px;font-size:13px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
+          <span style="font-size:12px;color:#64748b">至</span>
+          <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:130px;font-size:13px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
+          <button id="analytics-apply-btn" class="btn" style="font-size:13px;padding:5px 14px;background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0" onclick="applyCustomRange()">套用</button>
         </div>
-        <div style="overflow-x:auto;min-height:490px">
-        <table class="evx-table" style="min-width:600px">
-          <thead><tr>
-            <th style="width:150px;text-align:center">時間</th>
-            <th style="width:120px;text-align:center">操作人</th>
-            <th style="width:80px;text-align:center">動作</th>
-            <th style="width:140px;text-align:center">相關案件</th>
-            <th style="text-align:left">說明</th>
-          </tr></thead>
-          <tbody id="audit-log-tbody">
-            <tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">載入中...</td></tr>
-          </tbody>
-        </table>
-        </div>
-        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===== ANALYTICS ===== -->
-  <div class="view" id="view-analytics">
-    <!-- 篩選區間 bar -->
-    <div class="card" style="padding:14px 18px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span style="font-size:14px;font-weight:600;color:#0f172a;white-space:nowrap">篩選區間</span>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button id="arange-month" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('month')">本月</button>
-          <button id="arange-quarter" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('quarter')">本季</button>
-          <button id="arange-year" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('year')">本年</button>
-          <button id="arange-custom" class="btn btn-o" style="font-size:14px;padding:6px 14px" onclick="setAnalyticsRange('custom')">自訂</button>
-        </div>
-        <div id="analytics-custom-range" style="display:none;align-items:center;gap:8px;flex-wrap:wrap">
-          <input type="text" id="analytics-date-start" class="inp date-inp" placeholder="開始日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
-          <span style="font-size:13px;color:#64748b">至</span>
-          <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:148px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
-          <button id="analytics-apply-btn" class="btn" style="font-size:13px;padding:5px 16px;background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0;transition:all .15s" onclick="applyCustomRange()">套用</button>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap">
-          <div id="analytics-range-label" style="font-size:13px;color:#94a3b8;white-space:nowrap">載入中...</div>
-          <button class="btn btn-o" onclick="exportCSV()" style="font-size:13px;padding:8px 14px;flex-shrink:0;margin-left:auto">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            匯出 CSV
-          </button>
-        </div>
+        <div id="analytics-range-label" style="font-size:12px;color:#94a3b8;white-space:nowrap">載入中...</div>
+        <button class="btn btn-o" onclick="exportCSV()" style="font-size:12px;padding:5px 12px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          匯出 CSV
+        </button>
       </div>
     </div>
 
     <!-- KPI 卡片 -->
     <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-      <!-- 已核准總金額：淡粉底＋左色條 -->
       <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #f5c6d6;border-top:4px solid #e16b8c;box-shadow:0 2px 12px rgba(225,107,140,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
         <div style="font-size:14px;font-weight:700;color:#a0385a;letter-spacing:.2px">💰 已核准總金額</div>
         <div id="analytics-approved" style="font-size:22px;font-weight:900;color:#111827;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
         <div style="font-size:12px;color:#9ca3af;margin-top:auto;padding-top:8px">↑ 已完成案件累計</div>
       </div>
-      <!-- 已核准件數：淡綠底＋左色條 -->
       <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #b2dfe0;border-top:4px solid #38a3a5;box-shadow:0 2px 12px rgba(56,163,165,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
         <div style="font-size:14px;font-weight:700;color:#1e6b6c;letter-spacing:.2px">已核准件數</div>
         <div id="analytics-count" style="font-size:28px;font-weight:900;color:#111827;line-height:1;margin-top:10px">—</div>
         <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#9ca3af">已完成案件數</div></div>
       </div>
-      <!-- 平均每件金額：淡橘底＋左色條 -->
       <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #fce4a8;border-top:4px solid #f9c97e;box-shadow:0 2px 12px rgba(249,201,126,.10);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
         <div style="font-size:14px;font-weight:700;color:#b8832a;letter-spacing:.2px">平均每件金額</div>
         <div id="analytics-avg-amount" style="font-size:22px;font-weight:900;color:#111827;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
         <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#9ca3af">核准案件平均值</div></div>
       </div>
-      <!-- 退件率：淡灰底＋左色條 -->
       <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #dde3ec;border-top:4px solid #94a3b8;box-shadow:0 2px 12px rgba(100,116,139,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px" title="曾被退件的案件（含退件重送後核准）÷ 所有已結案案件">
         <div style="font-size:14px;font-weight:700;color:#374151;letter-spacing:.2px">退件率</div>
         <div id="analytics-reject-rate" style="font-size:28px;font-weight:900;color:#111827;line-height:1;margin-top:10px">—</div>
@@ -1620,9 +1555,70 @@ tbody td{font-size:var(--fs-base)!important}
           <tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8">載入中...</td></tr>
         </tbody>
       </table>
-      </div><!-- /overflow-x:auto -->
+      </div>
       <div id="analytics-table-pager"></div>
     </div>
+
+    <!-- 系統操作紀錄（僅管理者可見）-->
+    <div id="audit-log-dashboard" style="display:none;margin-top:20px">
+      <div class="card" style="overflow:hidden">
+        <div style="padding:14px 20px;border-bottom:1px solid #f1f5f9;display:flex;flex-direction:column;gap:10px">
+          <!-- 第一列：標題 + 操作按鈕 -->
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <div style="font-size:15px;font-weight:700;color:#0f172a">系統操作紀錄</div>
+              <div style="font-size:12px;color:#94a3b8">最新 200 筆</div>
+            </div>
+            <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
+              <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
+              <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
+              </button>
+            </div>
+          </div>
+          <!-- 第二列：篩選輸入 -->
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:13px;padding:6px 10px" onchange="filterAuditLog()">
+              <option value="">全部動作</option>
+              <option value="login">登入</option>
+              <option value="submit">送出申請</option>
+              <option value="approve">核准</option>
+              <option value="reject">退件</option>
+              <option value="resubmit">重新送出</option>
+              <option value="draft">草稿</option>
+              <option value="upload">上傳附件</option>
+              <option value="deleteFile">刪除附件</option>
+              <option value="deleteDraft">刪除草稿</option>
+              <option value="addUser">新增使用者</option>
+              <option value="editUser">編輯使用者</option>
+              <option value="deleteUser">停用使用者</option>
+            </select>
+            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:13px;padding:6px 10px" oninput="_debouncedAuditFilter()">
+            <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:13px;padding:6px 10px;color:#374151;cursor:pointer">
+          </div>
+        </div>
+        <div style="overflow-x:auto;min-height:490px">
+        <table class="evx-table" style="min-width:600px">
+          <thead><tr>
+            <th style="width:150px;text-align:center">時間</th>
+            <th style="width:120px;text-align:center">操作人</th>
+            <th style="width:80px;text-align:center">動作</th>
+            <th style="width:140px;text-align:center">相關案件</th>
+            <th style="text-align:left">說明</th>
+          </tr></thead>
+          <tbody id="audit-log-tbody">
+            <tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">載入中...</td></tr>
+          </tbody>
+        </table>
+        </div>
+        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- view-analytics 已併入 view-dashboard -->
+  <div class="view" id="view-analytics" style="display:none!important">
+    <!-- placeholder only -->
   </div>
 
   <!-- ===== MY APPLICATIONS ===== -->
@@ -2193,13 +2189,13 @@ tbody td{font-size:var(--fs-base)!important}
     <span class="bn-badge approval-badge" style="display:none"></span>
     <span class="bn-label">待審核</span>
   </button>
-  <button class="bn-item" data-view="analytics" onclick="sw('analytics')">
-    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
-    <span class="bn-label">費用分析</span>
-  </button>
   <button class="bn-item" data-view="admin" onclick="sw('admin')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
     <span class="bn-label">系統管理</span>
+  </button>
+  <button class="bn-item" data-view="hightea" onclick="sw('hightea')">
+    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></div>
+    <span class="bn-label">午茶日</span>
   </button>
 </nav>
 
@@ -2539,6 +2535,7 @@ function triggerGoogleLogin() {
 }
 
 function initGoogleSignIn() {
+  if (new URLSearchParams(location.search).get('demo')) return; // demo 模式跳過
   const btn = document.getElementById('g-signin-btn');
   if (GOOGLE_CLIENT_ID && window.google?.accounts?.id) {
     google.accounts.id.initialize({
@@ -2648,6 +2645,19 @@ function startTokenRefreshTimer() {
   }, 60 * 60 * 1000); // 每小時檢查（session 7 天才到期，不需要頻繁輪詢）
 }
 
+// ── Demo 模式（URL 帶 ?demo=hightea 跳過登入，僅供本地預覽）──
+(function(){
+  var sp = new URLSearchParams(location.search);
+  var demo = sp.get('demo');
+  if (!demo) return;
+  window.currentUser = { email: 'user-a@tsagroup.com.tw', name: '某員工A', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999 };
+  // DOMContentLoaded 可能已觸發，改用 setTimeout 確保 DOM 就緒
+  setTimeout(function(){
+    if(typeof showApp==='function') showApp();
+    setTimeout(function(){ if(typeof sw==='function') sw(demo === '1' ? 'dashboard' : demo); }, 300);
+  }, 50);
+})();
+
 function parseJwt(token) {
   const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
   return JSON.parse(decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
@@ -2692,7 +2702,7 @@ function showApp() {
     if(sheetEmail)sheetEmail.textContent=currentUser.email;
     // ── 路由還原：若 URL 有 hash 就跳到對應頁面，否則預設總覽 ──
     const _initHash = location.hash ? location.hash.slice(1) : '';
-    const _validViews = ['dashboard','applications','approvals','analytics','admin'];
+    const _validViews = ['dashboard','applications','approvals','admin'];
     // detail 頁：#detail/EWC-202506-1001
     if (_initHash.startsWith('detail/')) {
       const _detailId = _initHash.slice(7);
@@ -4584,7 +4594,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -4597,7 +4607,7 @@ window.addEventListener('popstate', function(e) {
   if (hash.startsWith('detail/')) { loadDetail(hash.slice(7), true); return; }
   // 主頁面
   const view = state.view || hash;
-  const validViews = ['dashboard','applications','approvals','analytics','admin'];
+  const validViews = ['dashboard','applications','approvals','admin'];
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 function sw(name,elOrName,_fromPop){
@@ -4616,7 +4626,7 @@ function sw(name,elOrName,_fromPop){
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   if (!_fromPop && window._appReady) {
-    const mainViews = ['dashboard','applications','approvals','analytics','admin'];
+    const mainViews = ['dashboard','applications','approvals','admin','hightea'];
     if (mainViews.includes(name)) {
       history.pushState({ view: name }, '', '#' + name);
     }
@@ -4647,17 +4657,16 @@ function sw(name,elOrName,_fromPop){
   closeSidebar();
   if(name==='applications'){ resetAppFilter(false); loadApplications(); }
   if(name==='approvals') loadApprovals();
-  if(name==='dashboard') loadDashboard();
-  if(name==='analytics'){
+  if(name==='analytics'){ sw('dashboard'); return; }
+  if(name==='dashboard'){
+    loadDashboard();
     _analyticsRange=null;
     if(typeof _resetAnalyticsButtons==='function') _resetAnalyticsButtons();
-    var _as=document.getElementById('analytics-date-start');
-    var _ae=document.getElementById('analytics-date-end');
-    if(_as) _as.value=''; if(_ae) _ae.value='';
     if(typeof _syncAnalyticsApplyBtn==='function') _syncAnalyticsApplyBtn();
     loadAnalytics();
   }
   if(name==='admin') loadAdminUsers();
+  if(name==='hightea') htLoadList();
   // 手機版底部操作列：只在 new-form 頁顯示（用 class 控制，避免 !important 衝突）
   var _mfa = document.getElementById('mobile-form-actions');
   if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
@@ -7726,6 +7735,650 @@ document.addEventListener('click', function(e) {
   });
   observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style','class'] });
 })();
+
+// ══════════════════════════════════════════════════
+//  午茶日 (High Tea Day) 前端模組
+// ══════════════════════════════════════════════════
+(function(){
+
+// ── 狀態 ──
+var _htEvents   = [];
+var _htItems    = [];
+var _htEvent    = null; // 目前開啟的活動
+var _htListTab  = 'events';
+var _htDetailTab= 'plan';
+var _htRateItemId = null;
+var _htRateStars  = 0;
+var _htVendors  = [];
+var _htRecData  = null;
+var _htRecTab   = 'all';
+
+// ── API 呼叫 (沿用既有 API_URL + token 機制) ──
+async function htApi(action, payload) {
+  var body = Object.assign({ action: action, token: (window.currentUser && window.currentUser.token) || '' }, payload || {});
+  var res  = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' });
+  return res.json();
+}
+
+// ── 格式化 ──
+function fmtMoney(n) { return 'NT$' + Number(n||0).toLocaleString(); }
+function fmtMonth(ym) {
+  if (!ym) return '';
+  var s = String(ym);
+  if (s.length === 6) return s.slice(0,4) + '/' + s.slice(4);
+  if (s.includes('-')) return s.replace('-','/');
+  return s;
+}
+function statusColor(s) {
+  if (s === '已完成') return { bg:'#dcfce7', color:'#16a34a' };
+  if (s === '進行中') return { bg:'#dbeafe', color:'#2563eb' };
+  return { bg:'#fef3c7', color:'#d97706' };
+}
+function starStr(avg, cnt) {
+  if (!cnt) return '<span style="color:#cbd5e1;font-size:11px">未評分</span>';
+  var full  = Math.floor(avg);
+  var half  = avg - full >= 0.5 ? 1 : 0;
+  var empty = 5 - full - half;
+  var s = '★'.repeat(full) + (half?'½':'') + '☆'.repeat(empty);
+  return '<span style="color:#f59e0b;font-size:12px">' + s + '</span> <span style="color:#94a3b8;font-size:11px">'+avg+'（'+cnt+'人）</span>';
+}
+
+// ── 月份列表頁 ──
+window.htLoadList = async function() {
+  document.getElementById('ht-list-panel').style.display = '';
+  document.getElementById('ht-detail-panel').style.display = 'none';
+  var r = await htApi('htList');
+  if (!r.ok) { toast('載入失敗：' + r.error); return; }
+  _htEvents = r.events || [];
+  htRenderList();
+  // 預載廠商
+  htApi('htVendors').then(function(rv){ if(rv.ok) _htVendors = rv.vendors || []; });
+};
+
+function htRenderList() {
+  if (_htListTab === 'events') htRenderEvents();
+  else if (_htListTab === 'analytics') htRenderAnalytics();
+  else htRenderVendors();
+}
+
+window.htSwitchListTab = function(tab) {
+  _htListTab = tab;
+  document.querySelectorAll('.ht-tab-btn').forEach(function(b) {
+    var active = b.id === 'ht-tab-' + tab;
+    b.style.background = active ? '#e16b8c' : '#fff';
+    b.style.color = active ? '#fff' : '#64748b';
+    b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
+    b.classList.toggle('active', active);
+  });
+  ['events','analytics','vendors'].forEach(function(p){
+    var el = document.getElementById('ht-panel-' + p);
+    if (el) el.style.display = p === tab ? '' : 'none';
+  });
+  htRenderList();
+};
+
+function htRenderEvents() {
+  var grid = document.getElementById('ht-events-grid');
+  if (!_htEvents.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:40px;margin-bottom:12px">☕</div><div style="font-size:15px;font-weight:600;margin-bottom:6px">還沒有午茶日活動</div><div style="font-size:13px">點擊右上角「新增活動」開始規劃！</div></div>';
+    return;
+  }
+  grid.innerHTML = _htEvents.map(function(ev) {
+    var sc = statusColor(ev.status);
+    var pct = ev.totalBudget > 0 ? Math.min(Math.round(ev.actualExpense / ev.totalBudget * 100), 100) : 0;
+    var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#1e9d6b';
+    var ordPct = ev.itemCount > 0 ? Math.round(ev.orderedCount / ev.itemCount * 100) : 0;
+    return '<div onclick="htOpenDetail(\''+ev.eventId+'\')" style="background:#fff;border-radius:16px;border:1.5px solid #f1f5f9;padding:20px;cursor:pointer;transition:box-shadow .2s,border-color .2s;position:relative;overflow:hidden" onmouseover="this.style.boxShadow=\'0 4px 20px rgba(0,0,0,.1)\';this.style.borderColor=\'#fde4ef\'" onmouseout="this.style.boxShadow=\'none\';this.style.borderColor=\'#f1f5f9\'">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'
+      + '<div><div style="font-size:18px;font-weight:800;color:#0f172a">' + fmtMonth(ev.month) + '</div>'
+      + '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + (ev.date || '日期待定') + ' · ' + (ev.headcount||0) + ' 人</div></div>'
+      + '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+ev.status+'</span>'
+      + '</div>'
+      + '<div style="margin-bottom:10px">'
+      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:4px"><span>預算使用</span><span style="font-weight:600;color:#0f172a">'+fmtMoney(ev.actualExpense)+' / '+fmtMoney(ev.totalBudget)+'</span></div>'
+      + '<div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px;transition:width .6s ease"></div></div>'
+      + '</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center">'
+      + '<div style="font-size:12px;color:#64748b">訂購進度 <span style="font-weight:700;color:#0f172a">'+ev.orderedCount+'/'+ev.itemCount+'</span></div>'
+      + (ev.birthdayBudget > 0 ? '<div style="font-size:12px;color:#f59e0b">🎂 '+fmtMoney(ev.birthdayBudget)+'</div>' : '')
+      + '</div>'
+      + (ev.claimId ? '<div style="margin-top:8px;font-size:11px;color:#1e9d6b;display:flex;align-items:center;gap:4px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>已建立報銷 '+ev.claimId+'</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function htRenderAnalytics() {
+  if (!_htEvents.length) {
+    document.getElementById('ht-analytics-stats').innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:20px">尚無資料</div>';
+    return;
+  }
+  var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
+  var avgSpend   = Math.round(totalSpend / _htEvents.length);
+  var maxSpend   = Math.max.apply(null, _htEvents.map(function(e){ return e.actualExpense||0; }));
+  var completed  = _htEvents.filter(function(e){ return e.status==='已完成'; }).length;
+  var statsHtml = [
+    { label:'活動場次', value: _htEvents.length + ' 場', icon:'📅', color:'#6366f1' },
+    { label:'總支出', value: fmtMoney(totalSpend), icon:'💰', color:'#e16b8c' },
+    { label:'平均每場', value: fmtMoney(avgSpend), icon:'📊', color:'#f59e0b' },
+    { label:'已完成', value: completed + ' 場', icon:'✅', color:'#1e9d6b' },
+  ].map(function(s){
+    return '<div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:18px;display:flex;align-items:center;gap:14px">'
+      + '<div style="width:42px;height:42px;border-radius:12px;background:'+s.color+'15;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">'+s.icon+'</div>'
+      + '<div><div style="font-size:20px;font-weight:800;color:#0f172a">'+s.value+'</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">'+s.label+'</div></div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('ht-analytics-stats').innerHTML = statsHtml;
+  // 趨勢圖（簡單橫條）
+  var sorted = _htEvents.slice().sort(function(a,b){ return a.month.localeCompare(b.month); });
+  var trendHtml = sorted.map(function(ev) {
+    var pct = maxSpend > 0 ? Math.round((ev.actualExpense||0) / maxSpend * 100) : 0;
+    return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+      + '<div style="font-size:12px;color:#64748b;width:60px;flex-shrink:0;text-align:right">'+fmtMonth(ev.month)+'</div>'
+      + '<div style="flex:1;height:22px;background:#f1f5f9;border-radius:4px;overflow:hidden">'
+      + '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#e16b8c,#f59e0b);border-radius:4px;display:flex;align-items:center;padding-left:8px;transition:width .8s ease">'
+      + (pct > 25 ? '<span style="font-size:11px;font-weight:700;color:#fff">'+fmtMoney(ev.actualExpense)+'</span>' : '')
+      + '</div></div>'
+      + (pct <= 25 ? '<div style="font-size:11px;color:#64748b;width:70px">'+fmtMoney(ev.actualExpense)+'</div>' : '<div style="width:70px"></div>')
+      + '</div>';
+  }).join('');
+  document.getElementById('ht-trend-chart').innerHTML = trendHtml;
+  document.getElementById('ht-trend-chart').style.height = 'auto';
+  // 類別分佈（從items彙整）
+  document.getElementById('ht-category-bars').innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:12px">請先新增品項後，類別分佈會自動出現</div>';
+}
+
+function htRenderVendors() {
+  var list = document.getElementById('ht-vendors-list');
+  if (!_htVendors.length) {
+    list.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">尚無廠商評分資料<br><span style="font-size:12px">在品項規劃中加入廠商並評分後會自動累積</span></div>';
+    return;
+  }
+  list.innerHTML = _htVendors.map(function(v, i) {
+    var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
+    return '<div style="background:#fff;border-radius:12px;border:1px solid #f1f5f9;padding:16px;display:flex;align-items:center;gap:14px">'
+      + '<div style="font-size:20px;width:32px;text-align:center;flex-shrink:0">'+medal+'</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:14px;font-weight:700;color:#0f172a">'+v.name+'</div>'
+      + '<div style="font-size:12px;color:#64748b;margin-top:2px">'+v.category+' · 訂購 '+v.totalOrders+' 次</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      + '<div style="font-size:18px;font-weight:800;color:#f59e0b">'+v.avgRating+'<span style="font-size:12px">★</span></div>'
+      + '<div style="font-size:11px;color:#94a3b8">'+v.ratingCount+'筆評分</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+// ── 新增活動 Modal ──
+window.htOpenCreate = function() {
+  var m = document.getElementById('ht-create-modal');
+  // 預填今天月份
+  var now = new Date();
+  var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  document.getElementById('ht-new-month').value = ym;
+  document.getElementById('ht-new-date').value = '';
+  document.getElementById('ht-new-headcount').value = '';
+  document.getElementById('ht-new-budget').value = '';
+  document.getElementById('ht-new-notes').value = '';
+  m.style.display = 'flex';
+};
+window.htCloseCreate = function() { document.getElementById('ht-create-modal').style.display = 'none'; };
+window.htSubmitCreate = async function() {
+  var monthRaw = document.getElementById('ht-new-month').value;
+  if (!monthRaw) { toast('請選擇月份'); return; }
+  var month = monthRaw.replace('-','');
+  var hc = Number(document.getElementById('ht-new-headcount').value) || 0;
+  var bp = Number(document.getElementById('ht-new-budget').value) || 0;
+  var r = await htApi('htCreate', {
+    month: month,
+    date: document.getElementById('ht-new-date').value,
+    headcount: hc,
+    budgetPerPerson: bp,
+    totalBudget: hc * bp,
+    notes: document.getElementById('ht-new-notes').value,
+  });
+  if (!r.ok) { toast('建立失敗：' + r.error); return; }
+  htCloseCreate();
+  toast('✅ 活動已建立');
+  await htLoadList();
+  htOpenDetail(r.eventId);
+};
+
+// ── 活動詳情頁 ──
+window.htOpenDetail = async function(eventId) {
+  document.getElementById('ht-list-panel').style.display = 'none';
+  document.getElementById('ht-detail-panel').style.display = '';
+  document.getElementById('ht-detail-title').textContent = '載入中…';
+  var r = await htApi('htGetItems', { eventId: eventId });
+  if (!r.ok) { toast('載入失敗：' + r.error); htBackToList(); return; }
+  _htEvent = r.event;
+  _htItems = r.items || [];
+  htRenderDetailHeader();
+  htSwitchDetailTab(_htDetailTab);
+};
+
+function htRenderDetailHeader() {
+  var ev = _htEvent;
+  document.getElementById('ht-detail-title').textContent = fmtMonth(ev.month) + ' 午茶日';
+  document.getElementById('ht-detail-subtitle').textContent = (ev.date||'日期待定') + ' · ' + ev.headcount + ' 人 · 每人 NT$' + ev.budgetPerPerson;
+  var sc = statusColor(ev.status);
+  var badge = document.getElementById('ht-detail-status-badge');
+  badge.textContent = ev.status;
+  badge.style.background = sc.bg;
+  badge.style.color = sc.color;
+  // 顯示轉為報銷按鈕（有品項且未轉過）
+  var btn = document.getElementById('ht-convert-btn');
+  if (_htItems.length > 0 && !ev.claimId) btn.style.display = 'flex';
+  else btn.style.display = 'none';
+  // 填入設定列
+  document.getElementById('ht-event-date').value = ev.date || '';
+  document.getElementById('ht-event-headcount').value = ev.headcount || '';
+  document.getElementById('ht-event-budget-pp').value = ev.budgetPerPerson || '';
+  htUpdateCalcBudget();
+}
+
+window.htBackToList = function() {
+  document.getElementById('ht-list-panel').style.display = '';
+  document.getElementById('ht-detail-panel').style.display = 'none';
+  htLoadList();
+};
+
+window.htSwitchDetailTab = function(tab) {
+  _htDetailTab = tab;
+  document.querySelectorAll('.ht-dtab').forEach(function(b) {
+    var active = b.dataset.tab === tab;
+    b.style.background = active ? '#e16b8c' : '#fff';
+    b.style.color = active ? '#fff' : '#64748b';
+    b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
+    b.classList.toggle('active', active);
+  });
+  ['plan','budget','recommend','menu','birthday'].forEach(function(t){
+    var el = document.getElementById('ht-dtab-' + t);
+    if (el) el.style.display = t === tab ? '' : 'none';
+  });
+  if (tab === 'plan')      htRenderItems();
+  if (tab === 'budget')    htRenderBudget();
+  if (tab === 'recommend') htRenderRecommend();
+  if (tab === 'menu')      htRenderMenuCard();
+  if (tab === 'birthday')  htRenderBirthday();
+};
+
+// ── 活動設定列 ──
+window.htUpdateCalcBudget = function() {
+  var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
+  var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
+  document.getElementById('ht-calc-budget').textContent = fmtMoney(hc * bp);
+};
+window.htSaveEventInfo = async function() {
+  htUpdateCalcBudget();
+  if (!_htEvent) return;
+  var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
+  var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
+  await htApi('htUpdate', {
+    eventId: _htEvent.eventId,
+    date: document.getElementById('ht-event-date').value,
+    headcount: hc,
+    budgetPerPerson: bp,
+    totalBudget: hc * bp,
+  });
+  _htEvent.headcount = hc;
+  _htEvent.budgetPerPerson = bp;
+  _htEvent.totalBudget = hc * bp;
+  _htEvent.date = document.getElementById('ht-event-date').value;
+  htRenderDetailHeader();
+};
+
+// ── 品項規劃 ──
+var _htCats = ['甜點','主食','飲料','水果','其他'];
+
+function htRenderItems() {
+  var tbody = document.getElementById('ht-items-tbody');
+  if (!_htItems.length) {
+    tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#94a3b8;font-size:13px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
+    document.getElementById('ht-total-cell').textContent = 'NT$0';
+    return;
+  }
+  var total = 0;
+  tbody.innerHTML = _htItems.map(function(it, idx) {
+    total += it.subtotal || 0;
+    var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('');
+    return '<tr style="border-bottom:1px solid #f8fafc" id="ht-row-'+idx+'">'
+      + '<td style="padding:8px 12px"><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:110px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:90px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td style="padding:8px"><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;outline:none">'+catOpts+'</select></td>'
+      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:62px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:50px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td style="padding:8px;text-align:right;font-weight:600;color:#0f172a;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
+      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="assignee" value="'+htEsc(it.assignee)+'" onchange="htItemChange(this)" placeholder="負責人" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:12px;width:80px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td style="padding:8px;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:16px;height:16px;accent-color:#1e9d6b;cursor:pointer"></td>'
+      + '<td style="padding:8px;text-align:center">'
+      + (it.avgRating > 0 ? '<span style="color:#f59e0b;font-size:12px">★'+it.avgRating+'</span>' : '')
+      + '<button onclick="htOpenRate('+idx+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:11px;padding:2px 4px;font-family:inherit" title="評分">評</button>'
+      + '</td>'
+      + '<td style="padding:8px;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px" title="刪除">×</button></td>'
+      + '</tr>';
+  }).join('');
+  document.getElementById('ht-total-cell').textContent = fmtMoney(total);
+}
+
+function htEsc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+window.htItemChange = function(el) {
+  var idx = parseInt(el.dataset.idx);
+  var f   = el.dataset.f;
+  var val = el.value;
+  if (f === 'unitPrice' || f === 'qty') {
+    _htItems[idx][f] = Number(val) || 0;
+    _htItems[idx].subtotal = (_htItems[idx].unitPrice||0) * (_htItems[idx].qty||0);
+    document.getElementById('ht-sub-'+idx).textContent = fmtMoney(_htItems[idx].subtotal);
+    // update total
+    var t = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+    document.getElementById('ht-total-cell').textContent = fmtMoney(t);
+  } else {
+    _htItems[idx][f] = val;
+  }
+};
+
+window.htToggleOrderLocal = function(cb) {
+  var idx = parseInt(cb.dataset.idx);
+  _htItems[idx].ordered = cb.checked;
+};
+
+window.htAddItemRow = function() {
+  _htItems.push({ itemId:'', name:'', vendor:'', category:'甜點', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', ratingSum:0, ratingCount:0, avgRating:0 });
+  htRenderItems();
+};
+
+window.htDeleteItem = function(idx) {
+  _htItems.splice(idx, 1);
+  htRenderItems();
+};
+
+window.htSaveItems = async function() {
+  var btn = document.getElementById('ht-save-btn');
+  if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
+  var r = await htApi('htSaveItems', { eventId: _htEvent.eventId, items: _htItems });
+  if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
+  if (!r.ok) { toast('儲存失敗：' + r.error); return; }
+  toast('✅ 品項已儲存');
+  // reload items
+  var r2 = await htApi('htGetItems', { eventId: _htEvent.eventId });
+  if (r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); }
+};
+
+// ── 預算結算 ──
+function htRenderBudget() {
+  var ev = _htEvent;
+  var total     = ev.totalBudget  || 0;
+  var actual    = ev.actualExpense || _htItems.reduce(function(s,it){ return s+it.subtotal; },0);
+  var bday      = ev.birthdayBudget || 0;
+  var grandTotal= actual + bday;
+  var surplus   = total - grandTotal;
+  var pct       = total > 0 ? Math.min(Math.round(grandTotal/total*100),100) : 0;
+  var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
+
+  var cards = [
+    { label:'總預算', val: fmtMoney(total), icon:'💰', color:'#6366f1' },
+    { label:'午茶支出', val: fmtMoney(actual), icon:'☕', color:'#e16b8c' },
+    { label:'慶生費用', val: fmtMoney(bday), icon:'🎂', color:'#f59e0b' },
+    { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️', color: surplusColor },
+  ];
+  document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
+    return '<div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:18px">'
+      + '<div style="font-size:22px;margin-bottom:8px">'+c.icon+'</div>'
+      + '<div style="font-size:20px;font-weight:800;color:'+c.color+'">'+c.val+'</div>'
+      + '<div style="font-size:12px;color:#94a3b8;margin-top:2px">'+c.label+'</div>'
+      + '</div>';
+  }).join('');
+
+  var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#1e9d6b';
+  document.getElementById('ht-budget-progress-bars').innerHTML =
+    '<div style="margin-bottom:16px">'
+    + '<div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:6px"><span>支出合計</span><span style="font-weight:700;color:#0f172a">'+pct+'%</span></div>'
+    + '<div style="height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:4px"><span>'+fmtMoney(grandTotal)+'</span><span>'+fmtMoney(total)+'</span></div>'
+    + '</div>';
+
+  // 類別明細
+  var catTotals = {};
+  _htCats.forEach(function(c){ catTotals[c] = 0; });
+  _htItems.forEach(function(it){ catTotals[it.category||'其他'] = (catTotals[it.category||'其他']||0) + (it.subtotal||0); });
+  var catHtml = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; }).map(function(c) {
+    var cpct = actual > 0 ? Math.round(catTotals[c]/actual*100) : 0;
+    var catColors = { '甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8' };
+    var col = catColors[c] || '#94a3b8';
+    return '<div style="margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600;color:#374151">'+c+'</span><span style="color:#64748b">'+fmtMoney(catTotals[c])+' ('+cpct+'%)</span></div>'
+      + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+cpct+'%;background:'+col+';border-radius:4px"></div></div>'
+      + '</div>';
+  }).join('');
+  document.getElementById('ht-budget-category-detail').innerHTML = catHtml || '<div style="color:#94a3b8;font-size:13px">尚無品項資料</div>';
+}
+
+// ── 智慧推薦 ──
+window.htRunOptimize = async function() {
+  var hc = Number(document.getElementById('ht-opt-headcount').value);
+  var bp = Number(document.getElementById('ht-opt-budget').value);
+  if (!hc || !bp) { toast('請填寫人數與每人預算'); return; }
+  var r = await htApi('htRecommend', { headcount: hc, budgetPerPerson: bp });
+  if (!r.ok) { toast('計算失敗'); return; }
+  _htRecData = r;
+  var opt = r.optimize;
+  var resultEl = document.getElementById('ht-optimize-result');
+  resultEl.style.display = '';
+  var cats = Object.keys(opt.breakdown);
+  var catColors = { '甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b' };
+  resultEl.innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">建議配置（總預算 '+fmtMoney(opt.total)+'）</div>'
+    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
+    + cats.map(function(c){
+      return '<div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid '+(catColors[c]||'#e2e8f0')+'22">'
+        + '<div style="font-size:11px;color:#64748b;margin-bottom:2px">'+c+'</div>'
+        + '<div style="font-size:16px;font-weight:800;color:'+(catColors[c]||'#374151')+'">'+fmtMoney(opt.breakdown[c])+'</div>'
+        + '</div>';
+    }).join('')
+    + '</div>';
+  htRenderRecommendList(r);
+};
+
+function htRenderRecommend() {
+  // 填入當前活動的人數和預算
+  if (_htEvent) {
+    document.getElementById('ht-opt-headcount').value = _htEvent.headcount || '';
+    document.getElementById('ht-opt-budget').value = _htEvent.budgetPerPerson || '';
+  }
+  if (_htRecData) htRenderRecommendList(_htRecData);
+}
+
+window.htSwitchRecTab = function(tab) {
+  _htRecTab = tab;
+  document.querySelectorAll('.ht-rtab').forEach(function(b){
+    var active = b.textContent.trim() === (tab==='all'?'全部':tab) || (tab==='all' && b.textContent.trim()==='全部');
+    b.style.background = active ? '#e16b8c' : '#fff';
+    b.style.color = active ? '#fff' : '#64748b';
+    b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
+  });
+  if (_htRecData) htRenderRecommendList(_htRecData);
+};
+
+function htRenderRecommendList(data) {
+  var list = document.getElementById('ht-recommend-list');
+  var items = data.topItems || [];
+  if (_htRecTab !== 'all') items = items.filter(function(it){ return it.category === _htRecTab; });
+  if (!items.length) {
+    list.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px">該類別尚無歷史評分資料</div>';
+    return;
+  }
+  list.innerHTML = items.map(function(it, i){
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px;background:'+(i%2===0?'#fafafa':'#fff')+';border-radius:10px">'
+      + '<div style="font-size:18px;width:28px;text-align:center;flex-shrink:0">'+(i===0?'🥇':i===1?'🥈':i===2?'🥉':'  ')+'</div>'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-size:13px;font-weight:700;color:#0f172a">'+htEsc(it.name)+'</div>'
+      + '<div style="font-size:11px;color:#64748b;margin-top:1px">'+htEsc(it.vendor)+' · '+it.category+'</div>'
+      + '</div>'
+      + '<div style="text-align:right;flex-shrink:0">'
+      + '<div style="font-size:14px;font-weight:700;color:#f59e0b">'+it.avgRating+'★</div>'
+      + '<div style="font-size:11px;color:#94a3b8">訂'+(it.orderCount||0)+'次</div>'
+      + '</div>'
+      + (it.unitPrice > 0 ? '<div style="font-size:12px;font-weight:600;color:#6366f1;flex-shrink:0">'+fmtMoney(it.unitPrice)+'</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+// ── 菜單卡片 ──
+function htRenderMenuCard() {
+  var ev = _htEvent;
+  var catColors = { '甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8' };
+  var cats = {};
+  _htItems.forEach(function(it){
+    var c = it.category || '其他';
+    if (!cats[c]) cats[c] = [];
+    cats[c].push(it);
+  });
+  var html = '<div style="padding:28px;font-family:\'Noto Sans TC\',sans-serif">'
+    // 封面
+    + '<div style="text-align:center;padding:24px 0 20px;border-bottom:2px dashed #fde4ef;margin-bottom:24px">'
+    + '<div style="font-size:28px">☕</div>'
+    + '<div style="font-size:24px;font-weight:900;color:#e16b8c;margin:6px 0">騰勢午茶日</div>'
+    + '<div style="font-size:14px;color:#64748b">'+fmtMonth(ev.month)+'</div>'
+    + (ev.date ? '<div style="font-size:13px;color:#94a3b8;margin-top:2px">'+ev.date+'</div>' : '')
+    + '<div style="font-size:13px;color:#94a3b8;margin-top:4px">人數：'+ev.headcount+' 人</div>'
+    + '</div>';
+  // 各類別
+  Object.keys(cats).forEach(function(cat) {
+    var col = catColors[cat] || '#94a3b8';
+    html += '<div style="margin-bottom:20px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      + '<div style="width:4px;height:18px;background:'+col+';border-radius:2px"></div>'
+      + '<div style="font-size:15px;font-weight:700;color:'+col+'">'+cat+'</div>'
+      + '</div>'
+      + '<div style="display:grid;gap:6px">';
+    cats[cat].forEach(function(it){
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:'+col+'0d;border-radius:10px;border-left:3px solid '+col+'">'
+        + '<div>'
+        + '<div style="font-size:13px;font-weight:700;color:#0f172a">'+htEsc(it.name)+'</div>'
+        + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+htEsc(it.vendor)+(it.serving?' · '+htEsc(it.serving):'')+' · 負責：'+(it.assignee||'—')+'</div>'
+        + '</div>'
+        + '<div style="text-align:right;flex-shrink:0;margin-left:10px">'
+        + '<div style="font-size:13px;font-weight:700;color:'+col+'">'+fmtMoney(it.subtotal)+'</div>'
+        + '<div style="font-size:11px;color:#94a3b8">×'+it.qty+'</div>'
+        + '</div>'
+        + '</div>';
+    });
+    html += '</div></div>';
+  });
+  // 合計
+  var total = _htItems.reduce(function(s,it){ return s+it.subtotal; },0);
+  html += '<div style="border-top:2px dashed #fde4ef;padding-top:16px;margin-top:8px;display:flex;justify-content:space-between;align-items:center">'
+    + '<div style="font-size:14px;font-weight:700;color:#64748b">支出合計</div>'
+    + '<div style="font-size:22px;font-weight:900;color:#e16b8c">'+fmtMoney(total)+'</div>'
+    + '</div>'
+    + '</div>';
+  document.getElementById('ht-menu-card').innerHTML = html;
+}
+
+window.htPrintMenu = function() {
+  var card = document.getElementById('ht-menu-card');
+  if (!card) return;
+  var w = window.open('', '_blank');
+  w.document.write('<html><head><meta charset="utf-8"><title>午茶日菜單</title>'
+    + '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">'
+    + '<style>body{margin:0;padding:20px;font-family:\'Noto Sans TC\',sans-serif;}</style></head><body>'
+    + card.innerHTML + '</body></html>');
+  w.document.close();
+  setTimeout(function(){ w.print(); }, 800);
+};
+
+// ── 壽星管理 ──
+function htRenderBirthday() {
+  var ev = _htEvent;
+  var list = ev.birthdays || [];
+  var el = document.getElementById('ht-birthday-list');
+  if (!list.length) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">尚無壽星，點擊「新增壽星」</div>';
+  } else {
+    el.innerHTML = list.map(function(bd, i){
+      var name = typeof bd === 'object' ? (bd.name||bd) : bd;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a">'
+        + '<span style="font-size:18px">🎂</span>'
+        + '<span style="flex:1;font-size:14px;font-weight:600;color:#0f172a">'+htEsc(name)+'</span>'
+        + '<button onclick="htDeleteBirthday('+i+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;padding:2px 6px">×</button>'
+        + '</div>';
+    }).join('');
+  }
+  var hc = ev.headcount || 0;
+  var perPerson = 40;
+  var total = list.length * hc * perPerson;
+  document.getElementById('ht-bday-total').textContent = fmtMoney(total) + '（' + list.length + '位 × ' + hc + '人 × NT$' + perPerson + '）';
+}
+
+window.htAddBirthday = async function() {
+  var name = prompt('輸入壽星姓名：');
+  if (!name || !name.trim()) return;
+  var ev = _htEvent;
+  var list = (ev.birthdays || []).slice();
+  list.push(name.trim());
+  var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+  if (!r.ok) { toast('新增失敗'); return; }
+  ev.birthdays = list;
+  ev.birthdayBudget = list.length * ev.headcount * 40;
+  htRenderBirthday();
+  htRenderDetailHeader();
+};
+
+window.htDeleteBirthday = async function(idx) {
+  var ev = _htEvent;
+  var list = (ev.birthdays || []).slice();
+  list.splice(idx, 1);
+  var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+  if (!r.ok) { toast('刪除失敗'); return; }
+  ev.birthdays = list;
+  ev.birthdayBudget = list.length * ev.headcount * 40;
+  htRenderBirthday();
+  htRenderDetailHeader();
+};
+
+// ── 評分 Modal ──
+window.htOpenRate = function(idx) {
+  _htRateItemId = _htItems[idx].itemId;
+  _htRateStars  = 0;
+  document.getElementById('ht-rate-item-name').textContent = _htItems[idx].name || '（無名稱）';
+  document.getElementById('ht-rate-label').textContent = '點選星星評分';
+  document.querySelectorAll('.ht-star').forEach(function(s){ s.style.filter = 'grayscale(1)'; });
+  document.getElementById('ht-rate-modal').style.display = 'flex';
+};
+window.htCloseRate = function() { document.getElementById('ht-rate-modal').style.display = 'none'; };
+window.htSetStar = function(val) {
+  _htRateStars = val;
+  var labels = ['','很差','普通','還好','很好','超棒！'];
+  document.getElementById('ht-rate-label').textContent = labels[val] || '';
+  document.querySelectorAll('.ht-star').forEach(function(s){
+    s.style.filter = parseInt(s.dataset.val) <= val ? 'none' : 'grayscale(1)';
+    s.style.transform = parseInt(s.dataset.val) <= val ? 'scale(1.15)' : 'scale(1)';
+  });
+};
+window.htSubmitRate = async function() {
+  if (!_htRateStars) { toast('請先選擇星數'); return; }
+  if (!_htRateItemId) { toast('品項尚未儲存，請先儲存品項再評分'); htCloseRate(); return; }
+  var r = await htApi('htRateItem', { itemId: _htRateItemId, stars: _htRateStars });
+  if (!r.ok) { toast('評分失敗：' + r.error); return; }
+  toast('⭐ 評分送出');
+  htCloseRate();
+  var r2 = await htApi('htGetItems', { eventId: _htEvent.eventId });
+  if (r2.ok) { _htItems = r2.items||[]; htRenderItems(); }
+};
+
+// ── 轉為報銷 ──
+window.htConvertToClaim = async function() {
+  if (!confirm('將此活動的品項費用轉為報銷申請草稿？')) return;
+  var r = await htApi('htConvert', { eventId: _htEvent.eventId });
+  if (!r.ok) { toast('轉換失敗：' + r.error); return; }
+  toast('✅ 已建立報銷草稿 ' + r.caseId + '，可至「案件追蹤」查看');
+  _htEvent.claimId = r.caseId;
+  htRenderDetailHeader();
+};
+
+})(); // end 午茶日 module
 </script>
 
 <!-- RECEIPT CONFIRM MODAL -->
@@ -7784,6 +8437,287 @@ document.addEventListener('click', function(e) {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       登出
     </button>
+  </div>
+</div>
+
+<!-- ══ 午茶日 View ══ -->
+<div class="view" id="view-hightea">
+
+  <!-- ── 列表頁 ── -->
+  <div id="ht-list-panel">
+    <!-- 頁頭工具列 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:8px">
+        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
+        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">歷史分析</button>
+        <button class="ht-tab-btn" id="ht-tab-vendors" onclick="htSwitchListTab('vendors')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">廠商評分</button>
+      </div>
+      <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增活動
+      </button>
+    </div>
+
+    <!-- 月份總覽 Tab -->
+    <div id="ht-panel-events">
+      <div id="ht-events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px;grid-column:1/-1">載入中…</div>
+      </div>
+    </div>
+
+    <!-- 歷史分析 Tab -->
+    <div id="ht-panel-analytics" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px" id="ht-analytics-stats"></div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px" id="ht-analytics-trend">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">月份支出趨勢</div>
+        <div id="ht-trend-chart" style="height:180px;position:relative;overflow:hidden"></div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">類別支出分佈</div>
+        <div id="ht-category-bars"></div>
+      </div>
+    </div>
+
+    <!-- 廠商評分 Tab -->
+    <div id="ht-panel-vendors" style="display:none">
+      <div id="ht-vendors-list" style="display:grid;gap:10px">
+        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 活動詳情頁 ── -->
+  <div id="ht-detail-panel" style="display:none">
+    <!-- 返回 + 標題 -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button onclick="htBackToList()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div id="ht-detail-title" style="font-size:18px;font-weight:700;color:#0f172a"></div>
+        <div id="ht-detail-subtitle" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <span id="ht-detail-status-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700"></span>
+        <button id="ht-convert-btn" onclick="htConvertToClaim()" style="display:none;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:none;background:#1e9d6b;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          轉為報銷
+        </button>
+      </div>
+    </div>
+
+    <!-- 詳情 Sub-tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="ht-dtab active" data-tab="plan" onclick="htSwitchDetailTab('plan')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項規劃</button>
+      <button class="ht-dtab" data-tab="budget" onclick="htSwitchDetailTab('budget')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">預算結算</button>
+      <button class="ht-dtab" data-tab="recommend" onclick="htSwitchDetailTab('recommend')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">✨ 智慧推薦</button>
+      <button class="ht-dtab" data-tab="menu" onclick="htSwitchDetailTab('menu')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">菜單卡片</button>
+      <button class="ht-dtab" data-tab="birthday" onclick="htSwitchDetailTab('birthday')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">🎂 壽星</button>
+    </div>
+
+    <!-- Tab: 品項規劃 -->
+    <div id="ht-dtab-plan">
+      <!-- 快速設定列 -->
+      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <input id="ht-event-date" type="text" placeholder="活動日期" onchange="htSaveEventInfo()" style="border:none;background:none;font-size:13px;color:#0f172a;font-family:inherit;width:100px;outline:none;font-weight:600">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span style="font-size:13px;color:#64748b">人數</span>
+          <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:52px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span style="font-size:13px;color:#64748b">每人預算</span>
+          <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:70px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+          <span style="font-size:12px;color:#94a3b8">元</span>
+        </div>
+        <div style="margin-left:auto;font-size:12px;color:#64748b">
+          總預算 <span id="ht-calc-budget" style="font-weight:700;color:#e16b8c">NT$0</span>
+        </div>
+      </div>
+
+      <!-- 品項表格 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:15px;font-weight:700;color:#0f172a">品項清單</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增品項
+            </button>
+            <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc">
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">品名</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">廠商</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">類別</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">單價</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">數量</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">小計</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">負責人</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">已訂</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">評分</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;font-size:12px"></th>
+              </tr>
+            </thead>
+            <tbody id="ht-items-tbody"></tbody>
+            <tfoot>
+              <tr style="background:#fafafa;border-top:2px solid #f1f5f9">
+                <td colspan="5" style="padding:10px 12px;font-size:12px;color:#64748b">合計</td>
+                <td style="padding:10px 8px;text-align:right;font-weight:700;color:#0f172a" id="ht-total-cell">NT$0</td>
+                <td colspan="4"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 預算結算 -->
+    <div id="ht-dtab-budget" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px" id="ht-budget-cards"></div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">支出進度</div>
+        <div id="ht-budget-progress-bars"></div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">類別明細</div>
+        <div id="ht-budget-category-detail"></div>
+      </div>
+    </div>
+
+    <!-- Tab: 智慧推薦 -->
+    <div id="ht-dtab-recommend" style="display:none">
+      <!-- 預算優化器 -->
+      <div style="background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #e0f0ff;border-radius:16px;padding:20px;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">🧮 預算優化器</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:14px">根據人數與預算自動計算各類別最佳配比</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:13px;color:#64748b">人數</span>
+            <input id="ht-opt-headcount" type="number" min="1" value="" placeholder="人數" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:13px;color:#64748b">每人預算</span>
+            <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
+            <span style="font-size:12px;color:#94a3b8">元</span>
+          </div>
+          <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">計算</button>
+        </div>
+        <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
+      </div>
+      <!-- 推薦品項 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">根據福委會歷次評分排名</div>
+        <div id="ht-recommend-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="ht-rtab active" onclick="htSwitchRecTab('all')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">全部</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('甜點')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">甜點</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('主食')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">主食</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('飲料')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">飲料</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('水果')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">水果</button>
+        </div>
+        <div id="ht-recommend-list" style="display:grid;gap:8px">
+          <div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px">先儲存品項並評分後，這裡會出現推薦清單</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 菜單卡片 -->
+    <div id="ht-dtab-menu" style="display:none">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+        <button onclick="htPrintMenu()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #64748b;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          列印 / 匯出
+        </button>
+      </div>
+      <div id="ht-menu-card" style="background:#fff;border-radius:20px;border:2px solid #fde4ef;overflow:hidden;box-shadow:0 4px 24px rgba(225,107,140,.12)">
+        <!-- 菜單卡片內容由 JS 動態生成 -->
+      </div>
+    </div>
+
+    <!-- Tab: 壽星 -->
+    <div id="ht-dtab-birthday" style="display:none">
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#0f172a">本月壽星</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:2px">每人 NT$40 × 人數計算慶生費用</div>
+          </div>
+          <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增壽星
+          </button>
+        </div>
+        <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:#64748b">慶生費用合計</span>
+          <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#f59e0b">NT$0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新增/編輯活動 Modal -->
+<div id="ht-create-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseCreate()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="font-size:17px;font-weight:700;color:#0f172a;margin-bottom:20px">新增午茶日活動</div>
+    <div style="display:grid;gap:14px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">月份 <span style="color:#e16b8c">*</span></label>
+        <input id="ht-new-month" type="month" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">活動日期</label>
+        <input id="ht-new-date" type="date" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">人數</label>
+          <input id="ht-new-headcount" type="number" min="1" placeholder="例：30" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">每人預算（元）</label>
+          <input id="ht-new-budget" type="number" min="0" placeholder="例：200" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">備註</label>
+        <textarea id="ht-new-notes" rows="2" placeholder="主題、特別需求…" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;resize:none;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:22px">
+      <button onclick="htCloseCreate()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
+      <button onclick="htSubmitCreate()" style="flex:2;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
+    </div>
+  </div>
+</div>
+
+<!-- 評分 Modal -->
+<div id="ht-rate-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseRate()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:24px;width:min(340px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">
+    <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:4px">為品項評分</div>
+    <div id="ht-rate-item-name" style="font-size:13px;color:#64748b;margin-bottom:20px"></div>
+    <div id="ht-rate-stars" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px">
+      <span class="ht-star" data-val="1" onclick="htSetStar(1)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
+      <span class="ht-star" data-val="2" onclick="htSetStar(2)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
+      <span class="ht-star" data-val="3" onclick="htSetStar(3)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
+      <span class="ht-star" data-val="4" onclick="htSetStar(4)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
+      <span class="ht-star" data-val="5" onclick="htSetStar(5)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
+    </div>
+    <div id="ht-rate-label" style="font-size:13px;color:#94a3b8;margin-bottom:20px">點選星星評分</div>
+    <div style="display:flex;gap:8px">
+      <button onclick="htCloseRate()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit">取消</button>
+      <button onclick="htSubmitRate()" style="flex:2;padding:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit">送出評分</button>
+    </div>
   </div>
 </div>
 
