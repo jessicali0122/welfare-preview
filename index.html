@@ -2547,19 +2547,9 @@ function initGoogleSignIn() {
       client_id: GOOGLE_CLIENT_ID,
       callback: handleGoogleLogin,
       auto_select: false,
+      use_fedcm_for_prompt: false,
     });
-    // 優先用官方 renderButton（OAuth2 popup，無痕模式也能用）
-    if (btn) {
-      btn.innerHTML = '';
-      try {
-        google.accounts.id.renderButton(btn, {
-          theme: 'outline', size: 'large', text: 'signin_with',
-          locale: 'zh-TW', width: 280,
-        });
-      } catch(e) {
-        btn.innerHTML = _googleBtnHTML;
-      }
-    }
+    if (btn) btn.innerHTML = _googleBtnHTML;
   } else if (GOOGLE_CLIENT_ID) {
     // GSI 尚未載入，200ms 後重試（最多 25 次 = 5 秒）
     if ((window._gsiRetry || 0) < 25) {
