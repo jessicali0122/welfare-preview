@@ -2605,7 +2605,12 @@ window.onload = function() {
     const oauthError = hashParams.get('error');
     history.replaceState({}, '', location.pathname + location.search);
     if (idToken) {
-      handleGoogleLogin({ credential: idToken });
+      try {
+        handleGoogleLogin({ credential: idToken });
+      } catch(e) {
+        const errEl = document.getElementById('login-error');
+        if (errEl) { errEl.style.display='block'; errEl.textContent='登入處理失敗：' + e.message; }
+      }
       return;
     }
     if (oauthError) {
@@ -2664,10 +2669,25 @@ window.onload = function() {
 
 
 function handleGoogleLogin(response) {
-  const payload = parseJwt(response.credential);
+  let payload;
+  try {
+    payload = parseJwt(response.credential);
+  } catch(e) {
+    const errEl = document.getElementById('login-error');
+    if (errEl) { errEl.style.display='block'; errEl.textContent='Token 解析失敗，請重新整理後再試一次。(' + e.message + ')'; }
+    return;
+  }
+  if (!payload || !payload.email) {
+    const errEl = document.getElementById('login-error');
+    if (errEl) { errEl.style.display='block'; errEl.textContent='無法取得帳號資訊，請重試。'; }
+    return;
+  }
   if (!payload.email.endsWith('@tsagroup.com.tw')) {
-    document.getElementById('login-error').style.display = 'block';
-    document.getElementById('login-error').textContent = '請使用 @tsagroup.com.tw 公司信箱登入';
+    const errEl = document.getElementById('login-error');
+    if (errEl) {
+      errEl.style.display='block';
+      errEl.textContent='此帳號（' + payload.email + '）非公司帳號，請使用 @tsagroup.com.tw 信箱登入。';
+    }
     return;
   }
   // 後端已放寬 token 有效期至 7 天（不依賴 Google 的 1 小時硬限制）
