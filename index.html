@@ -2535,6 +2535,9 @@ const _googleBtnHTML = `
 
 function triggerGoogleLogin() {
   if (!GOOGLE_CLIENT_ID) return;
+  // 視覺回饋：按鈕變色，確認點擊有被偵測到
+  const _btn = document.querySelector('#g-signin-btn button');
+  if (_btn) { _btn.style.background = '#e0f2fe'; _btn.textContent = '跳轉中...'; _btn.disabled = true; }
   const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
   sessionStorage.setItem('oauth_nonce', nonce);
   const redirectUri = location.origin + location.pathname;
@@ -2547,7 +2550,8 @@ function triggerGoogleLogin() {
     prompt: 'select_account',
     hd: 'tsagroup.com.tw',
   });
-  location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  setTimeout(function() { location.href = 'https://accounts.google.com/o/oauth2/v2/auth?' + params; }, 300);
+  return false;
 }
 
 function initGoogleSignIn() {
