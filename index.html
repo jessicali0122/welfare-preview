@@ -13,26 +13,21 @@
 <script>
 (function(){
   try{
-    var s=180,r=40;
+    var s=180;
     var cv=document.createElement('canvas');cv.width=cv.height=s;
     var x=cv.getContext('2d');
-    /* rounded rect background */
-    x.beginPath();x.moveTo(r,0);x.lineTo(s-r,0);x.arcTo(s,0,s,r,r);
-    x.lineTo(s,s-r);x.arcTo(s,s,s-r,s,r);
-    x.lineTo(r,s);x.arcTo(0,s,0,s-r,r);
-    x.lineTo(0,r);x.arcTo(0,0,r,0,r);x.closePath();
-    var g=x.createLinearGradient(0,0,s,s);
-    g.addColorStop(0,'#2ee89a');g.addColorStop(.5,'#1e9d6b');g.addColorStop(1,'#157a50');
-    x.fillStyle=g;x.fill();
-    /* leaf paths — scaled from 48x48 to 108px, offset 36px */
-    var sc=108/48,ox=36,oy=36;
+    /* 白底（apple-touch-icon 需不透明背景）*/
+    x.fillStyle='#ffffff';
+    x.fillRect(0,0,s,s);
+    /* 綠葉，置中縮放 */
+    var sc=s/48*0.72,ox=(s-48*sc)/2,oy=(s-48*sc)/2;
     x.save();x.translate(ox,oy);x.scale(sc,sc);
-    x.fillStyle='rgba(255,255,255,.92)';
-    x.strokeStyle='rgba(255,255,255,.92)';
+    x.fillStyle='#1e9d6b';
+    x.strokeStyle='#1e9d6b';
     x.lineWidth=2.5;x.lineCap='round';
     /* stem */
     x.beginPath();x.moveTo(18,44);x.bezierCurveTo(18,44,19,35,20,26);x.bezierCurveTo(21,18,24,10,27,4);x.stroke();
-    /* leaves: [sx,sy, cp1x,cp1y, cp2x,cp2y, ex,ey, cp3x,cp3y, cp4x,cp4y] */
+    /* leaves */
     [[20,37,16,33,9,34,8,39,13,41,18,39],
      [21,28,25,24,32,25,32,30,27,32,22,30],
      [21,21,17,16,10,17,10,22,15,24,20,22],
@@ -50,7 +45,7 @@
     /* apple-touch-icon */
     var l=document.createElement('link');l.rel='apple-touch-icon';l.sizes='180x180';l.href=d;
     document.head.insertBefore(l,document.head.firstChild);
-    /* update favicon too */
+    /* favicon */
     var f=document.getElementById('main-favicon');if(f)f.href=d;
   }catch(e){}
 })();
@@ -71,25 +66,78 @@ body{margin:0;background:#fff}
 .view{display:none}.view.active{display:block}
 
 /* ── SIDEBAR ── */
-aside{width:76px;min-height:100vh;height:100%;display:flex;flex-direction:column;position:absolute;top:0;left:0;z-index:20;overflow-x:hidden;overflow-y:hidden;max-width:100%}
-aside .sl-text{display:none}
-aside .sl-section-label{display:none}
-aside .sidebar-brand-text{display:none}
+aside{
+  width:76px;min-height:100vh;height:100%;display:flex;flex-direction:column;
+  position:absolute;top:0;left:0;z-index:20;overflow:hidden;max-width:100%;
+  transition:width .28s cubic-bezier(.4,0,.2,1),box-shadow .28s ease;
+  background:#fff;
+}
+aside:hover{
+  width:168px!important;
+  box-shadow:4px 0 28px rgba(0,0,0,.10);
+  overflow:visible;
+}
+/* 展開時顯示分區標籤 */
+aside:hover .sl-section-label{display:block!important;width:100%;padding:12px 16px 4px!important;box-sizing:border-box}
+/* 展開時顯示 brand text */
+aside:hover .sidebar-brand-text{display:block!important}
+/* 展開時顯示文字 */
+aside .sl-text{display:none;opacity:0;transition:opacity .18s ease .08s;white-space:nowrap;font-size:14px;font-weight:500}
+aside:hover .sl-text{display:block;opacity:1}
+/* 展開時隱藏 ::after label */
+aside:hover .sl::after{display:none}
 
 /* nav items */
-.sl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;color:#94a3b8;transition:background .18s ease,color .18s ease,transform .15s ease;margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;overflow:visible;touch-action:manipulation}
-.sl:hover{background:#f8fafc;color:#475569;transform:translateY(-1px)}
+.sl{
+  position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;
+  color:#94a3b8;
+  transition:background .18s ease,color .18s ease,transform .15s ease,width .28s cubic-bezier(.4,0,.2,1),height .2s ease,flex-direction .01s,gap .2s,padding .2s,border-radius .2s;
+  margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;
+  overflow:hidden;touch-action:manipulation;
+}
+/* 展開後 nav items 改為橫排 */
+aside:hover .sl{
+  flex-direction:row;justify-content:flex-start;
+  width:calc(168px - 16px);height:50px;
+  padding:0 16px;gap:12px;border-radius:10px;margin:1px auto;
+}
+.sl:hover{background:#f8fafc;color:#475569}
+aside:hover .sl:hover{transform:translateX(3px)}
+.sl:not(aside:hover .sl):hover{transform:translateY(-1px)}
 .sl:hover svg{transform:scale(1.1);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
-.sl:active{transform:scale(.93)}
-.sl svg{transition:transform .2s ease,stroke .18s ease}
-/* active：橘色左側指示條 + 淡橘背景 + icon 放大 */
+aside:hover .sl:hover svg{transform:scale(1.12)}
+.sl:active{transform:scale(.93)!important}
+.sl svg{transition:transform .2s ease,stroke .18s ease;flex-shrink:0;width:22px!important;height:22px!important}
+
+/* active：左側指示條 + 淡粉背景 + icon glow */
 .sl.active{background:rgba(225,107,140,.08);color:#e16b8c;box-shadow:none}
+.sl.active::before{
+  content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+  width:3px;height:60%;background:#e16b8c;border-radius:0 3px 3px 0;
+  transition:height .25s cubic-bezier(.4,0,.2,1);
+}
 .sl.active svg{stroke:#e16b8c!important;transform:scale(1.08);filter:drop-shadow(0 0 4px rgba(225,107,140,.3))}
 .sl.active::after{color:#e16b8c!important;font-weight:700!important}
-.sl svg{flex-shrink:0;width:22px!important;height:22px!important}
+aside:hover .sl.active::before{height:75%}
+
+/* Ripple 波紋 */
+.sl-ripple{
+  position:absolute;border-radius:50%;
+  background:radial-gradient(circle,rgba(225,107,140,.35) 0%,transparent 70%);
+  transform:scale(0);animation:sl-ripple-anim .5s ease-out forwards;
+  pointer-events:none;
+}
+@keyframes sl-ripple-anim{to{transform:scale(4);opacity:0}}
 
 /* notification dot */
 .sl-badge{position:absolute!important;top:2px!important;right:2px!important;width:auto!important;height:auto!important;border-radius:0!important;background:transparent!important;padding:0!important;min-width:0!important;font-size:0!important;color:transparent!important;margin:0!important;line-height:0!important;pointer-events:none!important}
+/* 展開時 badge 移到右側 */
+aside:hover .sl-badge{top:50%!important;transform:translateY(-50%);right:10px!important}
+/* Badge 有內容時呼吸動畫 */
+.sl-badge.has-badge{animation:badge-pulse 2.2s ease-in-out infinite}
+@keyframes badge-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.25)}}
+aside:hover .sl-badge.has-badge{animation:none;transform:translateY(-50%) scale(1)}
 
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:13px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
@@ -1273,7 +1321,7 @@ tbody td{font-size:var(--fs-base)!important}
   </nav>
 
   <!-- 底部人像區（電腦版：點擊展開 user menu；手機版：隱藏，改由頂部頭像按鈕觸發）-->
-  <div id="sidebar-user-section" onclick="toggleUserMenu()" title="帳號選項" style="padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #f0ede9;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+  <div id="sidebar-user-section" onclick="toggleUserMenu()" title="帳號選項" style="display:none;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #f0ede9;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
     <div class="user-avatar-wrap" style="width:32px;height:32px;border-radius:50%;background:#e16b8c;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;overflow:hidden"><span class="user-avatar-initial">潔</span></div>
   </div>
 
@@ -7642,6 +7690,41 @@ document.addEventListener('click', function(e) {
 
   document.addEventListener('touchstart', onTouchStart, { passive: true });
   document.addEventListener('touchend',   onTouchEnd,   { passive: true });
+})();
+
+// ── 側邊欄互動增強 ──
+(function(){
+  // Ripple 波紋效果
+  document.querySelectorAll('.sl').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      var r = this.getBoundingClientRect();
+      var size = Math.max(r.width, r.height);
+      var el = document.createElement('span');
+      el.className = 'sl-ripple';
+      el.style.cssText = 'width:'+size+'px;height:'+size+'px;left:'+(e.clientX-r.left-size/2)+'px;top:'+(e.clientY-r.top-size/2)+'px';
+      this.appendChild(el);
+      setTimeout(function(){ el.remove(); }, 520);
+    });
+  });
+
+  // 手機版不啟用 hover 展開（touch 裝置上 hover 無意義）
+  var aside = document.getElementById('sidebar');
+  if(aside && window.matchMedia('(hover:none)').matches){
+    aside.style.transition = 'none';
+    aside.addEventListener('mouseenter', function(e){ e.stopPropagation(); });
+  }
+
+  // 監聽 approval-badge 顯示狀態，加上呼吸動畫 class
+  var observer = new MutationObserver(function(){
+    document.querySelectorAll('.sl-badge.approval-badge').forEach(function(b){
+      if(b.style.display !== 'none' && b.offsetParent !== null){
+        b.classList.add('has-badge');
+      } else {
+        b.classList.remove('has-badge');
+      }
+    });
+  });
+  observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style','class'] });
 })();
 </script>
 
