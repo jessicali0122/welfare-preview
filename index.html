@@ -2535,6 +2535,8 @@ const _googleBtnHTML = `
 
 function triggerGoogleLogin() {
   if (window.google?.accounts?.id) {
+    // prompt() 在許多瀏覽器/情境下會被靜默壓制，改用 renderButton 已是官方建議
+    // 此函式保留供相容，但實際登入由 renderButton 產生的官方按鈕觸發
     google.accounts.id.prompt();
   }
 }
@@ -2549,7 +2551,19 @@ function initGoogleSignIn() {
       auto_select: false,
       use_fedcm_for_prompt: false,
     });
-    if (btn) btn.innerHTML = _googleBtnHTML;
+    if (btn) {
+      // 使用官方 renderButton 取代自訂按鈕 + prompt()
+      // renderButton 產生的按鈕點擊後會開 popup，不受 One Tap 壓制影響
+      btn.innerHTML = '';
+      google.accounts.id.renderButton(btn, {
+        theme: 'outline',
+        size: 'large',
+        text: 'signin_with',
+        locale: 'zh-TW',
+        width: 280,
+        shape: 'rectangular',
+      });
+    }
   } else if (GOOGLE_CLIENT_ID) {
     // GSI 尚未載入，200ms 後重試（最多 25 次 = 5 秒）
     if ((window._gsiRetry || 0) < 25) {
