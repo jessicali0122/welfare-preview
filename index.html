@@ -2813,14 +2813,23 @@ function _initGIS() {
 }
 
 function doGoogleLogin() {
+  console.log('[BeneFlow] doGoogleLogin called, GOOGLE_CLIENT_ID:', !!GOOGLE_CLIENT_ID);
+  var btn = document.getElementById('google-login-btn');
+  if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
   if (!GOOGLE_CLIENT_ID) {
     var errEl = document.getElementById('login-error');
     if (errEl) { errEl.style.display = 'block'; errEl.textContent = '設定錯誤：找不到 Google Client ID'; }
+    if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
     return;
   }
-  // 直接 redirect 到 Google OAuth，完全繞過 GIS prompt/renderButton
-  // （GIS prompt 在無痕/封鎖第三方 cookie 環境下會無限轉圈，renderButton iframe 點擊不可靠）
+  console.log('[BeneFlow] calling _doOAuthRedirect...');
   _doOAuthRedirect();
+}
+
+function _doOAuthRedirect_debug() {
+  console.log('[BeneFlow] _doOAuthRedirect called');
+  console.log('[BeneFlow] location.origin:', location.origin);
+  console.log('[BeneFlow] location.pathname:', location.pathname);
 }
 
 // Fallback：Implicit flow redirect（GIS 完全失敗時用）
@@ -2838,7 +2847,9 @@ function _doOAuthRedirect() {
     hd: 'tsagroup.com.tw',
     nonce: nonce,
   });
-  window.location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + params);
+  var url = 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  console.log('[BeneFlow] navigating to Google OAuth:', url.substring(0, 100) + '...');
+  window.location.assign(url);
 }
 
 function triggerGoogleLogin() { doGoogleLogin(); return false; }
