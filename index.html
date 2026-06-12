@@ -1271,8 +1271,8 @@ tbody td{font-size:var(--fs-base)!important}
 
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%);position:relative;z-index:99999">
-  <div style="background:#fff;border-radius:24px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 48px rgba(0,0,0,.10),0 2px 12px rgba(0,0,0,.06);border:none;text-align:center;position:relative;overflow:hidden;-webkit-transform:translateZ(0);transform:translateZ(0)">
+<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%);position:fixed;inset:0;z-index:100">
+  <div style="background:#fff;border-radius:24px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 48px rgba(0,0,0,.10),0 2px 12px rgba(0,0,0,.06);border:none;text-align:center;position:relative">
     <!-- amber gradient top accent -->
     <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#1e9d6b 0%,#3dba84 25%,#f59e0b 70%,#f59e0b 100%)"></div>
     <div style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;overflow:hidden;background:#fff">
@@ -1280,9 +1280,11 @@ tbody td{font-size:var(--fs-base)!important}
     </div>
     <div style="font-size:22px;font-weight:700;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px">Bene<span style="color:#f59e0b">Flow</span></div>
     <div style="font-size:14px;color:#64748b;margin-bottom:28px">福委會請款簽核系統<br>請使用公司帳號登入</div>
-    <div id="g-signin-btn" style="display:flex;justify-content:center;margin-bottom:16px">
-      <!-- href 已預填完整 OAuth URL，不需要 JavaScript 也能點擊 -->
-      <a id="google-login-btn" autofocus tabindex="0" onclick="doGoogleLogin();return false;" href="#" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;text-decoration:none;color:inherit;position:relative;z-index:100000">
+    <div id="g-signin-btn" style="display:flex;justify-content:center;margin-bottom:16px;min-height:44px">
+      <!-- GIS 真實按鈕由 JS 渲染在此，若 GIS 未載入則顯示下方 fallback -->
+      <div id="gis-render-target" style="display:flex;justify-content:center"></div>
+      <!-- Fallback 按鈕：GIS 載入失敗時顯示 -->
+      <a id="google-login-btn" tabindex="0" onclick="doGoogleLogin();return false;" href="#" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;text-decoration:none;color:inherit;position:relative;z-index:100000">
         <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
         <span style="font-size:14px;font-weight:500;color:#374151;font-family:'Noto Sans TC',sans-serif;letter-spacing:.01em">以 Google 帳戶登入</span>
       </a>
@@ -2651,8 +2653,8 @@ tbody td{font-size:var(--fs-base)!important}
   </div>
 </div>
 
-<!-- Google Identity Services (不再使用，改用 OAuth2 redirect 流程) -->
-<!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
+<!-- Google Identity Services -->
+<script src="https://accounts.google.com/gsi/client" async defer onload="initGoogleSignIn()"></script>
 
 <script>
 window.onerror = function(msg, src, line) {
@@ -2790,19 +2792,24 @@ function applyRolePermissions() {
   }
 }
 
-function _buildOAuthUrl() {
-  const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  try { sessionStorage.setItem('oauth_nonce', nonce); } catch(e) {}
-  const redirectUri = (location.origin || (location.protocol + '//' + location.host)) + location.pathname;
-  const params = new URLSearchParams({
+// ── Google Identity Services 初始化（GIS Popup 模式，取代已棄用的 Implicit Flow）──
+var _gisReady = false;
+var _gisInitDone = false;
+var _gisBtnRendered = false;
+function _initGIS() {
+  if (_gisInitDone) return;
+  if (typeof google === 'undefined' || !google.accounts) return;
+  _gisInitDone = true;
+  google.accounts.id.initialize({
     client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: redirectUri,
-    response_type: 'id_token',
-    scope: 'openid email profile',
-    nonce: nonce,
-    prompt: 'select_account',
+    callback: handleGoogleLogin,
+    hd: 'tsagroup.com.tw',
+    use_fedcm_for_prompt: false,
+    auto_select: false,
+    cancel_on_tap_outside: true,
+    itp_support: true,
   });
-  return 'https://accounts.google.com/o/oauth2/v2/auth?' + params;
+  _gisReady = true;
 }
 
 function doGoogleLogin() {
@@ -2811,19 +2818,65 @@ function doGoogleLogin() {
     if (errEl) { errEl.style.display = 'block'; errEl.textContent = '設定錯誤：找不到 Google Client ID'; }
     return;
   }
-  try {
-    var url = _buildOAuthUrl();
-    console.log('[BeneFlow] 導向登入:', url);
-    window.location.assign(url);
-  } catch(e) {
-    console.error('[BeneFlow] 登入錯誤:', e);
-    var errEl = document.getElementById('login-error');
-    if (errEl) { errEl.style.display = 'block'; errEl.textContent = '登入發生錯誤：' + e.message; }
+  if (_gisReady) {
+    // GIS 已載入：用 prompt() 顯示帳號選擇器（從真實點擊觸發，不經 iframe）
+    try {
+      google.accounts.id.prompt(function(notification) {
+        // prompt 被跳過或不顯示（無痕模式、第三方 cookie 封鎖等）→ 改用 redirect
+        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+          _doOAuthRedirect();
+        }
+      });
+    } catch(e) {
+      console.warn('[BeneFlow] GIS prompt failed, fallback to redirect:', e.message);
+      _doOAuthRedirect();
+    }
+  } else {
+    // GIS 尚未載入：等待最多 3 秒，超時改用 OAuth redirect
+    var waited = 0;
+    var t = setInterval(function() {
+      waited += 100;
+      if (typeof google !== 'undefined' && google.accounts) {
+        clearInterval(t);
+        _initGIS();
+        doGoogleLogin(); // 重試
+      } else if (waited >= 3000) {
+        clearInterval(t);
+        _doOAuthRedirect();
+      }
+    }, 100);
   }
 }
 
+// Fallback：Implicit flow redirect（GIS 完全失敗時用）
+// 使用 response_type=id_token，Google 將 id_token 放在 URL hash 回傳前端直接使用
+function _doOAuthRedirect() {
+  var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+  sessionStorage.setItem('bf_oauth_nonce', nonce);
+  var redirectUri = location.origin + location.pathname;
+  var params = new URLSearchParams({
+    client_id: GOOGLE_CLIENT_ID,
+    redirect_uri: redirectUri,
+    response_type: 'id_token',
+    scope: 'openid email profile',
+    prompt: 'select_account',
+    hd: 'tsagroup.com.tw',
+    nonce: nonce,
+  });
+  window.location.assign('https://accounts.google.com/o/oauth2/v2/auth?' + params);
+}
+
 function triggerGoogleLogin() { doGoogleLogin(); return false; }
-function initGoogleSignIn() {} // no-op: button calls doGoogleLogin() directly
+function initGoogleSignIn() {
+  if (typeof google === 'undefined' || !google.accounts) return;
+  _initGIS();
+  // 顯示 HTML 登入按鈕（不使用 GIS iframe renderButton，改用 prompt() 從按鈕點擊觸發）
+  var fb = document.getElementById('google-login-btn');
+  if (fb) fb.style.display = 'flex';
+  // gis-render-target 不再顯示 iframe 按鈕，保持空白
+  var target = document.getElementById('gis-render-target');
+  if (target) target.style.display = 'none';
+}
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
@@ -2836,7 +2889,17 @@ window.onload = function() {
     lp.href='https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
     document.head.appendChild(lp);
   })();
-  console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'), '| hash:', location.hash ? location.hash.slice(0,30) + '...' : '(無)');
+  console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
+  // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
+  if (location.hash && location.hash.includes('id_token=')) {
+    var _hashParams = new URLSearchParams(location.hash.slice(1));
+    var _idToken = _hashParams.get('id_token');
+    if (_idToken) {
+      history.replaceState({}, '', location.pathname);
+      handleGoogleLogin({ credential: _idToken });
+      return;
+    }
+  }
   // ?logout=1 強制清除 session
   if (new URLSearchParams(location.search).get('logout') === '1') {
     localStorage.removeItem('bf_user');
@@ -2844,37 +2907,27 @@ window.onload = function() {
     sessionStorage.removeItem('bf_token');
     history.replaceState({}, '', location.pathname);
   }
-  // OAuth2 redirect 回調：從 URL hash 取得 id_token 或錯誤
-  if (location.hash) {
-    const hashParams = new URLSearchParams(location.hash.slice(1));
-    const idToken = hashParams.get('id_token');
-    const oauthError = hashParams.get('error');
-    history.replaceState({}, '', location.pathname + location.search);
-    if (idToken) {
-      // 顯示「登入中」提示，避免用戶看到空白
-      const errEl = document.getElementById('login-error');
-      if (errEl) { errEl.style.display='block'; errEl.style.background='#f0fdf4'; errEl.style.borderColor='#86efac'; errEl.style.color='#16a34a'; errEl.textContent='✅ Google 驗證成功，正在載入...'; }
-      try {
-        handleGoogleLogin({ credential: idToken });
-      } catch(e) {
-        if (errEl) { errEl.style.display='block'; errEl.style.background=''; errEl.style.borderColor=''; errEl.style.color=''; errEl.textContent='登入處理失敗：' + e.message; }
+  // GIS 可能比 onload 更早載入完成，先嘗試初始化
+  if (typeof google !== 'undefined' && google.accounts) {
+    _initGIS();
+    initGoogleSignIn();
+  } else {
+    // GIS 還沒載入：等 3 秒，超時就顯示 fallback 按鈕
+    setTimeout(function() {
+      if (!_gisReady) {
+        var fb = document.getElementById('google-login-btn');
+        if (fb) fb.style.display = 'flex';
       }
-      return;
-    }
-    if (oauthError) {
-      const errEl = document.getElementById('login-error');
-      if (errEl) {
-        errEl.style.display = 'block';
-        if (oauthError === 'redirect_uri_mismatch') {
-          errEl.textContent = '登入設定錯誤：redirect_uri 未在 Google Cloud Console 登記（' + location.origin + location.pathname + '）';
-        } else if (oauthError === 'access_denied') {
-          errEl.textContent = '登入被拒絕：請使用 @tsagroup.com.tw 公司帳號';
-        } else {
-          errEl.textContent = 'Google 登入失敗：' + oauthError;
-        }
-      }
-    }
+    }, 3000);
   }
+  // demo 模式下跳過所有 session 檢查和畫面重置
+  var _isDemo = !!new URLSearchParams(location.search).get('demo');
+  if (_isDemo) { initGoogleSignIn(); return; }
+  // 確保初始狀態：app 隱藏、login-screen 顯示
+  var appEl = document.getElementById('app');
+  var loginEl = document.getElementById('login-screen');
+  if (appEl) appEl.style.display = 'none';
+  if (loginEl) loginEl.style.display = 'flex';
   const saved = localStorage.getItem('bf_user');
   if (saved) {
     try {
@@ -2900,8 +2953,10 @@ window.onload = function() {
         sessionStorage.removeItem('bf_token');
         currentUser = null;
       } else if (!currentUser.token) {
-        // session 有效但 token 不在 sessionStorage（新開瀏覽器）→ 重新登入
+        // session 有效但 token 遺失（無痕 / 跨瀏覽器）→ 清 session，顯示登入
         localStorage.removeItem('bf_user');
+        localStorage.removeItem('bf_token');
+        sessionStorage.removeItem('bf_token');
         currentUser = null;
       } else {
         showApp();
@@ -2951,6 +3006,16 @@ function handleGoogleLogin(response) {
   // 移除過期提示條（如果有）
   const expBar = document.getElementById('auth-expired-bar');
   if (expBar) expBar.remove();
+  // ── GIS cleanup：移除 popup 留下的 overlay / iframe，避免遮住頁面 ──
+  try { google.accounts.id.cancel(); } catch(e) {}
+  ['#credential_picker_container','#credential_picker_iframe',
+   '#__gis_tmp','[id^="gsi_"]','iframe[src*="accounts.google.com"]'
+  ].forEach(function(sel) {
+    document.querySelectorAll(sel).forEach(function(el){ el.remove(); });
+  });
+  // 移除 GIS 可能留下的 pointer-events:none / overflow:hidden 於 body
+  document.body.style.overflow = '';
+  document.body.style.pointerEvents = '';
   showApp();
   startTokenRefreshTimer();
 }
@@ -3036,11 +3101,9 @@ function showApp() {
       const _initView = _validViews.includes(_initHash) ? _initHash : 'dashboard';
       if (_initView !== 'dashboard') {
         sw('dashboard');
-        loadDashboard();
         setTimeout(function(){ sw(_initView); }, 300);
       } else {
         sw('dashboard');
-        loadDashboard();
       }
       history.replaceState({ view: _initView }, '', _initView !== 'dashboard' ? '#' + _initView : location.pathname + location.search);
     }
@@ -3379,7 +3442,7 @@ async function callAPI(action, data = {}, opts = {}) {
       // 背景靜默更新（不 await）
       _fetchAPI(action, data).then(fresh => {
         if (fresh && fresh.ok) _cacheSet(cacheKey, fresh);
-      });
+      }).catch(function(){});
       return cached;
     }
   }
@@ -3399,10 +3462,10 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     });
     const json = await res.json();
     if (!json.ok && json.error && (
-      json.error.includes('登入') || json.error.includes('授權') ||
-      json.error.includes('token') || json.error.includes('SESSION') ||
-      json.error.includes('login') || json.error.includes('auth') ||
-      json.error.includes('unauthorized')
+      json.error === '請先登入公司帳號' ||
+      json.error.includes('SESSION') ||
+      json.error.includes('unauthorized') ||
+      (json.error.includes('token') && json.error.includes('invalid'))
     )) {
       handleAuthError();
       return { ok: false, error: 'SESSION_EXPIRED', _authError: true };
@@ -4668,10 +4731,10 @@ async function submitForm() {
     const catSel  = card.querySelectorAll('select')[0];
     const descInp = card.querySelector('.desc-inp');
     const rcptSel = card.querySelectorAll('select')[1];
-    if (!dateInp?.value) { _itemFieldErr = true; dateInp.style.borderColor='#ef4444'; setTimeout(()=>{dateInp.style.borderColor='';},2500); }
-    if (!catSel?.value)  { _itemFieldErr = true; catSel.classList.add('inp-error'); setTimeout(()=>catSel.classList.remove('inp-error'),2500); }
-    if (!descInp?.value?.trim()) { _itemFieldErr = true; descInp.classList.add('inp-error'); setTimeout(()=>descInp.classList.remove('inp-error'),2500); }
-    if (!rcptSel?.value) { _itemFieldErr = true; rcptSel.classList.add('inp-error'); setTimeout(()=>rcptSel.classList.remove('inp-error'),2500); }
+    if (dateInp && !dateInp.value) { _itemFieldErr = true; dateInp.style.borderColor='#ef4444'; setTimeout(()=>{dateInp.style.borderColor='';},2500); } else if (!dateInp) { _itemFieldErr = true; }
+    if (catSel && !catSel.value)   { _itemFieldErr = true; catSel.classList.add('inp-error'); setTimeout(()=>catSel.classList.remove('inp-error'),2500); } else if (!catSel) { _itemFieldErr = true; }
+    if (descInp && !descInp.value?.trim()) { _itemFieldErr = true; descInp.classList.add('inp-error'); setTimeout(()=>descInp.classList.remove('inp-error'),2500); } else if (!descInp) { _itemFieldErr = true; }
+    if (rcptSel && !rcptSel.value) { _itemFieldErr = true; rcptSel.classList.add('inp-error'); setTimeout(()=>rcptSel.classList.remove('inp-error'),2500); } else if (!rcptSel) { _itemFieldErr = true; }
   });
   if (_itemFieldErr) { _failValidation('⚠️ 每筆明細的憑證日期、類別、項目和單據類型為必填'); return; }
 
@@ -4883,7 +4946,7 @@ async function saveDraftForm(silent = false) {
       // 附件上傳（需要 caseId 才能上傳）
       if (filesToUp.length > 0) {
         window._draftUploadInProgress = true;
-        uploadDraftFiles(res.caseId, filesToUp).finally(() => { window._draftUploadInProgress = false; });
+        uploadDraftFiles(res.caseId, filesToUp).catch(function(e){ toast('⚠️ 附件上傳失敗，請重新上傳'); }).finally(() => { window._draftUploadInProgress = false; });
       }
     } else if (!silent) {
       toast('⚠️ 雲端同步失敗，資料已暫存本機（' + (res.error || '') + '）');
