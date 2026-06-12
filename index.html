@@ -2829,7 +2829,6 @@ function _makeBfToken(email, name) {
 }
 
 function doGoogleLogin() {
-  var btn   = document.getElementById('google-login-btn');
   var errEl = document.getElementById('login-error');
   var sel   = document.getElementById('login-user-select');
   if (!sel || !sel.value) {
@@ -2840,11 +2839,16 @@ function doGoogleLogin() {
   var parts = sel.value.split('|');
   var email = parts[0];
   var name  = parts[1] || email.split('@')[0];
-  if (errEl) errEl.style.display = 'none';
-  if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
   var token = _makeBfToken(email, name);
-  handleGoogleLogin({ credential: token });
-  if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+  var now   = Date.now();
+  var expiry = now + 7 * 24 * 60 * 60 * 1000;
+  // 直接設定 currentUser，不經過 handleGoogleLogin 的 OAuth 驗證流程
+  currentUser = { email: email, name: name, token: token, tokenExpiry: expiry, sessionExpiry: expiry };
+  sessionStorage.setItem('bf_token', token);
+  localStorage.setItem('bf_token', token);
+  localStorage.setItem('bf_user', JSON.stringify({ email: email, name: name, tokenExpiry: expiry, sessionExpiry: expiry }));
+  if (errEl) errEl.style.display = 'none';
+  showApp();
 }
 
 function _doOAuthRedirect_debug() {
