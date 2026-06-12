@@ -2863,13 +2863,27 @@ window.onload = function() {
   })();
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
   // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
-  if (location.hash && location.hash.includes('id_token=')) {
+  if (location.hash && location.hash.length > 1) {
     var _hashParams = new URLSearchParams(location.hash.slice(1));
     var _idToken = _hashParams.get('id_token');
+    var _oauthError = _hashParams.get('error');
+    var _oauthErrorDesc = _hashParams.get('error_description');
+    console.log('[BeneFlow] hash 參數:', location.hash.substring(0, 80));
     if (_idToken) {
       history.replaceState({}, '', location.pathname);
       handleGoogleLogin({ credential: _idToken });
       return;
+    } else if (_oauthError) {
+      history.replaceState({}, '', location.pathname);
+      console.error('[BeneFlow] OAuth error:', _oauthError, _oauthErrorDesc);
+      // 等 DOM 就緒後顯示錯誤
+      setTimeout(function() {
+        var errEl = document.getElementById('login-error');
+        if (errEl) {
+          errEl.style.display = 'block';
+          errEl.textContent = 'Google 登入失敗：' + (_oauthErrorDesc || _oauthError);
+        }
+      }, 500);
     }
   }
   // ?logout=1 強制清除 session
