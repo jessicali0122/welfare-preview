@@ -2862,6 +2862,17 @@ window.onload = function() {
     document.head.appendChild(lp);
   })();
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
+  // 監控 login-screen display 變化（debug）
+  var _lsEl = document.getElementById('login-screen');
+  if (_lsEl && window.MutationObserver) {
+    new MutationObserver(function(muts) {
+      muts.forEach(function(m) {
+        if (m.attributeName === 'style') {
+          console.log('[BeneFlow] login-screen style changed to:', _lsEl.style.display, new Error().stack.split('\n').slice(1,4).join(' | '));
+        }
+      });
+    }).observe(_lsEl, { attributes: true });
+  }
   // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
   if (location.hash && location.hash.length > 1) {
     var _hashParams = new URLSearchParams(location.hash.slice(1));
