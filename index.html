@@ -2818,34 +2818,9 @@ function doGoogleLogin() {
     if (errEl) { errEl.style.display = 'block'; errEl.textContent = '設定錯誤：找不到 Google Client ID'; }
     return;
   }
-  if (_gisReady) {
-    // GIS 已載入：用 prompt() 顯示帳號選擇器（從真實點擊觸發，不經 iframe）
-    try {
-      google.accounts.id.prompt(function(notification) {
-        // prompt 被跳過或不顯示（無痕模式、第三方 cookie 封鎖等）→ 改用 redirect
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          _doOAuthRedirect();
-        }
-      });
-    } catch(e) {
-      console.warn('[BeneFlow] GIS prompt failed, fallback to redirect:', e.message);
-      _doOAuthRedirect();
-    }
-  } else {
-    // GIS 尚未載入：等待最多 3 秒，超時改用 OAuth redirect
-    var waited = 0;
-    var t = setInterval(function() {
-      waited += 100;
-      if (typeof google !== 'undefined' && google.accounts) {
-        clearInterval(t);
-        _initGIS();
-        doGoogleLogin(); // 重試
-      } else if (waited >= 3000) {
-        clearInterval(t);
-        _doOAuthRedirect();
-      }
-    }, 100);
-  }
+  // 直接 redirect 到 Google OAuth，完全繞過 GIS prompt/renderButton
+  // （GIS prompt 在無痕/封鎖第三方 cookie 環境下會無限轉圈，renderButton iframe 點擊不可靠）
+  _doOAuthRedirect();
 }
 
 // Fallback：Implicit flow redirect（GIS 完全失敗時用）
