@@ -3046,8 +3046,14 @@ function parseJwt(token) {
 }
 
 function showApp() {
-  document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('app').style.display = 'block';
+  console.log('[BeneFlow] showApp() called, currentUser:', currentUser && currentUser.email);
+  try {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    console.error('[BeneFlow] showApp DOM error:', e);
+    return;
+  }
   // 更新 UI 顯示使用者資訊
   if (currentUser) {
     // 優先用 LOCAL_EMAIL_TO_NAME 取中文名，避免顯示 Google 帳號英文名
