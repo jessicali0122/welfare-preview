@@ -1293,9 +1293,9 @@ tbody td{font-size:var(--fs-base)!important}
 </div>
 
 <!-- ===== MAIN APP (hidden until login) ===== -->
-<div id="app" style="display:none;height:100vh;overflow:hidden">
+<div id="app" style="display:none;height:100vh;overflow:hidden;background:#fff">
 <div id="mobile-overlay" onclick="closeSidebar()"></div>
-<div id="app-inner" style="display:flex;height:100vh;overflow:hidden;max-width:100vw">
+<div id="app-inner" style="display:flex;height:100vh;overflow:hidden;max-width:100vw;background:#fff">
 
 <!-- SIDEBAR -->
 <div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative;height:100%;background:#fff">
@@ -2655,6 +2655,18 @@ tbody td{font-size:var(--fs-base)!important}
 <!-- <script src="https://accounts.google.com/gsi/client" async defer></script> -->
 
 <script>
+window.onerror = function(msg, src, line) {
+  var bar = document.getElementById('__bf_err');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = '__bf_err';
+    bar.style = 'position:fixed;top:0;left:0;right:0;background:#fef2f2;color:#dc2626;padding:8px 14px;font-size:12px;z-index:2147483647;font-family:monospace;border-bottom:2px solid #fca5a5;white-space:pre-wrap;word-break:break-all';
+    document.body.appendChild(bar);
+  }
+  bar.style.display = 'block';
+  bar.textContent = '[JS Error] ' + msg + ' (line ' + line + ')';
+  return false;
+};
 // ── 共用工具：debounce（防止短時間內重複觸發）──
 function _debounce(fn, delay) {
   var t;
@@ -2937,9 +2949,7 @@ function handleGoogleLogin(response) {
   // 移除過期提示條（如果有）
   const expBar = document.getElementById('auth-expired-bar');
   if (expBar) expBar.remove();
-  if (document.getElementById('app').style.display === 'none') {
-    showApp();
-  }
+  showApp();
   startTokenRefreshTimer();
 }
 
@@ -3023,9 +3033,11 @@ function showApp() {
     } else {
       const _initView = _validViews.includes(_initHash) ? _initHash : 'dashboard';
       if (_initView !== 'dashboard') {
+        sw('dashboard');
         loadDashboard();
         setTimeout(function(){ sw(_initView); }, 300);
       } else {
+        sw('dashboard');
         loadDashboard();
       }
       history.replaceState({ view: _initView }, '', _initView !== 'dashboard' ? '#' + _initView : location.pathname + location.search);
