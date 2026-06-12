@@ -2862,49 +2862,18 @@ window.onload = function() {
     document.head.appendChild(lp);
   })();
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
-  // 監控 login-screen display 變化（debug）
-  var _lsEl = document.getElementById('login-screen');
-  if (_lsEl && window.MutationObserver) {
-    new MutationObserver(function(muts) {
-      muts.forEach(function(m) {
-        if (m.attributeName === 'style') {
-          console.log('[BeneFlow] login-screen style changed to:', _lsEl.style.display, new Error().stack.split('\n').slice(1,4).join(' | '));
-        }
-      });
-    }).observe(_lsEl, { attributes: true });
-  }
   // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
-  if (location.hash && location.hash.length > 1) {
+  if (location.hash && location.hash.includes('id_token=')) {
     var _hashParams = new URLSearchParams(location.hash.slice(1));
     var _idToken = _hashParams.get('id_token');
-    var _oauthError = _hashParams.get('error');
-    var _oauthErrorDesc = _hashParams.get('error_description');
-    console.log('[BeneFlow] hash 參數:', location.hash.substring(0, 80));
     if (_idToken) {
       history.replaceState({}, '', location.pathname);
-      try {
-        handleGoogleLogin({ credential: _idToken });
-      } catch(e) {
-        console.error('[BeneFlow] handleGoogleLogin threw:', e);
-        setTimeout(function() {
-          var errEl = document.getElementById('login-error');
-          if (errEl) { errEl.style.display='block'; errEl.textContent='登入處理錯誤：' + e.message + ' (at ' + (e.stack||'').split('\n')[1] + ')'; }
-        }, 500);
-      }
+      handleGoogleLogin({ credential: _idToken });
       return;
-    } else if (_oauthError) {
-      history.replaceState({}, '', location.pathname);
-      console.error('[BeneFlow] OAuth error:', _oauthError, _oauthErrorDesc);
-      // 等 DOM 就緒後顯示錯誤
-      setTimeout(function() {
-        var errEl = document.getElementById('login-error');
-        if (errEl) {
-          errEl.style.display = 'block';
-          errEl.textContent = 'Google 登入失敗：' + (_oauthErrorDesc || _oauthError);
-        }
-      }, 500);
     }
   }
+  // handleGoogleLogin 可能為 async（deployed 版），若已呼叫 showApp 則直接結束
+  if (window._appShown) return;
   // ?logout=1 強制清除 session
   if (new URLSearchParams(location.search).get('logout') === '1') {
     localStorage.removeItem('bf_user');
@@ -2929,6 +2898,8 @@ window.onload = function() {
   var _isDemo = !!new URLSearchParams(location.search).get('demo');
   if (_isDemo) { initGoogleSignIn(); return; }
   // 確保初始狀態：app 隱藏、login-screen 顯示
+  // 若 showApp() 已被呼叫（OAuth redirect 後 handleGoogleLogin 已執行），不可重置畫面
+  if (window._appShown) return;
   var appEl = document.getElementById('app');
   var loginEl = document.getElementById('login-screen');
   if (appEl) appEl.style.display = 'none';
@@ -3057,14 +3028,9 @@ function parseJwt(token) {
 }
 
 function showApp() {
-  console.log('[BeneFlow] showApp() called, currentUser:', currentUser && currentUser.email);
-  try {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'block';
-  } catch(e) {
-    console.error('[BeneFlow] showApp DOM error:', e);
-    return;
-  }
+  window._appShown = true;
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
   if (currentUser) {
     // 優先用 LOCAL_EMAIL_TO_NAME 取中文名，避免顯示 Google 帳號英文名
@@ -3158,6 +3124,15 @@ function showApp() {
       }
     }, 800);
   }
+  // ── 安全網：確保任何非同步操作都不會把畫面蓋回登入頁 ──
+  setTimeout(function() {
+    if (window._appShown) {
+      var ls = document.getElementById('login-screen');
+      var ap = document.getElementById('app');
+      if (ls && ls.style.display !== 'none') ls.style.display = 'none';
+      if (ap && ap.style.display === 'none')  ap.style.display = 'block';
+    }
+  }, 100);
 }
 
 // ── 列印：移出 grid → print() → afterprint 再還原 ──
