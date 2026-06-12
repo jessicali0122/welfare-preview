@@ -2871,7 +2871,15 @@ window.onload = function() {
     console.log('[BeneFlow] hash 參數:', location.hash.substring(0, 80));
     if (_idToken) {
       history.replaceState({}, '', location.pathname);
-      handleGoogleLogin({ credential: _idToken });
+      try {
+        handleGoogleLogin({ credential: _idToken });
+      } catch(e) {
+        console.error('[BeneFlow] handleGoogleLogin threw:', e);
+        setTimeout(function() {
+          var errEl = document.getElementById('login-error');
+          if (errEl) { errEl.style.display='block'; errEl.textContent='登入處理錯誤：' + e.message + ' (at ' + (e.stack||'').split('\n')[1] + ')'; }
+        }, 500);
+      }
       return;
     } else if (_oauthError) {
       history.replaceState({}, '', location.pathname);
