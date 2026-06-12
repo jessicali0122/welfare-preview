@@ -2200,6 +2200,233 @@ tbody td{font-size:var(--fs-base)!important}
     </div>
   </div>
 
+
+<!-- ══ 午茶日 View ══ -->
+<div class="view" id="view-hightea">
+
+  <!-- ── 列表頁 ── -->
+  <div id="ht-list-panel">
+    <!-- 頁頭工具列 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
+      <div style="display:flex;gap:8px">
+        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
+        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">歷史分析</button>
+        <button class="ht-tab-btn" id="ht-tab-vendors" onclick="htSwitchListTab('vendors')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">廠商評分</button>
+      </div>
+      <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        新增活動
+      </button>
+    </div>
+
+    <!-- 月份總覽 Tab -->
+    <div id="ht-panel-events">
+      <div id="ht-events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
+        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px;grid-column:1/-1">載入中…</div>
+      </div>
+    </div>
+
+    <!-- 歷史分析 Tab -->
+    <div id="ht-panel-analytics" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px" id="ht-analytics-stats"></div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px" id="ht-analytics-trend">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">月份支出趨勢</div>
+        <div id="ht-trend-chart" style="height:180px;position:relative;overflow:hidden"></div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">類別支出分佈</div>
+        <div id="ht-category-bars"></div>
+      </div>
+    </div>
+
+    <!-- 廠商評分 Tab -->
+    <div id="ht-panel-vendors" style="display:none">
+      <div id="ht-vendors-list" style="display:grid;gap:10px">
+        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 活動詳情頁 ── -->
+  <div id="ht-detail-panel" style="display:none">
+    <!-- 返回 + 標題 -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+      <button onclick="htBackToList()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div>
+        <div id="ht-detail-title" style="font-size:18px;font-weight:700;color:#0f172a"></div>
+        <div id="ht-detail-subtitle" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <span id="ht-detail-status-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700"></span>
+        <button id="ht-convert-btn" onclick="htConvertToClaim()" style="display:none;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:none;background:#1e9d6b;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+          轉為報銷
+        </button>
+      </div>
+    </div>
+
+    <!-- 詳情 Sub-tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="ht-dtab active" data-tab="plan" onclick="htSwitchDetailTab('plan')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項規劃</button>
+      <button class="ht-dtab" data-tab="budget" onclick="htSwitchDetailTab('budget')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">預算結算</button>
+      <button class="ht-dtab" data-tab="recommend" onclick="htSwitchDetailTab('recommend')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">✨ 智慧推薦</button>
+      <button class="ht-dtab" data-tab="menu" onclick="htSwitchDetailTab('menu')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">菜單卡片</button>
+      <button class="ht-dtab" data-tab="birthday" onclick="htSwitchDetailTab('birthday')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">🎂 壽星</button>
+    </div>
+
+    <!-- Tab: 品項規劃 -->
+    <div id="ht-dtab-plan">
+      <!-- 快速設定列 -->
+      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;align-items:center;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <input id="ht-event-date" type="text" placeholder="活動日期" onchange="htSaveEventInfo()" style="border:none;background:none;font-size:13px;color:#0f172a;font-family:inherit;width:100px;outline:none;font-weight:600">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span style="font-size:13px;color:#64748b">人數</span>
+          <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:52px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span style="font-size:13px;color:#64748b">每人預算</span>
+          <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:70px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+          <span style="font-size:12px;color:#94a3b8">元</span>
+        </div>
+        <div style="margin-left:auto;font-size:12px;color:#64748b">
+          總預算 <span id="ht-calc-budget" style="font-weight:700;color:#e16b8c">NT$0</span>
+        </div>
+      </div>
+
+      <!-- 品項表格 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;overflow:hidden">
+        <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">
+          <div style="font-size:15px;font-weight:700;color:#0f172a">品項清單</div>
+          <div style="display:flex;gap:8px">
+            <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              新增品項
+            </button>
+            <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="background:#f8fafc">
+                <th style="padding:10px 12px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">品名</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">廠商</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">類別</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">單價</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">數量</th>
+                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">小計</th>
+                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">負責人</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">已訂</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">評分</th>
+                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;font-size:12px"></th>
+              </tr>
+            </thead>
+            <tbody id="ht-items-tbody"></tbody>
+            <tfoot>
+              <tr style="background:#fafafa;border-top:2px solid #f1f5f9">
+                <td colspan="5" style="padding:10px 12px;font-size:12px;color:#64748b">合計</td>
+                <td style="padding:10px 8px;text-align:right;font-weight:700;color:#0f172a" id="ht-total-cell">NT$0</td>
+                <td colspan="4"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 預算結算 -->
+    <div id="ht-dtab-budget" style="display:none">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px" id="ht-budget-cards"></div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">支出進度</div>
+        <div id="ht-budget-progress-bars"></div>
+      </div>
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">類別明細</div>
+        <div id="ht-budget-category-detail"></div>
+      </div>
+    </div>
+
+    <!-- Tab: 智慧推薦 -->
+    <div id="ht-dtab-recommend" style="display:none">
+      <!-- 預算優化器 -->
+      <div style="background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #e0f0ff;border-radius:16px;padding:20px;margin-bottom:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">🧮 預算優化器</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:14px">根據人數與預算自動計算各類別最佳配比</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:13px;color:#64748b">人數</span>
+            <input id="ht-opt-headcount" type="number" min="1" value="" placeholder="人數" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:13px;color:#64748b">每人預算</span>
+            <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
+            <span style="font-size:12px;color:#94a3b8">元</span>
+          </div>
+          <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">計算</button>
+        </div>
+        <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
+      </div>
+      <!-- 推薦品項 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">根據福委會歷次評分排名</div>
+        <div id="ht-recommend-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="ht-rtab active" onclick="htSwitchRecTab('all')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">全部</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('甜點')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">甜點</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('主食')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">主食</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('飲料')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">飲料</button>
+          <button class="ht-rtab" onclick="htSwitchRecTab('水果')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">水果</button>
+        </div>
+        <div id="ht-recommend-list" style="display:grid;gap:8px">
+          <div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px">先儲存品項並評分後，這裡會出現推薦清單</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab: 菜單卡片 -->
+    <div id="ht-dtab-menu" style="display:none">
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
+        <button onclick="htPrintMenu()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #64748b;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          列印 / 匯出
+        </button>
+      </div>
+      <div id="ht-menu-card" style="background:#fff;border-radius:20px;border:2px solid #fde4ef;overflow:hidden;box-shadow:0 4px 24px rgba(225,107,140,.12)">
+        <!-- 菜單卡片內容由 JS 動態生成 -->
+      </div>
+    </div>
+
+    <!-- Tab: 壽星 -->
+    <div id="ht-dtab-birthday" style="display:none">
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#0f172a">本月壽星</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:2px">每人 NT$40 × 人數計算慶生費用</div>
+          </div>
+          <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增壽星
+          </button>
+        </div>
+        <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
+        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:13px;color:#64748b">慶生費用合計</span>
+          <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#f59e0b">NT$0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
   </main>
 </div><!-- end #main-wrapper -->
 </div><!-- end #app-inner -->
@@ -2786,7 +3013,7 @@ function showApp() {
     if(sheetEmail)sheetEmail.textContent=currentUser.email;
     // ── 路由還原：若 URL 有 hash 就跳到對應頁面，否則預設總覽 ──
     const _initHash = location.hash ? location.hash.slice(1) : '';
-    const _validViews = ['dashboard','applications','approvals','admin'];
+    const _validViews = ['dashboard','applications','approvals','admin','hightea'];
     // detail 頁：#detail/EWC-202506-1001
     if (_initHash.startsWith('detail/')) {
       const _detailId = _initHash.slice(7);
@@ -4691,7 +4918,7 @@ window.addEventListener('popstate', function(e) {
   if (hash.startsWith('detail/')) { loadDetail(hash.slice(7), true); return; }
   // 主頁面
   const view = state.view || hash;
-  const validViews = ['dashboard','applications','approvals','admin'];
+  const validViews = ['dashboard','applications','approvals','admin','hightea'];
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 function sw(name,elOrName,_fromPop){
@@ -8525,232 +8752,6 @@ window.htConvertToClaim = async function() {
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       登出
     </button>
-  </div>
-</div>
-
-<!-- ══ 午茶日 View ══ -->
-<div class="view" id="view-hightea">
-
-  <!-- ── 列表頁 ── -->
-  <div id="ht-list-panel">
-    <!-- 頁頭工具列 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-      <div style="display:flex;gap:8px">
-        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
-        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">歷史分析</button>
-        <button class="ht-tab-btn" id="ht-tab-vendors" onclick="htSwitchListTab('vendors')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">廠商評分</button>
-      </div>
-      <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        新增活動
-      </button>
-    </div>
-
-    <!-- 月份總覽 Tab -->
-    <div id="ht-panel-events">
-      <div id="ht-events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px;grid-column:1/-1">載入中…</div>
-      </div>
-    </div>
-
-    <!-- 歷史分析 Tab -->
-    <div id="ht-panel-analytics" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px" id="ht-analytics-stats"></div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px" id="ht-analytics-trend">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">月份支出趨勢</div>
-        <div id="ht-trend-chart" style="height:180px;position:relative;overflow:hidden"></div>
-      </div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">類別支出分佈</div>
-        <div id="ht-category-bars"></div>
-      </div>
-    </div>
-
-    <!-- 廠商評分 Tab -->
-    <div id="ht-panel-vendors" style="display:none">
-      <div id="ht-vendors-list" style="display:grid;gap:10px">
-        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── 活動詳情頁 ── -->
-  <div id="ht-detail-panel" style="display:none">
-    <!-- 返回 + 標題 -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button onclick="htBackToList()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-      </button>
-      <div>
-        <div id="ht-detail-title" style="font-size:18px;font-weight:700;color:#0f172a"></div>
-        <div id="ht-detail-subtitle" style="font-size:13px;color:#94a3b8;margin-top:2px"></div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:8px">
-        <span id="ht-detail-status-badge" style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700"></span>
-        <button id="ht-convert-btn" onclick="htConvertToClaim()" style="display:none;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:none;background:#1e9d6b;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-          轉為報銷
-        </button>
-      </div>
-    </div>
-
-    <!-- 詳情 Sub-tabs -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
-      <button class="ht-dtab active" data-tab="plan" onclick="htSwitchDetailTab('plan')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項規劃</button>
-      <button class="ht-dtab" data-tab="budget" onclick="htSwitchDetailTab('budget')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">預算結算</button>
-      <button class="ht-dtab" data-tab="recommend" onclick="htSwitchDetailTab('recommend')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">✨ 智慧推薦</button>
-      <button class="ht-dtab" data-tab="menu" onclick="htSwitchDetailTab('menu')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">菜單卡片</button>
-      <button class="ht-dtab" data-tab="birthday" onclick="htSwitchDetailTab('birthday')" style="padding:7px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">🎂 壽星</button>
-    </div>
-
-    <!-- Tab: 品項規劃 -->
-    <div id="ht-dtab-plan">
-      <!-- 快速設定列 -->
-      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 16px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-        <div style="display:flex;align-items:center;gap:8px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-          <input id="ht-event-date" type="text" placeholder="活動日期" onchange="htSaveEventInfo()" style="border:none;background:none;font-size:13px;color:#0f172a;font-family:inherit;width:100px;outline:none;font-weight:600">
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span style="font-size:13px;color:#64748b">人數</span>
-          <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:52px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
-        </div>
-        <div style="display:flex;align-items:center;gap:6px">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          <span style="font-size:13px;color:#64748b">每人預算</span>
-          <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:70px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:13px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
-          <span style="font-size:12px;color:#94a3b8">元</span>
-        </div>
-        <div style="margin-left:auto;font-size:12px;color:#64748b">
-          總預算 <span id="ht-calc-budget" style="font-weight:700;color:#e16b8c">NT$0</span>
-        </div>
-      </div>
-
-      <!-- 品項表格 -->
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:15px;font-weight:700;color:#0f172a">品項清單</div>
-          <div style="display:flex;gap:8px">
-            <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              新增品項
-            </button>
-            <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
-          </div>
-        </div>
-        <div style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="background:#f8fafc">
-                <th style="padding:10px 12px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">品名</th>
-                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">廠商</th>
-                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">類別</th>
-                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">單價</th>
-                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">數量</th>
-                <th style="padding:10px 8px;text-align:right;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">小計</th>
-                <th style="padding:10px 8px;text-align:left;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">負責人</th>
-                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">已訂</th>
-                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;white-space:nowrap;font-size:12px">評分</th>
-                <th style="padding:10px 8px;text-align:center;color:#64748b;font-weight:600;font-size:12px"></th>
-              </tr>
-            </thead>
-            <tbody id="ht-items-tbody"></tbody>
-            <tfoot>
-              <tr style="background:#fafafa;border-top:2px solid #f1f5f9">
-                <td colspan="5" style="padding:10px 12px;font-size:12px;color:#64748b">合計</td>
-                <td style="padding:10px 8px;text-align:right;font-weight:700;color:#0f172a" id="ht-total-cell">NT$0</td>
-                <td colspan="4"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: 預算結算 -->
-    <div id="ht-dtab-budget" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-bottom:20px" id="ht-budget-cards"></div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">支出進度</div>
-        <div id="ht-budget-progress-bars"></div>
-      </div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:14px">類別明細</div>
-        <div id="ht-budget-category-detail"></div>
-      </div>
-    </div>
-
-    <!-- Tab: 智慧推薦 -->
-    <div id="ht-dtab-recommend" style="display:none">
-      <!-- 預算優化器 -->
-      <div style="background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #e0f0ff;border-radius:16px;padding:20px;margin-bottom:20px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">🧮 預算優化器</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:14px">根據人數與預算自動計算各類別最佳配比</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:13px;color:#64748b">人數</span>
-            <input id="ht-opt-headcount" type="number" min="1" value="" placeholder="人數" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <span style="font-size:13px;color:#64748b">每人預算</span>
-            <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
-            <span style="font-size:12px;color:#94a3b8">元</span>
-          </div>
-          <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">計算</button>
-        </div>
-        <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
-      </div>
-      <!-- 推薦品項 -->
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
-        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">根據福委會歷次評分排名</div>
-        <div id="ht-recommend-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-          <button class="ht-rtab active" onclick="htSwitchRecTab('all')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">全部</button>
-          <button class="ht-rtab" onclick="htSwitchRecTab('甜點')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">甜點</button>
-          <button class="ht-rtab" onclick="htSwitchRecTab('主食')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">主食</button>
-          <button class="ht-rtab" onclick="htSwitchRecTab('飲料')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">飲料</button>
-          <button class="ht-rtab" onclick="htSwitchRecTab('水果')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">水果</button>
-        </div>
-        <div id="ht-recommend-list" style="display:grid;gap:8px">
-          <div style="color:#94a3b8;font-size:13px;text-align:center;padding:24px">先儲存品項並評分後，這裡會出現推薦清單</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: 菜單卡片 -->
-    <div id="ht-dtab-menu" style="display:none">
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px">
-        <button onclick="htPrintMenu()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #64748b;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-          列印 / 匯出
-        </button>
-      </div>
-      <div id="ht-menu-card" style="background:#fff;border-radius:20px;border:2px solid #fde4ef;overflow:hidden;box-shadow:0 4px 24px rgba(225,107,140,.12)">
-        <!-- 菜單卡片內容由 JS 動態生成 -->
-      </div>
-    </div>
-
-    <!-- Tab: 壽星 -->
-    <div id="ht-dtab-birthday" style="display:none">
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-          <div>
-            <div style="font-size:15px;font-weight:700;color:#0f172a">本月壽星</div>
-            <div style="font-size:12px;color:#94a3b8;margin-top:2px">每人 NT$40 × 人數計算慶生費用</div>
-          </div>
-          <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            新增壽星
-          </button>
-        </div>
-        <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
-        <div style="margin-top:16px;padding-top:12px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-          <span style="font-size:13px;color:#64748b">慶生費用合計</span>
-          <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#f59e0b">NT$0</span>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
