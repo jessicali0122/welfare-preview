@@ -2794,51 +2794,82 @@ function applyRolePermissions() {
 
 // ── Google Identity Services 初始化 ──
 var _gisReady = false;
+var _gisFallbackShown = false;
+
+// 顯示備用登入按鈕（GIS 載入失敗或逾時時）
+function _showFallbackBtn() {
+  if (_gisFallbackShown) return;
+  _gisFallbackShown = true;
+  var fb = document.getElementById('google-login-btn');
+  if (fb) fb.style.display = 'flex';
+}
+
 function _initGIS() {
   if (_gisReady) return;
   if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
-  google.accounts.id.initialize({
-    client_id     : GOOGLE_CLIENT_ID,
-    callback      : handleGoogleLogin,
-    hosted_domain : 'tsagroup.com.tw',  // 只允許公司網域
-    auto_select   : false,
-    itp_support   : true,
-    cancel_on_tap_outside: false,
-  });
-  // 渲染 Google 官方登入按鈕
-  var target = document.getElementById('gis-render-target');
-  if (target) {
-    google.accounts.id.renderButton(target, {
-      type   : 'standard',
-      theme  : 'outline',
-      size   : 'large',
-      text   : 'signin_with',
-      locale : 'zh-TW',
-      width  : 280,
+  try {
+    google.accounts.id.initialize({
+      client_id            : GOOGLE_CLIENT_ID,
+      callback             : handleGoogleLogin,
+      auto_select          : false,
+      itp_support          : true,
+      cancel_on_tap_outside: false,
+      use_fedcm_for_prompt : true,
     });
+    // 渲染 Google 官方登入按鈕
+    var target = document.getElementById('gis-render-target');
+    if (target) {
+      target.innerHTML = '';
+      google.accounts.id.renderButton(target, {
+        type   : 'standard',
+        theme  : 'outline',
+        size   : 'large',
+        text   : 'signin_with',
+        shape  : 'pill',
+        locale : 'zh-TW',
+        width  : 280,
+      });
+    }
+    _gisReady = true;
+    // 官方按鈕已渲染 → 隱藏備用按鈕
+    var fb = document.getElementById('google-login-btn');
+    if (fb) fb.style.display = 'none';
+    console.log('[BeneFlow] GIS 初始化成功，官方登入按鈕已渲染');
+  } catch (e) {
+    console.error('[BeneFlow] GIS 初始化失敗，改用備用登入：', e);
+    _showFallbackBtn();
   }
-  // 隱藏備用按鈕（GIS 官方按鈕已渲染）
-  var fb = document.getElementById('google-login-btn');
-  if (fb) fb.style.display = 'none';
-  _gisReady = true;
 }
 
-// 備用登入（GIS 無法載入時的 fallback）
-function doGoogleLogin() {
-  var btn = document.getElementById('google-login-btn');
-  if (btn) { btn.style.opacity = '0.6'; btn.style.pointerEvents = 'none'; }
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id && _gisReady) {
-    google.accounts.id.prompt();
-    if (btn) { btn.style.opacity = ''; btn.style.pointerEvents = ''; }
+// ── 輪詢等待 GIS SDK 載入完成 ──
+// GIS 用 async defer 載入，載入時機不固定，必須輪詢確保初始化一定被執行
+function _waitForGIS(attempt) {
+  attempt = attempt || 0;
+  if (window._appShown || _gisReady) return;
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
+    _initGIS();
+    if (!_gisReady) _showFallbackBtn();  // 初始化失敗時顯示備用按鈕
     return;
   }
-  // OAuth implicit flow redirect
+  if (attempt >= 40) {                    // 約 8 秒仍未載入 → 顯示備用按鈕
+    console.warn('[BeneFlow] GIS SDK 載入逾時，顯示備用登入按鈕');
+    _showFallbackBtn();
+    return;
+  }
+  setTimeout(function(){ _waitForGIS(attempt + 1); }, 200);
+}
+
+// 備用登入：優先用 GIS prompt，否則走 OAuth redirect
+function doGoogleLogin() {
+  if (typeof google !== 'undefined' && google.accounts && google.accounts.id && _gisReady) {
+    try { google.accounts.id.prompt(); return; } catch (e) { console.warn('GIS prompt 失敗，改用 redirect', e); }
+  }
+  // OAuth implicit flow redirect（最終 fallback）
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
   sessionStorage.setItem('bf_oauth_nonce', nonce);
-  var redirectUri = location.origin + location.pathname;
   var params = new URLSearchParams({
     client_id    : GOOGLE_CLIENT_ID,
-    redirect_uri : redirectUri,
+    redirect_uri : location.origin + location.pathname,
     response_type: 'id_token',
     scope        : 'openid email profile',
     prompt       : 'select_account',
@@ -2849,10 +2880,7 @@ function doGoogleLogin() {
 }
 
 function triggerGoogleLogin() { doGoogleLogin(); return false; }
-function initGoogleSignIn() {
-  if (typeof google === 'undefined' || !google.accounts) return;
-  _initGIS();
-}
+function initGoogleSignIn() { _waitForGIS(); }
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
@@ -2885,19 +2913,8 @@ window.onload = function() {
     sessionStorage.removeItem('bf_token');
     history.replaceState({}, '', location.pathname);
   }
-  // GIS 可能比 onload 更早載入完成，先嘗試初始化
-  if (typeof google !== 'undefined' && google.accounts) {
-    _initGIS();
-    initGoogleSignIn();
-  } else {
-    // GIS 還沒載入：等 3 秒，超時就顯示 fallback 按鈕
-    setTimeout(function() {
-      if (!_gisReady) {
-        var fb = document.getElementById('google-login-btn');
-        if (fb) fb.style.display = 'flex';
-      }
-    }, 3000);
-  }
+  // 啟動 GIS 初始化（輪詢等待 SDK 載入，不依賴 onload 時機）
+  _waitForGIS();
   // demo 模式下跳過所有 session 檢查和畫面重置
   var _isDemo = !!new URLSearchParams(location.search).get('demo');
   if (_isDemo) { initGoogleSignIn(); return; }
