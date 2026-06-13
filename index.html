@@ -1260,12 +1260,27 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
+window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
 (function(){
+  console.log('[BeneFlow] build:', window.BF_BUILD);
   if (localStorage.getItem('_bfv') !== '5') {
     localStorage.clear();
     sessionStorage.clear();
     localStorage.setItem('_bfv', '5');
   }
+  /* 防呆：清除任何殘留的 Service Worker 與 Cache Storage（避免瀏覽器永遠載入舊版） */
+  try {
+    if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+      navigator.serviceWorker.getRegistrations().then(function(rs){
+        rs.forEach(function(r){ r.unregister(); });
+      }).catch(function(){});
+    }
+    if (window.caches && caches.keys) {
+      caches.keys().then(function(ks){
+        ks.forEach(function(k){ caches.delete(k); });
+      }).catch(function(){});
+    }
+  } catch(e) {}
 })();
 </script>
 
@@ -1293,7 +1308,7 @@ tbody td{font-size:var(--fs-base)!important}
       </div>
     </div>
     <div id="login-error" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
-    <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域</div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域 <span style="color:#cbd5e1">· v6</span></div>
   </div>
 </div>
 
@@ -5972,7 +5987,8 @@ function updateDetailFlow(c){
   // 只取啟用的關卡（enabled !== false）
   let APPROVERS = allApprovers.filter(function(a){ return a.enabled !== false; });
   // ★ Fix：以後端回傳的 totalSteps 為基準，防止前端流程設定暫存與案件實際關卡數不一致
-  const totalSteps = Number(c.totalSteps) || APPROVERS.length;
+  //   安全上限 20 關：後端資料異常（NaN/Infinity/超大值）時防止下方 while 迴圈失控
+  const totalSteps = Math.min(Math.max(Number(c.totalSteps) || APPROVERS.length, 1), 20);
   if (totalSteps < APPROVERS.length) {
     // 後端說關卡比前端少 → 裁切（例如管理者已停用某些關卡但前端還沒刷新）
     APPROVERS = APPROVERS.slice(0, totalSteps);
@@ -8143,16 +8159,26 @@ document.addEventListener('click', function(e) {
   }
 
   // 監聽 approval-badge 顯示狀態，加上呼吸動畫 class
-  var observer = new MutationObserver(function(){
+  // ★ 凍結修復（2026-06）：原版監聽「整個 body」的 style/class 變化，回呼內
+  //   (a) offsetParent 每次強制同步排版 (b) classList.add/remove 又產生新的 class 變動。
+  //   當瀏覽器擴充功能注入樣式、或儀表板大量渲染 DOM 時，會形成「變動→回呼→再變動」
+  //   的回呼風暴，主執行緒完全凍結（頁面點不動、按鈕無反應、轉圈圈）。
+  //   修復：範圍縮小到 #sidebar + requestAnimationFrame 合併（每幀最多執行一次）
+  //   + 只在狀態真正改變時才動 class（不產生多餘變動，迴圈必定收斂）。
+  var _badgeRafPending = false;
+  function _refreshBadgePulse(){
+    _badgeRafPending = false;
     document.querySelectorAll('.sl-badge.approval-badge').forEach(function(b){
-      if(b.style.display !== 'none' && b.offsetParent !== null){
-        b.classList.add('has-badge');
-      } else {
-        b.classList.remove('has-badge');
-      }
+      var on = b.style.display !== 'none' && b.offsetParent !== null;
+      if (on !== b.classList.contains('has-badge')) b.classList.toggle('has-badge', on);
     });
-  });
-  observer.observe(document.body, { subtree: true, attributes: true, attributeFilter: ['style','class'] });
+  }
+  var _badgeScope = document.getElementById('sidebar') || document.body;
+  new MutationObserver(function(){
+    if (_badgeRafPending) return;
+    _badgeRafPending = true;
+    requestAnimationFrame(_refreshBadgePulse);
+  }).observe(_badgeScope, { subtree: true, attributes: true, attributeFilter: ['style','class'] });
 })();
 
 // ══════════════════════════════════════════════════
