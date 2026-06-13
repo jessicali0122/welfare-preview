@@ -2988,14 +2988,7 @@ async function handleGoogleLogin(response) {
   // 移除過期提示條（如果有）
   const expBar = document.getElementById('auth-expired-bar');
   if (expBar) expBar.remove();
-  // ── GIS cleanup：移除 popup 留下的 overlay / iframe，避免遮住頁面 ──
-  try { google.accounts.id.cancel(); } catch(e) {}
-  ['#credential_picker_container','#credential_picker_iframe',
-   '#__gis_tmp','[id^="gsi_"]','iframe[src*="accounts.google.com"]'
-  ].forEach(function(sel) {
-    document.querySelectorAll(sel).forEach(function(el){ el.remove(); });
-  });
-  // 移除 GIS 可能留下的 pointer-events:none / overflow:hidden 於 body
+  // 重置 body 樣式（避免任何殘留的 overflow / pointer-events 鎖住頁面）
   document.body.style.overflow = '';
   document.body.style.pointerEvents = '';
   showApp();
