@@ -87,9 +87,15 @@ aside{
 }
 aside:hover{
   width:168px!important;
+  /* aside 是 position:absolute，包含塊 wrapper 僅 76px，基礎規則的 max-width:100%
+     會解析成 76px 而把展開寬度鎖死、文字被裁切。展開時必須解除此限制。 */
+  max-width:none!important;
   box-shadow:4px 0 28px rgba(0,0,0,.10);
   overflow:visible;
 }
+/* 展開時推開主內容（wrapper 同步變寬），避免側邊欄浮層遮住右側內容 */
+#sidebar-wrapper{transition:width .28s cubic-bezier(.4,0,.2,1)}
+#sidebar-wrapper:hover{width:168px!important}
 /* 展開時顯示分區標籤 */
 aside:hover .sl-section-label{display:block!important;width:100%;padding:12px 16px 4px!important;box-sizing:border-box}
 /* 展開時顯示 brand text */
@@ -1260,13 +1266,14 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
-window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
+window.BF_BUILD = 'v7-secure-session (2026-06-13)';
 (function(){
   console.log('[BeneFlow] build:', window.BF_BUILD);
-  if (localStorage.getItem('_bfv') !== '5') {
+  // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
+  if (localStorage.getItem('_bfv') !== '7') {
     localStorage.clear();
     sessionStorage.clear();
-    localStorage.setItem('_bfv', '5');
+    localStorage.setItem('_bfv', '7');
   }
   /* 防呆：清除任何殘留的 Service Worker 與 Cache Storage（避免瀏覽器永遠載入舊版） */
   try {
@@ -1295,20 +1302,15 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
     </div>
     <div style="font-size:22px;font-weight:700;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px">Bene<span style="color:#f59e0b">Flow</span></div>
     <div style="font-size:14px;color:#64748b;margin-bottom:28px">福委會請款簽核系統<br>請使用公司帳號登入</div>
-    <!-- GIS 官方按鈕容器（瀏覽器允許時顯示，登入最順暢；被擴充功能/第三方 Cookie 封鎖時可能空白或無反應）-->
-    <div id="gis-render-target" style="display:flex;justify-content:center;margin-bottom:10px;min-height:44px"></div>
-    <!-- 相容模式登入：全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，永遠可用（這是可靠的登入路徑）-->
-    <div id="fallback-login-wrap" style="margin-bottom:8px">
-      <div id="fallback-hint" style="font-size:12px;color:#94a3b8;margin-bottom:8px;display:none">上方按鈕沒有反應？請改用相容模式登入：</div>
-      <div style="display:flex;justify-content:center">
-        <button id="google-login-btn" onclick="doGoogleLogin()" type="button" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;font-size:14px;font-weight:500;color:#374151">
-          <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
-          以 Google 帳戶登入
-        </button>
-      </div>
+    <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
+    <div style="display:flex;justify-content:center;margin-bottom:8px">
+      <button id="google-login-btn" onclick="doGoogleLogin()" type="button" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;font-size:14px;font-weight:500;color:#374151">
+        <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+        以 Google 帳戶登入
+      </button>
     </div>
     <div id="login-error" style="display:none;color:#dc2626;font-size:13px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
-    <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域 <span style="color:#cbd5e1">· v6</span></div>
+    <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域 <span style="color:#cbd5e1">· v7</span></div>
   </div>
 </div>
 
@@ -1327,7 +1329,7 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
       <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="leaf-grad" x1="21" y1="2" x2="6" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3dba84"/><stop offset="100%" stop-color="#157a50"/></linearGradient></defs><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="url(#leaf-grad)" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="url(#leaf-grad)"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="url(#leaf-grad)"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="url(#leaf-grad)"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="url(#leaf-grad)"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="url(#leaf-grad)"/></svg>
     </div>
     <div class="sidebar-brand-text" style="flex:1;min-width:0">
-      <div style="color:#0f172a;font-size:15px;font-weight:700;letter-spacing:-.01em">BeneFlow</div>
+      <div style="font-family:'Noto Sans TC',sans-serif;color:#0f172a;font-size:15px;font-weight:700;letter-spacing:-.01em">Bene<span style="color:#f59e0b">Flow</span></div>
     </div>
     <!-- 手機版關閉按鈕 -->
     <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;background:rgba(255,255,255,.12);border-radius:50%;color:#fff;font-size:18px;line-height:1;cursor:pointer;align-items:center;justify-content:center">×</button>
@@ -1335,7 +1337,6 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
 
   <!-- Nav -->
   <nav style="flex:1;padding:10px 0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center">
-    <div class="sl-section-label" style="color:#b0a9a4;font-size:11px;font-weight:700;padding:4px 4px 6px;letter-spacing:.09em;text-transform:uppercase">主選單</div>
     <div class="sl active" data-view="dashboard" data-label="總覽" onclick="sw('dashboard')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span class="sl-text">總覽</span>
@@ -1356,7 +1357,6 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
       <span class="sl-text">午茶日</span>
     </div>
 
-    <div class="sl-section-label" style="color:#b0a9a4;font-size:11px;font-weight:700;padding:14px 4px 6px;letter-spacing:.09em;text-transform:uppercase">管理</div>
     <div class="sl" data-view="admin" data-label="系統管理" onclick="sw('admin')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
       <span class="sl-text">系統管理</span>
@@ -1476,11 +1476,13 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
       </div>
 
     </div>
+    <!-- 區塊標題：外露式 section 標題，與下方「費用分析」風格統一 -->
+    <div style="display:flex;align-items:center;gap:10px;margin:24px 0 14px">
+      <div style="font-size:16px;font-weight:800;color:#0f172a">最新申請紀錄</div>
+      <div style="flex:1;height:1px;background:#f1f5f9"></div>
+      <span onclick="sw('applications')" style="font-size:13px;color:#374151;cursor:pointer;font-weight:600;white-space:nowrap">查看全部 →</span>
+    </div>
     <div class="card table-wrap" style="overflow:hidden">
-      <div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
-        <div style="font-size:15px;font-weight:700;color:#0f172a">最新申請紀錄</div>
-        <span onclick="sw('applications')" style="font-size:13px;color:#374151;cursor:pointer;font-weight:600">查看全部 →</span>
-      </div>
       <div style="overflow-x:auto;max-width:100%">
       <table class="evx-table dashboard-table" style="min-width:860px">
         <thead><tr>
@@ -2466,13 +2468,13 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
     <span class="bn-badge approval-badge" style="display:none"></span>
     <span class="bn-label">待審核</span>
   </button>
-  <button class="bn-item" data-view="admin" onclick="sw('admin')">
-    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
-    <span class="bn-label">系統管理</span>
-  </button>
   <button class="bn-item" data-view="hightea" onclick="sw('hightea')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></div>
     <span class="bn-label">午茶日</span>
+  </button>
+  <button class="bn-item" data-view="admin" onclick="sw('admin')">
+    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
+    <span class="bn-label">系統管理</span>
   </button>
 </nav>
 
@@ -2671,8 +2673,6 @@ window.BF_BUILD = 'v6-freeze-fix (2026-06-13)';
   </div>
 </div>
 
-<!-- Google Identity Services -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
 <script>
 window.onerror = function(msg, src, line) {
@@ -2811,96 +2811,26 @@ function applyRolePermissions() {
 }
 
 // ══════════════════════════════════════════
-//  登入架構說明（2026-06 診斷紀錄）
+//  登入：單一路徑 — OAuth implicit flow 全頁轉址
+// ──────────────────────────────────────────
+//  不使用 GIS 官方內嵌按鈕：它由 accounts.google.com 跨網域 iframe 繪製，依賴
+//  第三方 Cookie / FedCM，在無痕模式、開啟追蹤保護、或有廣告攔截擴充功能的
+//  瀏覽器會「畫不出來」或「點了沒反應」。改為單一全頁轉址按鈕，只需「已授權
+//  的重新導向 URI」，不依賴第三方 Cookie / FedCM，任何瀏覽器環境都能成功登入。
+//  轉址回來時 window.onload 從 location.hash 取出 id_token →
+//  handleGoogleLogin() → 後端換發無法偽造的 session token。
+//  ⚠️ 切勿再把 #google-login-btn 預設隱藏，或改用 google.accounts.id.prompt()
+//     （第三方 Cookie 被封鎖時會靜默失敗、完全沒反應，2026-06 實際踩雷）。
 // ══════════════════════════════════════════
-//  本頁有兩條登入路徑：
-//  1) GIS 官方內嵌按鈕（#gis-render-target）
-//     - 由 accounts.google.com 的跨網域 iframe 繪製
-//     - 依賴第三方 Cookie / FedCM，下列環境會壞掉：
-//       ‧ 無痕模式（預設封鎖第三方 Cookie）→ 按鈕有顯示但點了沒反應
-//       ‧ 一般模式 + 追蹤保護 / 廣告攔截擴充功能 → 按鈕整個畫不出來
-//     - 這些是瀏覽器環境問題，與程式碼和 GCP 設定無關
-//       （2026-06 已驗證：OAuth 用戶端的 JavaScript 來源與重新導向 URI 均正確註冊）
-//  2) 相容模式按鈕（#google-login-btn，永遠顯示）
-//     - doGoogleLogin()：OAuth implicit flow 全頁轉址
-//     - 只需「已授權的重新導向 URI」，不依賴第三方 Cookie，任何環境可用
-//     - 轉址回來時 window.onload 從 location.hash 取出 id_token → handleGoogleLogin()
-//  ⚠️ 切勿再把 #google-login-btn 預設隱藏，也不要讓 doGoogleLogin() 先呼叫
-//     google.accounts.id.prompt()——prompt() 在第三方 Cookie 被封鎖時會
-//     「靜默失敗、毫無反應」，使用者會完全無路可登入（2026-06 實際踩雷）。
-var _gisReady = false;
-var _gisFallbackShown = false;
 
-// 顯示備用登入按鈕（GIS 載入失敗或逾時時）
-function _showFallbackBtn() {
-  if (_gisFallbackShown) return;
-  _gisFallbackShown = true;
-  var fb = document.getElementById('google-login-btn');
-  if (fb) fb.style.display = 'flex';
+// 確保登入按鈕顯示（HTML 預設即顯示，此為保險）
+function _showLoginBtn() {
+  var b = document.getElementById('google-login-btn');
+  if (b) b.style.display = 'flex';
 }
 
-function _initGIS() {
-  if (_gisReady) return;
-  if (typeof google === 'undefined' || !google.accounts || !google.accounts.id) return;
-  try {
-    google.accounts.id.initialize({
-      client_id            : GOOGLE_CLIENT_ID,
-      callback             : handleGoogleLogin,
-      auto_select          : false,
-      itp_support          : true,
-      cancel_on_tap_outside: false,
-      use_fedcm_for_prompt : true,
-    });
-    // 渲染 Google 官方登入按鈕
-    var target = document.getElementById('gis-render-target');
-    if (target) {
-      target.innerHTML = '';
-      google.accounts.id.renderButton(target, {
-        type   : 'standard',
-        theme  : 'outline',
-        size   : 'large',
-        text   : 'signin_with',
-        shape  : 'pill',
-        locale : 'zh-TW',
-        width  : 280,
-      });
-    }
-    _gisReady = true;
-    // 官方按鈕已渲染 → 保留相容模式按鈕（避免官方按鈕被封鎖時使用者無路可走），
-    // 並顯示「沒反應就改用相容模式」提示。
-    var hint = document.getElementById('fallback-hint');
-    if (hint) hint.style.display = 'block';
-    console.log('[BeneFlow] GIS 初始化成功，官方登入按鈕已渲染');
-  } catch (e) {
-    console.error('[BeneFlow] GIS 初始化失敗，改用備用登入：', e);
-    _showFallbackBtn();
-  }
-}
-
-// ── 輪詢等待 GIS SDK 載入完成 ──
-// GIS 用 async defer 載入，載入時機不固定，必須輪詢確保初始化一定被執行
-function _waitForGIS(attempt) {
-  attempt = attempt || 0;
-  if (window._appShown || _gisReady) return;
-  if (typeof google !== 'undefined' && google.accounts && google.accounts.id) {
-    _initGIS();
-    if (!_gisReady) _showFallbackBtn();  // 初始化失敗時顯示備用按鈕
-    return;
-  }
-  if (attempt >= 40) {                    // 約 8 秒仍未載入 → 顯示備用按鈕
-    console.warn('[BeneFlow] GIS SDK 載入逾時，顯示備用登入按鈕');
-    _showFallbackBtn();
-    return;
-  }
-  setTimeout(function(){ _waitForGIS(attempt + 1); }, 200);
-}
-
-// 相容模式登入：直接走 OAuth 全頁轉址。
-// 不再優先呼叫 google.accounts.id.prompt()——在 FedCM 啟用或第三方 Cookie 被封鎖
-// （無痕模式預設、開啟追蹤保護的一般 Chrome）時，prompt() 會「靜默失敗、完全沒有反應」，
-// 正是使用者回報的症狀。全頁轉址只需「已授權的重新導向 URI」，不依賴第三方 Cookie/FedCM，最可靠。
+// 公司帳號登入：OAuth implicit flow 全頁轉址
 function doGoogleLogin() {
-  // OAuth implicit flow redirect（可靠登入路徑）
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
   sessionStorage.setItem('bf_oauth_nonce', nonce);
   var params = new URLSearchParams({
@@ -2916,7 +2846,7 @@ function doGoogleLogin() {
 }
 
 function triggerGoogleLogin() { doGoogleLogin(); return false; }
-function initGoogleSignIn() { _waitForGIS(); }
+function initGoogleSignIn() { _showLoginBtn(); }
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = function() {
@@ -2949,8 +2879,8 @@ window.onload = function() {
     sessionStorage.removeItem('bf_token');
     history.replaceState({}, '', location.pathname);
   }
-  // 啟動 GIS 初始化（輪詢等待 SDK 載入，不依賴 onload 時機）
-  _waitForGIS();
+  // 確保登入按鈕顯示（單一全頁轉址路徑，不啟動 GIS）
+  _showLoginBtn();
   // demo 模式下跳過所有 session 檢查和畫面重置
   var _isDemo = !!new URLSearchParams(location.search).get('demo');
   if (_isDemo) { initGoogleSignIn(); return; }
@@ -3003,7 +2933,7 @@ window.onload = function() {
   initGoogleSignIn();
 };
 
-function handleGoogleLogin(response) {
+async function handleGoogleLogin(response) {
   let payload;
   try {
     payload = parseJwt(response.credential);
@@ -3025,14 +2955,34 @@ function handleGoogleLogin(response) {
     }
     return;
   }
-  // 後端已放寬 token 有效期至 7 天（不依賴 Google 的 1 小時硬限制）
-  // 前端 session 同步設定為 7 天，大幅減少「登入逾期」頻率
+  // ── 安全修復（2026-06）：用 Google id_token 向後端換取「無法偽造」的自家 session token ──
+  // 後端 verifyUser 已不再接受未驗章的 Google id_token，必須先呼叫 login 交換。
+  const _errEl = document.getElementById('login-error');
+  let ex;
+  try {
+    const _res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'login', idToken: response.credential }),
+      redirect: 'follow',
+    });
+    ex = await _res.json();
+  } catch (e) {
+    if (_errEl) { _errEl.style.display='block'; _errEl.textContent='無法連線伺服器完成登入，請檢查網路後重試。(' + e.message + ')'; }
+    return;
+  }
+  if (!ex || !ex.ok || !ex.token) {
+    if (_errEl) { _errEl.style.display='block'; _errEl.textContent='登入失敗：' + ((ex && ex.error) || '請重新登入'); }
+    return;
+  }
+  // 後端簽發的 session token 效期 7 天，前端 session 同步設定為 7 天
+  const sessionToken  = ex.token;
   const tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 天
   const prevSession   = currentUser?.sessionExpiry;
   const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 7 * 24 * 60 * 60 * 1000;
-  currentUser = { email: payload.email, name: payload.name || payload.email.split('@')[0], token: response.credential, tokenExpiry, sessionExpiry };
-  sessionStorage.setItem('bf_token', response.credential);
-  localStorage.setItem('bf_token', response.credential); // 備援：sessionStorage 被清除時從這裡讀回
+  currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry };
+  sessionStorage.setItem('bf_token', sessionToken);
+  localStorage.setItem('bf_token', sessionToken); // 備援：sessionStorage 被清除時從這裡讀回
   const { token: _t, ...userToSave } = currentUser;
   localStorage.setItem('bf_user', JSON.stringify(userToSave));
   // 移除過期提示條（如果有）
