@@ -416,6 +416,20 @@ input[type=checkbox]{accent-color:#e16b8c}
   #toast{bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
 }
 
+/* 午茶日品項表格：手機版轉成卡片式（10 欄表格在手機橫向捲動難用，改為每個品項一張卡、欄位垂直排列）*/
+@media(max-width:768px){
+  #ht-dtab-plan thead{display:none}
+  #ht-items-tbody tr{display:block;border:1.5px solid #f1f5f9;border-radius:12px;padding:4px 14px;margin:10px 8px;background:#fff}
+  #ht-items-tbody td{display:flex;align-items:center;gap:10px;padding:6px 0!important;text-align:left!important;border:none!important;white-space:normal!important}
+  #ht-items-tbody td::before{content:attr(data-label);font-size:12px;color:#94a3b8;font-weight:600;min-width:46px;flex-shrink:0}
+  #ht-items-tbody td.ht-it-del{justify-content:flex-end}
+  #ht-items-tbody td.ht-it-del::before{display:none}
+  #ht-items-tbody td .ht-it-inp{width:100%!important;box-sizing:border-box}
+  #ht-dtab-plan tfoot tr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
+  #ht-dtab-plan tfoot td{padding:0!important}
+  #ht-dtab-plan tfoot td[colspan="4"]{display:none}
+}
+
 
 /* ── BATCH BAR ── */
 #batch-bar{display:none;background:#1e293b;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:14px;align-items:center;gap:12px}
@@ -8426,19 +8440,19 @@ function htRenderItems() {
     total += it.subtotal || 0;
     var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('');
     return '<tr style="border-bottom:1px solid #f8fafc" id="ht-row-'+idx+'">'
-      + '<td style="padding:8px 12px"><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:110px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
-      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:90px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
-      + '<td style="padding:8px"><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;outline:none">'+catOpts+'</select></td>'
-      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:62px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
-      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:50px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
-      + '<td style="padding:8px;text-align:right;font-weight:600;color:#0f172a;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
-      + '<td style="padding:8px"><input data-idx="'+idx+'" data-f="assignee" value="'+htEsc(it.assignee)+'" onchange="htItemChange(this)" placeholder="負責人" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:12px;width:80px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
-      + '<td style="padding:8px;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:16px;height:16px;accent-color:#1e9d6b;cursor:pointer"></td>'
-      + '<td style="padding:8px;text-align:center">'
+      + '<td data-label="品名" style="padding:8px 12px"><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:110px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td data-label="廠商" style="padding:8px"><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:13px;width:90px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td data-label="類別" style="padding:8px"><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit;outline:none">'+catOpts+'</select></td>'
+      + '<td data-label="單價" style="padding:8px"><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:62px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td data-label="數量" style="padding:8px"><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 6px;font-size:13px;width:50px;text-align:right;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td data-label="小計" style="padding:8px;text-align:right;font-weight:600;color:#0f172a;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
+      + '<td data-label="負責人" style="padding:8px"><input data-idx="'+idx+'" data-f="assignee" value="'+htEsc(it.assignee)+'" onchange="htItemChange(this)" placeholder="負責人" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:6px;padding:5px 8px;font-size:12px;width:80px;font-family:inherit;outline:none" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'"></td>'
+      + '<td data-label="已訂購" style="padding:8px;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:16px;height:16px;accent-color:#1e9d6b;cursor:pointer"></td>'
+      + '<td data-label="評分" style="padding:8px;text-align:center">'
       + (it.avgRating > 0 ? '<span style="color:#f59e0b;font-size:12px">★'+it.avgRating+'</span>' : '')
       + '<button onclick="htOpenRate('+idx+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:11px;padding:2px 4px;font-family:inherit" title="評分">評</button>'
       + '</td>'
-      + '<td style="padding:8px;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px" title="刪除">×</button></td>'
+      + '<td data-label="" class="ht-it-del" style="padding:8px;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;line-height:1;padding:2px 4px" title="刪除">×</button></td>'
       + '</tr>';
   }).join('');
   document.getElementById('ht-total-cell').textContent = fmtMoney(total);
