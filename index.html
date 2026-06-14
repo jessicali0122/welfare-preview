@@ -8168,7 +8168,10 @@ var _htRecTab   = 'all';
 
 // ── API 呼叫 (沿用既有 API_URL + token 機制) ──
 async function htApi(action, payload) {
-  var body = Object.assign({ action: action, token: (window.currentUser && window.currentUser.token) || '' }, payload || {});
+  // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
+  //   currentUser 並未掛到 window（只有 demo 模式才會），用 window.currentUser
+  //   會永遠取到 undefined → token 變空字串 → 後端回「請先登入公司帳號」。
+  var body = Object.assign({ action: action, token: (currentUser && currentUser.token) || '' }, payload || {});
   var res  = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' });
   return res.json();
 }
