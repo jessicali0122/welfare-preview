@@ -82,50 +82,24 @@ body{margin:0;background:#fff}
 aside{
   width:76px;min-height:100vh;height:100%;display:flex;flex-direction:column;
   position:absolute;top:0;left:0;z-index:20;overflow:hidden;max-width:100%;
-  transition:width .28s cubic-bezier(.4,0,.2,1),box-shadow .28s ease;
   background:#fff;
 }
-aside:hover{
-  width:168px!important;
-  /* aside 是 position:absolute，包含塊 wrapper 僅 76px，基礎規則的 max-width:100%
-     會解析成 76px 而把展開寬度鎖死、文字被裁切。展開時必須解除此限制。 */
-  max-width:none!important;
-  box-shadow:4px 0 28px rgba(0,0,0,.10);
-  overflow:visible;
-}
-/* 展開時推開主內容（wrapper 同步變寬），避免側邊欄浮層遮住右側內容 */
-#sidebar-wrapper{transition:width .28s cubic-bezier(.4,0,.2,1)}
-#sidebar-wrapper:hover{width:168px!important}
-/* 展開時顯示分區標籤 */
-aside:hover .sl-section-label{display:block!important;width:100%;padding:12px 16px 4px!important;box-sizing:border-box}
-/* 展開時顯示 brand text */
-aside:hover .sidebar-brand-text{display:block!important}
-/* 展開時顯示文字 */
-aside .sl-text{display:none;opacity:0;transition:opacity .18s ease .08s;white-space:nowrap;font-size:14px;font-weight:500}
-aside:hover .sl-text{display:block;opacity:1}
-/* 展開時隱藏 ::after label */
-aside:hover .sl::after{display:none}
+/* 固定窄欄（icon rail）：不再 hover 展開、不縮放、不推開內容，永遠 76px。
+   每個項目＝圖示＋下方文字標籤（文字由 .sl::after 的 data-label 提供）。
+   sl-text（舊的展開用橫排文字）一律隱藏。 */
+aside .sl-text{display:none}
 
 /* nav items */
 .sl{
   position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:5px;width:68px;height:64px;padding:0 0 3px;border-radius:12px;cursor:pointer;
   color:#94a3b8;
-  transition:background .18s ease,color .18s ease,transform .15s ease,width .28s cubic-bezier(.4,0,.2,1),height .2s ease,flex-direction .01s,gap .2s,padding .2s,border-radius .2s;
+  transition:background .18s ease,color .18s ease,transform .15s ease;
   margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;
   overflow:hidden;touch-action:manipulation;
 }
-/* 展開後 nav items 改為橫排 */
-aside:hover .sl{
-  flex-direction:row;justify-content:flex-start;
-  width:calc(168px - 16px);height:50px;
-  padding:0 16px;gap:12px;border-radius:10px;margin:1px auto;
-}
-.sl:hover{background:#f8fafc;color:#475569}
-aside:hover .sl:hover{transform:translateX(3px)}
-.sl:not(aside:hover .sl):hover{transform:translateY(-1px)}
+.sl:hover{background:#f8fafc;color:#475569;transform:translateY(-1px)}
 .sl:hover svg{transform:scale(1.1);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
-aside:hover .sl:hover svg{transform:scale(1.12)}
 .sl:active{transform:scale(.93)!important}
 .sl svg{transition:transform .2s ease,stroke .18s ease;flex-shrink:0;width:22px!important;height:22px!important}
 
@@ -138,7 +112,6 @@ aside:hover .sl:hover svg{transform:scale(1.12)}
 }
 .sl.active svg{stroke:#e16b8c!important;transform:scale(1.08);filter:drop-shadow(0 0 4px rgba(225,107,140,.3))}
 .sl.active::after{color:#e16b8c!important;font-weight:700!important}
-aside:hover .sl.active::before{height:75%}
 
 /* Ripple 波紋 */
 .sl-ripple{
@@ -151,12 +124,9 @@ aside:hover .sl.active::before{height:75%}
 
 /* notification dot */
 .sl-badge{position:absolute!important;top:2px!important;right:2px!important;width:auto!important;height:auto!important;border-radius:0!important;background:transparent!important;padding:0!important;min-width:0!important;font-size:0!important;color:transparent!important;margin:0!important;line-height:0!important;pointer-events:none!important}
-/* 展開時 badge 移到右側 */
-aside:hover .sl-badge{top:50%!important;transform:translateY(-50%);right:10px!important}
 /* Badge 有內容時呼吸動畫 */
 .sl-badge.has-badge{animation:badge-pulse 2.2s ease-in-out infinite}
 @keyframes badge-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.25)}}
-aside:hover .sl-badge.has-badge{animation:none;transform:translateY(-50%) scale(1)}
 
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:13px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
@@ -1331,9 +1301,6 @@ window.BF_BUILD = 'v7-secure-session (2026-06-13)';
   <div style="padding:calc(14px + env(safe-area-inset-top,0px)) 0 14px;display:flex;align-items:center;justify-content:center;position:relative">
     <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent">
       <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="leaf-grad" x1="21" y1="2" x2="6" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3dba84"/><stop offset="100%" stop-color="#157a50"/></linearGradient></defs><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="url(#leaf-grad)" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="url(#leaf-grad)"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="url(#leaf-grad)"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="url(#leaf-grad)"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="url(#leaf-grad)"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="url(#leaf-grad)"/></svg>
-    </div>
-    <div class="sidebar-brand-text" style="flex:1;min-width:0">
-      <div style="font-family:'Noto Sans TC',sans-serif;color:#0f172a;font-size:15px;font-weight:700;letter-spacing:-.01em">Bene<span style="color:#f59e0b">Flow</span></div>
     </div>
     <!-- 手機版關閉按鈕 -->
     <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;background:rgba(255,255,255,.12);border-radius:50%;color:#fff;font-size:18px;line-height:1;cursor:pointer;align-items:center;justify-content:center">×</button>
