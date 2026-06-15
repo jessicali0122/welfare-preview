@@ -2216,18 +2216,27 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     <!-- 品項分析 Tab -->
     <div id="ht-panel-analytics" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px" id="ht-analytics-stats"></div>
-      <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;margin-bottom:14px" id="ht-analytics-trend">
-        <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">月份支出趨勢</div>
-        <div id="ht-trend-chart" style="height:110px;position:relative;overflow:hidden"></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px" id="ht-analytics-stats"></div>
+      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px;margin-bottom:16px" id="ht-analytics-trend">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
+          <span style="font-size:14px;font-weight:700;color:#0f172a">月份支出趨勢</span>
+        </div>
+        <div id="ht-trend-chart" style="position:relative;overflow:hidden"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px">
-          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px">熱門店家排行</div>
+        <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#6366f1,#a5b4fc);border-radius:2px"></span>
+            <span style="font-size:14px;font-weight:700;color:#0f172a">熱門店家排行</span>
+          </div>
           <div id="ht-vendor-ranking"></div>
         </div>
-        <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px">
-          <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:12px">品項類別佔比</div>
+        <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#f59e0b,#fcd34d);border-radius:2px"></span>
+            <span style="font-size:14px;font-weight:700;color:#0f172a">品項類別佔比</span>
+          </div>
           <div id="ht-category-bars"></div>
         </div>
       </div>
@@ -8386,13 +8395,14 @@ function htRenderAnalytics() {
   var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
   var avgSpend   = Math.round(totalSpend / _htEvents.length);
   document.getElementById('ht-analytics-stats').innerHTML = [
-    { label:'活動場次', value: _htEvents.length + ' 場', icon:'📅', color:'#6366f1' },
-    { label:'總支出', value: fmtMoney(totalSpend), icon:'💰', color:'#e16b8c' },
-    { label:'平均每場', value: fmtMoney(avgSpend), icon:'📊', color:'#f59e0b' },
+    { label:'活動場次', value: _htEvents.length + ' 場', icon:'🗓️', grad:'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)', sub:'#c7d2fe' },
+    { label:'總支出', value: fmtMoney(totalSpend), icon:'💸', grad:'linear-gradient(135deg,#e16b8c 0%,#f472b6 100%)', sub:'#fbcfe8' },
+    { label:'平均每場', value: fmtMoney(avgSpend), icon:'📊', grad:'linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%)', sub:'#fde68a' },
   ].map(function(s){
-    return '<div style="background:#fff;border-radius:12px;border:1px solid #f1f5f9;padding:12px 14px;display:flex;align-items:center;gap:10px">'
-      + '<div style="width:34px;height:34px;border-radius:9px;background:'+s.color+'15;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">'+s.icon+'</div>'
-      + '<div><div style="font-size:16px;font-weight:800;color:#0f172a">'+s.value+'</div><div style="font-size:12px;color:#94a3b8;margin-top:1px">'+s.label+'</div></div>'
+    return '<div style="background:'+s.grad+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.1)">'
+      + '<div style="position:absolute;right:-10px;top:-10px;font-size:52px;opacity:.18;line-height:1">'+s.icon+'</div>'
+      + '<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:6px;letter-spacing:.03em">'+s.label+'</div>'
+      + '<div style="font-size:22px;font-weight:800;color:#fff;line-height:1">'+s.value+'</div>'
       + '</div>';
   }).join('');
 
@@ -8438,20 +8448,20 @@ function htRenderAnalytics() {
       var vSorted = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); });
       var maxOrders = (vSorted[0] && vSorted[0].totalOrders) || 1;
       rankEl.innerHTML = vSorted.slice(0,8).map(function(v,i){
-        var medals = ['🥇','🥈','🥉'];
-        var badge = i < 3 ? '<span style="font-size:18px;line-height:1">'+medals[i]+'</span>'
-          : '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:12px;font-weight:700;color:#64748b">'+(i+1)+'</span>';
+        var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
+        var badge = i < 3
+          ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
+          : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
         var pct = Math.round((v.totalOrders||0)/maxOrders*100);
         var barColor = catColors[v.category]||'#94a3b8';
-        return '<div style="margin-bottom:14px">'
-          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
           + badge
-          + '<span style="font-size:13px;font-weight:700;color:#0f172a;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+v.name+'</span>'
-          + '<span style="font-size:12px;color:#64748b;flex-shrink:0">'+(v.totalOrders||0)+' 次</span>'
-          + '</div>'
-          + '<div style="display:flex;align-items:center;gap:6px;margin-left:28px">'
-          + '<div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
-          + '<span style="font-size:12px;color:#94a3b8;flex-shrink:0;min-width:28px">'+(v.category||'')+'</span>'
+          + '<div style="flex:1;min-width:0">'
+          +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+          +     '<span style="font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
+          +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+(v.totalOrders||0)+' 次</span>'
+          +   '</div>'
+          +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
           + '</div>'
           + '</div>';
       }).join('');
@@ -8476,12 +8486,20 @@ function htRenderAnalytics() {
         var pct = Math.round(catTotals[c]/catMax*100);
         var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
         var col = catColMap[c]||'#94a3b8';
-        return '<div style="margin-bottom:14px">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:5px">'
-          + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:3px;background:'+col+';flex-shrink:0"></div><span style="font-weight:600;color:#374151">'+c+'</span></div>'
-          + '<span style="color:#64748b">'+catTotals[c]+' 次 <span style="color:#94a3b8;font-size:12px">('+pctTotal+'%)</span></span>'
+        return '<div style="margin-bottom:12px">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+          +   '<div style="display:flex;align-items:center;gap:7px">'
+          +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+          +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
+          +     '</div>'
+          +     '<span style="font-size:13px;font-weight:700;color:#0f172a">'+c+'</span>'
+          +   '</div>'
+          +   '<div style="display:flex;align-items:center;gap:6px">'
+          +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
+          +     '<span style="font-size:11px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
+          +   '</div>'
           + '</div>'
-          + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>'
+          + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
           + '</div>';
       }).join('');
     } else {
