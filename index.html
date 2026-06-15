@@ -1272,8 +1272,13 @@ tbody td{font-size:var(--fs-base)!important}
   .evx-action-col{margin-left:auto}
   /* 探店靈感類別卡片：6欄→3欄 */
   #ht-cat-grid{grid-template-columns:repeat(3,1fr)!important}
+  /* 探店靈感區域按鈕：隱藏副標題文字，避免換行 */
+  .ht-zone-btn span{display:none!important}
   /* AI小Bee FAB：避免蓋住底部導覽列 */
   #ht-fab-wrap{bottom:80px!important}
+  /* 品項分析統計卡片：可橫滑，避免文字擠壓 */
+  #ht-analytics-stats{overflow-x:auto!important;-webkit-overflow-scrolling:touch;flex-wrap:nowrap!important}
+  #ht-analytics-stats>div{flex-shrink:0!important;min-width:100px!important}
   /* 午茶日工具列手機版：兩排 */
   .ht-toolbar{flex-wrap:wrap!important;gap:8px!important;justify-content:flex-start!important}
   .ht-toolbar-tabs{flex-shrink:0;order:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
@@ -8356,7 +8361,7 @@ function _evMonth(e) {
   if (slashD) return slashD[1] + '-' + slashD[2];
   var d = new Date(ds.replace(/\//g, '-'));
   if (!isNaN(d.getTime())) return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
-  return s;
+  return ds;
 }
 function _ymLabel(ym) { // "2026-06" → "2026年6月"
   var m = /^(\d{4})-(\d{2})/.exec(ym || '');
@@ -8463,7 +8468,7 @@ function htRenderAnalytics() {
   ];
   document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s, i){
     var divider = i < statsData.length - 1
-      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 28px;flex-shrink:0"></div>' : '';
+      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 16px;flex-shrink:0"></div>' : '';
     return '<div style="display:flex;align-items:center;gap:12px;flex:1">'
       + '<div style="width:40px;height:40px;border-radius:10px;background:'+s.color+'18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.icon+'</div>'
       + '<div>'
