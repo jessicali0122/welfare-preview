@@ -58,12 +58,23 @@ function _loadFlatpickr(cb) {
   if (typeof flatpickr !== 'undefined') { if(cb) cb(); return; }
   if (_flatpickrLoaded) { var t=setInterval(function(){if(typeof flatpickr!=='undefined'){clearInterval(t);if(cb)cb();}},50); return; }
   _flatpickrLoaded = true;
+  // 月份選擇 plugin 的樣式
+  var pcss = document.createElement('link'); pcss.rel = 'stylesheet';
+  pcss.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css';
+  document.head.appendChild(pcss);
   var s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
   s.onload = function() {
     var s2 = document.createElement('script');
     s2.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh-tw.js';
-    s2.onload = function(){ if(cb) cb(); };
+    s2.onload = function(){
+      // 月份選擇 plugin（給午茶日「月份」用）
+      var s3 = document.createElement('script');
+      s3.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js';
+      s3.onload = function(){ if(cb) cb(); };
+      s3.onerror = function(){ if(cb) cb(); }; // plugin 載入失敗也不卡住
+      document.head.appendChild(s3);
+    };
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
@@ -1037,6 +1048,10 @@ span.flatpickr-weekday{color:#94a3b8!important;font-weight:700!important;font-si
 .flatpickr-day.today{color:#e16b8c!important;font-weight:800!important;background:transparent!important;border:none!important}
 .flatpickr-day.today::after{content:'';position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#e16b8c}
 .flatpickr-day.today:hover{background:#fdf2f8!important}
+/* 月份選擇 plugin：套用系統粉紅主題 */
+.flatpickr-monthSelect-month{font-family:'Noto Sans TC',sans-serif!important;border-radius:8px!important;font-weight:500!important}
+.flatpickr-monthSelect-month:hover{background:#fdf2f8!important;color:#e16b8c!important}
+.flatpickr-monthSelect-month.selected{background:#e16b8c!important;color:#fff!important}
 /* 選中：漸層圓 + 光暈 */
 .flatpickr-day.selected,.flatpickr-day.selected:hover,
 .flatpickr-day.selected.startRange,.flatpickr-day.selected.endRange{
@@ -1254,7 +1269,7 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
-window.BF_BUILD = 'v7-secure-session (2026-06-13)';
+window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 (function(){
   console.log('[BeneFlow] build:', window.BF_BUILD);
   // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
@@ -2228,8 +2243,8 @@ window.BF_BUILD = 'v7-secure-session (2026-06-13)';
 
     <!-- 月份總覽 Tab -->
     <div id="ht-panel-events">
-      <div id="ht-events-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px">
-        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px;grid-column:1/-1">載入中…</div>
+      <div id="ht-events-grid">
+        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
       </div>
     </div>
 
@@ -8162,8 +8177,11 @@ function fmtMoney(n) { return 'NT$' + Number(n||0).toLocaleString(); }
 function fmtMonth(ym) {
   if (!ym) return '';
   var s = String(ym);
-  if (s.length === 6) return s.slice(0,4) + '/' + s.slice(4);
-  if (s.includes('-')) return s.replace('-','/');
+  if (/^\d{6}$/.test(s)) return s.slice(0,4) + '/' + s.slice(4);     // 202505
+  if (/^\d{4}-\d{2}/.test(s)) return s.slice(0,7).replace('-','/');  // 2025-05
+  // 防禦：若仍收到 Date 字串（如「Wed Oct 01 2025...」），解析成 yyyy/MM
+  var d = new Date(s);
+  if (!isNaN(d.getTime())) return d.getFullYear() + '/' + ('0'+(d.getMonth()+1)).slice(-2);
   return s;
 }
 function statusColor(s) {
@@ -8214,34 +8232,86 @@ window.htSwitchListTab = function(tab) {
   htRenderList();
 };
 
+// 統一把 event 的月份正規化成 yyyy-MM（不論後端傳 "2025-10" 或 Date 字串），
+// 標題與排序都靠這個，所以不依賴後端格式。
+function _evMonth(e) {
+  var s = String((e && e.month) || '');
+  if (/^\d{4}-\d{2}/.test(s)) return s.slice(0, 7);
+  var d = new Date(s);
+  if (!isNaN(d.getTime())) return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+  return s;
+}
+function _ymLabel(ym) { // "2026-06" → "2026年6月"
+  var m = /^(\d{4})-(\d{2})/.exec(ym || '');
+  return m ? (m[1] + '年' + parseInt(m[2], 10) + '月') : (ym || '');
+}
+function _htMiniStat(label, val) {
+  return '<div><div style="font-size:11px;color:#94a3b8;margin-bottom:3px">' + label + '</div>'
+    + '<div style="font-size:18px;font-weight:800;color:#0f172a">' + val + '</div></div>';
+}
+
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
-  if (!_htEvents.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:#94a3b8"><div style="font-size:40px;margin-bottom:12px">☕</div><div style="font-size:15px;font-weight:600;margin-bottom:6px">還沒有午茶日活動</div><div style="font-size:13px">點擊右上角「新增活動」開始規劃！</div></div>';
-    return;
-  }
-  grid.innerHTML = _htEvents.map(function(ev) {
-    var sc = statusColor(ev.status);
-    var pct = ev.totalBudget > 0 ? Math.min(Math.round(ev.actualExpense / ev.totalBudget * 100), 100) : 0;
-    var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#f59e0b' : '#1e9d6b';
-    var ordPct = ev.itemCount > 0 ? Math.round(ev.orderedCount / ev.itemCount * 100) : 0;
-    return '<div onclick="htOpenDetail(\''+ev.eventId+'\')" style="background:#fff;border-radius:16px;border:1.5px solid #f1f5f9;padding:20px;cursor:pointer;transition:box-shadow .2s,border-color .2s;position:relative;overflow:hidden" onmouseover="this.style.boxShadow=\'0 4px 20px rgba(0,0,0,.1)\';this.style.borderColor=\'#fde4ef\'" onmouseout="this.style.boxShadow=\'none\';this.style.borderColor=\'#f1f5f9\'">'
-      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">'
-      + '<div><div style="font-size:18px;font-weight:800;color:#0f172a">' + fmtMonth(ev.month) + '</div>'
-      + '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + (ev.date || '日期待定') + ' · ' + (ev.headcount||0) + ' 人</div></div>'
-      + '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+ev.status+'</span>'
+  var now = new Date();
+  var thisMonth = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2);
+  var current = null, history = [];
+  _htEvents.forEach(function(e) {
+    if (_evMonth(e) === thisMonth && !current) current = e;
+    else history.push(e);
+  });
+  history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
+
+  // ── 本月焦點 Hero ──
+  var html = '';
+  if (current) {
+    var sc = statusColor(current.status);
+    html += '<div onclick="htOpenDetail(\'' + current.eventId + '\')" style="cursor:pointer;border-radius:18px;padding:24px;background:linear-gradient(135deg,#fdeef5 0%,#fff7fb 100%);border:1.5px solid #f8d3e4;transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'0 8px 28px rgba(225,107,140,.18)\'" onmouseout="this.style.boxShadow=\'none\'">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
+      + '<div><div style="font-size:12px;font-weight:700;color:#e16b8c;letter-spacing:.05em;margin-bottom:6px">☕ 本月午茶日</div>'
+      + '<div style="font-size:24px;font-weight:800;color:#0f172a">' + _ymLabel(thisMonth) + '</div>'
+      + '<div style="font-size:13px;color:#94a3b8;margin-top:3px">' + (current.date || '日期待定') + ' · ' + (current.headcount || 0) + ' 人</div></div>'
+      + '<span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc.bg + ';color:' + sc.color + '">' + current.status + '</span>'
       + '</div>'
-      + '<div style="margin-bottom:10px">'
-      + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#64748b;margin-bottom:4px"><span>預算使用</span><span style="font-weight:600;color:#0f172a">'+fmtMoney(ev.actualExpense)+' / '+fmtMoney(ev.totalBudget)+'</span></div>'
-      + '<div style="height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px;transition:width .6s ease"></div></div>'
+      + '<div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:20px">'
+      + _htMiniStat('品項', current.itemCount || 0)
+      + _htMiniStat('已訂購', (current.orderedCount || 0) + ' / ' + (current.itemCount || 0))
+      + _htMiniStat('預估花費', fmtMoney(current.actualExpense))
       + '</div>'
-      + '<div style="display:flex;justify-content:space-between;align-items:center">'
-      + '<div style="font-size:12px;color:#64748b">訂購進度 <span style="font-weight:700;color:#0f172a">'+ev.orderedCount+'/'+ev.itemCount+'</span></div>'
-      + (ev.birthdayBudget > 0 ? '<div style="font-size:12px;color:#f59e0b">🎂 '+fmtMoney(ev.birthdayBudget)+'</div>' : '')
-      + '</div>'
-      + (ev.claimId ? '<div style="margin-top:8px;font-size:11px;color:#1e9d6b;display:flex;align-items:center;gap:4px"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>已建立報銷 '+ev.claimId+'</div>' : '')
+      + '<div style="display:flex;align-items:center;justify-content:flex-end;font-size:14px;font-weight:700;color:#e16b8c">進入規劃 →</div>'
       + '</div>';
-  }).join('');
+  } else {
+    html += '<div style="border:2px dashed #f1b9d0;border-radius:18px;padding:34px 24px;text-align:center;background:linear-gradient(135deg,#fff8fb 0%,#fff 100%)">'
+      + '<div style="font-size:38px;margin-bottom:8px">☕</div>'
+      + '<div style="font-size:12px;font-weight:700;color:#e16b8c;letter-spacing:.05em;margin-bottom:6px">本月午茶日</div>'
+      + '<div style="font-size:20px;font-weight:800;color:#0f172a;margin-bottom:4px">' + _ymLabel(thisMonth) + '</div>'
+      + '<div style="font-size:13px;color:#94a3b8;margin-bottom:20px">還沒開始規劃，來安排這個月的午茶吧</div>'
+      + '<button onclick="htOpenCreate()" style="display:inline-flex;align-items:center;gap:6px;padding:11px 22px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3)">+ 開始規劃這個月</button>'
+      + '</div>';
+  }
+
+  // ── 歷史回顧（按年份分組，精簡列表）──
+  if (history.length) {
+    html += '<div style="display:flex;align-items:center;gap:10px;margin:28px 0 14px"><div style="font-size:15px;font-weight:800;color:#0f172a">歷史回顧</div><div style="flex:1;height:1px;background:#f1f5f9"></div><div style="font-size:12px;color:#94a3b8">' + history.length + ' 場</div></div>';
+    var byYear = {};
+    history.forEach(function(e) { var y = (_evMonth(e).slice(0, 4)) || '其他'; (byYear[y] = byYear[y] || []).push(e); });
+    Object.keys(byYear).sort().reverse().forEach(function(y) {
+      html += '<div style="font-size:13px;font-weight:700;color:#94a3b8;margin:18px 0 8px">' + y + ' 年</div>';
+      html += '<div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;overflow:hidden">';
+      html += byYear[y].map(function(ev, i, arr) {
+        var sc2 = statusColor(ev.status);
+        var mNum = parseInt(_evMonth(ev).slice(5, 7), 10) || '';
+        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;transition:background .15s' + (i < arr.length - 1 ? ';border-bottom:1px solid #f8fafc' : '') + '" onmouseover="this.style.background=\'#fff8fb\'" onmouseout="this.style.background=\'transparent\'">'
+          + '<div style="font-size:16px;font-weight:800;color:#0f172a;min-width:42px">' + mNum + '月</div>'
+          + '<div style="flex:1;min-width:0;font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (ev.date || '') + ' · ' + (ev.itemCount || 0) + ' 項' + (ev.claimId ? ' · 已報銷' : '') + '</div>'
+          + '<div style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap">' + fmtMoney(ev.actualExpense) + '</div>'
+          + '<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap">' + ev.status + '</span>'
+          + '</div>';
+      }).join('');
+      html += '</div>';
+    });
+  }
+
+  grid.innerHTML = html;
 }
 
 function htRenderAnalytics() {
@@ -8266,7 +8336,7 @@ function htRenderAnalytics() {
   }).join('');
   document.getElementById('ht-analytics-stats').innerHTML = statsHtml;
   // 趨勢圖（簡單橫條）
-  var sorted = _htEvents.slice().sort(function(a,b){ return a.month.localeCompare(b.month); });
+  var sorted = _htEvents.slice().sort(function(a,b){ return _evMonth(a).localeCompare(_evMonth(b)); });
   var trendHtml = sorted.map(function(ev) {
     var pct = maxSpend > 0 ? Math.round((ev.actualExpense||0) / maxSpend * 100) : 0;
     return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
@@ -8307,13 +8377,31 @@ function htRenderVendors() {
 }
 
 // ── 新增活動 Modal ──
+// 午茶日日期選擇器（用系統 flatpickr，符合粉紅主題；月份用 monthSelect plugin）
+var _htMonthFp = null, _htDateFp = null;
+function _htInitCreatePickers(presetYm) {
+  if (typeof flatpickr === 'undefined') { _loadFlatpickr(function(){ _htInitCreatePickers(presetYm); }); return; }
+  // monthSelectPlugin 透過 _loadFlatpickr 的鏈式載入，可能比 flatpickr 晚到——
+  // 若仍未到齊，等 80ms 再試，避免 plugin 未定義時落入 dateFormat:'Y-m' fallback。
+  if (typeof monthSelectPlugin === 'undefined') { setTimeout(function(){ _htInitCreatePickers(presetYm); }, 80); return; }
+  var mEl = document.getElementById('ht-new-month');
+  var dEl = document.getElementById('ht-new-date');
+  if (mEl && !mEl._flatpickr) {
+    var mopts = { locale: 'zh_tw', disableMobile: true, appendTo: document.body };
+    if (typeof monthSelectPlugin !== 'undefined') {
+      mopts.plugins = [ new monthSelectPlugin({ shorthand: false, dateFormat: 'Y 年 n 月' }) ];
+    } else { mopts.dateFormat = 'Y-m'; } // plugin 萬一沒載到的 fallback
+    _htMonthFp = flatpickr(mEl, mopts);
+  }
+  if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl);
+  if (_htMonthFp && presetYm) _htMonthFp.setDate(presetYm, false);
+  if (_htDateFp) _htDateFp.clear();
+}
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
-  // 預填今天月份
   var now = new Date();
   var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  document.getElementById('ht-new-month').value = ym;
-  document.getElementById('ht-new-date').value = '';
+  _htInitCreatePickers(ym); // 初始化並預填本月
   document.getElementById('ht-new-headcount').value = '';
   document.getElementById('ht-new-budget').value = '';
   document.getElementById('ht-new-notes').value = '';
@@ -8321,9 +8409,18 @@ window.htOpenCreate = function() {
 };
 window.htCloseCreate = function() { document.getElementById('ht-create-modal').style.display = 'none'; };
 window.htSubmitCreate = async function() {
-  var monthRaw = document.getElementById('ht-new-month').value;
-  if (!monthRaw) { toast('請選擇月份'); return; }
-  var month = monthRaw.replace('-','');
+  // 月份從 flatpickr selectedDates 取（最可靠），不依賴 input.value 的顯示格式
+  var month;
+  if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
+    var _fd = _htMonthFp.selectedDates[0];
+    month = _fd.getFullYear() + '-' + String(_fd.getMonth() + 1).padStart(2, '0');
+  } else {
+    var _raw = document.getElementById('ht-new-month').value;
+    var _m = /(\d{4})[\s年-]*(\d{1,2})/.exec(_raw || '');
+    if (!_m) { toast('請選擇月份'); return; }
+    month = _m[1] + '-' + String(parseInt(_m[2], 10)).padStart(2, '0');
+  }
+  if (!month) { toast('請選擇月份'); return; }
   var hc = Number(document.getElementById('ht-new-headcount').value) || 0;
   var bp = Number(document.getElementById('ht-new-budget').value) || 0;
   var r = await htApi('htCreate', {
@@ -8367,8 +8464,10 @@ function htRenderDetailHeader() {
   var btn = document.getElementById('ht-convert-btn');
   if (_htItems.length > 0 && !ev.claimId) btn.style.display = 'flex';
   else btn.style.display = 'none';
-  // 填入設定列
-  document.getElementById('ht-event-date').value = ev.date || '';
+  // 填入設定列（活動日期改用系統 flatpickr，符合主題）
+  var _edEl = document.getElementById('ht-event-date');
+  if (_edEl && !_edEl._flatpickr) initFlatpickr(_edEl);
+  if (_edEl && _edEl._flatpickr) _edEl._flatpickr.setDate(ev.date || '', false); else _edEl.value = ev.date || '';
   document.getElementById('ht-event-headcount').value = ev.headcount || '';
   document.getElementById('ht-event-budget-pp').value = ev.budgetPerPerson || '';
   htUpdateCalcBudget();
@@ -8844,11 +8943,11 @@ window.htConvertToClaim = async function() {
     <div style="display:grid;gap:14px">
       <div>
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">月份 <span style="color:#e16b8c">*</span></label>
-        <input id="ht-new-month" type="month" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+        <input id="ht-new-month" type="text" readonly placeholder="選擇月份" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none;cursor:pointer;background:#fff">
       </div>
       <div>
         <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:6px">活動日期</label>
-        <input id="ht-new-date" type="date" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+        <input id="ht-new-date" type="text" readonly placeholder="選擇日期" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none;cursor:pointer;background:#fff">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
