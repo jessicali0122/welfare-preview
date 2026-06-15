@@ -4212,7 +4212,10 @@ async function loadApprovals() {
 
     var dateBoxBg = '#e16b8c';
     var _nm = localName(c.email, c.name);
-    var _avatar = '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">' + (_nm.charAt(0)||'?') + '</div>';
+    var _avatarUrl = c.email ? localStorage.getItem('bf_avatar_' + c.email) : null;
+    var _avatar = _avatarUrl
+      ? '<img src="'+_avatarUrl+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0">'
+      : '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+(_nm.charAt(0)||'?')+'</div>';
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')" style="padding:13px 16px">'
       + '<div class="evx-inner-row" style="display:flex;align-items:center;gap:12px;overflow:hidden">'
       // 日期方塊
