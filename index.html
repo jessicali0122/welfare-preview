@@ -8304,8 +8304,15 @@ window.htSwitchListTab = function(tab) {
 // 標題與排序都靠這個，所以不依賴後端格式。
 function _evMonth(e) {
   var s = String((e && e.month) || '');
+  // 處理 "2026/06" 或 "2026/06/15" 格式
+  var slashM = /^(\d{4})\/(\d{2})/.exec(s);
+  if (slashM) return slashM[1] + '-' + slashM[2];
   if (/^\d{4}-\d{2}/.test(s)) return s.slice(0, 7);
-  var d = new Date(s);
+  // fallback：從 date 或 createdAt 欄位推算
+  var ds = String((e && (e.date || e.createdAt || e.applyDate)) || '');
+  var slashD = /^(\d{4})\/(\d{2})/.exec(ds);
+  if (slashD) return slashD[1] + '-' + slashD[2];
+  var d = new Date(ds.replace(/\//g, '-'));
   if (!isNaN(d.getTime())) return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
   return s;
 }
