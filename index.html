@@ -2198,6 +2198,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <div style="display:flex;gap:8px;flex-shrink:0">
         <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
         <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項分析</button>
+        <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">📍 探店靈感</button>
       </div>
       <div id="ht-current-month-chip" style="flex:1;display:flex;justify-content:center"></div>
       <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
@@ -2229,6 +2230,68 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">品項類別佔比</div>
           <div id="ht-category-bars"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 探店靈感 Tab -->
+    <div id="ht-panel-discover" style="display:none">
+      <!-- 快速探索 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">📍 新莊周邊探索</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">點擊類別，在 Google 地圖搜尋附近適合的店家</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <a href="https://www.google.com/maps/search/新莊+甜點+蛋糕" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#fdeef5,#fff8fb);border:1.5px solid #f8d3e4;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(225,107,140,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🍰</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">甜點蛋糕</div>
+          </a>
+          <a href="https://www.google.com/maps/search/新莊+手搖飲料" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:1.5px solid #bae6fd;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(14,165,233,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🧋</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">手搖飲料</div>
+          </a>
+          <a href="https://www.google.com/maps/search/新莊+麵包+烘焙" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fde68a;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(245,158,11,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🍞</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">麵包烘焙</div>
+          </a>
+          <a href="https://www.google.com/maps/search/新莊+外帶+輕食" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(34,197,94,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🍱</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">輕食便當</div>
+          </a>
+          <a href="https://www.google.com/maps/search/新莊+冰淇淋+冰品" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:1.5px solid #e9d5ff;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(168,85,247,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🍦</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">冰品甜點</div>
+          </a>
+          <a href="https://www.google.com/maps/search/新莊+新開幕+餐廳" target="_blank" style="text-decoration:none;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:1.5px solid #fecdd3;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:box-shadow .2s" onmouseover="this.style.boxShadow='0 4px 16px rgba(239,68,68,.15)'" onmouseout="this.style.boxShadow=''">
+            <span style="font-size:24px">🆕</span>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">新開幕</div>
+          </a>
+        </div>
+      </div>
+      <!-- 口袋名單 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <div>
+            <div style="font-size:15px;font-weight:700;color:#0f172a">🗒️ 口袋名單</div>
+            <div style="font-size:12px;color:#94a3b8;margin-top:2px">儲存感興趣的店家，規劃時快速參考</div>
+          </div>
+          <button onclick="htToggleSpotForm()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增
+          </button>
+        </div>
+        <div id="ht-spot-form" style="display:none;background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
+            <input id="ht-spot-name" placeholder="店家名稱" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+            <select id="ht-spot-cat" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;color:#0f172a;outline:none;background:#fff;cursor:pointer">
+              <option>甜點</option><option>飲料</option><option>麵包</option><option>主食</option><option>冰品</option><option>其他</option>
+            </select>
+          </div>
+          <input id="ht-spot-notes" placeholder="備註（地址、特色、營業時間…）" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box;margin-bottom:10px;display:block" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button onclick="htToggleSpotForm()" style="padding:6px 14px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="htSaveSpot()" style="padding:6px 14px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit">儲存</button>
+          </div>
+        </div>
+        <div id="ht-spots-list"></div>
       </div>
     </div>
 
@@ -2371,14 +2434,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
             <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:13px;font-family:inherit;color:#0f172a;text-align:center">
             <span style="font-size:12px;color:#94a3b8">元</span>
           </div>
-          <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#6366f1;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">計算</button>
+          <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">計算</button>
         </div>
         <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
       </div>
       <!-- 推薦品項 -->
       <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
         <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
-        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">根據福委會歷次評分排名</div>
+        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px">根據歷次活動品項紀錄自動推薦</div>
         <div id="ht-recommend-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
           <button class="ht-rtab active" onclick="htSwitchRecTab('all')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">全部</button>
           <button class="ht-rtab" onclick="htSwitchRecTab('甜點')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">甜點</button>
@@ -8136,8 +8199,6 @@ var _htItems    = [];
 var _htEvent    = null; // 目前開啟的活動
 var _htListTab  = 'events';
 var _htDetailTab= 'plan';
-var _htRateItemId = null;
-var _htRateStars  = 0;
 var _htVendors  = [];
 var _htRecData  = null;
 var _htRecTab   = 'all';
@@ -8192,7 +8253,8 @@ window.htLoadList = async function() {
 
 function htRenderList() {
   if (_htListTab === 'events') htRenderEvents();
-  else htRenderAnalytics();
+  else if (_htListTab === 'analytics') htRenderAnalytics();
+  else if (_htListTab === 'discover') htRenderDiscover();
 }
 
 window.htSwitchListTab = function(tab) {
@@ -8204,7 +8266,7 @@ window.htSwitchListTab = function(tab) {
     b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
     b.classList.toggle('active', active);
   });
-  ['events','analytics'].forEach(function(p){
+  ['events','analytics','discover'].forEach(function(p){
     var el = document.getElementById('ht-panel-' + p);
     if (el) el.style.display = p === tab ? '' : 'none';
   });
@@ -8297,7 +8359,7 @@ function htRenderEvents() {
           + '<span style="padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap;flex-shrink:0">' + ev.status + '</span>'
           + '</div>'
           + (metaLine.length ? '<div style="font-size:12px;color:#64748b;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">' + metaLine.map(function(m){ return '<span>'+m+'</span>'; }).join('<span style="color:#e2e8f0">·</span>') + '</div>' : '')
-          + '<div style="font-size:16px;font-weight:800;color:#0f172a">' + fmtMoney(ev.actualExpense) + '</div>'
+          + '<div style="font-size:16px;font-weight:800;color:' + (ev.actualExpense > 0 ? '#0f172a' : '#cbd5e1') + '">' + (ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算') + '</div>'
           + '</div>';
       }).join('');
       html += '</div>';
@@ -8312,7 +8374,11 @@ function htRenderEvents() {
 
 function htRenderAnalytics() {
   if (!_htEvents.length) {
-    document.getElementById('ht-analytics-stats').innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:20px">尚無資料</div>';
+    var _emptyMsg = '<div style="color:#94a3b8;font-size:14px;padding:20px;text-align:center">尚無資料</div>';
+    document.getElementById('ht-analytics-stats').innerHTML = _emptyMsg;
+    document.getElementById('ht-trend-chart').innerHTML = '';
+    document.getElementById('ht-vendor-ranking').innerHTML = '';
+    document.getElementById('ht-category-bars').innerHTML = '';
     return;
   }
   var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
@@ -8493,6 +8559,62 @@ window.htSubmitCreate = async function() {
   toast('✅ 活動已建立');
   await htLoadList();
   htOpenDetail(r.eventId);
+};
+
+// ── 探店靈感 ──
+function htRenderDiscover() {
+  var spots = htGetSpots();
+  var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
+  var list = document.getElementById('ht-spots-list');
+  if (!list) return;
+  if (!spots.length) {
+    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:13px">尚無口袋名單，點擊「新增」加入感興趣的店家</div></div>';
+    return;
+  }
+  list.innerHTML = '<div style="display:grid;gap:10px">' + spots.map(function(s) {
+    var col = catColors[s.category] || '#64748b';
+    var dt = s.ts ? new Date(s.ts).toLocaleDateString('zh-TW', { month:'numeric', day:'numeric' }) : '';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border:1px solid #f1f5f9;border-radius:10px;transition:border-color .2s" onmouseover="this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.borderColor=\'#f1f5f9\'">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+      + '<span style="font-size:13px;font-weight:700;color:#0f172a">' + htEsc(s.name) + '</span>'
+      + '<span style="padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;background:' + col + '18;color:' + col + '">' + htEsc(s.category) + '</span>'
+      + '</div>'
+      + (s.notes ? '<div style="font-size:12px;color:#64748b">' + htEsc(s.notes) + '</div>' : '')
+      + (dt ? '<div style="font-size:12px;color:#cbd5e1;margin-top:4px">加入於 ' + dt + '</div>' : '')
+      + '</div>'
+      + '<button onclick="htRemoveSpot(\'' + s.id + '\')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:18px;padding:2px 4px;line-height:1;transition:color .15s" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#cbd5e1\'">×</button>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+function htGetSpots() {
+  try { return JSON.parse(localStorage.getItem('bf_ht_spots') || '[]'); } catch(e) { return []; }
+}
+window.htToggleSpotForm = function() {
+  var f = document.getElementById('ht-spot-form');
+  if (!f) return;
+  var showing = f.style.display !== 'none';
+  f.style.display = showing ? 'none' : '';
+  if (!showing) setTimeout(function(){ var el = document.getElementById('ht-spot-name'); if (el) el.focus(); }, 50);
+};
+window.htSaveSpot = function() {
+  var name = (document.getElementById('ht-spot-name').value || '').trim();
+  if (!name) { toast('請輸入店家名稱'); return; }
+  var cat   = document.getElementById('ht-spot-cat').value || '其他';
+  var notes = (document.getElementById('ht-spot-notes').value || '').trim();
+  var spots = htGetSpots();
+  spots.unshift({ id: Date.now().toString(), name: name, category: cat, notes: notes, ts: Date.now() });
+  localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
+  document.getElementById('ht-spot-name').value = '';
+  document.getElementById('ht-spot-notes').value = '';
+  document.getElementById('ht-spot-form').style.display = 'none';
+  htRenderDiscover();
+  toast('✅ 已加入口袋名單');
+};
+window.htRemoveSpot = function(id) {
+  var spots = htGetSpots().filter(function(s){ return s.id !== id; });
+  localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
+  htRenderDiscover();
 };
 
 // ── 活動詳情頁 ──
@@ -8981,34 +9103,6 @@ window.htDeleteBirthday = async function(idx) {
 };
 
 // ── 評分 Modal ──
-window.htOpenRate = function(idx) {
-  _htRateItemId = _htItems[idx].itemId;
-  _htRateStars  = 0;
-  document.getElementById('ht-rate-item-name').textContent = _htItems[idx].name || '（無名稱）';
-  document.getElementById('ht-rate-label').textContent = '點選星星評分';
-  document.querySelectorAll('.ht-star').forEach(function(s){ s.style.filter = 'grayscale(1)'; });
-  document.getElementById('ht-rate-modal').style.display = 'flex';
-};
-window.htCloseRate = function() { document.getElementById('ht-rate-modal').style.display = 'none'; };
-window.htSetStar = function(val) {
-  _htRateStars = val;
-  var labels = ['','很差','普通','還好','很好','超棒！'];
-  document.getElementById('ht-rate-label').textContent = labels[val] || '';
-  document.querySelectorAll('.ht-star').forEach(function(s){
-    s.style.filter = parseInt(s.dataset.val) <= val ? 'none' : 'grayscale(1)';
-    s.style.transform = parseInt(s.dataset.val) <= val ? 'scale(1.15)' : 'scale(1)';
-  });
-};
-window.htSubmitRate = async function() {
-  if (!_htRateStars) { toast('請先選擇星數'); return; }
-  if (!_htRateItemId) { toast('品項尚未儲存，請先儲存品項再評分'); htCloseRate(); return; }
-  var r = await htApi('htRateItem', { itemId: _htRateItemId, stars: _htRateStars });
-  if (!r.ok) { toast('評分失敗：' + r.error); return; }
-  toast('⭐ 評分送出');
-  htCloseRate();
-  var r2 = await htApi('htGetItems', { eventId: _htEvent.eventId });
-  if (r2.ok) { _htItems = r2.items||[]; htRenderItems(); }
-};
 
 // ── 轉為報銷 ──
 window.htConvertToClaim = async function() {
@@ -9135,26 +9229,6 @@ window.htDeleteEvent = async function() {
     <div style="display:flex;gap:10px;margin-top:22px">
       <button onclick="htCloseCreate()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
       <button onclick="htSubmitCreate()" style="flex:2;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
-    </div>
-  </div>
-</div>
-
-<!-- 評分 Modal -->
-<div id="ht-rate-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseRate()">
-  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:24px;width:min(340px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">
-    <div style="font-size:16px;font-weight:700;color:#0f172a;margin-bottom:4px">為品項評分</div>
-    <div id="ht-rate-item-name" style="font-size:13px;color:#64748b;margin-bottom:20px"></div>
-    <div id="ht-rate-stars" style="display:flex;justify-content:center;gap:8px;margin-bottom:20px">
-      <span class="ht-star" data-val="1" onclick="htSetStar(1)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
-      <span class="ht-star" data-val="2" onclick="htSetStar(2)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
-      <span class="ht-star" data-val="3" onclick="htSetStar(3)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
-      <span class="ht-star" data-val="4" onclick="htSetStar(4)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
-      <span class="ht-star" data-val="5" onclick="htSetStar(5)" style="font-size:32px;cursor:pointer;transition:transform .15s">⭐</span>
-    </div>
-    <div id="ht-rate-label" style="font-size:13px;color:#94a3b8;margin-bottom:20px">點選星星評分</div>
-    <div style="display:flex;gap:8px">
-      <button onclick="htCloseRate()" style="flex:1;padding:10px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit">取消</button>
-      <button onclick="htSubmitRate()" style="flex:2;padding:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit">送出評分</button>
     </div>
   </div>
 </div>
