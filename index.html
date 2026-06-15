@@ -8744,7 +8744,7 @@ function _htUserSelectHtml(idx, cur) {
 function htRenderItems() {
   var tbody = document.getElementById('ht-items-tbody');
   if (!_htItems.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#94a3b8;font-size:13px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:#94a3b8;font-size:13px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
     document.getElementById('ht-total-cell').textContent = 'NT$0';
     return;
   }
@@ -9110,15 +9110,6 @@ window.htDeleteBirthday = async function(idx) {
 
 // ── 評分 Modal ──
 
-// ── 轉為報銷 ──
-window.htConvertToClaim = async function() {
-  if (!confirm('將此活動的品項費用轉為報銷申請草稿？')) return;
-  var r = await htApi('htConvert', { eventId: _htEvent.eventId });
-  if (!r.ok) { toast('轉換失敗：' + r.error); return; }
-  toast('✅ 已建立報銷草稿 ' + r.caseId + '，可至「案件追蹤」查看');
-  _htEvent.claimId = r.caseId;
-  htRenderDetailHeader();
-};
 
 window.htDeleteEvent = async function() {
   var title = (fmtMonth(_htEvent.month)||'') + ' 午茶日';
