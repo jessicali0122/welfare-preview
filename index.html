@@ -2244,33 +2244,48 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <div id="ht-panel-discover" style="display:none">
       <!-- 快速探索 -->
       <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
           <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
-          <span style="font-size:15px;font-weight:700;color:#0f172a">新莊周邊探索</span>
+          <span style="font-size:15px;font-weight:700;color:#0f172a">周邊探索</span>
         </div>
-        <div style="font-size:12px;color:#94a3b8;margin-bottom:16px;margin-left:12px">點選類別，即時顯示附近店家地圖</div>
+        <!-- 距離 tier chips -->
+        <div style="display:flex;gap:8px;margin-bottom:16px" id="ht-zone-chips">
+          <button onclick="htSelectZone(this,'walk')" data-zone="walk" class="ht-zone-btn ht-zone-active" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e16b8c;background:#fff0f5;color:#e16b8c;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+            🏃 步行圈
+            <span style="font-size:11px;font-weight:500;opacity:.75">新莊・蘆洲・五股</span>
+          </button>
+          <button onclick="htSelectZone(this,'ride')" data-zone="ride" class="ht-zone-btn" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+            🛵 騎車圈
+            <span style="font-size:11px;font-weight:500;opacity:.75">三重・泰山・林口・板橋</span>
+          </button>
+          <button onclick="htSelectZone(this,'metro')" data-zone="metro" class="ht-zone-btn" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+            🌐 雙北全區
+            <span style="font-size:11px;font-weight:500;opacity:.75">台北・新北</span>
+          </button>
+        </div>
+        <!-- 類別卡片 -->
         <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
-          <div onclick="htDiscoverMap(this,'新莊 甜點 蛋糕','甜點蛋糕')" style="cursor:pointer;background:linear-gradient(135deg,#fdeef5,#fff8fb);border:2px solid #f8d3e4;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'甜點 蛋糕','甜點蛋糕')" data-cat="甜點 蛋糕" data-label="甜點蛋糕" style="cursor:pointer;background:linear-gradient(135deg,#fdeef5,#fff8fb);border:2px solid #f8d3e4;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍰</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">甜點蛋糕</div>
           </div>
-          <div onclick="htDiscoverMap(this,'新莊 手搖飲料','手搖飲料')" style="cursor:pointer;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:2px solid #bae6fd;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'手搖 飲料','手搖飲料')" data-cat="手搖 飲料" data-label="手搖飲料" style="cursor:pointer;background:linear-gradient(135deg,#f0f9ff,#e0f2fe);border:2px solid #bae6fd;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🧋</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">手搖飲料</div>
           </div>
-          <div onclick="htDiscoverMap(this,'新莊 麵包 烘焙','麵包烘焙')" style="cursor:pointer;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fde68a;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'麵包 烘焙','麵包烘焙')" data-cat="麵包 烘焙" data-label="麵包烘焙" style="cursor:pointer;background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid #fde68a;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍞</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">麵包烘焙</div>
           </div>
-          <div onclick="htDiscoverMap(this,'新莊 輕食 外帶','輕食便當')" style="cursor:pointer;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'輕食 外帶','輕食便當')" data-cat="輕食 外帶" data-label="輕食便當" style="cursor:pointer;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:2px solid #86efac;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍱</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">輕食便當</div>
           </div>
-          <div onclick="htDiscoverMap(this,'新莊 冰淇淋 冰品','冰品甜點')" style="cursor:pointer;background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:2px solid #e9d5ff;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'冰淇淋 冰品','冰品甜點')" data-cat="冰淇淋 冰品" data-label="冰品甜點" style="cursor:pointer;background:linear-gradient(135deg,#fdf4ff,#fae8ff);border:2px solid #e9d5ff;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍦</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">冰品甜點</div>
           </div>
-          <div onclick="htDiscoverMap(this,'新莊 新開幕 餐廳','新開幕')" style="cursor:pointer;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:2px solid #fecdd3;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
+          <div onclick="htDiscoverMap(this,'新開幕 餐廳','新開幕')" data-cat="新開幕 餐廳" data-label="新開幕" style="cursor:pointer;background:linear-gradient(135deg,#fff1f2,#ffe4e6);border:2px solid #fecdd3;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🎊</span>
             <div style="font-size:13px;font-weight:700;color:#0f172a">新開幕</div>
           </div>
@@ -8583,13 +8598,49 @@ window.htSubmitCreate = async function() {
 
 // ── 探店靈感 ──
 var _htActiveMapCard = null;
-window.htDiscoverMap = function(el, query, label) {
+var _htZone = 'walk'; // 預設步行圈
+var _htZoneMap = {
+  walk:  { label:'步行圈', areas:'新莊 蘆洲 五股' },
+  ride:  { label:'騎車圈', areas:'三重 泰山 林口 板橋' },
+  metro: { label:'雙北全區', areas:'台北 新北' }
+};
+
+window.htSelectZone = function(btn, zone) {
+  _htZone = zone;
+  // 更新 chip 樣式
+  document.querySelectorAll('.ht-zone-btn').forEach(function(b) {
+    b.style.border = '2px solid #e2e8f0';
+    b.style.background = '#f8fafc';
+    b.style.color = '#475569';
+  });
+  btn.style.border = '2px solid #e16b8c';
+  btn.style.background = '#fff0f5';
+  btn.style.color = '#e16b8c';
+  // 若地圖已開啟，自動用新區域刷新
+  if (_htActiveMapCard) {
+    var cat = _htActiveMapCard.dataset.cat;
+    var lbl = _htActiveMapCard.dataset.label;
+    if (cat) _htRefreshMap(cat, lbl);
+  }
+};
+
+function _htRefreshMap(cat, label) {
+  var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
+  var query = zone.areas + ' ' + cat;
+  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&hl=zh-TW&output=embed';
+  var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
+  document.getElementById('ht-map-iframe').src = mapUrl;
+  document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — ' + zone.label;
+  document.getElementById('ht-map-extlink').href = extUrl;
+}
+
+window.htDiscoverMap = function(el, cat, label) {
   // 重置所有分類卡片樣式
   if (_htActiveMapCard && _htActiveMapCard !== el) {
     _htActiveMapCard.style.boxShadow = '';
     _htActiveMapCard.style.transform = '';
   }
-  // 若再次點相同分類，收起地圖
+  // 再次點同分類 → 收起
   if (_htActiveMapCard === el) {
     document.getElementById('ht-map-container').style.display = 'none';
     el.style.boxShadow = '';
@@ -8600,12 +8651,7 @@ window.htDiscoverMap = function(el, query, label) {
   _htActiveMapCard = el;
   el.style.boxShadow = '0 0 0 3px #e16b8c55';
   el.style.transform = 'scale(1.03)';
-
-  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&hl=zh-TW&output=embed';
-  var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
-  document.getElementById('ht-map-iframe').src = mapUrl;
-  document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — 新莊周邊';
-  document.getElementById('ht-map-extlink').href = extUrl;
+  _htRefreshMap(cat, label);
   document.getElementById('ht-map-container').style.display = 'block';
   document.getElementById('ht-map-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
