@@ -8606,10 +8606,38 @@ function _htInitCreatePickers(presetYm) {
 function _htSeasonHoliday(ym) {
   var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
   var season = m >= 3 && m <= 5 ? '春季' : m >= 6 && m <= 8 ? '夏季' : m >= 9 && m <= 11 ? '秋季' : '冬季';
-  var holidays = { 1:'元旦、農曆新年', 2:'農曆新年、元宵節', 3:'', 4:'兒童節、清明節', 5:'母親節', 6:'端午節', 7:'', 8:'七夕', 9:'中秋節、教師節', 10:'重陽節、國慶日', 11:'', 12:'聖誕節、跨年' };
+  var holidays = {
+    1:'元旦、農曆新年', 2:'農曆新年、元宵節、情人節', 3:'婦女節',
+    4:'兒童節、清明節', 5:'母親節、勞動節', 6:'端午節',
+    7:'', 8:'七夕情人節', 9:'中秋節、教師節',
+    10:'重陽節、國慶日', 11:'', 12:'聖誕節、跨年'
+  };
+  var ingredients = {
+    1:['草莓','柑橘','金棗'], 2:['草莓','番茄','蓮霧'], 3:['草莓','芭樂','鳳梨'],
+    4:['芒果','鳳梨','荔枝'], 5:['芒果','荔枝','西瓜'], 6:['西瓜','荔枝','芒果'],
+    7:['西瓜','芒果','百香果'], 8:['百香果','葡萄','火龍果'], 9:['葡萄','柚子','釋迦'],
+    10:['柚子','蓮霧','橘子'], 11:['草莓','橘子','蓮霧'], 12:['草莓','柳橙','棗子']
+  };
   var holiday = holidays[m] || '';
-  return { season: season, holiday: holiday, label: season + (holiday ? '・' + holiday : '') };
+  var seasonal = ingredients[m] || [];
+  return { season: season, holiday: holiday, seasonal: seasonal, label: season + (holiday ? '・' + holiday : '') };
 }
+var _htCategoryPresets = {
+  balanced: { label:'🌈 均衡', desc:'鹹食 35%・甜點 30%・水果 15%・飲品 20%', ratios:{ savory:35, sweet:30, fruit:15, drink:20 } },
+  sweet:    { label:'🍰 甜點系', desc:'鹹食 20%・甜點 45%・水果 15%・飲品 20%', ratios:{ savory:20, sweet:45, fruit:15, drink:20 } },
+  light:    { label:'🥗 輕食系', desc:'鹹食 25%・甜點 20%・水果 35%・飲品 20%', ratios:{ savory:25, sweet:20, fruit:35, drink:20 } },
+  savory:   { label:'🥨 鹹點系', desc:'鹹食 50%・甜點 20%・水果 10%・飲品 20%', ratios:{ savory:50, sweet:20, fruit:10, drink:20 } }
+};
+var _htActiveRatioPreset = 'balanced';
+window.htSelectRatioPreset = function(btn, preset) {
+  _htActiveRatioPreset = preset;
+  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
+    b.style.background = '#f8fafc'; b.style.borderColor = '#e2e8f0'; b.style.color = '#475569';
+  });
+  if (btn) { btn.style.background = '#fff0f5'; btn.style.borderColor = '#e16b8c'; btn.style.color = '#c94e72'; }
+  var det = document.getElementById('ht-modal-ratio-detail');
+  if (det && _htCategoryPresets[preset]) det.textContent = _htCategoryPresets[preset].desc;
+};
 async function _htLoadExcludeItems() {
   if (!_htEvents || !_htEvents.length) return [];
   var pastIds = _htEvents.slice(0, 2).map(function(e) { return e.eventId; });
@@ -8671,7 +8699,7 @@ window.htModalRunAI = async function() {
   try {
     var hc = Number(document.getElementById('ht-new-headcount').value) || 10;
     var bp = Number(document.getElementById('ht-new-budget').value) || 200;
-    var sweetRatio = Number(document.getElementById('ht-modal-sweet-slider').value) || 50;
+    var preset = _htCategoryPresets[_htActiveRatioPreset] || _htCategoryPresets.balanced;
     var ym = '';
     if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
       var fd = _htMonthFp.selectedDates[0];
@@ -8679,7 +8707,14 @@ window.htModalRunAI = async function() {
     }
     var sh = _htSeasonHoliday(ym);
     var excludeItems = await _htLoadExcludeItems();
-    var r = await htApi('htRecommend', { headcount: hc, budgetPerPerson: bp, sweetRatio: sweetRatio, seasonHint: sh.label, excludeItems: excludeItems });
+    var r = await htApi('htRecommend', {
+      headcount: hc, budgetPerPerson: bp,
+      categoryRatios: preset.ratios,
+      seasonHint: sh.label,
+      festivalHint: sh.holiday,
+      seasonalIngredients: sh.seasonal,
+      excludeItems: excludeItems
+    });
     var items = (r && (r.topItems || r.items)) || [];
     if (!items.length) throw new Error('無推薦結果');
     _htModalRecResult = items;
@@ -8717,8 +8752,17 @@ window.htOpenCreate = function() {
   var sh = _htSeasonHoliday(ym);
   var shEl = document.getElementById('ht-modal-season-hint');
   if (shEl) shEl.textContent = '🗓 ' + sh.label;
-  var sw = document.getElementById('ht-modal-sweet-slider');
-  if (sw) { sw.value = 50; var swLbl = document.getElementById('ht-modal-sweet-label'); if (swLbl) swLbl.textContent = '50%'; }
+  var ingEl = document.getElementById('ht-modal-seasonal-ing');
+  if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
+  _htActiveRatioPreset = 'balanced';
+  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
+    var isActive = b.dataset.preset === 'balanced';
+    b.style.background = isActive ? '#fff0f5' : '#f8fafc';
+    b.style.borderColor = isActive ? '#e16b8c' : '#e2e8f0';
+    b.style.color = isActive ? '#c94e72' : '#475569';
+  });
+  var det = document.getElementById('ht-modal-ratio-detail');
+  if (det) det.textContent = _htCategoryPresets.balanced.desc;
   _htModalRecResult = null;
   var aiRes = document.getElementById('ht-modal-ai-result');
   if (aiRes) aiRes.style.display = 'none';
@@ -9515,16 +9559,19 @@ window.htDeleteEvent = async function() {
       <!-- 智慧規劃 -->
       <div style="border-top:1.5px dashed #f5b8cb;padding-top:14px">
         <div style="font-size:13px;font-weight:700;color:#e16b8c;margin-bottom:10px">✨ 智慧規劃</div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:12px;color:#64748b">季節 / 節日</span>
+        <div style="margin-bottom:10px">
           <span id="ht-modal-season-hint" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
+          <div id="ht-modal-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
         </div>
         <div>
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:600;color:#374151">甜點比例</span>
-            <span style="font-size:12px;color:#64748b">🧂 鹹 &nbsp;<span id="ht-modal-sweet-label" style="font-weight:700;color:#e16b8c">50%</span>&nbsp; 🍰 甜</span>
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="ht-ratio-chip" data-preset="balanced" onclick="htSelectRatioPreset(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
+            <button class="ht-ratio-chip" data-preset="sweet" onclick="htSelectRatioPreset(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
+            <button class="ht-ratio-chip" data-preset="light" onclick="htSelectRatioPreset(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
+            <button class="ht-ratio-chip" data-preset="savory" onclick="htSelectRatioPreset(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
           </div>
-          <input id="ht-modal-sweet-slider" type="range" min="0" max="100" value="50" style="width:100%;accent-color:#e16b8c" oninput="document.getElementById('ht-modal-sweet-label').textContent=this.value+'%'">
+          <div id="ht-modal-ratio-detail" style="font-size:11px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
         </div>
         <button id="ht-modal-ai-btn" onclick="htModalRunAI()" style="width:100%;margin-top:12px;padding:10px;border:2px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe0ec'" onmouseout="this.style.background='#fff0f5'">✨ AI 幫我規劃品項</button>
         <div id="ht-modal-ai-result" style="display:none"></div>
