@@ -4092,30 +4092,30 @@ async function loadApprovals() {
       : '';
 
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')">'
-      // 頂列：日期框 + 單號 + checkbox
+      // 頂列：日期框 + 單號 + proxy + checkbox
       + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
       +   '<div style="width:44px;height:44px;min-width:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
       +     '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + dbMonth + '</span>'
       +     '<span style="font-size:20px;font-weight:800;line-height:1">' + dbDay + '</span>'
       +   '</div>'
       +   '<div style="flex:1;min-width:0">'
-      +     '<div style="font-size:12px;font-family:monospace;font-weight:700;color:#64748b;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + c.caseId + '</div>'
-      +     (proxyTag ? '<div style="margin-top:2px">'+proxyTag+'</div>' : '')
+      +     '<div style="display:flex;align-items:center;gap:5px">'
+      +       '<span style="font-size:12px;font-family:monospace;font-weight:700;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + c.caseId + '</span>'
+      +       proxyTag
+      +     '</div>'
       +   '</div>'
       +   '<div onclick="event.stopPropagation()" style="flex-shrink:0">'
       +     '<input type="checkbox" class="approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" style="accent-color:#e16b8c;width:16px;height:16px;cursor:pointer">'
       +   '</div>'
       + '</div>'
-      // 主旨（2行截斷）
-      + '<div style="font-size:14px;font-weight:700;color:#0f172a;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.4;margin-bottom:6px">' + subject + '</div>'
-      // 類別 badges
-      + (catBadges ? '<div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:8px">'+catBadges+'</div>' : '')
-      // 底列：申請人・時間 ＋ 操作按鈕
-      + '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:auto;padding-top:4px">'
-      +   '<div style="font-size:12px;color:#64748b;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'
+      // 資訊列：主旨 + badges + 申請人・時間 + 操作按鈕（同一列）
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +   '<span style="font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100px;flex-shrink:0">' + subject + '</span>'
+      +   (catBadges ? catBadges : '')
+      +   '<span style="font-size:12px;color:#94a3b8;white-space:nowrap;flex-shrink:0">'
       +     localName(c.email,c.name) + ' · ' + lastAt
-      +   '</div>'
-      +   '<div class="evx-action-col" onclick="event.stopPropagation()" style="flex-shrink:0;margin-left:6px">'
+      +   '</span>'
+      +   '<div class="evx-action-col" onclick="event.stopPropagation()" style="flex-shrink:0;margin-left:auto">'
       +     '<button class="evx-act" onclick="loadDetail(\'' + c.caseId + '\')" title="查看案件" style="background:#f8fafc;color:#64748b;border-color:#e2e8f0;width:30px;height:30px">'
       +       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>'
       +     '</button>'
@@ -8271,23 +8271,32 @@ function htRenderEvents() {
     Object.keys(byYear).sort().reverse().forEach(function(y) {
       html += '<div style="font-size:12px;font-weight:700;color:#94a3b8;margin:14px 0 10px;letter-spacing:.04em">' + y + ' 年</div>';
       html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px">';
+      var htMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       html += byYear[y].map(function(ev) {
         var sc2 = statusColor(ev.status);
-        var mNum = parseInt(_evMonth(ev).slice(5, 7), 10) || '';
+        var mNum = parseInt(_evMonth(ev).slice(5, 7), 10) || 0;
+        var mAbbr = mNum > 0 ? htMonthNames[mNum - 1].toUpperCase() : '';
         var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join('・');
+        var bdayCount = ev.birthdayBudget > 0 ? Math.round(ev.birthdayBudget / 40) : 0;
+        var metaLine = [];
+        if (ev.headcount) metaLine.push(ev.headcount + ' 人');
+        if (bdayCount)    metaLine.push(bdayCount + ' 壽星');
+        if (orgLine)      metaLine.push('主辦：' + orgLine);
         return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
           + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'
-          + '<div style="display:flex;align-items:center;gap:8px">'
-          + '<div style="width:36px;height:36px;border-radius:10px;background:#fdf2f8;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
-          + '<div style="font-size:17px;font-weight:800;color:#e16b8c;line-height:1">' + mNum + '</div>'
-          + '<div style="font-size:12px;font-weight:600;color:#94a3b8">月</div>'
+          + '<div style="display:flex;align-items:center;gap:10px">'
+          + '<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
+          + '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + mAbbr + '</span>'
+          + '<span style="font-size:20px;font-weight:800;line-height:1">' + mNum + '</span>'
           + '</div>'
-          + '<div><div style="font-size:13px;font-weight:700;color:#0f172a">' + (ev.date || '日期待定') + '</div>'
-          + '<div style="font-size:12px;color:#94a3b8">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '・已報銷' : '') + '</div></div>'
+          + '<div>'
+          + '<div style="font-size:13px;font-weight:700;color:#0f172a">' + (ev.date || '日期待定') + '</div>'
+          + '<div style="font-size:12px;color:#94a3b8">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '・已報銷' : '') + '</div>'
+          + '</div>'
           + '</div>'
           + '<span style="padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap;flex-shrink:0">' + ev.status + '</span>'
           + '</div>'
-          + (orgLine ? '<div style="font-size:12px;color:#64748b;margin-bottom:8px">👤 ' + orgLine + '</div>' : '')
+          + (metaLine.length ? '<div style="font-size:12px;color:#64748b;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">' + metaLine.map(function(m){ return '<span>'+m+'</span>'; }).join('<span style="color:#e2e8f0">·</span>') + '</div>' : '')
           + '<div style="font-size:16px;font-weight:800;color:#0f172a">' + fmtMoney(ev.actualExpense) + '</div>'
           + '</div>';
       }).join('');
@@ -8729,7 +8738,7 @@ function htRenderBudget() {
     '<div style="margin-bottom:16px">'
     + '<div style="display:flex;justify-content:space-between;font-size:13px;color:#64748b;margin-bottom:6px"><span>支出合計</span><span style="font-weight:700;color:#0f172a">'+pct+'%</span></div>'
     + '<div style="height:12px;background:#f1f5f9;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-top:4px"><span>'+fmtMoney(grandTotal)+'</span><span>'+fmtMoney(total)+'</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8;margin-top:4px"><span>支出 '+fmtMoney(actual)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
     + '</div>';
 
   // 類別明細
