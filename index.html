@@ -1263,8 +1263,8 @@ tbody td{font-size:var(--fs-base)!important}
   .evx-approve-card{gap:9px;padding:10px 12px}
   .evx-date-block{width:38px;height:38px}
   .evx-case-icon{width:38px;height:38px}
-  /* 待審核卡片手機版：隱藏姓名時間欄、縮減案號寬度 */
-  .evx-name-col{display:none!important}
+  /* 待審核卡片手機版：姓名時間欄換到最後一行顯示 */
+  .evx-name-col{order:15;width:100%;margin:0!important;flex:none!important;font-size:12px!important;gap:6px!important;opacity:.85}
   .evx-caseid-col{width:auto!important;max-width:130px!important}
   /* 待審核卡片手機版：主旨+badge 換到第二行 */
   .evx-inner-row{flex-wrap:wrap!important;gap:8px!important;overflow:visible!important}
@@ -1272,6 +1272,8 @@ tbody td{font-size:var(--fs-base)!important}
   .evx-action-col{margin-left:auto}
   /* 探店靈感類別卡片：6欄→3欄 */
   #ht-cat-grid{grid-template-columns:repeat(3,1fr)!important}
+  /* AI小Bee FAB：避免蓋住底部導覽列 */
+  #ht-fab-wrap{bottom:80px!important}
   /* 午茶日工具列手機版：兩排 */
   .ht-toolbar{flex-wrap:wrap!important;gap:8px!important;justify-content:flex-start!important}
   .ht-toolbar-tabs{flex-shrink:0;order:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
@@ -8406,7 +8408,7 @@ function htRenderEvents() {
     history.forEach(function(e) { var y = (_evMonth(e).slice(0, 4)) || '其他'; (byYear[y] = byYear[y] || []).push(e); });
     Object.keys(byYear).sort().reverse().forEach(function(y) {
       html += '<div style="font-size:12px;font-weight:700;color:#94a3b8;margin:14px 0 10px;letter-spacing:.04em">' + y + ' 年</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px">';
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:4px">';
       var htMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       html += byYear[y].map(function(ev) {
         var sc2 = statusColor(ev.status);
@@ -8419,7 +8421,7 @@ function htRenderEvents() {
         if (bdayCount)    metaLine.push(bdayCount + ' 壽星');
         if (orgLine)      metaLine.push('主辦：' + orgLine);
         return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
-          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'
+          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
           + '<div style="display:flex;align-items:center;gap:10px">'
           + '<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
           + '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + mAbbr + '</span>'
@@ -9587,7 +9589,7 @@ window.htAssistRun = async function() {
 
 <!-- ── AI 午茶日小助手 FAB ── -->
 <div id="ht-fab-wrap" style="display:none;position:fixed;bottom:28px;right:20px;z-index:400;display:none">
-  <div style="position:absolute;bottom:calc(100%+8px);right:0;background:rgba(15,23,42,.8);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;white-space:nowrap;pointer-events:none">AI 小助手</div>
+  <div style="position:absolute;bottom:calc(100%+8px);right:0;background:rgba(15,23,42,.8);color:#fff;font-size:11px;font-weight:600;padding:4px 10px;border-radius:8px;white-space:nowrap;pointer-events:none">小Bee 🐝</div>
   <button onclick="htAssistOpen()" style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,#e16b8c 0%,#f5a0b0 100%);border:none;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 4px 20px rgba(225,107,140,.5);display:flex;align-items:center;justify-content:center;font-family:inherit;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 6px 28px rgba(225,107,140,.65)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 20px rgba(225,107,140,.5)'">✨</button>
 </div>
 
@@ -9597,8 +9599,8 @@ window.htAssistRun = async function() {
     <div style="width:36px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 16px"></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
       <div>
-        <div style="font-size:18px;font-weight:700;color:#0f172a">✨ 午茶日規劃小助手</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:3px">讓 AI 幫你省下查找時間</div>
+        <div style="font-size:18px;font-weight:700;color:#0f172a">🐝 小Bee</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:3px">你的午茶日智慧規劃夥伴</div>
       </div>
       <button onclick="htAssistClose()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">✕</button>
     </div>
