@@ -8470,75 +8470,113 @@ function htRenderAnalytics() {
 
   // 月份支出趨勢已移除
 
-  // 熱門店家排行（依 totalOrders 排序）
+  // 熱門店家排行 + 品項類別佔比：優先用 _htVendors.totalOrders，若全為 0 則從活動品項重新計算
   var rankEl = document.getElementById('ht-vendor-ranking');
-  if (rankEl) {
-    if (!_htVendors.length) {
-      rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
-      htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
-    } else {
-      var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-      var vSorted = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); });
-      var maxOrders = (vSorted[0] && vSorted[0].totalOrders) || 1;
-      rankEl.innerHTML = vSorted.slice(0,8).map(function(v,i){
-        var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
-        var badge = i < 3
-          ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
-          : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
-        var pct = Math.round((v.totalOrders||0)/maxOrders*100);
-        var barColor = catColors[v.category]||'#94a3b8';
-        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
-          + badge
-          + '<div style="flex:1;min-width:0">'
-          +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-          +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
-          +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+(v.totalOrders||0)+' 次</span>'
-          +   '</div>'
-          +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-    }
+  var catEl  = document.getElementById('ht-category-bars');
+  var allZero = _htVendors.every(function(v){ return !(v.totalOrders); });
+
+  if (!_htVendors.length) {
+    if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
+    htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
+    return;
   }
 
-  // 品項類別佔比（依 _htVendors 的 category 分組，累計 totalOrders）
-  var catEl = document.getElementById('ht-category-bars');
-  if (catEl) {
-    var catTotals = {};
+  if (allZero && _htEvents.length) {
+    // 後端 totalOrders 尚未計算，從所有活動的品項中自行統計
+    if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">統計中…</div>';
+    if (catEl)  catEl.innerHTML  = '';
+    var _evIds = _htEvents.map(function(e){ return e.eventId; });
+    Promise.all(_evIds.map(function(id){ return htApi('htGetItems', { eventId: id }); }))
+      .then(function(results) {
+        var vendorMap = {}; // { name: { name, count, category } }
+        var catTotals = {};
+        results.forEach(function(r) {
+          if (!r || !r.ok || !r.items) return;
+          r.items.forEach(function(it) {
+            var vn = (it.vendor || '').trim();
+            if (vn) {
+              if (!vendorMap[vn]) vendorMap[vn] = { name: vn, count: 0, category: it.category || '其他' };
+              vendorMap[vn].count++;
+            }
+            var cat = (it.category || '其他').trim();
+            catTotals[cat] = (catTotals[cat] || 0) + 1;
+          });
+        });
+        _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
+        _htRenderCatBars(catEl, catTotals);
+      });
+  } else {
+    _htRenderVendorRank(rankEl, _htVendors, 'totalOrders');
+    var catTotalsV = {};
     _htVendors.forEach(function(v){
       var cat = v.category || '其他';
-      catTotals[cat] = (catTotals[cat]||0) + (v.totalOrders||0);
+      catTotalsV[cat] = (catTotalsV[cat]||0) + (v.totalOrders||0);
     });
-    var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
-    if (catEntries.length) {
-      catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
-      var catMax = catTotals[catEntries[0]];
-      var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
-      var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-      catEl.innerHTML = catEntries.map(function(c){
-        var pct = Math.round(catTotals[c]/catMax*100);
-        var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
-        var col = catColMap[c]||'#94a3b8';
-        return '<div style="margin-bottom:12px">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-          +   '<div style="display:flex;align-items:center;gap:7px">'
-          +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-          +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
-          +     '</div>'
-          +     '<span style="font-size:14px;font-weight:700;color:#0f172a">'+c+'</span>'
-          +   '</div>'
-          +   '<div style="display:flex;align-items:center;gap:6px">'
-          +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
-          +     '<span style="font-size:12px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
-          +   '</div>'
-          + '</div>'
-          + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
-          + '</div>';
-      }).join('');
-    } else {
-      catEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">廠商資料載入後可顯示類別分析</div>';
-    }
+    _htRenderCatBars(catEl, catTotalsV);
   }
+}
+
+function _htRenderVendorRank(el, vendors, countField) {
+  if (!el) return;
+  var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+  var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
+  var sorted = vendors.slice().sort(function(a,b){ return (b[countField]||0)-(a[countField]||0); });
+  var maxVal = (sorted[0] && sorted[0][countField]) || 1;
+  if (!sorted.length || !sorted[0][countField]) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無訂購記錄</div>';
+    return;
+  }
+  el.innerHTML = sorted.slice(0,8).map(function(v,i){
+    var cnt = v[countField] || 0;
+    var pct = Math.round(cnt/maxVal*100);
+    var barColor = catColors[v.category]||'#94a3b8';
+    var badge = i < 3
+      ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
+      : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
+      + badge
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
+      +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+cnt+' 次</span>'
+      +   '</div>'
+      +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function _htRenderCatBars(el, catTotals) {
+  if (!el) return;
+  var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+  var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
+  if (!catEntries.length) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無品項資料</div>';
+    return;
+  }
+  catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
+  var catMax = catTotals[catEntries[0]];
+  var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
+  el.innerHTML = catEntries.map(function(c){
+    var pct = Math.round(catTotals[c]/catMax*100);
+    var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
+    var col = catColMap[c]||'#94a3b8';
+    return '<div style="margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +   '<div style="display:flex;align-items:center;gap:7px">'
+      +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
+      +     '</div>'
+      +     '<span style="font-size:14px;font-weight:700;color:#0f172a">'+c+'</span>'
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:6px">'
+      +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
+      +     '<span style="font-size:12px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
+      +   '</div>'
+      + '</div>'
+      + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
+      + '</div>';
+  }).join('');
 }
 
 // ── 新增活動 Modal ──
@@ -8618,9 +8656,9 @@ window.htSubmitCreate = async function() {
 var _htActiveMapCard = null;
 var _htZone = 'walk'; // 預設步行圈
 var _htZoneMap = {
-  walk:  { label:'步行圈', areas:'新莊 蘆洲 五股' },
-  ride:  { label:'騎車圈', areas:'三重 泰山 林口 板橋' },
-  metro: { label:'雙北全區', areas:'台北 新北' }
+  walk:  { label:'步行圈',  areas:'新莊 蘆洲 五股',              ll:'25.027,121.432', z:'14' },
+  ride:  { label:'騎車圈',  areas:'三重 泰山 林口 板橋',          ll:'25.044,121.473', z:'13' },
+  metro: { label:'雙北全區', areas:'台北市 新北市 板橋 中和 永和 新莊 三重 汐止 新店', ll:'25.047,121.497', z:'12' }
 };
 
 window.htSelectZone = function(btn, zone) {
@@ -8645,7 +8683,7 @@ window.htSelectZone = function(btn, zone) {
 function _htRefreshMap(cat, label) {
   var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
   var query = zone.areas + ' ' + cat;
-  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&hl=zh-TW&output=embed';
+  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
   var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
   document.getElementById('ht-map-iframe').src = mapUrl;
   document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — ' + zone.label;
