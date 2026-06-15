@@ -8423,22 +8423,22 @@ function htRenderEvents() {
         var bdayCount = ev.birthdayBudget > 0 ? Math.round(ev.birthdayBudget / 40) : 0;
         var metaLine = [];
         if (bdayCount) metaLine.push(bdayCount + ' 壽星');
-        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
-          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">'
-          + '<div style="display:flex;align-items:center;gap:10px">'
+        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s;min-width:0;overflow:hidden" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
+          + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
           + '<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
           + '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + mAbbr + '</span>'
           + '<span style="font-size:20px;font-weight:800;line-height:1">' + mNum + '</span>'
           + '</div>'
-          + '<div>'
-          + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + (ev.date || '日期待定') + '</div>'
+          + '<div style="min-width:0">'
+          + '<div style="font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (ev.date || '日期待定') + '</div>'
           + '<div style="font-size:12px;color:#94a3b8">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '・已報銷' : '') + '</div>'
           + '</div>'
           + '</div>'
-          + '<span style="padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap;flex-shrink:0">' + ev.status + '</span>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+          + '<span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + '">' + ev.status + '</span>'
+          + (metaLine.length ? '<span style="font-size:11px;color:#94a3b8">' + metaLine.join(' · ') + '</span>' : '')
           + '</div>'
-          + (metaLine.length ? '<div style="font-size:12px;color:#64748b;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">' + metaLine.map(function(m){ return '<span>'+m+'</span>'; }).join('<span style="color:#e2e8f0">·</span>') + '</div>' : '')
-          + '<div style="font-size:16px;font-weight:800;color:' + (ev.actualExpense > 0 ? '#0f172a' : '#cbd5e1') + '">' + (ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算') + '</div>'
+          + '<div style="font-size:15px;font-weight:800;color:' + (ev.actualExpense > 0 ? '#0f172a' : '#cbd5e1') + '">' + (ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算') + '</div>'
           + '</div>';
       }).join('');
       html += '</div>';
@@ -9592,7 +9592,7 @@ window.htAssistRun = async function() {
 
 <!-- ── AI 午茶日小助手 FAB ── -->
 <div id="ht-fab-wrap" style="display:none;position:fixed;bottom:28px;right:20px;z-index:400;display:none">
-  <button onclick="htAssistOpen()" style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#f9a825 0%,#e16b8c 100%);border:none;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 18px rgba(225,107,140,.45);display:flex;align-items:center;justify-content:center;font-family:inherit;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 6px 24px rgba(225,107,140,.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 18px rgba(225,107,140,.45)'">🐝</button>
+  <button onclick="htAssistOpen()" style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#e16b8c 0%,#f9a8d4 100%);border:none;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 18px rgba(225,107,140,.45);display:flex;align-items:center;justify-content:center;font-family:inherit;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 6px 24px rgba(225,107,140,.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 18px rgba(225,107,140,.45)'">🎂</button>
 </div>
 
 <!-- ── AI 午茶日小助手 Panel (Bottom Sheet) ── -->
