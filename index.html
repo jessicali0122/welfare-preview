@@ -3774,9 +3774,10 @@ function _renderCaseRow(c, opts) {
   const stepApproverEmail = c.status === '已退件'
     ? (c.rejectedBy && c.rejectedBy.includes('@') ? c.rejectedBy : _stepInfo.email)
     : (c.status && c.status.includes('待') ? _stepInfo.email : '');
-  // fallback: if stepApproverEmail doesn't match any stored avatar, look up email by name from LOCAL_USER_LIST
-  const _resolvedApproverEmail = stepApproverEmail ||
-    (stepApproverName ? ((LOCAL_USER_LIST.find(function(u){return u.name===stepApproverName;})||{}).email||'') : '');
+  // prefer LOCAL_USER_LIST email (same source as avatar storage) over flow-config email
+  const _nameBasedEmail = stepApproverName
+    ? ((LOCAL_USER_LIST.find(function(u){return u.name===stepApproverName;})||{}).email||'') : '';
+  const _resolvedApproverEmail = _nameBasedEmail || stepApproverEmail || '';
   const isDraft = c.status === '草稿';
   const isDone  = c.status === '已完成';
   const isReject= c.status === '已退件';
