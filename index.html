@@ -1266,6 +1266,12 @@ tbody td{font-size:var(--fs-base)!important}
   /* 待審核卡片手機版：隱藏姓名時間欄、縮減案號寬度 */
   .evx-name-col{display:none!important}
   .evx-caseid-col{width:auto!important;max-width:130px!important}
+  /* 待審核卡片手機版：主旨+badge 換到第二行 */
+  .evx-inner-row{flex-wrap:wrap!important;gap:8px!important;overflow:visible!important}
+  .evx-subj-area{order:10;width:100%;flex:none!important;min-width:0;overflow:hidden;padding-top:2px}
+  .evx-action-col{margin-left:auto}
+  /* 探店靈感類別卡片：6欄→3欄 */
+  #ht-cat-grid{grid-template-columns:repeat(3,1fr)!important}
   /* 午茶日工具列手機版：兩排 */
   .ht-toolbar{flex-wrap:wrap!important;gap:8px!important;justify-content:flex-start!important}
   .ht-toolbar-tabs{flex-shrink:0;order:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
@@ -2273,7 +2279,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           </button>
         </div>
         <!-- 類別卡片 -->
-        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
+        <div id="ht-cat-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
           <div onclick="htDiscoverMap(this,'甜點 蛋糕','甜點蛋糕')" data-cat="甜點 蛋糕" data-label="甜點蛋糕" style="cursor:pointer;background:linear-gradient(135deg,#fdeef5,#fff8fb);border:2px solid #f8d3e4;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍰</span>
             <div style="font-size:14px;font-weight:700;color:#0f172a">甜點蛋糕</div>
@@ -4208,7 +4214,7 @@ async function loadApprovals() {
     var _nm = localName(c.email, c.name);
     var _avatar = '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">' + (_nm.charAt(0)||'?') + '</div>';
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')" style="padding:13px 16px">'
-      + '<div style="display:flex;align-items:center;gap:12px;overflow:hidden">'
+      + '<div class="evx-inner-row" style="display:flex;align-items:center;gap:12px;overflow:hidden">'
       // 日期方塊
       +   '<div style="flex-shrink:0;width:46px;height:46px;border-radius:10px;background:' + dateBoxBg + ';color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15">'
       +     '<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.9">' + dbMonth + '</span>'
@@ -4220,7 +4226,7 @@ async function loadApprovals() {
       +     (isProxy ? '<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:1px 7px;border-radius:20px;font-weight:600;border:1px solid #e2e8f0;white-space:nowrap">代理</span>' : '')
       +   '</div>'
       // 主旨 + 類別 badges（不換行，超出截斷）
-      +   '<div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden">'
+      +   '<div class="evx-subj-area" style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden">'
       +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:40px">' + subject + '</span>'
       +     '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px">' + (catBadges||'') + '</div>'
       +   '</div>'
