@@ -8832,9 +8832,9 @@ window.htSubmitCreate = async function() {
 var _htActiveMapCard = null;
 var _htZone = 'walk'; // 預設步行圈
 var _htZoneMap = {
-  walk:  { label:'步行圈',  areas:'新莊 蘆洲 五股',              ll:'25.027,121.432', z:'14' },
-  ride:  { label:'騎車圈',  areas:'三重 泰山 林口 板橋',          ll:'25.044,121.473', z:'13' },
-  metro: { label:'雙北全區', areas:'台北市 新北市 板橋 中和 永和 新莊 三重 汐止 新店', ll:'25.047,121.497', z:'12' }
+  walk:  { label:'步行圈',  area:'新莊',     ll:'25.027,121.432', z:'14' },
+  ride:  { label:'騎車圈',  area:'三重 板橋', ll:'25.044,121.473', z:'13' },
+  metro: { label:'雙北全區', area:'台北 新北', ll:'25.047,121.497', z:'12' }
 };
 
 window.htSelectZone = function(btn, zone) {
@@ -8858,7 +8858,7 @@ window.htSelectZone = function(btn, zone) {
 
 function _htRefreshMap(cat, label) {
   var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
-  var query = zone.areas + ' ' + cat;
+  var query = cat + ' ' + zone.area;  // 類別在前、地名在後，Google Maps 解析更準
   var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
   var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
   document.getElementById('ht-map-iframe').src = mapUrl;
