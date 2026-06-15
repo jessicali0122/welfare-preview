@@ -8603,6 +8603,103 @@ function _htInitCreatePickers(presetYm) {
   if (_htMonthFp && presetYm) _htMonthFp.setDate(presetYm, false);
   if (_htDateFp) _htDateFp.clear();
 }
+function _htSeasonHoliday(ym) {
+  var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
+  var season = m >= 3 && m <= 5 ? '春季' : m >= 6 && m <= 8 ? '夏季' : m >= 9 && m <= 11 ? '秋季' : '冬季';
+  var holidays = { 1:'元旦、農曆新年', 2:'農曆新年、元宵節', 3:'', 4:'兒童節、清明節', 5:'母親節', 6:'端午節', 7:'', 8:'七夕', 9:'中秋節、教師節', 10:'重陽節、國慶日', 11:'', 12:'聖誕節、跨年' };
+  var holiday = holidays[m] || '';
+  return { season: season, holiday: holiday, label: season + (holiday ? '・' + holiday : '') };
+}
+async function _htLoadExcludeItems() {
+  if (!_htEvents || !_htEvents.length) return [];
+  var pastIds = _htEvents.slice(0, 2).map(function(e) { return e.eventId; });
+  try {
+    var results = await Promise.all(pastIds.map(function(id) { return htApi('htGetItems', { eventId: id }); }));
+    var names = [];
+    results.forEach(function(res) {
+      var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+      items.forEach(function(it) { if (it.name) names.push(it.name); });
+    });
+    return names;
+  } catch(e) { return []; }
+}
+function _htRenderModalStoreHints() {
+  var sec = document.getElementById('ht-modal-store-section');
+  if (!sec) return;
+  var chips = [];
+  var spots = (typeof htGetSpots === 'function') ? htGetSpots() : [];
+  (spots || []).slice(0, 6).forEach(function(s) {
+    if (s && s.name) chips.push('<span onclick="_htModalAddStoreNote(\'' + htEsc(s.name) + '\')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#fff0f5;border:1.5px solid #f5b8cb;border-radius:20px;font-size:12px;color:#c94e72;cursor:pointer" onmouseover="this.style.background=\'#ffe0ec\'" onmouseout="this.style.background=\'#fff0f5\'">⭐ ' + htEsc(s.name) + '</span>');
+  });
+  var vendorsSorted = (_htVendors || []).slice().sort(function(a, b) { return (b.totalOrders || 0) - (a.totalOrders || 0); });
+  vendorsSorted.slice(0, 5).forEach(function(v) {
+    if (v && v.name && !(spots || []).some(function(s) { return s.name === v.name; })) {
+      chips.push('<span onclick="_htModalAddStoreNote(\'' + htEsc(v.name) + '\')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f0faf5;border:1.5px solid #a3d9bc;border-radius:20px;font-size:12px;color:#2d7a52;cursor:pointer" onmouseover="this.style.background=\'#d4f1e3\'" onmouseout="this.style.background=\'#f0faf5\'">🏪 ' + htEsc(v.name) + '</span>');
+    }
+  });
+  if (chips.length) { sec.style.display = ''; document.getElementById('ht-modal-store-chips').innerHTML = chips.join(''); }
+  else sec.style.display = 'none';
+}
+window._htModalAddStoreNote = function(name) {
+  var ta = document.getElementById('ht-new-notes');
+  if (!ta) return;
+  var cur = ta.value.trim();
+  ta.value = cur ? (cur.includes(name) ? cur : cur + '、' + name) : name;
+};
+function _htRenderModalCopyHint() {
+  var sec = document.getElementById('ht-modal-copy-section');
+  if (!sec) return;
+  var past = (_htEvents || []).filter(function(e) { return e.status !== 'draft'; });
+  if (!past.length) { sec.style.display = 'none'; return; }
+  var last = past[0];
+  var label = (last.month || last.eventId || '') + (last.title ? ' ' + last.title : '');
+  sec.style.display = '';
+  var lbl = document.getElementById('ht-modal-copy-label');
+  if (lbl) lbl.textContent = '從「' + label + '」複製品項清單';
+  var hidId = document.getElementById('ht-modal-copy-id');
+  if (hidId) hidId.value = last.eventId || '';
+}
+var _htModalRecResult = null;
+window.htModalRunAI = async function() {
+  var btn = document.getElementById('ht-modal-ai-btn');
+  var resEl = document.getElementById('ht-modal-ai-result');
+  if (!btn || !resEl) return;
+  btn.disabled = true; btn.textContent = '🤖 分析中…';
+  resEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px 0">正在智慧規劃中，請稍候…</div>';
+  resEl.style.display = '';
+  _htModalRecResult = null;
+  try {
+    var hc = Number(document.getElementById('ht-new-headcount').value) || 10;
+    var bp = Number(document.getElementById('ht-new-budget').value) || 200;
+    var sweetRatio = Number(document.getElementById('ht-modal-sweet-slider').value) || 50;
+    var ym = '';
+    if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
+      var fd = _htMonthFp.selectedDates[0];
+      ym = fd.getFullYear() + '-' + String(fd.getMonth() + 1).padStart(2, '0');
+    }
+    var sh = _htSeasonHoliday(ym);
+    var excludeItems = await _htLoadExcludeItems();
+    var r = await htApi('htRecommend', { headcount: hc, budgetPerPerson: bp, sweetRatio: sweetRatio, seasonHint: sh.label, excludeItems: excludeItems });
+    var items = (r && (r.topItems || r.items)) || [];
+    if (!items.length) throw new Error('無推薦結果');
+    _htModalRecResult = items;
+    var html = '<div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:6px">✨ 推薦品項（建立後自動套用）</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    items.slice(0, 12).forEach(function(it) {
+      html += '<span style="padding:3px 10px;background:#fff0f5;border:1px solid #f5b8cb;border-radius:12px;font-size:12px;color:#c94e72">' + htEsc(it.name || it) + (it.vendor ? ' <span style="opacity:.6">@' + htEsc(it.vendor) + '</span>' : '') + '</span>';
+    });
+    html += '</div>';
+    if (r.optimize && r.optimize.breakdown) {
+      html += '<div style="margin-top:6px;font-size:11px;color:#94a3b8">';
+      Object.keys(r.optimize.breakdown).forEach(function(k) { html += k + ': $' + r.optimize.breakdown[k] + ' '; });
+      html += '</div>';
+    }
+    html += '</div>';
+    resEl.innerHTML = html;
+  } catch(e) {
+    resEl.innerHTML = '<div style="color:#e16b8c;font-size:13px;padding:8px 0">推薦失敗，請稍後再試</div>';
+  }
+  btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
+};
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
   var now = new Date();
@@ -8614,15 +8711,27 @@ window.htOpenCreate = function() {
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
   }).join('');
-  var o1 = document.getElementById('ht-new-org1');
-  var o2 = document.getElementById('ht-new-org2');
+  var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
   if (o1) o1.innerHTML = orgOpts;
   if (o2) o2.innerHTML = orgOpts;
+  var sh = _htSeasonHoliday(ym);
+  var shEl = document.getElementById('ht-modal-season-hint');
+  if (shEl) shEl.textContent = '🗓 ' + sh.label;
+  var sw = document.getElementById('ht-modal-sweet-slider');
+  if (sw) { sw.value = 50; var swLbl = document.getElementById('ht-modal-sweet-label'); if (swLbl) swLbl.textContent = '50%'; }
+  _htModalRecResult = null;
+  var aiRes = document.getElementById('ht-modal-ai-result');
+  if (aiRes) aiRes.style.display = 'none';
+  var aiBtn = document.getElementById('ht-modal-ai-btn');
+  if (aiBtn) { aiBtn.disabled = false; aiBtn.textContent = '✨ AI 幫我規劃品項'; }
+  _htRenderModalCopyHint();
+  var cb = document.getElementById('ht-modal-copy-cb');
+  if (cb) cb.checked = false;
+  _htRenderModalStoreHints();
   m.style.display = 'flex';
 };
 window.htCloseCreate = function() { document.getElementById('ht-create-modal').style.display = 'none'; };
 window.htSubmitCreate = async function() {
-  // 月份從 flatpickr selectedDates 取（最可靠），不依賴 input.value 的顯示格式
   var month;
   if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
     var _fd = _htMonthFp.selectedDates[0];
@@ -8649,6 +8758,23 @@ window.htSubmitCreate = async function() {
     notes: document.getElementById('ht-new-notes').value,
   });
   if (!r.ok) { toast('建立失敗：' + r.error); return; }
+  var copyCb = document.getElementById('ht-modal-copy-cb');
+  var copyId = (document.getElementById('ht-modal-copy-id') || {}).value;
+  if (copyCb && copyCb.checked && copyId) {
+    try {
+      var srcItems = await htApi('htGetItems', { eventId: copyId });
+      var srcArr = Array.isArray(srcItems) ? srcItems : (srcItems && srcItems.items ? srcItems.items : []);
+      var resetItems = srcArr.map(function(it) { return Object.assign({}, it, { actualQty: 0, actualCost: 0, eventId: r.eventId }); });
+      if (resetItems.length) await htApi('htSaveItems', { eventId: r.eventId, items: resetItems });
+    } catch(e) {}
+  } else if (_htModalRecResult && _htModalRecResult.length) {
+    try {
+      var aiItems = _htModalRecResult.map(function(it, i) {
+        return { name: it.name || it, vendor: it.vendor || '', category: it.category || '', unitPrice: it.unitPrice || 0, qty: it.qty || 1, totalPrice: it.totalPrice || 0, sort: i, eventId: r.eventId };
+      });
+      await htApi('htSaveItems', { eventId: r.eventId, items: aiItems });
+    } catch(e) {}
+  }
   htCloseCreate();
   toast('✅ 活動已建立');
   await htLoadList();
@@ -9336,7 +9462,7 @@ window.htDeleteEvent = async function() {
 
 <!-- 新增/編輯活動 Modal -->
 <div id="ht-create-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseCreate()">
-  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2)">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(520px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:20px">新增午茶日活動</div>
     <div style="display:grid;gap:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -9372,6 +9498,36 @@ window.htDeleteEvent = async function() {
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:6px">備註</label>
         <textarea id="ht-new-notes" rows="2" placeholder="主題、特別需求…" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;resize:none;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+      </div>
+      <!-- 從上次複製品項 -->
+      <div id="ht-modal-copy-section" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px">
+          <input id="ht-modal-copy-cb" type="checkbox" style="width:16px;height:16px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <input id="ht-modal-copy-id" type="hidden" value="">
+          <span id="ht-modal-copy-label" style="font-size:13px;color:#374151">從上次複製品項清單</span>
+        </label>
+      </div>
+      <!-- 口袋名單 + 常用店家 -->
+      <div id="ht-modal-store-section" style="display:none">
+        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">常用店家快選</div>
+        <div id="ht-modal-store-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- 智慧規劃 -->
+      <div style="border-top:1.5px dashed #f5b8cb;padding-top:14px">
+        <div style="font-size:13px;font-weight:700;color:#e16b8c;margin-bottom:10px">✨ 智慧規劃</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:12px;color:#64748b">季節 / 節日</span>
+          <span id="ht-modal-season-hint" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:600;color:#374151">甜點比例</span>
+            <span style="font-size:12px;color:#64748b">🧂 鹹 &nbsp;<span id="ht-modal-sweet-label" style="font-weight:700;color:#e16b8c">50%</span>&nbsp; 🍰 甜</span>
+          </div>
+          <input id="ht-modal-sweet-slider" type="range" min="0" max="100" value="50" style="width:100%;accent-color:#e16b8c" oninput="document.getElementById('ht-modal-sweet-label').textContent=this.value+'%'">
+        </div>
+        <button id="ht-modal-ai-btn" onclick="htModalRunAI()" style="width:100%;margin-top:12px;padding:10px;border:2px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe0ec'" onmouseout="this.style.background='#fff0f5'">✨ AI 幫我規劃品項</button>
+        <div id="ht-modal-ai-result" style="display:none"></div>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
