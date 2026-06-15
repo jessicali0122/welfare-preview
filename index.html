@@ -2216,14 +2216,11 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     <!-- 品項分析 Tab -->
     <div id="ht-panel-analytics" style="display:none">
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px" id="ht-analytics-stats"></div>
-      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px;margin-bottom:16px" id="ht-analytics-trend">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
-          <span style="font-size:14px;font-weight:700;color:#0f172a">月份支出趨勢</span>
-        </div>
-        <div id="ht-trend-chart" style="position:relative;overflow:hidden;max-height:150px"></div>
+      <!-- 統計數字橫排 -->
+      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:16px 20px;margin-bottom:14px">
+        <div id="ht-analytics-stats" style="display:flex;align-items:center;gap:0"></div>
       </div>
+      <!-- 熱門店家 + 類別佔比 並排 -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
@@ -2240,6 +2237,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <div id="ht-category-bars"></div>
         </div>
       </div>
+      <div id="ht-trend-chart" style="display:none"></div>
     </div>
 
     <!-- 探店靈感 Tab -->
@@ -8422,48 +8420,24 @@ function htRenderAnalytics() {
   }
   var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
   var avgSpend   = Math.round(totalSpend / _htEvents.length);
-  document.getElementById('ht-analytics-stats').innerHTML = [
-    { label:'活動場次', value: _htEvents.length + ' 場', icon:'🗓️', grad:'linear-gradient(135deg,#6366f1 0%,#818cf8 100%)', sub:'#c7d2fe' },
-    { label:'總支出', value: fmtMoney(totalSpend), icon:'💸', grad:'linear-gradient(135deg,#e16b8c 0%,#f472b6 100%)', sub:'#fbcfe8' },
-    { label:'平均每場', value: fmtMoney(avgSpend), icon:'📊', grad:'linear-gradient(135deg,#f59e0b 0%,#fbbf24 100%)', sub:'#fde68a' },
-  ].map(function(s){
-    return '<div style="background:'+s.grad+';border-radius:16px;padding:18px 20px;position:relative;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.1)">'
-      + '<div style="position:absolute;right:-10px;top:-10px;font-size:52px;opacity:.18;line-height:1">'+s.icon+'</div>'
-      + '<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,.8);margin-bottom:4px;letter-spacing:.03em">'+s.label+'</div>'
-      + '<div style="font-size:18px;font-weight:800;color:#fff;line-height:1">'+s.value+'</div>'
-      + '</div>';
+  var statsData = [
+    { label:'活動場次', value: _htEvents.length + ' 場', icon:'🗓️', color:'#6366f1' },
+    { label:'總支出',   value: fmtMoney(totalSpend),      icon:'💸',  color:'#e16b8c' },
+    { label:'平均每場', value: fmtMoney(avgSpend),         icon:'📊',  color:'#f59e0b' },
+  ];
+  document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s, i){
+    var divider = i < statsData.length - 1
+      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 28px;flex-shrink:0"></div>' : '';
+    return '<div style="display:flex;align-items:center;gap:12px;flex:1">'
+      + '<div style="width:40px;height:40px;border-radius:10px;background:'+s.color+'18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.icon+'</div>'
+      + '<div>'
+      +   '<div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">'+s.value+'</div>'
+      +   '<div style="font-size:12px;color:#94a3b8;margin-top:3px">'+s.label+'</div>'
+      + '</div>'
+      + '</div>' + divider;
   }).join('');
 
-  // 月份支出趨勢（SVG 直條圖）
-  var evSorted = _htEvents.slice().sort(function(a,b){ return _evMonth(a).localeCompare(_evMonth(b)); });
-  var chartData = evSorted.slice(-12);
-  var maxV = Math.max.apply(null, chartData.map(function(e){ return e.actualExpense||0; })) || 1;
-  (function(){
-    var W=580, H=130, pL=46, pR=10, pT=14, pB=28;
-    var cW=W-pL-pR, cH=H-pT-pB, n=chartData.length;
-    var slot=cW/n, barW=Math.max(14,Math.min(40,slot*0.6));
-    var yLines='';
-    [0,.25,.5,.75,1].forEach(function(f){
-      var y=pT+cH*(1-f), v=maxV*f;
-      yLines+='<line x1="'+pL+'" y1="'+y+'" x2="'+(W-pR)+'" y2="'+y+'" stroke="#f1f5f9" stroke-width="1"/>';
-      if(f>0){ var lbl=v>=100000?(v/1000).toFixed(0)+'K':(v/10000).toFixed(1)+'萬'; yLines+='<text x="'+(pL-5)+'" y="'+(y+3.5)+'" text-anchor="end" font-size="9" fill="#94a3b8">'+lbl+'</text>'; }
-    });
-    var axis='<line x1="'+pL+'" y1="'+(pT+cH)+'" x2="'+(W-pR)+'" y2="'+(pT+cH)+'" stroke="#e2e8f0" stroke-width="1.5"/>';
-    var bars=chartData.map(function(ev,i){
-      var cx=pL+slot*i+slot/2, x=cx-barW/2;
-      var h=Math.max(3,cH*(ev.actualExpense||0)/maxV), y=pT+cH-h;
-      var mLbl=parseInt(_evMonth(ev).slice(5,7),10)+'月';
-      var vLbl=(ev.actualExpense||0)>=10000?Math.round((ev.actualExpense||0)/1000)+'K':'';
-      return '<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+h+'" rx="4" fill="url(#htG1)"><title>'+fmtMoney(ev.actualExpense||0)+'</title></rect>'
-        +(h>26&&vLbl?'<text x="'+cx+'" y="'+(y-5)+'" text-anchor="middle" font-size="8.5" fill="#c0456e" font-weight="700">'+vLbl+'</text>':'')
-        +'<text x="'+cx+'" y="'+(pT+cH+16)+'" text-anchor="middle" font-size="9" fill="#94a3b8">'+mLbl+'</text>';
-    }).join('');
-    var svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:150px;display:block">'
-      +'<defs><linearGradient id="htG1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e16b8c"/><stop offset="100%" stop-color="#f9a8d4" stop-opacity=".55"/></linearGradient></defs>'
-      +yLines+axis+bars+'</svg>';
-    var el=document.getElementById('ht-trend-chart');
-    el.innerHTML=svg; el.style.height='auto';
-  })();
+  // 月份支出趨勢已移除
 
   // 熱門店家排行（依 totalOrders 排序）
   var rankEl = document.getElementById('ht-vendor-ranking');
