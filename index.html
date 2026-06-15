@@ -2197,8 +2197,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:10px">
       <div style="display:flex;gap:8px;flex-shrink:0">
         <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
-        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">歷史分析</button>
-        <button class="ht-tab-btn" id="ht-tab-vendors" onclick="htSwitchListTab('vendors')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">廠商評分</button>
+        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項分析</button>
       </div>
       <div id="ht-current-month-chip" style="flex:1;display:flex;justify-content:center"></div>
       <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
@@ -2214,25 +2213,25 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       </div>
     </div>
 
-    <!-- 歷史分析 Tab -->
+    <!-- 品項分析 Tab -->
     <div id="ht-panel-analytics" style="display:none">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px;margin-bottom:20px" id="ht-analytics-stats"></div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px" id="ht-analytics-trend">
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-bottom:16px" id="ht-analytics-trend">
         <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">月份支出趨勢</div>
         <div id="ht-trend-chart" style="height:180px;position:relative;overflow:hidden"></div>
       </div>
-      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-top:16px">
-        <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">類別支出分佈</div>
-        <div id="ht-category-bars"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">熱門店家排行</div>
+          <div id="ht-vendor-ranking"></div>
+        </div>
+        <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
+          <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:16px">品項類別佔比</div>
+          <div id="ht-category-bars"></div>
+        </div>
       </div>
     </div>
 
-    <!-- 廠商評分 Tab -->
-    <div id="ht-panel-vendors" style="display:none">
-      <div id="ht-vendors-list" style="display:grid;gap:10px">
-        <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
-      </div>
-    </div>
   </div>
 
   <!-- ── 活動詳情頁 ── -->
@@ -8196,8 +8195,7 @@ window.htLoadList = async function() {
 
 function htRenderList() {
   if (_htListTab === 'events') htRenderEvents();
-  else if (_htListTab === 'analytics') htRenderAnalytics();
-  else htRenderVendors();
+  else htRenderAnalytics();
 }
 
 window.htSwitchListTab = function(tab) {
@@ -8209,7 +8207,7 @@ window.htSwitchListTab = function(tab) {
     b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
     b.classList.toggle('active', active);
   });
-  ['events','analytics','vendors'].forEach(function(p){
+  ['events','analytics'].forEach(function(p){
     var el = document.getElementById('ht-panel-' + p);
     if (el) el.style.display = p === tab ? '' : 'none';
   });
@@ -8310,9 +8308,7 @@ function htRenderAnalytics() {
   }
   var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
   var avgSpend   = Math.round(totalSpend / _htEvents.length);
-  var maxSpend   = Math.max.apply(null, _htEvents.map(function(e){ return e.actualExpense||0; }));
-  var completed  = _htEvents.filter(function(e){ return e.status==='已完成'; }).length;
-  var statsHtml = [
+  document.getElementById('ht-analytics-stats').innerHTML = [
     { label:'活動場次', value: _htEvents.length + ' 場', icon:'📅', color:'#6366f1' },
     { label:'總支出', value: fmtMoney(totalSpend), icon:'💰', color:'#e16b8c' },
     { label:'平均每場', value: fmtMoney(avgSpend), icon:'📊', color:'#f59e0b' },
@@ -8322,10 +8318,10 @@ function htRenderAnalytics() {
       + '<div><div style="font-size:20px;font-weight:800;color:#0f172a">'+s.value+'</div><div style="font-size:12px;color:#94a3b8;margin-top:2px">'+s.label+'</div></div>'
       + '</div>';
   }).join('');
-  document.getElementById('ht-analytics-stats').innerHTML = statsHtml;
-  // 趨勢圖（SVG 直條圖，最近12場）
-  var sorted = _htEvents.slice().sort(function(a,b){ return _evMonth(a).localeCompare(_evMonth(b)); });
-  var chartData = sorted.slice(-12);
+
+  // 月份支出趨勢（SVG 直條圖）
+  var evSorted = _htEvents.slice().sort(function(a,b){ return _evMonth(a).localeCompare(_evMonth(b)); });
+  var chartData = evSorted.slice(-12);
   var maxV = Math.max.apply(null, chartData.map(function(e){ return e.actualExpense||0; })) || 1;
   (function(){
     var W=580, H=200, pL=58, pR=12, pT=22, pB=38;
@@ -8353,49 +8349,68 @@ function htRenderAnalytics() {
     var el=document.getElementById('ht-trend-chart');
     el.innerHTML=svg; el.style.height='auto';
   })();
-  // 類別分佈（彙整各活動品項類別，需後端在 event 摘要中提供 categoryBreakdown）
-  var catTotals = {};
-  _htEvents.forEach(function(ev){
-    var bd = ev.categoryBreakdown;
-    if (bd && typeof bd === 'object') {
-      Object.keys(bd).forEach(function(cat){ catTotals[cat] = (catTotals[cat]||0) + (bd[cat]||0); });
-    }
-  });
-  var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
-  if (catEntries.length) {
-    var catMax = Math.max.apply(null, catEntries.map(function(c){ return catTotals[c]; }));
-    var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-    document.getElementById('ht-category-bars').innerHTML = catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; }).map(function(c){
-      var pct = Math.round(catTotals[c]/catMax*100);
-      var col = catColors[c]||'#94a3b8';
-      return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px"><span style="font-weight:600;color:#374151">'+c+'</span><span style="color:#64748b">'+fmtMoney(catTotals[c])+'</span></div>'
-        +'<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div></div>';
-    }).join('');
-  } else {
-    document.getElementById('ht-category-bars').innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:12px">後端需在活動摘要加入 categoryBreakdown 欄位才能顯示</div>';
-  }
-}
 
-function htRenderVendors() {
-  var list = document.getElementById('ht-vendors-list');
-  if (!_htVendors.length) {
-    list.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">尚無廠商評分資料<br><span style="font-size:12px">在品項規劃中加入廠商並評分後會自動累積</span></div>';
-    return;
+  // 熱門店家排行（依 totalOrders 排序）
+  var rankEl = document.getElementById('ht-vendor-ranking');
+  if (rankEl) {
+    if (!_htVendors.length) {
+      rankEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">載入中…</div>';
+      htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
+    } else {
+      var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+      var vSorted = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); });
+      var maxOrders = (vSorted[0] && vSorted[0].totalOrders) || 1;
+      rankEl.innerHTML = vSorted.slice(0,8).map(function(v,i){
+        var medals = ['🥇','🥈','🥉'];
+        var badge = i < 3 ? '<span style="font-size:18px;line-height:1">'+medals[i]+'</span>'
+          : '<span style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#f1f5f9;font-size:11px;font-weight:700;color:#64748b">'+(i+1)+'</span>';
+        var pct = Math.round((v.totalOrders||0)/maxOrders*100);
+        var barColor = catColors[v.category]||'#94a3b8';
+        return '<div style="margin-bottom:14px">'
+          + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">'
+          + badge
+          + '<span style="font-size:13px;font-weight:700;color:#0f172a;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+v.name+'</span>'
+          + '<span style="font-size:12px;color:#64748b;flex-shrink:0">'+(v.totalOrders||0)+' 次</span>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;gap:6px;margin-left:28px">'
+          + '<div style="flex:1;height:6px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
+          + '<span style="font-size:11px;color:#94a3b8;flex-shrink:0;min-width:28px">'+(v.category||'')+'</span>'
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
   }
-  list.innerHTML = _htVendors.map(function(v, i) {
-    var medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i+1)+'.';
-    return '<div style="background:#fff;border-radius:12px;border:1px solid #f1f5f9;padding:16px;display:flex;align-items:center;gap:14px">'
-      + '<div style="font-size:20px;width:32px;text-align:center;flex-shrink:0">'+medal+'</div>'
-      + '<div style="flex:1;min-width:0">'
-      + '<div style="font-size:14px;font-weight:700;color:#0f172a">'+v.name+'</div>'
-      + '<div style="font-size:12px;color:#64748b;margin-top:2px">'+v.category+' · 訂購 '+v.totalOrders+' 次</div>'
-      + '</div>'
-      + '<div style="text-align:right;flex-shrink:0">'
-      + '<div style="font-size:18px;font-weight:800;color:#f59e0b">'+v.avgRating+'<span style="font-size:12px">★</span></div>'
-      + '<div style="font-size:11px;color:#94a3b8">'+v.ratingCount+'筆評分</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+
+  // 品項類別佔比（依 _htVendors 的 category 分組，累計 totalOrders）
+  var catEl = document.getElementById('ht-category-bars');
+  if (catEl) {
+    var catTotals = {};
+    _htVendors.forEach(function(v){
+      var cat = v.category || '其他';
+      catTotals[cat] = (catTotals[cat]||0) + (v.totalOrders||0);
+    });
+    var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
+    if (catEntries.length) {
+      catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
+      var catMax = catTotals[catEntries[0]];
+      var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
+      var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+      catEl.innerHTML = catEntries.map(function(c){
+        var pct = Math.round(catTotals[c]/catMax*100);
+        var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
+        var col = catColMap[c]||'#94a3b8';
+        return '<div style="margin-bottom:14px">'
+          + '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;margin-bottom:5px">'
+          + '<div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:3px;background:'+col+';flex-shrink:0"></div><span style="font-weight:600;color:#374151">'+c+'</span></div>'
+          + '<span style="color:#64748b">'+catTotals[c]+' 次 <span style="color:#94a3b8;font-size:11px">('+pctTotal+'%)</span></span>'
+          + '</div>'
+          + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+col+';border-radius:4px"></div></div>'
+          + '</div>';
+      }).join('');
+    } else {
+      catEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:20px">廠商資料載入後可顯示類別分析</div>';
+    }
+  }
 }
 
 // ── 新增活動 Modal ──
