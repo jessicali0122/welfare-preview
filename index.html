@@ -2194,13 +2194,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   <!-- ── 列表頁 ── -->
   <div id="ht-list-panel">
     <!-- 頁頭工具列 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-      <div style="display:flex;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:10px">
+      <div style="display:flex;gap:8px;flex-shrink:0">
         <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
         <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">歷史分析</button>
         <button class="ht-tab-btn" id="ht-tab-vendors" onclick="htSwitchListTab('vendors')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">廠商評分</button>
       </div>
-      <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+      <div id="ht-current-month-chip" style="flex:1;display:flex;justify-content:center"></div>
+      <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         新增活動
       </button>
@@ -8244,33 +8245,28 @@ function htRenderEvents() {
   });
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
 
-  // ── 本月焦點 Hero ──
-  var html = '';
-  if (current) {
-    var sc = statusColor(current.status);
-    html += '<div onclick="htOpenDetail(\'' + current.eventId + '\')" style="cursor:pointer;border-radius:18px;padding:24px;background:linear-gradient(135deg,#fdeef5 0%,#fff7fb 100%);border:1.5px solid #f8d3e4;transition:box-shadow .2s" onmouseover="this.style.boxShadow=\'0 8px 28px rgba(225,107,140,.18)\'" onmouseout="this.style.boxShadow=\'none\'">'
-      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">'
-      + '<div><div style="font-size:12px;font-weight:700;color:#e16b8c;letter-spacing:.05em;margin-bottom:6px">☕ 本月午茶日</div>'
-      + '<div style="font-size:24px;font-weight:800;color:#0f172a">' + _ymLabel(thisMonth) + '</div>'
-      + '<div style="font-size:13px;color:#94a3b8;margin-top:3px">' + (current.date || '日期待定') + ' · ' + (current.headcount || 0) + ' 人</div></div>'
-      + '<span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc.bg + ';color:' + sc.color + '">' + current.status + '</span>'
-      + '</div>'
-      + '<div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:20px">'
-      + _htMiniStat('品項', current.itemCount || 0)
-      + _htMiniStat('已訂購', (current.orderedCount || 0) + ' / ' + (current.itemCount || 0))
-      + _htMiniStat('預估花費', fmtMoney(current.actualExpense))
-      + '</div>'
-      + '<div style="display:flex;align-items:center;justify-content:flex-end;font-size:14px;font-weight:700;color:#e16b8c">進入規劃 →</div>'
-      + '</div>';
-  } else {
-    html += '<div style="border:1.5px dashed #f1b9d0;border-radius:14px;padding:14px 20px;background:#fff8fb;display:flex;align-items:center;gap:14px;margin-bottom:4px">'
-      + '<div style="font-size:26px;line-height:1;flex-shrink:0">☕</div>'
-      + '<div>'
-      + '<div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:2px">本月午茶日・' + _ymLabel(thisMonth) + '</div>'
-      + '<div style="font-size:13px;color:#94a3b8">還沒開始規劃，點右上角「新增活動」來安排</div>'
-      + '</div>'
-      + '</div>';
+  // ── 本月狀態 chip（融入頂部工具列）──
+  var chip = document.getElementById('ht-current-month-chip');
+  if (chip) {
+    if (current) {
+      var sc = statusColor(current.status);
+      chip.innerHTML = '<div onclick="htOpenDetail(\'' + current.eventId + '\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:10px;padding:7px 16px;border-radius:20px;background:#fdeef5;border:1.5px solid #f8d3e4;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(225,107,140,.18)\'" onmouseout="this.style.boxShadow=\'\'">'
+        + '<span style="font-size:16px">☕</span>'
+        + '<div style="line-height:1.3">'
+        + '<div style="font-size:13px;font-weight:700;color:#e16b8c">' + _ymLabel(thisMonth) + '</div>'
+        + '<div style="font-size:11px;color:#94a3b8">' + (current.date||'日期待定') + '・' + (current.itemCount||0) + ' 品項</div>'
+        + '</div>'
+        + '<span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:' + sc.bg + ';color:' + sc.color + '">' + current.status + '</span>'
+        + '</div>';
+    } else {
+      chip.innerHTML = '<div style="display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:20px;background:#fff8fb;border:1.5px dashed #f1b9d0">'
+        + '<span style="font-size:15px">☕</span>'
+        + '<span style="font-size:13px;font-weight:600;color:#e16b8c">' + _ymLabel(thisMonth) + '</span>'
+        + '<span style="font-size:12px;color:#94a3b8">尚未規劃</span>'
+        + '</div>';
+    }
   }
+  var html = '';
 
   // ── 歷史回顧（按年份分組，方塊卡片排列）──
   if (history.length) {
