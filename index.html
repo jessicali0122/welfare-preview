@@ -2501,10 +2501,20 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         </div>
       </div>
 
+      <!-- 防重複提示 -->
+      <div id="ht-repeat-warning" style="display:none;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:12px 16px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 上次（近兩場）用過的店家</div>
+        <div id="ht-repeat-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        <div style="font-size:12px;color:#a16207;margin-top:6px">建議這次換換口味，避免重複。</div>
+      </div>
+
       <!-- 品項表格 -->
       <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;overflow:hidden">
         <div style="padding:16px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;justify-content:space-between">
-          <div style="font-size:16px;font-weight:700;color:#0f172a">品項清單</div>
+          <div>
+            <div style="font-size:16px;font-weight:700;color:#0f172a">品項清單</div>
+            <div id="ht-qty-hint" style="font-size:12px;color:#64748b;margin-top:2px"></div>
+          </div>
           <div style="display:flex;gap:8px">
             <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -9438,6 +9448,7 @@ window.htOpenDetail = async function(eventId) {
 
   htRenderDetailHeader();
   htRenderItems();
+  _htShowRepeatWarning();
   htRenderBudget();
   htRenderBirthday();
 };
@@ -9491,7 +9502,7 @@ window.htSwitchDetailTab = function(tab) {
     var el = document.getElementById('ht-dtab-' + t);
     if (el) el.style.display = t === tab ? '' : 'none';
   });
-  if (tab === 'plan')      htRenderItems();
+  if (tab === 'plan')      { htRenderItems(); _htShowRepeatWarning(); }
   if (tab === 'budget')    htRenderBudget();
   if (tab === 'recommend' && typeof htRenderRecommend === 'function') htRenderRecommend();
   if (tab === 'menu')      htRenderMenuCard();
@@ -9542,6 +9553,38 @@ window.htSaveEventInfo = async function() {
 
 // ── 品項規劃 ──
 var _htCats = ['甜點','主食','飲料','水果','其他'];
+
+async function _htShowRepeatWarning() {
+  var warning = document.getElementById('ht-repeat-warning');
+  var chips = document.getElementById('ht-repeat-chips');
+  var qtyHint = document.getElementById('ht-qty-hint');
+  if (!warning || !chips) return;
+
+  // 分量建議
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  if (qtyHint && hc > 0) {
+    var perItem = Math.ceil(hc / 8);
+    qtyHint.textContent = '建議每項訂 ' + perItem + ' 份（' + hc + ' 人 ÷ 8）';
+  }
+
+  // 撈最近兩場活動的店家
+  if (!_htEvents || _htEvents.length < 2) { warning.style.display = 'none'; return; }
+  var pastIds = _htEvents.filter(function(e) { return e.eventId !== (_htEvent && _htEvent.eventId); }).slice(0, 2).map(function(e) { return e.eventId; });
+  try {
+    var results = await Promise.all(pastIds.map(function(id) { return htApi('htGetItems', { eventId: id }); }));
+    var vendorSet = {};
+    results.forEach(function(res) {
+      var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+      items.forEach(function(it) { if (it.vendor && it.vendor.trim()) vendorSet[it.vendor.trim()] = true; });
+    });
+    var vendors = Object.keys(vendorSet);
+    if (!vendors.length) { warning.style.display = 'none'; return; }
+    chips.innerHTML = vendors.map(function(v) {
+      return '<span style="display:inline-block;padding:3px 10px;background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;font-size:12px;color:#92400e">🔁 ' + htEsc(v) + '</span>';
+    }).join('');
+    warning.style.display = '';
+  } catch(e) { warning.style.display = 'none'; }
+}
 
 function _htUserSelectHtml(idx, cur) {
   var o = '<option value="">—</option>';
