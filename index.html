@@ -8394,34 +8394,48 @@ function htRenderEvents() {
     history.forEach(function(e) { var y = (_evMonth(e).slice(0, 4)) || '其他'; (byYear[y] = byYear[y] || []).push(e); });
     Object.keys(byYear).sort().reverse().forEach(function(y) {
       html += '<div style="font-size:12px;font-weight:700;color:#94a3b8;margin:14px 0 10px;letter-spacing:.04em">' + y + ' 年</div>';
-      html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:4px">';
+      html += '<div style="background:#fff;border-radius:16px;border:1px solid #f1e8f0;overflow:hidden;margin-bottom:16px">';
+      html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;padding:8px 20px 8px 80px;background:#fdf6f9;border-bottom:1px solid #f1e8f0">'
+        + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">活動日期</div>'
+        + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">品項數量</div>'
+        + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">狀態</div>'
+        + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">實際支出</div>'
+        + '</div>';
       var htMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      html += byYear[y].map(function(ev) {
+      html += byYear[y].map(function(ev, idx) {
         var sc2 = statusColor(ev.status);
         var mNum = parseInt(_evMonth(ev).slice(5, 7), 10) || 0;
         var mAbbr = mNum > 0 ? htMonthNames[mNum - 1].toUpperCase() : '';
         var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join('・');
         var bdayCount = ev.birthdayBudget > 0 ? Math.round(ev.birthdayBudget / 40) : 0;
-        var metaLine = [];
-        if (ev.headcount) metaLine.push(ev.headcount + ' 人');
-        if (bdayCount)    metaLine.push(bdayCount + ' 壽星');
-        if (orgLine)      metaLine.push('主辦：' + orgLine);
-        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
-          + '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">'
-          + '<div style="display:flex;align-items:center;gap:10px">'
-          + '<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
-          + '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + mAbbr + '</span>'
-          + '<span style="font-size:20px;font-weight:800;line-height:1">' + mNum + '</span>'
-          + '</div>'
-          + '<div>'
-          + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + (ev.date || '日期待定') + '</div>'
-          + '<div style="font-size:12px;color:#94a3b8">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '・已報銷' : '') + '</div>'
+        var tags = [];
+        if (ev.headcount) tags.push(ev.headcount + ' 人');
+        if (bdayCount)    tags.push('🎂 ' + bdayCount + ' 壽星');
+        if (orgLine)      tags.push(orgLine);
+        var isLast = idx === byYear[y].length - 1;
+        var expColor = ev.actualExpense > 0 ? '#be185d' : '#cbd5e1';
+        var expVal   = ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算';
+        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="display:flex;align-items:center;padding:14px 20px;gap:0;cursor:pointer;border-bottom:' + (isLast?'none':'1px solid #fdf0f5') + ';transition:background .15s" onmouseover="this.style.background=\'#fdf6f9\'" onmouseout="this.style.background=\'\'">'
+          + '<div style="width:60px;flex-shrink:0;display:flex;justify-content:center;align-items:center;margin-right:20px">'
+          + '<div style="width:48px;height:52px;border-radius:12px;background:linear-gradient(160deg,#f07ba0 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1;box-shadow:0 4px 12px rgba(200,88,122,.25)">'
+          + '<span style="font-size:10px;font-weight:700;letter-spacing:.08em;opacity:.85;text-transform:uppercase;margin-bottom:2px">' + mAbbr + '</span>'
+          + '<span style="font-size:22px;font-weight:800;line-height:1">' + mNum + '</span>'
           + '</div>'
           + '</div>'
-          + '<span style="padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap;flex-shrink:0">' + ev.status + '</span>'
+          + '<div style="flex:1;min-width:0">'
+          + '<div style="font-size:13px;font-weight:700;color:#1e1e2e;margin-bottom:3px">' + (ev.date || '日期待定') + '</div>'
+          + (tags.length ? '<div style="display:flex;flex-wrap:wrap;gap:5px">' + tags.map(function(t){ return '<span style="font-size:11px;color:#9a6b80;background:#fdf0f5;border-radius:6px;padding:1px 7px">'+t+'</span>'; }).join('') + '</div>' : '')
           + '</div>'
-          + (metaLine.length ? '<div style="font-size:12px;color:#64748b;margin-bottom:8px;display:flex;flex-wrap:wrap;gap:6px">' + metaLine.map(function(m){ return '<span>'+m+'</span>'; }).join('<span style="color:#e2e8f0">·</span>') + '</div>' : '')
-          + '<div style="font-size:16px;font-weight:800;color:' + (ev.actualExpense > 0 ? '#0f172a' : '#cbd5e1') + '">' + (ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算') + '</div>'
+          + '<div style="width:80px;flex-shrink:0;font-size:13px;font-weight:600;color:#64748b;text-align:center">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '<br><span style="font-size:10px;color:#a78bfa">已報銷</span>' : '') + '</div>'
+          + '<div style="width:90px;flex-shrink:0;text-align:center">'
+          + '<span style="padding:3px 11px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + '">' + ev.status + '</span>'
+          + '</div>'
+          + '<div style="width:130px;flex-shrink:0;text-align:right">'
+          + '<div style="font-size:15px;font-weight:800;color:' + expColor + '">' + expVal + '</div>'
+          + '</div>'
+          + '<div style="width:60px;flex-shrink:0;display:flex;justify-content:center">'
+          + '<button onclick="event.stopPropagation();htOpenDetail(\'' + ev.eventId + '\')" style="padding:5px 12px;border-radius:8px;background:linear-gradient(135deg,#f07ba0,#c8587a);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(200,88,122,.25);white-space:nowrap">查看</button>'
+          + '</div>'
           + '</div>';
       }).join('');
       html += '</div>';
