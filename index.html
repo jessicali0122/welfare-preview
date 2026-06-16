@@ -8461,15 +8461,12 @@ function _ymLabel(ym) { // "2026-06" → "2026年6月"
   return m ? (m[1] + '年' + parseInt(m[2], 10) + '月') : (ym || '');
 }
 function _htMiniStat(label, val) {
-  return '<div><div style="font-size:12px;color:#94a3b8;margin-bottom:3px">' + label + '</div>'
+  return '<div><div style="font-size:12px;color:#94a3b8;margin-bottom:4px">' + label + '</div>'
     + '<div style="font-size:18px;font-weight:800;color:#0f172a">' + val + '</div></div>';
 }
 
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
-  var now = new Date();
-  var thisMonth = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2);
-  // 本月活動直接併入列表，不另外顯示 chip
   var history = _htEvents.slice();
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
   var chip = document.getElementById('ht-current-month-chip');
@@ -8479,9 +8476,9 @@ function htRenderEvents() {
   // ── 歷史回顧（按年份分組）──
   if (history.length) {
     html += '<div style="display:flex;align-items:center;gap:10px;margin:24px 0 18px">'
-      + '<div style="font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em">歷史回顧</div>'
+      + '<div style="font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-.01em">歷史回顧</div>'
       + '<div style="flex:1;height:1px;background:linear-gradient(90deg,#f1c4d8,transparent)"></div>'
-      + '<div style="font-size:12px;font-weight:600;color:#d4889e;background:#fdf0f5;padding:2px 10px;border-radius:20px">' + history.length + ' 場</div>'
+      + '<div style="font-size:12px;font-weight:600;color:#d4889e;background:#fdf0f5;padding:4px 10px;border-radius:20px">' + history.length + ' 場</div>'
       + '</div>';
     var byYear = {};
     history.forEach(function(e) { var y = (_evMonth(e).slice(0, 4)) || '其他'; (byYear[y] = byYear[y] || []).push(e); });
@@ -8491,11 +8488,11 @@ function htRenderEvents() {
     Object.keys(byYear).sort().reverse().forEach(function(y) {
       var grad = yearGrads[yearIdx++ % yearGrads.length];
       html += '<div style="display:flex;align-items:center;gap:10px;margin:0 0 12px">'
-        + '<div style="width:28px;height:28px;border-radius:8px;background:linear-gradient(' + grad + ');display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-        + '<span style="font-size:10px;font-weight:800;color:#fff">' + y.slice(2) + '</span></div>'
-        + '<span style="font-size:13px;font-weight:700;color:#374151">' + y + ' 年</span>'
+        + '<div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(' + grad + ');display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+        + '<span style="font-size:12px;font-weight:800;color:#fff">' + y.slice(2) + '</span></div>'
+        + '<span style="font-size:14px;font-weight:700;color:#374151">' + y + ' 年</span>'
         + '<div style="flex:1;height:1px;background:#f1f5f9"></div>'
-        + '<span style="font-size:11px;color:#94a3b8">' + byYear[y].length + ' 場</span>'
+        + '<span style="font-size:12px;color:#94a3b8">' + byYear[y].length + ' 場</span>'
         + '</div>';
       html += '<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">';
       html += byYear[y].map(function(ev) {
@@ -8507,37 +8504,37 @@ function htRenderEvents() {
         var expHas = ev.actualExpense > 0;
         var expVal = expHas ? fmtMoney(ev.actualExpense) : '尚未結算';
         var metaParts = [];
-        if (ev.headcount) metaParts.push('<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + ev.headcount + ' 人');
+        if (ev.headcount) metaParts.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' + ev.headcount + ' 人');
         if (bdayCount) metaParts.push('🎂 ' + bdayCount);
-        if (orgLine)   metaParts.push('<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + orgLine);
+        if (orgLine)   metaParts.push('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>' + orgLine);
         return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="display:flex;align-items:center;gap:0;background:#fff;border-radius:16px;border:1px solid #f1e8f0;cursor:pointer;overflow:hidden;transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 6px 24px rgba(225,107,140,.13)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'\';this.style.transform=\'\'">'
           // 左側色條
-          + '<div style="width:5px;flex-shrink:0;align-self:stretch;background:linear-gradient(180deg,#f07ba0,#c8587a)"></div>'
+          + '<div style="width:6px;flex-shrink:0;align-self:stretch;background:linear-gradient(180deg,#f07ba0,#c8587a)"></div>'
           // 月份徽章
           + '<div style="padding:0 16px;flex-shrink:0;display:flex;align-items:center">'
-          + '<div style="width:44px;height:48px;border-radius:11px;background:linear-gradient(150deg,#fdeef5 0%,#f9d0e4 100%);border:1.5px solid #f8d3e4;color:#c8587a;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1">'
-          + '<span style="font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.8">' + mAbbr + '</span>'
+          + '<div style="width:48px;height:52px;border-radius:12px;background:linear-gradient(150deg,#fdeef5 0%,#f9d0e4 100%);border:2px solid #f8d3e4;color:#c8587a;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1">'
+          + '<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.8">' + mAbbr + '</span>'
           + '<span style="font-size:20px;font-weight:800">' + mNum + '</span>'
           + '</div></div>'
           // 主要資訊
-          + '<div style="flex:1;min-width:0;padding:14px 0">'
-          + '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:5px">' + (ev.date || '日期待定') + '</div>'
-          + (metaParts.length ? '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' + metaParts.map(function(m){ return '<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#94a3b8;font-weight:500">'+m+'</span>'; }).join('') + '</div>' : '')
+          + '<div style="flex:1;min-width:0;padding:16px 0">'
+          + '<div style="font-size:14px;font-weight:700;color:#1e293b;margin-bottom:6px">' + (ev.date || '日期待定') + '</div>'
+          + (metaParts.length ? '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' + metaParts.map(function(m){ return '<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#94a3b8;font-weight:500">'+m+'</span>'; }).join('') + '</div>' : '')
           + '</div>'
           // 品項數
           + '<div style="flex-shrink:0;padding:0 14px;text-align:center">'
           + '<div style="font-size:16px;font-weight:800;color:#0f172a">' + (ev.itemCount || 0) + '</div>'
-          + '<div style="font-size:10px;color:#94a3b8;margin-top:1px">品項</div>'
+          + '<div style="font-size:12px;color:#94a3b8;margin-top:2px">品項</div>'
           + '</div>'
           // 狀態
           + '<div style="flex-shrink:0;padding:0 12px">'
           + '<span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + ';white-space:nowrap">' + ev.status + '</span>'
-          + (ev.claimId ? '<div style="font-size:10px;color:#a78bfa;text-align:center;margin-top:3px">已報銷</div>' : '')
+          + (ev.claimId ? '<div style="font-size:12px;color:#a78bfa;text-align:center;margin-top:4px">已報銷</div>' : '')
           + '</div>'
           // 金額
           + '<div style="flex-shrink:0;padding:0 20px;text-align:right;border-left:1px solid #fdf0f5">'
-          + '<div style="font-size:15px;font-weight:800;color:' + (expHas ? '#be185d' : '#cbd5e1') + ';white-space:nowrap">' + expVal + '</div>'
-          + '<div style="font-size:10px;color:#94a3b8;margin-top:2px">實際支出</div>'
+          + '<div style="font-size:16px;font-weight:800;color:' + (expHas ? '#be185d' : '#cbd5e1') + ';white-space:nowrap">' + expVal + '</div>'
+          + '<div style="font-size:12px;color:#94a3b8;margin-top:2px">實際支出</div>'
           + '</div>'
           // 箭頭
           + '<div style="flex-shrink:0;padding:0 16px;color:#f1c4d8">'
@@ -8578,7 +8575,7 @@ function htRenderAnalytics() {
       + '<div style="width:40px;height:40px;border-radius:10px;background:'+s.color+'18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.icon+'</div>'
       + '<div>'
       +   '<div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">'+s.value+'</div>'
-      +   '<div style="font-size:12px;color:#94a3b8;margin-top:3px">'+s.label+'</div>'
+      +   '<div style="font-size:12px;color:#94a3b8;margin-top:4px">'+s.label+'</div>'
       + '</div>'
       + '</div>' + divider;
   }).join('');
@@ -9180,10 +9177,10 @@ function htRenderCalendar() {
       dots += '<div style="width:6px;height:6px;border-radius:50%;background:'+dc+';margin:0 1px"></div>';
     }
 
-    cells += '<div style="padding:3px 2px;text-align:center;'+bg+'">'
-      + '<div style="font-size:13px;font-weight:'+(isToday?'800':'600')+';color:'+numColor+'">' + d + '</div>'
+    cells += '<div style="padding:4px 2px;text-align:center;'+bg+'">'
+      + '<div style="font-size:14px;font-weight:'+(isToday?'800':'600')+';color:'+numColor+'">' + d + '</div>'
       + (dots ? '<div style="display:flex;justify-content:center;gap:0;margin-top:2px">'+dots+'</div>' : '<div style="height:8px"></div>')
-      + (hol ? '<div style="font-size:8px;color:'+(hol.type==='national'?'#f43f5e':'#f59e0b')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:1px">'+hol.name+'</div>' : '')
+      + (hol ? '<div style="font-size:12px;color:'+(hol.type==='national'?'#f43f5e':'#f59e0b')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:2px">'+hol.name+'</div>' : '')
       + '</div>';
   }
   // 後補
@@ -9203,20 +9200,20 @@ function htRenderCalendar() {
 
   // 當月活動行程列表
   if (!monthEvents.length) {
-    evEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px 0">本月尚無午茶日安排</div>';
+    evEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:16px 0">本月尚無午茶日安排</div>';
   } else {
     evEl.innerHTML = monthEvents.map(function(e) {
       var sc = statusColor(e.status);
       var ds = String(e.date||'').replace(/-/g,'/');
-      return '<div onclick="htOpenDetail(\''+e.eventId+'\')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid #fde4ef;margin-bottom:8px;cursor:pointer;transition:all .18s;background:#fff8fb" onmouseover="this.style.background=\'#fde4ef\'" onmouseout="this.style.background=\'#fff8fb\'">'
+      return '<div onclick="htOpenDetail(\''+e.eventId+'\')" style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1px solid #fde4ef;margin-bottom:8px;cursor:pointer;transition:all .18s;background:#fff8fb" onmouseover="this.style.background=\'#fde4ef\'" onmouseout="this.style.background=\'#fff8fb\'">'
         + '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#f07ba0,#c8587a);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:20px">🍵</span></div>'
         + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-size:13px;font-weight:700;color:#0f172a">'+fmtMonth(e.month)+' 午茶日</div>'
-        +   '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+ds+'</div>'
+        +   '<div style="font-size:14px;font-weight:700;color:#0f172a">'+fmtMonth(e.month)+' 午茶日</div>'
+        +   '<div style="font-size:12px;color:#94a3b8;margin-top:2px">'+ds+'</div>'
         + '</div>'
         + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
-        +   '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:'+sc.bg+';color:'+sc.text+'">'+e.status+'</span>'
-        +   (e.actualExpense ? '<span style="font-size:11px;color:#94a3b8">'+fmtMoney(e.actualExpense)+'</span>' : '')
+        +   '<span style="font-size:12px;font-weight:700;padding:4px 8px;border-radius:10px;background:'+sc.bg+';color:'+sc.text+'">'+e.status+'</span>'
+        +   (e.actualExpense ? '<span style="font-size:12px;color:#94a3b8">'+fmtMoney(e.actualExpense)+'</span>' : '')
         + '</div>'
         + '</div>';
     }).join('');
