@@ -8381,34 +8381,11 @@ function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
   var now = new Date();
   var thisMonth = now.getFullYear() + '-' + ('0' + (now.getMonth() + 1)).slice(-2);
-  var current = null, history = [];
-  _htEvents.forEach(function(e) {
-    if (_evMonth(e) === thisMonth && !current) current = e;
-    else history.push(e);
-  });
+  // 本月活動直接併入列表，不另外顯示 chip
+  var history = _htEvents.slice();
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
-
-  // ── 本月狀態 chip（融入頂部工具列）──
   var chip = document.getElementById('ht-current-month-chip');
-  if (chip) {
-    if (current) {
-      var sc = statusColor(current.status);
-      chip.innerHTML = '<div onclick="htOpenDetail(\'' + current.eventId + '\')" style="cursor:pointer;display:inline-flex;align-items:center;gap:10px;padding:7px 16px;border-radius:20px;background:#fdeef5;border:1.5px solid #f8d3e4;transition:box-shadow .15s" onmouseover="this.style.boxShadow=\'0 4px 12px rgba(225,107,140,.18)\'" onmouseout="this.style.boxShadow=\'\'">'
-        + '<span style="font-size:16px">☕</span>'
-        + '<div style="line-height:1.3">'
-        + '<div style="font-size:14px;font-weight:700;color:#e16b8c">' + _ymLabel(thisMonth) + '</div>'
-        + '<div style="font-size:12px;color:#94a3b8">' + (current.date||'日期待定') + '・' + (current.itemCount||0) + ' 品項</div>'
-        + '</div>'
-        + '<span style="padding:2px 8px;border-radius:20px;font-size:12px;font-weight:700;background:' + sc.bg + ';color:' + sc.color + '">' + current.status + '</span>'
-        + '</div>';
-    } else {
-      chip.innerHTML = '<div style="display:inline-flex;align-items:center;gap:8px;padding:7px 16px;border-radius:20px;background:#fff8fb;border:1.5px dashed #f1b9d0">'
-        + '<span style="font-size:16px">☕</span>'
-        + '<span style="font-size:14px;font-weight:600;color:#e16b8c">' + _ymLabel(thisMonth) + '</span>'
-        + '<span style="font-size:12px;color:#94a3b8">尚未規劃</span>'
-        + '</div>';
-    }
-  }
+  if (chip) chip.innerHTML = '';
   var html = '';
 
   // ── 歷史回顧（按年份分組）──
