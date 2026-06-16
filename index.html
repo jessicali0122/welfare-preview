@@ -1263,9 +1263,23 @@ tbody td{font-size:var(--fs-base)!important}
   .evx-approve-card{gap:9px;padding:10px 12px}
   .evx-date-block{width:38px;height:38px}
   .evx-case-icon{width:38px;height:38px}
-  /* 待審核卡片手機版：隱藏姓名時間欄、縮減案號寬度 */
-  .evx-name-col{display:none!important}
+  /* 待審核卡片手機版：姓名時間欄換到最後一行顯示 */
+  .evx-name-col{order:15;width:100%;margin:0!important;flex:none!important;font-size:12px!important;gap:6px!important;opacity:.85}
   .evx-caseid-col{width:auto!important;max-width:130px!important}
+  /* 待審核卡片手機版：主旨+badge 換到第二行 */
+  .evx-inner-row{flex-wrap:wrap!important;gap:8px!important;overflow:visible!important}
+  .evx-subj-area{order:10;width:100%;flex:none!important;min-width:0;overflow:hidden;padding-top:2px}
+  .evx-action-col{margin-left:auto}
+  /* 探店靈感類別卡片：6欄→3欄 */
+  #ht-cat-grid{grid-template-columns:repeat(3,1fr)!important}
+  /* 探店靈感區域按鈕：手機版改為垂直排列 */
+  #ht-zone-chips{flex-direction:column!important}
+  .ht-zone-btn{width:100%!important;justify-content:flex-start!important;border-radius:12px!important}
+  /* AI小Bee FAB：避免蓋住底部導覽列 */
+  #ht-fab-wrap{bottom:80px!important}
+  /* 品項分析統計卡片：可橫滑，避免文字擠壓 */
+  #ht-analytics-stats{overflow-x:auto!important;-webkit-overflow-scrolling:touch;flex-wrap:nowrap!important}
+  #ht-analytics-stats>div{flex-shrink:0!important;min-width:100px!important}
   /* 午茶日工具列手機版：兩排 */
   .ht-toolbar{flex-wrap:wrap!important;gap:8px!important;justify-content:flex-start!important}
   .ht-toolbar-tabs{flex-shrink:0;order:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
@@ -2273,7 +2287,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           </button>
         </div>
         <!-- 類別卡片 -->
-        <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
+        <div id="ht-cat-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px">
           <div onclick="htDiscoverMap(this,'甜點 蛋糕','甜點蛋糕')" data-cat="甜點 蛋糕" data-label="甜點蛋糕" style="cursor:pointer;background:linear-gradient(135deg,#fdeef5,#fff8fb);border:2px solid #f8d3e4;border-radius:12px;padding:14px 12px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s">
             <span style="font-size:24px">🍰</span>
             <div style="font-size:14px;font-weight:700;color:#0f172a">甜點蛋糕</div>
@@ -4206,9 +4220,12 @@ async function loadApprovals() {
 
     var dateBoxBg = '#e16b8c';
     var _nm = localName(c.email, c.name);
-    var _avatar = '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">' + (_nm.charAt(0)||'?') + '</div>';
+    var _avatarUrl = c.email ? localStorage.getItem('bf_avatar_' + c.email) : null;
+    var _avatar = _avatarUrl
+      ? '<img src="'+_avatarUrl+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0">'
+      : '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+(_nm.charAt(0)||'?')+'</div>';
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')" style="padding:13px 16px">'
-      + '<div style="display:flex;align-items:center;gap:12px;overflow:hidden">'
+      + '<div class="evx-inner-row" style="display:flex;align-items:center;gap:12px;overflow:hidden">'
       // 日期方塊
       +   '<div style="flex-shrink:0;width:46px;height:46px;border-radius:10px;background:' + dateBoxBg + ';color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15">'
       +     '<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.9">' + dbMonth + '</span>'
@@ -4220,7 +4237,7 @@ async function loadApprovals() {
       +     (isProxy ? '<span style="font-size:12px;background:#f1f5f9;color:#64748b;padding:1px 7px;border-radius:20px;font-weight:600;border:1px solid #e2e8f0;white-space:nowrap">代理</span>' : '')
       +   '</div>'
       // 主旨 + 類別 badges（不換行，超出截斷）
-      +   '<div style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden">'
+      +   '<div class="evx-subj-area" style="flex:1;min-width:0;display:flex;align-items:center;gap:6px;overflow:hidden">'
       +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:40px">' + subject + '</span>'
       +     '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px">' + (catBadges||'') + '</div>'
       +   '</div>'
@@ -7095,8 +7112,11 @@ window.sw = function(view, ...args) {
   if (view === 'applications') {
     setTimeout(syncApplicantFilter, 50);
   }
-  // 每次切換頁面都刷新 viewport，確保手機版按鈕可用
   if (typeof updateVH === 'function') setTimeout(updateVH, 50);
+  // AI 小助手 FAB：只在午茶日分頁顯示
+  var htFab = document.getElementById('ht-fab-wrap');
+  if (htFab) htFab.style.display = view === 'hightea' ? 'block' : 'none';
+  if (view !== 'hightea') { var p = document.getElementById('ht-assist-panel'); if (p) p.style.display = 'none'; }
 };
 
 // 初始同步
@@ -8342,7 +8362,7 @@ function _evMonth(e) {
   if (slashD) return slashD[1] + '-' + slashD[2];
   var d = new Date(ds.replace(/\//g, '-'));
   if (!isNaN(d.getTime())) return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
-  return s;
+  return ds;
 }
 function _ymLabel(ym) { // "2026-06" → "2026年6月"
   var m = /^(\d{4})-(\d{2})/.exec(ym || '');
@@ -8394,6 +8414,7 @@ function htRenderEvents() {
     history.forEach(function(e) { var y = (_evMonth(e).slice(0, 4)) || '其他'; (byYear[y] = byYear[y] || []).push(e); });
     Object.keys(byYear).sort().reverse().forEach(function(y) {
       html += '<div style="font-size:12px;font-weight:700;color:#94a3b8;margin:14px 0 10px;letter-spacing:.04em">' + y + ' 年</div>';
+<<<<<<< HEAD
       html += '<div style="background:#fff;border-radius:16px;border:1px solid #f1e8f0;overflow:hidden;margin-bottom:16px">';
       html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;padding:8px 20px 8px 80px;background:#fdf6f9;border-bottom:1px solid #f1e8f0">'
         + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">活動日期</div>'
@@ -8401,13 +8422,16 @@ function htRenderEvents() {
         + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">狀態</div>'
         + '<div style="font-size:11px;font-weight:700;color:#c48aa0;letter-spacing:.06em;text-transform:uppercase">實際支出</div>'
         + '</div>';
+=======
+      html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:4px">';
+>>>>>>> c56334e2dbd9823010d6a7313b51c47350f4e8b6
       var htMonthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
       html += byYear[y].map(function(ev, idx) {
         var sc2 = statusColor(ev.status);
         var mNum = parseInt(_evMonth(ev).slice(5, 7), 10) || 0;
         var mAbbr = mNum > 0 ? htMonthNames[mNum - 1].toUpperCase() : '';
-        var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join('・');
         var bdayCount = ev.birthdayBudget > 0 ? Math.round(ev.birthdayBudget / 40) : 0;
+<<<<<<< HEAD
         var tags = [];
         if (ev.headcount) tags.push(ev.headcount + ' 人');
         if (bdayCount)    tags.push('🎂 ' + bdayCount + ' 壽星');
@@ -8436,6 +8460,26 @@ function htRenderEvents() {
           + '<div style="width:60px;flex-shrink:0;display:flex;justify-content:center">'
           + '<button onclick="event.stopPropagation();htOpenDetail(\'' + ev.eventId + '\')" style="padding:5px 12px;border-radius:8px;background:linear-gradient(135deg,#f07ba0,#c8587a);color:#fff;font-size:12px;font-weight:700;border:none;cursor:pointer;box-shadow:0 2px 8px rgba(200,88,122,.25);white-space:nowrap">查看</button>'
           + '</div>'
+=======
+        var metaLine = [];
+        if (bdayCount) metaLine.push(bdayCount + ' 壽星');
+        return '<div onclick="htOpenDetail(\'' + ev.eventId + '\')" style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:14px 16px;cursor:pointer;transition:all .2s;min-width:0;overflow:hidden" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\';this.style.borderColor=\'#f8d3e4\'" onmouseout="this.style.boxShadow=\'\';this.style.borderColor=\'#f1f5f9\'">'
+          + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'
+          + '<div style="width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#e16b8c 0%,#c8587a 100%);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1.1">'
+          + '<span style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.85;text-transform:uppercase">' + mAbbr + '</span>'
+          + '<span style="font-size:20px;font-weight:800;line-height:1">' + mNum + '</span>'
+          + '</div>'
+          + '<div style="min-width:0">'
+          + '<div style="font-size:13px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (ev.date || '日期待定') + '</div>'
+          + '<div style="font-size:12px;color:#94a3b8">' + (ev.itemCount || 0) + ' 品項' + (ev.claimId ? '・已報銷' : '') + '</div>'
+          + '</div>'
+          + '</div>'
+          + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+          + '<span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;background:' + sc2.bg + ';color:' + sc2.color + '">' + ev.status + '</span>'
+          + (metaLine.length ? '<span style="font-size:11px;color:#94a3b8">' + metaLine.join(' · ') + '</span>' : '')
+          + '</div>'
+          + '<div style="font-size:15px;font-weight:800;color:' + (ev.actualExpense > 0 ? '#0f172a' : '#cbd5e1') + '">' + (ev.actualExpense > 0 ? fmtMoney(ev.actualExpense) : '尚未結算') + '</div>'
+>>>>>>> c56334e2dbd9823010d6a7313b51c47350f4e8b6
           + '</div>';
       }).join('');
       html += '</div>';
@@ -8466,7 +8510,7 @@ function htRenderAnalytics() {
   ];
   document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s, i){
     var divider = i < statsData.length - 1
-      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 28px;flex-shrink:0"></div>' : '';
+      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 16px;flex-shrink:0"></div>' : '';
     return '<div style="display:flex;align-items:center;gap:12px;flex:1">'
       + '<div style="width:40px;height:40px;border-radius:10px;background:'+s.color+'18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.icon+'</div>'
       + '<div>'
@@ -8478,75 +8522,113 @@ function htRenderAnalytics() {
 
   // 月份支出趨勢已移除
 
-  // 熱門店家排行（依 totalOrders 排序）
+  // 熱門店家排行 + 品項類別佔比：優先用 _htVendors.totalOrders，若全為 0 則從活動品項重新計算
   var rankEl = document.getElementById('ht-vendor-ranking');
-  if (rankEl) {
-    if (!_htVendors.length) {
-      rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
-      htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
-    } else {
-      var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-      var vSorted = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); });
-      var maxOrders = (vSorted[0] && vSorted[0].totalOrders) || 1;
-      rankEl.innerHTML = vSorted.slice(0,8).map(function(v,i){
-        var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
-        var badge = i < 3
-          ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
-          : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
-        var pct = Math.round((v.totalOrders||0)/maxOrders*100);
-        var barColor = catColors[v.category]||'#94a3b8';
-        return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
-          + badge
-          + '<div style="flex:1;min-width:0">'
-          +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-          +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
-          +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+(v.totalOrders||0)+' 次</span>'
-          +   '</div>'
-          +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-    }
+  var catEl  = document.getElementById('ht-category-bars');
+  var allZero = _htVendors.every(function(v){ return !(v.totalOrders); });
+
+  if (!_htVendors.length) {
+    if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
+    htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
+    return;
   }
 
-  // 品項類別佔比（依 _htVendors 的 category 分組，累計 totalOrders）
-  var catEl = document.getElementById('ht-category-bars');
-  if (catEl) {
-    var catTotals = {};
+  if (allZero && _htEvents.length) {
+    // 後端 totalOrders 尚未計算，從所有活動的品項中自行統計
+    if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">統計中…</div>';
+    if (catEl)  catEl.innerHTML  = '';
+    var _evIds = _htEvents.map(function(e){ return e.eventId; });
+    Promise.all(_evIds.map(function(id){ return htApi('htGetItems', { eventId: id }); }))
+      .then(function(results) {
+        var vendorMap = {}; // { name: { name, count, category } }
+        var catTotals = {};
+        results.forEach(function(r) {
+          if (!r || !r.ok || !r.items) return;
+          r.items.forEach(function(it) {
+            var vn = (it.vendor || '').trim();
+            if (vn) {
+              if (!vendorMap[vn]) vendorMap[vn] = { name: vn, count: 0, category: it.category || '其他' };
+              vendorMap[vn].count++;
+            }
+            var cat = (it.category || '其他').trim();
+            catTotals[cat] = (catTotals[cat] || 0) + 1;
+          });
+        });
+        _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
+        _htRenderCatBars(catEl, catTotals);
+      });
+  } else {
+    _htRenderVendorRank(rankEl, _htVendors, 'totalOrders');
+    var catTotalsV = {};
     _htVendors.forEach(function(v){
       var cat = v.category || '其他';
-      catTotals[cat] = (catTotals[cat]||0) + (v.totalOrders||0);
+      catTotalsV[cat] = (catTotalsV[cat]||0) + (v.totalOrders||0);
     });
-    var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
-    if (catEntries.length) {
-      catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
-      var catMax = catTotals[catEntries[0]];
-      var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
-      var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-      catEl.innerHTML = catEntries.map(function(c){
-        var pct = Math.round(catTotals[c]/catMax*100);
-        var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
-        var col = catColMap[c]||'#94a3b8';
-        return '<div style="margin-bottom:12px">'
-          + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-          +   '<div style="display:flex;align-items:center;gap:7px">'
-          +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-          +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
-          +     '</div>'
-          +     '<span style="font-size:14px;font-weight:700;color:#0f172a">'+c+'</span>'
-          +   '</div>'
-          +   '<div style="display:flex;align-items:center;gap:6px">'
-          +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
-          +     '<span style="font-size:12px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
-          +   '</div>'
-          + '</div>'
-          + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
-          + '</div>';
-      }).join('');
-    } else {
-      catEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">廠商資料載入後可顯示類別分析</div>';
-    }
+    _htRenderCatBars(catEl, catTotalsV);
   }
+}
+
+function _htRenderVendorRank(el, vendors, countField) {
+  if (!el) return;
+  var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+  var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
+  var sorted = vendors.slice().sort(function(a,b){ return (b[countField]||0)-(a[countField]||0); });
+  var maxVal = (sorted[0] && sorted[0][countField]) || 1;
+  if (!sorted.length || !sorted[0][countField]) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無訂購記錄</div>';
+    return;
+  }
+  el.innerHTML = sorted.slice(0,8).map(function(v,i){
+    var cnt = v[countField] || 0;
+    var pct = Math.round(cnt/maxVal*100);
+    var barColor = catColors[v.category]||'#94a3b8';
+    var badge = i < 3
+      ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
+      : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
+      + badge
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
+      +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
+      +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+cnt+' 次</span>'
+      +   '</div>'
+      +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function _htRenderCatBars(el, catTotals) {
+  if (!el) return;
+  var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+  var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
+  if (!catEntries.length) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無品項資料</div>';
+    return;
+  }
+  catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
+  var catMax = catTotals[catEntries[0]];
+  var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
+  el.innerHTML = catEntries.map(function(c){
+    var pct = Math.round(catTotals[c]/catMax*100);
+    var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
+    var col = catColMap[c]||'#94a3b8';
+    return '<div style="margin-bottom:12px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
+      +   '<div style="display:flex;align-items:center;gap:7px">'
+      +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
+      +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
+      +     '</div>'
+      +     '<span style="font-size:14px;font-weight:700;color:#0f172a">'+c+'</span>'
+      +   '</div>'
+      +   '<div style="display:flex;align-items:center;gap:6px">'
+      +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
+      +     '<span style="font-size:12px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
+      +   '</div>'
+      + '</div>'
+      + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
+      + '</div>';
+  }).join('');
 }
 
 // ── 新增活動 Modal ──
@@ -8570,6 +8652,138 @@ function _htInitCreatePickers(presetYm) {
   if (_htMonthFp && presetYm) _htMonthFp.setDate(presetYm, false);
   if (_htDateFp) _htDateFp.clear();
 }
+function _htSeasonHoliday(ym) {
+  var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
+  var season = m >= 3 && m <= 5 ? '春季' : m >= 6 && m <= 8 ? '夏季' : m >= 9 && m <= 11 ? '秋季' : '冬季';
+  var holidays = {
+    1:'元旦、農曆新年', 2:'農曆新年、元宵節、情人節', 3:'婦女節',
+    4:'兒童節、清明節', 5:'母親節、勞動節', 6:'端午節',
+    7:'', 8:'七夕情人節', 9:'中秋節、教師節',
+    10:'重陽節、國慶日', 11:'', 12:'聖誕節、跨年'
+  };
+  var ingredients = {
+    1:['草莓','柑橘','金棗'], 2:['草莓','番茄','蓮霧'], 3:['草莓','芭樂','鳳梨'],
+    4:['芒果','鳳梨','荔枝'], 5:['芒果','荔枝','西瓜'], 6:['西瓜','荔枝','芒果'],
+    7:['西瓜','芒果','百香果'], 8:['百香果','葡萄','火龍果'], 9:['葡萄','柚子','釋迦'],
+    10:['柚子','蓮霧','橘子'], 11:['草莓','橘子','蓮霧'], 12:['草莓','柳橙','棗子']
+  };
+  var holiday = holidays[m] || '';
+  var seasonal = ingredients[m] || [];
+  return { season: season, holiday: holiday, seasonal: seasonal, label: season + (holiday ? '・' + holiday : '') };
+}
+var _htCategoryPresets = {
+  balanced: { label:'🌈 均衡', desc:'鹹食 35%・甜點 30%・水果 15%・飲品 20%', ratios:{ savory:35, sweet:30, fruit:15, drink:20 } },
+  sweet:    { label:'🍰 甜點系', desc:'鹹食 20%・甜點 45%・水果 15%・飲品 20%', ratios:{ savory:20, sweet:45, fruit:15, drink:20 } },
+  light:    { label:'🥗 輕食系', desc:'鹹食 25%・甜點 20%・水果 35%・飲品 20%', ratios:{ savory:25, sweet:20, fruit:35, drink:20 } },
+  savory:   { label:'🥨 鹹點系', desc:'鹹食 50%・甜點 20%・水果 10%・飲品 20%', ratios:{ savory:50, sweet:20, fruit:10, drink:20 } }
+};
+var _htActiveRatioPreset = 'balanced';
+window.htSelectRatioPreset = function(btn, preset) {
+  _htActiveRatioPreset = preset;
+  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
+    b.style.background = '#f8fafc'; b.style.borderColor = '#e2e8f0'; b.style.color = '#475569';
+  });
+  if (btn) { btn.style.background = '#fff0f5'; btn.style.borderColor = '#e16b8c'; btn.style.color = '#c94e72'; }
+  var det = document.getElementById('ht-modal-ratio-detail');
+  if (det && _htCategoryPresets[preset]) det.textContent = _htCategoryPresets[preset].desc;
+};
+async function _htLoadExcludeItems() {
+  if (!_htEvents || !_htEvents.length) return [];
+  var pastIds = _htEvents.slice(0, 2).map(function(e) { return e.eventId; });
+  try {
+    var results = await Promise.all(pastIds.map(function(id) { return htApi('htGetItems', { eventId: id }); }));
+    var names = [];
+    results.forEach(function(res) {
+      var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+      items.forEach(function(it) { if (it.name) names.push(it.name); });
+    });
+    return names;
+  } catch(e) { return []; }
+}
+function _htRenderModalStoreHints() {
+  var sec = document.getElementById('ht-modal-store-section');
+  if (!sec) return;
+  var chips = [];
+  var spots = (typeof htGetSpots === 'function') ? htGetSpots() : [];
+  (spots || []).slice(0, 6).forEach(function(s) {
+    if (s && s.name) chips.push('<span onclick="_htModalAddStoreNote(\'' + htEsc(s.name) + '\')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#fff0f5;border:1.5px solid #f5b8cb;border-radius:20px;font-size:12px;color:#c94e72;cursor:pointer" onmouseover="this.style.background=\'#ffe0ec\'" onmouseout="this.style.background=\'#fff0f5\'">⭐ ' + htEsc(s.name) + '</span>');
+  });
+  var vendorsSorted = (_htVendors || []).slice().sort(function(a, b) { return (b.totalOrders || 0) - (a.totalOrders || 0); });
+  vendorsSorted.slice(0, 5).forEach(function(v) {
+    if (v && v.name && !(spots || []).some(function(s) { return s.name === v.name; })) {
+      chips.push('<span onclick="_htModalAddStoreNote(\'' + htEsc(v.name) + '\')" style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:#f0faf5;border:1.5px solid #a3d9bc;border-radius:20px;font-size:12px;color:#2d7a52;cursor:pointer" onmouseover="this.style.background=\'#d4f1e3\'" onmouseout="this.style.background=\'#f0faf5\'">🏪 ' + htEsc(v.name) + '</span>');
+    }
+  });
+  if (chips.length) { sec.style.display = ''; document.getElementById('ht-modal-store-chips').innerHTML = chips.join(''); }
+  else sec.style.display = 'none';
+}
+window._htModalAddStoreNote = function(name) {
+  var ta = document.getElementById('ht-new-notes');
+  if (!ta) return;
+  var cur = ta.value.trim();
+  ta.value = cur ? (cur.includes(name) ? cur : cur + '、' + name) : name;
+};
+function _htRenderModalCopyHint() {
+  var sec = document.getElementById('ht-modal-copy-section');
+  if (!sec) return;
+  var past = (_htEvents || []).filter(function(e) { return e.status !== 'draft'; });
+  if (!past.length) { sec.style.display = 'none'; return; }
+  var last = past[0];
+  var label = (last.month || last.eventId || '') + (last.title ? ' ' + last.title : '');
+  sec.style.display = '';
+  var lbl = document.getElementById('ht-modal-copy-label');
+  if (lbl) lbl.textContent = '從「' + label + '」複製品項清單';
+  var hidId = document.getElementById('ht-modal-copy-id');
+  if (hidId) hidId.value = last.eventId || '';
+}
+var _htModalRecResult = null;
+window.htModalRunAI = async function() {
+  var btn = document.getElementById('ht-modal-ai-btn');
+  var resEl = document.getElementById('ht-modal-ai-result');
+  if (!btn || !resEl) return;
+  btn.disabled = true; btn.textContent = '🤖 分析中…';
+  resEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;padding:8px 0">正在智慧規劃中，請稍候…</div>';
+  resEl.style.display = '';
+  _htModalRecResult = null;
+  try {
+    var hc = Number(document.getElementById('ht-new-headcount').value) || 10;
+    var bp = Number(document.getElementById('ht-new-budget').value) || 200;
+    var preset = _htCategoryPresets[_htActiveRatioPreset] || _htCategoryPresets.balanced;
+    var ym = '';
+    if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
+      var fd = _htMonthFp.selectedDates[0];
+      ym = fd.getFullYear() + '-' + String(fd.getMonth() + 1).padStart(2, '0');
+    }
+    var sh = _htSeasonHoliday(ym);
+    var excludeItems = await _htLoadExcludeItems();
+    var r = await htApi('htRecommend', {
+      headcount: hc, budgetPerPerson: bp,
+      categoryRatios: preset.ratios,
+      seasonHint: sh.label,
+      festivalHint: sh.holiday,
+      seasonalIngredients: sh.seasonal,
+      excludeItems: excludeItems
+    });
+    var items = (r && (r.topItems || r.items)) || [];
+    if (!items.length) throw new Error('無推薦結果');
+    _htModalRecResult = items;
+    var html = '<div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:6px">✨ 推薦品項（建立後自動套用）</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
+    items.slice(0, 12).forEach(function(it) {
+      html += '<span style="padding:3px 10px;background:#fff0f5;border:1px solid #f5b8cb;border-radius:12px;font-size:12px;color:#c94e72">' + htEsc(it.name || it) + (it.vendor ? ' <span style="opacity:.6">@' + htEsc(it.vendor) + '</span>' : '') + '</span>';
+    });
+    html += '</div>';
+    if (r.optimize && r.optimize.breakdown) {
+      html += '<div style="margin-top:6px;font-size:11px;color:#94a3b8">';
+      Object.keys(r.optimize.breakdown).forEach(function(k) { html += k + ': $' + r.optimize.breakdown[k] + ' '; });
+      html += '</div>';
+    }
+    html += '</div>';
+    resEl.innerHTML = html;
+  } catch(e) {
+    resEl.innerHTML = '<div style="color:#e16b8c;font-size:13px;padding:8px 0">推薦失敗，請稍後再試</div>';
+  }
+  btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
+};
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
   var now = new Date();
@@ -8581,15 +8795,36 @@ window.htOpenCreate = function() {
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
   }).join('');
-  var o1 = document.getElementById('ht-new-org1');
-  var o2 = document.getElementById('ht-new-org2');
+  var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
   if (o1) o1.innerHTML = orgOpts;
   if (o2) o2.innerHTML = orgOpts;
+  var sh = _htSeasonHoliday(ym);
+  var shEl = document.getElementById('ht-modal-season-hint');
+  if (shEl) shEl.textContent = '🗓 ' + sh.label;
+  var ingEl = document.getElementById('ht-modal-seasonal-ing');
+  if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
+  _htActiveRatioPreset = 'balanced';
+  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
+    var isActive = b.dataset.preset === 'balanced';
+    b.style.background = isActive ? '#fff0f5' : '#f8fafc';
+    b.style.borderColor = isActive ? '#e16b8c' : '#e2e8f0';
+    b.style.color = isActive ? '#c94e72' : '#475569';
+  });
+  var det = document.getElementById('ht-modal-ratio-detail');
+  if (det) det.textContent = _htCategoryPresets.balanced.desc;
+  _htModalRecResult = null;
+  var aiRes = document.getElementById('ht-modal-ai-result');
+  if (aiRes) aiRes.style.display = 'none';
+  var aiBtn = document.getElementById('ht-modal-ai-btn');
+  if (aiBtn) { aiBtn.disabled = false; aiBtn.textContent = '✨ AI 幫我規劃品項'; }
+  _htRenderModalCopyHint();
+  var cb = document.getElementById('ht-modal-copy-cb');
+  if (cb) cb.checked = false;
+  _htRenderModalStoreHints();
   m.style.display = 'flex';
 };
 window.htCloseCreate = function() { document.getElementById('ht-create-modal').style.display = 'none'; };
 window.htSubmitCreate = async function() {
-  // 月份從 flatpickr selectedDates 取（最可靠），不依賴 input.value 的顯示格式
   var month;
   if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
     var _fd = _htMonthFp.selectedDates[0];
@@ -8616,6 +8851,23 @@ window.htSubmitCreate = async function() {
     notes: document.getElementById('ht-new-notes').value,
   });
   if (!r.ok) { toast('建立失敗：' + r.error); return; }
+  var copyCb = document.getElementById('ht-modal-copy-cb');
+  var copyId = (document.getElementById('ht-modal-copy-id') || {}).value;
+  if (copyCb && copyCb.checked && copyId) {
+    try {
+      var srcItems = await htApi('htGetItems', { eventId: copyId });
+      var srcArr = Array.isArray(srcItems) ? srcItems : (srcItems && srcItems.items ? srcItems.items : []);
+      var resetItems = srcArr.map(function(it) { return Object.assign({}, it, { actualQty: 0, actualCost: 0, eventId: r.eventId }); });
+      if (resetItems.length) await htApi('htSaveItems', { eventId: r.eventId, items: resetItems });
+    } catch(e) {}
+  } else if (_htModalRecResult && _htModalRecResult.length) {
+    try {
+      var aiItems = _htModalRecResult.map(function(it, i) {
+        return { name: it.name || it, vendor: it.vendor || '', category: it.category || '', unitPrice: it.unitPrice || 0, qty: it.qty || 1, totalPrice: it.totalPrice || 0, sort: i, eventId: r.eventId };
+      });
+      await htApi('htSaveItems', { eventId: r.eventId, items: aiItems });
+    } catch(e) {}
+  }
   htCloseCreate();
   toast('✅ 活動已建立');
   await htLoadList();
@@ -8626,9 +8878,9 @@ window.htSubmitCreate = async function() {
 var _htActiveMapCard = null;
 var _htZone = 'walk'; // 預設步行圈
 var _htZoneMap = {
-  walk:  { label:'步行圈', areas:'新莊 蘆洲 五股' },
-  ride:  { label:'騎車圈', areas:'三重 泰山 林口 板橋' },
-  metro: { label:'雙北全區', areas:'台北 新北' }
+  walk:  { label:'步行圈',  area:'新莊',     ll:'25.027,121.432', z:'14' },
+  ride:  { label:'騎車圈',  area:'三重 板橋', ll:'25.044,121.473', z:'13' },
+  metro: { label:'雙北全區', area:'台北 新北', ll:'25.047,121.497', z:'12' }
 };
 
 window.htSelectZone = function(btn, zone) {
@@ -8652,8 +8904,8 @@ window.htSelectZone = function(btn, zone) {
 
 function _htRefreshMap(cat, label) {
   var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
-  var query = zone.areas + ' ' + cat;
-  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&hl=zh-TW&output=embed';
+  var query = cat + ' ' + zone.area;  // 類別在前、地名在後，Google Maps 解析更準
+  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
   var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
   document.getElementById('ht-map-iframe').src = mapUrl;
   document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — ' + zone.label;
@@ -9239,8 +9491,225 @@ window.htDeleteEvent = async function() {
   htBackToList();
 };
 
+// ── AI 小助手 (獨立浮動面板) ──
+var _htAssistMode = 'plan';
+var _htAssistRatioPreset = 'balanced';
+window.htAssistOpen = function() {
+  var panel = document.getElementById('ht-assist-panel');
+  if (!panel) return;
+  var hcEl = document.getElementById('ht-assist-hc');
+  var bpEl = document.getElementById('ht-assist-bp');
+  if (hcEl) hcEl.value = (LOCAL_USER_LIST && LOCAL_USER_LIST.length) || 30;
+  if (bpEl) bpEl.value = 200;
+  var now = new Date();
+  var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  var sh = _htSeasonHoliday(ym);
+  var sc = document.getElementById('ht-assist-season-chip');
+  if (sc) sc.textContent = '🗓 ' + sh.label;
+  var ingEl = document.getElementById('ht-assist-seasonal-ing');
+  if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
+  _htAssistRatioPreset = 'balanced';
+  document.querySelectorAll('.ht-assist-ratio-chip').forEach(function(b) {
+    var on = b.dataset.preset === 'balanced';
+    b.style.background = on ? '#fff0f5' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#c94e72' : '#475569';
+  });
+  var det = document.getElementById('ht-assist-ratio-detail');
+  if (det) det.textContent = _htCategoryPresets.balanced.desc;
+  _htAssistMode = 'plan';
+  document.querySelectorAll('.ht-assist-tab').forEach(function(b) {
+    var on = b.dataset.mode === 'plan';
+    b.style.background = on ? '#e16b8c' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#fff' : '#64748b';
+  });
+  document.getElementById('ht-assist-plan-opts').style.display = '';
+  document.getElementById('ht-assist-trend-opts').style.display = 'none';
+  document.getElementById('ht-assist-corp-opts').style.display = 'none';
+  document.getElementById('ht-assist-mode-desc').textContent = '根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。';
+  var res = document.getElementById('ht-assist-result');
+  if (res) { res.innerHTML = ''; res.style.display = 'none'; }
+  var goBtn = document.getElementById('ht-assist-go-btn');
+  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
+  panel.style.display = 'block';
+};
+window.htAssistClose = function() {
+  var p = document.getElementById('ht-assist-panel');
+  if (p) p.style.display = 'none';
+};
+window.htAssistSetMode = function(btn, mode) {
+  _htAssistMode = mode;
+  document.querySelectorAll('.ht-assist-tab').forEach(function(b) {
+    var on = b.dataset.mode === mode;
+    b.style.background = on ? '#e16b8c' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#fff' : '#64748b';
+  });
+  document.getElementById('ht-assist-plan-opts').style.display = mode === 'plan' ? '' : 'none';
+  document.getElementById('ht-assist-trend-opts').style.display = mode === 'trend' ? '' : 'none';
+  document.getElementById('ht-assist-corp-opts').style.display = mode === 'corp' ? '' : 'none';
+  var descs = {
+    plan: '根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。',
+    trend: '偵測目前社群平台（IG、FB、Dcard）上的下午茶熱議新品，為你挑出最夯的品項與店家類型。',
+    corp: '針對企業下午茶的特殊需求，推薦口味多元、方便取用、衛生包裝、符合團體預算的最佳組合。'
+  };
+  var desc = document.getElementById('ht-assist-mode-desc');
+  if (desc) desc.textContent = descs[mode] || '';
+  var res = document.getElementById('ht-assist-result');
+  if (res) { res.innerHTML = ''; res.style.display = 'none'; }
+  var goBtn = document.getElementById('ht-assist-go-btn');
+  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
+};
+window.htAssistSelectRatio = function(btn, preset) {
+  _htAssistRatioPreset = preset;
+  document.querySelectorAll('.ht-assist-ratio-chip').forEach(function(b) {
+    b.style.background = '#f8fafc'; b.style.borderColor = '#e2e8f0'; b.style.color = '#475569';
+  });
+  if (btn) { btn.style.background = '#fff0f5'; btn.style.borderColor = '#e16b8c'; btn.style.color = '#c94e72'; }
+  var det = document.getElementById('ht-assist-ratio-detail');
+  if (det && _htCategoryPresets[preset]) det.textContent = _htCategoryPresets[preset].desc;
+};
+window.htAssistRun = async function() {
+  var goBtn = document.getElementById('ht-assist-go-btn');
+  var resEl = document.getElementById('ht-assist-result');
+  if (!goBtn || !resEl) return;
+  goBtn.disabled = true; goBtn.textContent = '🤖 分析中…';
+  resEl.innerHTML = '<div style="text-align:center;padding:28px 0;color:#94a3b8"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-size:13px">正在為你智慧規劃，請稍候…</div></div>';
+  resEl.style.display = '';
+  var hc = Number(document.getElementById('ht-assist-hc').value) || 30;
+  var bp = Number(document.getElementById('ht-assist-bp').value) || 200;
+  var now = new Date();
+  var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
+  var sh = _htSeasonHoliday(ym);
+  var payload = { headcount: hc, budgetPerPerson: bp, seasonHint: sh.label, festivalHint: sh.holiday, seasonalIngredients: sh.seasonal };
+  if (_htAssistMode === 'plan') {
+    var preset = _htCategoryPresets[_htAssistRatioPreset] || _htCategoryPresets.balanced;
+    payload.categoryRatios = preset.ratios;
+    payload.excludeItems = await _htLoadExcludeItems();
+  } else if (_htAssistMode === 'trend') {
+    payload.type = 'trending';
+    payload.context = '請推薦目前社群平台（Instagram、Facebook、Dcard、YouTube）上討論熱度最高的下午茶新品、網紅推薦品項、最夯的甜點飲品潮流，以及適合企業團體下午茶的人氣店家品類。考量目前季節與節慶因素。';
+  } else if (_htAssistMode === 'corp') {
+    var cn = [];
+    if ((document.getElementById('ht-corp-diverse')||{}).checked) cn.push('口味多元、不偏食、適合大眾口味');
+    if ((document.getElementById('ht-corp-delivery')||{}).checked) cn.push('容易點餐、有企業外送合作、量大好操作');
+    if ((document.getElementById('ht-corp-hygienic')||{}).checked) cn.push('衛生獨立包裝、個人份量、不需公筷共盤');
+    if ((document.getElementById('ht-corp-value')||{}).checked) cn.push('預算效益最大化、同預算份量最多');
+    payload.type = 'corporate';
+    payload.corporateNeeds = cn;
+    payload.context = '請推薦適合企業公司下午茶的品項組合，重點考量：' + cn.join('、') + '。';
+  }
+  try {
+    var r = await htApi('htRecommend', payload);
+    var items = (r && (r.topItems || r.items)) || [];
+    if (!items.length) throw new Error('無推薦結果');
+    var modeLabel = { plan:'本月規劃', trend:'社群熱品', corp:'企業團餐' }[_htAssistMode] || '';
+    var catColors = { '甜點':'#e16b8c', '飲品':'#3b82f6', '水果':'#22c55e', '鹹食':'#f59e0b', '主食':'#f59e0b' };
+    var html = '<div style="border-top:1.5px solid #f1f5f9;padding-top:16px;margin-top:4px">';
+    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">✨ ' + modeLabel + ' 推薦清單</div>';
+    html += '<div style="display:flex;flex-direction:column;gap:8px">';
+    items.slice(0, 15).forEach(function(it) {
+      var name = it.name || it; var vendor = it.vendor || ''; var cat = it.category || ''; var price = it.unitPrice ? '$'+it.unitPrice : '';
+      var cc = catColors[cat] || '#94a3b8';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#f8fafc;border-radius:10px">';
+      if (cat) html += '<span style="flex-shrink:0;padding:2px 8px;background:'+cc+'20;color:'+cc+';border-radius:8px;font-size:11px;font-weight:700;min-width:36px;text-align:center">'+htEsc(cat)+'</span>';
+      html += '<div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:#0f172a">'+htEsc(name)+'</div>';
+      if (vendor) html += '<div style="font-size:11px;color:#94a3b8;margin-top:1px">@ '+htEsc(vendor)+'</div>';
+      html += '</div>';
+      if (price) html += '<div style="font-size:12px;font-weight:700;color:#64748b;flex-shrink:0">'+price+'</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    if (r.optimize && r.optimize.breakdown) {
+      html += '<div style="margin-top:10px;padding:10px 12px;background:#fff0f5;border-radius:10px"><div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:4px">預算分配</div><div style="display:flex;flex-wrap:wrap;gap:10px">';
+      Object.keys(r.optimize.breakdown).forEach(function(k){ html += '<span style="font-size:11px;color:#374151"><b>'+k+'</b> $'+r.optimize.breakdown[k]+'</span>'; });
+      html += '</div></div>';
+    }
+    html += '</div>';
+    resEl.innerHTML = html;
+  } catch(e) {
+    resEl.innerHTML = '<div style="text-align:center;padding:20px;color:#e16b8c;font-size:13px">推薦失敗，請稍後再試</div>';
+  }
+  goBtn.disabled = false; goBtn.textContent = '🔄 重新規劃';
+};
+
 })(); // end 午茶日 module
 </script>
+
+<!-- ── AI 午茶日小助手 FAB ── -->
+<div id="ht-fab-wrap" style="display:none;position:fixed;bottom:28px;right:20px;z-index:400;display:none">
+  <button onclick="htAssistOpen()" style="width:56px;height:56px;border-radius:18px;background:linear-gradient(135deg,#e16b8c 0%,#f9a8d4 100%);border:none;color:#fff;font-size:26px;cursor:pointer;box-shadow:0 4px 18px rgba(225,107,140,.45);display:flex;align-items:center;justify-content:center;font-family:inherit;transition:transform .2s,box-shadow .2s" onmouseover="this.style.transform='scale(1.08)';this.style.boxShadow='0 6px 24px rgba(225,107,140,.6)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 4px 18px rgba(225,107,140,.45)'">🎂</button>
+</div>
+
+<!-- ── AI 午茶日小助手 Panel (Bottom Sheet) ── -->
+<div id="ht-assist-panel" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,.45);backdrop-filter:blur(3px)" onclick="if(event.target===this)htAssistClose()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+20px);max-height:88vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)">
+    <div style="width:36px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 16px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#0f172a">🐝 小Bee</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:3px">你的午茶日智慧規劃夥伴</div>
+      </div>
+      <button onclick="htAssistClose()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">✕</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="ht-assist-tab" data-mode="plan" onclick="htAssistSetMode(this,'plan')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">📅 本月規劃</button>
+      <button class="ht-assist-tab" data-mode="trend" onclick="htAssistSetMode(this,'trend')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🔥 社群熱品</button>
+      <button class="ht-assist-tab" data-mode="corp" onclick="htAssistSetMode(this,'corp')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🏢 企業團餐</button>
+    </div>
+    <div id="ht-assist-mode-desc" style="font-size:12px;color:#64748b;padding:8px 12px;background:#f8fafc;border-radius:10px;margin-bottom:14px">根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">人數</label>
+        <input id="ht-assist-hc" type="number" min="1" placeholder="例：30" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">每人預算（元）</label>
+        <input id="ht-assist-bp" type="number" min="0" placeholder="例：200" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+      </div>
+    </div>
+    <div id="ht-assist-plan-opts">
+      <div style="margin-bottom:10px">
+        <span id="ht-assist-season-chip" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
+        <div id="ht-assist-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="ht-assist-ratio-chip" data-preset="balanced" onclick="htAssistSelectRatio(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
+          <button class="ht-assist-ratio-chip" data-preset="sweet" onclick="htAssistSelectRatio(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
+          <button class="ht-assist-ratio-chip" data-preset="light" onclick="htAssistSelectRatio(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
+          <button class="ht-assist-ratio-chip" data-preset="savory" onclick="htAssistSelectRatio(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
+        </div>
+        <div id="ht-assist-ratio-detail" style="font-size:11px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
+      </div>
+    </div>
+    <div id="ht-assist-trend-opts" style="display:none;margin-bottom:14px">
+      <div style="padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px">
+        <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:4px">🔥 AI 社群熱品偵測</div>
+        <div style="font-size:12px;color:#92400e;line-height:1.6">AI 將根據目前的月份季節，推薦 IG、Facebook、Dcard、YouTube 上正在熱議的下午茶新品、網紅推薦品類，以及最夯的甜點飲品潮流。</div>
+      </div>
+    </div>
+    <div id="ht-assist-corp-opts" style="display:none;margin-bottom:14px">
+      <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">企業團餐重點考量</div>
+      <div style="display:grid;gap:6px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+          <input type="checkbox" id="ht-corp-diverse" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <div><div style="font-size:13px;font-weight:600;color:#374151">口味多元、適合大眾</div><div style="font-size:11px;color:#94a3b8">甜鹹平衡，確保每個人都有喜歡的選項</div></div>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+          <input type="checkbox" id="ht-corp-delivery" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <div><div style="font-size:13px;font-weight:600;color:#374151">容易點餐、有外送合作</div><div style="font-size:11px;color:#94a3b8">優先推薦量大好操作、有企業外送服務的店家類型</div></div>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+          <input type="checkbox" id="ht-corp-hygienic" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <div><div style="font-size:13px;font-weight:600;color:#374151">衛生包裝、個人份量</div><div style="font-size:11px;color:#94a3b8">強調獨立包裝、不需公筷共盤，乾淨方便取用</div></div>
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
+          <input type="checkbox" id="ht-corp-value" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <div><div style="font-size:13px;font-weight:600;color:#374151">預算效益最大化</div><div style="font-size:11px;color:#94a3b8">同預算下份量最多、CP 值最高的組合方案</div></div>
+        </label>
+      </div>
+    </div>
+    <button id="ht-assist-go-btn" onclick="htAssistRun()" style="width:100%;padding:12px;border:none;background:#e16b8c;color:#fff;font-size:15px;font-weight:700;border-radius:12px;cursor:pointer;font-family:inherit;transition:opacity .2s;margin-bottom:12px" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🤖 開始規劃</button>
+    <div id="ht-assist-result" style="display:none"></div>
+  </div>
+</div>
 
 <!-- RECEIPT CONFIRM MODAL -->
 <div id="receipt-confirm" onclick="if(event.target===this)this.classList.remove('open')">
@@ -9303,7 +9772,7 @@ window.htDeleteEvent = async function() {
 
 <!-- 新增/編輯活動 Modal -->
 <div id="ht-create-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseCreate()">
-  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(0,0,0,.2)">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(520px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#0f172a;margin-bottom:20px">新增午茶日活動</div>
     <div style="display:grid;gap:12px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -9339,6 +9808,39 @@ window.htDeleteEvent = async function() {
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:6px">備註</label>
         <textarea id="ht-new-notes" rows="2" placeholder="主題、特別需求…" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#0f172a;resize:none;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'"></textarea>
+      </div>
+      <!-- 從上次複製品項 -->
+      <div id="ht-modal-copy-section" style="display:none">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 12px;background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px">
+          <input id="ht-modal-copy-cb" type="checkbox" style="width:16px;height:16px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+          <input id="ht-modal-copy-id" type="hidden" value="">
+          <span id="ht-modal-copy-label" style="font-size:13px;color:#374151">從上次複製品項清單</span>
+        </label>
+      </div>
+      <!-- 口袋名單 + 常用店家 -->
+      <div id="ht-modal-store-section" style="display:none">
+        <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">常用店家快選</div>
+        <div id="ht-modal-store-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+      <!-- 智慧規劃 -->
+      <div style="border-top:1.5px dashed #f5b8cb;padding-top:14px">
+        <div style="font-size:13px;font-weight:700;color:#e16b8c;margin-bottom:10px">✨ 智慧規劃</div>
+        <div style="margin-bottom:10px">
+          <span id="ht-modal-season-hint" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
+          <div id="ht-modal-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="ht-ratio-chip" data-preset="balanced" onclick="htSelectRatioPreset(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
+            <button class="ht-ratio-chip" data-preset="sweet" onclick="htSelectRatioPreset(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
+            <button class="ht-ratio-chip" data-preset="light" onclick="htSelectRatioPreset(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
+            <button class="ht-ratio-chip" data-preset="savory" onclick="htSelectRatioPreset(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
+          </div>
+          <div id="ht-modal-ratio-detail" style="font-size:11px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
+        </div>
+        <button id="ht-modal-ai-btn" onclick="htModalRunAI()" style="width:100%;margin-top:12px;padding:10px;border:2px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe0ec'" onmouseout="this.style.background='#fff0f5'">✨ AI 幫我規劃品項</button>
+        <div id="ht-modal-ai-result" style="display:none"></div>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
