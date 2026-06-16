@@ -2255,23 +2255,12 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         </button>
         <!-- 分隔 -->
         <div style="width:1px;background:linear-gradient(180deg,transparent,#fde4ef,transparent);margin:6px 2px;flex-shrink:0"></div>
-        <!-- 新增活動（含小Bee下拉） -->
-        <div style="flex-shrink:0;position:relative;padding:6px 4px" id="ht-add-wrap">
-          <button onclick="htToggleAddMenu()" style="display:flex;align-items:center;gap:6px;padding:10px 14px;border-radius:13px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(225,107,140,.35);transition:all .22s;white-space:nowrap" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
+        <!-- 新增活動（直接開 modal） -->
+        <div style="flex-shrink:0;padding:6px 4px">
+          <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:13px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(225,107,140,.35);transition:all .22s;white-space:nowrap" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
             <span style="font-size:18px;line-height:1">✨</span>
             <span style="font-size:12px;font-weight:700">新增活動</span>
-            <span style="font-size:10px;opacity:.8">▾</span>
           </button>
-          <!-- 下拉選單 -->
-          <div id="ht-add-menu" style="display:none;position:absolute;right:4px;top:calc(100% - 2px);background:#fff;border:1.5px solid #fde4ef;border-radius:14px;box-shadow:0 8px 24px rgba(225,107,140,.18);overflow:hidden;min-width:148px;z-index:500">
-            <button onclick="htOpenCreate();htToggleAddMenu()" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;border:none;background:none;font-family:inherit;cursor:pointer;color:#0f172a;font-size:14px;font-weight:700;transition:background .15s;text-align:left" onmouseover="this.style.background='#fff8fb'" onmouseout="this.style.background='none'">
-              <span style="font-size:18px">✨</span> 新增活動
-            </button>
-            <div style="height:1px;background:#fde4ef;margin:0 12px"></div>
-            <button onclick="htAssistOpen();htToggleAddMenu()" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px 16px;border:none;background:none;font-family:inherit;cursor:pointer;color:#e16b8c;font-size:14px;font-weight:700;transition:background .15s;text-align:left" onmouseover="this.style.background='#fff8fb'" onmouseout="this.style.background='none'">
-              <span style="font-size:18px">🐝</span> 小 Bee AI
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -2429,7 +2418,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
             新增
           </button>
         </div>
-        <div id="ht-spot-form" style="display:none;background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0">
+        <div id="ht-spot-form" style="display:none;background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;max-width:480px">
           <div style="display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px">
             <input id="ht-spot-name" placeholder="店家名稱" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
             <select id="ht-spot-cat" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;background:#fff;cursor:pointer">
@@ -10295,8 +10284,9 @@ window.htAssistRun = async function() {
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
-      <button onclick="htCloseCreate()" style="flex:1;padding:11px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
-      <button onclick="htSubmitCreate()" style="flex:2;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
+      <button onclick="htCloseCreate()" style="padding:11px 16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
+      <button onclick="htCloseCreate();htAssistOpen()" style="padding:11px 16px;border:1.5px solid #e16b8c;background:#fff8fb;color:#e16b8c;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'"><span>🐝</span> 小 Bee AI</button>
+      <button onclick="htSubmitCreate()" style="flex:1;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
     </div>
   </div>
 </div>
