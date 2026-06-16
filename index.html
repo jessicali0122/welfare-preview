@@ -2286,25 +2286,24 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     <!-- 品項分析 Tab -->
     <div id="ht-panel-analytics" style="display:none">
-      <!-- 統計數字橫排 -->
-      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:16px 20px;margin-bottom:14px">
-        <div id="ht-analytics-stats" style="display:flex;align-items:center;gap:0"></div>
-      </div>
-      <!-- 熱門店家 + 類別佔比 並排 -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-            <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#6366f1,#a5b4fc);border-radius:2px"></span>
-            <span style="font-size:14px;font-weight:700;color:#0f172a">最常採購店家</span>
+      <!-- 三個統計數字 -->
+      <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
+      <!-- 主體：左側店家排行 + 右側品類 -->
+      <div style="display:grid;grid-template-columns:1fr 400px;gap:16px;align-items:start">
+        <!-- 左：店家排行 -->
+        <div style="background:#fff;border-radius:20px;border:1px solid #f0f0f0;overflow:hidden">
+          <div style="padding:20px 24px;border-bottom:1px solid #f5f5f5">
+            <div style="font-size:16px;font-weight:800;color:#0f172a">最常採購店家</div>
+            <div style="font-size:13px;color:#bbb;margin-top:4px">依採購次數排列</div>
           </div>
-          <div id="ht-vendor-ranking"></div>
+          <div id="ht-vendor-ranking" style="padding:8px 0"></div>
         </div>
-        <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-            <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#f59e0b,#fcd34d);border-radius:2px"></span>
-            <span style="font-size:14px;font-weight:700;color:#0f172a">品項類別佔比</span>
+        <!-- 右：品類占比 -->
+        <div style="background:#fff;border-radius:20px;border:1px solid #f0f0f0;overflow:hidden">
+          <div style="padding:20px 24px;border-bottom:1px solid #f5f5f5">
+            <div style="font-size:16px;font-weight:800;color:#0f172a">品項類別佔比</div>
           </div>
-          <div id="ht-category-bars"></div>
+          <div id="ht-category-bars" style="padding:20px 24px"></div>
         </div>
       </div>
       <div id="ht-trend-chart" style="display:none"></div>
@@ -8617,16 +8616,14 @@ function htRenderAnalytics() {
     { label:'總支出',   value: fmtMoney(totalSpend),      icon:'💸',  color:'#e16b8c' },
     { label:'平均每場', value: fmtMoney(avgSpend),         icon:'📊',  color:'#f59e0b' },
   ];
-  document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s, i){
-    var divider = i < statsData.length - 1
-      ? '<div style="width:1px;height:36px;background:#f1f5f9;margin:0 16px;flex-shrink:0"></div>' : '';
-    return '<div style="display:flex;align-items:center;gap:12px;flex:1">'
-      + '<div style="width:40px;height:40px;border-radius:10px;background:'+s.color+'18;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">'+s.icon+'</div>'
-      + '<div>'
-      +   '<div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">'+s.value+'</div>'
-      +   '<div style="font-size:12px;color:#94a3b8;margin-top:4px">'+s.label+'</div>'
+  document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s){
+    return '<div style="background:#fff;border-radius:16px;border:1px solid #f0f0f0;padding:20px 24px">'
+      + '<div style="font-size:13px;color:#bbb;font-weight:600;margin-bottom:10px">'+s.label+'</div>'
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<div style="font-size:28px;line-height:1">'+s.icon+'</div>'
+      + '<div style="font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-.02em">'+s.value+'</div>'
       + '</div>'
-      + '</div>' + divider;
+      + '</div>';
   }).join('');
 
   // 月份支出趨勢已移除
@@ -8685,30 +8682,25 @@ function htRenderAnalytics() {
 
 function _htRenderVendorRank(el, vendors, countField) {
   if (!el) return;
-  var catColors = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
-  var medalColors = ['linear-gradient(135deg,#f59e0b,#fbbf24)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#e16b8c,#f9a8d4)'];
   var sorted = vendors.slice().sort(function(a,b){ return (b[countField]||0)-(a[countField]||0); });
   var maxVal = (sorted[0] && sorted[0][countField]) || 1;
   if (!sorted.length || !sorted[0][countField]) {
-    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無訂購記錄</div>';
+    el.innerHTML = '<div style="color:#ccc;font-size:14px;text-align:center;padding:30px">尚無訂購記錄</div>';
     return;
   }
+  var rankNums = ['①','②','③','④','⑤','⑥','⑦','⑧'];
   el.innerHTML = sorted.slice(0,8).map(function(v,i){
     var cnt = v[countField] || 0;
     var pct = Math.round(cnt/maxVal*100);
-    var barColor = catColors[v.category]||'#94a3b8';
-    var badge = i < 3
-      ? '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:'+medalColors[i]+';display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.15)">'+(i===0?'🥇':i===1?'🥈':'🥉')+'</div>'
-      : '<div style="width:28px;height:28px;min-width:28px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#94a3b8">'+(i+1)+'</div>';
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;margin-bottom:6px;'+(i<3?'background:'+barColor+'0d':'')+';">'
-      + badge
+    var isTop = i < 3;
+    var numColor = i===0?'#e16b8c':i===1?'#f59e0b':i===2?'#6366f1':'#ccc';
+    return '<div style="display:flex;align-items:center;gap:14px;padding:14px 24px;'+(i>0?'border-top:1px solid #f8f8f8':'')+'">'
+      + '<span style="font-size:'+(isTop?'20px':'16px')+';font-weight:800;color:'+numColor+';min-width:24px;text-align:center;flex-shrink:0">'+(isTop?rankNums[i]:(i+1))+'</span>'
       + '<div style="flex:1;min-width:0">'
-      +   '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">'
-      +     '<span style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">'+v.name+'</span>'
-      +     '<span style="font-size:12px;font-weight:600;color:'+barColor+';flex-shrink:0">'+cnt+' 次</span>'
-      +   '</div>'
-      +   '<div style="height:5px;background:#f1f5f9;border-radius:3px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:3px"></div></div>'
+      +   '<div style="font-size:15px;font-weight:'+(isTop?'700':'500')+';color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px">'+v.name+'</div>'
+      +   '<div style="height:4px;background:#f5f5f5;border-radius:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(isTop?'linear-gradient(90deg,#f07ba0,#e16b8c)':'#e5e7eb')+';border-radius:4px"></div></div>'
       + '</div>'
+      + '<span style="font-size:14px;font-weight:700;color:'+(isTop?'#e16b8c':'#94a3b8')+';flex-shrink:0;min-width:40px;text-align:right">'+cnt+'<span style="font-size:12px;font-weight:400"> 次</span></span>'
       + '</div>';
   }).join('');
 }
@@ -8758,10 +8750,20 @@ function _htRenderCatBars(el, catTotals) {
       + '</div>';
   }).join('');
 
-  el.innerHTML = '<div style="display:flex;align-items:center;gap:20px">'
-    + '<svg width="220" height="220" viewBox="0 0 220 220" style="flex-shrink:0">'+slices+'</svg>'
-    + '<div style="flex:1;min-width:0">'+legendHtml+'</div>'
-    + '</div>';
+  var legendHtml = catEntries.map(function(c,i){
+    var pct = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8f8f8">'
+      + '<div style="width:10px;height:10px;min-width:10px;border-radius:50%;background:'+colors[i]+'"></div>'
+      + '<span style="font-size:14px;color:#374151;flex:1">'+c+'</span>'
+      + '<span style="font-size:14px;font-weight:700;color:#0f172a;min-width:28px;text-align:right">'+catTotals[c]+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:'+colors[i]+';min-width:38px;text-align:right">'+pct+'%</span>'
+      + '</div>';
+  }).join('');
+
+  el.innerHTML = '<div style="display:flex;justify-content:center;margin-bottom:20px">'
+    + '<svg width="200" height="200" viewBox="0 0 220 220">'+slices+'</svg>'
+    + '</div>'
+    + '<div>'+legendHtml+'</div>';
 }
 
 function _htRenderMonthly(el, events) {
@@ -9092,9 +9094,11 @@ window.htSelectZone = function(btn, zone) {
 
 function _htRefreshMap(cat, label) {
   var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
-  var query = cat + ' ' + zone.area;  // 類別在前、地名在後，Google Maps 解析更準
-  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query) + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
-  var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(query);
+  // near: 讓 Google Maps 把搜尋結果錨定在公司座標附近
+  var query = cat + ' near:新北市新莊區新北大道三段218號';
+  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query)
+    + '&sll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
+  var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(cat + ' 新莊新北大道');
   document.getElementById('ht-map-iframe').src = mapUrl;
   document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — ' + zone.label;
   document.getElementById('ht-map-extlink').href = extUrl;
