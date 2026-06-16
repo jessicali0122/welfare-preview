@@ -2307,14 +2307,6 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <div id="ht-category-bars"></div>
         </div>
       </div>
-      <!-- 每月消費分析 -->
-      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px;margin-top:14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
-          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#8b5cf6,#c4b5fd);border-radius:2px"></span>
-          <span style="font-size:14px;font-weight:700;color:#0f172a">每月消費分析</span>
-        </div>
-        <div id="ht-monthly-chart"></div>
-      </div>
       <div id="ht-trend-chart" style="display:none"></div>
     </div>
 
@@ -8660,7 +8652,6 @@ function htRenderAnalytics() {
         });
         _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
         _htRenderCatBars(catEl, catTotals);
-        _htRenderMonthly(document.getElementById('ht-monthly-chart'), _htEvents);
       });
   } else {
     _htRenderVendorRank(rankEl, _htVendors, 'totalOrders');
@@ -8670,7 +8661,6 @@ function htRenderAnalytics() {
       catTotalsV[cat] = (catTotalsV[cat]||0) + (v.totalOrders||0);
     });
     _htRenderCatBars(catEl, catTotalsV);
-    _htRenderMonthly(document.getElementById('ht-monthly-chart'), _htEvents);
   }
 }
 
@@ -8717,37 +8707,40 @@ function _htRenderCatBars(el, catTotals) {
   var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
   var colors = catEntries.map(function(c,i){ return catColMap[c] || palette[i % palette.length]; });
 
-  // SVG 圓餅圖
-  var r = 70, cx = 90, cy = 90, gap = 0.02;
+  // SVG 甜甜圈
+  var r = 90, ri = 54, cx = 110, cy = 110, gap = 0.018;
   var slices = ''; var startAngle = -Math.PI/2;
   catEntries.forEach(function(c, i) {
     var frac = catTotals[c] / grandTotal;
     var angle = frac * Math.PI * 2 - gap;
-    var x1 = cx + r * Math.cos(startAngle);
-    var y1 = cy + r * Math.sin(startAngle);
-    var x2 = cx + r * Math.cos(startAngle + angle);
-    var y2 = cy + r * Math.sin(startAngle + angle);
+    if (angle <= 0) { startAngle += frac * Math.PI * 2; return; }
+    var x1o = cx + r  * Math.cos(startAngle),  y1o = cy + r  * Math.sin(startAngle);
+    var x2o = cx + r  * Math.cos(startAngle+angle), y2o = cy + r  * Math.sin(startAngle+angle);
+    var x1i = cx + ri * Math.cos(startAngle+angle), y1i = cy + ri * Math.sin(startAngle+angle);
+    var x2i = cx + ri * Math.cos(startAngle),  y2i = cy + ri * Math.sin(startAngle);
     var large = angle > Math.PI ? 1 : 0;
-    slices += '<path d="M'+cx+','+cy+' L'+x1.toFixed(2)+','+y1.toFixed(2)+' A'+r+','+r+' 0 '+large+',1 '+x2.toFixed(2)+','+y2.toFixed(2)+' Z" fill="'+colors[i]+'" opacity="0.92"/>';
+    slices += '<path d="M'+x1o.toFixed(2)+','+y1o.toFixed(2)
+      +' A'+r+','+r+' 0 '+large+',1 '+x2o.toFixed(2)+','+y2o.toFixed(2)
+      +' L'+x1i.toFixed(2)+','+y1i.toFixed(2)
+      +' A'+ri+','+ri+' 0 '+large+',0 '+x2i.toFixed(2)+','+y2i.toFixed(2)
+      +' Z" fill="'+colors[i]+'" opacity="0.9"/>';
     startAngle += frac * Math.PI * 2;
   });
-  // 中心白圓（甜甜圈效果）
-  slices += '<circle cx="'+cx+'" cy="'+cy+'" r="42" fill="#fff"/>';
-  slices += '<text x="'+cx+'" y="'+(cy-6)+'" text-anchor="middle" style="font-size:11px;fill:#94a3b8;font-family:inherit">品項總計</text>';
-  slices += '<text x="'+cx+'" y="'+(cy+14)+'" text-anchor="middle" style="font-size:18px;font-weight:800;fill:#0f172a;font-family:inherit">'+grandTotal+'</text>';
+  slices += '<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="12" fill="#94a3b8" font-family="inherit">品項總計</text>';
+  slices += '<text x="'+cx+'" y="'+(cy+18)+'" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a" font-family="inherit">'+grandTotal+'</text>';
 
   var legendHtml = catEntries.map(function(c,i){
     var pct = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
-    return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'
-      + '<div style="width:10px;height:10px;border-radius:50%;background:'+colors[i]+';flex-shrink:0"></div>'
-      + '<span style="font-size:12px;color:#374151;flex:1">'+c+'</span>'
-      + '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+'</span>'
-      + '<span style="font-size:11px;font-weight:700;color:'+colors[i]+';min-width:32px;text-align:right">'+pct+'%</span>'
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f8f8f8">'
+      + '<div style="width:10px;height:10px;min-width:10px;border-radius:50%;background:'+colors[i]+'"></div>'
+      + '<span style="font-size:13px;color:#374151;flex:1;white-space:nowrap">'+c+'</span>'
+      + '<span style="font-size:13px;font-weight:700;color:#0f172a;min-width:28px;text-align:right">'+catTotals[c]+'</span>'
+      + '<span style="font-size:12px;font-weight:700;color:'+colors[i]+';min-width:36px;text-align:right">'+pct+'%</span>'
       + '</div>';
   }).join('');
 
-  el.innerHTML = '<div style="display:flex;align-items:center;gap:16px">'
-    + '<svg width="180" height="180" viewBox="0 0 180 180" style="flex-shrink:0">'+slices+'</svg>'
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:20px">'
+    + '<svg width="220" height="220" viewBox="0 0 220 220" style="flex-shrink:0">'+slices+'</svg>'
     + '<div style="flex:1;min-width:0">'+legendHtml+'</div>'
     + '</div>';
 }
