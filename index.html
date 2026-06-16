@@ -2248,7 +2248,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
             <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#6366f1,#a5b4fc);border-radius:2px"></span>
-            <span style="font-size:14px;font-weight:700;color:#0f172a">熱門店家排行</span>
+            <span style="font-size:14px;font-weight:700;color:#0f172a">最常採購店家</span>
           </div>
           <div id="ht-vendor-ranking"></div>
         </div>
@@ -2259,6 +2259,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           </div>
           <div id="ht-category-bars"></div>
         </div>
+      </div>
+      <!-- 每月消費分析 -->
+      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:18px 20px;margin-top:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#8b5cf6,#c4b5fd);border-radius:2px"></span>
+          <span style="font-size:14px;font-weight:700;color:#0f172a">每月消費分析</span>
+        </div>
+        <div id="ht-monthly-chart"></div>
       </div>
       <div id="ht-trend-chart" style="display:none"></div>
     </div>
@@ -8521,7 +8529,7 @@ function htRenderAnalytics() {
           if (!r || !r.ok || !r.items) return;
           r.items.forEach(function(it) {
             var vn = (it.vendor || '').trim();
-            if (vn) {
+            if (vn && !/^\d+$/.test(vn)) { // 過濾純數字（如壽星金額誤入廠商欄）
               if (!vendorMap[vn]) vendorMap[vn] = { name: vn, count: 0, category: it.category || '其他' };
               vendorMap[vn].count++;
             }
@@ -8531,6 +8539,7 @@ function htRenderAnalytics() {
         });
         _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
         _htRenderCatBars(catEl, catTotals);
+        _htRenderMonthly(document.getElementById('ht-monthly-chart'), _htEvents);
       });
   } else {
     _htRenderVendorRank(rankEl, _htVendors, 'totalOrders');
@@ -8540,6 +8549,7 @@ function htRenderAnalytics() {
       catTotalsV[cat] = (catTotalsV[cat]||0) + (v.totalOrders||0);
     });
     _htRenderCatBars(catEl, catTotalsV);
+    _htRenderMonthly(document.getElementById('ht-monthly-chart'), _htEvents);
   }
 }
 
@@ -8575,35 +8585,104 @@ function _htRenderVendorRank(el, vendors, countField) {
 
 function _htRenderCatBars(el, catTotals) {
   if (!el) return;
-  var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#94a3b8'};
+  var palette = ['#e16b8c','#6366f1','#06b6d4','#f59e0b','#1e9d6b','#f97316','#8b5cf6','#0ea5e9','#ec4899','#94a3b8'];
+  var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','鹹食':'#f59e0b','餐點':'#f97316','甜食':'#ec4899','蛋糕':'#8b5cf6','餐具':'#0ea5e9','其他':'#94a3b8'};
   var catEntries = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; });
   if (!catEntries.length) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無品項資料</div>';
     return;
   }
   catEntries.sort(function(a,b){ return catTotals[b]-catTotals[a]; });
-  var catMax = catTotals[catEntries[0]];
   var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
-  el.innerHTML = catEntries.map(function(c){
-    var pct = Math.round(catTotals[c]/catMax*100);
-    var pctTotal = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
-    var col = catColMap[c]||'#94a3b8';
-    return '<div style="margin-bottom:12px">'
-      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
-      +   '<div style="display:flex;align-items:center;gap:7px">'
-      +     '<div style="width:28px;height:28px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;flex-shrink:0">'
-      +       '<div style="width:10px;height:10px;border-radius:3px;background:'+col+'"></div>'
-      +     '</div>'
-      +     '<span style="font-size:14px;font-weight:700;color:#0f172a">'+c+'</span>'
-      +   '</div>'
-      +   '<div style="display:flex;align-items:center;gap:6px">'
-      +     '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+' 次</span>'
-      +     '<span style="font-size:12px;font-weight:700;color:#fff;background:'+col+';padding:1px 7px;border-radius:20px">'+pctTotal+'%</span>'
-      +   '</div>'
-      + '</div>'
-      + '<div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;margin-left:35px"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,'+col+','+col+'99);border-radius:4px"></div></div>'
+  var colors = catEntries.map(function(c,i){ return catColMap[c] || palette[i % palette.length]; });
+
+  // SVG 圓餅圖
+  var r = 70, cx = 90, cy = 90, gap = 0.02;
+  var slices = ''; var startAngle = -Math.PI/2;
+  catEntries.forEach(function(c, i) {
+    var frac = catTotals[c] / grandTotal;
+    var angle = frac * Math.PI * 2 - gap;
+    var x1 = cx + r * Math.cos(startAngle);
+    var y1 = cy + r * Math.sin(startAngle);
+    var x2 = cx + r * Math.cos(startAngle + angle);
+    var y2 = cy + r * Math.sin(startAngle + angle);
+    var large = angle > Math.PI ? 1 : 0;
+    slices += '<path d="M'+cx+','+cy+' L'+x1.toFixed(2)+','+y1.toFixed(2)+' A'+r+','+r+' 0 '+large+',1 '+x2.toFixed(2)+','+y2.toFixed(2)+' Z" fill="'+colors[i]+'" opacity="0.92"/>';
+    startAngle += frac * Math.PI * 2;
+  });
+  // 中心白圓（甜甜圈效果）
+  slices += '<circle cx="'+cx+'" cy="'+cy+'" r="42" fill="#fff"/>';
+  slices += '<text x="'+cx+'" y="'+(cy-6)+'" text-anchor="middle" style="font-size:11px;fill:#94a3b8;font-family:inherit">品項總計</text>';
+  slices += '<text x="'+cx+'" y="'+(cy+14)+'" text-anchor="middle" style="font-size:18px;font-weight:800;fill:#0f172a;font-family:inherit">'+grandTotal+'</text>';
+
+  var legendHtml = catEntries.map(function(c,i){
+    var pct = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
+    return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:7px">'
+      + '<div style="width:10px;height:10px;border-radius:50%;background:'+colors[i]+';flex-shrink:0"></div>'
+      + '<span style="font-size:12px;color:#374151;flex:1">'+c+'</span>'
+      + '<span style="font-size:12px;color:#64748b;font-weight:600">'+catTotals[c]+'</span>'
+      + '<span style="font-size:11px;font-weight:700;color:'+colors[i]+';min-width:32px;text-align:right">'+pct+'%</span>'
       + '</div>';
   }).join('');
+
+  el.innerHTML = '<div style="display:flex;align-items:center;gap:16px">'
+    + '<svg width="180" height="180" viewBox="0 0 180 180" style="flex-shrink:0">'+slices+'</svg>'
+    + '<div style="flex:1;min-width:0">'+legendHtml+'</div>'
+    + '</div>';
+}
+
+function _htRenderMonthly(el, events) {
+  if (!el) return;
+  if (!events.length) { el.innerHTML = ''; return; }
+  var monthData = {};
+  events.forEach(function(e) {
+    var ym = _evMonth(e);
+    if (!ym) return;
+    if (!monthData[ym]) monthData[ym] = { label: _ymLabel(ym), spend: 0, count: 0 };
+    monthData[ym].spend += (e.actualExpense || 0);
+    monthData[ym].count++;
+  });
+  var months = Object.keys(monthData).sort();
+  var maxSpend = Math.max.apply(null, months.map(function(m){ return monthData[m].spend; })) || 1;
+  var barW = Math.max(24, Math.min(48, Math.floor(560 / months.length) - 8));
+  var bars = months.map(function(m) {
+    var d = monthData[m];
+    var hPct = d.spend > 0 ? Math.round(d.spend / maxSpend * 100) : 0;
+    var shortLabel = m.slice(5); // "06"
+    return '<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1">'
+      + '<div style="font-size:10px;font-weight:700;color:#e16b8c;opacity:'+(hPct===100?'1':'.7')+'">'+(d.spend>0?'NT$'+(d.spend/1000).toFixed(0)+'K':'')+'</div>'
+      + '<div style="width:100%;display:flex;align-items:flex-end;justify-content:center;height:60px">'
+      + '<div style="width:'+barW+'px;height:'+Math.max(4,hPct*0.6)+'px;background:linear-gradient(180deg,#f07ba0,#c8587a);border-radius:6px 6px 0 0;transition:height .4s"></div>'
+      + '</div>'
+      + '<div style="font-size:10px;color:#94a3b8;font-weight:600">'+parseInt(shortLabel,10)+'月</div>'
+      + '</div>';
+  });
+  var yearGroups = {};
+  months.forEach(function(m){ var y=m.slice(0,4); (yearGroups[y]=yearGroups[y]||[]).push(m); });
+  var yearHtml = Object.keys(yearGroups).sort().reverse().map(function(y){
+    var yMonths = yearGroups[y];
+    var ySpend = yMonths.reduce(function(s,m){ return s+monthData[m].spend; }, 0);
+    var yBars = yMonths.map(function(m){
+      var d = monthData[m];
+      var hPct = d.spend > 0 ? Math.round(d.spend / maxSpend * 100) : 0;
+      return '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">'
+        + '<div style="font-size:9px;font-weight:600;color:#e16b8c;white-space:nowrap">'+(d.spend>0?'$'+(d.spend/1000).toFixed(0)+'K':'—')+'</div>'
+        + '<div style="width:100%;display:flex;align-items:flex-end;justify-content:center;height:50px">'
+        + '<div style="width:'+barW+'px;height:'+Math.max(3,hPct*0.5)+'px;background:linear-gradient(180deg,#f07ba0,#c8587a);border-radius:5px 5px 0 0"></div>'
+        + '</div>'
+        + '<div style="font-size:10px;color:#94a3b8;font-weight:600">'+parseInt(m.slice(5),10)+'月</div>'
+        + '</div>';
+    }).join('');
+    return '<div style="margin-bottom:16px">'
+      + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">'
+      + '<span style="font-size:12px;font-weight:700;color:#374151">'+y+' 年</span>'
+      + '<div style="flex:1;height:1px;background:#f1f5f9"></div>'
+      + '<span style="font-size:11px;color:#94a3b8">年度合計 '+fmtMoney(ySpend)+'</span>'
+      + '</div>'
+      + '<div style="display:flex;align-items:flex-end;gap:2px">'+yBars+'</div>'
+      + '</div>';
+  }).join('');
+  el.innerHTML = yearHtml;
 }
 
 // ── 新增活動 Modal ──
