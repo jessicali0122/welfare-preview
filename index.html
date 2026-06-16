@@ -8368,6 +8368,39 @@ var _htVendors  = [];
 var _htRecData  = null;
 var _htRecTab   = 'all';
 
+// ── TSA 全員生日資料庫 ──
+var _HT_BDAY_DB = [
+  {name:'李亭儀', m:1,  d:1 }, {name:'張嘉文', m:1,  d:4 }, {name:'蔡婉綺', m:1,  d:7 },
+  {name:'曾宥榛', m:1,  d:7 }, {name:'劉怡伶', m:1,  d:10}, {name:'蔡鴻陵', m:1,  d:12},
+  {name:'徐維亨', m:1,  d:13}, {name:'徐唯庭', m:1,  d:18}, {name:'李亭恩', m:1,  d:19},
+  {name:'李軒',   m:1,  d:21}, {name:'李潔慧', m:1,  d:22}, {name:'林菀宣', m:1,  d:24},
+  {name:'吳政哲', m:1,  d:26},
+  {name:'游千慧', m:2,  d:9 }, {name:'施彥宇', m:2,  d:16}, {name:'藍聖鈞', m:2,  d:21},
+  {name:'王品喬', m:2,  d:27},
+  {name:'李品嫺', m:3,  d:11}, {name:'呂世評', m:3,  d:18}, {name:'戴鋅霈', m:3,  d:29},
+  {name:'曾子柔', m:5,  d:6 }, {name:'林冠汝', m:5,  d:26}, {name:'馮文馨', m:5,  d:29},
+  {name:'沈俞君', m:6,  d:11}, {name:'黃淑珍', m:6,  d:16}, {name:'陳家翔', m:6,  d:21},
+  {name:'阮彥馨', m:6,  d:22}, {name:'王婷茹', m:6,  d:29},
+  {name:'歐倩妤', m:7,  d:9 }, {name:'顏政',   m:7,  d:17}, {name:'張智翔', m:7,  d:20},
+  {name:'林蕙芸', m:7,  d:28},
+  {name:'梁筠珮', m:8,  d:4 }, {name:'李雨璇', m:8,  d:14}, {name:'王鈞逸', m:8,  d:18},
+  {name:'李貞霓', m:8,  d:24}, {name:'林仕涵', m:8,  d:27}, {name:'吳雅筑', m:8,  d:28},
+  {name:'廖珮妤', m:8,  d:29},
+  {name:'黃如華', m:9,  d:17}, {name:'盧胤勳', m:9,  d:21},
+  {name:'蔡書溶', m:10, d:9 }, {name:'黃岩',   m:10, d:20}, {name:'鄭安汝', m:10, d:29},
+  {name:'吳映萱', m:11, d:1 }, {name:'林佩芬', m:11, d:5 }, {name:'陳冠孜', m:11, d:4 },
+  {name:'黃馨儀', m:11, d:22}, {name:'邱湘芬', m:11, d:28}, {name:'黃文傳', m:11, d:30},
+  {name:'陳姿璇', m:12, d:1 }, {name:'馬呈欣', m:12, d:1 }, {name:'鄒馨瑩', m:12, d:2 },
+  {name:'王雨涵', m:12, d:7 }, {name:'林俐廷', m:12, d:16}, {name:'何舒維', m:12, d:29}
+];
+
+// 取得某月份的壽星名單（回傳帶日期的物件陣列）
+function _htBdaysForMonth(monthNum) {
+  return _HT_BDAY_DB
+    .filter(function(p){ return p.m === monthNum; })
+    .sort(function(a, b){ return a.d - b.d; });
+}
+
 // ── API 呼叫 (沿用既有 API_URL + token 機制) ──
 async function htApi(action, payload) {
   // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
@@ -9302,6 +9335,20 @@ window.htOpenDetail = async function(eventId) {
   if (!r.ok) { toast('載入失敗：' + r.error); htBackToList(); return; }
   _htEvent = r.event;
   _htItems = r.items || [];
+
+  // 若壽星清單尚未設定，自動從生日資料庫帶入本月壽星
+  if (!_htEvent.birthdays || _htEvent.birthdays.length === 0) {
+    var mNum = parseInt((_evMonth(_htEvent) || '').slice(5, 7), 10) || 0;
+    if (mNum) {
+      var autoBdays = _htBdaysForMonth(mNum).map(function(p){ return p.name; });
+      if (autoBdays.length) {
+        _htEvent.birthdays = autoBdays;
+        _htEvent.birthdayBudget = autoBdays.length * 40;
+        htApi('htUpdate', { eventId: _htEvent.eventId, birthdays: autoBdays });
+      }
+    }
+  }
+
   htRenderDetailHeader();
   htRenderItems();
   htRenderBudget();
@@ -9735,22 +9782,63 @@ function htRenderBirthday() {
   var ev = _htEvent;
   var list = ev.birthdays || [];
   var el = document.getElementById('ht-birthday-list');
-  if (!list.length) {
-    el.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">尚無壽星，點擊「新增壽星」</div>';
-  } else {
-    el.innerHTML = list.map(function(bd, i){
-      var name = typeof bd === 'object' ? (bd.name||bd) : bd;
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fffbeb;border-radius:10px;border:1px solid #fde68a">'
-        + '<span style="font-size:18px">🎂</span>'
-        + '<span style="flex:1;font-size:14px;font-weight:600;color:#0f172a">'+htEsc(name)+'</span>'
-        + '<button onclick="htDeleteBirthday('+i+')" style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:16px;padding:2px 6px">×</button>'
+  var monthNum = parseInt((_evMonth(ev) || '').slice(5, 7), 10) || 0;
+  var dbBdays = monthNum ? _htBdaysForMonth(monthNum) : [];
+
+  // 從 DB 自動帶出的壽星（用姓名比對是否已手動加入）
+  var listNames = list.map(function(b){ return typeof b === 'object' ? (b.name||b) : b; });
+  var autoAdded = dbBdays.filter(function(p){ return listNames.indexOf(p.name) < 0; });
+
+  var html = '';
+
+  // ① DB 自動帶入的壽星
+  if (dbBdays.length) {
+    html += dbBdays.map(function(p) {
+      var inList = listNames.indexOf(p.name) >= 0;
+      var idx = listNames.indexOf(p.name);
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + (inList ? '#fffbeb' : '#fff8fb') + ';border-radius:10px;border:1px solid ' + (inList ? '#fde68a' : '#fde4ef') + ';margin-bottom:6px">'
+        + '<span style="font-size:18px">' + (inList ? '🎂' : '🎀') + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(p.name) + '</div>'
+        +   '<div style="font-size:12px;color:#94a3b8;margin-top:2px">' + monthNum + '/' + p.d + ' 生日</div>'
+        + '</div>'
+        + (inList
+            ? '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
+            + '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="margin-left:6px;background:#e16b8c;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+            : '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="background:#e16b8c;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
+          )
         + '</div>';
     }).join('');
+  } else {
+    html = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">本月無壽星</div>';
   }
+
+  el.innerHTML = html;
+
   var perPerson = 40;
   var total = list.length * perPerson;
   document.getElementById('ht-bday-total').textContent = fmtMoney(total) + '（' + list.length + '位壽星 × NT$' + perPerson + '）';
 }
+
+// 從 DB 建議清單中加入／移除壽星
+window.htAddBirthdayByName = async function(name) {
+  var ev = _htEvent;
+  var list = (ev.birthdays || []).slice();
+  var names = list.map(function(b){ return typeof b === 'object' ? (b.name||b) : b; });
+  var idx = names.indexOf(name);
+  if (idx >= 0) {
+    list.splice(idx, 1); // 已在清單 → 移除
+  } else {
+    list.push(name);     // 不在清單 → 加入
+  }
+  var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+  if (!r.ok) { toast('儲存失敗'); return; }
+  ev.birthdays = list;
+  ev.birthdayBudget = list.length * 40;
+  htRenderBirthday();
+  htUpdateCalcBudget();
+  htRenderDetailHeader();
+};
 
 window.htAddBirthday = async function() {
   var name = prompt('輸入壽星姓名：');
