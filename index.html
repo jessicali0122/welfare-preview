@@ -1280,12 +1280,9 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析統計卡片：可橫滑，避免文字擠壓 */
   #ht-analytics-stats{overflow-x:auto!important;-webkit-overflow-scrolling:touch;flex-wrap:nowrap!important}
   #ht-analytics-stats>div{flex-shrink:0!important;min-width:100px!important}
-  /* 午茶日工具列手機版：兩排 */
-  .ht-toolbar{flex-wrap:wrap!important;gap:8px!important;justify-content:flex-start!important}
-  .ht-toolbar-tabs{flex-shrink:0;order:1;width:100%;display:flex;flex-wrap:wrap;gap:6px}
-  .ht-toolbar-tabs .ht-tab-btn{padding:6px 12px!important;font-size:12px!important}
-  #ht-current-month-chip{order:2;flex:1;justify-content:flex-start!important}
-  .ht-toolbar-btn{order:3;flex-shrink:0;padding:7px 12px!important;font-size:12px!important}
+  /* 午茶日工具列手機版 */
+  .ht-tab-btn span:last-child{font-size:9px!important}
+  .ht-tab-btn{padding:8px 4px!important}
 }
 </style>
 </head>
@@ -2216,19 +2213,44 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
   <!-- ── 列表頁 ── -->
   <div id="ht-list-panel">
-    <!-- 頁頭工具列 -->
-    <div class="ht-toolbar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:10px">
-      <div class="ht-toolbar-tabs" style="display:flex;gap:8px;flex-shrink:0">
-        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">月份總覽</button>
-        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">品項分析</button>
-        <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')" style="padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s">📍 探店靈感</button>
+    <!-- 頁頭工具列（重設計） -->
+    <div style="margin-bottom:20px">
+      <!-- Tab 卡片列 -->
+      <div style="background:linear-gradient(135deg,#fff8fb 0%,#fff 60%);border:1px solid #fde4ef;border-radius:20px;box-shadow:0 4px 20px rgba(225,107,140,.08);padding:8px;display:flex;align-items:stretch;gap:4px;position:relative">
+        <!-- 月份總覽 -->
+        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')"
+          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 8px;border-radius:13px;border:none;background:linear-gradient(135deg,#e16b8c,#f07ba0);color:#fff;font-family:inherit;cursor:pointer;transition:all .22s;box-shadow:0 3px 10px rgba(225,107,140,.35)">
+          <span style="font-size:18px;line-height:1">🗂️</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">月份總覽</span>
+        </button>
+        <!-- 活動日曆 -->
+        <button class="ht-tab-btn" id="ht-tab-calendar" onclick="htSwitchListTab('calendar')"
+          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 8px;border-radius:13px;border:none;background:transparent;color:#b0748a;font-family:inherit;cursor:pointer;transition:all .22s">
+          <span style="font-size:18px;line-height:1">📅</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">活動日曆</span>
+        </button>
+        <!-- 品項分析 -->
+        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')"
+          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 8px;border-radius:13px;border:none;background:transparent;color:#b0748a;font-family:inherit;cursor:pointer;transition:all .22s">
+          <span style="font-size:18px;line-height:1">📊</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">品項分析</span>
+        </button>
+        <!-- 探店靈感 -->
+        <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
+          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 8px;border-radius:13px;border:none;background:transparent;color:#b0748a;font-family:inherit;cursor:pointer;transition:all .22s">
+          <span style="font-size:18px;line-height:1">🗺️</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">探店靈感</span>
+        </button>
+        <!-- 分隔 -->
+        <div style="width:1px;background:linear-gradient(180deg,transparent,#fde4ef,transparent);margin:6px 2px;flex-shrink:0"></div>
+        <!-- 新增活動 -->
+        <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 14px;border-radius:13px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(225,107,140,.35);transition:all .22s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
+          <span style="font-size:18px;line-height:1">✨</span>
+          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">新增活動</span>
+        </button>
       </div>
-      <div id="ht-current-month-chip" style="flex:1;display:flex;justify-content:center"></div>
-      <button class="ht-toolbar-btn" onclick="htOpenCreate()" style="flex-shrink:0;display:flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(225,107,140,.3);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        新增活動
-      </button>
     </div>
+    <div id="ht-current-month-chip" style="display:none"></div>
 
     <!-- 月份總覽 Tab -->
     <div id="ht-panel-events">
@@ -2269,6 +2291,45 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         <div id="ht-monthly-chart"></div>
       </div>
       <div id="ht-trend-chart" style="display:none"></div>
+    </div>
+
+    <!-- 活動日曆 Tab -->
+    <div id="ht-panel-calendar" style="display:none">
+      <!-- 月份導航 -->
+      <div style="background:linear-gradient(135deg,#fff0f6,#fff);border:1px solid #fde4ef;border-radius:20px;box-shadow:0 2px 12px rgba(225,107,140,.07);padding:20px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+          <button onclick="htCalPrev()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #fde4ef;background:#fff;color:#e16b8c;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff'">‹</button>
+          <div style="text-align:center">
+            <div id="ht-cal-title" style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:.03em"></div>
+            <div id="ht-cal-subtitle" style="font-size:12px;color:#94a3b8;margin-top:2px"></div>
+          </div>
+          <button onclick="htCalNext()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #fde4ef;background:#fff;color:#e16b8c;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff'">›</button>
+        </div>
+        <!-- 星期標頭 -->
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#f43f5e;padding:4px 0">日</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#64748b;padding:4px 0">一</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#64748b;padding:4px 0">二</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#64748b;padding:4px 0">三</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#64748b;padding:4px 0">四</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#64748b;padding:4px 0">五</div>
+          <div style="text-align:center;font-size:11px;font-weight:700;color:#6366f1;padding:4px 0">六</div>
+        </div>
+        <!-- 日期格子 -->
+        <div id="ht-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px"></div>
+        <!-- 圖例 -->
+        <div style="display:flex;align-items:center;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:11px;color:#64748b">午茶日</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f43f5e"></div><span style="font-size:11px;color:#64748b">國定假日</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div><span style="font-size:11px;color:#64748b">節慶</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:#e0f2fe"></div><span style="font-size:11px;color:#64748b">今天</span></div>
+        </div>
+      </div>
+      <!-- 當月事件列表 -->
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:16px;padding:16px 18px">
+        <div style="font-size:13px;font-weight:700;color:#0f172a;margin-bottom:10px">本月行程</div>
+        <div id="ht-cal-events"></div>
+      </div>
     </div>
 
     <!-- 探店靈感 Tab -->
@@ -8348,16 +8409,23 @@ window.htSwitchListTab = function(tab) {
   _htListTab = tab;
   document.querySelectorAll('.ht-tab-btn').forEach(function(b) {
     var active = b.id === 'ht-tab-' + tab;
-    b.style.background = active ? '#e16b8c' : '#fff';
-    b.style.color = active ? '#fff' : '#64748b';
-    b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
+    if (active) {
+      b.style.background = 'linear-gradient(135deg,#e16b8c,#f07ba0)';
+      b.style.color = '#fff';
+      b.style.boxShadow = '0 3px 10px rgba(225,107,140,.35)';
+    } else {
+      b.style.background = 'transparent';
+      b.style.color = '#b0748a';
+      b.style.boxShadow = 'none';
+    }
     b.classList.toggle('active', active);
   });
-  ['events','analytics','discover'].forEach(function(p){
+  ['events','calendar','analytics','discover'].forEach(function(p){
     var el = document.getElementById('ht-panel-' + p);
     if (el) el.style.display = p === tab ? '' : 'none';
   });
-  htRenderList();
+  if (tab === 'calendar') htRenderCalendar();
+  else htRenderList();
 };
 
 // 統一把 event 的月份正規化成 yyyy-MM（不論後端傳 "2025-10" 或 Date 字串），
@@ -8989,6 +9057,173 @@ window.htDiscoverMap = function(el, cat, label) {
   document.getElementById('ht-map-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 };
 
+// ── 活動日曆 ──
+var _htCalYear  = new Date().getFullYear();
+var _htCalMonth = new Date().getMonth() + 1; // 1-based
+
+// 台灣固定節日 (MM-DD) 和農曆節慶（近似公曆）
+var _twHolidays = {
+  '01-01': { name:'元旦',      type:'national' },
+  '02-14': { name:'情人節',    type:'festival' },
+  '02-28': { name:'和平紀念日',type:'national' },
+  '03-08': { name:'婦女節',    type:'festival' },
+  '04-04': { name:'兒童節',    type:'national' },
+  '04-05': { name:'清明節',    type:'national' },
+  '05-01': { name:'勞動節',    type:'national' },
+  '05-12': { name:'母親節',    type:'festival' },
+  '06-15': { name:'端午節',    type:'festival' },
+  '07-04': { name:'父親節(7/4)',type:'festival' },
+  '08-08': { name:'父親節',    type:'festival' },
+  '09-03': { name:'軍人節',    type:'national' },
+  '09-28': { name:'教師節',    type:'festival' },
+  '10-10': { name:'國慶日',    type:'national' },
+  '10-31': { name:'萬聖節',    type:'festival' },
+  '11-11': { name:'光棍節',    type:'festival' },
+  '12-25': { name:'聖誕節',    type:'festival' },
+  '12-31': { name:'跨年夜',    type:'festival' }
+};
+// 農曆可變日期（hardcode 近幾年）
+var _twLunarMap = {
+  '2024-02-10': { name:'春節',    type:'national' },
+  '2024-02-24': { name:'元宵節',  type:'festival' },
+  '2024-04-04': { name:'清明節',  type:'national' },
+  '2024-06-10': { name:'端午節',  type:'national' },
+  '2024-09-17': { name:'中秋節',  type:'national' },
+  '2025-01-29': { name:'春節',    type:'national' },
+  '2025-02-12': { name:'元宵節',  type:'festival' },
+  '2025-04-04': { name:'清明節',  type:'national' },
+  '2025-05-31': { name:'端午節',  type:'national' },
+  '2025-09-06': { name:'七夕',    type:'festival' },
+  '2025-10-06': { name:'中秋節',  type:'national' },
+  '2026-02-17': { name:'春節',    type:'national' },
+  '2026-03-03': { name:'元宵節',  type:'festival' },
+  '2026-04-05': { name:'清明節',  type:'national' },
+  '2026-06-19': { name:'端午節',  type:'national' },
+  '2026-08-25': { name:'七夕',    type:'festival' },
+  '2026-09-25': { name:'中秋節',  type:'national' },
+  '2027-02-06': { name:'春節',    type:'national' },
+  '2027-06-09': { name:'端午節',  type:'national' },
+  '2027-09-15': { name:'中秋節',  type:'national' }
+};
+
+function _htHolidayForDate(yyyy, mm, dd) {
+  var mmdd = (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
+  var full  = yyyy + '-' + mmdd;
+  return _twLunarMap[full] || _twHolidays[mmdd] || null;
+}
+
+function htRenderCalendar() {
+  var y = _htCalYear, m = _htCalMonth;
+  var monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
+  var titleEl = document.getElementById('ht-cal-title');
+  var subEl   = document.getElementById('ht-cal-subtitle');
+  var gridEl  = document.getElementById('ht-cal-grid');
+  var evEl    = document.getElementById('ht-cal-events');
+  if (!gridEl) return;
+
+  titleEl.textContent = y + ' 年 ' + monthNames[m-1];
+
+  // 當月活動（比對 _htEvents 的 month 欄）
+  var ym = y + '-' + (m < 10 ? '0' : '') + m;
+  var monthEvents = _htEvents.filter(function(e){ return _evMonth(e) === ym; });
+  // 建立 date→event 的快速查找（e.date 格式 yyyy/MM/dd 或 yyyy-MM-dd）
+  var eventDays = {};
+  monthEvents.forEach(function(e) {
+    var ds = String(e.date||'').replace(/\//g,'-');
+    if (ds) eventDays[ds] = e;
+  });
+
+  var today = new Date();
+  var todayStr = today.getFullYear() + '-' + _pad2(today.getMonth()+1) + '-' + _pad2(today.getDate());
+
+  var firstDay = new Date(y, m-1, 1).getDay(); // 0=Sun
+  var daysInMonth = new Date(y, m, 0).getDate();
+  var prevDays = new Date(y, m-1, 0).getDate();
+
+  var cells = '';
+  // 前補
+  for (var i = firstDay - 1; i >= 0; i--) {
+    cells += '<div style="padding:4px 0;text-align:center"><span style="font-size:12px;color:#e2e8f0">' + (prevDays - i) + '</span></div>';
+  }
+  // 當月日期
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dateStr = y + '-' + _pad2(m) + '-' + _pad2(d);
+    var dow = new Date(y, m-1, d).getDay();
+    var isToday   = dateStr === todayStr;
+    var hasEvent  = !!eventDays[dateStr];
+    var hol = _htHolidayForDate(y, m, d);
+    var isSun = dow === 0, isSat = dow === 6;
+
+    var numColor = isSun ? '#f43f5e' : isSat ? '#6366f1' : '#374151';
+    if (hol && hol.type === 'national') numColor = '#f43f5e';
+
+    var bg = isToday ? 'background:#e0f2fe;border-radius:10px;' : '';
+    if (hasEvent && isToday) bg = 'background:linear-gradient(135deg,#fde4ef,#dbeafe);border-radius:10px;';
+    else if (hasEvent) bg = 'background:#fff0f6;border-radius:10px;';
+
+    var dots = '';
+    if (hasEvent) dots += '<div style="width:6px;height:6px;border-radius:50%;background:#e16b8c;margin:0 1px"></div>';
+    if (hol) {
+      var dc = hol.type === 'national' ? '#f43f5e' : '#f59e0b';
+      dots += '<div style="width:6px;height:6px;border-radius:50%;background:'+dc+';margin:0 1px"></div>';
+    }
+
+    cells += '<div style="padding:3px 2px;text-align:center;'+bg+'">'
+      + '<div style="font-size:13px;font-weight:'+(isToday?'800':'600')+';color:'+numColor+'">' + d + '</div>'
+      + (dots ? '<div style="display:flex;justify-content:center;gap:0;margin-top:2px">'+dots+'</div>' : '<div style="height:8px"></div>')
+      + (hol ? '<div style="font-size:8px;color:'+(hol.type==='national'?'#f43f5e':'#f59e0b')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;margin-top:1px">'+hol.name+'</div>' : '')
+      + '</div>';
+  }
+  // 後補
+  var total = firstDay + daysInMonth;
+  var trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (var t = 1; t <= trailing; t++) {
+    cells += '<div style="padding:4px 0;text-align:center"><span style="font-size:12px;color:#e2e8f0">' + t + '</span></div>';
+  }
+  gridEl.innerHTML = cells;
+
+  // 副標題：本月事件數
+  var holCount = 0;
+  for (var dd2 = 1; dd2 <= daysInMonth; dd2++) {
+    if (_htHolidayForDate(y, m, dd2)) holCount++;
+  }
+  subEl.textContent = (monthEvents.length ? '本月 ' + monthEvents.length + ' 場午茶日' : '本月尚無活動') + (holCount ? '　' + holCount + ' 個節假日' : '');
+
+  // 當月活動行程列表
+  if (!monthEvents.length) {
+    evEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px 0">本月尚無午茶日安排</div>';
+  } else {
+    evEl.innerHTML = monthEvents.map(function(e) {
+      var sc = statusColor(e.status);
+      var ds = String(e.date||'').replace(/-/g,'/');
+      return '<div onclick="htOpenDetail(\''+e.eventId+'\')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;border:1px solid #fde4ef;margin-bottom:8px;cursor:pointer;transition:all .18s;background:#fff8fb" onmouseover="this.style.background=\'#fde4ef\'" onmouseout="this.style.background=\'#fff8fb\'">'
+        + '<div style="width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#f07ba0,#c8587a);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:20px">🍵</span></div>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-size:13px;font-weight:700;color:#0f172a">'+fmtMonth(e.month)+' 午茶日</div>'
+        +   '<div style="font-size:11px;color:#94a3b8;margin-top:2px">'+ds+'</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">'
+        +   '<span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;background:'+sc.bg+';color:'+sc.text+'">'+e.status+'</span>'
+        +   (e.actualExpense ? '<span style="font-size:11px;color:#94a3b8">'+fmtMoney(e.actualExpense)+'</span>' : '')
+        + '</div>'
+        + '</div>';
+    }).join('');
+  }
+}
+
+function _pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+window.htCalPrev = function() {
+  _htCalMonth--;
+  if (_htCalMonth < 1) { _htCalMonth = 12; _htCalYear--; }
+  htRenderCalendar();
+};
+window.htCalNext = function() {
+  _htCalMonth++;
+  if (_htCalMonth > 12) { _htCalMonth = 1; _htCalYear++; }
+  htRenderCalendar();
+};
+
 function htRenderDiscover() {
   var spots = htGetSpots();
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
@@ -9110,7 +9345,7 @@ window.htSwitchDetailTab = function(tab) {
   });
   if (tab === 'plan')      htRenderItems();
   if (tab === 'budget')    htRenderBudget();
-  if (tab === 'recommend') htRenderRecommend();
+  if (tab === 'recommend' && typeof htRenderRecommend === 'function') htRenderRecommend();
   if (tab === 'menu')      htRenderMenuCard();
   if (tab === 'birthday')  htRenderBirthday();
 };
