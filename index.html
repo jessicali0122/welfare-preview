@@ -2255,11 +2255,19 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         </button>
         <!-- 分隔 -->
         <div style="width:1px;background:linear-gradient(180deg,transparent,#fde4ef,transparent);margin:6px 2px;flex-shrink:0"></div>
-        <!-- 新增活動 -->
-        <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:10px 14px;border-radius:13px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 3px 10px rgba(225,107,140,.35);transition:all .22s" onmouseover="this.style.transform='scale(1.04)'" onmouseout="this.style.transform=''">
-          <span style="font-size:18px;line-height:1">✨</span>
-          <span style="font-size:11px;font-weight:700;letter-spacing:.02em;white-space:nowrap">新增活動</span>
-        </button>
+        <!-- 新增活動 + 小Bee 合併區 -->
+        <div style="flex-shrink:0;display:flex;flex-direction:column;gap:4px;padding:6px 4px">
+          <!-- 新增活動 -->
+          <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:10px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;box-shadow:0 2px 8px rgba(225,107,140,.35);transition:all .22s;white-space:nowrap" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''">
+            <span style="font-size:16px;line-height:1">✨</span>
+            <span style="font-size:12px;font-weight:700">新增活動</span>
+          </button>
+          <!-- 小Bee AI -->
+          <button onclick="htAssistOpen()" style="display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;border:1.5px solid #fde4ef;background:#fff8fb;color:#e16b8c;font-family:inherit;cursor:pointer;transition:all .22s;white-space:nowrap" onmouseover="this.style.background='#fde4ef'" onmouseout="this.style.background='#fff8fb'">
+            <span style="font-size:14px;line-height:1">🐝</span>
+            <span style="font-size:12px;font-weight:700">小 Bee</span>
+          </button>
+        </div>
       </div>
     </div>
     <div id="ht-current-month-chip" style="display:none"></div>
@@ -7198,9 +7206,6 @@ window.sw = function(view, ...args) {
     setTimeout(syncApplicantFilter, 50);
   }
   if (typeof updateVH === 'function') setTimeout(updateVH, 50);
-  // AI 小助手 FAB：只在午茶日分頁顯示
-  var htFab = document.getElementById('ht-fab-wrap');
-  if (htFab) htFab.style.display = view === 'hightea' ? 'block' : 'none';
   if (view !== 'hightea') { var p = document.getElementById('ht-assist-panel'); if (p) p.style.display = 'none'; }
 };
 
@@ -9928,13 +9933,7 @@ window.htAssistRun = async function() {
 })(); // end 午茶日 module
 </script>
 
-<!-- ── AI 午茶日小助手 FAB ── -->
-<div id="ht-fab-wrap" style="display:none;position:fixed;right:0;top:50%;transform:translateY(-50%);z-index:400">
-  <button onclick="htAssistOpen()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;background:linear-gradient(180deg,#e16b8c 0%,#c8587a 100%);border:none;border-radius:14px 0 0 14px;color:#fff;cursor:pointer;box-shadow:-3px 0 18px rgba(225,107,140,.35);font-family:inherit;transition:all .2s;width:36px" onmouseover="this.style.width='44px';this.style.boxShadow='-4px 0 24px rgba(225,107,140,.5)'" onmouseout="this.style.width='36px';this.style.boxShadow='-3px 0 18px rgba(225,107,140,.35)'">
-    <span style="font-size:18px;line-height:1">🐝</span>
-    <span style="writing-mode:vertical-rl;font-size:11px;font-weight:700;letter-spacing:.08em;opacity:.9;white-space:nowrap">小 Bee</span>
-  </button>
-</div>
+<!-- ht-fab-wrap 已移除，小Bee 整合至 tab bar -->
 
 <!-- ── AI 午茶日小助手 Panel (Bottom Sheet) ── -->
 <div id="ht-assist-panel" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,.45);backdrop-filter:blur(3px)" onclick="if(event.target===this)htAssistClose()">
