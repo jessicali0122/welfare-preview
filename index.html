@@ -2269,6 +2269,15 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     </div>
     <div id="ht-current-month-chip" style="display:none"></div>
 
+    <!-- 倒數提醒 Banner -->
+    <div id="ht-countdown-banner" style="display:none;border-radius:14px;background:linear-gradient(135deg,#fff0f5,#fde8f0);border:1.5px solid #f9c2d8;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:24px;flex-shrink:0">🍰</span>
+      <div style="flex:1">
+        <div id="ht-countdown-text" style="font-size:15px;font-weight:700;color:#be185d"></div>
+        <div id="ht-countdown-sub" style="font-size:12px;color:#f472b6;margin-top:2px"></div>
+      </div>
+    </div>
+
     <!-- 月份總覽 Tab -->
     <div id="ht-panel-events">
       <div id="ht-events-grid">
@@ -2408,7 +2417,23 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           </div>
           <iframe id="ht-map-iframe" src="" width="100%" height="380" style="border:none;display:block" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
+        <!-- 曾訂過的店家提示 -->
+        <div id="ht-nearby-history" style="display:none;margin-top:12px;padding:12px 14px;background:#fdf4f7;border-radius:10px;border:1px solid #f9c2d8">
+          <div style="font-size:13px;font-weight:700;color:#be185d;margin-bottom:8px">📋 這類別我們曾訂過…</div>
+          <div id="ht-nearby-history-list" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+        </div>
       </div>
+
+      <!-- 智慧推薦 -->
+      <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#6366f1,#a5b4fc);border-radius:2px"></span>
+          <span style="font-size:16px;font-weight:700;color:#0f172a">✨ 智慧推薦</span>
+          <span style="font-size:12px;color:#94a3b8;margin-left:2px">根據歷史訂購，排除近兩場</span>
+        </div>
+        <div id="ht-recommend-list"><div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">載入中…</div></div>
+      </div>
+
       <!-- 口袋名單 -->
       <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -2428,7 +2453,8 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
               <option>甜點</option><option>飲料</option><option>麵包</option><option>主食</option><option>冰品</option><option>其他</option>
             </select>
           </div>
-          <input id="ht-spot-notes" placeholder="備註（地址、特色、營業時間…）" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box;margin-bottom:10px;display:block" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+          <input id="ht-spot-addr" placeholder="地址（選填，填入後可一鍵開地圖）" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box;margin-bottom:8px;display:block" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+          <input id="ht-spot-notes" placeholder="備註（特色、營業時間…）" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;width:100%;box-sizing:border-box;margin-bottom:10px;display:block" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
           <div style="display:flex;gap:8px;justify-content:flex-end">
             <button onclick="htToggleSpotForm()" style="padding:6px 14px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;border-radius:8px;cursor:pointer;font-family:inherit">取消</button>
             <button onclick="htSaveSpot()" style="padding:6px 14px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit">儲存</button>
@@ -8474,8 +8500,31 @@ window.htLoadList = async function() {
   if (!r.ok) { toast('載入失敗：' + r.error); return; }
   _htEvents = r.events || [];
   htRenderList();
+  _htUpdateCountdown();
   // 預載廠商
   htApi('htVendors').then(function(rv){ if(rv.ok) _htVendors = rv.vendors || []; });
+}
+
+function _htUpdateCountdown() {
+  var banner = document.getElementById('ht-countdown-banner');
+  if (!banner) return;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var upcoming = _htEvents.map(function(e) {
+    var ds = String(e.date||'').replace(/\//g,'-');
+    if (!ds) return null;
+    var d = new Date(ds); d.setHours(0,0,0,0);
+    return isNaN(d.getTime()) || d < now ? null : { ev: e, d: d };
+  }).filter(Boolean).sort(function(a,b){ return a.d - b.d; });
+  if (!upcoming.length) { banner.style.display = 'none'; return; }
+  var next = upcoming[0];
+  var diffDays = Math.round((next.d - now) / 86400000);
+  if (diffDays > 7) { banner.style.display = 'none'; return; }
+  var txt = diffDays === 0 ? '今天就是午茶日！準備好了嗎？🎉'
+           : diffDays === 1 ? '明天就是午茶日！'
+           : '距離下次午茶日還有 ' + diffDays + ' 天';
+  document.getElementById('ht-countdown-text').textContent = txt;
+  document.getElementById('ht-countdown-sub').textContent = (next.ev.title || next.ev.eventId || '') + '　' + String(next.ev.date||'').replace(/-/g,'/');
+  banner.style.display = 'flex';
 };
 
 function htRenderList() {
@@ -8675,7 +8724,7 @@ function htRenderAnalytics() {
     // 後端 totalOrders 尚未計算，從所有活動的品項中自行統計（結果快取避免重複撈）
     if (_htItemsCache) {
       _htRenderVendorRank(rankEl, Object.values(_htItemsCache.vendorMap), 'count');
-      _htRenderCatBars(catEl, _htItemsCache.catTotals);
+      _htRenderCatBars(catEl, _htItemsCache.catTotals, totalSpend);
       return;
     }
     if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">統計中，請稍候…</div>';
@@ -8699,7 +8748,7 @@ function htRenderAnalytics() {
         });
         _htItemsCache = { vendorMap: vendorMap, catTotals: catTotals };
         _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
-        _htRenderCatBars(catEl, catTotals);
+        _htRenderCatBars(catEl, catTotals, totalSpend);
       });
   } else {
     _htRenderVendorRank(rankEl, _htVendors, 'totalOrders');
@@ -8708,7 +8757,7 @@ function htRenderAnalytics() {
       var cat = v.category || '其他';
       catTotalsV[cat] = (catTotalsV[cat]||0) + (v.totalOrders||0);
     });
-    _htRenderCatBars(catEl, catTotalsV);
+    _htRenderCatBars(catEl, catTotalsV, totalSpend);
   }
 }
 
@@ -8740,7 +8789,7 @@ function _htRenderVendorRank(el, vendors, countField) {
   }).join('');
 }
 
-function _htRenderCatBars(el, catTotals) {
+function _htRenderCatBars(el, catTotals, totalSpend) {
   if (!el) return;
   var palette = ['#e16b8c','#6366f1','#06b6d4','#f59e0b','#1e9d6b','#f97316','#8b5cf6','#0ea5e9','#ec4899','#94a3b8'];
   var catColMap = {'甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b','鹹食':'#f59e0b','餐點':'#f97316','甜食':'#ec4899','蛋糕':'#8b5cf6','餐具':'#0ea5e9','其他':'#94a3b8'};
@@ -8795,10 +8844,27 @@ function _htRenderCatBars(el, catTotals) {
       + '</div>';
   }).join('');
 
+  var summaryHtml = '';
+  if (catEntries.length) {
+    var topCat = catEntries[0];
+    var topPct = grandTotal > 0 ? Math.round(catTotals[topCat]/grandTotal*100) : 0;
+    summaryHtml += '<div style="margin-top:14px;padding:10px 14px;background:#fdf4f7;border-radius:10px;display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:16px">🏆</span>'
+      + '<span style="font-size:13px;color:#0f172a">最受歡迎類別：<strong style="color:#e16b8c">' + htEsc(topCat) + '</strong>（佔 ' + topPct + '%）</span>'
+      + '</div>';
+  }
+  if (totalSpend && grandTotal > 0) {
+    var avgItem = Math.round(totalSpend / grandTotal);
+    summaryHtml += '<div style="margin-top:8px;padding:10px 14px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;gap:10px">'
+      + '<span style="font-size:16px">💰</span>'
+      + '<span style="font-size:13px;color:#0f172a">平均單品花費：<strong style="color:#1e9d6b">NT$' + avgItem + '</strong></span>'
+      + '</div>';
+  }
   el.innerHTML = '<div style="display:flex;justify-content:center;margin-bottom:24px">'
     + '<svg width="200" height="200" viewBox="0 0 220 220">'+slices+'</svg>'
     + '</div>'
-    + '<div>'+legendHtml+'</div>';
+    + '<div>'+legendHtml+'</div>'
+    + summaryHtml;
 }
 
 function _htRenderMonthly(el, events) {
@@ -9159,7 +9225,26 @@ window.htDiscoverMap = function(el, cat, label) {
   _htRefreshMap(cat, label);
   document.getElementById('ht-map-container').style.display = 'block';
   document.getElementById('ht-map-container').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  _htRenderNearbyHistory(cat);
 };
+
+function _htRenderNearbyHistory(cat) {
+  var sec = document.getElementById('ht-nearby-history');
+  var lst = document.getElementById('ht-nearby-history-list');
+  if (!sec || !lst) return;
+  var keywords = cat.split(' ');
+  var matched = (_htVendors || []).filter(function(v) {
+    if (!v.totalOrders) return false;
+    var c = (v.category || '').toLowerCase();
+    return keywords.some(function(k){ return c.indexOf(k) !== -1 || (v.name||'').indexOf(k) !== -1; });
+  }).sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0,6);
+  if (!matched.length) { sec.style.display = 'none'; return; }
+  lst.innerHTML = matched.map(function(v){
+    return '<span style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#fff;border:1px solid #f9c2d8;color:#be185d">'
+      + htEsc(v.name) + ' <span style="font-weight:400;opacity:.7">×' + v.totalOrders + '</span></span>';
+  }).join('');
+  sec.style.display = '';
+}
 
 // ── 活動日曆 ──
 var _htCalYear  = new Date().getFullYear();
@@ -9370,7 +9455,46 @@ window.htCalNext = function() {
   htRenderCalendar();
 };
 
+function htRenderRecommend() {
+  var el = document.getElementById('ht-recommend-list');
+  if (!el) return;
+  if (!_htVendors.length) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">尚無歷史資料</div>';
+    return;
+  }
+  // 找出最近 2 場活動的廠商名稱，排除掉
+  var sorted = _htEvents.slice().sort(function(a,b){ return (_evMonth(b)||'').localeCompare(_evMonth(a)||''); });
+  var recentVendors = {};
+  sorted.slice(0,2).forEach(function(e){ if(e.vendors) e.vendors.forEach(function(v){ recentVendors[v] = true; }); });
+  var candidates = _htVendors.filter(function(v){ return (v.totalOrders||0) > 0 && !recentVendors[v.name]; });
+  // 取前 3，盡量不同類別
+  var seen = {}, picks = [];
+  candidates.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).forEach(function(v){
+    if (picks.length >= 3) return;
+    var cat = v.category || '其他';
+    if (!seen[cat] || picks.length < 3) { picks.push(v); seen[cat] = true; }
+  });
+  if (!picks.length) {
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">資料不足，多辦幾場再來看看 ☕</div>';
+    return;
+  }
+  var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
+  el.innerHTML = '<div style="display:grid;gap:10px">' + picks.map(function(v,i){
+    var col = catColors[v.category||'其他'] || '#64748b';
+    var medals = ['🥇','🥈','🥉'];
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:#f8fafc;border:1px solid #f1f5f9">'
+      + '<span style="font-size:20px">' + medals[i] + '</span>'
+      + '<div style="flex:1">'
+      +   '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(v.name) + '</span>'
+      +   '<span style="margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:'+col+'18;color:'+col+'">' + htEsc(v.category||'其他') + '</span>'
+      + '</div>'
+      + '<span style="font-size:12px;color:#94a3b8">訂過 ' + v.totalOrders + ' 次</span>'
+      + '</div>';
+  }).join('') + '</div>';
+}
+
 function htRenderDiscover() {
+  htRenderRecommend();
   var spots = htGetSpots();
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
   var list = document.getElementById('ht-spots-list');
@@ -9388,7 +9512,8 @@ function htRenderDiscover() {
       + '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(s.name) + '</span>'
       + '<span style="padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;background:' + col + '18;color:' + col + '">' + htEsc(s.category) + '</span>'
       + '</div>'
-      + (s.notes ? '<div style="font-size:12px;color:#64748b">' + htEsc(s.notes) + '</div>' : '')
+      + (s.address ? '<div style="font-size:12px;color:#475569;margin-top:3px;display:flex;align-items:center;gap:4px"><span>📍</span><a href="https://maps.google.com/?q=' + encodeURIComponent(s.address) + '" target="_blank" style="color:#e16b8c;text-decoration:none;font-weight:600" onclick="event.stopPropagation()">' + htEsc(s.address) + '</a></div>' : '')
+      + (s.notes ? '<div style="font-size:12px;color:#64748b;margin-top:2px">' + htEsc(s.notes) + '</div>' : '')
       + (dt ? '<div style="font-size:12px;color:#cbd5e1;margin-top:4px">加入於 ' + dt + '</div>' : '')
       + '</div>'
       + '<button onclick="htRemoveSpot(\'' + s.id + '\')" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:18px;padding:2px 4px;line-height:1;transition:color .15s" onmouseover="this.style.color=\'#ef4444\'" onmouseout="this.style.color=\'#cbd5e1\'">×</button>'
@@ -9409,11 +9534,13 @@ window.htSaveSpot = function() {
   var name = (document.getElementById('ht-spot-name').value || '').trim();
   if (!name) { toast('請輸入店家名稱'); return; }
   var cat   = document.getElementById('ht-spot-cat').value || '其他';
+  var addr  = (document.getElementById('ht-spot-addr').value || '').trim();
   var notes = (document.getElementById('ht-spot-notes').value || '').trim();
   var spots = htGetSpots();
-  spots.unshift({ id: Date.now().toString(), name: name, category: cat, notes: notes, ts: Date.now() });
+  spots.unshift({ id: Date.now().toString(), name: name, category: cat, address: addr, notes: notes, ts: Date.now() });
   localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
   document.getElementById('ht-spot-name').value = '';
+  document.getElementById('ht-spot-addr').value = '';
   document.getElementById('ht-spot-notes').value = '';
   document.getElementById('ht-spot-form').style.display = 'none';
   htRenderDiscover();
