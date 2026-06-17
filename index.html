@@ -9479,13 +9479,13 @@ function _htRenderDiscoverRec() {
   var sorted = _htEvents.slice().sort(function(a,b){ return (_evMonth(b)||'').localeCompare(_evMonth(a)||''); });
   var recentVendors = {};
   sorted.slice(0,2).forEach(function(e){ if(e.vendors) e.vendors.forEach(function(v){ recentVendors[v] = true; }); });
-  var candidates = _htVendors.filter(function(v){ return (v.totalOrders||0) > 0 && !recentVendors[v.name]; });
+  var candidates = _htVendors.filter(function(v){ return !recentVendors[v.name]; });
   // 取前 3，盡量不同類別
   var seen = {}, picks = [];
   candidates.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).forEach(function(v){
     if (picks.length >= 3) return;
     var cat = v.category || '其他';
-    if (!seen[cat] || picks.length < 3) { picks.push(v); seen[cat] = true; }
+    if (!seen[cat]) { picks.push(v); seen[cat] = true; }
   });
   if (!picks.length) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">資料不足，多辦幾場再來看看 ☕</div>';
@@ -9495,13 +9495,14 @@ function _htRenderDiscoverRec() {
   el.innerHTML = '<div style="display:grid;gap:10px">' + picks.map(function(v,i){
     var col = catColors[v.category||'其他'] || '#64748b';
     var medals = ['🥇','🥈','🥉'];
+    var ordersBadge = (v.totalOrders||0) > 0 ? '<span style="font-size:12px;color:#94a3b8">訂過 ' + v.totalOrders + ' 次</span>' : '';
     return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:#f8fafc;border:1px solid #f1f5f9">'
       + '<span style="font-size:20px">' + medals[i] + '</span>'
       + '<div style="flex:1">'
       +   '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(v.name) + '</span>'
       +   '<span style="margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:'+col+'18;color:'+col+'">' + htEsc(v.category||'其他') + '</span>'
       + '</div>'
-      + '<span style="font-size:12px;color:#94a3b8">訂過 ' + v.totalOrders + ' 次</span>'
+      + ordersBadge
       + '</div>';
   }).join('') + '</div>';
 }
