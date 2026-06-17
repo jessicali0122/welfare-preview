@@ -2270,7 +2270,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <div id="ht-current-month-chip" style="display:none"></div>
 
     <!-- 倒數提醒 Banner -->
-    <div id="ht-countdown-banner" style="display:none;border-radius:14px;background:linear-gradient(135deg,#fff0f5,#fde8f0);border:1.5px solid #f9c2d8;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
+    <div id="ht-countdown-banner" style="display:none;border-radius:14px;background:linear-gradient(135deg,#fff0f5,#fde8f0);border:1.5px solid #f9c2d8;padding:14px 18px;margin-bottom:14px;align-items:center;gap:12px">
       <span style="font-size:24px;flex-shrink:0">🍰</span>
       <div style="flex:1">
         <div id="ht-countdown-text" style="font-size:15px;font-weight:700;color:#be185d"></div>
@@ -2431,7 +2431,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <span style="font-size:16px;font-weight:700;color:#0f172a">✨ 智慧推薦</span>
           <span style="font-size:12px;color:#94a3b8;margin-left:2px">根據歷史訂購，排除近兩場</span>
         </div>
-        <div id="ht-recommend-list"><div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">載入中…</div></div>
+        <div id="ht-discover-rec-list"><div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">載入中…</div></div>
       </div>
 
       <!-- 口袋名單 -->
@@ -8502,7 +8502,12 @@ window.htLoadList = async function() {
   htRenderList();
   _htUpdateCountdown();
   // 預載廠商
-  htApi('htVendors').then(function(rv){ if(rv.ok) _htVendors = rv.vendors || []; });
+  htApi('htVendors').then(function(rv){
+    if(rv.ok) {
+      _htVendors = rv.vendors || [];
+      if (_htListTab === 'discover') _htRenderDiscoverRec();
+    }
+  });
 }
 
 function _htUpdateCountdown() {
@@ -9455,8 +9460,8 @@ window.htCalNext = function() {
   htRenderCalendar();
 };
 
-function htRenderRecommend() {
-  var el = document.getElementById('ht-recommend-list');
+function _htRenderDiscoverRec() {
+  var el = document.getElementById('ht-discover-rec-list');
   if (!el) return;
   if (!_htVendors.length) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">尚無歷史資料</div>';
@@ -9494,7 +9499,7 @@ function htRenderRecommend() {
 }
 
 function htRenderDiscover() {
-  htRenderRecommend();
+  _htRenderDiscoverRec();
   var spots = htGetSpots();
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
   var list = document.getElementById('ht-spots-list');
