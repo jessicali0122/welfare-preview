@@ -9199,11 +9199,20 @@ window.htSelectZone = function(btn, zone) {
 
 function _htRefreshMap(cat, label) {
   var zone = _htZoneMap[_htZone] || _htZoneMap.walk;
-  // near: 讓 Google Maps 把搜尋結果錨定在公司座標附近
-  var query = cat + ' near:新北市新莊區新北大道三段218號';
-  var mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query)
-    + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
-  var extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(cat + ' 新莊新北大道');
+  var mapUrl, extUrl;
+  if (_htZone === 'metro') {
+    // 雙北全區：用座標固定中心
+    var query = cat + ' ' + zone.area;
+    mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query)
+      + '&ll=' + zone.ll + '&z=' + zone.z + '&hl=zh-TW&output=embed';
+    extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(cat + ' 台北新北');
+  } else {
+    // 步行/騎車圈：直接用地址做錨點，不帶 ll= 以免座標偏移
+    var query = cat + ' near:新北市新莊區新北大道三段218號';
+    mapUrl = 'https://maps.google.com/maps?q=' + encodeURIComponent(query)
+      + '&z=' + zone.z + '&hl=zh-TW&output=embed';
+    extUrl = 'https://www.google.com/maps/search/' + encodeURIComponent(cat + ' 新北市新莊區新北大道三段218號');
+  }
   document.getElementById('ht-map-iframe').src = mapUrl;
   document.getElementById('ht-map-title').textContent = '📍 ' + label + ' — ' + zone.label;
   document.getElementById('ht-map-extlink').href = extUrl;
