@@ -232,7 +232,7 @@ function doSearch(){
     return;
   }
   if(!q && !hasBrand){
-    showMsg('請輸入關鍵字，或選擇品牌', false);
+    showMsg('請輸入關鍵字，或選擇下方品牌', false);
     return;
   }
 
@@ -255,6 +255,21 @@ function doSearch(){
       targetBrands.forEach(b => push(b.name + ' 官網', q || b.name, getOfficialSearchUrl(b, q)));
     }
   }
+
+  if(urls.length === 0){
+    if(!hasBrand && selP.size > 0 && nonCyberbizPlats.length === 0){
+      showMsg('CYBERBIZ 需搭配品牌才能搜尋，請選擇品牌', false);
+    } else {
+      showMsg('沒有符合條件的查詢頁面', false);
+    }
+    return;
+  }
+
+  const condParts = [];
+  if(q) condParts.push(`關鍵字：${q}`);
+  if(hasBrand) condParts.push(`品牌：${targetBrands.map(b=>b.name).join('、')}`);
+  const condEl = document.getElementById('searchCondLine');
+  if(condEl) condEl.textContent = condParts.length ? `本次查詢 — ${condParts.join('　')}` : '';
 
   const btn = document.getElementById('doSearchBtn');
   const fire = ()=>{
@@ -297,6 +312,9 @@ function setSpMode(mode){
   document.getElementById('spBrandArea').style.display = mode === 'brand'   ? '' : 'none';
   document.getElementById('spResults').style.display   = 'none';
   document.getElementById('spResultMsg').style.display = 'none';
+  document.getElementById('spLinkItems').innerHTML     = '';
+  const condEl = document.getElementById('spSearchCondLine');
+  if(condEl) condEl.textContent = '';
 }
 
 function doSpSearch(){
@@ -323,6 +341,19 @@ function doSpSearch(){
       });
     });
   }
+
+  const spCondParts = [];
+  if(spMode === 'keyword'){
+    const q = document.getElementById('spKwInput').value.trim();
+    if(q) spCondParts.push(`關鍵字：${q}`);
+  } else {
+    const targetBrandsForCond = brands.filter(b => selSB.has(b.id));
+    if(targetBrandsForCond.length) spCondParts.push(`品牌：${targetBrandsForCond.map(b=>b.name).join('、')}`);
+    const spBrandKwCond = (document.getElementById('spBrandKwInput').value || '').trim();
+    if(spBrandKwCond) spCondParts.push(`關鍵字：${spBrandKwCond}`);
+  }
+  const spCondEl = document.getElementById('spSearchCondLine');
+  if(spCondEl) spCondEl.textContent = spCondParts.length ? `本次查詢 — ${spCondParts.join('　')}` : '';
 
   const btn = document.getElementById(spMode === 'keyword' ? 'spSearchBtnKw' : 'spSearchBtnBrand');
   const fire = ()=>{
