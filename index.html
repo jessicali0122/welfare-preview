@@ -1293,7 +1293,7 @@ tbody td{font-size:var(--fs-base)!important}
   /* 活動日曆：右側行程列表取消 sticky */
   #ht-panel-calendar [style*="position:sticky"]{position:static!important}
   /* 活動日曆月份節日文字縮小 */
-  #ht-cal-grid>div{min-height:52px}
+  #ht-cal-grid>div{min-height:60px}
   /* 事件資訊列 flex-wrap */
   #ht-event-info-bar [style*="display:flex;gap:16px"]{flex-wrap:wrap!important;gap:8px!important}
   /* 月份總覽：4欄卡片 → 2欄（避免被截斷） */
@@ -8418,6 +8418,7 @@ var _htEvent    = null; // 目前開啟的活動
 var _htListTab  = 'events';
 var _htDetailTab= 'plan';
 var _htVendors  = [];
+var _htVendorsLoading = null;
 var _htItemsCache = null; // { vendorMap, catTotals } — 避免重複撈全部品項
 var _htRecData  = null;
 var _htRecTab   = 'all';
@@ -8500,13 +8501,18 @@ window.htLoadList = async function() {
   _htEvents = r.events || [];
   htRenderList();
   _htUpdateCountdown();
-  // 預載廠商
-  htApi('htVendors').then(function(rv){
-    if(rv.ok) {
-      _htVendors = rv.vendors || [];
-      if (_htListTab === 'discover') _htRenderDiscoverRec();
-    }
-  });
+  // 預載廠商（共用 promise 防止重複呼叫）
+  if (!_htVendors.length && !_htVendorsLoading) {
+    _htVendorsLoading = htApi('htVendors').then(function(rv){
+      _htVendorsLoading = null;
+      if(rv.ok) {
+        _htVendors = rv.vendors || [];
+        if (_htListTab === 'discover') _htRenderDiscoverRec();
+      }
+    });
+  } else if (_htListTab === 'discover') {
+    _htRenderDiscoverRec();
+  }
 }
 
 function _htUpdateCountdown() {
@@ -8720,7 +8726,12 @@ function htRenderAnalytics() {
 
   if (!_htVendors.length) {
     if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
-    htApi('htVendors').then(function(rv){ if(rv.ok){ _htVendors = rv.vendors||[]; htRenderAnalytics(); } });
+    var vendorPromise = _htVendorsLoading || htApi('htVendors').then(function(rv){
+      _htVendorsLoading = null;
+      if(rv.ok) _htVendors = rv.vendors||[];
+    });
+    if (!_htVendorsLoading) _htVendorsLoading = vendorPromise;
+    vendorPromise.then(function(){ htRenderAnalytics(); });
     return;
   }
 
@@ -8731,9 +8742,20 @@ function htRenderAnalytics() {
       _htRenderCatBars(catEl, _htItemsCache.catTotals, totalSpend);
       return;
     }
+    // 嘗試讀 localStorage 快取（6 小時有效）
+    var _cacheKey = 'bf_ht_items_' + _htEvents.length;
+    try {
+      var _cached = JSON.parse(localStorage.getItem(_cacheKey) || 'null');
+      if (_cached && Date.now() - _cached.ts < 6 * 3600 * 1000) {
+        _htItemsCache = { vendorMap: _cached.vendorMap, catTotals: _cached.catTotals };
+        _htRenderVendorRank(rankEl, Object.values(_htItemsCache.vendorMap), 'count');
+        _htRenderCatBars(catEl, _htItemsCache.catTotals, totalSpend);
+        return;
+      }
+    } catch(e) {}
     if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">統計中，請稍候…</div>';
     if (catEl)  catEl.innerHTML  = '';
-    var _evIds = _htEvents.map(function(e){ return e.eventId; });
+    var _evIds = _htEvents.slice(0, 15).map(function(e){ return e.eventId; });
     Promise.all(_evIds.map(function(id){ return htApi('htGetItems', { eventId: id }); }))
       .then(function(results) {
         var vendorMap = {};
@@ -8751,6 +8773,7 @@ function htRenderAnalytics() {
           });
         });
         _htItemsCache = { vendorMap: vendorMap, catTotals: catTotals };
+        try { localStorage.setItem(_cacheKey, JSON.stringify({ ts: Date.now(), vendorMap: vendorMap, catTotals: catTotals })); } catch(e) {}
         _htRenderVendorRank(rankEl, Object.values(vendorMap), 'count');
         _htRenderCatBars(catEl, catTotals, totalSpend);
       });
@@ -9481,18 +9504,8 @@ function _htRenderDiscoverRec() {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">尚無歷史資料</div>';
     return;
   }
-  // 找出最近 2 場活動的廠商名稱，排除掉
-  var sorted = _htEvents.slice().sort(function(a,b){ return (_evMonth(b)||'').localeCompare(_evMonth(a)||''); });
-  var recentVendors = {};
-  sorted.slice(0,2).forEach(function(e){ if(e.vendors) e.vendors.forEach(function(v){ recentVendors[v] = true; }); });
-  var candidates = _htVendors.filter(function(v){ return !recentVendors[v.name]; });
-  // 取前 3，盡量不同類別
-  var seen = {}, picks = [];
-  candidates.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).forEach(function(v){
-    if (picks.length >= 3) return;
-    var cat = v.category || '其他';
-    if (!seen[cat]) { picks.push(v); seen[cat] = true; }
-  });
+  // 直接按訂購次數取前 3 推薦
+  var picks = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0,3);
   if (!picks.length) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">資料不足，多辦幾場再來看看 ☕</div>';
     return;
