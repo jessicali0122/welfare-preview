@@ -1289,11 +1289,11 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析左右並排 → 上下 */
   #ht-panel-analytics>[style*="display:grid"]{grid-template-columns:1fr!important}
   /* 活動日曆：雙欄 → 單欄 */
-  #ht-panel-calendar>[style*="grid-template-columns:1fr 320px"]{grid-template-columns:1fr!important}
-  /* 活動日曆：右側行程列表取消 sticky */
-  #ht-panel-calendar [style*="position:sticky"]{position:static!important}
-  /* 活動日曆月份節日文字縮小 */
-  #ht-cal-grid>div{min-height:52px}
+  #ht-panel-calendar>[style*="grid-template-columns:260px 1fr"]{grid-template-columns:1fr!important}
+  /* 活動日曆：sidebar 隱藏 */
+  #ht-cal-sidebar{display:none!important}
+  /* 活動日曆月份格子縮小 */
+  #ht-cal-grid>div{min-height:56px!important}
   /* 事件資訊列 flex-wrap */
   #ht-event-info-bar [style*="display:flex;gap:16px"]{flex-wrap:wrap!important;gap:8px!important}
   /* 月份總覽：4欄卡片 → 2欄（避免被截斷） */
@@ -1301,6 +1301,29 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
+/* ── 新版日曆 ── */
+.ht-mini-day{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;font-size:12px;font-weight:400;color:#374151;cursor:pointer;transition:background .15s,color .15s;margin:1px auto}
+.ht-mini-day:hover{background:#f5f5f5}
+.ht-mini-day.is-today{background:#e16b8c;color:#fff;font-weight:800}
+.ht-mini-day.has-event{color:#e16b8c;font-weight:700}
+.ht-mini-day.is-today.has-event{background:#e16b8c;color:#fff}
+.ht-mini-day.is-sun{color:#f43f5e}
+.ht-mini-day.is-sat{color:#6366f1}
+.ht-mini-day.is-today.is-sun,.ht-mini-day.is-today.is-sat{color:#fff}
+.ht-mini-day.selected{background:#fde4ef;color:#e16b8c;font-weight:700}
+.ht-mini-day.is-today.selected{background:#e16b8c;color:#fff}
+.ht-mini-day.other-month{color:#d0d0d0;cursor:default}
+.ht-mini-day.other-month:hover{background:transparent}
+.ht-main-day{padding:10px 10px 8px;min-height:90px;border-right:1px solid #f5f5f5;border-bottom:1px solid #f5f5f5;cursor:pointer;transition:background .12s;position:relative;box-sizing:border-box}
+.ht-main-day:hover{background:#fafafa}
+.ht-main-day.is-today{background:#fff8fb}
+.ht-main-day.is-today:hover{background:#fff0f5}
+.ht-main-day.selected{background:#fff0f5;box-shadow:inset 0 0 0 2px #f9a8d4}
+.ht-main-day.no-border-r{border-right:none}
+.ht-main-day.no-border-b{border-bottom:none}
+.ht-cal-chip{border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;margin-top:4px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;transition:opacity .15s}
+.ht-cal-chip:hover{opacity:.78}
+.ht-cal-hol{border-radius:6px;padding:3px 8px;font-size:12px;font-weight:600;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
 </style>
 </head>
 <body>
@@ -2311,47 +2334,77 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
-        <!-- 左側：日曆 -->
+      <div style="display:grid;grid-template-columns:260px 1fr;gap:16px;align-items:start">
+
+        <!-- 左側 Sidebar -->
+        <div id="ht-cal-sidebar" style="display:flex;flex-direction:column;gap:12px">
+
+          <!-- Mini 月曆 -->
+          <div style="background:#fff;border:1px solid #ebebeb;border-radius:20px;padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+              <button onclick="htCalPrev()" style="width:28px;height:28px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s" onmouseover="this.style.background='#fff0f5'" onmouseout="this.style.background='#fff'">‹</button>
+              <div id="ht-mini-cal-title" style="font-size:14px;font-weight:800;color:#0f172a"></div>
+              <button onclick="htCalNext()" style="width:28px;height:28px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s" onmouseover="this.style.background='#fff0f5'" onmouseout="this.style.background='#fff'">›</button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px">
+              <div style="font-size:12px;color:#f43f5e;font-weight:600;padding:4px 0">日</div>
+              <div style="font-size:12px;color:#aaa;font-weight:600;padding:4px 0">一</div>
+              <div style="font-size:12px;color:#aaa;font-weight:600;padding:4px 0">二</div>
+              <div style="font-size:12px;color:#aaa;font-weight:600;padding:4px 0">三</div>
+              <div style="font-size:12px;color:#aaa;font-weight:600;padding:4px 0">四</div>
+              <div style="font-size:12px;color:#aaa;font-weight:600;padding:4px 0">五</div>
+              <div style="font-size:12px;color:#6366f1;font-weight:600;padding:4px 0">六</div>
+            </div>
+            <div id="ht-mini-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);text-align:center"></div>
+          </div>
+
+          <!-- 活動狀態 -->
+          <div style="background:#fff;border:1px solid #ebebeb;border-radius:20px;padding:20px">
+            <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:12px">活動狀態</div>
+            <div id="ht-cal-categories"></div>
+          </div>
+
+          <!-- 本月概覽 -->
+          <div style="background:#fff;border:1px solid #ebebeb;border-radius:20px;padding:20px">
+            <div style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:12px">本月概覽</div>
+            <div id="ht-cal-stats"></div>
+          </div>
+
+        </div>
+
+        <!-- 主月曆 -->
         <div style="background:#fff;border:1px solid #ebebeb;border-radius:20px;overflow:hidden">
           <!-- 標題列 -->
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #f5f5f5">
-            <button onclick="htCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s" onmouseover="this.style.background='#fff0f5';this.style.borderColor='#e16b8c'" onmouseout="this.style.background='#fff';this.style.borderColor='#ebebeb'">‹</button>
-            <div style="text-align:center">
-              <div id="ht-cal-title" style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:.02em"></div>
-              <div id="ht-cal-subtitle" style="font-size:12px;color:#bbb;margin-top:4px"></div>
-            </div>
-            <button onclick="htCalNext()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s" onmouseover="this.style.background='#fff0f5';this.style.borderColor='#e16b8c'" onmouseout="this.style.background='#fff';this.style.borderColor='#ebebeb'">›</button>
+          <div style="display:flex;align-items:center;gap:10px;padding:20px 24px;border-bottom:1px solid #f5f5f5">
+            <button onclick="htCalPrev()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s" onmouseover="this.style.background='#fff0f5';this.style.borderColor='#e16b8c'" onmouseout="this.style.background='#fff';this.style.borderColor='#ebebeb'">‹</button>
+            <button onclick="htCalNext()" style="width:32px;height:32px;border-radius:50%;border:1.5px solid #ebebeb;background:#fff;color:#e16b8c;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;transition:all .18s" onmouseover="this.style.background='#fff0f5';this.style.borderColor='#e16b8c'" onmouseout="this.style.background='#fff';this.style.borderColor='#ebebeb'">›</button>
+            <div id="ht-cal-title" style="font-size:20px;font-weight:800;color:#0f172a;letter-spacing:.01em"></div>
+            <div style="flex:1"></div>
+            <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:6px;padding:10px 18px;border-radius:12px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(225,107,140,.28);transition:all .18s" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 16px rgba(225,107,140,.4)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 12px rgba(225,107,140,.28)'">
+              <span style="font-size:16px;line-height:1">+</span> 新增活動
+            </button>
           </div>
           <!-- 星期標頭 -->
-          <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #f5f5f5">
-            <div style="text-align:center;font-size:14px;font-weight:700;color:#e16b8c;padding:10px 0">日</div>
-            <div style="text-align:center;font-size:14px;font-weight:600;color:#999;padding:10px 0">一</div>
-            <div style="text-align:center;font-size:14px;font-weight:600;color:#999;padding:10px 0">二</div>
-            <div style="text-align:center;font-size:14px;font-weight:600;color:#999;padding:10px 0">三</div>
-            <div style="text-align:center;font-size:14px;font-weight:600;color:#999;padding:10px 0">四</div>
-            <div style="text-align:center;font-size:14px;font-weight:600;color:#999;padding:10px 0">五</div>
-            <div style="text-align:center;font-size:14px;font-weight:700;color:#6366f1;padding:10px 0">六</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #f5f5f5;background:#fafafa">
+            <div style="text-align:center;font-size:13px;font-weight:700;color:#f43f5e;padding:12px 0">日</div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#64748b;padding:12px 0">一</div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#64748b;padding:12px 0">二</div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#64748b;padding:12px 0">三</div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#64748b;padding:12px 0">四</div>
+            <div style="text-align:center;font-size:13px;font-weight:600;color:#64748b;padding:12px 0">五</div>
+            <div style="text-align:center;font-size:13px;font-weight:700;color:#6366f1;padding:12px 0">六</div>
           </div>
           <!-- 日期格子 -->
           <div id="ht-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
           <!-- 圖例 -->
-          <div style="display:flex;align-items:center;gap:16px;padding:14px 22px;border-top:1px solid #f5f5f5;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#999">午茶日</span></div>
-            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#999">國定假日</span></div>
-            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#f59e0b"></div><span style="font-size:12px;color:#999">節慶</span></div>
-            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#fde4ef"></div><span style="font-size:12px;color:#999">今天</span></div>
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 22px;border-top:1px solid #f5f5f5;background:#fafafa;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#999">午茶日</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#999">國定假日</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#f59e0b"></div><span style="font-size:12px;color:#999">節慶</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c;opacity:.3"></div><span style="font-size:12px;color:#999">今天</span></div>
           </div>
         </div>
 
-        <!-- 右側：行程列表 -->
-        <div style="background:#fff;border:1px solid #ebebeb;border-radius:20px;overflow:hidden;position:sticky;top:16px">
-          <div style="padding:18px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:10px">
-            <div style="width:4px;height:18px;border-radius:2px;background:linear-gradient(180deg,#e16b8c,#f9a8d4)"></div>
-            <span style="font-size:16px;font-weight:800;color:#0f172a">本月行程</span>
-          </div>
-          <div id="ht-cal-events" style="padding:16px 20px;max-height:480px;overflow-y:auto"></div>
-        </div>
       </div>
     </div>
 
@@ -9314,129 +9367,166 @@ function _htHolidayForDate(yyyy, mm, dd) {
   return _twLunarMap[full] || _twHolidays[mmdd] || null;
 }
 
+var _htCalSelectedDay = null;
+
 function htRenderCalendar() {
   var y = _htCalYear, m = _htCalMonth;
   var monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
-  var titleEl = document.getElementById('ht-cal-title');
-  var subEl   = document.getElementById('ht-cal-subtitle');
-  var gridEl  = document.getElementById('ht-cal-grid');
-  var evEl    = document.getElementById('ht-cal-events');
+  var titleEl    = document.getElementById('ht-cal-title');
+  var miniTitle  = document.getElementById('ht-mini-cal-title');
+  var miniGrid   = document.getElementById('ht-mini-cal-grid');
+  var gridEl     = document.getElementById('ht-cal-grid');
+  var catsEl     = document.getElementById('ht-cal-categories');
+  var statsEl    = document.getElementById('ht-cal-stats');
   if (!gridEl) return;
 
-  titleEl.textContent = y + ' 年 ' + monthNames[m-1];
+  var label = y + ' 年 ' + monthNames[m-1];
+  if (titleEl) titleEl.textContent = label;
+  if (miniTitle) miniTitle.textContent = monthNames[m-1] + ' ' + y;
 
-  // 當月活動（比對 _htEvents 的 month 欄）
   var ym = y + '-' + (m < 10 ? '0' : '') + m;
   var monthEvents = _htEvents.filter(function(e){ return _evMonth(e) === ym; });
-  // 建立 date→event 的快速查找（e.date 格式 yyyy/MM/dd 或 yyyy-MM-dd）
+
   var eventDays = {};
   monthEvents.forEach(function(e) {
     var ds = String(e.date||'').replace(/\//g,'-');
-    if (ds) eventDays[ds] = e;
+    if (ds) { if (!eventDays[ds]) eventDays[ds] = []; eventDays[ds].push(e); }
   });
 
   var today = new Date();
   var todayStr = today.getFullYear() + '-' + _pad2(today.getMonth()+1) + '-' + _pad2(today.getDate());
-
-  var firstDay = new Date(y, m-1, 1).getDay(); // 0=Sun
+  var firstDay   = new Date(y, m-1, 1).getDay();
   var daysInMonth = new Date(y, m, 0).getDate();
-  var prevDays = new Date(y, m-1, 0).getDate();
-
-  var borderR = 'border-right:1px solid #f0f0f0;';
-  var borderB = 'border-bottom:1px solid #f0f0f0;';
-  // 計算總列數以決定哪行不加下框線
+  var prevDays   = new Date(y, m-1, 0).getDate();
   var totalCells = firstDay + daysInMonth;
-  var totalRows = Math.ceil(totalCells / 7);
+  var totalRows  = Math.ceil(totalCells / 7);
 
+  // ── Mini 月曆 ──
+  if (miniGrid) {
+    var mini = '';
+    for (var pi = firstDay - 1; pi >= 0; pi--) {
+      mini += '<div><span class="ht-mini-day other-month">' + (prevDays - pi) + '</span></div>';
+    }
+    for (var md = 1; md <= daysInMonth; md++) {
+      var mds = y + '-' + _pad2(m) + '-' + _pad2(md);
+      var mdow = new Date(y, m-1, md).getDay();
+      var cls = 'ht-mini-day';
+      if (mds === todayStr) cls += ' is-today';
+      if (eventDays[mds]) cls += ' has-event';
+      if (mdow === 0) cls += ' is-sun';
+      if (mdow === 6) cls += ' is-sat';
+      if (mds === _htCalSelectedDay) cls += ' selected';
+      mini += '<div><span class="' + cls + '" onclick="htCalSelectDay(\'' + mds + '\')">' + md + '</span></div>';
+    }
+    var mtrail = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+    for (var mt = 1; mt <= mtrail; mt++) {
+      mini += '<div><span class="ht-mini-day other-month">' + mt + '</span></div>';
+    }
+    miniGrid.innerHTML = mini;
+  }
+
+  // ── 主月曆格子 ──
   var cells = '';
   var cellIdx = 0;
-  // 前補（上個月尾巴）
-  for (var i = firstDay - 1; i >= 0; i--, cellIdx++) {
-    var rowI = Math.floor(cellIdx / 7);
+  for (var pi2 = firstDay - 1; pi2 >= 0; pi2--, cellIdx++) {
     var colI = cellIdx % 7;
-    cells += '<div style="padding:10px 4px 8px;text-align:center;'+(colI<6?borderR:'')+(rowI<totalRows-1?borderB:'')+'">'
-      + '<span style="font-size:14px;color:#d0d0d0">' + (prevDays - i) + '</span>'
+    var rowI = Math.floor(cellIdx / 7);
+    cells += '<div class="ht-main-day' + (colI === 6 ? ' no-border-r' : '') + (rowI === totalRows-1 ? ' no-border-b' : '') + '">'
+      + '<span style="font-size:14px;color:#d0d0d0">' + (prevDays - pi2) + '</span>'
       + '</div>';
   }
-  // 當月日期
   for (var d = 1; d <= daysInMonth; d++, cellIdx++) {
     var dateStr = y + '-' + _pad2(m) + '-' + _pad2(d);
     var dow = new Date(y, m-1, d).getDay();
     var rowD = Math.floor(cellIdx / 7);
     var colD = cellIdx % 7;
-    var isToday  = dateStr === todayStr;
-    var hasEvent = !!eventDays[dateStr];
-    var hol = _htHolidayForDate(y, m, d);
-    var isSun = dow === 0, isSat = dow === 6;
-
-    var numColor = isSun ? '#f43f5e' : isSat ? '#6366f1' : '#374151';
+    var isToday = dateStr === todayStr;
+    var isSel   = dateStr === _htCalSelectedDay;
+    var evs     = eventDays[dateStr] || [];
+    var hol     = _htHolidayForDate(y, m, d);
+    var numColor = dow === 0 ? '#f43f5e' : dow === 6 ? '#6366f1' : '#374151';
     if (hol && hol.type === 'national') numColor = '#f43f5e';
 
-    var cellBg = isToday ? 'background:#fff0f6;' : '';
+    var dayCls = 'ht-main-day';
+    if (isToday) dayCls += ' is-today';
+    if (isSel)   dayCls += ' selected';
+    if (colD === 6) dayCls += ' no-border-r';
+    if (rowD === totalRows-1) dayCls += ' no-border-b';
 
-    var dots = '';
-    if (hasEvent) dots += '<div style="width:6px;height:6px;border-radius:50%;background:#e16b8c;margin:0 1px;flex-shrink:0"></div>';
+    var chips = '';
+    evs.forEach(function(ev) {
+      var sc = statusColor(ev.status);
+      chips += '<span class="ht-cal-chip" style="background:' + sc.bg + ';color:' + sc.color + '" onclick="event.stopPropagation();htOpenDetail(\'' + ev.eventId + '\')">'
+        + fmtMonth(ev.month) + ' 午茶日'
+        + '</span>';
+    });
     if (hol) {
-      var dc = hol.type === 'national' ? '#f43f5e' : '#f59e0b';
-      dots += '<div style="width:6px;height:6px;border-radius:50%;background:'+dc+';margin:0 1px;flex-shrink:0"></div>';
+      var hbg = hol.type === 'national' ? '#fef2f2' : '#fffbeb';
+      var hcc2 = hol.type === 'national' ? '#ef4444' : '#f59e0b';
+      chips += '<span class="ht-cal-hol" style="background:' + hbg + ';color:' + hcc2 + '">' + hol.name + '</span>';
     }
 
-    cells += '<div style="padding:10px 4px 8px;text-align:center;position:relative;'+(colD<6?borderR:'')+(rowD<totalRows-1?borderB:'')+cellBg+'">'
-      + (isToday ? '<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);width:28px;height:28px;border-radius:50%;background:#e16b8c;opacity:.12"></div>' : '')
-      + '<div style="font-size:14px;font-weight:'+(isToday?'800':'500')+';color:'+numColor+';position:relative">' + d + '</div>'
-      + (dots ? '<div style="display:flex;justify-content:center;gap:2px;margin-top:4px;position:relative">'+dots+'</div>' : '<div style="height:10px"></div>')
-      + (hol ? '<div style="font-size:12px;color:'+(hol.type==='national'?'#f43f5e':'#f59e0b')+';white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 2px;margin-top:2px;position:relative">'+hol.name+'</div>' : '')
+    cells += '<div class="' + dayCls + '" onclick="htCalSelectDay(\'' + dateStr + '\')">'
+      + '<span style="display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:' + (isToday ? '#e16b8c' : 'transparent') + ';color:' + (isToday ? '#fff' : numColor) + ';font-size:14px;font-weight:' + (isToday ? '800' : '500') + '">' + d + '</span>'
+      + chips
       + '</div>';
   }
-  // 後補（下個月開頭）
-  var totalFinal = firstDay + daysInMonth;
-  var trailing = totalFinal % 7 === 0 ? 0 : 7 - (totalFinal % 7);
+  var trailing = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
   for (var t = 1; t <= trailing; t++, cellIdx++) {
     var colT = cellIdx % 7;
-    cells += '<div style="padding:10px 4px 8px;text-align:center;'+(colT<6?borderR:'')+'">'
+    cells += '<div class="ht-main-day' + (colT === 6 ? ' no-border-r' : '') + ' no-border-b">'
       + '<span style="font-size:14px;color:#d0d0d0">' + t + '</span>'
       + '</div>';
   }
   gridEl.innerHTML = cells;
 
-  // 副標題：本月事件數
-  var holCount = 0;
-  for (var dd2 = 1; dd2 <= daysInMonth; dd2++) {
-    if (_htHolidayForDate(y, m, dd2)) holCount++;
+  // ── 活動狀態 sidebar ──
+  if (catsEl) {
+    var statGroups = [
+      { key: '規劃中', color: '#6366f1', bg: '#eef2ff' },
+      { key: '進行中', color: '#f59e0b', bg: '#fffbeb' },
+      { key: '已完成', color: '#10b981', bg: '#ecfdf5' },
+      { key: '已取消', color: '#94a3b8', bg: '#f8fafc' },
+    ];
+    var counts = {};
+    monthEvents.forEach(function(e){ var s = e.status||''; counts[s] = (counts[s]||0) + 1; });
+    catsEl.innerHTML = statGroups.map(function(g, i) {
+      var cnt = counts[g.key] || 0;
+      var isLast = i === statGroups.length - 1;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;' + (isLast ? '' : 'border-bottom:1px solid #f5f5f5') + '">'
+        + '<div style="width:12px;height:12px;border-radius:3px;background:' + g.color + ';flex-shrink:0"></div>'
+        + '<span style="flex:1;font-size:14px;color:#374151;font-weight:500">' + g.key + '</span>'
+        + '<span style="font-size:14px;font-weight:700;color:' + (cnt ? g.color : '#d0d0d0') + '">' + cnt + '</span>'
+        + '</div>';
+    }).join('') + '<div style="margin-top:12px;font-size:12px;color:#bbb;text-align:center">僅顯示本月</div>';
   }
-  subEl.textContent = (monthEvents.length ? '本月 ' + monthEvents.length + ' 場午茶日' : '本月尚無活動') + (holCount ? '　' + holCount + ' 個節假日' : '');
 
-  // 當月活動行程列表
-  if (!monthEvents.length) {
-    evEl.innerHTML = '<div style="text-align:center;padding:40px 0">'
-      + '<div style="font-size:32px;margin-bottom:10px">📅</div>'
-      + '<div style="font-size:14px;color:#ccc;font-weight:600">本月尚無午茶日</div>'
-      + '</div>';
-  } else {
-    evEl.innerHTML = monthEvents.map(function(e) {
-      var sc = statusColor(e.status);
-      var d = String(e.date||'');
-      var dayNum = d ? parseInt(d.slice(-2),10) : '';
-      var mNum = d ? parseInt(d.slice(5,7),10) : '';
-      var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
-      var mAbbr = mNum ? mNames[mNum-1] : '';
-      return '<div onclick="htOpenDetail(\''+e.eventId+'\')" style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:14px;margin-bottom:10px;cursor:pointer;background:#fff;border:1px solid #f0f0f0;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'#f9a8d4\';this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\'" onmouseout="this.style.borderColor=\'#f0f0f0\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
-        + '<div style="width:48px;flex-shrink:0;background:linear-gradient(150deg,#fdeef5,#fad8ea);border-radius:12px;padding:8px 0;text-align:center;color:#c8587a">'
-        +   '<div style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.7">'+mAbbr+'</div>'
-        +   '<div style="font-size:22px;font-weight:800;line-height:1.1">'+dayNum+'</div>'
-        + '</div>'
-        + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-size:16px;font-weight:800;color:#1e293b">'+fmtMonth(e.month)+' 午茶日</div>'
-        +   (e.headcount ? '<div style="font-size:14px;color:#aaa;margin-top:4px">👥 '+e.headcount+' 人參與</div>' : '')
-        + '</div>'
-        + '<div style="text-align:right;flex-shrink:0">'
-        +   '<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+e.status+'</span>'
-        +   (e.actualExpense ? '<div style="font-size:14px;font-weight:700;color:#be185d;margin-top:6px">'+fmtMoney(e.actualExpense)+'</div>' : '')
-        + '</div>'
+  // ── 本月概覽 sidebar ──
+  if (statsEl) {
+    var totalPeople = monthEvents.reduce(function(s,e){return s+(e.headcount||0);},0);
+    var totalBudget = monthEvents.reduce(function(s,e){
+      return s+(e.headcount||0)*(e.budgetPerHead||200)+(e.birthdayBudget||0);
+    },0);
+    var sData = [
+      { icon:'🍰', label:'本月活動', val: monthEvents.length + ' 場' },
+      { icon:'👥', label:'預計人次', val: totalPeople + ' 人' },
+      { icon:'💰', label:'預計預算', val: totalBudget ? fmtMoney(totalBudget) : '-' },
+    ];
+    statsEl.innerHTML = sData.map(function(s, i) {
+      var isLast = i === sData.length - 1;
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;' + (isLast ? '' : 'border-bottom:1px solid #f5f5f5') + '">'
+        + '<span style="font-size:18px">' + s.icon + '</span>'
+        + '<span style="flex:1;font-size:13px;color:#64748b;font-weight:500">' + s.label + '</span>'
+        + '<span style="font-size:14px;font-weight:700;color:#0f172a">' + s.val + '</span>'
         + '</div>';
     }).join('');
   }
 }
+
+window.htCalSelectDay = function(dateStr) {
+  _htCalSelectedDay = (_htCalSelectedDay === dateStr) ? null : dateStr;
+  htRenderCalendar();
+};
 
 function _pad2(n) { return n < 10 ? '0' + n : '' + n; }
 
