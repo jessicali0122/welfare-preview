@@ -8832,6 +8832,29 @@ function _htRenderVendorRank(el, vendors, countField) {
   }).join('');
 }
 
+window._htDonutHover = function(i){
+  var d = (window._htDonutData || [])[i];
+  if (!d) return;
+  document.querySelectorAll('.ht-donut-slice').forEach(function(p){
+    p.setAttribute('opacity', p.getAttribute('data-i') === String(i) ? '1' : '0.2');
+  });
+  var lab = document.getElementById('ht-donut-label');
+  var val = document.getElementById('ht-donut-value');
+  if (lab) { lab.textContent = d.name; lab.setAttribute('fill', d.color); }
+  if (val) { val.textContent = d.count + ' 項'; val.setAttribute('fill', d.color); }
+  document.querySelectorAll('[id^="ht-donut-leg-"]').forEach(function(r){ r.style.background = 'transparent'; });
+  var leg = document.getElementById('ht-donut-leg-' + i);
+  if (leg) leg.style.background = '#fdf4f7';
+};
+window._htDonutReset = function(){
+  document.querySelectorAll('.ht-donut-slice').forEach(function(p){ p.setAttribute('opacity', '0.9'); });
+  var lab = document.getElementById('ht-donut-label');
+  var val = document.getElementById('ht-donut-value');
+  if (lab) { lab.textContent = '品項總計'; lab.setAttribute('fill', '#94a3b8'); }
+  if (val) { val.textContent = (window._htDonutGrand != null ? window._htDonutGrand : ''); val.setAttribute('fill', '#0f172a'); }
+  document.querySelectorAll('[id^="ht-donut-leg-"]').forEach(function(r){ r.style.background = 'transparent'; });
+};
+
 function _htRenderCatBars(el, catTotals, totalSpend) {
   if (!el) return;
   var palette = ['#e16b8c','#6366f1','#06b6d4','#f59e0b','#1e9d6b','#f97316','#8b5cf6','#0ea5e9','#ec4899','#94a3b8'];
@@ -8845,7 +8868,11 @@ function _htRenderCatBars(el, catTotals, totalSpend) {
   var grandTotal = catEntries.reduce(function(s,c){ return s+catTotals[c]; }, 0);
   var colors = catEntries.map(function(c,i){ return catColMap[c] || palette[i % palette.length]; });
 
-  // SVG 甜甜圈
+  // SVG 甜甜圈（含 hover 互動）
+  window._htDonutGrand = grandTotal;
+  window._htDonutData = catEntries.map(function(c,i){
+    return { name: c, count: catTotals[c], pct: grandTotal>0?Math.round(catTotals[c]/grandTotal*100):0, color: colors[i] };
+  });
   var r = 90, ri = 54, cx = 110, cy = 110, gap = 0.018;
   var slices = ''; var startAngle = -Math.PI/2;
   catEntries.forEach(function(c, i) {
@@ -8857,19 +8884,19 @@ function _htRenderCatBars(el, catTotals, totalSpend) {
     var x1i = cx + ri * Math.cos(startAngle+angle), y1i = cy + ri * Math.sin(startAngle+angle);
     var x2i = cx + ri * Math.cos(startAngle),  y2i = cy + ri * Math.sin(startAngle);
     var large = angle > Math.PI ? 1 : 0;
-    slices += '<path d="M'+x1o.toFixed(2)+','+y1o.toFixed(2)
+    slices += '<path class="ht-donut-slice" data-i="'+i+'" onmouseover="_htDonutHover('+i+')" onmouseout="_htDonutReset()" style="cursor:pointer;transition:opacity .15s" d="M'+x1o.toFixed(2)+','+y1o.toFixed(2)
       +' A'+r+','+r+' 0 '+large+',1 '+x2o.toFixed(2)+','+y2o.toFixed(2)
       +' L'+x1i.toFixed(2)+','+y1i.toFixed(2)
       +' A'+ri+','+ri+' 0 '+large+',0 '+x2i.toFixed(2)+','+y2i.toFixed(2)
       +' Z" fill="'+colors[i]+'" opacity="0.9"/>';
     startAngle += frac * Math.PI * 2;
   });
-  slices += '<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="12" fill="#94a3b8" font-family="inherit">品項總計</text>';
-  slices += '<text x="'+cx+'" y="'+(cy+18)+'" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a" font-family="inherit">'+grandTotal+'</text>';
+  slices += '<text id="ht-donut-label" x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="12" fill="#94a3b8" font-family="inherit">品項總計</text>';
+  slices += '<text id="ht-donut-value" x="'+cx+'" y="'+(cy+18)+'" text-anchor="middle" font-size="26" font-weight="800" fill="#0f172a" font-family="inherit">'+grandTotal+'</text>';
 
   var legendHtml = catEntries.map(function(c,i){
     var pct = grandTotal > 0 ? Math.round(catTotals[c]/grandTotal*100) : 0;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #fafafa">'
+    return '<div id="ht-donut-leg-'+i+'" onmouseover="_htDonutHover('+i+')" onmouseout="_htDonutReset()" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #fafafa;border-radius:6px;cursor:pointer;transition:background .15s">'
       + '<div style="width:10px;height:10px;min-width:10px;border-radius:50%;background:'+colors[i]+'"></div>'
       + '<span style="font-size:13px;color:#374151;flex:1;font-weight:500">'+c+'</span>'
       + '<span style="font-size:13px;font-weight:700;color:#0f172a;min-width:28px;text-align:right">'+catTotals[c]+'</span>'
