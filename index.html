@@ -9639,8 +9639,14 @@ function htRenderDetailHeader() {
   ['ht-event-org1','ht-event-org2'].forEach(function(id, i) {
     var sel = document.getElementById(id);
     if (!sel) return;
-    sel.innerHTML = orgOpts;
-    sel.value = i === 0 ? (ev.organizer1 || '') : (ev.organizer2 || '');
+    var cur = i === 0 ? (ev.organizer1 || '') : (ev.organizer2 || '');
+    var opts = orgOpts;
+    // 若主辦人不在成員清單中（舊資料／暱稱），補一個選項，避免下次儲存時被清空
+    if (cur && LOCAL_USER_LIST.every(function(u){ return u.name !== cur; })) {
+      opts += '<option value="' + htEsc(cur) + '">' + htEsc(cur) + '</option>';
+    }
+    sel.innerHTML = opts;
+    sel.value = cur;
   });
   htUpdateCalcBudget();
 }
