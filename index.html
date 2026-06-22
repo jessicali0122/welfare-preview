@@ -9744,7 +9744,11 @@ async function _htShowRepeatWarning() {
     var vendorSet = {};
     results.forEach(function(res) {
       var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
-      items.forEach(function(it) { if (it.vendor && it.vendor.trim()) vendorSet[it.vendor.trim()] = true; });
+      items.forEach(function(it) {
+        var vn = (it.vendor || '').trim();
+        // 排除空值與純數字（如誤填的金額「40」），只留真正的店家名稱
+        if (vn && !/^\d+$/.test(vn)) vendorSet[vn] = true;
+      });
     });
     var vendors = Object.keys(vendorSet);
     if (!vendors.length) { warning.style.display = 'none'; return; }
