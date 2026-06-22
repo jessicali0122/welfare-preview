@@ -6276,7 +6276,7 @@ function updateDetailFlow(c){
   APPROVERS.forEach(function(a, i) {
     const apv    = approvals[i] || {};
     const result = String(apv.result || '').trim();
-    const at     = apv.at     ? ' · ' + fmtDate(apv.at) : '';
+    const at     = apv.at     ? '<div style="font-size:12px;color:#94a3b8;margin-top:1px;white-space:nowrap">' + fmtDate(apv.at) + '</div>' : '';
     const comment= apv.comment ? apv.comment : '';
     const stepColor = stepColors[Math.min(i, stepColors.length - 1)];
     let iconSvg = '', statusHtml = '';
@@ -6291,11 +6291,13 @@ function updateDetailFlow(c){
     if (result === '核准') {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#374151;font-weight:600;margin-top:2px">✓ 已核准</div>'
-                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>';
+                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + at;
     } else if (result === '退件') {
       iconSvg = leafSvg('#dc2626', 28);
       statusHtml = '<div style="font-size:14px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div>'
-                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + at + '</div>'
+                 + '<div style="font-size:12px;color:#94a3b8;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + at
                  + (displayComment ? '<div style="font-size:12px;color:#ef4444;margin-top:2px">原因：' + displayComment + '</div>' : '');
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
