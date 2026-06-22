@@ -2247,13 +2247,8 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <div style="background:#fff;border:1px solid #f0f0f0;border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:6px;display:flex;align-items:center;gap:2px">
         <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')"
           style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:#fff0f5;color:#e16b8c;font-family:inherit;cursor:pointer;transition:all .2s">
-          <span style="font-size:20px;line-height:1">🗂️</span>
-          <span style="font-size:14px;font-weight:700;white-space:nowrap">月份總覽</span>
-        </button>
-        <button class="ht-tab-btn" id="ht-tab-calendar" onclick="htSwitchListTab('calendar')"
-          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:transparent;color:#aaa;font-family:inherit;cursor:pointer;transition:all .2s">
-          <span style="font-size:20px;line-height:1">📅</span>
-          <span style="font-size:14px;font-weight:600;white-space:nowrap">活動日曆</span>
+          <span style="font-size:20px;line-height:1">🗓️</span>
+          <span style="font-size:14px;font-weight:700;white-space:nowrap">活動總覽</span>
         </button>
         <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')"
           style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:transparent;color:#aaa;font-family:inherit;cursor:pointer;transition:all .2s">
@@ -2282,8 +2277,10 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       </div>
     </div>
 
-    <!-- 月份總覽 Tab -->
+    <!-- 活動總覽 Tab（年曆 + 日曆 + 活動卡片） -->
     <div id="ht-panel-events">
+      <div id="ht-year-timeline" style="margin-bottom:18px"></div>
+      <!-- #ht-panel-calendar 會於載入時由 JS 移入此處 -->
       <div id="ht-events-grid">
         <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
       </div>
@@ -8544,8 +8541,21 @@ function _htUpdateCountdown() {
   banner.style.display = 'flex';
 };
 
+var _htLayoutMerged = false;
+function _htMergeLayout() {
+  if (_htLayoutMerged) return;
+  var ev = document.getElementById('ht-panel-events');
+  var cal = document.getElementById('ht-panel-calendar');
+  var grid = document.getElementById('ht-events-grid');
+  if (!ev || !cal || !grid) return;
+  cal.style.display = '';
+  cal.style.marginBottom = '18px';
+  ev.insertBefore(cal, grid);   // 順序：年曆 → 日曆 → 活動卡片
+  _htLayoutMerged = true;
+}
+
 function htRenderList() {
-  if (_htListTab === 'events') htRenderEvents();
+  if (_htListTab === 'events') { _htMergeLayout(); htRenderYearTimeline(); htRenderCalendar(); htRenderEvents(); }
   else if (_htListTab === 'analytics') htRenderAnalytics();
   else if (_htListTab === 'discover') htRenderDiscover();
 }
@@ -8565,12 +8575,11 @@ window.htSwitchListTab = function(tab) {
     }
     b.classList.toggle('active', active);
   });
-  ['events','calendar','analytics','discover'].forEach(function(p){
+  ['events','analytics','discover'].forEach(function(p){
     var el = document.getElementById('ht-panel-' + p);
     if (el) el.style.display = p === tab ? '' : 'none';
   });
-  if (tab === 'calendar') htRenderCalendar();
-  else htRenderList();
+  htRenderList();
 };
 
 // 統一把 event 的月份正規化成 yyyy-MM（不論後端傳 "2025-10" 或 Date 字串），
@@ -9332,6 +9341,54 @@ function _htHolidayForDate(yyyy, mm, dd) {
   var mmdd = (mm < 10 ? '0' : '') + mm + '-' + (dd < 10 ? '0' : '') + dd;
   var full  = yyyy + '-' + mmdd;
   return _twLunarMap[full] || _twHolidays[mmdd] || null;
+}
+
+function htRenderYearTimeline() {
+  var el = document.getElementById('ht-year-timeline');
+  if (!el) return;
+  var now = new Date();
+  var curMonth = now.getMonth() + 1;
+  var curYear  = now.getFullYear();
+  // 本年度有活動的月份
+  var eventMonths = {};
+  (_htEvents || []).forEach(function(e){
+    var mm = _evMonth(e) || '';
+    if (mm.indexOf(curYear + '-') === 0) eventMonths[parseInt(mm.slice(5,7),10)] = true;
+  });
+  var months = '';
+  for (var m = 1; m <= 12; m++) {
+    var isCur = m === curMonth;
+    var hasEv = !!eventMonths[m];
+    var size  = isCur ? 30 : 14;
+    var bg    = isCur ? '#e16b8c' : (hasEv ? '#f6a8c4' : '#e2e8f0');
+    var ring  = isCur ? 'box-shadow:0 0 0 5px #fbe1ec;' : '';
+    var labW  = isCur ? '800' : (hasEv ? '600' : '400');
+    var labC  = isCur ? '#be185d' : (hasEv ? '#e07ba0' : '#cbd5e1');
+    var inner = isCur ? '<span style="color:#fff;font-size:12px;font-weight:800">' + curMonth + '</span>' : '';
+    months += '<div style="display:flex;flex-direction:column;align-items:center;gap:9px;flex:1">'
+      + '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + bg + ';' + ring + 'display:flex;align-items:center;justify-content:center;transition:all .4s">' + inner + '</div>'
+      + '<span style="font-size:12px;font-weight:' + labW + ';color:' + labC + '">' + m + '月</span>'
+      + '</div>';
+  }
+  var pct = 3 + ((curMonth - 0.5) / 12) * 94;
+  el.innerHTML = '<div style="background:#fff;border:1px solid #f0f0f0;border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,.05);padding:18px 16px 14px">'
+    + '<div style="display:flex;align-items:baseline;gap:10px;margin:0 4px 6px"><span style="font-size:16px;font-weight:800;color:#0f172a">' + curYear + ' 午茶日年曆</span>'
+    + '<span style="font-size:12px;color:#94a3b8">目前進行到 ' + curMonth + ' 月</span></div>'
+    + '<div style="position:relative;height:118px;margin:0 8px">'
+    +   '<div style="position:absolute;left:3%;right:3%;top:72px;height:3px;background:#f1f5f9;border-radius:2px"></div>'
+    +   '<div id="ht-yt-progress" style="position:absolute;left:3%;width:0;top:72px;height:3px;background:#e16b8c;border-radius:2px;transition:width 1.5s cubic-bezier(.34,1.2,.4,1)"></div>'
+    +   '<div id="ht-yt-marker" style="position:absolute;left:3%;top:24px;transform:translateX(-50%);transition:left 1.5s cubic-bezier(.34,1.2,.4,1);z-index:3;text-align:center">'
+    +     '<div style="width:36px;height:36px;border-radius:50%;background:#e16b8c;display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:19px">☕</div>'
+    +     '<div style="width:0;height:0;border-left:6px solid transparent;border-right:6px solid transparent;border-top:8px solid #e16b8c;margin:1px auto 0"></div>'
+    +   '</div>'
+    +   '<div style="position:absolute;left:3%;right:3%;top:58px;display:flex;justify-content:space-between">' + months + '</div>'
+    + '</div></div>';
+  setTimeout(function(){
+    var mk = document.getElementById('ht-yt-marker');
+    var pg = document.getElementById('ht-yt-progress');
+    if (mk) mk.style.left = pct + '%';
+    if (pg) pg.style.width = (pct - 3) + '%';
+  }, 300);
 }
 
 function htRenderCalendar() {
