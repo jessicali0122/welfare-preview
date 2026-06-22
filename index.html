@@ -9695,7 +9695,7 @@ window.htSaveEventInfo = async function() {
   var bdayCount = (_htEvent.birthdays || []).length;
   var org1 = (document.getElementById('ht-event-org1') || {}).value || '';
   var org2 = (document.getElementById('ht-event-org2') || {}).value || '';
-  await htApi('htUpdate', {
+  var r = await htApi('htUpdate', {
     eventId: _htEvent.eventId,
     date: document.getElementById('ht-event-date').value,
     headcount: hc,
@@ -9704,6 +9704,7 @@ window.htSaveEventInfo = async function() {
     organizer1: org1,
     organizer2: org2,
   });
+  if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
   _htEvent.headcount = hc;
   _htEvent.budgetPerPerson = bp;
   _htEvent.totalBudget = hc * bp + bdayCount * 40;
