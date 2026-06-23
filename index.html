@@ -2680,118 +2680,156 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
 <!-- ══ 按摩預約 View ══ -->
 <div class="view" id="view-massage">
+
+  <!-- Hero 卡片 -->
+  <div id="ms-hero" style="background:linear-gradient(135deg,#6366f1 0%,#a78bfa 100%);border-radius:20px;padding:20px;margin-bottom:20px;color:#fff;position:relative;overflow:hidden">
+    <div style="position:absolute;right:-20px;top:-20px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%"></div>
+    <div style="position:absolute;right:20px;bottom:-30px;width:80px;height:80px;background:rgba(255,255,255,.06);border-radius:50%"></div>
+    <div style="font-size:22px;margin-bottom:4px">💆</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:2px">按摩預約</div>
+    <div id="ms-hero-sub" style="font-size:13px;opacity:.85;margin-bottom:14px">放鬆一下，預約屬於你的舒壓時光</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <div style="background:rgba(255,255,255,.18);border-radius:10px;padding:8px 14px;backdrop-filter:blur(8px)">
+        <div style="font-size:11px;opacity:.8;margin-bottom:2px">本週預約</div>
+        <div id="ms-hero-week" style="font-size:18px;font-weight:800">0 / 1</div>
+      </div>
+      <div id="ms-hero-next-wrap" style="background:rgba(255,255,255,.18);border-radius:10px;padding:8px 14px;backdrop-filter:blur(8px);display:none">
+        <div style="font-size:11px;opacity:.8;margin-bottom:2px">下次預約</div>
+        <div id="ms-hero-next" style="font-size:14px;font-weight:800">—</div>
+      </div>
+      <div id="ms-suspend-warn" style="display:none;background:rgba(239,68,68,.3);border-radius:10px;padding:8px 14px">
+        <div style="font-size:12px;font-weight:700">⚠️ 帳號暫停預約</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Tab 列 -->
-  <div style="margin-bottom:20px">
-    <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;margin-bottom:16px">
-      <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
-        📅 預約日曆
-      </button>
-      <button class="massage-tab admin-tab" id="ms-tab-my" onclick="msSwitchTab('my')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
-        📋 我的預約
-      </button>
-      <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none;display:none" id="ms-tab-admin">
-        ⚙️ 管理設定
-      </button>
-    </div>
-    <!-- 用量提示 -->
-    <div id="ms-quota-bar" style="display:none;background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #fde4ef;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:13px;color:#64748b">本週預約用量：</span>
-      <span id="ms-quota-text" style="font-size:13px;font-weight:700;color:#e16b8c">0 / 0</span>
-      <div id="ms-suspend-warn" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:4px 10px;font-size:12px;color:#dc2626;font-weight:600">⚠️ 帳號已暫停預約</div>
-    </div>
+  <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;margin-bottom:20px">
+    <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')"
+      style="display:flex;align-items:center;gap:6px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+      📅 預約日曆
+    </button>
+    <button class="massage-tab admin-tab" id="ms-tab-my" onclick="msSwitchTab('my')"
+      style="display:flex;align-items:center;gap:6px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+      📋 我的預約
+    </button>
+    <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')"
+      style="display:none;align-items:center;gap:6px;padding:10px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+      ⚙️ 管理
+    </button>
   </div>
 
   <!-- 📅 預約日曆 panel -->
   <div id="ms-panel-calendar">
     <!-- 月份導覽 -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <button onclick="msCalPrev()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#64748b">‹</button>
-      <div id="ms-cal-title" style="font-size:16px;font-weight:700;color:#0f172a"></div>
-      <button onclick="msCalNext()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#64748b">›</button>
+      <button onclick="msCalPrev()" style="width:38px;height:38px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#374151;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'">‹</button>
+      <div id="ms-cal-title" style="font-size:17px;font-weight:800;color:#0f172a"></div>
+      <button onclick="msCalNext()" style="width:38px;height:38px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#374151;transition:box-shadow .15s" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'">›</button>
     </div>
     <!-- 星期 header -->
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">日</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">一</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">二</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">三</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">四</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">五</div>
-      <div style="text-align:center;font-size:12px;font-weight:700;color:#e16b8c;padding:4px 0">六</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:8px">
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">日</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">一</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">二</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">三</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">四</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">五</div>
+      <div style="text-align:center;font-size:11px;font-weight:700;color:#e16b8c;padding:4px 0">六</div>
     </div>
-    <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px"></div>
+    <!-- 日曆格子 -->
+    <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:16px"></div>
     <!-- 圖例 -->
-    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:10px 0">
-      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#dcfce7"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
-      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#fde4ef"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
-      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#f1f5f9"></div><span style="font-size:12px;color:#64748b">額滿</span></div>
+    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#a78bfa"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e2e8f0"></div><span style="font-size:12px;color:#64748b">額滿/不開放</span></div>
     </div>
     <!-- 選定日期的時段 -->
     <div id="ms-slots-panel" style="display:none">
-      <div id="ms-slots-date" style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px"></div>
+      <div id="ms-slots-date" style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+        <div style="width:4px;height:18px;background:linear-gradient(#6366f1,#a78bfa);border-radius:2px"></div>
+      </div>
       <div id="ms-slots-list" style="display:flex;flex-direction:column;gap:10px"></div>
     </div>
-    <div id="ms-no-slots" style="display:none;text-align:center;padding:32px 0;color:#94a3b8;font-size:14px">選擇日期查看可預約時段</div>
+    <div id="ms-no-slots" style="text-align:center;padding:32px 0;color:#94a3b8;font-size:14px">
+      <div style="font-size:36px;margin-bottom:8px">📅</div>
+      選擇日期查看可預約時段
+    </div>
   </div>
 
   <!-- 📋 我的預約 panel -->
   <div id="ms-panel-my" style="display:none">
-    <div style="margin-bottom:16px">
-      <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px">即將到來</div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">即將到來</div>
       <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:24px;color:#94a3b8;font-size:14px;background:#f8fafc;border-radius:12px">尚無即將到來的預約</div>
+      <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:32px;margin-bottom:8px">📭</div>尚無即將到來的預約
+      </div>
     </div>
-    <div style="margin-top:24px">
-      <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px">歷史紀錄</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">歷史紀錄</div>
       <div id="ms-my-history" style="display:flex;flex-direction:column;gap:10px"></div>
-      <div id="ms-my-history-empty" style="display:none;text-align:center;padding:24px;color:#94a3b8;font-size:14px;background:#f8fafc;border-radius:12px">無歷史紀錄</div>
+      <div id="ms-my-history-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+        <div style="font-size:32px;margin-bottom:8px">🗂️</div>無歷史紀錄
+      </div>
     </div>
   </div>
 
   <!-- ⚙️ 管理設定 panel -->
   <div id="ms-panel-admin" style="display:none">
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
-        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:16px">📋 預約限制設定</div>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">每週預約上限（次）
-            <input id="ms-cfg-weekly" type="number" min="1" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+      <!-- 限制設定 -->
+      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📋</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">預約限制</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每週上限（次）
+            <input id="ms-cfg-weekly" type="number" min="1" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc;transition:border .15s" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
           </label>
-          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">取消期限（小時前）
-            <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">取消期限（小時前）
+            <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc;transition:border .15s" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
           </label>
-          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">違規幾次停權
-            <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">違規幾次停權
+            <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc;transition:border .15s" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
           </label>
-          <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:10px;padding:10px 0;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">儲存設定</button>
+          <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px;transition:opacity .15s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存設定</button>
         </div>
       </div>
-      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
-        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:16px">🕐 時段設定</div>
-        <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
-        <div style="display:flex;gap:8px">
-          <input id="ms-new-slot-time" type="time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:14px;font-family:inherit">
-          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:14px;font-family:inherit">
-          <button onclick="msAddSlotTemplate()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+      <!-- 時段設定 -->
+      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#e16b8c,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">時段設定</div>
+        </div>
+        <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+        <div style="display:flex;gap:6px">
+          <input id="ms-new-slot-time" type="time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#f8fafc">
+          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#f8fafc;text-align:center">
+          <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
         </div>
       </div>
     </div>
-    <!-- 所有預約一覽 -->
-    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#0f172a">📊 所有預約紀錄</div>
-        <input id="ms-admin-search" type="text" placeholder="搜尋姓名或日期…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:13px;font-family:inherit;width:200px">
+    <!-- 所有預約 -->
+    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">所有預約紀錄</div>
+        </div>
+        <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:13px;font-family:inherit;background:#f8fafc;width:150px;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
       </div>
       <div id="ms-admin-table-wrap" style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="border-bottom:2px solid #f1f5f9">
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">姓名</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">日期</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">時段</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">狀態</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">建立時間</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">操作</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">姓名</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">日期</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">時段</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">狀態</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作</th>
             </tr>
           </thead>
           <tbody id="ms-admin-tbody"></tbody>
@@ -2799,6 +2837,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       </div>
     </div>
   </div>
+
 </div>
 <!-- ══ end 按摩預約 View ══ -->
   </main>
@@ -10755,24 +10794,29 @@ async function msFetchData() {
 // ── 用量 bar ──
 function msRenderQuota() {
   if (!_msData) return;
-  var bar = document.getElementById('ms-quota-bar');
-  var txt = document.getElementById('ms-quota-text');
-  var warn = document.getElementById('ms-suspend-warn');
-  if (!bar || !txt) return;
-  bar.style.display = 'flex';
-  // 計算本週已預約次數
   var now = new Date();
-  var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
-  weekStart.setHours(0,0,0,0);
+  var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
   var myBookings = (_msData.myBookings || []);
-  var thisWeek = myBookings.filter(function(b){
-    return b.status === 'booked' && new Date(b.date) >= weekStart;
-  }).length;
+  var thisWeek = myBookings.filter(function(b){ return b.status === 'booked' && new Date(b.date) >= weekStart; }).length;
   var limit = (_msData.settings || {}).weeklyLimit || 1;
-  txt.textContent = thisWeek + ' / ' + limit + ' 次';
-  txt.style.color = thisWeek >= limit ? '#dc2626' : '#e16b8c';
-  if (_msData.suspended) warn.style.display = '';
-  else warn.style.display = 'none';
+  // Hero
+  var hw = document.getElementById('ms-hero-week');
+  if (hw) hw.textContent = thisWeek + ' / ' + limit;
+  var sw2 = document.getElementById('ms-suspend-warn');
+  if (sw2) sw2.style.display = _msData.suspended ? '' : 'none';
+  // Next booking
+  var upcoming = myBookings.filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var nw = document.getElementById('ms-hero-next-wrap');
+  var nt = document.getElementById('ms-hero-next');
+  if (nw && nt) {
+    if (upcoming.length) {
+      nw.style.display = '';
+      var nb = upcoming[0];
+      var parts = (nb.date||'').split('-');
+      nt.textContent = parseInt(parts[1]) + '/' + parseInt(parts[2]) + ' ' + (nb.timeSlot||'');
+    } else { nw.style.display = 'none'; }
+  }
 }
 
 // ── Tab 切換 ──
@@ -10824,30 +10868,35 @@ function msRenderCal() {
     var dt = new Date(_msYear, _msMonth, d);
     var isPast = dt < today;
     var isToday = dt.getTime() === today.getTime();
-    var isSun = dt.getDay() === 0;
-    var isSat = dt.getDay() === 6;
-    var isWeekend = isSun || isSat;
+    var isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
     var myBook = myDates[dateStr];
     var slotsForDay = msSlotsForDate(dateStr);
     var hasSlots = slotsForDay.length > 0;
-    var hasAvail = slotsForDay.some(function(s){ return s.remaining > 0 && !isPast; });
+    var hasAvail = !isPast && hasSlots && !isWeekend && slotsForDay.some(function(s){ return s.remaining > 0; });
     var isSelected = _msSelectedDate === dateStr;
-    var bg, color, border;
-    if (myBook) { bg = '#fde4ef'; color = '#e16b8c'; border = '2px solid #e16b8c'; }
-    else if (!hasSlots || isWeekend) { bg = '#f8fafc'; color = '#cbd5e1'; border = '2px solid transparent'; }
-    else if (isPast) { bg = '#f8fafc'; color = '#cbd5e1'; border = '2px solid transparent'; }
-    else if (hasAvail) { bg = '#dcfce7'; color = '#16a34a'; border = '2px solid transparent'; }
-    else { bg = '#f1f5f9'; color = '#94a3b8'; border = '2px solid transparent'; }
-    if (isSelected) border = '2px solid #6366f1';
-    if (isToday) border = isSelected ? '2px solid #6366f1' : '2px solid #0f172a';
     var clickable = !isPast && hasSlots && !isWeekend;
-    html += '<div onclick="' + (clickable ? 'msSelectDate(\'' + dateStr + '\')' : '') + '"'
+    // Style logic
+    var bg, color, shadow = '', fw = isToday ? '800' : '600';
+    if (isSelected) {
+      bg = 'linear-gradient(135deg,#6366f1,#a78bfa)'; color = '#fff'; shadow = '0 4px 12px rgba(99,102,241,.4)';
+    } else if (myBook) {
+      bg = 'linear-gradient(135deg,#e16b8c,#f43f5e)'; color = '#fff'; shadow = '0 3px 8px rgba(225,107,140,.35)';
+    } else if (hasAvail) {
+      bg = 'rgba(99,102,241,.1)'; color = '#6366f1';
+    } else if (isToday) {
+      bg = '#0f172a'; color = '#fff';
+    } else {
+      bg = 'transparent'; color = isPast || isWeekend ? '#cbd5e1' : '#374151';
+    }
+    html += '<div'
+      + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
       + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;'
-      + 'background:' + bg + ';color:' + color + ';border:' + border + ';font-size:13px;font-weight:'+(isToday?'800':'600')
-      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .15s;position:relative"'
-      + (clickable ? ' onmouseover="this.style.opacity=\'.8\'" onmouseout="this.style.opacity=\'1\'"' : '')
+      + 'background:' + bg + ';color:' + color + ';font-size:13px;font-weight:' + fw
+      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative'
+      + (shadow ? ';box-shadow:' + shadow : '') + '"'
+      + (clickable && !isSelected && !myBook ? ' onmouseover="this.style.background=\'rgba(99,102,241,.15)\';this.style.color=\'#6366f1\'" onmouseout="this.style.background=\'' + bg + '\';this.style.color=\'' + color + '\'"' : '')
       + '>' + d
-      + (myBook ? '<span style="position:absolute;bottom:2px;right:2px;width:6px;height:6px;border-radius:50%;background:#e16b8c"></span>' : '')
+      + (myBook && !isSelected ? '<span style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
       + '</div>';
   }
   grid.innerHTML = html;
@@ -10858,7 +10907,6 @@ function msRenderCal() {
 window.msSelectDate = function(dateStr) {
   _msSelectedDate = dateStr;
   msRenderCal();
-  msShowSlots(dateStr);
 };
 
 function msShowSlots(dateStr) {
@@ -10872,43 +10920,49 @@ function msShowSlots(dateStr) {
   var parts = dateStr.split('-');
   var days = ['日','一','二','三','四','五','六'];
   var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-  dateLabel.textContent = parts[0] + ' 年 ' + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt.getDay()] + '）';
-  if (!slots.length) { panel.style.display = 'none'; noSlots.style.display = ''; noSlots.textContent = '此日無開放時段'; return; }
+  dateLabel.innerHTML = '<div style="width:4px;height:18px;background:linear-gradient(#6366f1,#a78bfa);border-radius:2px;flex-shrink:0"></div>'
+    + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt.getDay()] + '）';
+  if (!slots.length) { panel.style.display = 'none'; noSlots.style.display = ''; noSlots.innerHTML = '<div style="font-size:36px;margin-bottom:8px">🚫</div>此日無開放時段'; return; }
   panel.style.display = '';
   noSlots.style.display = 'none';
   var settings = (_msData && _msData.settings) || {};
   var suspended = _msData && _msData.suspended;
   var now = new Date();
   var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
-  var myBookings2 = (_msData && _msData.myBookings) || [];
-  var weekCount = myBookings2.filter(function(b){ return b.status==='booked' && new Date(b.date)>=weekStart; }).length;
+  var weekCount = myBookings.filter(function(b){ return b.status==='booked' && new Date(b.date)>=weekStart; }).length;
   var overLimit = weekCount >= (settings.weeklyLimit || 1);
   list.innerHTML = slots.map(function(s) {
     var isMySlot = myBook && myBook.timeSlot === s.time;
-    var isToday = dateStr === fmtDateStr(new Date());
-    var canCheckIn = isMySlot && isToday && myBook.status === 'booked';
+    var isTodayDate = dateStr === fmtDateStr(new Date());
+    var canCheckIn = isMySlot && isTodayDate && myBook.status === 'booked';
     var cancelDeadline = settings.cancelDeadlineHours || 24;
     var appointmentTime = new Date(dateStr + 'T' + s.time + ':00');
     var canCancel = isMySlot && (appointmentTime - now) > cancelDeadline * 3600000;
-    var statusBadge = isMySlot ? (myBook.status === 'attended' ? '<span style="background:#dcfce7;color:#16a34a;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">已報到</span>' : '<span style="background:#fde4ef;color:#e16b8c;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">已預約</span>') : '';
+    // Left accent color
+    var accentColor = isMySlot ? (myBook.status==='attended'?'#22c55e':'#e16b8c') : (s.remaining>0?'#6366f1':'#e2e8f0');
+    var badge = isMySlot
+      ? (myBook.status==='attended'
+          ? '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✓ 已報到</span>'
+          : '<span style="background:linear-gradient(135deg,#fde4ef,#fff0f5);color:#e16b8c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">💆 已預約</span>')
+      : '';
+    var remaining = s.remaining > 0
+      ? '<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">剩 ' + s.remaining + ' 位</span>'
+      : '<span style="background:#f1f5f9;color:#94a3b8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">額滿</span>';
     var actionBtn = '';
     if (isMySlot && myBook.status === 'booked') {
-      if (canCheckIn) actionBtn += '<button onclick="msCheckIn(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 報到</button>';
-      if (canCancel) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消預約</button>';
+      if (canCheckIn) actionBtn += '<button onclick="msCheckIn(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">✓ 立即報到</button>';
+      if (canCancel) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">取消</button>';
     } else if (!isMySlot && s.remaining > 0 && !suspended && !overLimit) {
-      actionBtn = '<button onclick="msBook(\'' + dateStr + '\',\'' + s.time + '\')" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">立即預約</button>';
-    } else if (!isMySlot && s.remaining <= 0) {
-      actionBtn = '<span style="font-size:12px;color:#94a3b8">額滿</span>';
-    } else if (overLimit && !isMySlot) {
-      actionBtn = '<span style="font-size:12px;color:#f59e0b">本週已達上限</span>';
+      actionBtn = '<button onclick="msBook(\'' + dateStr + '\',\'' + s.time + '\')" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:20px;padding:7px 18px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;box-shadow:0 3px 10px rgba(99,102,241,.3)">立即預約</button>';
+    } else if (overLimit && !isMySlot && s.remaining > 0) {
+      actionBtn = '<span style="font-size:12px;color:#f59e0b;background:#fffbeb;border-radius:20px;padding:5px 12px;font-weight:600">本週已達上限</span>';
     }
-    return '<div style="background:#fff;border:1.5px solid '+(isMySlot?'#e16b8c':'#e2e8f0')+';border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
-      + '<div style="font-size:18px;font-weight:800;color:#0f172a;min-width:52px">' + s.time + '</div>'
-      + '<div style="flex:1">'
-      + statusBadge
-      + '<div style="font-size:12px;color:#64748b;margin-top:2px">剩餘 <b style="color:' + (s.remaining>0?'#16a34a':'#dc2626') + '">' + s.remaining + '</b> / ' + s.capacity + ' 名額</div>'
+    return '<div style="background:#fff;border-radius:16px;padding:16px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ' + accentColor + ';flex-wrap:wrap">'
+      + '<div style="min-width:52px;text-align:center">'
+      + '<div style="font-size:20px;font-weight:800;color:#0f172a;line-height:1">' + s.time + '</div>'
       + '</div>'
-      + '<div style="display:flex;gap:8px;flex-wrap:wrap">' + actionBtn + '</div>'
+      + '<div style="flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + badge + remaining + '</div>'
+      + '<div>' + actionBtn + '</div>'
       + '</div>';
   }).join('');
 }
@@ -11010,30 +11064,36 @@ function msRenderMyBookings() {
 }
 
 function msBookingCard(b, isUpcoming) {
-  var statusMap = { booked:'已預約', cancelled:'已取消', attended:'已報到', noshow:'缺席' };
-  var colorMap = { booked:'#e16b8c', cancelled:'#94a3b8', attended:'#16a34a', noshow:'#dc2626' };
-  var bgMap = { booked:'#fde4ef', cancelled:'#f1f5f9', attended:'#dcfce7', noshow:'#fef2f2' };
   var s = b.status || 'booked';
+  var statusCfg = {
+    booked:   { label:'💆 已預約', bg:'linear-gradient(135deg,#6366f1,#a78bfa)', color:'#fff' },
+    cancelled:{ label:'✕ 已取消',  bg:'#f1f5f9',                                  color:'#94a3b8' },
+    attended: { label:'✓ 已報到',  bg:'linear-gradient(135deg,#22c55e,#16a34a)', color:'#fff' },
+    noshow:   { label:'⚠ 缺席',    bg:'#fef2f2',                                  color:'#dc2626' }
+  };
+  var cfg = statusCfg[s] || statusCfg.booked;
   var now = new Date();
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot||'00:00') + ':00');
   var settings = (_msData && _msData.settings) || {};
   var canCancel = isUpcoming && s === 'booked' && (appointmentTime - now) > (settings.cancelDeadlineHours||24) * 3600000;
-  var isToday = b.date === fmtDateStr(new Date());
-  var canCheckIn = isUpcoming && s === 'booked' && isToday;
+  var isTodayDate = b.date === fmtDateStr(new Date());
+  var canCheckIn = isUpcoming && s === 'booked' && isTodayDate;
   var actions = '';
-  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 立即報到</button>';
-  if (canCancel) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消預約</button>';
+  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 立即報到</button>';
+  if (canCancel) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit">取消預約</button>';
+  var parts = (b.date||'').split('-');
   var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  var cancelTs = b.cancelledAt ? '  取消於：' + new Date(b.cancelledAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  return '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">'
-    + '<div style="min-width:80px;text-align:center;background:#f8fafc;border-radius:10px;padding:10px 8px">'
-    + '<div style="font-size:20px;font-weight:800;color:#0f172a">' + parseInt((b.date||'').split('-')[2]||0) + '</div>'
-    + '<div style="font-size:12px;color:#64748b">' + ((b.date||'').split('-').slice(0,2).join('/')) + '</div>'
-    + '<div style="font-size:14px;font-weight:700;color:#374151;margin-top:4px">' + (b.timeSlot||'') + '</div>'
+  var accentGrad = s==='booked'?'linear-gradient(#6366f1,#a78bfa)':s==='attended'?'linear-gradient(#22c55e,#16a34a)':'linear-gradient(#e2e8f0,#e2e8f0)';
+  return '<div style="background:#fff;border-radius:16px;padding:16px;display:flex;gap:14px;align-items:stretch;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden">'
+    + '<div style="width:4px;border-radius:2px;background:' + accentGrad + ';flex-shrink:0"></div>'
+    + '<div style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:12px;padding:10px 12px;min-width:68px;text-align:center;flex-shrink:0">'
+    + '<div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1">' + parseInt(parts[2]||0) + '</div>'
+    + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + parseInt(parts[1]||0) + '月</div>'
+    + '<div style="font-size:13px;font-weight:700;color:#374151;margin-top:4px">' + (b.timeSlot||'') + '</div>'
     + '</div>'
-    + '<div style="flex:1">'
-    + '<span style="background:' + bgMap[s] + ';color:' + colorMap[s] + ';border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700">' + (statusMap[s]||s) + '</span>'
-    + (ts ? '<div style="font-size:11px;color:#94a3b8;margin-top:6px">預約於：' + ts + cancelTs + '</div>' : '')
+    + '<div style="flex:1;min-width:0">'
+    + '<span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block">' + cfg.label + '</span>'
+    + (ts ? '<div style="font-size:11px;color:#94a3b8;margin-top:6px">預約於 ' + ts + '</div>' : '')
     + (actions ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' + actions + '</div>' : '')
     + '</div></div>';
 }
@@ -11056,12 +11116,13 @@ function msRenderSlotTemplates() {
   var list = document.getElementById('ms-slot-template-list');
   if (!list) return;
   list.innerHTML = _msSlotTemplates.map(function(t, i){
-    return '<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:8px;padding:8px 10px">'
+    return '<div style="display:flex;align-items:center;gap:8px;background:linear-gradient(135deg,#f8fafc,#f1f5f9);border-radius:10px;padding:9px 12px;border:1px solid #e2e8f0">'
+      + '<div style="width:8px;height:8px;border-radius:50%;background:linear-gradient(#e16b8c,#f43f5e);flex-shrink:0"></div>'
       + '<span style="font-size:14px;font-weight:700;color:#0f172a;flex:1">' + t.time + '</span>'
-      + '<span style="font-size:12px;color:#64748b">名額 ' + t.capacity + '</span>'
-      + '<button onclick="msRemoveSlot(' + i + ')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-family:inherit">✕</button>'
+      + '<span style="font-size:12px;color:#6366f1;background:#ede9fe;border-radius:20px;padding:2px 8px;font-weight:600">×' + t.capacity + '</span>'
+      + '<button onclick="msRemoveSlot(' + i + ')" style="background:none;color:#cbd5e1;border:none;border-radius:6px;padding:2px 6px;font-size:14px;cursor:pointer;font-family:inherit;line-height:1" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#cbd5e1\'">✕</button>'
       + '</div>';
-  }).join('') || '<div style="font-size:13px;color:#94a3b8">尚未設定時段</div>';
+  }).join('') || '<div style="font-size:13px;color:#94a3b8;text-align:center;padding:12px">尚未設定時段</div>';
 }
 
 window.msAddSlotTemplate = function() {
@@ -11115,21 +11176,25 @@ window.msAdminFilter = function() {
 function msRenderAdminRows(rows) {
   var tbody = document.getElementById('ms-admin-tbody');
   if (!tbody) return;
-  var statusMap = { booked:'已預約', cancelled:'已取消', attended:'已報到', noshow:'缺席' };
-  var colorMap = { booked:'#e16b8c', cancelled:'#94a3b8', attended:'#16a34a', noshow:'#dc2626' };
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8">無紀錄</td></tr>'; return; }
+  var statusCfg = {
+    booked:   { label:'已預約', bg:'#ede9fe', color:'#6366f1' },
+    cancelled:{ label:'已取消', bg:'#f1f5f9', color:'#94a3b8' },
+    attended: { label:'已報到', bg:'#dcfce7', color:'#16a34a' },
+    noshow:   { label:'缺席',   bg:'#fef2f2', color:'#dc2626' }
+  };
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:#94a3b8;font-size:14px">📭 無紀錄</td></tr>'; return; }
   tbody.innerHTML = rows.map(function(b){
     var s = b.status || 'booked';
+    var sc = statusCfg[s] || statusCfg.booked;
     var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-    return '<tr style="border-bottom:1px solid #f1f5f9">'
-      + '<td style="padding:10px">' + (b.userName||b.userEmail||'—') + '</td>'
-      + '<td style="padding:10px">' + (b.date||'') + '</td>'
-      + '<td style="padding:10px">' + (b.timeSlot||'') + '</td>'
-      + '<td style="padding:10px"><span style="color:' + (colorMap[s]||'#374151') + ';font-weight:700;font-size:12px">' + (statusMap[s]||s) + '</span></td>'
-      + '<td style="padding:10px;font-size:12px;color:#94a3b8">' + ts + '</td>'
-      + '<td style="padding:10px">'
-      + (s==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit">取消</button>':'')
-      + (s==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:4px">報到</button>':'')
+    return '<tr style="border-bottom:1px solid #f8fafc" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
+      + '<td style="padding:10px 10px;font-weight:600;color:#0f172a">' + (b.userName||b.userEmail||'—') + '</td>'
+      + '<td style="padding:10px;color:#374151">' + (b.date||'') + '</td>'
+      + '<td style="padding:10px;font-weight:700;color:#374151">' + (b.timeSlot||'') + '</td>'
+      + '<td style="padding:10px"><span style="background:' + sc.bg + ';color:' + sc.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + sc.label + '</span></td>'
+      + '<td style="padding:10px;white-space:nowrap">'
+      + (s==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消</button> ':'')
+      + (s==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 報到</button>':'')
       + '</td></tr>';
   }).join('');
 }
