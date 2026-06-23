@@ -9176,7 +9176,7 @@ window.htModalRunAI = async function() {
     }
     var sh = _htSeasonHoliday(ym);
     var excludeItems = await _htLoadExcludeItems();
-    var r = await htApi('htRecommend', {
+    var r = await htApi('htRecommendAI', {
       headcount: hc, budgetPerPerson: bp,
       categoryRatios: preset.ratios,
       seasonHint: sh.label,
@@ -10138,24 +10138,29 @@ window.htRunOptimize = async function() {
   var hc = Number(document.getElementById('ht-opt-headcount').value);
   var bp = Number(document.getElementById('ht-opt-budget').value);
   if (!hc || !bp) { toast('請填寫人數與每人預算'); return; }
-  var r = await htApi('htRecommend', { headcount: hc, budgetPerPerson: bp });
-  if (!r.ok) { toast('計算失敗'); return; }
+  var r = await htApi('htRecommendAI', { headcount: hc, budgetPerPerson: bp });
+  if (!r || !r.ok) { toast('計算失敗：' + (r && r.error || '')); return; }
   _htRecData = r;
-  var opt = r.optimize;
   var resultEl = document.getElementById('ht-optimize-result');
   resultEl.style.display = '';
-  var cats = Object.keys(opt.breakdown);
-  var catColors = { '甜點':'#e16b8c','主食':'#6366f1','飲料':'#06b6d4','水果':'#1e9d6b' };
+  var totalBudget = hc * bp;
+  var catColors = { '甜點':'#e16b8c','主食':'#6366f1','飲品':'#06b6d4','水果':'#1e9d6b','鹹食':'#f59e0b' };
+  // 從 topItems 匯總各類別預算
+  var catMap = {};
+  (r.topItems || []).forEach(function(it) {
+    if (it.category) catMap[it.category] = (catMap[it.category] || 0) + ((it.unitPrice || 0) * (it.qty || 1));
+  });
+  var cats = Object.keys(catMap);
   resultEl.innerHTML =
-    '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">建議配置（總預算 '+fmtMoney(opt.total)+'）</div>'
-    + '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
+    '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">🤖 AI 建議配置（總預算 '+fmtMoney(totalBudget)+'）</div>'
+    + (r.summary ? '<div style="font-size:13px;color:#64748b;margin-bottom:10px">'+htEsc(r.summary)+'</div>' : '')
+    + (cats.length ? '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
     + cats.map(function(c){
-      return '<div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid '+(catColors[c]||'#e2e8f0')+'22">'
+      return '<div style="background:#fff;border-radius:10px;padding:10px 14px;border:1px solid '+(catColors[c]||'#e2e8f0')+'40">'
         + '<div style="font-size:12px;color:#64748b;margin-bottom:2px">'+c+'</div>'
-        + '<div style="font-size:16px;font-weight:800;color:'+(catColors[c]||'#374151')+'">'+fmtMoney(opt.breakdown[c])+'</div>'
+        + '<div style="font-size:16px;font-weight:800;color:'+(catColors[c]||'#374151')+'">'+fmtMoney(catMap[c])+'</div>'
         + '</div>';
-    }).join('')
-    + '</div>';
+    }).join('')+'</div>' : '');
   htRenderRecommendList(r);
 };
 
