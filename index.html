@@ -1402,6 +1402,11 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <span class="sl-text">午茶日</span>
     </div>
 
+    <div class="sl" data-view="massage" data-label="按摩預約" onclick="sw('massage')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg>
+      <span class="sl-text">按摩預約</span>
+    </div>
+
     <div class="sl" data-view="admin" data-label="系統管理" onclick="sw('admin')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
       <span class="sl-text">系統管理</span>
@@ -2673,6 +2678,129 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   </div>
 </div>
 
+<!-- ══ 按摩預約 View ══ -->
+<div class="view" id="view-massage">
+  <!-- Tab 列 -->
+  <div style="margin-bottom:20px">
+    <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;margin-bottom:16px">
+      <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+        📅 預約日曆
+      </button>
+      <button class="massage-tab admin-tab" id="ms-tab-my" onclick="msSwitchTab('my')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+        📋 我的預約
+      </button>
+      <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')" style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none;display:none" id="ms-tab-admin">
+        ⚙️ 管理設定
+      </button>
+    </div>
+    <!-- 用量提示 -->
+    <div id="ms-quota-bar" style="display:none;background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #fde4ef;border-radius:12px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:13px;color:#64748b">本週預約用量：</span>
+      <span id="ms-quota-text" style="font-size:13px;font-weight:700;color:#e16b8c">0 / 0</span>
+      <div id="ms-suspend-warn" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:4px 10px;font-size:12px;color:#dc2626;font-weight:600">⚠️ 帳號已暫停預約</div>
+    </div>
+  </div>
+
+  <!-- 📅 預約日曆 panel -->
+  <div id="ms-panel-calendar">
+    <!-- 月份導覽 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button onclick="msCalPrev()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#64748b">‹</button>
+      <div id="ms-cal-title" style="font-size:16px;font-weight:700;color:#0f172a"></div>
+      <button onclick="msCalNext()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #e2e8f0;background:#fff;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#64748b">›</button>
+    </div>
+    <!-- 星期 header -->
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px">
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">日</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">一</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">二</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">三</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">四</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#94a3b8;padding:4px 0">五</div>
+      <div style="text-align:center;font-size:12px;font-weight:700;color:#e16b8c;padding:4px 0">六</div>
+    </div>
+    <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:20px"></div>
+    <!-- 圖例 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding:10px 0">
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#dcfce7"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#fde4ef"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
+      <div style="display:flex;align-items:center;gap:6px"><div style="width:12px;height:12px;border-radius:50%;background:#f1f5f9"></div><span style="font-size:12px;color:#64748b">額滿</span></div>
+    </div>
+    <!-- 選定日期的時段 -->
+    <div id="ms-slots-panel" style="display:none">
+      <div id="ms-slots-date" style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px"></div>
+      <div id="ms-slots-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+    <div id="ms-no-slots" style="display:none;text-align:center;padding:32px 0;color:#94a3b8;font-size:14px">選擇日期查看可預約時段</div>
+  </div>
+
+  <!-- 📋 我的預約 panel -->
+  <div id="ms-panel-my" style="display:none">
+    <div style="margin-bottom:16px">
+      <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px">即將到來</div>
+      <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:24px;color:#94a3b8;font-size:14px;background:#f8fafc;border-radius:12px">尚無即將到來的預約</div>
+    </div>
+    <div style="margin-top:24px">
+      <div style="font-size:15px;font-weight:700;color:#0f172a;margin-bottom:12px">歷史紀錄</div>
+      <div id="ms-my-history" style="display:flex;flex-direction:column;gap:10px"></div>
+      <div id="ms-my-history-empty" style="display:none;text-align:center;padding:24px;color:#94a3b8;font-size:14px;background:#f8fafc;border-radius:12px">無歷史紀錄</div>
+    </div>
+  </div>
+
+  <!-- ⚙️ 管理設定 panel -->
+  <div id="ms-panel-admin" style="display:none">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:16px">📋 預約限制設定</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">每週預約上限（次）
+            <input id="ms-cfg-weekly" type="number" min="1" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+          </label>
+          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">取消期限（小時前）
+            <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+          </label>
+          <label style="font-size:13px;color:#374151;display:flex;flex-direction:column;gap:4px">違規幾次停權
+            <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;width:100%">
+          </label>
+          <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:10px;padding:10px 0;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:4px">儲存設定</button>
+        </div>
+      </div>
+      <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
+        <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:16px">🕐 時段設定</div>
+        <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px"></div>
+        <div style="display:flex;gap:8px">
+          <input id="ms-new-slot-time" type="time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:14px;font-family:inherit">
+          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px;font-size:14px;font-family:inherit">
+          <button onclick="msAddSlotTemplate()" style="background:#6366f1;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+        </div>
+      </div>
+    </div>
+    <!-- 所有預約一覽 -->
+    <div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:#0f172a">📊 所有預約紀錄</div>
+        <input id="ms-admin-search" type="text" placeholder="搜尋姓名或日期…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:13px;font-family:inherit;width:200px">
+      </div>
+      <div id="ms-admin-table-wrap" style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="border-bottom:2px solid #f1f5f9">
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">姓名</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">日期</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">時段</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">狀態</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">建立時間</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600">操作</th>
+            </tr>
+          </thead>
+          <tbody id="ms-admin-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ══ end 按摩預約 View ══ -->
   </main>
 </div><!-- end #main-wrapper -->
 </div><!-- end #app-inner -->
@@ -2695,6 +2823,10 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   <button class="bn-item" data-view="hightea" onclick="sw('hightea')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></div>
     <span class="bn-label">午茶日</span>
+  </button>
+  <button class="bn-item" data-view="massage" onclick="sw('massage')">
+    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg></div>
+    <span class="bn-label">按摩預約</span>
   </button>
   <button class="bn-item" data-view="admin" onclick="sw('admin')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
@@ -3311,7 +3443,7 @@ function showApp() {
     if(sheetEmail)sheetEmail.textContent=currentUser.email;
     // ── 路由還原：若 URL 有 hash 就跳到對應頁面，否則預設總覽 ──
     const _initHash = location.hash ? location.hash.slice(1) : '';
-    const _validViews = ['dashboard','applications','approvals','admin','hightea'];
+    const _validViews = ['dashboard','applications','approvals','admin','hightea','massage'];
     // detail 頁：#detail/EWC-202506-1001
     if (_initHash.startsWith('detail/')) {
       const _detailId = _initHash.slice(7);
@@ -5272,7 +5404,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -5285,7 +5417,7 @@ window.addEventListener('popstate', function(e) {
   if (hash.startsWith('detail/')) { loadDetail(hash.slice(7), true); return; }
   // 主頁面
   const view = state.view || hash;
-  const validViews = ['dashboard','applications','approvals','admin','hightea'];
+  const validViews = ['dashboard','applications','approvals','admin','hightea','massage'];
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 function sw(name,elOrName,_fromPop){
@@ -5304,7 +5436,7 @@ function sw(name,elOrName,_fromPop){
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   if (!_fromPop && window._appReady) {
-    const mainViews = ['dashboard','applications','approvals','admin','hightea'];
+    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage'];
     if (mainViews.includes(name)) {
       history.pushState({ view: name }, '', '#' + name);
     }
@@ -5345,6 +5477,7 @@ function sw(name,elOrName,_fromPop){
   }
   if(name==='admin') loadAdminUsers();
   if(name==='hightea') htLoadList();
+  if(name==='massage') massageLoad();
   // 手機版底部操作列：只在 new-form 頁顯示（用 class 控制，避免 !important 衝突）
   var _mfa = document.getElementById('mobile-form-actions');
   if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
@@ -10556,6 +10689,472 @@ window.htAssistRun = async function() {
 };
 
 })(); // end 午茶日 module
+
+// ══════════════════════════════════════════
+// 按摩預約模組
+// ══════════════════════════════════════════
+(function(){
+'use strict';
+
+// ── 狀態 ──
+var _msYear, _msMonth, _msSelectedDate = null;
+var _msData = null; // { bookings, slots, settings, myBookings, userEmail, isAdmin, violationCount, suspended }
+var _msSlotTemplates = []; // [{time, capacity}]
+var _msTab = 'calendar';
+var _msAllBookings = []; // admin 用
+
+// ── 初始化 ──
+window.massageLoad = async function() {
+  var now = new Date();
+  if (!_msYear) { _msYear = now.getFullYear(); _msMonth = now.getMonth(); }
+  if (!_msData) {
+    _msData = {
+      ok: true,
+      userEmail: (window.currentUser && window.currentUser.email) || '',
+      isAdmin: true, suspended: false, violationCount: 0,
+      settings: { weeklyLimit: 1, cancelDeadlineHours: 24, violationPenaltyCount: 3,
+        slotTemplates: [{time:'10:00',capacity:1},{time:'14:00',capacity:1},{time:'16:00',capacity:1}] },
+      myBookings: [], allBookings: []
+    };
+    _msSlotTemplates = _msData.settings.slotTemplates;
+  }
+  msRenderQuota();
+  msRenderCal();
+  if (_msData && _msData.isAdmin) document.getElementById('ms-tab-admin').style.display = '';
+  msFetchData().then(function(){ msRenderCal(); msRenderQuota(); }).catch(function(){});
+};
+
+async function msFetchData() {
+  try {
+    var r = await htApi('massageGetData', {});
+    if (r && r.ok) {
+      _msData = r;
+      _msSlotTemplates = r.settings.slotTemplates || [];
+      _allBookings = r.allBookings || [];
+      msRenderQuota();
+    }
+  } catch(e) {
+    // 用 mock 資料 demo
+    if (!_msData) {
+      _msData = {
+        ok: true,
+        userEmail: (window.currentUser && currentUser.email) || 'demo@example.com',
+        isAdmin: true,
+        suspended: false,
+        violationCount: 0,
+        settings: { weeklyLimit: 1, cancelDeadlineHours: 24, violationPenaltyCount: 3,
+          slotTemplates: [{time:'10:00',capacity:1},{time:'14:00',capacity:1},{time:'16:00',capacity:1}] },
+        myBookings: [],
+        allBookings: []
+      };
+      _msSlotTemplates = _msData.settings.slotTemplates;
+    }
+  }
+}
+
+// ── 用量 bar ──
+function msRenderQuota() {
+  if (!_msData) return;
+  var bar = document.getElementById('ms-quota-bar');
+  var txt = document.getElementById('ms-quota-text');
+  var warn = document.getElementById('ms-suspend-warn');
+  if (!bar || !txt) return;
+  bar.style.display = 'flex';
+  // 計算本週已預約次數
+  var now = new Date();
+  var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0,0,0,0);
+  var myBookings = (_msData.myBookings || []);
+  var thisWeek = myBookings.filter(function(b){
+    return b.status === 'booked' && new Date(b.date) >= weekStart;
+  }).length;
+  var limit = (_msData.settings || {}).weeklyLimit || 1;
+  txt.textContent = thisWeek + ' / ' + limit + ' 次';
+  txt.style.color = thisWeek >= limit ? '#dc2626' : '#e16b8c';
+  if (_msData.suspended) warn.style.display = '';
+  else warn.style.display = 'none';
+}
+
+// ── Tab 切換 ──
+window.msSwitchTab = function(tab) {
+  _msTab = tab;
+  document.querySelectorAll('.massage-tab').forEach(function(b){
+    b.classList.toggle('active', b.id === 'ms-tab-' + tab);
+  });
+  document.getElementById('ms-panel-calendar').style.display = tab === 'calendar' ? '' : 'none';
+  document.getElementById('ms-panel-my').style.display = tab === 'my' ? '' : 'none';
+  document.getElementById('ms-panel-admin').style.display = tab === 'admin' ? '' : 'none';
+  if (tab === 'my') msRenderMyBookings();
+  if (tab === 'admin') msRenderAdmin();
+};
+
+function msShowAdmin() {
+  // 等資料載入後才顯示管理 tab
+}
+
+// ── 日曆導覽 ──
+window.msCalPrev = function() {
+  _msMonth--;
+  if (_msMonth < 0) { _msMonth = 11; _msYear--; }
+  _msSelectedDate = null;
+  msRenderCal();
+};
+window.msCalNext = function() {
+  _msMonth++;
+  if (_msMonth > 11) { _msMonth = 0; _msYear++; }
+  _msSelectedDate = null;
+  msRenderCal();
+};
+
+// ── 日曆渲染 ──
+function msRenderCal() {
+  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+  document.getElementById('ms-cal-title').textContent = _msYear + ' 年 ' + months[_msMonth];
+  var grid = document.getElementById('ms-cal-grid');
+  var first = new Date(_msYear, _msMonth, 1).getDay();
+  var daysInMonth = new Date(_msYear, _msMonth + 1, 0).getDate();
+  var today = new Date(); today.setHours(0,0,0,0);
+  var myBookings = (_msData && _msData.myBookings) || [];
+  var myDates = {};
+  myBookings.forEach(function(b){ if (b.status === 'booked' || b.status === 'attended') myDates[b.date] = b; });
+  var html = '';
+  for (var i = 0; i < first; i++) html += '<div></div>';
+  for (var d = 1; d <= daysInMonth; d++) {
+    var dateStr = _msYear + '-' + pad2(_msMonth+1) + '-' + pad2(d);
+    var dt = new Date(_msYear, _msMonth, d);
+    var isPast = dt < today;
+    var isToday = dt.getTime() === today.getTime();
+    var isSun = dt.getDay() === 0;
+    var isSat = dt.getDay() === 6;
+    var isWeekend = isSun || isSat;
+    var myBook = myDates[dateStr];
+    var slotsForDay = msSlotsForDate(dateStr);
+    var hasSlots = slotsForDay.length > 0;
+    var hasAvail = slotsForDay.some(function(s){ return s.remaining > 0 && !isPast; });
+    var isSelected = _msSelectedDate === dateStr;
+    var bg, color, border;
+    if (myBook) { bg = '#fde4ef'; color = '#e16b8c'; border = '2px solid #e16b8c'; }
+    else if (!hasSlots || isWeekend) { bg = '#f8fafc'; color = '#cbd5e1'; border = '2px solid transparent'; }
+    else if (isPast) { bg = '#f8fafc'; color = '#cbd5e1'; border = '2px solid transparent'; }
+    else if (hasAvail) { bg = '#dcfce7'; color = '#16a34a'; border = '2px solid transparent'; }
+    else { bg = '#f1f5f9'; color = '#94a3b8'; border = '2px solid transparent'; }
+    if (isSelected) border = '2px solid #6366f1';
+    if (isToday) border = isSelected ? '2px solid #6366f1' : '2px solid #0f172a';
+    var clickable = !isPast && hasSlots && !isWeekend;
+    html += '<div onclick="' + (clickable ? 'msSelectDate(\'' + dateStr + '\')' : '') + '"'
+      + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;'
+      + 'background:' + bg + ';color:' + color + ';border:' + border + ';font-size:13px;font-weight:'+(isToday?'800':'600')
+      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .15s;position:relative"'
+      + (clickable ? ' onmouseover="this.style.opacity=\'.8\'" onmouseout="this.style.opacity=\'1\'"' : '')
+      + '>' + d
+      + (myBook ? '<span style="position:absolute;bottom:2px;right:2px;width:6px;height:6px;border-radius:50%;background:#e16b8c"></span>' : '')
+      + '</div>';
+  }
+  grid.innerHTML = html;
+  if (_msSelectedDate) msShowSlots(_msSelectedDate);
+  else { document.getElementById('ms-slots-panel').style.display = 'none'; document.getElementById('ms-no-slots').style.display = ''; }
+}
+
+window.msSelectDate = function(dateStr) {
+  _msSelectedDate = dateStr;
+  msRenderCal();
+  msShowSlots(dateStr);
+};
+
+function msShowSlots(dateStr) {
+  var panel = document.getElementById('ms-slots-panel');
+  var noSlots = document.getElementById('ms-no-slots');
+  var dateLabel = document.getElementById('ms-slots-date');
+  var list = document.getElementById('ms-slots-list');
+  var slots = msSlotsForDate(dateStr);
+  var myBookings = (_msData && _msData.myBookings) || [];
+  var myBook = myBookings.find(function(b){ return b.date === dateStr && (b.status==='booked'||b.status==='attended'); });
+  var parts = dateStr.split('-');
+  var days = ['日','一','二','三','四','五','六'];
+  var dt = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  dateLabel.textContent = parts[0] + ' 年 ' + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt.getDay()] + '）';
+  if (!slots.length) { panel.style.display = 'none'; noSlots.style.display = ''; noSlots.textContent = '此日無開放時段'; return; }
+  panel.style.display = '';
+  noSlots.style.display = 'none';
+  var settings = (_msData && _msData.settings) || {};
+  var suspended = _msData && _msData.suspended;
+  var now = new Date();
+  var weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+  var myBookings2 = (_msData && _msData.myBookings) || [];
+  var weekCount = myBookings2.filter(function(b){ return b.status==='booked' && new Date(b.date)>=weekStart; }).length;
+  var overLimit = weekCount >= (settings.weeklyLimit || 1);
+  list.innerHTML = slots.map(function(s) {
+    var isMySlot = myBook && myBook.timeSlot === s.time;
+    var isToday = dateStr === fmtDateStr(new Date());
+    var canCheckIn = isMySlot && isToday && myBook.status === 'booked';
+    var cancelDeadline = settings.cancelDeadlineHours || 24;
+    var appointmentTime = new Date(dateStr + 'T' + s.time + ':00');
+    var canCancel = isMySlot && (appointmentTime - now) > cancelDeadline * 3600000;
+    var statusBadge = isMySlot ? (myBook.status === 'attended' ? '<span style="background:#dcfce7;color:#16a34a;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">已報到</span>' : '<span style="background:#fde4ef;color:#e16b8c;border-radius:6px;padding:2px 8px;font-size:11px;font-weight:700">已預約</span>') : '';
+    var actionBtn = '';
+    if (isMySlot && myBook.status === 'booked') {
+      if (canCheckIn) actionBtn += '<button onclick="msCheckIn(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 報到</button>';
+      if (canCancel) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消預約</button>';
+    } else if (!isMySlot && s.remaining > 0 && !suspended && !overLimit) {
+      actionBtn = '<button onclick="msBook(\'' + dateStr + '\',\'' + s.time + '\')" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">立即預約</button>';
+    } else if (!isMySlot && s.remaining <= 0) {
+      actionBtn = '<span style="font-size:12px;color:#94a3b8">額滿</span>';
+    } else if (overLimit && !isMySlot) {
+      actionBtn = '<span style="font-size:12px;color:#f59e0b">本週已達上限</span>';
+    }
+    return '<div style="background:#fff;border:1.5px solid '+(isMySlot?'#e16b8c':'#e2e8f0')+';border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+      + '<div style="font-size:18px;font-weight:800;color:#0f172a;min-width:52px">' + s.time + '</div>'
+      + '<div style="flex:1">'
+      + statusBadge
+      + '<div style="font-size:12px;color:#64748b;margin-top:2px">剩餘 <b style="color:' + (s.remaining>0?'#16a34a':'#dc2626') + '">' + s.remaining + '</b> / ' + s.capacity + ' 名額</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap">' + actionBtn + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function msSlotsForDate(dateStr) {
+  var templates = _msSlotTemplates;
+  var allBookings = (_msData && _msData.allBookings) || [];
+  return templates.map(function(t){
+    var booked = allBookings.filter(function(b){ return b.date === dateStr && b.timeSlot === t.time && b.status === 'booked'; }).length;
+    return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked) };
+  }).sort(function(a,b){ return a.time.localeCompare(b.time); });
+}
+
+// ── 預約 ──
+window.msBook = async function(date, timeSlot) {
+  if (!_msData) return;
+  if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
+  try {
+    var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
+    if (r && r.ok) {
+      toast('✅ 預約成功！');
+      if (!_msData.myBookings) _msData.myBookings = [];
+      _msData.myBookings.push({ bookingId: r.bookingId || ('BK'+Date.now()), date: date, timeSlot: timeSlot, status: 'booked', createdAt: new Date().toISOString() });
+      if (_msData.allBookings) _msData.allBookings.push({ bookingId: r.bookingId || ('BK'+Date.now()), date: date, timeSlot: timeSlot, status: 'booked', userEmail: _msData.userEmail, userName: (currentUser && currentUser.name) || '', createdAt: new Date().toISOString() });
+      msRenderQuota(); msRenderCal();
+    } else { toast('❌ 預約失敗：' + ((r&&r.error)||'請稍後再試')); }
+  } catch(e) {
+    // mock
+    if (!_msData.myBookings) _msData.myBookings = [];
+    var bid = 'BK' + Date.now();
+    _msData.myBookings.push({ bookingId: bid, date: date, timeSlot: timeSlot, status: 'booked', createdAt: new Date().toISOString(), userName: (currentUser&&currentUser.name)||'', userEmail: _msData.userEmail });
+    if (!_msData.allBookings) _msData.allBookings = [];
+    _msData.allBookings.push({ bookingId: bid, date: date, timeSlot: timeSlot, status: 'booked', userEmail: _msData.userEmail, userName:(currentUser&&currentUser.name)||'', createdAt: new Date().toISOString() });
+    toast('✅ 預約成功！'); msRenderQuota(); msRenderCal();
+  }
+};
+
+// ── 取消 ──
+window.msCancel = async function(bookingId, date) {
+  if (!confirm('確定要取消 ' + date + ' 的預約嗎？')) return;
+  try {
+    var r = await htApi('massageCancel', { bookingId: bookingId });
+    if (r && r.ok) {
+      toast('預約已取消');
+      _msUpdateBookingStatus(bookingId, 'cancelled');
+      if (r.violation) { _msData.violationCount = (_msData.violationCount||0)+1; toast('⚠️ 已記錄一次違規'); }
+      msRenderQuota(); msRenderCal();
+    } else { toast('❌ 取消失敗：' + ((r&&r.error)||'請稍後再試')); }
+  } catch(e) {
+    _msUpdateBookingStatus(bookingId, 'cancelled');
+    toast('預約已取消'); msRenderQuota(); msRenderCal();
+  }
+};
+
+// ── 報到 ──
+window.msCheckIn = async function(bookingId, date) {
+  try {
+    var r = await htApi('massageCheckIn', { bookingId: bookingId });
+    if (r && r.ok) {
+      toast('✅ 報到成功！');
+      _msUpdateBookingStatus(bookingId, 'attended');
+      msRenderCal();
+    } else { toast('❌ 報到失敗：' + ((r&&r.error)||'請稍後再試')); }
+  } catch(e) {
+    _msUpdateBookingStatus(bookingId, 'attended');
+    toast('✅ 報到成功！'); msRenderCal();
+  }
+};
+
+function _msUpdateBookingStatus(bookingId, status) {
+  if (_msData && _msData.myBookings) {
+    var b = _msData.myBookings.find(function(x){ return x.bookingId === bookingId; });
+    if (b) b.status = status;
+  }
+  if (_msData && _msData.allBookings) {
+    var b2 = _msData.allBookings.find(function(x){ return x.bookingId === bookingId; });
+    if (b2) b2.status = status;
+  }
+}
+
+// ── 我的預約 ──
+function msRenderMyBookings() {
+  var myBookings = (_msData && _msData.myBookings) || [];
+  var now = new Date(); now.setHours(0,0,0,0);
+  var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); });
+  var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; })
+    .sort(function(a,b){ return b.date.localeCompare(a.date); });
+
+  var upEl = document.getElementById('ms-my-upcoming');
+  var upEmpty = document.getElementById('ms-my-upcoming-empty');
+  upEmpty.style.display = upcoming.length ? 'none' : '';
+  upEl.innerHTML = upcoming.map(function(b){ return msBookingCard(b, true); }).join('');
+
+  var hiEl = document.getElementById('ms-my-history');
+  var hiEmpty = document.getElementById('ms-my-history-empty');
+  hiEmpty.style.display = history.length ? 'none' : '';
+  hiEl.innerHTML = history.map(function(b){ return msBookingCard(b, false); }).join('');
+}
+
+function msBookingCard(b, isUpcoming) {
+  var statusMap = { booked:'已預約', cancelled:'已取消', attended:'已報到', noshow:'缺席' };
+  var colorMap = { booked:'#e16b8c', cancelled:'#94a3b8', attended:'#16a34a', noshow:'#dc2626' };
+  var bgMap = { booked:'#fde4ef', cancelled:'#f1f5f9', attended:'#dcfce7', noshow:'#fef2f2' };
+  var s = b.status || 'booked';
+  var now = new Date();
+  var appointmentTime = new Date(b.date + 'T' + (b.timeSlot||'00:00') + ':00');
+  var settings = (_msData && _msData.settings) || {};
+  var canCancel = isUpcoming && s === 'booked' && (appointmentTime - now) > (settings.cancelDeadlineHours||24) * 3600000;
+  var isToday = b.date === fmtDateStr(new Date());
+  var canCheckIn = isUpcoming && s === 'booked' && isToday;
+  var actions = '';
+  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#16a34a;color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 立即報到</button>';
+  if (canCancel) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#f8fafc;color:#64748b;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消預約</button>';
+  var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  var cancelTs = b.cancelledAt ? '  取消於：' + new Date(b.cancelledAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+  return '<div style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:16px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">'
+    + '<div style="min-width:80px;text-align:center;background:#f8fafc;border-radius:10px;padding:10px 8px">'
+    + '<div style="font-size:20px;font-weight:800;color:#0f172a">' + parseInt((b.date||'').split('-')[2]||0) + '</div>'
+    + '<div style="font-size:12px;color:#64748b">' + ((b.date||'').split('-').slice(0,2).join('/')) + '</div>'
+    + '<div style="font-size:14px;font-weight:700;color:#374151;margin-top:4px">' + (b.timeSlot||'') + '</div>'
+    + '</div>'
+    + '<div style="flex:1">'
+    + '<span style="background:' + bgMap[s] + ';color:' + colorMap[s] + ';border-radius:6px;padding:2px 10px;font-size:12px;font-weight:700">' + (statusMap[s]||s) + '</span>'
+    + (ts ? '<div style="font-size:11px;color:#94a3b8;margin-top:6px">預約於：' + ts + cancelTs + '</div>' : '')
+    + (actions ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' + actions + '</div>' : '')
+    + '</div></div>';
+}
+
+// ── 管理設定 ──
+function msRenderAdmin() {
+  if (!_msData) return;
+  var s = _msData.settings || {};
+  var wl = document.getElementById('ms-cfg-weekly');
+  var ch = document.getElementById('ms-cfg-cancel-hrs');
+  var vio = document.getElementById('ms-cfg-violation');
+  if (wl) wl.value = s.weeklyLimit || 1;
+  if (ch) ch.value = s.cancelDeadlineHours || 24;
+  if (vio) vio.value = s.violationPenaltyCount || 3;
+  msRenderSlotTemplates();
+  msRenderAdminTable();
+}
+
+function msRenderSlotTemplates() {
+  var list = document.getElementById('ms-slot-template-list');
+  if (!list) return;
+  list.innerHTML = _msSlotTemplates.map(function(t, i){
+    return '<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:8px;padding:8px 10px">'
+      + '<span style="font-size:14px;font-weight:700;color:#0f172a;flex:1">' + t.time + '</span>'
+      + '<span style="font-size:12px;color:#64748b">名額 ' + t.capacity + '</span>'
+      + '<button onclick="msRemoveSlot(' + i + ')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:6px;padding:4px 8px;font-size:12px;cursor:pointer;font-family:inherit">✕</button>'
+      + '</div>';
+  }).join('') || '<div style="font-size:13px;color:#94a3b8">尚未設定時段</div>';
+}
+
+window.msAddSlotTemplate = function() {
+  var t = document.getElementById('ms-new-slot-time').value;
+  var c = parseInt(document.getElementById('ms-new-slot-cap').value) || 1;
+  if (!t) { toast('請選擇時段'); return; }
+  if (_msSlotTemplates.find(function(x){ return x.time === t; })) { toast('此時段已存在'); return; }
+  _msSlotTemplates.push({ time: t, capacity: c });
+  _msSlotTemplates.sort(function(a,b){ return a.time.localeCompare(b.time); });
+  msRenderSlotTemplates();
+};
+
+window.msRemoveSlot = function(i) {
+  _msSlotTemplates.splice(i, 1);
+  msRenderSlotTemplates();
+};
+
+window.msSaveSettings = async function() {
+  var s = {
+    weeklyLimit: parseInt(document.getElementById('ms-cfg-weekly').value) || 1,
+    cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value) || 24,
+    violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value) || 3,
+    slotTemplates: _msSlotTemplates
+  };
+  try {
+    var r = await htApi('massageSaveSettings', { settings: s });
+    if (r && r.ok) { if (_msData) _msData.settings = s; toast('✅ 設定已儲存'); }
+    else toast('❌ 儲存失敗');
+  } catch(e) {
+    if (_msData) _msData.settings = s;
+    toast('✅ 設定已儲存');
+  }
+};
+
+function msRenderAdminTable() {
+  var tbody = document.getElementById('ms-admin-tbody');
+  if (!tbody) return;
+  var all = (_msData && _msData.allBookings) || [];
+  all = all.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  _allBookings = all;
+  msRenderAdminRows(all);
+}
+
+window.msAdminFilter = function() {
+  var q = (document.getElementById('ms-admin-search').value || '').toLowerCase();
+  var all = _allBookings;
+  if (q) all = all.filter(function(b){ return (b.userName||'').toLowerCase().includes(q) || (b.userEmail||'').toLowerCase().includes(q) || (b.date||'').includes(q); });
+  msRenderAdminRows(all);
+};
+
+function msRenderAdminRows(rows) {
+  var tbody = document.getElementById('ms-admin-tbody');
+  if (!tbody) return;
+  var statusMap = { booked:'已預約', cancelled:'已取消', attended:'已報到', noshow:'缺席' };
+  var colorMap = { booked:'#e16b8c', cancelled:'#94a3b8', attended:'#16a34a', noshow:'#dc2626' };
+  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:24px;color:#94a3b8">無紀錄</td></tr>'; return; }
+  tbody.innerHTML = rows.map(function(b){
+    var s = b.status || 'booked';
+    var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+    return '<tr style="border-bottom:1px solid #f1f5f9">'
+      + '<td style="padding:10px">' + (b.userName||b.userEmail||'—') + '</td>'
+      + '<td style="padding:10px">' + (b.date||'') + '</td>'
+      + '<td style="padding:10px">' + (b.timeSlot||'') + '</td>'
+      + '<td style="padding:10px"><span style="color:' + (colorMap[s]||'#374151') + ';font-weight:700;font-size:12px">' + (statusMap[s]||s) + '</span></td>'
+      + '<td style="padding:10px;font-size:12px;color:#94a3b8">' + ts + '</td>'
+      + '<td style="padding:10px">'
+      + (s==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit">取消</button>':'')
+      + (s==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;margin-left:4px">報到</button>':'')
+      + '</td></tr>';
+  }).join('');
+}
+
+window.msAdminCancel = function(bookingId) {
+  if (!confirm('確定要取消此預約嗎？')) return;
+  _msUpdateBookingStatus(bookingId, 'cancelled');
+  msRenderAdminTable();
+  htApi('massageAdminCancel', { bookingId: bookingId }).catch(function(){});
+  toast('已取消');
+};
+
+window.msAdminCheckIn = function(bookingId) {
+  _msUpdateBookingStatus(bookingId, 'attended');
+  msRenderAdminTable();
+  htApi('massageCheckIn', { bookingId: bookingId }).catch(function(){});
+  toast('✅ 已報到');
+};
+
+// ── 工具 ──
+function pad2(n){ return n < 10 ? '0'+n : ''+n; }
+function fmtDateStr(d){ return d.getFullYear() + '-' + pad2(d.getMonth()+1) + '-' + pad2(d.getDate()); }
+var _allBookings = [];
+
+})(); // end 按摩預約 module
 </script>
 
 <!-- ht-fab-wrap 已移除，小Bee 整合至 tab bar -->
