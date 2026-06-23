@@ -1982,6 +1982,15 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           </div>
           <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px" id="file-list">
           </div>
+          <!-- OCR 掃描收據 -->
+          <div style="margin-top:10px">
+            <input type="file" id="ocr-file-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="htOcrScan(this)">
+            <button type="button" onclick="document.getElementById('ocr-file-input').click()" style="width:100%;padding:9px;border:1.5px dashed #e16b8c;border-radius:10px;background:#fff0f5;color:#e16b8c;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              📷 拍照掃描收據自動填入金額
+            </button>
+            <div id="ocr-result" style="display:none;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-size:13px;color:#16a34a"></div>
+          </div>
         </div>
         <div class="card" style="padding:20px">
           <div style="font-size:14px;font-weight:600;color:#0f172a;margin-bottom:10px">注意事項</div>
@@ -4742,6 +4751,30 @@ async function loadDetail(caseId, _fromPop) {
     const canApprove  = isMyTurnToApprove(c) || (isAdmin() && isPending);
     approveBox.style.display = canApprove ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
+    // 異常偵測
+    var anomalyEl = document.getElementById('anomaly-warnings');
+    if (!anomalyEl) {
+      anomalyEl = document.createElement('div');
+      anomalyEl.id = 'anomaly-warnings';
+      approveBox.insertBefore(anomalyEl, approveBox.firstChild);
+    }
+    anomalyEl.innerHTML = '';
+    if (canApprove) {
+      var hasAtt = !!(c.files && c.files.length > 0);
+      htApi('htCheckAnomaly', { amount: c.totalAmount || 0, applicantEmail: c.email || '', caseId: c.caseId, hasAttachment: hasAtt }).then(function(res) {
+        if (res && res.warnings && res.warnings.length > 0) {
+          var wHtml = '<div style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px">';
+          res.warnings.forEach(function(w) {
+            var bg = w.level === 'warn' ? '#fef3c7' : '#eff6ff';
+            var color = w.level === 'warn' ? '#d97706' : '#3b82f6';
+            var icon = w.level === 'warn' ? '⚠️' : 'ℹ️';
+            wHtml += '<div style="padding:8px 12px;background:'+bg+';border-radius:8px;font-size:13px;color:'+color+';border-left:3px solid '+color+'">'+icon+' '+htEsc(w.msg)+'</div>';
+          });
+          wHtml += '</div>';
+          anomalyEl.innerHTML = wHtml;
+        }
+      }).catch(function(){});
+    }
     // 每次切換案件時清空退件原因，避免帶入上一筆的內容
     const _ta = approveBox.querySelector('textarea');
     if (_ta) _ta.value = '';
@@ -8496,6 +8529,36 @@ async function htApi(action, payload) {
   return res.json();
 }
 
+// ── OCR 掃描收據 ──
+window.htOcrScan = async function(input) {
+  var file = input && input.files && input.files[0];
+  if (!file) return;
+  var resEl = document.getElementById('ocr-result');
+  if (resEl) { resEl.style.display=''; resEl.textContent='🔍 掃描中，請稍候…'; resEl.style.color='#64748b'; }
+  try {
+    var reader = new FileReader();
+    reader.onload = async function(e) {
+      var b64 = e.target.result.split(',')[1];
+      var r = await htApi('htOcrReceipt', { imageBase64: b64, mimeType: file.type });
+      if (r && r.ok && r.suggestedAmount) {
+        // 填入含稅金額欄位
+        var amtInputs = document.querySelectorAll('.inp.withtax');
+        if (amtInputs.length > 0) {
+          amtInputs[amtInputs.length-1].value = r.suggestedAmount;
+          amtInputs[amtInputs.length-1].dispatchEvent(new Event('input'));
+        }
+        if (resEl) { resEl.textContent='✅ 偵測金額 NT$' + Number(r.suggestedAmount).toLocaleString() + '，已自動填入'; resEl.style.color='#16a34a'; }
+      } else {
+        if (resEl) { resEl.textContent='⚠️ 無法識別金額，請手動輸入。' + (r && r.text ? '（識別文字：' + r.text.slice(0,40) + '…）' : ''); resEl.style.color='#d97706'; }
+      }
+    };
+    reader.readAsDataURL(file);
+  } catch(e) {
+    if (resEl) { resEl.textContent='❌ 掃描失敗：' + e.message; resEl.style.color='#dc2626'; }
+  }
+  input.value = '';
+};
+
 // ── 格式化 ──
 function fmtMoney(n) { return 'NT$' + Number(n||0).toLocaleString(); }
 function fmtMonth(ym) {
@@ -10444,13 +10507,14 @@ window.htAssistRun = async function() {
     payload.context = '請推薦適合企業公司下午茶的品項組合，重點考量：' + cn.join('、') + '。';
   }
   try {
-    var r = await htApi('htRecommend', payload);
+    var r = await htApi('htRecommendAI', payload);
     var items = (r && (r.topItems || r.items)) || [];
-    if (!items.length) throw new Error('無推薦結果');
+    if (!items.length) throw new Error((r && r.error) || '無推薦結果');
     var modeLabel = { plan:'本月規劃', trend:'社群熱品', corp:'企業團餐' }[_htAssistMode] || '';
     var catColors = { '甜點':'#e16b8c', '飲品':'#3b82f6', '水果':'#22c55e', '鹹食':'#f59e0b', '主食':'#f59e0b' };
     var html = '<div style="border-top:1.5px solid #f1f5f9;padding-top:16px;margin-top:4px">';
-    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">✨ ' + modeLabel + ' 推薦清單</div>';
+    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">🤖 AI ' + modeLabel + ' 推薦清單</div>';
+    if (r.summary) html += '<div style="font-size:13px;color:#64748b;background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.6">'+htEsc(r.summary)+'</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px">';
     items.slice(0, 15).forEach(function(it) {
       var name = it.name || it; var vendor = it.vendor || ''; var cat = it.category || ''; var price = it.unitPrice ? '$'+it.unitPrice : '';
