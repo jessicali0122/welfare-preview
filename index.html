@@ -2247,25 +2247,19 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <!-- 頁頭工具列（重設計） -->
     <div style="margin-bottom:20px">
       <!-- Tab 列 -->
-      <div style="background:#fff;border:1px solid #f0f0f0;border-radius:18px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:6px;display:flex;align-items:center;gap:2px">
-        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')"
-          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:#fff0f5;color:#e16b8c;font-family:inherit;cursor:pointer;transition:all .2s">
-          <span style="font-size:20px;line-height:1">🗓️</span>
-          <span style="font-size:14px;font-weight:700;white-space:nowrap">活動總覽</span>
-        </button>
-        <button class="ht-tab-btn" id="ht-tab-analytics" onclick="htSwitchListTab('analytics')"
-          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:transparent;color:#aaa;font-family:inherit;cursor:pointer;transition:all .2s">
-          <span style="font-size:20px;line-height:1">📊</span>
-          <span style="font-size:14px;font-weight:600;white-space:nowrap">品項分析</span>
-        </button>
-        <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
-          style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:12px 8px;border-radius:12px;border:none;background:transparent;color:#aaa;font-family:inherit;cursor:pointer;transition:all .2s">
-          <span style="font-size:20px;line-height:1">🗺️</span>
-          <span style="font-size:14px;font-weight:600;white-space:nowrap">探店靈感</span>
-        </button>
-        <div style="width:1px;height:36px;background:#f0f0f0;margin:0 6px;flex-shrink:0"></div>
-        <button onclick="htOpenCreate()" style="flex-shrink:0;display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:12px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;transition:all .2s;box-shadow:0 4px 14px rgba(225,107,140,.4)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(225,107,140,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(225,107,140,.4)'">
-          <span style="font-size:18px">✨</span> 新增活動
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;gap:8px">
+          <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')"
+            style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#fff0f5;color:#e16b8c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+            🗓️ 活動指南
+          </button>
+          <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
+            style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+            🗺️ 探店靈感
+          </button>
+        </div>
+        <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:20px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;transition:all .2s;box-shadow:0 4px 14px rgba(225,107,140,.4)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(225,107,140,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(225,107,140,.4)'">
+          ✨ 新增活動
         </button>
       </div>
     </div>
@@ -2280,25 +2274,21 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       </div>
     </div>
 
-    <!-- 活動總覽 Tab（年曆 + 日曆 + 活動卡片） -->
+    <!-- 活動指南 Tab（統計摘要 + 年曆 + 日曆 + 活動卡片） -->
     <div id="ht-panel-events">
+      <!-- 統計摘要卡片（原品項分析 Tab 的數字） -->
+      <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
       <div id="ht-year-timeline" style="margin-bottom:18px"></div>
       <!-- #ht-panel-calendar 會於載入時由 JS 移入此處 -->
       <div id="ht-events-grid">
         <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
       </div>
-    </div>
-
-    <!-- 品項分析 Tab -->
-    <div id="ht-panel-analytics" style="display:none">
-      <!-- 三個統計數字 -->
-      <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
-      <!-- 主體：店家排行（整排） -->
-      <div>
+      <!-- 最常採購店家（收在底部） -->
+      <div id="ht-vendor-section" style="display:none;margin-top:24px">
         <div style="background:#fff;border-radius:20px;border:1px solid #f0f0f0;overflow:hidden">
-          <div style="padding:20px 24px;border-bottom:1px solid #f5f5f5">
-            <div style="font-size:16px;font-weight:800;color:#0f172a">最常採購店家</div>
-            <div style="font-size:14px;color:#bbb;margin-top:4px">依採購次數排列</div>
+          <div style="padding:16px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:8px">
+            <span style="font-size:15px;font-weight:800;color:#0f172a">最常採購店家</span>
+            <span style="font-size:12px;color:#bbb">依採購次數排列</span>
           </div>
           <div id="ht-vendor-ranking" style="padding:8px 0"></div>
         </div>
@@ -2306,6 +2296,9 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <div id="ht-category-bars" style="display:none"></div>
       <div id="ht-trend-chart" style="display:none"></div>
     </div>
+
+    <!-- 品項分析 Tab（已整合，保留空殼以免 JS 報錯） -->
+    <div id="ht-panel-analytics" style="display:none"></div>
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
@@ -8611,11 +8604,11 @@ window.htSwitchListTab = function(tab) {
     if (active) {
       b.style.background = '#fff0f5';
       b.style.color = '#e16b8c';
-      b.style.boxShadow = 'none';
+      b.style.borderColor = '#e16b8c';
     } else {
-      b.style.background = 'transparent';
-      b.style.color = '#aaa';
-      b.style.boxShadow = 'none';
+      b.style.background = '#f8fafc';
+      b.style.color = '#475569';
+      b.style.borderColor = '#e2e8f0';
     }
     b.classList.toggle('active', active);
   });
@@ -8750,6 +8743,8 @@ function htRenderAnalytics() {
   // 熱門店家排行 + 品項類別佔比：優先用 _htVendors.totalOrders，若全為 0 則從活動品項重新計算
   var rankEl = document.getElementById('ht-vendor-ranking');
   var catEl  = document.getElementById('ht-category-bars');
+  var vendorSec = document.getElementById('ht-vendor-section');
+  if (vendorSec) vendorSec.style.display = '';
   var allZero = _htVendors.every(function(v){ return !(v.totalOrders); });
 
   if (!_htVendors.length) {
