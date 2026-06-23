@@ -8419,6 +8419,33 @@ var _htDetailTab= 'plan';
 var _htVendors  = [];
 var _htVendorsLoading = null;
 var _htItemsCache = null; // { vendorMap, catTotals } — 避免重複撈全部品項
+
+// 廠商名稱／分類正規化：已知錯字、諧音對應到正確名稱（原始試算表不動，於系統端統一）
+var _HT_VENDOR_ALIAS = {
+  '肯德雞':'肯德基', '拿坡理':'拿坡里', '銅羅燒':'銅鑼燒',
+  '捲捲烘培':'捲捲烘焙', '里洋烘培':'里洋烘焙', 'buger now':'burger now', '魯味':'滷味'
+};
+var _HT_CAT_ALIAS = { '外繪':'外燴' };
+function _htCanonVendor(n){ var s = (n||'').trim(); return _HT_VENDOR_ALIAS[s] || s; }
+function _htCanonCat(c){ var s = (c||'').trim(); return _HT_CAT_ALIAS[s] || s; }
+// 正規化廠商陣列並合併重複（同一正確名稱的訂購數/評分加總）
+function _htNormalizeVendors(arr){
+  var map = {};
+  (arr||[]).forEach(function(v){
+    var name = _htCanonVendor(v.name);
+    if (!name) return;
+    var cat = _htCanonCat(v.category);
+    if (!map[name]) { map[name] = Object.assign({}, v, { name:name, category:cat }); }
+    else {
+      var m = map[name];
+      m.totalOrders = (m.totalOrders||0) + (v.totalOrders||0);
+      m.ratingSum   = (m.ratingSum||0)   + (v.ratingSum||0);
+      m.ratingCount = (m.ratingCount||0) + (v.ratingCount||0);
+      if (!m.category && cat) m.category = cat;
+    }
+  });
+  return Object.keys(map).map(function(k){ return map[k]; });
+}
 var _htRecData  = null;
 var _htRecTab   = 'all';
 
@@ -8516,7 +8543,7 @@ window.htLoadList = async function() {
     _htVendorsLoading = htApi('htVendors').then(function(rv){
       _htVendorsLoading = null;
       if(rv.ok) {
-        _htVendors = rv.vendors || [];
+        _htVendors = _htNormalizeVendors(rv.vendors || []);
         if (_htListTab === 'discover') _htRenderDiscoverRec();
       }
     });
@@ -8775,7 +8802,7 @@ function htRenderAnalytics() {
     if (rankEl) rankEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">載入中…</div>';
     var vendorPromise = _htVendorsLoading || htApi('htVendors').then(function(rv){
       _htVendorsLoading = null;
-      if(rv.ok) _htVendors = rv.vendors||[];
+      if(rv.ok) _htVendors = _htNormalizeVendors(rv.vendors||[]);
     });
     if (!_htVendorsLoading) _htVendorsLoading = vendorPromise;
     vendorPromise.then(function(){ htRenderAnalytics(); });
@@ -8810,12 +8837,12 @@ function htRenderAnalytics() {
         results.forEach(function(r) {
           if (!r || !r.ok || !r.items) return;
           r.items.forEach(function(it) {
-            var vn = (it.vendor || '').trim();
+            var vn = _htCanonVendor(it.vendor);
             if (vn && !/^\d+$/.test(vn)) {
-              if (!vendorMap[vn]) vendorMap[vn] = { name: vn, count: 0, category: it.category || '其他' };
+              if (!vendorMap[vn]) vendorMap[vn] = { name: vn, count: 0, category: _htCanonCat(it.category) || '其他' };
               vendorMap[vn].count++;
             }
-            var cat = (it.category || '其他').trim();
+            var cat = _htCanonCat(it.category) || '其他';
             catTotals[cat] = (catTotals[cat] || 0) + 1;
           });
         });
@@ -9925,7 +9952,7 @@ async function _htShowRepeatWarning() {
     results.forEach(function(res) {
       var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
       items.forEach(function(it) {
-        var vn = (it.vendor || '').trim();
+        var vn = _htCanonVendor(it.vendor);
         // 排除空值與純數字（如誤填的金額「40」），只留真正的店家名稱
         if (vn && !/^\d+$/.test(vn)) vendorSet[vn] = true;
       });
