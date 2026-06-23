@@ -2256,14 +2256,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <!-- 頁頭工具列（重設計） -->
     <div style="margin-bottom:20px">
       <!-- Tab 列 -->
-      <div style="display:flex;align-items:center;justify-content:space-between">
-        <div style="display:flex;gap:8px">
-          <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')"
-            style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #e16b8c;background:#fff0f5;color:#e16b8c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f1f5f9;margin-bottom:16px">
+        <div style="display:flex;gap:0">
+          <button class="ht-tab-btn admin-tab active" id="ht-tab-events" onclick="htSwitchListTab('events')"
+            style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
             🗓️ 活動指南
           </button>
-          <button class="ht-tab-btn" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
-            style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+          <button class="ht-tab-btn admin-tab" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
+            style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
             🗺️ 探店靈感
           </button>
         </div>
@@ -8460,6 +8460,8 @@ var _HT_VENDOR_ALIAS_NS = {};
 Object.keys(_HT_VENDOR_ALIAS).forEach(function(k){ _HT_VENDOR_ALIAS_NS[k.replace(/\s/g,'')] = _HT_VENDOR_ALIAS[k]; });
 function _htCanonVendor(n){
   var s = (n||'').trim();
+  // 過濾純數字（電話、編號）、太短、或只有符號
+  if (!s || /^\d+$/.test(s) || s.length < 2) return '';
   if (_HT_VENDOR_ALIAS[s]) return _HT_VENDOR_ALIAS[s];
   var ns = s.replace(/\s/g,'');
   return _HT_VENDOR_ALIAS_NS[ns] || s;
@@ -8664,15 +8666,10 @@ window.htSwitchListTab = function(tab) {
   _htListTab = tab;
   document.querySelectorAll('.ht-tab-btn').forEach(function(b) {
     var active = b.id === 'ht-tab-' + tab;
-    if (active) {
-      b.style.background = '#fff0f5';
-      b.style.color = '#e16b8c';
-      b.style.borderColor = '#e16b8c';
-    } else {
-      b.style.background = '#f8fafc';
-      b.style.color = '#475569';
-      b.style.borderColor = '#e2e8f0';
-    }
+    // 底線式 admin-tab 風格，清除 inline 樣式讓 CSS class 生效
+    b.style.background = '';
+    b.style.color = '';
+    b.style.borderColor = '';
     b.classList.toggle('active', active);
   });
   ['events','analytics','discover'].forEach(function(p){
@@ -8786,10 +8783,22 @@ function htRenderAnalytics() {
   }
   var totalSpend = _htEvents.reduce(function(s,e){ return s + (e.actualExpense||0); }, 0);
   var avgSpend   = Math.round(totalSpend / _htEvents.length);
+  // 每月平均人數（從有 headcount 的場次計算）
+  var evWithHc = _htEvents.filter(function(e){ return e.headcount > 0; });
+  var avgHc = evWithHc.length ? Math.round(evWithHc.reduce(function(s,e){ return s+(e.headcount||0); },0) / evWithHc.length) : 0;
+  // 每月平均花費（按月份分組，再平均）
+  var monthMap = {};
+  _htEvents.forEach(function(e){
+    var ym = (e.date||'').slice(0,7) || (e.month||'');
+    if (!ym) return;
+    monthMap[ym] = (monthMap[ym]||0) + (e.actualExpense||0);
+  });
+  var monthKeys = Object.keys(monthMap);
+  var avgMonthSpend = monthKeys.length ? Math.round(Object.values(monthMap).reduce(function(s,v){return s+v;},0) / monthKeys.length) : 0;
   var statsData = [
-    { label:'活動場次', value: _htEvents.length + ' 場', icon:'🗓️', color:'#6366f1' },
-    { label:'總支出',   value: fmtMoney(totalSpend),      icon:'💸',  color:'#e16b8c' },
-    { label:'平均每場', value: fmtMoney(avgSpend),         icon:'📊',  color:'#f59e0b' },
+    { label:'累計場次',     value: _htEvents.length + ' 場', icon:'🗓️', color:'#6366f1' },
+    { label:'平均每月人數', value: avgHc ? avgHc + ' 人' : '—',         icon:'👥',  color:'#e16b8c' },
+    { label:'每月平均花費', value: avgMonthSpend ? fmtMoney(avgMonthSpend) : fmtMoney(avgSpend), icon:'💰', color:'#f59e0b' },
   ];
   document.getElementById('ht-analytics-stats').innerHTML = statsData.map(function(s){
     return '<div style="background:#fff;border-radius:18px;border:1px solid #f0f0f0;padding:24px 28px;display:flex;align-items:center;gap:18px">'
@@ -10165,13 +10174,13 @@ window.htRunOptimize = async function() {
 };
 
 function htRenderRecommend() {
-  // 填入當前活動的人數和預算
   if (_htEvent) {
     document.getElementById('ht-opt-headcount').value = _htEvent.headcount || '';
     document.getElementById('ht-opt-budget').value = _htEvent.budgetPerPerson || '';
   }
   if (_htRecData) htRenderRecommendList(_htRecData);
 }
+window.htRenderRecommend = htRenderRecommend;
 
 window.htSwitchRecTab = function(tab) {
   _htRecTab = tab;
