@@ -3168,8 +3168,68 @@ let ADMIN_EMAILS = ['user-a@tsagroup.com.tw'];
 // ── 簽核人清單（由 loadAdminFlow 動態載入）──
 let APPROVER_EMAILS = [];
 
+// ══════════════════════════════════════════════════════════
+//  角色 / 權限地基（capability 模型，支援多重角色）
+// ══════════════════════════════════════════════════════════
+// 四種角色：employee 員工（基底）/ welfare 福委會 / hr / manager 管理者
+const ROLE_LABELS = { employee:'員工', welfare:'福委會', hr:'HR', manager:'管理者' };
+const ROLE_KEYS = ['employee','welfare','hr','manager'];
+
+// 能力 → 擁有該能力的角色清單（manager 自動全開，不必列）
+const CAPABILITY_MAP = {
+  'reimbursement.view':    ['welfare'],
+  'reimbursement.create':  ['welfare'],
+  'reimbursement.approve': ['welfare'],
+  'analytics.view':        ['welfare'],
+  'hightea.manage':        ['welfare'],
+  'massage.manage':        ['hr'],
+  'bulletin.post':         ['welfare','hr'],
+  'admin.users':           []   // 僅 manager
+};
+
+// email → roles 陣列（由 getMembers 動態填入）
+let USER_ROLES = {};
+
+// 將後端的角色字串（可能是「福委,HR」或舊值「管理者」/「申請人」）解析成新角色陣列
+function parseRoles(roleStr) {
+  if (!roleStr) return ['employee'];
+  const map = {
+    '管理者':'manager', 'admin':'manager', 'manager':'manager',
+    '福委會':'welfare', '福委':'welfare', '副委':'welfare', 'welfare':'welfare',
+    'HR':'hr', 'hr':'hr',
+    '員工':'employee', '申請人':'employee', 'employee':'employee'
+  };
+  const roles = String(roleStr).split(/[,，、]/).map(s => map[s.trim()]).filter(Boolean);
+  if (!roles.includes('employee')) roles.push('employee'); // 員工為基底，人人都有
+  return [...new Set(roles)];
+}
+
+// 取得目前登入者的角色陣列
+// 註：本檔同時存在詞法 currentUser（請款模組）與 window.currentUser（按摩/公告模組），
+//     兩者可能不同步，故此處兩邊都讀，確保 can() 對所有模組一致。
+function getCurrentRoles() {
+  const cu = currentUser || window.currentUser;
+  if (!cu) return ['employee'];
+  let roles = cu.roles || USER_ROLES[cu.email] || ['employee'];
+  roles = roles.slice();
+  if (ADMIN_EMAILS.includes(cu.email) && !roles.includes('manager')) roles.push('manager');
+  if (!roles.includes('employee')) roles.push('employee');
+  return roles;
+}
+
+function hasRole(role) { return getCurrentRoles().includes(role); }
+
+// 統一權限判斷入口：if (can('reimbursement.approve')) {...}
+function can(capability) {
+  const roles = getCurrentRoles();
+  if (roles.includes('manager')) return true;              // 管理者全開
+  const allowed = CAPABILITY_MAP[capability] || [];
+  return allowed.some(r => roles.includes(r));
+}
+
+// 保留舊介面：isAdmin() === 擁有 manager 角色（既有呼叫點行為不變）
 function isAdmin() {
-  return currentUser && ADMIN_EMAILS.includes(currentUser.email);
+  return !!(currentUser || window.currentUser) && getCurrentRoles().includes('manager');
 }
 
 // 判斷目前登入者是否為某案件當關的簽核人
@@ -5706,12 +5766,18 @@ async function _syncMembersFromServer() {
         localStorage.setItem('bf_avatar_' + u.email, u.avatar);
       }
     });
-    // 同步管理員清單（只新增，保留原有硬編碼）
+    // 同步管理員清單 + 多重角色對照表
     res.members.forEach(function(u) {
       if (u.role === '管理者' && !ADMIN_EMAILS.includes(u.email)) {
         ADMIN_EMAILS.push(u.email);
       }
+      // 解析成新角色陣列（支援「福委,HR」多值）
+      USER_ROLES[u.email] = parseRoles(u.roles || u.role);
     });
+    // 目前登入者也更新自己的角色
+    if (currentUser && USER_ROLES[currentUser.email]) {
+      currentUser.roles = getCurrentRoles();
+    }
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
     // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（僅管理員）
@@ -10819,7 +10885,7 @@ window.massageLoad = async function() {
     _msData = {
       ok: true,
       userEmail: (window.currentUser && window.currentUser.email) || '',
-      isAdmin: true, suspended: false, violationCount: 0, monthlyCancelCount: 0,
+      isAdmin: (typeof can === 'function' ? can('massage.manage') : false), suspended: false, violationCount: 0, monthlyCancelCount: 0,
       settings: { monthlyLimit: 2, cancelFreeLimit: 1, cancelDeadlineHours: 24, violationPenaltyCount: 3,
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: []
@@ -11352,7 +11418,7 @@ var _bulletinPosts = [
 
 function bulletinRender() {
   var list = document.getElementById('bulletin-list'); if (!list) return;
-  var isAdmin = window.currentUser && window.currentUser.role === 'admin';
+  var isAdmin = typeof can === 'function' && can('bulletin.post');
   var btn = document.getElementById('btn-new-bulletin'); if (btn) btn.style.display = isAdmin ? '' : 'none';
   var sorted = _bulletinPosts.slice().sort(function(a,b){
     if (a.pinned && !b.pinned) return -1; if (!a.pinned && b.pinned) return 1;
