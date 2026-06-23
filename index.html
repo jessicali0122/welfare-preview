@@ -2447,7 +2447,16 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
             <button onclick="htSaveSpot()" style="padding:6px 14px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit">儲存</button>
           </div>
         </div>
+        <!-- 關鍵字搜尋 + 分類篩選 -->
+        <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+          <input id="ht-spot-search" oninput="htRenderDiscover()" placeholder="🔍 搜尋店家名稱、地址、備註…" style="flex:1;min-width:160px;border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;box-sizing:border-box" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
+          <select id="ht-spot-filter-cat" onchange="htRenderDiscover()" style="border:1.5px solid #e2e8f0;border-radius:10px;padding:9px 10px;font-size:14px;font-family:inherit;color:#0f172a;outline:none;background:#fff;cursor:pointer">
+            <option value="">全部分類</option>
+            <option>甜點</option><option>飲料</option><option>麵包</option><option>主食</option><option>冰品</option><option>其他</option>
+          </select>
+        </div>
         <div id="ht-spots-list"></div>
+        <div id="ht-store-search-results"></div>
       </div>
     </div>
 
@@ -9639,13 +9648,31 @@ function _htRenderDiscoverRec() {
 }
 
 function htRenderDiscover() {
-  _htRenderDiscoverRec();
-  var spots = htGetSpots();
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
   var list = document.getElementById('ht-spots-list');
   if (!list) return;
-  if (!spots.length) {
+  // 關鍵字 + 分類篩選
+  var kwEl  = document.getElementById('ht-spot-search');
+  var catEl = document.getElementById('ht-spot-filter-cat');
+  var kw  = kwEl ? kwEl.value.trim().toLowerCase() : '';
+  var cat = catEl ? catEl.value : '';
+  var allSpots = htGetSpots();
+  var spots = allSpots.filter(function(s){
+    if (cat && s.category !== cat) return false;
+    if (kw) {
+      var hay = ((s.name||'') + ' ' + (s.address||'') + ' ' + (s.notes||'')).toLowerCase();
+      if (hay.indexOf(kw) < 0) return false;
+    }
+    return true;
+  });
+  // 同步顯示「曾訂過的店家」搜尋結果（讓搜尋在口袋名單空時也實用）
+  _htRenderStoreSearch(kw, cat, allSpots);
+  if (!allSpots.length) {
     list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:14px">尚無口袋名單，點擊「新增」加入感興趣的店家</div></div>';
+    return;
+  }
+  if (!spots.length) {
+    list.innerHTML = '<div style="text-align:center;padding:24px 20px;color:#94a3b8;font-size:14px">口袋名單沒有符合「'+ htEsc(kw||cat) +'」的店家</div>';
     return;
   }
   list.innerHTML = '<div style="display:grid;gap:10px">' + spots.map(function(s) {
@@ -9668,6 +9695,46 @@ function htRenderDiscover() {
 function htGetSpots() {
   try { return JSON.parse(localStorage.getItem('bf_ht_spots') || '[]'); } catch(e) { return []; }
 }
+// 搜尋「曾訂過的店家」（讓探店搜尋在口袋名單空時也實用）
+function _htRenderStoreSearch(kw, cat, spots) {
+  var box = document.getElementById('ht-store-search-results');
+  if (!box) return;
+  if (!kw) { box.innerHTML = ''; return; }
+  var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
+  var have = {}; (spots||[]).forEach(function(s){ have[(s.name||'').toLowerCase()] = true; });
+  var vendors = (_htVendors||[]).filter(function(v){
+    var nm = (v.name||'').trim();
+    if (!nm || /^\d+$/.test(nm)) return false;
+    if (have[nm.toLowerCase()]) return false;
+    if (cat && (v.category||'其他') !== cat) return false;
+    return nm.toLowerCase().indexOf(kw) >= 0;
+  }).sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0, 12);
+  window._htStoreSearchList = vendors;
+  if (!vendors.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div style="margin-top:16px">'
+    + '<div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:10px">🔎 曾訂過的店家（符合「' + htEsc(kw) + '」）</div>'
+    + '<div style="display:grid;gap:8px">' + vendors.map(function(v, i){
+        var col = catColors[v.category||'其他'] || '#64748b';
+        return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #f1f5f9;border-radius:10px">'
+          + '<div style="flex:1;min-width:0">'
+          +   '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(v.name) + '</span>'
+          +   '<span style="margin-left:8px;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600;background:' + col + '18;color:' + col + '">' + htEsc(v.category||'其他') + '</span>'
+          +   (v.totalOrders ? '<span style="font-size:12px;color:#94a3b8;margin-left:8px">訂過 ' + v.totalOrders + ' 次</span>' : '')
+          + '</div>'
+          + '<button onclick="htAddSpotQuick(' + i + ')" style="flex-shrink:0;padding:5px 10px;border:1.5px solid #e16b8c;background:#fff8fb;color:#e16b8c;font-size:12px;font-weight:700;border-radius:8px;cursor:pointer;font-family:inherit">＋ 加入口袋</button>'
+          + '</div>';
+      }).join('') + '</div></div>';
+}
+window.htAddSpotQuick = function(i) {
+  var v = (window._htStoreSearchList || [])[i];
+  if (!v) return;
+  var spots = htGetSpots();
+  if (spots.some(function(s){ return (s.name||'').toLowerCase() === (v.name||'').toLowerCase(); })) { toast('已在口袋名單'); return; }
+  spots.unshift({ id: 'sp_' + Date.now(), name: v.name, category: v.category || '其他', address: '', notes: '', ts: Date.now() });
+  localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
+  toast('✅ 已加入口袋名單');
+  htRenderDiscover();
+};
 window.htToggleSpotForm = function() {
   var f = document.getElementById('ht-spot-form');
   if (!f) return;
