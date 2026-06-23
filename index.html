@@ -4332,7 +4332,7 @@ async function loadApprovals() {
       ? '<img src="'+_avatarUrl+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0">'
       : '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#fdeef5;color:#e16b8c;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+(_nm.charAt(0)||'?')+'</div>';
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')" style="padding:12px 16px">'
-      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<div class="evx-inner-row" style="display:flex;align-items:center;gap:12px">'
       // 日期方塊
       +   '<div style="flex-shrink:0;width:46px;height:46px;border-radius:10px;background:' + dateBoxBg + ';color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15">'
       +     '<span style="font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;opacity:.9">' + dbMonth + '</span>'
@@ -8471,7 +8471,18 @@ function fmtMonth(ym) {
 function statusColor(s) {
   if (s === '已完成') return { bg:'#dcfce7', color:'#16a34a' };
   if (s === '進行中') return { bg:'#dbeafe', color:'#2563eb' };
+  if (s === '待結算') return { bg:'#f1f5f9', color:'#64748b' };
   return { bg:'#fef3c7', color:'#d97706' };
+}
+// 顯示用狀態：規劃中但活動日期已過 → 待結算（避免「已過卻顯示規劃中」）
+function _htDisplayStatus(ev) {
+  var s = ev.status || '';
+  if (s === '規劃中' && ev.date) {
+    var d = new Date(String(ev.date).replace(/\//g,'-')); d.setHours(0,0,0,0);
+    var t = new Date(); t.setHours(0,0,0,0);
+    if (!isNaN(d.getTime()) && d < t) return '待結算';
+  }
+  return s;
 }
 function starStr(avg, cnt) {
   if (!cnt) return '<span style="color:#cbd5e1;font-size:12px">未評分</span>';
@@ -8595,8 +8606,12 @@ function _htMiniStat(label, val) {
 
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
-  var history = _htEvents.slice();
+  // 排除「本月」活動：本月活動已顯示在上方「本月行程」，歷史回顧只放過去月份，避免重複
+  var _now = new Date();
+  var _curYM = _now.getFullYear() + '-' + (_now.getMonth()+1 < 10 ? '0' : '') + (_now.getMonth()+1);
+  var history = _htEvents.filter(function(e){ return _evMonth(e) !== _curYM; });
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
+  var isMobile = window.innerWidth <= 640;
   var chip = document.getElementById('ht-current-month-chip');
   if (chip) chip.innerHTML = '';
 
@@ -8625,9 +8640,12 @@ function htRenderEvents() {
       + '<span style="font-size:14px;color:#bbb;font-weight:500">'+ evs.length +' 場</span>'
       + '</div>';
 
-    html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:36px">';
+    html += isMobile
+      ? '<div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">'
+      : '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:36px">';
     evs.forEach(function(ev) {
-      var sc = statusColor(ev.status);
+      var dispStatus = _htDisplayStatus(ev);
+      var sc = statusColor(dispStatus);
       var ym = _evMonth(ev);
       var mNum = parseInt(ym.slice(5,7),10) || 0;
       var dNum = ev.date ? parseInt(ev.date.slice(-2),10) : 0;
@@ -8635,6 +8653,24 @@ function htRenderEvents() {
       var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join(' & ');
       var expHas = ev.actualExpense > 0;
       var expVal = expHas ? fmtMoney(ev.actualExpense) : '—';
+      // 手機版：橫條卡片（與「本月行程」一致）
+      if (isMobile) {
+        html += '<div onclick="htOpenDetail(\''+ ev.eventId +'\')" style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:12px 14px;cursor:pointer">'
+          + '<div style="background:linear-gradient(150deg,#fdeef5,#fad8ea);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#c8587a;flex-shrink:0">'
+          +   '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
+          +   '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
+          + '</div>'
+          + '<div style="flex:1;min-width:0">'
+          +   '<div style="font-size:14px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) +'</div>'
+          +   '<div style="font-size:12px;color:#aaa;margin-top:3px">'+ (ev.headcount ? '👥 '+ev.headcount+' 人' : '') + (ev.itemCount ? '　'+ev.itemCount+' 品項' : '') +'</div>'
+          + '</div>'
+          + '<div style="text-align:right;flex-shrink:0">'
+          +   '<span style="display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;background:'+ sc.bg +';color:'+ sc.color +'">'+ dispStatus +'</span>'
+          +   '<div style="font-size:15px;font-weight:800;color:'+ (expHas?'#be185d':'#d1d5db') +';margin-top:5px;white-space:nowrap">'+ expVal +'</div>'
+          + '</div>'
+          + '</div>';
+        return;
+      }
       // 壽星 badges（名字陣列）
       var bdays = (Array.isArray(ev.birthdays) && ev.birthdays.length > 0)
         ? ev.birthdays
@@ -8660,7 +8696,7 @@ function htRenderEvents() {
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.7">'+ mAbbr +'</div>'
         +     '<div style="font-size:28px;font-weight:900;line-height:1">'+ (dNum||mNum) +'</div>'
         +   '</div>'
-        +   '<span style="padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:'+ sc.bg +';color:'+ sc.color +'">'+ ev.status +'</span>'
+        +   '<span style="padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:'+ sc.bg +';color:'+ sc.color +'">'+ dispStatus +'</span>'
         + '</div>'
 
         // 主辦人
@@ -9518,7 +9554,8 @@ function htRenderCalendar() {
       + '</div>';
   } else {
     evEl.innerHTML = monthEvents.map(function(e) {
-      var sc = statusColor(e.status);
+      var dispStatus = _htDisplayStatus(e);
+      var sc = statusColor(dispStatus);
       var d = String(e.date||'');
       var dayNum = d ? parseInt(d.slice(-2),10) : '';
       var mNum = d ? parseInt(d.slice(5,7),10) : '';
@@ -9534,7 +9571,7 @@ function htRenderCalendar() {
         +   (e.headcount ? '<div style="font-size:14px;color:#aaa;margin-top:4px">👥 '+e.headcount+' 人參與</div>' : '')
         + '</div>'
         + '<div style="text-align:right;flex-shrink:0">'
-        +   '<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+e.status+'</span>'
+        +   '<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+dispStatus+'</span>'
         +   (e.actualExpense ? '<div style="font-size:14px;font-weight:700;color:#be185d;margin-top:6px">'+fmtMoney(e.actualExpense)+'</div>' : '')
         + '</div>'
         + '</div>';
