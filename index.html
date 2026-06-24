@@ -93,7 +93,7 @@ body{margin:0;background:#fff}
 aside{
   width:76px;min-height:100vh;height:100%;display:flex;flex-direction:column;
   position:absolute;top:0;left:0;z-index:20;overflow:hidden;max-width:100%;
-  background:#fff;
+  background:transparent;
 }
 /* 固定窄欄（icon rail）：不再 hover 展開、不縮放、不推開內容，永遠 76px。
    每個項目＝圖示＋下方文字標籤（文字由 .sl::after 的 data-label 提供）。
@@ -109,7 +109,7 @@ aside .sl-text{display:none}
   margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;
   overflow:hidden;touch-action:manipulation;
 }
-.sl:hover{background:#f8fafc;color:#475569;transform:translateY(-1px)}
+.sl:hover{background:rgba(232,218,198,.35);color:#475569;transform:translateY(-1px)}
 .sl:hover svg{transform:scale(1.1);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
 .sl:active{transform:scale(.93)!important}
 .sl svg{transition:transform .2s ease,stroke .18s ease;flex-shrink:0;width:22px!important;height:22px!important}
@@ -185,7 +185,7 @@ input[type=radio]{accent-color:#e16b8c}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* Topbar gradient accent strip - desktop only */
 @media(min-width:769px){
-  header::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1.5px;background:#f1f5f9;pointer-events:none;z-index:1}
+  header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#1e9d6b 0%,#3dba84 35%,#f59e0b 70%,#f08020 100%);pointer-events:none;z-index:1}
 }
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:10000;display:none}
 .modal-bg.open{display:flex}
@@ -1349,24 +1349,29 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%);position:fixed;inset:0;z-index:100">
-  <div style="background:#fff;border-radius:24px;padding:40px 44px;width:400px;max-width:95vw;box-shadow:0 8px 48px rgba(0,0,0,.10),0 2px 12px rgba(0,0,0,.06);border:none;text-align:center;position:relative;overflow:hidden">
-    <!-- amber gradient top accent -->
-    <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#1e9d6b 0%,#3dba84 25%,#f59e0b 70%,#f59e0b 100%)"></div>
-    <div style="width:72px;height:72px;border-radius:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;overflow:hidden;background:#fff">
-      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/><path d="M25 7 C23 3 17 4 18 8 C21 10 24 8 25 7Z" fill="#1e9d6b"/><path d="M27 4 C29 1 34 2 33 6 C30 7 27 5 27 4Z" fill="#1e9d6b"/></svg>
-    </div>
-    <div style="font-size:22px;font-weight:700;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px">Bene<span style="color:#f59e0b">Flow</span></div>
-    <div style="font-size:14px;color:#64748b;margin-bottom:28px">福委會請款簽核系統<br>請使用公司帳號登入</div>
-    <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
-    <div style="display:flex;justify-content:center;margin-bottom:8px">
-      <button id="google-login-btn" onclick="doGoogleLogin()" type="button" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px 24px;background:#fff;cursor:pointer;width:280px;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;font-size:14px;font-weight:500;color:#374151">
+<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(155deg,#faf6f0 0%,#f8f3e8 55%,#fdf9f2 100%);position:fixed;inset:0;z-index:100;overflow:hidden">
+  <!-- 背景柔光暈（右上綠、左下琥珀）-->
+  <div style="position:absolute;top:-20%;right:-15%;width:70%;height:70%;background:radial-gradient(ellipse,rgba(30,157,107,.09) 0%,transparent 68%);pointer-events:none"></div>
+  <div style="position:absolute;bottom:-18%;left:-10%;width:60%;height:65%;background:radial-gradient(ellipse,rgba(245,158,11,.10) 0%,transparent 68%);pointer-events:none"></div>
+  <!-- 漸層細邊框卡片 -->
+  <div style="position:relative;z-index:1;padding:2px;border-radius:28px;background:linear-gradient(145deg,#1e9d6b 0%,#3dba84 30%,#f0b840 68%,#f08020 100%);box-shadow:0 24px 70px rgba(0,0,0,.11),0 4px 20px rgba(0,0,0,.06)">
+    <div style="background:linear-gradient(160deg,#fffef9 0%,#fffdf4 100%);border-radius:26px;padding:46px 44px 40px;text-align:center;width:380px;max-width:calc(92vw - 4px);box-sizing:border-box;position:relative;overflow:hidden">
+      <!-- 頂部極細漸層光條 -->
+      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(30,157,107,.4) 0%,rgba(61,186,132,.3) 35%,rgba(245,158,11,.4) 70%,rgba(240,128,32,.35) 100%);pointer-events:none"></div>
+      <!-- Logo -->
+      <div style="width:76px;height:76px;border-radius:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04)">
+        <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/><path d="M25 7 C23 3 17 4 18 8 C21 10 24 8 25 7Z" fill="#1e9d6b"/><path d="M27 4 C29 1 34 2 33 6 C30 7 27 5 27 4Z" fill="#1e9d6b"/></svg>
+      </div>
+      <div style="font-size:26px;font-weight:800;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px;letter-spacing:-.02em">Bene<span style="color:#f59e0b">Flow</span></div>
+      <div style="font-size:14px;color:#64748b;margin-bottom:32px;line-height:1.75">福委會請款簽核系統<br>請使用公司帳號登入</div>
+      <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
+      <button id="google-login-btn" onclick="doGoogleLogin()" type="button" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e8e2d8;border-radius:12px;padding:13px 24px;background:#fff;cursor:pointer;width:100%;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;font-size:14px;font-weight:500;color:#374151;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.05)">
         <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
         以 Google 帳戶登入
       </button>
+      <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:18px">僅限 @tsagroup.com.tw 網域</div>
     </div>
-    <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
-    <div style="font-size:12px;color:#94a3b8;margin-top:16px">僅限 @tsagroup.com.tw 網域</div>
   </div>
 </div>
 
@@ -1376,8 +1381,8 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 <div id="app-inner" style="display:flex;height:100vh;overflow:hidden;max-width:100vw;background:#fff">
 
 <!-- SIDEBAR -->
-<div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative;height:100%;background:#fff">
-<aside id="sidebar" style="background:#fff;border-right:none;display:flex;flex-direction:column">
+<div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative;height:100%;background:linear-gradient(180deg,#fefaf5 0%,#faf5ee 100%);border-right:1px solid rgba(220,205,182,.35)">
+<aside id="sidebar" style="background:transparent;border-right:none;display:flex;flex-direction:column">
 
   <!-- Header（桌面版只顯示 Logo；手機版顯示品牌 + 關閉按鈕）-->
   <div style="padding:calc(14px + env(safe-area-inset-top,0px)) 0 14px;display:flex;align-items:center;justify-content:center;position:relative">
@@ -1429,7 +1434,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   </nav>
 
   <!-- 底部人像區（電腦版：點擊展開 user menu；手機版：隱藏，改由頂部頭像按鈕觸發）-->
-  <div id="sidebar-user-section" onclick="toggleUserMenu()" title="帳號選項" style="display:none;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #f0ede9;align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+  <div id="sidebar-user-section" onclick="toggleUserMenu()" title="帳號選項" style="display:none;padding:14px 0 calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid rgba(210,192,162,.35);align-items:center;justify-content:center;cursor:pointer;transition:background .15s" onmouseenter="this.style.background='rgba(232,218,198,.4)'" onmouseleave="this.style.background=''">
     <div class="user-avatar-wrap" style="width:32px;height:32px;border-radius:50%;background:#e16b8c;display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;overflow:hidden"><span class="user-avatar-initial">潔</span></div>
   </div>
 
@@ -1441,7 +1446,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 <div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
 
   <!-- TOPBAR -->
-  <header style="height:56px;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:none;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.06);z-index:10;position:relative">
+  <header style="height:56px;background:rgba(254,250,244,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:none;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 1px 0 rgba(210,192,162,.25),0 2px 10px rgba(0,0,0,.05);z-index:10;position:relative">
     <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
@@ -1488,7 +1493,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📢 公佈欄</div>
         <div style="flex:1;height:1px;background:#f1f5f9"></div>
-        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #6366f1;background:#fff;color:#6366f1;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='#6366f1';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#6366f1'">＋ 新增公告</button>
+        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #1e9d6b;background:#fff;color:#1e9d6b;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='#1e9d6b';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#1e9d6b'">＋ 新增公告</button>
       </div>
       <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;padding:20px;color:#94a3b8;font-size:14px">載入中...</div>
@@ -1700,7 +1705,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
-      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件 <span id="tab-cases-count" style="background:#6366f1;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件 <span id="tab-cases-count" style="background:#e16b8c;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿 <span id="tab-drafts-count" style="background:#94a3b8;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
     </div>
     <!-- 草稿列表 -->
@@ -2146,7 +2151,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <div style="display:flex;gap:0">
         <div class="admin-tab active" id="atab-mine" onclick="switchApprovalTab('mine')" style="display:flex;align-items:center;gap:6px">
           🔑 我需要審核
-          <span id="atab-mine-count" style="background:#6366f1;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
+          <span id="atab-mine-count" style="background:#e16b8c;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
         </div>
         <div class="admin-tab" id="atab-proxy" onclick="switchApprovalTab('proxy')" style="display:flex;align-items:center;gap:6px">
           🛡️ 代理審核
