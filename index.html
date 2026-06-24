@@ -948,6 +948,8 @@ input[type=checkbox]{accent-color:#e16b8c}
 }
 .print-header{display:none}
 
+/* ── 權限隱藏：依角色能力隱藏元素（保留原本 display）── */
+.cap-hidden{display:none!important}
 /* ── 待審核列表：改用 block 布局（月份分組模式）── */
 #approvals-list,#approvals-list-proxy{display:block}
 
@@ -1396,9 +1398,9 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       <span class="sl-text">案件追蹤</span>
     </div>
-    <div class="sl" data-view="approvals" data-label="待審核" data-cap="reimbursement.approve" onclick="sw('approvals')">
+    <div class="sl" data-view="approvals" data-label="請款審核" data-cap="reimbursement.approve" onclick="sw('approvals')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <span class="sl-text">待審核</span>
+      <span class="sl-text">請款審核</span>
       <span class="sl-badge approval-badge" style="display:none"><svg width="13" height="13" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
     </div>
 
@@ -2324,7 +2326,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
             🗺️ 探店靈感
           </button>
         </div>
-        <button onclick="htOpenCreate()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:20px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;transition:all .2s;box-shadow:0 4px 14px rgba(225,107,140,.4)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(225,107,140,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(225,107,140,.4)'">
+        <button data-cap="hightea.manage" onclick="htOpenCreate()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:20px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;transition:all .2s;box-shadow:0 4px 14px rgba(225,107,140,.4)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(225,107,140,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(225,107,140,.4)'">
           ✨ 新增活動
         </button>
       </div>
@@ -2948,7 +2950,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   <button class="bn-item" data-view="approvals" data-cap="reimbursement.approve" onclick="sw('approvals')">
     <div class="bn-icon-wrap" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
     <span class="bn-badge approval-badge" style="display:none"></span>
-    <span class="bn-label">待審核</span>
+    <span class="bn-label">請款審核</span>
   </button>
   <button class="bn-item" data-view="hightea" onclick="sw('hightea')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></div>
@@ -3069,19 +3071,30 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <input class="inp" id="edit-empid" placeholder="例：T0001" style="font-family:monospace;letter-spacing:.05em">
         </div>
         <div>
-          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">角色</label>
-          <select class="inp" id="edit-role">
-            <option value="申請人">申請人</option>
-            <option value="管理者">管理者</option>
+          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
+          <select class="inp" id="edit-dept">
+            <option value="">請選擇部門</option>
+            <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
           </select>
         </div>
       </div>
       <div>
-        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門</label>
-        <select class="inp" id="edit-dept">
-          <option value="">請選擇部門</option>
-          <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-        </select>
+        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:7px">角色（可複選）</label>
+        <div id="edit-roles" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:not-allowed;background:#f8fafc;font-size:14px;color:#94a3b8">
+            <input type="checkbox" value="employee" checked disabled style="width:16px;height:16px"> 員工 <span style="font-size:11px">（基底）</span>
+          </label>
+          <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
+            <input type="checkbox" value="welfare" style="width:16px;height:16px"> 福委會
+          </label>
+          <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
+            <input type="checkbox" value="hr" style="width:16px;height:16px"> HR
+          </label>
+          <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
+            <input type="checkbox" value="manager" style="width:16px;height:16px"> 管理者 <span style="font-size:11px;color:#94a3b8">（全權限）</span>
+          </label>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px">勾選多個角色 → 權限取聯集。「管理者」自動擁有全部權限。</div>
       </div>
     </div>
     <div style="padding:14px 22px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
@@ -3267,11 +3280,11 @@ function isAdmin() {
   return !!(currentUser || window.currentUser) && getCurrentRoles().includes('manager');
 }
 
-// 依角色能力動態顯示/隱藏導覽項（側欄 + 手機底部）
+// 依角色能力動態顯示/隱藏元素（導覽項、按鈕等任何 [data-cap]）
 function applyNavVisibility() {
-  document.querySelectorAll('.sl[data-cap], .bn-item[data-cap]').forEach(function(el){
+  document.querySelectorAll('[data-cap]').forEach(function(el){
     var cap = el.getAttribute('data-cap');
-    el.style.display = can(cap) ? '' : 'none';
+    el.classList.toggle('cap-hidden', !can(cap));
   });
 }
 window.applyNavVisibility = applyNavVisibility;
@@ -5642,7 +5655,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'待審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -7035,19 +7048,33 @@ function nameChip(name, size, email) {
     + '<span>'+n+'</span>'
     + '</div>';
 }
+// 角色徽章樣式（依角色配色）
+const ROLE_BADGE_STYLE = {
+  manager:  'background:#fdf2f8;color:#e16b8c',
+  welfare:  'background:#ede9fe;color:#6366f1',
+  hr:       'background:#e0f2fe;color:#0ea5e9',
+  employee: 'background:#f1f5f9;color:#64748b'
+};
 function buildAdminUserRow(u) {
-  const roleStyle = u.role === '管理者'
-    ? 'background:#fdf2f8;color:#e16b8c'
-    : 'background:#f1f5f9;color:#64748b';
   const avatarColor = adminUserAvatarColor(u.name);
   const firstChar = (u.name || '?').charAt(0);
-  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" style="border-bottom:1px solid #f8fafc">
+  // 角色：以 USER_ROLES 為準，回退解析後端 role 字串
+  const roles = (USER_ROLES[u.email] || parseRoles(u.roles || u.role));
+  // 顯示順序：manager > welfare > hr > employee
+  const order = ['manager','welfare','hr','employee'];
+  const shown = order.filter(function(r){ return roles.includes(r); });
+  // 若只有 employee 才顯示員工，否則隱藏基底以節省空間
+  const display = shown.length > 1 ? shown.filter(function(r){return r!=='employee';}) : shown;
+  const roleBadges = display.map(function(r){
+    return '<span style="'+(ROLE_BADGE_STYLE[r]||ROLE_BADGE_STYLE.employee)+';padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap">'+(ROLE_KEY_TO_LABEL[r]||r)+'</span>';
+  }).join(' ');
+  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-roles="${roles.join(',')}" style="border-bottom:1px solid #f8fafc">
     <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
     <td style="padding:12px 16px">${nameChip(u.name||'—', 28, u.email)}</td>
     <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${u.employeeId||'—'}</td>
     <td style="padding:12px 16px;font-size:14px;color:#374151;white-space:nowrap">${u.department||'—'}</td>
     <td style="padding:12px 16px;color:#64748b">${u.email||'—'}</td>
-    <td style="padding:12px 16px"><span style="${roleStyle};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">${u.role||'申請人'}</span></td>
+    <td style="padding:12px 16px"><div style="display:flex;gap:4px;flex-wrap:wrap">${roleBadges}</div></td>
     <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
     <td style="padding:12px 16px"><div style="display:flex;gap:6px">
       <button class="btn btn-o" style="padding:5px 10px;font-size:14px" onclick="showEditUserModal(this)">編輯</button>
@@ -7135,30 +7162,49 @@ function showEditUserModal(btn){
   const colors=['#38a3a5','#16a34a','#06b6d4','#d97706','#1e9d6b','#6366f1'];
   avatarEl.style.background=colors[name.charCodeAt(0)%colors.length];
   document.getElementById('edit-user-subtitle').textContent='編輯：'+name;
-  const roleEl=document.getElementById('edit-role');
-  for(let o of roleEl.options)o.selected=o.value===role||o.textContent===role;
+  // 角色 checkbox：優先讀列上的 data-roles，再回退 USER_ROLES / 解析徽章文字
+  const roles = (row.dataset.roles ? row.dataset.roles.split(',').filter(Boolean) : (USER_ROLES[email] || parseRoles(role)));
+  document.querySelectorAll('#edit-roles input[type="checkbox"]').forEach(function(cb){
+    if (cb.value === 'employee') return; // 基底固定勾選
+    cb.checked = roles.includes(cb.value);
+  });
   document.getElementById('edit-user-modal').classList.add('open');
 }
+// 角色 key ↔ 中文標籤（與後端 role 欄位相容）
+const ROLE_KEY_TO_LABEL = { employee:'員工', welfare:'福委會', hr:'HR', manager:'管理者' };
 function closeEditUserModal(){
   document.getElementById('edit-user-modal').classList.remove('open');
   _editRow=null;
 }
 function doEditUser(){
   if(!_editRow){closeEditUserModal();return;}
-  const role     = document.getElementById('edit-role').value||'申請人';
+  // 收集勾選的角色（employee 為基底，一律包含）
+  var rolesArr = ['employee'];
+  document.querySelectorAll('#edit-roles input[type="checkbox"]:checked').forEach(function(cb){
+    if (!rolesArr.includes(cb.value)) rolesArr.push(cb.value);
+  });
   const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
   const newDept  = document.getElementById('edit-dept')?.value||'';
   const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
+  // 後端相容：role 存代表角色（manager 優先，否則第一個非員工角色），roles 存完整清單
+  var rolesLabels = rolesArr.map(function(r){ return ROLE_KEY_TO_LABEL[r]||r; });
+  var primary = rolesArr.includes('manager') ? '管理者'
+              : (rolesArr.find(function(r){return r!=='employee';}) ? ROLE_KEY_TO_LABEL[rolesArr.find(function(r){return r!=='employee';})] : '員工');
+  // 本地立即更新（preview 無後端也能反映）
+  USER_ROLES[email] = rolesArr.slice();
+  if (rolesArr.includes('manager')) { if(!ADMIN_EMAILS.includes(email)) ADMIN_EMAILS.push(email); }
+  else { var i=ADMIN_EMAILS.indexOf(email); if(i>=0) ADMIN_EMAILS.splice(i,1); }
+  if (currentUser && currentUser.email===email) { currentUser.roles = getCurrentRoles(); applyNavVisibility(); }
   closeEditUserModal();
   toast('⏳ 儲存中...');
-  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,role}).then(res=>{
+  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,role:primary,roles:rolesLabels.join(',')}).then(res=>{
     if(res.ok){
       toast('✅ 已儲存變更');
       loadAdminUsers();
     } else {
       toast('❌ 儲存失敗：'+res.error);
     }
-  });
+  }).catch(function(){ toast('✅ 已儲存變更（本地）'); loadAdminUsers(); });
 }
 
 // ── DELETE USER ──
