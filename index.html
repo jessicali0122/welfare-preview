@@ -1285,9 +1285,9 @@ tbody td{font-size:var(--fs-base)!important}
   .evx-action-col{margin-left:auto}
   /* 探店靈感類別卡片：6欄→3欄 */
   #ht-cat-grid{grid-template-columns:repeat(3,1fr)!important}
-  /* 探店靈感區域按鈕：手機版改為垂直排列 */
-  #ht-zone-chips{flex-direction:column!important}
-  .ht-zone-btn{width:100%!important;justify-content:flex-start!important;border-radius:12px!important}
+  /* 探店靈感區域按鈕：手機版隱藏副標題，維持水平排列 */
+  .ht-zone-sub{display:none!important}
+  .ht-rtab{padding:8px 10px!important}
   /* AI小Bee FAB：避免蓋住底部導覽列 */
   #ht-fab-wrap{bottom:80px!important}
   /* 品項分析統計卡片：可橫滑，避免文字擠壓 */
@@ -2315,14 +2315,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <!-- 頁頭工具列（重設計） -->
     <div style="margin-bottom:20px">
       <!-- Tab 列 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #f1f5f9;margin-bottom:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
         <div style="display:flex;gap:0">
           <button class="ht-tab-btn admin-tab active" id="ht-tab-events" onclick="htSwitchListTab('events')"
-            style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+            style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🗓️ 活動指南
           </button>
           <button class="ht-tab-btn admin-tab" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
-            style="display:flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">
+            style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🗺️ 探店靈感
           </button>
         </div>
@@ -2423,18 +2423,18 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <span style="font-size:16px;font-weight:700;color:#0f172a">周邊探索</span>
         </div>
         <!-- 距離 tier chips -->
-        <div style="display:flex;gap:8px;margin-bottom:16px" id="ht-zone-chips">
-          <button onclick="htSelectZone(this,'walk')" data-zone="walk" class="ht-zone-btn ht-zone-active" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e16b8c;background:#fff0f5;color:#e16b8c;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+        <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px" id="ht-zone-chips">
+          <button onclick="htSelectZone(this,'walk')" data-zone="walk" class="ht-zone-btn admin-tab active" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🏃 步行圈
-            <span style="font-size:12px;font-weight:500;opacity:.75">新莊・蘆洲・五股</span>
+            <span class="ht-zone-sub" style="font-size:12px;font-weight:500;opacity:.75">新莊・蘆洲・五股</span>
           </button>
-          <button onclick="htSelectZone(this,'ride')" data-zone="ride" class="ht-zone-btn" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+          <button onclick="htSelectZone(this,'ride')" data-zone="ride" class="ht-zone-btn admin-tab" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🛵 騎車圈
-            <span style="font-size:12px;font-weight:500;opacity:.75">三重・泰山・林口・板橋</span>
+            <span class="ht-zone-sub" style="font-size:12px;font-weight:500;opacity:.75">三重・泰山・林口・板橋</span>
           </button>
-          <button onclick="htSelectZone(this,'metro')" data-zone="metro" class="ht-zone-btn" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:2px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s">
+          <button onclick="htSelectZone(this,'metro')" data-zone="metro" class="ht-zone-btn admin-tab" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🌐 雙北全區
-            <span style="font-size:12px;font-weight:500;opacity:.75">台北・新北</span>
+            <span class="ht-zone-sub" style="font-size:12px;font-weight:500;opacity:.75">台北・新北</span>
           </button>
         </div>
         <!-- 類別卡片 -->
@@ -2668,12 +2668,12 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
           <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
             <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
             <div style="font-size:12px;color:#94a3b8;margin-bottom:14px">根據歷次活動品項紀錄自動推薦</div>
-            <div id="ht-recommend-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
-              <button class="ht-rtab active" onclick="htSwitchRecTab('all')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">全部</button>
-              <button class="ht-rtab" onclick="htSwitchRecTab('甜點')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">甜點</button>
-              <button class="ht-rtab" onclick="htSwitchRecTab('主食')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">主食</button>
-              <button class="ht-rtab" onclick="htSwitchRecTab('飲料')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">飲料</button>
-              <button class="ht-rtab" onclick="htSwitchRecTab('水果')" style="padding:5px 12px;border-radius:16px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">水果</button>
+            <div id="ht-recommend-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:14px">
+              <button class="ht-rtab admin-tab active" onclick="htSwitchRecTab('all')" style="cursor:pointer;font-family:inherit">全部</button>
+              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('甜點')" style="cursor:pointer;font-family:inherit">甜點</button>
+              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('主食')" style="cursor:pointer;font-family:inherit">主食</button>
+              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('飲料')" style="cursor:pointer;font-family:inherit">飲料</button>
+              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('水果')" style="cursor:pointer;font-family:inherit">水果</button>
             </div>
             <div id="ht-recommend-list" style="display:grid;gap:8px">
               <div style="color:#94a3b8;font-size:14px;text-align:center;padding:24px">填入人數與預算後點擊「計算」，即可獲得智慧推薦清單</div>
@@ -2776,14 +2776,14 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   </div>
 
   <!-- Tab 列 -->
-  <div style="display:flex;gap:0;border-bottom:2px solid #f1f5f9;margin-bottom:20px">
-    <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')" style="display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+  <div style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
+    <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
       📅 預約日曆
     </button>
-    <button class="massage-tab admin-tab" id="ms-tab-my" onclick="msSwitchTab('my')" style="display:flex;align-items:center;gap:6px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+    <button class="massage-tab admin-tab" id="ms-tab-my" onclick="msSwitchTab('my')" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
       📋 我的預約
     </button>
-    <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')" style="display:none;align-items:center;gap:6px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;background:none;border:none">
+    <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')" style="display:none;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
       ⚙️ 管理
     </button>
   </div>
@@ -5884,6 +5884,11 @@ async function _syncMembersFromServer() {
       currentUser.roles = getCurrentRoles();
     }
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
+    // 角色到位後，若正在總覽則重繪積木區塊（避免登入初期短暫顯示員工版）
+    if (typeof applyDashboardBlocks === 'function' &&
+        document.getElementById('view-dashboard')?.classList.contains('active')) {
+      applyDashboardBlocks();
+    }
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
     // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（僅管理員）
@@ -9748,15 +9753,9 @@ var _htZoneMap = {
 
 window.htSelectZone = function(btn, zone) {
   _htZone = zone;
-  // 更新 chip 樣式
   document.querySelectorAll('.ht-zone-btn').forEach(function(b) {
-    b.style.border = '2px solid #e2e8f0';
-    b.style.background = '#f8fafc';
-    b.style.color = '#475569';
+    b.classList.toggle('active', b === btn);
   });
-  btn.style.border = '2px solid #e16b8c';
-  btn.style.background = '#fff0f5';
-  btn.style.color = '#e16b8c';
   // 若地圖已開啟，自動用新區域刷新
   if (_htActiveMapCard) {
     var cat = _htActiveMapCard.dataset.cat;
@@ -10618,10 +10617,8 @@ window.htRenderRecommend = htRenderRecommend;
 window.htSwitchRecTab = function(tab) {
   _htRecTab = tab;
   document.querySelectorAll('.ht-rtab').forEach(function(b){
-    var active = b.textContent.trim() === (tab==='all'?'全部':tab) || (tab==='all' && b.textContent.trim()==='全部');
-    b.style.background = active ? '#e16b8c' : '#fff';
-    b.style.color = active ? '#fff' : '#64748b';
-    b.style.borderColor = active ? '#e16b8c' : '#e2e8f0';
+    var isActive = b.textContent.trim() === (tab==='all'?'全部':tab);
+    b.classList.toggle('active', isActive);
   });
   if (_htRecData) htRenderRecommendList(_htRecData);
 };
