@@ -1579,58 +1579,6 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
     </div>
 
-    <!-- 系統操作紀錄（僅管理者可見）-->
-    <div id="audit-log-dashboard" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin:24px 0 14px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a">系統操作紀錄</div>
-        <div style="flex:1;height:1px;background:#f1f5f9"></div>
-        <div style="display:flex;gap:4px;align-items:center;flex-shrink:0">
-          <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
-          <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
-          </button>
-        </div>
-      </div>
-      <div class="card" style="overflow:hidden">
-        <div style="padding:10px 20px;border-bottom:1px solid #f1f5f9">
-          <!-- 篩選輸入 -->
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-            <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:14px;padding:6px 10px" onchange="filterAuditLog()">
-              <option value="">全部動作</option>
-              <option value="login">登入</option>
-              <option value="submit">送出申請</option>
-              <option value="approve">核准</option>
-              <option value="reject">退件</option>
-              <option value="resubmit">重新送出</option>
-              <option value="draft">草稿</option>
-              <option value="upload">上傳附件</option>
-              <option value="deleteFile">刪除附件</option>
-              <option value="deleteDraft">刪除草稿</option>
-              <option value="addUser">新增使用者</option>
-              <option value="editUser">編輯使用者</option>
-              <option value="deleteUser">停用使用者</option>
-            </select>
-            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:14px;padding:6px 10px" oninput="_debouncedAuditFilter()">
-            <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:14px;padding:6px 10px;color:#374151;cursor:pointer">
-          </div>
-        </div>
-        <div style="overflow-x:auto">
-        <table class="evx-table" style="min-width:600px">
-          <thead><tr>
-            <th style="width:150px;text-align:center">時間</th>
-            <th style="width:120px;text-align:center">操作人</th>
-            <th style="width:80px;text-align:center">動作</th>
-            <th style="width:140px;text-align:center">相關案件</th>
-            <th style="text-align:left">說明</th>
-          </tr></thead>
-          <tbody id="audit-log-tbody">
-            <tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">載入中...</td></tr>
-          </tbody>
-        </table>
-        </div>
-        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
-      </div>
-    </div>
   </div>
 
   <!-- view-analytics 已併入 view-dashboard -->
@@ -2238,6 +2186,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;margin-bottom:20px">
       <div class="admin-tab active" id="tab-users" onclick="switchAdminTab('users')">👥 使用者管理</div>
       <div class="admin-tab" id="tab-flow" onclick="switchAdminTab('flow')">⚙️ 流程設定</div>
+      <div class="admin-tab" id="tab-log" onclick="switchAdminTab('log')">📋 系統紀錄</div>
     </div>
     <div id="admin-panel-users">
       <div class="card" style="padding:14px 16px;margin-bottom:14px">
@@ -2304,6 +2253,57 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         </div>
       </div>
     </div>
+    <!-- 系統紀錄 panel -->
+    <div id="admin-panel-log" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="font-size:16px;font-weight:700;color:#0f172a">系統操作紀錄</div>
+        <div style="flex:1;height:1px;background:#f1f5f9"></div>
+        <div style="display:flex;gap:4px;align-items:center">
+          <button type="button" onclick="clearAuditFilters()" class="audit-text-btn">清除</button>
+          <button type="button" onclick="loadAuditLogDashboard()" class="audit-text-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.14"/></svg>重新整理
+          </button>
+        </div>
+      </div>
+      <div class="card" style="overflow:hidden">
+        <div style="padding:10px 20px;border-bottom:1px solid #f1f5f9">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+            <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:14px;padding:6px 10px" onchange="filterAuditLog()">
+              <option value="">全部動作</option>
+              <option value="login">登入</option>
+              <option value="submit">送出申請</option>
+              <option value="approve">核准</option>
+              <option value="reject">退件</option>
+              <option value="resubmit">重新送出</option>
+              <option value="draft">草稿</option>
+              <option value="upload">上傳附件</option>
+              <option value="deleteFile">刪除附件</option>
+              <option value="deleteDraft">刪除草稿</option>
+              <option value="addUser">新增使用者</option>
+              <option value="editUser">編輯使用者</option>
+              <option value="deleteUser">停用使用者</option>
+            </select>
+            <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:14px;padding:6px 10px" oninput="_debouncedAuditFilter()">
+            <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:14px;padding:6px 10px;color:#374151;cursor:pointer">
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="evx-table" style="min-width:600px">
+            <thead><tr>
+              <th style="width:150px;text-align:center">時間</th>
+              <th style="width:120px;text-align:center">操作人</th>
+              <th style="width:80px;text-align:center">動作</th>
+              <th style="width:140px;text-align:center">相關案件</th>
+              <th style="text-align:left">說明</th>
+            </tr></thead>
+            <tbody id="audit-log-tbody">
+              <tr><td colspan="5" style="text-align:center;padding:24px;color:#94a3b8">載入中...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="audit-log-pagination" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;border-top:1px solid #f1f5f9"></div>
+      </div>
+    </div>
   </div>
 
 
@@ -2321,7 +2321,7 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
             style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🗓️ 活動指南
           </button>
-          <button class="ht-tab-btn admin-tab" id="ht-tab-discover" onclick="htSwitchListTab('discover')"
+          <button class="ht-tab-btn admin-tab" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')"
             style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
             🗺️ 探店靈感
           </button>
@@ -3230,6 +3230,7 @@ const CAPABILITY_MAP = {
   'reimbursement.approve': ['welfare'],
   'analytics.view':        ['welfare'],
   'hightea.manage':        ['welfare'],
+  'hightea.discover':      ['welfare','hr'],
   'massage.manage':        ['hr'],
   'bulletin.post':         ['welfare','hr'],
   'admin.users':           []   // 僅 manager
@@ -4230,14 +4231,6 @@ async function loadDashboard() {
   updateBadge(myTurnPending.length);
   const myTurnEl = document.getElementById('stat-my-turn');
   if (myTurnEl) myTurnEl.textContent = myTurnPending.length > 0 ? '其中 ' + myTurnPending.length + ' 件輪到您審核' : '';
-  // 管理者才顯示系統操作紀錄；非管理者強制隱藏
-  const auditBlock = document.getElementById('audit-log-dashboard');
-  if (isAdmin()) {
-    if (auditBlock) auditBlock.style.display = 'block';
-    loadAuditLogDashboard();
-  } else {
-    if (auditBlock) auditBlock.style.display = 'none';
-  }
 }
 
 // ── 系統操作紀錄（管理者專用）──
@@ -5891,17 +5884,6 @@ async function _syncMembersFromServer() {
     }
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
-    // 若目前在總覽頁且系統紀錄尚未顯示，補觸發一次（僅管理員）
-    var _auditBlock = document.getElementById('audit-log-dashboard');
-    var _onDashboard = document.getElementById('view-dashboard')?.classList.contains('active');
-    if (_auditBlock && _onDashboard && isAdmin()) {
-      if (_auditBlock.style.display === 'none') {
-        _auditBlock.style.display = 'block';
-        loadAuditLogDashboard();
-      }
-    } else if (_auditBlock && !isAdmin()) {
-      _auditBlock.style.display = 'none';
-    }
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
 }
 // 根據 email 查詢本地使用者（名稱 + 部門）
@@ -7023,9 +7005,12 @@ async function doSaveFlowStep() {
 function switchAdminTab(tab){
   document.getElementById('admin-panel-users').style.display=tab==='users'?'block':'none';
   document.getElementById('admin-panel-flow').style.display=tab==='flow'?'block':'none';
+  document.getElementById('admin-panel-log').style.display=tab==='log'?'block':'none';
   document.getElementById('tab-users').classList.toggle('active',tab==='users');
   document.getElementById('tab-flow').classList.toggle('active',tab==='flow');
+  document.getElementById('tab-log').classList.toggle('active',tab==='log');
   if(tab==='flow') loadAdminFlow();
+  if(tab==='log') loadAuditLogDashboard();
   setTimeout(applyRolePermissions, 50);
 }
 
@@ -9101,6 +9086,7 @@ function htRenderList() {
 }
 
 window.htSwitchListTab = function(tab) {
+  if (tab === 'discover' && typeof can === 'function' && !can('hightea.discover')) tab = 'events';
   _htListTab = tab;
   document.querySelectorAll('.ht-tab-btn').forEach(function(b) {
     var active = b.id === 'ht-tab-' + tab;
