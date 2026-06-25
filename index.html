@@ -1322,7 +1322,7 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
-window.BF_BUILD = 'v8.2 (2026-06-25)';
+window.BF_BUILD = 'v8.3 (2026-06-25)';
 (function(){
   console.log('[BeneFlow] build:', window.BF_BUILD);
   // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
@@ -1349,29 +1349,53 @@ window.BF_BUILD = 'v8.2 (2026-06-25)';
 
 
 <!-- ===== LOGIN SCREEN ===== -->
-<div id="login-screen" style="display:flex;height:100vh;align-items:center;justify-content:center;background:linear-gradient(155deg,#faf6f0 0%,#f8f3e8 55%,#fdf9f2 100%);position:fixed;inset:0;z-index:100;overflow:hidden">
-  <!-- 背景柔光暈（右上綠、左下琥珀）-->
-  <div style="position:absolute;top:-20%;right:-15%;width:70%;height:70%;background:radial-gradient(ellipse,rgba(30,157,107,.09) 0%,transparent 68%);pointer-events:none"></div>
-  <div style="position:absolute;bottom:-18%;left:-10%;width:60%;height:65%;background:radial-gradient(ellipse,rgba(245,158,11,.10) 0%,transparent 68%);pointer-events:none"></div>
-  <!-- 漸層細邊框卡片 -->
-  <div style="position:relative;z-index:1;padding:2px;border-radius:28px;background:linear-gradient(145deg,#1e9d6b 0%,#3dba84 30%,#f0b840 68%,#f08020 100%);box-shadow:0 24px 70px rgba(0,0,0,.11),0 4px 20px rgba(0,0,0,.06)">
-    <div style="background:linear-gradient(160deg,#fffef9 0%,#fffdf4 100%);border-radius:26px;padding:46px 44px 40px;text-align:center;width:380px;max-width:calc(92vw - 4px);box-sizing:border-box;position:relative;overflow:hidden">
-      <!-- 頂部極細漸層光條 -->
-      <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,rgba(30,157,107,.4) 0%,rgba(61,186,132,.3) 35%,rgba(245,158,11,.4) 70%,rgba(240,128,32,.35) 100%);pointer-events:none"></div>
-      <!-- Logo -->
-      <div style="width:76px;height:76px;border-radius:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;background:#fff;box-shadow:0 2px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04)">
-        <svg width="50" height="50" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/><path d="M25 7 C23 3 17 4 18 8 C21 10 24 8 25 7Z" fill="#1e9d6b"/><path d="M27 4 C29 1 34 2 33 6 C30 7 27 5 27 4Z" fill="#1e9d6b"/></svg>
-      </div>
-      <div style="font-size:26px;font-weight:800;font-family:'Noto Sans TC',sans-serif;color:#0f172a;margin-bottom:6px;letter-spacing:-.02em">Bene<span style="color:#f59e0b">Flow</span></div>
-      <div style="font-size:14px;color:#64748b;margin-bottom:32px;line-height:1.75">福委會請款簽核系統<br>請使用公司帳號登入</div>
-      <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
-      <button id="google-login-btn" onclick="doGoogleLogin()" type="button" style="display:flex;align-items:center;gap:10px;border:1.5px solid #e8e2d8;border-radius:12px;padding:13px 24px;background:#fff;cursor:pointer;width:100%;justify-content:center;font-family:'Noto Sans TC',sans-serif;transition:box-shadow .15s,border-color .15s;box-sizing:border-box;font-size:14px;font-weight:500;color:#374151;white-space:nowrap;box-shadow:0 1px 4px rgba(0,0,0,.05)">
-        <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
-        以 Google 帳戶登入
-      </button>
-      <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:#fef2f2;border-radius:8px;border:1px solid #fecaca"></div>
-      <div style="font-size:12px;color:#94a3b8;margin-top:18px">僅限 @tsagroup.com.tw 網域</div>
+<style>
+#login-screen{font-family:'Noto Sans TC',sans-serif}
+#login-screen .lg-grad{position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%)}
+#login-screen .lg-mapwrap{position:absolute;inset:-6%;z-index:2;pointer-events:none}
+#login-screen .lg-map{position:absolute;inset:0;background:url('login-map.png') center/cover no-repeat;mix-blend-mode:normal;opacity:1;animation:lgDrift 26s ease-in-out infinite alternate}
+@keyframes lgDrift{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.05) translate(-1.5%,1%)}100%{transform:scale(1.02) translate(1%,-1%)}}
+#login-screen .lg-rings{position:absolute;top:54%;left:50%;z-index:3;pointer-events:none}
+#login-screen .lg-ring{position:absolute;border:1px solid rgba(255,255,255,.5);border-radius:50%;transform:translate(-50%,-50%);animation:lgPulse 4s ease-out infinite}
+#login-screen .lg-ring:nth-child(2){animation-delay:1.3s}
+#login-screen .lg-ring:nth-child(3){animation-delay:2.6s}
+@keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
+#login-screen .lg-bloom{position:absolute;top:44%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%)}
+#login-screen .lg-cardfade{position:absolute;bottom:0;left:0;right:0;height:42%;z-index:4;pointer-events:none;background:linear-gradient(to bottom,transparent 0%,rgba(255,250,254,.4) 55%,#fff 90%)}
+#login-screen .lg-card{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:15;padding:34px 32px max(34px,env(safe-area-inset-bottom,0px));box-sizing:border-box;animation:lgRise .7s cubic-bezier(.2,.8,.2,1) both}
+@keyframes lgRise{from{opacity:0;transform:translate(-50%,28px)}to{opacity:1;transform:translate(-50%,0)}}
+#login-screen .lg-hello{font-weight:700;font-size:38px;color:#6b4a9a;line-height:1;margin-bottom:6px}
+#login-screen .lg-sub{font-weight:400;font-size:16px;color:#a98fc8;margin-bottom:24px;display:flex;align-items:center;gap:8px}
+#login-screen #google-login-btn{width:100%;height:52px;border-radius:16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(183,168,214,.55);display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;color:#5a3a8a;font-weight:500;cursor:pointer;backdrop-filter:blur(6px);transition:transform .15s,box-shadow .2s;font-family:'Noto Sans TC',sans-serif}
+#login-screen #google-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(160,120,200,.18)}
+#login-screen #google-login-btn:active{transform:scale(.98)}
+#login-screen .lg-note{font-size:12px;color:#bca5d4;margin-top:12px;text-align:center}
+</style>
+<div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#e7dcf0">
+  <div class="lg-grad"></div>
+  <div class="lg-mapwrap"><div class="lg-map"></div></div>
+  <div class="lg-rings"><div class="lg-ring"></div><div class="lg-ring"></div><div class="lg-ring"></div></div>
+  <div class="lg-bloom"></div>
+  <div class="lg-cardfade"></div>
+  <div class="lg-card">
+    <div class="lg-hello">Hello</div>
+    <div class="lg-sub">Welcome to TSA
+      <svg width="20" height="20" viewBox="0 0 32 32" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
+        <path d="M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1" stroke="#1e9d6b" stroke-width="2" stroke-linecap="round" fill="none"/>
+        <path d="M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z" fill="#3dba84"/>
+        <path d="M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z" fill="#1e9d6b"/>
+        <path d="M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z" fill="#3dba84"/>
+        <path d="M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z" fill="#1e9d6b"/>
+        <path d="M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z" fill="#3dba84"/>
+      </svg>
     </div>
+    <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
+    <button id="google-login-btn" onclick="doGoogleLogin()" type="button">
+      <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+      使用 Google 帳號登入
+    </button>
+    <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:rgba(254,242,242,.92);border-radius:8px;border:1px solid #fecaca"></div>
+    <div class="lg-note">僅限 @tsagroup.com.tw 帳號</div>
   </div>
 </div>
 
@@ -1523,7 +1547,29 @@ window.BF_BUILD = 'v8.2 (2026-06-25)';
       </div>
       <div id="dash-quick-btns" style="display:flex;gap:10px;flex-wrap:wrap"></div>
     </div>
+  </div>
 
+  <!-- view-analytics 已併入 view-dashboard -->
+  <div class="view" id="view-analytics" style="display:none!important">
+    <!-- placeholder only -->
+  </div>
+
+  <!-- ===== MY APPLICATIONS ===== -->
+  <div class="view" id="view-applications">
+    <div id="apps-tab-bar" style="display:flex;gap:0;border-bottom:2px solid #f1e8da;margin-bottom:16px">
+      <button id="apps-tab-all" onclick="appsSetTab('all')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:700;color:#e16b8c;border-bottom:2px solid #e16b8c;margin-bottom:-2px;cursor:pointer;font-family:inherit">全部案件</button>
+      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">待我審核</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+      <div><div id="app-count-label" style="font-size:14px;color:#94a3b8;margin-top:2px">共 0 件</div></div>
+      <button class="btn btn-p" onclick="openNewForm()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
+      </button>
+    </div>
+    <!-- ── 費用分析（自總覽搬入請款模組）── -->
+    <!-- ── 費用分析（併入總覽）── -->
+    <!-- 請款概況 + 費用分析（待我審核 tab 隱藏）-->
+    <div id="apps-analytics-block">
     <!-- 4 張統計卡（請款統計，限有 reimbursement.view 權限）：桌面 4 欄一列，手機 2x2 -->
     <div id="dash-reimburse-heading" style="display:none;align-items:center;gap:10px;margin-bottom:14px">
       <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📑 請款概況</div>
@@ -1578,28 +1624,6 @@ window.BF_BUILD = 'v8.2 (2026-06-25)';
       </div>
 
     </div>
-
-  </div>
-
-  <!-- view-analytics 已併入 view-dashboard -->
-  <div class="view" id="view-analytics" style="display:none!important">
-    <!-- placeholder only -->
-  </div>
-
-  <!-- ===== MY APPLICATIONS ===== -->
-  <div class="view" id="view-applications">
-    <div id="apps-tab-bar" style="display:flex;gap:0;border-bottom:2px solid #f1e8da;margin-bottom:16px">
-      <button id="apps-tab-all" onclick="appsSetTab('all')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:700;color:#e16b8c;border-bottom:2px solid #e16b8c;margin-bottom:-2px;cursor:pointer;font-family:inherit">全部案件</button>
-      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">待我審核</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div><div id="app-count-label" style="font-size:14px;color:#94a3b8;margin-top:2px">共 0 件</div></div>
-      <button class="btn btn-p" onclick="openNewForm()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
-      </button>
-    </div>
-    <!-- ── 費用分析（自總覽搬入請款模組）── -->
-    <!-- ── 費用分析（併入總覽）── -->
     <div id="analytics-header" style="display:flex;align-items:center;gap:10px;margin:24px 0 14px">
       <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">費用分析</div>
       <div class="ana-rule" style="flex:1;height:1px;background:#f1f5f9"></div>
@@ -1702,6 +1726,8 @@ window.BF_BUILD = 'v8.2 (2026-06-25)';
       <div id="analytics-table-pager"></div>
     </div>
 
+    </div><!-- /apps-analytics-block -->
+
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
       <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件 <span id="tab-cases-count" style="background:#e16b8c;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
@@ -1713,7 +1739,7 @@ window.BF_BUILD = 'v8.2 (2026-06-25)';
     </div>
     <!-- 申請案件（現有內容） -->
     <div id="app-tab-cases">
-    <div class="card" style="padding:14px 16px;margin-bottom:14px">
+    <div class="card" id="app-filter-card" style="padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <div style="position:relative;display:inline-flex;align-items:center">
           <input class="inp" id="app-search" style="width:190px;padding-right:28px" placeholder="搜尋單號或主旨..." oninput="_debouncedAppSearch()">
@@ -4614,6 +4640,16 @@ function appsSetTab(tab) {
   document.getElementById('apps-tab-all').style.borderBottomColor = tab==='all' ? '#e16b8c' : 'transparent';
   document.getElementById('apps-tab-mine').style.color = tab==='pending' ? '#e16b8c' : '#94a3b8';
   document.getElementById('apps-tab-mine').style.borderBottomColor = tab==='pending' ? '#e16b8c' : 'transparent';
+  // 待我審核 tab：只顯示該關審核人要審的案件，隱藏請款概況/費用分析/已核准明細/草稿tab/篩選/新增鈕
+  var pending = (tab === 'pending');
+  var hide = function(id, disp){ var el=document.getElementById(id); if(el) el.style.display = pending ? 'none' : (disp||''); };
+  hide('apps-analytics-block');
+  hide('app-tabs', 'flex');
+  hide('app-filter-card');
+  hide('app-filter-notice');
+  var addBtn = document.querySelector('#view-applications .btn.btn-p');
+  if (addBtn) addBtn.style.display = pending ? 'none' : '';
+  if (pending && typeof switchAppTab === 'function') switchAppTab('cases');
   renderApplications();
 }
 // renderApplications: 根據 _appsTab 重新渲染案件列表
@@ -4621,7 +4657,13 @@ function renderApplications() {
   var allCases = window._allCasesCache || [];
   var cases = allCases.filter(function(c){ return c.status !== '草稿'; });
   if (_appsTab === 'pending') {
-    cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
+    if (typeof isAdmin === 'function' && isAdmin()) {
+      // 管理員：顯示所有待審核（簽核中）案件
+      cases = cases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; });
+    } else {
+      // 一般審核人：只顯示輪到自己審的案件
+      cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
+    }
   }
   window._appSortedCases = cases.slice().sort(function(a,b){ return (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1); });
   window._appCurrentPage = 1;
