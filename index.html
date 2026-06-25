@@ -1322,7 +1322,7 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
-window.BF_BUILD = 'v8.1-loginfix (2026-06-25)';
+window.BF_BUILD = 'v8.2 (2026-06-25)';
 (function(){
   console.log('[BeneFlow] build:', window.BF_BUILD);
   // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
@@ -10178,7 +10178,7 @@ function htRenderDiscover() {
   // 同步顯示「曾訂過的店家」搜尋結果（讓搜尋在口袋名單空時也實用）
   _htRenderStoreSearch(kw, cat, allSpots);
   if (!allSpots.length) {
-    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:14px;margin-bottom:16px">尚無口袋名單，從地圖加入或讓 AI 推薦</div><button onclick="htAiRecommendPocket()" style="padding:10px 24px;border:none;border-radius:20px;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">✨ AI 推薦探店</button></div>';
+    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:14px;margin-bottom:16px">尚無口袋名單，從地圖加入或讓 AI 推薦</div><button onclick="htAiRecommendPocket(event)" style="padding:10px 24px;border:none;border-radius:20px;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">✨ AI 推薦探店</button></div>';
     return;
   }
   if (!spots.length) {
@@ -10205,11 +10205,12 @@ function htRenderDiscover() {
 function htGetSpots() {
   try { return JSON.parse(localStorage.getItem('bf_ht_spots') || '[]'); } catch(e) { return []; }
 }
-async function htAiRecommendPocket() {
-  var btn = event && event.target;
+window.htAiRecommendPocket = async function(ev) {
+  var btn = ev && ev.target;
   if (btn) btn.textContent = '🔍 推薦中…';
   try {
     var r = await htApi('htRecommendPocket', { companyAddress: '台北市', count: 6 });
+    if (!r || !r.ok) { console.warn('htRecommendPocket failed:', r && r.error); toast('AI 推薦暫時無法使用，請稍後再試'); if (btn) btn.textContent = '✨ AI 推薦探店'; return; }
     var spots = JSON.parse(localStorage.getItem('bf_ht_spots') || '[]');
     var added = 0;
     ((r && r.spots) || []).forEach(function(s) {
@@ -10219,14 +10220,14 @@ async function htAiRecommendPocket() {
       }
     });
     localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
-    if (typeof htRenderDiscover === 'function') htRenderDiscover();
-    toast('✅ AI 推薦了 ' + added + ' 家店家');
+    if (added > 0) { if (typeof htRenderDiscover === 'function') htRenderDiscover(); toast('✅ AI 推薦了 ' + added + ' 家店家'); }
+    else { toast('這次沒有新的推薦，請稍後再試'); if (btn) btn.textContent = '✨ AI 推薦探店'; }
   } catch(e) {
     toast('❌ 推薦失敗，請稍後再試');
     if (btn) btn.textContent = '✨ AI 推薦探店';
   }
 }
-function htAddToPocketFromMap(info) {
+window.htAddToPocketFromMap = function(info) {
   var spots = JSON.parse(localStorage.getItem('bf_ht_spots') || '[]');
   if (spots.some(function(s){ return (s.name||'').toLowerCase() === (info.name||'').toLowerCase(); })) {
     toast('已在口袋名單'); return;
