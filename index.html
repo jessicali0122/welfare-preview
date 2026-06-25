@@ -1322,7 +1322,7 @@ tbody td{font-size:var(--fs-base)!important}
 <body>
 <script>
 /* ── 版本清除：偵測到舊版 session 就自動清除，強制重新登入 ── */
-window.BF_BUILD = 'v7-bugfix (2026-06-15)';
+window.BF_BUILD = 'v8-refactor (2026-06-25)';
 (function(){
   console.log('[BeneFlow] build:', window.BF_BUILD);
   // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
@@ -1402,11 +1402,6 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
     <div class="sl" data-view="applications" data-label="案件追蹤" data-cap="reimbursement.view" onclick="sw('applications')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
       <span class="sl-text">案件追蹤</span>
-    </div>
-    <div class="sl" data-view="approvals" data-label="請款審核" data-cap="reimbursement.approve" onclick="sw('approvals')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-      <span class="sl-text">請款審核</span>
-      <span class="sl-badge approval-badge" style="display:none"><svg width="13" height="13" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.2" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
     </div>
 
 
@@ -1593,6 +1588,10 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
   <!-- ===== MY APPLICATIONS ===== -->
   <div class="view" id="view-applications">
+    <div id="apps-tab-bar" style="display:flex;gap:0;border-bottom:2px solid #f1e8da;margin-bottom:16px">
+      <button id="apps-tab-all" onclick="appsSetTab('all')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:700;color:#e16b8c;border-bottom:2px solid #e16b8c;margin-bottom:-2px;cursor:pointer;font-family:inherit">全部案件</button>
+      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">待我審核</button>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
       <div><div id="app-count-label" style="font-size:14px;color:#94a3b8;margin-top:2px">共 0 件</div></div>
       <button class="btn btn-p" onclick="openNewForm()">
@@ -2473,10 +2472,13 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
         <div id="ht-map-container" style="display:none;border-radius:12px;overflow:hidden;border:1.5px solid #f1f5f9">
           <div id="ht-map-label" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#fdf4f7;border-bottom:1px solid #f1f5f9">
             <span id="ht-map-title" style="font-size:14px;font-weight:700;color:#e16b8c"></span>
-            <a id="ht-map-extlink" href="#" target="_blank" style="font-size:12px;color:#94a3b8;text-decoration:none;display:flex;align-items:center;gap:4px">
-              在 Google 地圖開啟
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            </a>
+            <div style="display:flex;align-items:center;gap:8px">
+              <button id="ht-map-pocket-btn" onclick="htAddToPocketFromMap({name:document.getElementById('ht-map-title').textContent.replace(/^📍\s*/,'').split(' — ')[0],category:window._htActiveMapCat||''})" style="padding:5px 12px;border:none;border-radius:20px;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700">＋加入口袋名單</button>
+              <a id="ht-map-extlink" href="#" target="_blank" style="font-size:12px;color:#94a3b8;text-decoration:none;display:flex;align-items:center;gap:4px">
+                在 Google 地圖開啟
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              </a>
+            </div>
           </div>
           <iframe id="ht-map-iframe" src="" width="100%" height="380" style="border:none;display:block" loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
@@ -2795,6 +2797,10 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
 
   <!-- 📅 預約日曆 panel -->
   <div id="ms-panel-calendar">
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px">即將開放預約</div>
+      <div id="ms-upcoming" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+    </div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <button onclick="msCalPrev()" style="width:38px;height:38px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'">‹</button>
       <div id="ms-cal-title" style="font-size:17px;font-weight:800;color:#0f172a"></div>
@@ -2951,11 +2957,6 @@ window.BF_BUILD = 'v7-bugfix (2026-06-15)';
   <button class="bn-item" data-view="applications" data-cap="reimbursement.view" onclick="sw('applications')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></div>
     <span class="bn-label">案件追蹤</span>
-  </button>
-  <button class="bn-item" data-view="approvals" data-cap="reimbursement.approve" onclick="sw('approvals')">
-    <div class="bn-icon-wrap" style="position:relative"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-    <span class="bn-badge approval-badge" style="display:none"></span>
-    <span class="bn-label">請款審核</span>
   </button>
   <button class="bn-item" data-view="hightea" onclick="sw('hightea')">
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg></div>
@@ -3230,15 +3231,15 @@ const ROLE_KEYS = ['employee','welfare','hr','manager'];
 
 // 能力 → 擁有該能力的角色清單（manager 自動全開，不必列）
 const CAPABILITY_MAP = {
-  'reimbursement.view':    ['welfare'],
+  'reimbursement.view':    ['welfare', 'hr'],   // HR 也可看案件追蹤
   'reimbursement.create':  ['welfare'],
-  'reimbursement.approve': ['welfare'],
+  'reimbursement.approve': ['welfare', 'hr'],   // HR 在簽核流程中可審核
   'analytics.view':        ['welfare'],
   'hightea.manage':        ['welfare'],
-  'hightea.discover':      ['welfare','hr'],
+  'hightea.discover':      ['welfare'],          // 移除 hr
   'massage.manage':        ['hr'],
-  'bulletin.post':         ['welfare','hr'],
-  'admin.users':           []   // 僅 manager
+  'bulletin.post':         ['welfare', 'hr'],
+  'admin.users':           []
 };
 
 // email → roles 陣列（由 getMembers 動態填入）
@@ -3428,6 +3429,9 @@ function _hideLoggingIn() {
   if (d) d.remove();
 }
 
+// sessionStorage 在無痕模式的 fallback
+function _safeSsSet(k, v) { try { sessionStorage.setItem(k, v); } catch(e) { try { localStorage.setItem(k, v); } catch(e2) {} } }
+
 // 公司帳號登入：OAuth implicit flow 全頁轉址
 function doGoogleLogin() {
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -3466,7 +3470,7 @@ window.onload = function() {
     if (_idToken) {
       history.replaceState({}, '', location.pathname);
       _showLoggingIn();  // 顯示「登入中…」過場，避免換 token 期間閃現登入畫面
-      handleGoogleLogin({ credential: _idToken });
+      await handleGoogleLogin({ credential: _idToken });
       return;
     }
   }
@@ -3499,7 +3503,7 @@ window.onload = function() {
       const storedToken = sessionStorage.getItem('bf_token') || localStorage.getItem('bf_token') || currentUser.token || null;
       // 舊版 localStorage 含 token 的資料：升級時移除，改存 sessionStorage
       if (currentUser.token) {
-        sessionStorage.setItem('bf_token', currentUser.token);
+        _safeSsSet('bf_token', currentUser.token);
         delete currentUser.token;
         localStorage.setItem('bf_user', JSON.stringify(currentUser));
       }
@@ -3575,7 +3579,7 @@ async function handleGoogleLogin(response) {
   const prevSession   = currentUser?.sessionExpiry;
   const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 7 * 24 * 60 * 60 * 1000;
   currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry };
-  sessionStorage.setItem('bf_token', sessionToken);
+  _safeSsSet('bf_token', sessionToken);
   localStorage.setItem('bf_token', sessionToken); // 備援：sessionStorage 被清除時從這裡讀回
   const { token: _t, ...userToSave } = currentUser;
   localStorage.setItem('bf_user', JSON.stringify(userToSave));
@@ -3607,7 +3611,10 @@ function startTokenRefreshTimer() {
   var sp = new URLSearchParams(location.search);
   var demo = sp.get('demo');
   if (!demo) return;
-  window.currentUser = { email: 'user-a@tsagroup.com.tw', name: '某員工A', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999 };
+  if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return; // 生產環境禁止 demo
+  // 同時設定詞法 currentUser 和 window.currentUser 確保一致
+  currentUser = { email: 'user-a@tsagroup.com.tw', name: '某員工A', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999, roles: ['manager'] };
+  window.currentUser = currentUser;
   // DOMContentLoaded 可能已觸發，改用 setTimeout 確保 DOM 就緒
   setTimeout(function(){
     if(typeof showApp==='function') showApp();
@@ -3616,7 +3623,9 @@ function startTokenRefreshTimer() {
 })();
 
 function parseJwt(token) {
-  const base64 = token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+  const parts = token.split('.');
+  if (parts.length !== 3) throw new Error('Invalid JWT format');
+  const base64 = parts[1].replace(/-/g,'+').replace(/_/g,'/');
   return JSON.parse(decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')));
 }
 
@@ -4171,7 +4180,7 @@ function applyDashboardBlocks() {
       { cap:null,                     label:'💆 預約按摩', onclick:"sw('massage')",      color:'#6366f1', bg:'#ede9fe' },
       { cap:null,                     label:'☕ 午茶日',   onclick:"sw('hightea')",      color:'#b8832a', bg:'#fef3c7' },
       { cap:'reimbursement.create',   label:'📝 新增請款', onclick:"window._newFormReturnView='dashboard';openNewForm()", color:'#e16b8c', bg:'#fde4ef' },
-      { cap:'reimbursement.approve',  label:'✅ 請款審核', onclick:"sw('approvals')",     color:'#16a34a', bg:'#dcfce7' },
+      { cap:'reimbursement.approve',  label:'✅ 請款審核', onclick:"sw('applications');appsSetTab('pending')",     color:'#16a34a', bg:'#dcfce7' },
       { cap:'bulletin.post',          label:'📢 發布公告', onclick:"bulletinOpenNew()",   color:'#0ea5e9', bg:'#e0f2fe' },
       { cap:'admin.users',            label:'⚙️ 使用者管理', onclick:"sw('admin')",       color:'#64748b', bg:'#f1f5f9' }
     ];
@@ -4595,6 +4604,31 @@ async function loadApplications(forceRefresh) {
   if (!window._appPageSize) window._appPageSize = 15;
   _renderAppPage(window._appCurrentPage);
   if (typeof syncApplicantFilter === 'function') setTimeout(syncApplicantFilter, 50);
+}
+
+// ── 案件追蹤 Tab（全部 / 待我審核）──
+var _appsTab = 'all';
+function appsSetTab(tab) {
+  _appsTab = tab;
+  document.getElementById('apps-tab-all').style.color = tab==='all' ? '#e16b8c' : '#94a3b8';
+  document.getElementById('apps-tab-all').style.borderBottomColor = tab==='all' ? '#e16b8c' : 'transparent';
+  document.getElementById('apps-tab-mine').style.color = tab==='pending' ? '#e16b8c' : '#94a3b8';
+  document.getElementById('apps-tab-mine').style.borderBottomColor = tab==='pending' ? '#e16b8c' : 'transparent';
+  renderApplications();
+}
+// renderApplications: 根據 _appsTab 重新渲染案件列表
+function renderApplications() {
+  var allCases = window._allCasesCache || [];
+  var cases = allCases.filter(function(c){ return c.status !== '草稿'; });
+  if (_appsTab === 'pending') {
+    cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
+  }
+  window._appSortedCases = cases.slice().sort(function(a,b){ return (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1); });
+  window._appCurrentPage = 1;
+  window._appFilteredCases = null;
+  var countLabel = document.getElementById('app-count-label');
+  if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
+  _renderAppPage(1);
 }
 
 // 全選 / 取消全選（案件追蹤表格）
@@ -5142,7 +5176,9 @@ async function loadDetail(caseId, _fromPop) {
     anomalyEl.innerHTML = '';
     if (canApprove) {
       var hasAtt = !!(c.files && c.files.length > 0);
+      var _anomalyCaseId = c.caseId;
       htApi('htCheckAnomaly', { amount: c.totalAmount || 0, applicantEmail: c.email || '', caseId: c.caseId, hasAttachment: hasAtt }).then(function(res) {
+        if (_anomalyCaseId !== c.caseId) return; // 已切換案件
         if (res && res.warnings && res.warnings.length > 0) {
           var wHtml = '<div style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px">';
           res.warnings.forEach(function(w) {
@@ -5721,14 +5757,16 @@ function sw(name,elOrName,_fromPop){
   // 載入對應資料（先觸發，之後再做 DOM 調整，避免 iOS fetch 被中斷）
   closeSidebar();
   if(name==='applications'){
-    resetAppFilter(false); loadApplications();
+    resetAppFilter(false); _appsTab = 'all';
+    if(document.getElementById('apps-tab-all')) appsSetTab('all');
+    loadApplications();
     // 費用分析已搬到請款模組，於此載入
     _analyticsRange=null;
     if(typeof _resetAnalyticsButtons==='function') _resetAnalyticsButtons();
     if(typeof _syncAnalyticsApplyBtn==='function') _syncAnalyticsApplyBtn();
     loadAnalytics();
   }
-  if(name==='approvals') loadApprovals();
+  if(name==='approvals') { sw('applications'); appsSetTab('pending'); return; }
   if(name==='analytics'){ sw('applications'); return; }
   if(name==='dashboard'){
     loadDashboard();
@@ -8954,7 +8992,7 @@ async function htApi(action, payload) {
   // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
   //   currentUser 並未掛到 window（只有 demo 模式才會），用 window.currentUser
   //   會永遠取到 undefined → token 變空字串 → 後端回「請先登入公司帳號」。
-  var body = Object.assign({ action: action, token: (currentUser && currentUser.token) || '' }, payload || {});
+  var body = Object.assign({ action: action, token: ((currentUser && currentUser.token) || (window.currentUser && window.currentUser.token)) || '' }, payload || {});
   var res  = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' });
   return res.json();
 }
@@ -9791,6 +9829,7 @@ window.htDiscoverMap = function(el, cat, label) {
     return;
   }
   _htActiveMapCard = el;
+  window._htActiveMapCat = cat;
   el.style.boxShadow = '0 0 0 3px #e16b8c55';
   el.style.transform = 'scale(1.03)';
   _htRefreshMap(cat, label);
@@ -10139,7 +10178,7 @@ function htRenderDiscover() {
   // 同步顯示「曾訂過的店家」搜尋結果（讓搜尋在口袋名單空時也實用）
   _htRenderStoreSearch(kw, cat, allSpots);
   if (!allSpots.length) {
-    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:14px">尚無口袋名單，點擊「新增」加入感興趣的店家</div></div>';
+    list.innerHTML = '<div style="text-align:center;padding:30px 20px;color:#94a3b8"><div style="font-size:24px;margin-bottom:8px">📋</div><div style="font-size:14px;margin-bottom:16px">尚無口袋名單，從地圖加入或讓 AI 推薦</div><button onclick="htAiRecommendPocket()" style="padding:10px 24px;border:none;border-radius:20px;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">✨ AI 推薦探店</button></div>';
     return;
   }
   if (!spots.length) {
@@ -10165,6 +10204,37 @@ function htRenderDiscover() {
 }
 function htGetSpots() {
   try { return JSON.parse(localStorage.getItem('bf_ht_spots') || '[]'); } catch(e) { return []; }
+}
+async function htAiRecommendPocket() {
+  var btn = event && event.target;
+  if (btn) btn.textContent = '🔍 推薦中…';
+  try {
+    var r = await htApi('htRecommendPocket', { companyAddress: '台北市', count: 6 });
+    var spots = JSON.parse(localStorage.getItem('bf_ht_spots') || '[]');
+    var added = 0;
+    ((r && r.spots) || []).forEach(function(s) {
+      if (!spots.some(function(x){ return x.name === s.name; })) {
+        spots.push({ name: s.name, address: s.address || '', category: s.category || '', addedAt: new Date().toISOString(), fromAI: true });
+        added++;
+      }
+    });
+    localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
+    if (typeof htRenderDiscover === 'function') htRenderDiscover();
+    toast('✅ AI 推薦了 ' + added + ' 家店家');
+  } catch(e) {
+    toast('❌ 推薦失敗，請稍後再試');
+    if (btn) btn.textContent = '✨ AI 推薦探店';
+  }
+}
+function htAddToPocketFromMap(info) {
+  var spots = JSON.parse(localStorage.getItem('bf_ht_spots') || '[]');
+  if (spots.some(function(s){ return (s.name||'').toLowerCase() === (info.name||'').toLowerCase(); })) {
+    toast('已在口袋名單'); return;
+  }
+  spots.push({ name: info.name, address: info.address || '', category: info.category || '', addedAt: new Date().toISOString() });
+  localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
+  toast('✅ 已加入口袋名單');
+  if (typeof htRenderDiscover === 'function') htRenderDiscover();
 }
 // 搜尋「曾訂過的店家」（讓探店搜尋在口袋名單空時也實用）
 function _htRenderStoreSearch(kw, cat, spots) {
@@ -11136,11 +11206,45 @@ function msRenderCal() {
       + '</div>';
   }
   grid.innerHTML = html;
+  msRenderUpcoming();
   if (_msSelectedDate) msShowSlots(_msSelectedDate);
   else { document.getElementById('ms-slots-panel').style.display = 'none'; document.getElementById('ms-no-slots').style.display = ''; }
 }
 
 window.msSelectDate = function(dateStr) { _msSelectedDate = dateStr; msRenderCal(); };
+
+// ── 即將開放預約快覽 ──
+function msRenderUpcoming() {
+  var upEl = document.getElementById('ms-upcoming');
+  if (!upEl || !_msData) return;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var openDates = _msData.openDates || {};
+  var upcoming = Object.keys(openDates).filter(function(d){
+    return new Date(d) >= now;
+  }).sort().slice(0, 6);
+  if (!upcoming.length) { upEl.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:12px">近期尚無開放預約日期</div>'; return; }
+  upEl.innerHTML = upcoming.map(function(d) {
+    var info = openDates[d];
+    var slots = (info && info.slots) || [];
+    var total = slots.reduce(function(s,sl){return s+sl.capacity;},0);
+    var myBooked = (_msData.myBookings||[]).filter(function(b){return b.date===d&&b.status==='booked';}).length;
+    var allBooked = (_msData.allBookings||[]).filter(function(b){return b.date===d&&b.status==='booked';}).length;
+    var avail = total - allBooked;
+    var dateObj = new Date(d);
+    var label = (dateObj.getMonth()+1)+'/'+(dateObj.getDate())+' ('+['日','一','二','三','四','五','六'][dateObj.getDay()]+')';
+    return '<div onclick="msFocusDate(\''+d+'\')" style="flex-shrink:0;padding:10px 14px;background:'+(avail>0?'#f0fdf4':'#f8fafc')+';border:1.5px solid '+(avail>0?'#86efac':'#e2e8f0')+';border-radius:12px;cursor:pointer;min-width:90px;text-align:center">'
+      +'<div style="font-size:13px;font-weight:700;color:#0f172a">'+label+'</div>'
+      +'<div style="font-size:11px;color:'+(avail>0?'#16a34a':'#94a3b8')+'">'+( avail>0 ? '剩 '+avail+' 位' : '已額滿')+'</div>'
+      +(myBooked?'<div style="font-size:10px;color:#6366f1">✓ 已預約</div>':'')
+      +'</div>';
+  }).join('');
+}
+window.msFocusDate = function(d) {
+  var dt = new Date(d);
+  _msYear = dt.getFullYear(); _msMonth = dt.getMonth(); _msSelectedDate = d;
+  msRenderCal();
+  setTimeout(function(){ var g = document.getElementById('ms-cal-grid'); if(g) g.scrollIntoView({behavior:'smooth',block:'nearest'}); }, 100);
+};
 
 // ── 顯示時段 ──
 function msShowSlots(dateStr) {
@@ -11583,7 +11687,7 @@ window.bulletinSubmit = function() {
   var body = document.getElementById('bulletin-body-inp').value.trim();
   var pinned = document.getElementById('bulletin-pin-inp').checked;
   if (!title) { document.getElementById('bulletin-title-inp').focus(); return; }
-  var post = { id:'B'+Date.now(), pinned, title, content:body, author:(window.currentUser&&window.currentUser.name)||'管理員', createdAt:new Date().toISOString() };
+  var post = { id:'B'+Date.now(), pinned, title, content:body, author:((currentUser||window.currentUser)&&(currentUser||window.currentUser).name)||'管理員', createdAt:new Date().toISOString() };
   _bulletinPosts.unshift(post);
   bulletinCloseModal(); bulletinRender();
   if (window.toast) toast('✅ 公告已發布');
