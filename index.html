@@ -1354,19 +1354,19 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 <style>
 #login-screen{font-family:'Noto Sans TC',sans-serif}
 #login-screen .lg-grad{position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%)}
-#login-screen .lg-mapwrap{position:absolute;inset:-8%;z-index:2;pointer-events:none;filter:hue-rotate(200deg) saturate(0.55) brightness(1.12);opacity:0.58}
+#login-screen .lg-mapwrap{position:absolute;inset:-8%;z-index:2;pointer-events:none;filter:hue-rotate(200deg) saturate(0.45) brightness(1.18) contrast(0.78);opacity:0.32}
 #lg-leaflet-map{position:absolute;inset:0;background:transparent}
 .lg-pin-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
 .lg-pin{position:absolute;transform:translate(-50%,-100%)}
 .lg-pin-dot{width:14px;height:14px;border-radius:50%;background:#e16b8c;border:2px solid #fff;box-shadow:0 2px 8px rgba(225,107,140,.5)}
 .lg-pin-pulse{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:rgba(225,107,140,.35);animation:pinPulse 2s ease-out infinite}
 @keyframes pinPulse{0%{width:14px;height:14px;opacity:.7}100%{width:52px;height:52px;opacity:0}}
-#login-screen .lg-rings{position:absolute;top:54%;left:50%;z-index:3;pointer-events:none}
-#login-screen .lg-ring{position:absolute;border:1px solid rgba(255,255,255,.5);border-radius:50%;transform:translate(-50%,-50%);animation:lgPulse 4s ease-out infinite}
+#login-screen .lg-rings{position:absolute;top:50%;left:50%;z-index:3;pointer-events:none;transition:left .5s,top .5s}
+#login-screen .lg-ring{position:absolute;border:1px solid rgba(255,255,255,.55);border-radius:50%;transform:translate(-50%,-50%);animation:lgPulse 4s ease-out infinite}
 #login-screen .lg-ring:nth-child(2){animation-delay:1.3s}
 #login-screen .lg-ring:nth-child(3){animation-delay:2.6s}
 @keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
-#login-screen .lg-bloom{position:absolute;top:44%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%)}
+#login-screen .lg-bloom{position:absolute;top:50%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%);transition:left .5s,top .5s}
 #login-screen .lg-cardfade{position:absolute;bottom:0;left:0;right:0;height:42%;z-index:4;pointer-events:none;background:linear-gradient(to bottom,transparent 0%,rgba(255,250,254,.4) 55%,#fff 90%)}
 #login-screen .lg-card{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:15;padding:34px 32px max(34px,env(safe-area-inset-bottom,0px));box-sizing:border-box;animation:lgRise .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes lgRise{from{opacity:0;transform:translate(-50%,28px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -1434,7 +1434,31 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       existing.style.left=x+'px'; existing.style.top=y+'px';
     }
   }
-  map.whenReady(function(){ setTimeout(placePinOnScreen,200); });
+  function positionElements(){
+    var pt=map.latLngToContainerPoint([LAT,LNG]);
+    var mapRect=document.getElementById('lg-leaflet-map').getBoundingClientRect();
+    var screenX=mapRect.left+pt.x;
+    var screenY=mapRect.top+pt.y;
+    var loginRect=document.getElementById('login-screen').getBoundingClientRect();
+    var relX=screenX-loginRect.left;
+    var relY=screenY-loginRect.top;
+    var rings=document.querySelector('#login-screen .lg-rings');
+    var bloom=document.querySelector('#login-screen .lg-bloom');
+    if(rings){rings.style.left=relX+'px';rings.style.top=relY+'px';}
+    if(bloom){bloom.style.left=relX+'px';bloom.style.top=relY+'px';}
+    var wrap=document.getElementById('lg-pin-wrap');
+    var existing=wrap.querySelector('.lg-pin');
+    if(!existing){
+      var pin=document.createElement('div');
+      pin.className='lg-pin';
+      pin.style.left=relX+'px'; pin.style.top=relY+'px';
+      pin.innerHTML='<div class="lg-pin-pulse"></div><div class="lg-pin-dot"></div>';
+      wrap.appendChild(pin);
+    } else {
+      existing.style.left=relX+'px'; existing.style.top=relY+'px';
+    }
+  }
+  map.whenReady(function(){ setTimeout(positionElements,200); });
 })();
 </script>
 <!-- ===== MAIN APP (hidden until login) ===== -->
