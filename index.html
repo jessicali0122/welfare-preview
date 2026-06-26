@@ -2511,6 +2511,15 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
     <!-- 探店靈感 Tab -->
     <div id="ht-panel-discover" style="display:none">
+      <!-- 歷史訂購推薦（善用歷次午茶日訂購紀錄） -->
+      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
+          <span style="font-size:16px;font-weight:700;color:#0f172a">🏆 歷史訂購推薦</span>
+        </div>
+        <div style="font-size:12px;color:#94a3b8;margin:0 0 14px 12px">依本公司歷次午茶日訂購紀錄與評分</div>
+        <div id="ht-discover-rec-list"></div>
+      </div>
       <!-- 快速探索 -->
       <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -10038,8 +10047,10 @@ function _htRenderNearbyHistory(cat) {
   }).sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0,6);
   if (!matched.length) { sec.style.display = 'none'; return; }
   lst.innerHTML = matched.map(function(v){
+    var rating = (v.ratingCount||0) > 0 ? (Math.round((v.ratingSum/v.ratingCount)*10)/10) : null;
+    var ratingTxt = rating != null ? ' <span style="color:#f59e0b">⭐' + rating + '</span>' : '';
     return '<span style="padding:4px 10px;border-radius:12px;font-size:12px;font-weight:600;background:#fff;border:1px solid #f9c2d8;color:#be185d">'
-      + htEsc(v.name) + ' <span style="font-weight:400;opacity:.7">×' + v.totalOrders + '</span></span>';
+      + htEsc(v.name) + ' <span style="font-weight:400;opacity:.7">×' + v.totalOrders + '</span>' + ratingTxt + '</span>';
   }).join('');
   sec.style.display = '';
 }
@@ -10320,32 +10331,45 @@ function _htRenderDiscoverRec() {
   var el = document.getElementById('ht-discover-rec-list');
   if (!el) return;
   if (!_htVendors.length) {
-    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">尚無歷史資料</div>';
+    el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">尚無歷史訂購資料，多辦幾場午茶日後這裡會自動推薦 ☕</div>';
     return;
   }
-  // 直接按訂購次數取前 3 推薦
-  var picks = _htVendors.slice().sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0,3);
+  // 按訂購次數取前 5 名推薦
+  var picks = _htVendors.slice().filter(function(v){ return (v.totalOrders||0) > 0; })
+    .sort(function(a,b){ return (b.totalOrders||0)-(a.totalOrders||0); }).slice(0,5);
   if (!picks.length) {
     el.innerHTML = '<div style="color:#94a3b8;font-size:13px;text-align:center;padding:16px">資料不足，多辦幾場再來看看 ☕</div>';
     return;
   }
+  window._htRecPicks = picks;
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
+  var medals = ['🥇','🥈','🥉','④','⑤'];
   el.innerHTML = '<div style="display:grid;gap:10px">' + picks.map(function(v,i){
     var col = catColors[v.category||'其他'] || '#64748b';
-    var medals = ['🥇','🥈','🥉'];
-    var ordersBadge = (v.totalOrders||0) > 0 ? '<span style="font-size:12px;color:#94a3b8">訂過 ' + v.totalOrders + ' 次</span>' : '';
-    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:#f8fafc;border:1px solid #f1f5f9">'
-      + '<span style="font-size:20px">' + medals[i] + '</span>'
-      + '<div style="flex:1">'
-      +   '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(v.name) + '</span>'
-      +   '<span style="margin-left:8px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:'+col+'18;color:'+col+'">' + htEsc(v.category||'其他') + '</span>'
+    var rating = (v.ratingCount||0) > 0 ? (Math.round((v.ratingSum/v.ratingCount)*10)/10) : null;
+    var ratingBadge = rating != null ? '<span style="font-size:12px;color:#f59e0b;font-weight:700;flex-shrink:0">⭐' + rating + '</span>' : '';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:#fff;border:1px solid #f1f5f9">'
+      + '<span style="font-size:18px;flex-shrink:0">' + medals[i] + '</span>'
+      + '<div style="flex:1;min-width:0">'
+      +   '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      +     '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(v.name) + '</span>'
+      +     '<span style="padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;background:'+col+'18;color:'+col+'">' + htEsc(v.category||'其他') + '</span>'
+      +   '</div>'
+      +   '<div style="font-size:12px;color:#94a3b8;margin-top:2px">訂過 ' + v.totalOrders + ' 次</div>'
       + '</div>'
-      + ordersBadge
+      + ratingBadge
+      + '<button onclick="htMapSearchVendor((window._htRecPicks[' + i + ']||{}).name)" style="flex-shrink:0;padding:6px 12px;border:1.5px solid #fbcfe8;border-radius:20px;background:#fff;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background=\'#fdf2f8\'" onmouseout="this.style.background=\'#fff\'">🗺 在地圖找</button>'
       + '</div>';
   }).join('') + '</div>';
 }
+// 在 Google 地圖搜尋店家（免費，免 API）
+window.htMapSearchVendor = function(name){
+  if (!name) return;
+  window.open('https://www.google.com/maps/search/' + encodeURIComponent(name + ' 新北市新莊區新北大道三段218號'), '_blank');
+};
 
 function htRenderDiscover() {
+  _htRenderDiscoverRec();
   var catColors = { '甜點':'#e16b8c','飲料':'#06b6d4','麵包':'#f59e0b','主食':'#1e9d6b','冰品':'#8b5cf6','其他':'#64748b' };
   var list = document.getElementById('ht-spots-list');
   if (!list) return;
