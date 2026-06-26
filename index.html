@@ -2566,7 +2566,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             </div>
             <div style="display:flex;align-items:center;gap:8px">
               <input id="ht-map-store-name" placeholder="輸入店家名稱後加入口袋名單" style="flex:1;padding:5px 10px;border:1.5px solid #fbc4d4;border-radius:20px;font-size:12px;font-family:inherit;outline:none;color:#0f172a;background:#fff">
-              <button id="ht-map-pocket-btn" onclick="htAddToPocketFromMap({name:(document.getElementById('ht-map-store-name').value.trim()||document.getElementById('ht-map-title').textContent.replace(/^📍\s*/,'').split(' — ')[0]),category:window._htActiveMapCat||''})" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:20px;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700">＋加入口袋名單</button>
+              <button id="ht-map-pocket-btn" onclick="htAddToPocketFromMap({name:document.getElementById('ht-map-store-name').value.trim(),category:window._htActiveMapCat||''})" style="flex-shrink:0;padding:5px 12px;border:none;border-radius:20px;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700">＋加入口袋名單</button>
               <a id="ht-map-extlink" href="#" target="_blank" style="font-size:12px;color:#94a3b8;text-decoration:none;display:flex;align-items:center;gap:4px">
                 在 Google 地圖開啟
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -10384,9 +10384,11 @@ window.htAddToPocketFromMap = function(info) {
   if (spots.some(function(s){ return (s.name||'').toLowerCase() === (info.name||'').toLowerCase(); })) {
     toast('已在口袋名單'); return;
   }
-  spots.push({ id: 'sp_' + Date.now(), name: info.name, address: info.address || '', category: info.category || '', addedAt: new Date().toISOString() });
+  spots.push({ id: 'sp_' + Date.now(), name: info.name.trim(), address: info.address || '', category: info.category || '', addedAt: new Date().toISOString() });
   localStorage.setItem('bf_ht_spots', JSON.stringify(spots));
   toast('✅ 已加入口袋名單');
+  var inp = document.getElementById('ht-map-store-name');
+  if (inp) inp.value = '';
   if (typeof htRenderDiscover === 'function') htRenderDiscover();
 }
 // 搜尋「曾訂過的店家」（讓探店搜尋在口袋名單空時也實用）
