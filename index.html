@@ -2885,37 +2885,49 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div style="font-size:13px;font-weight:700;color:#64748b;margin-bottom:8px">即將開放預約</div>
       <div id="ms-upcoming" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <button onclick="msCalPrev()" style="width:38px;height:38px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'">‹</button>
-      <div id="ms-cal-title" style="font-size:17px;font-weight:800;color:#0f172a"></div>
-      <button onclick="msCalNext()" style="width:38px;height:38px;border-radius:50%;border:none;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,.08);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.boxShadow='0 4px 14px rgba(0,0,0,.12)'" onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.08)'">›</button>
-    </div>
-    <div style="max-width:320px">
-    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">日</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">一</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">二</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">三</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">四</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">五</div>
-      <div style="text-align:center;font-size:11px;font-weight:700;color:#e16b8c;padding:4px 0">六</div>
-    </div>
-    <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:12px"></div>
-    </div>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
-      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f9a8c4"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
-      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
-      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e2e8f0"></div><span style="font-size:12px;color:#64748b">額滿/不開放</span></div>
-    </div>
-    <div id="ms-slots-panel" style="display:none">
-      <div id="ms-slots-date" style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:12px;display:flex;align-items:center;gap:8px">
-        <div style="width:4px;height:18px;background:linear-gradient(#e16b8c,#f9a8c4);border-radius:2px"></div>
+
+    <!-- 左右並排：左日曆、右時段名單 -->
+    <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
+
+      <!-- 左：日曆 -->
+      <div style="flex:0 0 320px;max-width:340px;min-width:280px">
+        <div style="background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #f1f5f9;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.background='#fdf4f7'" onmouseout="this.style.background='#fff'">‹</button>
+            <div id="ms-cal-title" style="font-size:16px;font-weight:800;color:#0f172a"></div>
+            <button onclick="msCalNext()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #f1f5f9;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.background='#fdf4f7'" onmouseout="this.style.background='#fff'">›</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">日</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">一</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">二</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">三</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">四</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#94a3b8;padding:4px 0">五</div>
+            <div style="text-align:center;font-size:11px;font-weight:700;color:#e16b8c;padding:4px 0">六</div>
+          </div>
+          <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f9a8c4"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e2e8f0"></div><span style="font-size:12px;color:#64748b">額滿/不開放</span></div>
+        </div>
       </div>
-      <div id="ms-slots-list" style="display:flex;flex-direction:column;gap:10px"></div>
-    </div>
-    <div id="ms-no-slots" style="text-align:center;padding:32px 0;color:#94a3b8;font-size:14px">
-      <div style="font-size:36px;margin-bottom:8px">📅</div>
-      選擇日期查看可預約時段
+
+      <!-- 右：時段 + 每時段預約名單 -->
+      <div style="flex:1;min-width:280px">
+        <div id="ms-slots-panel" style="display:none">
+          <div id="ms-slots-date" style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+            <div style="width:4px;height:18px;background:linear-gradient(#e16b8c,#f9a8c4);border-radius:2px"></div>
+          </div>
+          <div id="ms-slots-list" style="display:flex;flex-direction:column;gap:12px"></div>
+        </div>
+        <div id="ms-no-slots" style="text-align:center;padding:48px 20px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+          <div style="font-size:40px;margin-bottom:10px">📅</div>
+          請從左側日曆選擇日期<br>查看各時段預約狀況
+        </div>
+      </div>
     </div>
   </div>
 
@@ -11442,10 +11454,36 @@ function msShowSlots(dateStr) {
     } else if (overMonthLimit && !isMySlot && s.remaining > 0) {
       actionBtn = '<span style="font-size:12px;color:#f59e0b;background:#fffbeb;border-radius:20px;padding:5px 12px;font-weight:600">本月已達上限</span>';
     }
-    return '<div style="background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ' + accentColor + ';flex-wrap:wrap">'
-      + '<div style="min-width:50px;text-align:center"><div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">' + s.time + '</div></div>'
+    // ── 此時段已預約名單 ──
+    var slotBookings = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===s.time && (b.status==='booked'||b.status==='attended'); });
+    var myEmail = (_msData && _msData.userEmail) || '';
+    var nameChips = slotBookings.map(function(b){
+      var nm = b.userName || (b.userEmail||'').split('@')[0] || '同事';
+      var mine = b.userEmail && myEmail && b.userEmail === myEmail;
+      var attended = b.status === 'attended';
+      var initial = (nm || '?').trim().charAt(0);
+      var chipBg = mine ? 'linear-gradient(135deg,#fde4ef,#fff0f5)' : '#f8fafc';
+      var chipBd = mine ? '#f9a8c4' : '#e2e8f0';
+      var dotBg = attended ? '#22c55e' : (mine ? '#e16b8c' : '#94a3b8');
+      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:#0f172a">'
+        + '<span style="width:20px;height:20px;border-radius:50%;background:' + dotBg + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">' + htEsc(initial) + '</span>'
+        + htEsc(nm) + (mine ? '（我）' : '') + (attended ? ' ✓' : '')
+        + '</span>';
+    });
+    // 空位 placeholder
+    for (var ei = 0; ei < s.remaining; ei++) {
+      nameChips.push('<span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px dashed #cbd5e1;border-radius:20px;padding:3px 12px;font-size:12px;color:#94a3b8">'
+        + '<span style="width:20px;height:20px;border-radius:50%;border:1.5px dashed #cbd5e1;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#cbd5e1;flex-shrink:0">＋</span>空位</span>');
+    }
+    var attendeeRow = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">' + nameChips.join('') + '</div>';
+
+    return '<div style="background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ' + accentColor + '">'
+      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+      + '<div style="display:flex;align-items:center;gap:7px;min-width:64px"><span style="font-size:15px">🕐</span><span style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">' + s.time + '</span></div>'
       + '<div style="flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + badge + remaining + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn + '</div>'
+      + '</div>'
+      + attendeeRow
       + '</div>';
   }).join('');
 }
