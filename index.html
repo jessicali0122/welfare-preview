@@ -1602,14 +1602,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
     </div>
 
-    <!-- 快速入口（依角色顯示對應按鈕） -->
-    <div id="dash-quick" style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">⚡ 快速入口</div>
-        <div style="flex:1;height:1px;background:#f1f5f9"></div>
-      </div>
-      <div id="dash-quick-btns" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-    </div>
   </div>
 
   <!-- view-analytics 已併入 view-dashboard -->
@@ -1619,16 +1611,25 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
   <!-- ===== MY APPLICATIONS ===== -->
   <div class="view" id="view-applications">
-    <div id="apps-tab-bar" style="display:flex;gap:0;border-bottom:2px solid #f1e8da;margin-bottom:16px">
-      <button id="apps-tab-all" onclick="appsSetTab('all')" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:700;color:#e16b8c;border-bottom:2px solid #e16b8c;margin-bottom:-2px;cursor:pointer;font-family:inherit">全部案件</button>
-      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="padding:10px 20px;border:none;background:none;font-size:14px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;font-family:inherit">待我審核</button>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
-      <div><div id="app-count-label" style="font-size:14px;color:#94a3b8;margin-top:2px">共 0 件</div></div>
-      <button class="btn btn-p" onclick="openNewForm()">
+    <!-- 3-tab pill bar -->
+    <div id="apps-tab-bar" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
+      <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;background:#fde4ef;color:#e16b8c;box-shadow:0 2px 8px rgba(225,107,140,.15)">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>費用分析
+      </button>
+      <button id="apps-tab-all" onclick="appsSetTab('all')" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:#f1f5f9;color:#64748b">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件
+        <span id="apps-tab-all-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px">0</span>
+      </button>
+      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:#f1f5f9;color:#64748b">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>待審核的案件
+        <span id="apps-tab-mine-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px">0</span>
+      </button>
+      <div style="flex:1"></div>
+      <button id="apps-add-btn" class="btn btn-p" onclick="openNewForm()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
+    <div id="app-count-label" style="font-size:13px;color:#94a3b8;margin-bottom:12px;display:none">共 0 件</div>
     <!-- ── 費用分析（自總覽搬入請款模組）── -->
     <!-- ── 費用分析（併入總覽）── -->
     <!-- 請款概況 + 費用分析（待我審核 tab 隱藏）-->
@@ -4262,22 +4263,9 @@ function applyDashboardBlocks() {
   var ht = document.getElementById('dash-hightea-summary');
   if (ht) ht.textContent = '查看下次午茶日活動資訊與店家推薦。';
 
-  // 快速入口：依能力組合
-  var btns = document.getElementById('dash-quick-btns');
-  if (btns) {
-    var items = [
-      { cap:null,                     label:'💆 預約按摩', onclick:"sw('massage')",      color:'#6366f1', bg:'#ede9fe' },
-      { cap:null,                     label:'☕ 午茶日',   onclick:"sw('hightea')",      color:'#b8832a', bg:'#fef3c7' },
-      { cap:'reimbursement.create',   label:'📝 新增請款', onclick:"window._newFormReturnView='dashboard';openNewForm()", color:'#e16b8c', bg:'#fde4ef' },
-      { cap:'reimbursement.approve',  label:'✅ 請款審核', onclick:"sw('applications');appsSetTab('pending')",     color:'#16a34a', bg:'#dcfce7' },
-      { cap:'bulletin.post',          label:'📢 發布公告', onclick:"bulletinOpenNew()",   color:'#0ea5e9', bg:'#e0f2fe' },
-      { cap:'admin.users',            label:'⚙️ 使用者管理', onclick:"sw('admin')",       color:'#64748b', bg:'#f1f5f9' }
-    ];
-    btns.innerHTML = items.filter(function(it){ return !it.cap || (typeof can==='function' && can(it.cap)); })
-      .map(function(it){
-        return '<button onclick="' + it.onclick + '" style="background:' + it.bg + ';color:' + it.color + ';border:none;border-radius:14px;padding:14px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex:1;min-width:130px;transition:transform .12s" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'">' + it.label + '</button>';
-      }).join('');
-  }
+  // 隱藏無權限的 tab
+  var mineTab = document.getElementById('apps-tab-mine');
+  if (mineTab) mineTab.style.display = (typeof can==='function' && can('reimbursement.approve')) ? '' : 'none';
 }
 window.applyDashboardBlocks = applyDashboardBlocks;
 
@@ -4674,6 +4662,12 @@ async function loadApplications(forceRefresh) {
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   const tabCasesCount = document.getElementById('tab-cases-count');
   if (tabCasesCount) tabCasesCount.textContent = cases.length;
+  // 更新新 pill tab 的 badge
+  var allBadge = document.getElementById('apps-tab-all-badge');
+  if (allBadge) allBadge.textContent = cases.length;
+  var pendingCount = allCases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; }).length;
+  var mineBadge = document.getElementById('apps-tab-mine-badge');
+  if (mineBadge) mineBadge.textContent = pendingCount;
   if (!tbody) return;
   // 隱藏卡片容器
   if (cardsContainer) cardsContainer.style.display = 'none';
@@ -4695,25 +4689,63 @@ async function loadApplications(forceRefresh) {
   if (typeof syncApplicantFilter === 'function') setTimeout(syncApplicantFilter, 50);
 }
 
-// ── 案件追蹤 Tab（全部 / 待我審核）──
-var _appsTab = 'all';
+// ── 案件追蹤 Tab（費用分析 / 案件 / 待審核）──
+var _appsTab = 'analytics';
 function appsSetTab(tab) {
   _appsTab = tab;
-  document.getElementById('apps-tab-all').style.color = tab==='all' ? '#e16b8c' : '#94a3b8';
-  document.getElementById('apps-tab-all').style.borderBottomColor = tab==='all' ? '#e16b8c' : 'transparent';
-  document.getElementById('apps-tab-mine').style.color = tab==='pending' ? '#e16b8c' : '#94a3b8';
-  document.getElementById('apps-tab-mine').style.borderBottomColor = tab==='pending' ? '#e16b8c' : 'transparent';
-  // 待我審核 tab：只顯示該關審核人要審的案件，隱藏請款概況/費用分析/已核准明細/草稿tab/篩選/新增鈕
-  var pending = (tab === 'pending');
-  var hide = function(id, disp){ var el=document.getElementById(id); if(el) el.style.display = pending ? 'none' : (disp||''); };
-  hide('apps-analytics-block');
-  hide('app-tabs', 'flex');
-  hide('app-filter-card');
-  hide('app-filter-notice');
-  var addBtn = document.querySelector('#view-applications .btn.btn-p');
-  if (addBtn) addBtn.style.display = pending ? 'none' : '';
-  if (pending && typeof switchAppTab === 'function') switchAppTab('cases');
-  renderApplications();
+  // pill 樣式更新
+  var tabs = {
+    analytics: { el: document.getElementById('apps-tab-analytics'), active: tab==='analytics' },
+    all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' },
+    mine:      { el: document.getElementById('apps-tab-mine'),      active: tab==='pending' }
+  };
+  var activeStyle   = { bg:'#fde4ef', color:'#e16b8c', shadow:'0 2px 8px rgba(225,107,140,.18)', weight:'700' };
+  var inactiveStyle = { bg:'#f1f5f9', color:'#64748b', shadow:'none',                             weight:'600' };
+  Object.keys(tabs).forEach(function(k) {
+    var t = tabs[k]; if (!t.el) return;
+    var s = t.active ? activeStyle : inactiveStyle;
+    t.el.style.background  = s.bg;
+    t.el.style.color       = s.color;
+    t.el.style.boxShadow   = s.shadow;
+    t.el.style.fontWeight  = s.weight;
+  });
+  // badge 顏色跟著 active 狀態更新
+  var allBadge  = document.getElementById('apps-tab-all-badge');
+  var mineBadge = document.getElementById('apps-tab-mine-badge');
+  if (allBadge)  allBadge.style.background  = (tab==='all')     ? '#e16b8c' : '#94a3b8';
+  if (mineBadge) mineBadge.style.background = (tab==='pending') ? '#e16b8c' : '#94a3b8';
+
+  // 區塊顯示控制
+  var analyticsEl  = document.getElementById('apps-analytics-block');
+  var appTabsEl    = document.getElementById('app-tabs');
+  var filterCard   = document.getElementById('app-filter-card');
+  var filterNotice = document.getElementById('app-filter-notice');
+  var countLabel   = document.getElementById('app-count-label');
+  var addBtn       = document.getElementById('apps-add-btn');
+
+  if (tab === 'analytics') {
+    if (analyticsEl)  analyticsEl.style.display  = '';
+    if (appTabsEl)    appTabsEl.style.display     = 'none';
+    if (filterCard)   filterCard.style.display    = 'none';
+    if (filterNotice) filterNotice.style.display  = 'none';
+    if (countLabel)   countLabel.style.display    = 'none';
+    if (addBtn)       addBtn.style.display        = '';
+    // 隱藏案件列表
+    var tabCases  = document.getElementById('app-tab-cases');
+    var tabDrafts = document.getElementById('app-tab-drafts');
+    if (tabCases)  tabCases.style.display  = 'none';
+    if (tabDrafts) tabDrafts.style.display = 'none';
+  } else {
+    if (analyticsEl)  analyticsEl.style.display  = 'none';
+    if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
+    if (filterCard)   filterCard.style.display    = tab==='all' ? '' : 'none';
+    if (filterNotice) filterNotice.style.display  = tab==='all' ? '' : 'none';
+    if (countLabel)   countLabel.style.display    = '';
+    if (addBtn)       addBtn.style.display        = tab==='all' ? '' : 'none';
+    if (tab==='all' && typeof switchAppTab === 'function') switchAppTab('cases');
+    if (tab==='pending' && typeof switchAppTab === 'function') switchAppTab('cases');
+    renderApplications();
+  }
 }
 // renderApplications: 根據 _appsTab 重新渲染案件列表
 function renderApplications() {
@@ -5862,8 +5894,8 @@ function sw(name,elOrName,_fromPop){
   // 載入對應資料（先觸發，之後再做 DOM 調整，避免 iOS fetch 被中斷）
   closeSidebar();
   if(name==='applications'){
-    resetAppFilter(false); _appsTab = 'all';
-    if(document.getElementById('apps-tab-all')) appsSetTab('all');
+    resetAppFilter(false); _appsTab = 'analytics';
+    if(document.getElementById('apps-tab-analytics')) appsSetTab('analytics');
     loadApplications();
     // 費用分析已搬到請款模組，於此載入
     _analyticsRange=null;
