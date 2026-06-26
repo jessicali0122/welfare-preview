@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260626210957';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260626212747';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -22,7 +22,7 @@
   } catch (e) {}
 })();
 </script>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>福委會請款簽核系統</title>
 <link rel="icon" id="main-favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='%231e9d6b' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='%231e9d6b'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='%231e9d6b'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='%231e9d6b'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='%231e9d6b'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='%231e9d6b'/></svg>">
@@ -1379,11 +1379,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #lg-leaflet-map{position:absolute;inset:0;background:transparent}
 .lg-pin-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
 .lg-pin{position:absolute;transform:translate(-50%,-100%)}
-.lg-pin-dot{width:14px;height:14px;border-radius:50%;background:#e16b8c;border:2px solid #fff;box-shadow:0 2px 8px rgba(225,107,140,.5)}
-.lg-pin-pulse{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:rgba(225,107,140,.35);animation:pinPulse 2s ease-out infinite}
+.lg-pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 6px rgba(255,255,255,.45)}
+.lg-pin-pulse{display:none}
 @keyframes pinPulse{0%{width:14px;height:14px;opacity:.7}100%{width:52px;height:52px;opacity:0}}
 #login-screen .lg-rings{position:absolute;top:50%;left:50%;z-index:3;pointer-events:none;transition:left .5s,top .5s}
-#login-screen .lg-ring{position:absolute;border:1px solid rgba(255,255,255,.55);border-radius:50%;transform:translate(-50%,-50%);animation:lgPulse 4s ease-out infinite}
+#login-screen .lg-ring{display:none}
 #login-screen .lg-ring:nth-child(2){animation-delay:1.3s}
 #login-screen .lg-ring:nth-child(3){animation-delay:2.6s}
 @keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
@@ -1548,7 +1548,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 <div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
 
   <!-- TOPBAR -->
-  <header style="height:56px;background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
+  <header style="height:56px;padding-top:env(safe-area-inset-top,0px);background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
     <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
@@ -2427,7 +2427,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <!-- ── 列表頁 ── -->
   <div id="ht-list-panel">
     <!-- 頁頭工具列（重設計） -->
-    <div style="margin-bottom:20px">
+    <div style="margin-bottom:20px;padding-top:10px">
       <!-- Tab 列 -->
       <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
         <div style="display:flex;gap:0">
@@ -3506,7 +3506,7 @@ function _showLoggingIn() {
   }
   var d = document.createElement('div');
   d.id = 'bf-logging-in';
-  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#f8f5f3 0%,#fffbf0 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
   d.innerHTML =
     '<svg width="46" height="46" viewBox="0 0 48 48" fill="none"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/></svg>' +
     '<div style="width:26px;height:26px;border:3px solid #e2e8f0;border-top-color:#1e9d6b;border-radius:50%;animation:bf-spin .8s linear infinite"></div>' +
