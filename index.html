@@ -2434,17 +2434,18 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div id="ht-countdown-text" style="font-size:15px;font-weight:700;color:#be185d"></div>
         <div id="ht-countdown-sub" style="font-size:12px;color:#f472b6;margin-top:2px"></div>
       </div>
+      <div id="ht-weather-tip" style="display:none;text-align:right;flex-shrink:0;padding-left:12px;border-left:1px solid #f9c2d8"></div>
     </div>
 
     <!-- 活動指南 Tab（統計摘要 + 年曆 + 日曆 + 活動卡片） -->
     <div id="ht-panel-events">
-      <!-- 統計摘要卡片（原品項分析 Tab 的數字） -->
-      <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px"></div>
-      <div id="ht-year-timeline" style="margin-bottom:18px"></div>
       <!-- #ht-panel-calendar 會於載入時由 JS 移入此處 -->
       <div id="ht-events-grid">
         <div style="color:#94a3b8;font-size:14px;text-align:center;padding:40px">載入中…</div>
       </div>
+      <!-- 統計摘要 + 年曆（次要資訊，移至下方） -->
+      <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 16px"></div>
+      <div id="ht-year-timeline" style="margin-bottom:18px"></div>
       <!-- 最常採購店家（收在底部） -->
       <div id="ht-vendor-section" style="display:none;margin-top:24px">
         <div style="background:#fff;border-radius:20px;border:1px solid #f0f0f0;overflow:hidden">
@@ -9207,17 +9208,52 @@ function _htUpdateCountdown() {
     var d = new Date(ds); d.setHours(0,0,0,0);
     return isNaN(d.getTime()) || d < now ? null : { ev: e, d: d };
   }).filter(Boolean).sort(function(a,b){ return a.d - b.d; });
-  if (!upcoming.length) { banner.style.display = 'none'; return; }
+  var wtip = document.getElementById('ht-weather-tip');
+  if (!upcoming.length) { banner.style.display = 'none'; if (wtip) wtip.style.display = 'none'; return; }
   var next = upcoming[0];
   var diffDays = Math.round((next.d - now) / 86400000);
-  if (diffDays > 7) { banner.style.display = 'none'; return; }
   var txt = diffDays === 0 ? '今天就是午茶日！準備好了嗎？🎉'
            : diffDays === 1 ? '明天就是午茶日！'
            : '距離下次午茶日還有 ' + diffDays + ' 天';
   document.getElementById('ht-countdown-text').textContent = txt;
   document.getElementById('ht-countdown-sub').textContent = (next.ev.title || next.ev.eventId || '') + '　' + String(next.ev.date||'').replace(/-/g,'/');
   banner.style.display = 'flex';
+  // 天氣提示（open-meteo 免費 API，僅在預報範圍內顯示）
+  _htLoadWeather(String(next.ev.date || '').replace(/\//g, '-'));
 };
+
+// ── 午茶日當天天氣（open-meteo，免費免金鑰；新莊座標）──
+function _htWeatherEmoji(code) {
+  if (code === 0) return { e: '☀️', t: '晴朗' };
+  if (code <= 3)  return { e: '⛅', t: '多雲' };
+  if (code <= 48) return { e: '🌫️', t: '有霧' };
+  if (code <= 67) return { e: '🌧️', t: '下雨' };
+  if (code <= 77) return { e: '🌨️', t: '雨雪' };
+  if (code <= 82) return { e: '🌧️', t: '陣雨' };
+  if (code <= 99) return { e: '⛈️', t: '雷雨' };
+  return { e: '🌡️', t: '' };
+}
+async function _htLoadWeather(dateStr) {
+  var tip = document.getElementById('ht-weather-tip');
+  if (!tip || !dateStr) return;
+  tip.style.display = 'none';
+  try {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=25.036&longitude=121.45'
+      + '&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia%2FTaipei'
+      + '&start_date=' + dateStr + '&end_date=' + dateStr;
+    var j = await fetch(url).then(function(r){ return r.json(); });
+    var dd = j && j.daily;
+    if (!dd || !dd.time || !dd.time.length || dd.temperature_2m_max[0] == null) return;
+    var w = _htWeatherEmoji(dd.weather_code[0]);
+    var tmax = Math.round(dd.temperature_2m_max[0]);
+    var tmin = Math.round(dd.temperature_2m_min[0]);
+    var suggest = tmax >= 28 ? '🧊 建議冷飲/冰品' : (tmax <= 18 ? '☕ 建議熱飲' : '🥤 冷熱皆宜');
+    tip.innerHTML = '<div style="font-size:20px;line-height:1">' + w.e + '</div>'
+      + '<div style="font-size:12px;font-weight:700;color:#be185d;margin-top:2px">' + tmin + '~' + tmax + '°C ' + w.t + '</div>'
+      + '<div style="font-size:11px;color:#f472b6">' + suggest + '</div>';
+    tip.style.display = '';
+  } catch (e) { /* 預報抓不到就略過，不影響其他功能 */ }
+}
 
 var _htLayoutMerged = false;
 function _htMergeLayout() {
@@ -11243,9 +11279,14 @@ function msRenderQuota() {
   if (nw && nt) {
     if (upcoming.length) {
       nw.style.display = '';
-      var parts = (upcoming[0].date||'').split('-');
-      nt.textContent = parseInt(parts[1]) + '/' + parseInt(parts[2]) + ' ' + (upcoming[0].timeSlot||'');
-    } else { nw.style.display = 'none'; }
+      var nd = (upcoming[0].date || '');
+      var parts = nd.split('-');
+      var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
+      nt.textContent = parseInt(parts[1]) + '/' + parseInt(parts[2]) + '(' + wd + ') ' + (upcoming[0].timeSlot || '') + ' ›';
+      nw.style.cursor = 'pointer';
+      nw.title = '點擊跳到該日期查看 / 取消這筆預約';
+      nw.onclick = function(){ if (typeof msFocusDate === 'function') msFocusDate(nd); };
+    } else { nw.style.display = 'none'; nw.onclick = null; }
   }
 }
 
