@@ -10,6 +10,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="BeneFlow">
 <meta name="theme-color" content="#1e9d6b">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
   try{
@@ -1352,9 +1354,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 <style>
 #login-screen{font-family:'Noto Sans TC',sans-serif}
 #login-screen .lg-grad{position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%)}
-#login-screen .lg-mapwrap{position:absolute;inset:-6%;z-index:2;pointer-events:none}
-#login-screen .lg-map{position:absolute;inset:0;background:url('login-map.png') center/cover no-repeat;mix-blend-mode:normal;opacity:1;animation:lgDrift 26s ease-in-out infinite alternate}
-@keyframes lgDrift{0%{transform:scale(1) translate(0,0)}50%{transform:scale(1.05) translate(-1.5%,1%)}100%{transform:scale(1.02) translate(1%,-1%)}}
+#login-screen .lg-mapwrap{position:absolute;inset:-8%;z-index:2;pointer-events:none;filter:hue-rotate(200deg) saturate(0.55) brightness(1.12);opacity:0.58}
+#lg-leaflet-map{position:absolute;inset:0;background:transparent}
+.lg-pin-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
+.lg-pin{position:absolute;transform:translate(-50%,-100%)}
+.lg-pin-dot{width:14px;height:14px;border-radius:50%;background:#e16b8c;border:2px solid #fff;box-shadow:0 2px 8px rgba(225,107,140,.5)}
+.lg-pin-pulse{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:rgba(225,107,140,.35);animation:pinPulse 2s ease-out infinite}
+@keyframes pinPulse{0%{width:14px;height:14px;opacity:.7}100%{width:52px;height:52px;opacity:0}}
 #login-screen .lg-rings{position:absolute;top:54%;left:50%;z-index:3;pointer-events:none}
 #login-screen .lg-ring{position:absolute;border:1px solid rgba(255,255,255,.5);border-radius:50%;transform:translate(-50%,-50%);animation:lgPulse 4s ease-out infinite}
 #login-screen .lg-ring:nth-child(2){animation-delay:1.3s}
@@ -1373,7 +1379,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 </style>
 <div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#e7dcf0">
   <div class="lg-grad"></div>
-  <div class="lg-mapwrap"><div class="lg-map"></div></div>
+  <div class="lg-mapwrap"><div id="lg-leaflet-map"></div></div>
+  <div class="lg-pin-wrap" id="lg-pin-wrap"></div>
   <div class="lg-rings"><div class="lg-ring"></div><div class="lg-ring"></div><div class="lg-ring"></div></div>
   <div class="lg-bloom"></div>
   <div class="lg-cardfade"></div>
@@ -1399,6 +1406,37 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   </div>
 </div>
 
+<script>
+(function(){
+  var LAT=25.06094937503631, LNG=121.4537706698206;
+  var map=L.map('lg-leaflet-map',{
+    center:[LAT,LNG],zoom:15,
+    zoomControl:false,attributionControl:false,
+    dragging:false,touchZoom:false,doubleClickZoom:false,
+    scrollWheelZoom:false,keyboard:false,boxZoom:false
+  });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
+  var wrap=document.getElementById('lg-pin-wrap');
+  function placePinOnScreen(){
+    var pt=map.latLngToContainerPoint([LAT,LNG]);
+    var mapRect=document.getElementById('lg-leaflet-map').getBoundingClientRect();
+    var wrapRect=wrap.getBoundingClientRect();
+    var x=mapRect.left-wrapRect.left+pt.x;
+    var y=mapRect.top-wrapRect.top+pt.y;
+    var existing=wrap.querySelector('.lg-pin');
+    if(!existing){
+      var pin=document.createElement('div');
+      pin.className='lg-pin';
+      pin.style.left=x+'px'; pin.style.top=y+'px';
+      pin.innerHTML='<div class="lg-pin-pulse"></div><div class="lg-pin-dot"></div>';
+      wrap.appendChild(pin);
+    } else {
+      existing.style.left=x+'px'; existing.style.top=y+'px';
+    }
+  }
+  map.whenReady(function(){ setTimeout(placePinOnScreen,200); });
+})();
+</script>
 <!-- ===== MAIN APP (hidden until login) ===== -->
 <div id="app" style="display:none;height:100vh;overflow:hidden;background:#fff">
 <div id="mobile-overlay" onclick="closeSidebar()"></div>
