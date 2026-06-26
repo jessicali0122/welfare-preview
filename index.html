@@ -11511,7 +11511,7 @@ window.msBook = async function(date, timeSlot) {
   _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:(window.currentUser&&window.currentUser.name)||'' });
   if (!_msData.allBookings) _msData.allBookings = [];
   _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:(window.currentUser&&window.currentUser.name)||'', createdAt:new Date().toISOString() });
-  msRenderQuota(); msRenderCal();
+  msRenderQuota(); msRenderCal(); msRenderMyBookings();
 };
 
 // ── 取消（在限額內直接取消） ──
@@ -11520,7 +11520,7 @@ window.msCancel = async function(bookingId, date) {
   try { await htApi('massageCancel', { bookingId }); } catch(e) {}
   _msUpdateBookingStatus(bookingId, 'cancelled');
   _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
-  toast('預約已取消'); msRenderQuota(); msRenderCal();
+  toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings();
 };
 
 // ── 申請取消（超過限額或已過截止時間，需管理員審核） ──
@@ -11531,7 +11531,7 @@ window.msRequestCancel = async function(bookingId, date) {
   _msPendingRequests.push(req);
   if (_msData) { _msData.pendingRequests = _msPendingRequests; var bk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;}); if(bk) bk.cancelRequested = true; }
   toast('✅ 已提交取消申請，等待管理員審核');
-  msRenderCal();
+  msRenderCal(); msRenderMyBookings();
   try { await htApi('massageRequestCancel', { bookingId, reason }); } catch(e) {}
 };
 
@@ -11544,7 +11544,7 @@ window.msRequestDelete = async function(bookingId, date) {
   _msPendingRequests.push(req);
   if (_msData) _msData.pendingRequests = _msPendingRequests;
   toast('✅ 已提交刪除申請，等待管理員審核');
-  msRenderCal(); if (_msTab === 'my') msRenderMyBookings();
+  msRenderCal(); msRenderMyBookings();
   try { await htApi('massageRequestDelete', { bookingId }); } catch(e) {}
 };
 
@@ -11552,7 +11552,7 @@ window.msRequestDelete = async function(bookingId, date) {
 window.msCheckIn = async function(bookingId, date) {
   try { await htApi('massageCheckIn', { bookingId }); } catch(e) {}
   _msUpdateBookingStatus(bookingId, 'attended');
-  toast('✅ 報到成功！'); msRenderCal();
+  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings();
 };
 
 function _msUpdateBookingStatus(bookingId, status) {
