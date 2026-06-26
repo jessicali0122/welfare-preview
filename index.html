@@ -4670,7 +4670,9 @@ async function loadApplications(forceRefresh) {
   // 更新新 pill tab 的 badge
   var allBadge = document.getElementById('apps-tab-all-badge');
   if (allBadge) allBadge.textContent = cases.length;
-  var pendingCount = allCases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; }).length;
+  var pendingCount = (typeof isAdmin === 'function' && isAdmin())
+    ? allCases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; }).length
+    : allCases.filter(function(c){ return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
   var mineBadge = document.getElementById('apps-tab-mine-badge');
   if (mineBadge) mineBadge.textContent = pendingCount;
   if (!tbody) return;
@@ -4744,7 +4746,7 @@ function appsSetTab(tab) {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
     if (filterCard)   filterCard.style.display    = tab==='all' ? '' : 'none';
-    if (filterNotice) filterNotice.style.display  = tab==='all' ? '' : 'none';
+    if (filterNotice && tab !== 'all') filterNotice.style.display = 'none';
     if (countLabel)   countLabel.style.display    = '';
     if (addBtn)       addBtn.style.display        = tab==='all' ? '' : 'none';
     if (tab==='all' && typeof switchAppTab === 'function') switchAppTab('cases');
