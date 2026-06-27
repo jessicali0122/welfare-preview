@@ -9751,7 +9751,12 @@ function _htInitCreatePickers(presetYm) {
     _htMonthFp = flatpickr(mEl, mopts);
   }
   if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl);
-  if (_htMonthFp && presetYm) _htMonthFp.setDate(presetYm, false);
+  // monthSelectPlugin 的 dateFormat 為 'Y 年 n 月'，無法解析 'YYYY-MM' 字串（會落回 1 月），
+  // 故改傳 Date 物件確保預設月份正確。
+  if (_htMonthFp && presetYm) {
+    var _pp = String(presetYm).split('-');
+    _htMonthFp.setDate(new Date(parseInt(_pp[0], 10), parseInt(_pp[1], 10) - 1, 1), false);
+  }
   if (_htDateFp) _htDateFp.clear();
 }
 function _htSeasonHoliday(ym) {
