@@ -712,6 +712,10 @@ input[type=checkbox]{accent-color:#e16b8c}
   /* 按摩預約日曆：手機版改垂直堆疊，日曆佔全寬 */
   #ms-cal-layout{flex-direction:column!important}
   #ms-cal-layout>div:first-child{flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important}
+  /* 午茶日新增 Modal：手機版改底部抽屜（fix iOS overflow-y:auto 無法滑動） */
+  #ht-create-modal{align-items:flex-end!important;padding:0!important;backdrop-filter:none!important;background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important}
+  #ht-create-modal>div{max-height:88vh!important;overflow:hidden auto!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
+  #ht-create-modal>div::before{content:'';display:block;flex-shrink:0;width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 12px}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制防止過長訊息擋住畫面 */
   #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(300px,calc(100vw - 48px))!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;text-align:center!important;line-height:1.4!important}
   /* submit-result-card 手機版由上方那段 CSS 控制（top:12px），此處不重複設定 bottom */
@@ -9929,7 +9933,8 @@ window.htModalRunAI = async function() {
     html += '</div>';
     resEl.innerHTML = html;
   } catch(e) {
-    var errDetail = (r && r.error) || (e && e.message && e.message !== '無推薦結果' ? e.message : '') || '請稍後再試';
+    var errRaw = (r && r.error) || (e && e.message && e.message !== '無推薦結果' ? e.message : '') || '';
+    var errDetail = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
     resEl.innerHTML = '<div style="color:#e16b8c;font-size:13px;padding:8px 0">推薦失敗：' + htEsc(errDetail) + '</div>';
   }
   btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
@@ -11316,7 +11321,8 @@ window.htAssistRun = async function() {
     html += '</div>';
     resEl.innerHTML = html;
   } catch(e) {
-    var errMsg = (e && e.message && e.message !== '無推薦結果') ? e.message : '請稍後再試';
+    var errRaw = (e && e.message && e.message !== '無推薦結果') ? e.message : '';
+    var errMsg = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
     resEl.innerHTML = '<div style="text-align:center;padding:20px;color:#e16b8c;font-size:14px">推薦失敗：' + htEsc(errMsg) + '</div>';
   }
   goBtn.disabled = false; goBtn.textContent = '🔄 重新規劃';
