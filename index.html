@@ -5343,20 +5343,28 @@ async function loadDetail(caseId, _fromPop) {
     if (canApprove) {
       var hasAtt = !!(c.files && c.files.length > 0);
       var _anomalyCaseId = c.caseId;
-      htApi('htCheckAnomaly', { amount: c.totalAmount || 0, applicantEmail: c.email || '', caseId: c.caseId, hasAttachment: hasAtt }).then(function(res) {
-        if (_anomalyCaseId !== c.caseId) return; // 已切換案件
-        if (res && res.warnings && res.warnings.length > 0) {
-          var wHtml = '<div style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px">';
-          res.warnings.forEach(function(w) {
-            var bg = w.level === 'warn' ? '#fef3c7' : '#eff6ff';
-            var color = w.level === 'warn' ? '#d97706' : '#3b82f6';
-            var icon = w.level === 'warn' ? '⚠️' : 'ℹ️';
-            wHtml += '<div style="padding:8px 12px;background:'+bg+';border-radius:8px;font-size:13px;color:'+color+';border-left:3px solid '+color+'">'+icon+' '+htEsc(w.msg)+'</div>';
-          });
-          wHtml += '</div>';
-          anomalyEl.innerHTML = wHtml;
-        }
-      }).catch(function(){});
+      if (!window._anomalyCache) window._anomalyCache = {};
+      var _showAnomalyRes = function(res) {
+        if (!res || !res.warnings || !res.warnings.length) return;
+        var wHtml = '<div style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px">';
+        res.warnings.forEach(function(w) {
+          var bg = w.level === 'warn' ? '#fef3c7' : '#eff6ff';
+          var color = w.level === 'warn' ? '#d97706' : '#3b82f6';
+          var icon = w.level === 'warn' ? '⚠️' : 'ℹ️';
+          wHtml += '<div style="padding:8px 12px;background:'+bg+';border-radius:8px;font-size:13px;color:'+color+';border-left:3px solid '+color+'">'+icon+' '+htEsc(w.msg)+'</div>';
+        });
+        wHtml += '</div>';
+        anomalyEl.innerHTML = wHtml;
+      };
+      if (window._anomalyCache.hasOwnProperty(_anomalyCaseId)) {
+        _showAnomalyRes(window._anomalyCache[_anomalyCaseId]);
+      } else {
+        htApi('htCheckAnomaly', { amount: c.totalAmount || 0, applicantEmail: c.email || '', caseId: c.caseId, hasAttachment: hasAtt }).then(function(res) {
+          window._anomalyCache[_anomalyCaseId] = res;
+          if (_anomalyCaseId !== c.caseId) return; // 已切換案件
+          _showAnomalyRes(res);
+        }).catch(function(){});
+      }
     }
     // 每次切換案件時清空退件原因，避免帶入上一筆的內容
     const _ta = approveBox.querySelector('textarea');
