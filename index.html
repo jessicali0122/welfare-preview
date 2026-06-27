@@ -2688,9 +2688,9 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
       <!-- 防重複提示 -->
       <div id="ht-repeat-warning" style="display:none;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:12px 16px;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 上次（近兩場）用過的店家</div>
+        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 與近兩場重複的廠商或品名</div>
         <div id="ht-repeat-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-        <div style="font-size:12px;color:#a16207;margin-top:6px">建議這次換換口味，避免重複。</div>
+        <div style="font-size:12px;color:#a16207;margin-top:6px">建議換換口味，避免重複。</div>
       </div>
 
       <!-- 品項表格 -->
@@ -2707,6 +2707,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             </button>
             <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
           </div>
+        </div>
+        <!-- 預算餘額列 -->
+        <div id="ht-balance-bar" style="padding:10px 20px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:13px;color:#64748b">總預算 <strong id="ht-bal-total" style="color:#374151">NT$0</strong></span>
+          <span style="font-size:13px;color:#64748b">已用 <strong id="ht-bal-used" style="color:#e16b8c">NT$0</strong></span>
+          <span style="font-size:13px;font-weight:700;color:#374151">餘額 <strong id="ht-bal-remain" style="color:#1e9d6b">NT$0</strong></span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
@@ -2737,48 +2743,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
               </tr>
             </tfoot>
           </table>
-        </div>
-      </div>
-    </div>
-    <!-- 智慧推薦（左欄底部，可展開） -->
-    <div style="margin-top:12px">
-      <button onclick="(function(b,p){p.style.display=p.style.display==='none'?'':p.style.display==='none'?'':'none';b.querySelector('span').textContent=p.style.display===''?'▲':'▼';if(p.style.display==='')htRenderRecommend();})(this,document.getElementById('ht-recommend-body'))" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fdeef5'" onmouseout="this.style.background='#fff8fb'">
-        <span style="font-size:14px;font-weight:700;color:#e16b8c">✨ 智慧推薦 &amp; 預算優化器</span>
-        <span style="font-size:12px;color:#e16b8c">▼</span>
-      </button>
-      <div id="ht-recommend-body" style="display:none;margin-top:8px">
-        <div id="ht-dtab-recommend">
-          <div style="background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #e0f0ff;border-radius:16px;padding:20px;margin-bottom:12px">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px">🧮 預算優化器</div>
-            <div style="font-size:12px;color:#64748b;margin-bottom:14px">根據人數與預算自動計算各類別最佳配比</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:14px;color:#64748b">人數</span>
-                <input id="ht-opt-headcount" type="number" min="1" value="" placeholder="人數" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit;color:#0f172a;text-align:center">
-              </div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:14px;color:#64748b">每人預算</span>
-                <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit;color:#0f172a;text-align:center">
-                <span style="font-size:12px;color:#94a3b8">元</span>
-              </div>
-              <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">計算</button>
-            </div>
-            <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
-          </div>
-          <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:14px">根據歷次活動品項紀錄自動推薦</div>
-            <div id="ht-recommend-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:14px">
-              <button class="ht-rtab admin-tab active" onclick="htSwitchRecTab('all')" style="cursor:pointer;font-family:inherit">全部</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('甜點')" style="cursor:pointer;font-family:inherit">甜點</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('主食')" style="cursor:pointer;font-family:inherit">主食</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('飲料')" style="cursor:pointer;font-family:inherit">飲料</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('水果')" style="cursor:pointer;font-family:inherit">水果</button>
-            </div>
-            <div id="ht-recommend-list" style="display:grid;gap:8px">
-              <div style="color:#94a3b8;font-size:14px;text-align:center;padding:24px">填入人數與預算後點擊「計算」，即可獲得智慧推薦清單</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -9772,10 +9736,18 @@ function _htInitCreatePickers(presetYm) {
   var mEl = document.getElementById('ht-new-month');
   var dEl = document.getElementById('ht-new-date');
   if (mEl && !mEl._flatpickr) {
-    var mopts = { locale: 'zh_tw', disableMobile: true, appendTo: document.body };
+    var mopts = {
+      locale: 'zh_tw', disableMobile: true, appendTo: document.body,
+      onChange: function(dates) {
+        if (!dates.length) return;
+        var selYm = dates[0].getFullYear() + '-' + String(dates[0].getMonth()+1).padStart(2,'0');
+        var budEl = document.getElementById('ht-new-budget');
+        if (budEl) budEl.value = _htBudgetForMonth(selYm);
+      }
+    };
     if (typeof monthSelectPlugin !== 'undefined') {
       mopts.plugins = [ new monthSelectPlugin({ shorthand: false, dateFormat: 'Y 年 n 月' }) ];
-    } else { mopts.dateFormat = 'Y-m'; } // plugin 萬一沒載到的 fallback
+    } else { mopts.dateFormat = 'Y-m'; }
     _htMonthFp = flatpickr(mEl, mopts);
   }
   if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl);
@@ -9916,13 +9888,17 @@ window.htModalRunAI = async function() {
   }
   btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
 };
+function _htBudgetForMonth(ym) {
+  var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
+  return m === 7 ? 400 : 200;
+}
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
   var now = new Date();
   var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   _htInitCreatePickers(ym);
   document.getElementById('ht-new-headcount').value = LOCAL_USER_LIST.length || '';
-  document.getElementById('ht-new-budget').value = '200';
+  document.getElementById('ht-new-budget').value = _htBudgetForMonth(ym);
   document.getElementById('ht-new-notes').value = '';
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
@@ -10588,9 +10564,26 @@ window.htOpenDetail = async function(eventId) {
 
   htRenderDetailHeader();
   htRenderItems();
-  _htShowRepeatWarning();
   htRenderBudget();
   htRenderBirthday();
+  // 預先載入近兩場品項，供重複偵測使用
+  _htPastItemsCache = null;
+  var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
+  if (_pastIds.length) {
+    Promise.all(_pastIds.map(function(id){ return htApi('htGetItems', { eventId: id }); })).then(function(results) {
+      _htPastItemsCache = { vendors: {}, names: {} };
+      results.forEach(function(res) {
+        var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+        items.forEach(function(it) {
+          var vn = _htCanonVendor(it.vendor);
+          if (vn && !/^\d+$/.test(vn)) _htPastItemsCache.vendors[vn] = true;
+          var nm = (it.name || '').trim();
+          if (nm) _htPastItemsCache.names[nm] = true;
+        });
+      });
+      _htCheckRepeatWarning();
+    }).catch(function(){});
+  }
 };
 
 function htRenderDetailHeader() {
@@ -10670,6 +10663,8 @@ window.htUpdateCalcBudget = function() {
     if (bdayCount > 0) fStr += ' + ' + bdayCount + '位壽星 × NT$40';
     fmEl.textContent = fStr;
   }
+  if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
+  _htUpdateBalance();
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
@@ -10738,11 +10733,63 @@ async function _htShowRepeatWarning() {
 }
 
 function _htUserSelectHtml(idx, cur) {
+  var organizers = [(_htEvent && _htEvent.organizer1) || '', (_htEvent && _htEvent.organizer2) || ''].filter(Boolean);
   var o = '<option value="">—</option>';
-  LOCAL_USER_LIST.forEach(function(u) {
-    o += '<option value="' + htEsc(u.name) + '"' + (u.name === cur ? ' selected' : '') + '>' + htEsc(u.name) + '</option>';
+  organizers.forEach(function(name) {
+    o += '<option value="' + htEsc(name) + '"' + (name === cur ? ' selected' : '') + '>' + htEsc(name) + '</option>';
   });
+  if (cur && !organizers.includes(cur)) {
+    o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
+  }
   return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#1e293b" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'">' + o + '</select>';
+}
+
+var _htPastItemsCache = null;
+
+function _htAutoCategory(name) {
+  var n = (name || '').toLowerCase();
+  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋/.test(n)) return '甜點';
+  if (/拿鐵|奶茶|珍珠|飲料|茶|咖啡|果汁|氣泡|飲品|礦泉水|手搖|可樂|紅茶|綠茶|冰沙|豆漿|燕麥奶|抹茶/.test(n)) return '飲料';
+  if (/三明治|便當|壽司|沙拉|輕食|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅/.test(n)) return '主食';
+  if (/水果|草莓|芒果|西瓜|葡萄|蘋果|梨|桃|荔枝|龍眼|鳳梨|藍莓|奇異果|香蕉|橘子|柳橙|百香果|哈密瓜/.test(n)) return '水果';
+  return null;
+}
+
+function _htUpdateBalance() {
+  var totalEl = document.getElementById('ht-bal-total');
+  var usedEl  = document.getElementById('ht-bal-used');
+  var remEl   = document.getElementById('ht-bal-remain');
+  if (!totalEl || !usedEl || !remEl) return;
+  var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  var bp = (_htEvent && _htEvent.budgetPerPerson) || 0;
+  var totalBudget = hc * bp + bdayCount * 40;
+  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0);
+  var remain = totalBudget - used;
+  totalEl.textContent = fmtMoney(totalBudget);
+  usedEl.textContent  = fmtMoney(used);
+  remEl.textContent   = fmtMoney(Math.abs(remain));
+  remEl.style.color   = remain >= 0 ? '#1e9d6b' : '#ef4444';
+  remEl.parentElement.childNodes[0].textContent = remain >= 0 ? '餘額 ' : '超支 ';
+}
+
+function _htCheckRepeatWarning() {
+  var warning = document.getElementById('ht-repeat-warning');
+  var chips   = document.getElementById('ht-repeat-chips');
+  if (!warning || !chips || !_htPastItemsCache) return;
+  var hits = {};
+  _htItems.forEach(function(it) {
+    var vn = _htCanonVendor(it.vendor);
+    if (vn && !/^\d+$/.test(vn) && _htPastItemsCache.vendors[vn]) hits[vn] = '廠商';
+    var nm = (it.name || '').trim();
+    if (nm && _htPastItemsCache.names[nm]) hits[nm] = '品名';
+  });
+  var keys = Object.keys(hits);
+  if (!keys.length) { warning.style.display = 'none'; return; }
+  chips.innerHTML = keys.map(function(k) {
+    return '<span style="display:inline-block;padding:3px 10px;background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;font-size:12px;color:#92400e">🔁 ' + htEsc(k) + ' <span style="opacity:.65">(' + hits[k] + ')</span></span>';
+  }).join('');
+  warning.style.display = '';
 }
 
 function htRenderItems() {
@@ -10773,6 +10820,7 @@ function htRenderItems() {
       + '</tr>';
   }).join('');
   document.getElementById('ht-total-cell').textContent = fmtMoney(total);
+  _htUpdateBalance();
 }
 
 function htEsc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
@@ -10785,9 +10833,21 @@ window.htItemChange = function(el) {
     _htItems[idx][f] = Number(val) || 0;
     _htItems[idx].subtotal = (_htItems[idx].unitPrice||0) * (_htItems[idx].qty||0);
     document.getElementById('ht-sub-'+idx).textContent = fmtMoney(_htItems[idx].subtotal);
-    // update total
     var t = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
     document.getElementById('ht-total-cell').textContent = fmtMoney(t);
+    _htUpdateBalance();
+  } else if (f === 'name') {
+    _htItems[idx][f] = val;
+    var autocat = _htAutoCategory(val);
+    if (autocat) {
+      _htItems[idx].category = autocat;
+      var row = document.getElementById('ht-row-' + idx);
+      if (row) { var cs = row.querySelector('[data-f="category"]'); if (cs) cs.value = autocat; }
+    }
+    _htCheckRepeatWarning();
+  } else if (f === 'vendor') {
+    _htItems[idx][f] = val;
+    _htCheckRepeatWarning();
   } else {
     _htItems[idx][f] = val;
   }
@@ -12192,26 +12252,6 @@ if (document.getElementById('bulletin-list')) bulletinRender();
       <div id="ht-modal-store-section" style="display:none">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">常用店家快選</div>
         <div id="ht-modal-store-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-      </div>
-      <!-- 智慧規劃 -->
-      <div style="border-top:1.5px dashed #f5b8cb;padding-top:14px">
-        <div style="font-size:14px;font-weight:700;color:#e16b8c;margin-bottom:10px">✨ 智慧規劃</div>
-        <div style="margin-bottom:10px">
-          <span id="ht-modal-season-hint" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
-          <div id="ht-modal-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="ht-ratio-chip" data-preset="balanced" onclick="htSelectRatioPreset(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
-            <button class="ht-ratio-chip" data-preset="sweet" onclick="htSelectRatioPreset(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
-            <button class="ht-ratio-chip" data-preset="light" onclick="htSelectRatioPreset(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
-            <button class="ht-ratio-chip" data-preset="savory" onclick="htSelectRatioPreset(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
-          </div>
-          <div id="ht-modal-ratio-detail" style="font-size:12px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
-        </div>
-        <button id="ht-modal-ai-btn" onclick="htModalRunAI()" style="width:100%;margin-top:12px;padding:10px;border:2px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe0ec'" onmouseout="this.style.background='#fff0f5'">✨ AI 幫我規劃品項</button>
-        <div id="ht-modal-ai-result" style="display:none"></div>
       </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
