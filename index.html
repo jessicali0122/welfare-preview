@@ -10897,7 +10897,10 @@ window.htRunOptimize = async function() {
   var hc = Number(document.getElementById('ht-opt-headcount').value);
   var bp = Number(document.getElementById('ht-opt-budget').value);
   if (!hc || !bp) { toast('請填寫人數與每人預算'); return; }
+  var calcBtn = document.querySelector('button[onclick="htRunOptimize()"]');
+  if (calcBtn) { calcBtn.disabled = true; calcBtn.textContent = '計算中…'; }
   var r = await htApi('htRecommendAI', { headcount: hc, budgetPerPerson: bp });
+  if (calcBtn) { calcBtn.disabled = false; calcBtn.textContent = '計算'; }
   if (!r || !r.ok) { toast('計算失敗：' + (r && r.error || '')); return; }
   _htRecData = r;
   var resultEl = document.getElementById('ht-optimize-result');
