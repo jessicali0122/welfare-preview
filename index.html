@@ -10584,7 +10584,15 @@ window.htOpenDetail = async function(eventId) {
       _htCheckRepeatWarning();
     }).catch(function(){});
   }
+  _htUpdateQtyHint();
 };
+
+function _htUpdateQtyHint() {
+  var qtyHint = document.getElementById('ht-qty-hint');
+  if (!qtyHint) return;
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  qtyHint.textContent = hc > 0 ? '建議每項訂 ' + Math.ceil(hc / 8) + ' 份（' + hc + ' 人 ÷ 8）' : '';
+}
 
 function htRenderDetailHeader() {
   var ev = _htEvent;
@@ -10665,6 +10673,7 @@ window.htUpdateCalcBudget = function() {
   }
   if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
   _htUpdateBalance();
+  _htUpdateQtyHint();
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
