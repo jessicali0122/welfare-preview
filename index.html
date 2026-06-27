@@ -107,7 +107,7 @@ function _loadFlatpickr(cb) {
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
 html,body{margin:0;background:#fff;overflow-x:hidden;width:100%}
-body{margin:0;background:#fff}
+body{margin:0;background:#e7d5ef}
 :root{--brand:#9b6fc0;--brand-dark:#6b4a9a;--brand-light:#f1e9f9;--brand-mid:#b794d4;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
 
@@ -1389,14 +1389,14 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 @keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
 #login-screen .lg-bloom{position:absolute;top:50%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%);transition:left .5s,top .5s}
 #login-screen .lg-cardfade{position:absolute;bottom:0;left:0;right:0;height:42%;z-index:4;pointer-events:none;background:linear-gradient(to bottom,transparent 0%,rgba(255,250,254,.4) 55%,#fff 90%)}
-#login-screen .lg-card{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:15;padding:34px 32px max(34px,env(safe-area-inset-bottom,0px));box-sizing:border-box;animation:lgRise .7s cubic-bezier(.2,.8,.2,1) both}
+#login-screen .lg-card{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:15;padding:34px 32px calc(env(safe-area-inset-bottom,0px) + 28px);box-sizing:border-box;animation:lgRise .7s cubic-bezier(.2,.8,.2,1) both}
 @keyframes lgRise{from{opacity:0;transform:translate(-50%,28px)}to{opacity:1;transform:translate(-50%,0)}}
 #login-screen .lg-hello{font-weight:700;font-size:38px;color:#6b4a9a;line-height:1;margin-bottom:6px}
 #login-screen .lg-sub{font-weight:400;font-size:16px;color:#a98fc8;margin-bottom:24px;display:flex;align-items:center;gap:8px}
 #login-screen #google-login-btn{width:100%;height:52px;border-radius:16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(183,168,214,.55);display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;color:#5a3a8a;font-weight:500;cursor:pointer;backdrop-filter:blur(6px);transition:transform .15s,box-shadow .2s;font-family:'Noto Sans TC',sans-serif}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(160,120,200,.18)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
-#login-screen .lg-note{font-size:12px;color:#bca5d4;margin-top:12px;text-align:center}
+#login-screen .lg-note{font-size:13px;color:#8b6aaf;font-weight:500;margin-top:14px;text-align:center}
 </style>
 <div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#e7dcf0">
   <div class="lg-grad"></div>
@@ -3514,16 +3514,22 @@ function _showLoggingIn() {
   if (!document.getElementById('bf-spin-style')) {
     var st = document.createElement('style');
     st.id = 'bf-spin-style';
-    st.textContent = '@keyframes bf-spin{to{transform:rotate(360deg)}}';
+    st.textContent = '@keyframes bf-pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.18);opacity:1}}@keyframes bf-dot{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1.1);opacity:1}}';
     document.head.appendChild(st);
   }
   var d = document.createElement('div');
   d.id = 'bf-logging-in';
-  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding-bottom:env(safe-area-inset-bottom,0px)';
   d.innerHTML =
-    '<svg width="46" height="46" viewBox="0 0 48 48" fill="none"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/></svg>' +
-    '<div style="width:26px;height:26px;border:3px solid #e2e8f0;border-top-color:#1e9d6b;border-radius:50%;animation:bf-spin .8s linear infinite"></div>' +
-    '<div style="color:#64748b;font-size:16px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif">登入中…</div>';
+    '<div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.35);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;animation:bf-pulse 1.6s ease-in-out infinite;box-shadow:0 4px 24px rgba(183,168,214,.4)">' +
+      '<span style="font-size:34px">🔐</span>' +
+    '</div>' +
+    '<div style="display:flex;gap:8px;align-items:center">' +
+      '<div style="width:8px;height:8px;border-radius:50%;background:#9b72cf;animation:bf-dot 1.2s ease-in-out infinite;animation-delay:0s"></div>' +
+      '<div style="width:8px;height:8px;border-radius:50%;background:#9b72cf;animation:bf-dot 1.2s ease-in-out infinite;animation-delay:.2s"></div>' +
+      '<div style="width:8px;height:8px;border-radius:50%;background:#9b72cf;animation:bf-dot 1.2s ease-in-out infinite;animation-delay:.4s"></div>' +
+    '</div>' +
+    '<div style="color:#7a4fa8;font-size:16px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.5px">登入中…</div>';
   document.body.appendChild(d);
 }
 function _hideLoggingIn() {
