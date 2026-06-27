@@ -709,9 +709,12 @@ input[type=checkbox]{accent-color:#e16b8c}
   #form-desktop-btns{display:none!important}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
-  /* 按摩預約日曆：手機版改垂直堆疊，日曆佔全寬 */
-  #ms-cal-layout{flex-direction:column!important}
+  /* 按摩預約日曆：手機版改垂直堆疊，日曆佔全寬，align-items:stretch 確保第二欄也撐滿 */
+  #ms-cal-layout{flex-direction:column!important;align-items:stretch!important}
   #ms-cal-layout>div:first-child{flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important}
+  #ms-cal-layout>div:last-child{width:100%!important;min-width:0!important;flex:none!important}
+  /* 午茶日 detail grid：手機版改單欄，避免左欄被壓縮到 52px 導致品項文字消失 */
+  #ht-detail-grid{grid-template-columns:1fr!important}
   /* 午茶日新增 Modal：手機版改底部抽屜（fix iOS overflow-y:auto 無法滑動） */
   #ht-create-modal{align-items:flex-end!important;padding:0!important;backdrop-filter:none!important;background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important}
   #ht-create-modal>div{max-height:88vh!important;overflow:hidden auto!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
@@ -2641,7 +2644,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
 
     <!-- 主版面：左欄（品項）+ 右欄（預算/壽星）-->
-    <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
+    <div id="ht-detail-grid" style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
     <!-- ── 左欄 ── -->
     <div>
     <!-- Tab: 品項規劃 -->
