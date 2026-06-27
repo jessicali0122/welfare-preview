@@ -9251,6 +9251,22 @@ function _htUpdateCountdown() {
     return isNaN(d.getTime()) || d < now ? null : { ev: e, d: d };
   }).filter(Boolean).sort(function(a,b){ return a.d - b.d; });
   var wtip = document.getElementById('ht-weather-tip');
+  // ── Hero 下次活動 ──
+  var heroWrap = document.getElementById('ht-hero-next-wrap');
+  var heroNext = document.getElementById('ht-hero-next');
+  if (heroWrap && heroNext) {
+    if (!upcoming.length) {
+      heroWrap.style.display = 'none';
+    } else {
+      var nxt = upcoming[0];
+      var nds = String(nxt.ev.date||'').replace(/\//g,'-');
+      var nparts = nds.split('-');
+      var nwd = ['日','一','二','三','四','五','六'][nxt.d.getDay()];
+      var ndiff = Math.round((nxt.d - now) / 86400000);
+      heroNext.textContent = parseInt(nparts[1]) + '/' + parseInt(nparts[2]) + '（' + nwd + '）' + (ndiff===0?'今天':ndiff===1?'明天':'還有'+ndiff+'天');
+      heroWrap.style.display = '';
+    }
+  }
   if (!upcoming.length) { banner.style.display = 'none'; if (wtip) wtip.style.display = 'none'; return; }
   var next = upcoming[0];
   var diffDays = Math.round((next.d - now) / 86400000);
