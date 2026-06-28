@@ -2350,10 +2350,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <th style="text-align:center">Email</th>
             <th style="text-align:center">標籤</th>
             <th style="text-align:center">加入時間</th>
+            <th style="text-align:center">生日</th>
             <th style="text-align:center">操作</th>
           </tr></thead>
           <tbody id="admin-users-tbody">
-            <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
+            <tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
           </tbody>
         </table>
         </div>
@@ -3187,6 +3188,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <option value="">請選擇部門</option>
             <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
           </select>
+        </div>
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
+          <input class="inp" id="edit-birthday" type="date">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
         </div>
       </div>
       <div>
@@ -7232,6 +7238,21 @@ const ROLE_BADGE_STYLE = {
   hr:       'background:#e0f2fe;color:#0ea5e9',
   employee: 'background:#f1f5f9;color:#64748b'
 };
+// 解析生日字串 → {m,d}（支援 YYYY-MM-DD / MM-DD / M月D日）
+function _bdayParse(v) {
+  if (!v) return null;
+  var s = String(v).trim();
+  var ymd = s.match(/^(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+  if (ymd) { var mo=+ymd[2], d=+ymd[3]; if(mo>=1&&mo<=12&&d>=1&&d<=31) return {m:mo,d:d}; }
+  var md = s.match(/^(\d{1,2})\D+(\d{1,2})/);
+  if (md) { var mo2=+md[1], d2=+md[2]; if(mo2>=1&&mo2<=12&&d2>=1&&d2<=31) return {m:mo2,d:d2}; }
+  return null;
+}
+// 生日顯示 → MM/DD
+function _bdayDisplay(v) {
+  var p = _bdayParse(v);
+  return p ? (p.m+'/'+p.d) : (v ? String(v) : '');
+}
 function buildAdminUserRow(u) {
   const avatarColor = adminUserAvatarColor(u.name);
   const firstChar = (u.name || '?').charAt(0);
@@ -7247,7 +7268,9 @@ function buildAdminUserRow(u) {
   const roleBadges = display.map(function(r){
     return '<span style="'+(ROLE_BADGE_STYLE[r]||ROLE_BADGE_STYLE.employee)+';padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap">'+(ROLE_KEY_TO_LABEL[r]||r)+'</span>';
   }).join(' ');
-  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-roles="${roles.join(',')}" style="border-bottom:1px solid #f8fafc">
+  var _bday = u.birthday || u.birthDay || '';
+  var _bdayShow = _bdayDisplay(_bday);
+  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-roles="${roles.join(',')}" data-birthday="${_bday}" style="border-bottom:1px solid #f8fafc">
     <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
     <td style="padding:12px 16px">${nameChip(u.name||'—', 28, u.email)}</td>
     <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${u.employeeId||'—'}</td>
@@ -7255,6 +7278,7 @@ function buildAdminUserRow(u) {
     <td style="padding:12px 16px;color:#64748b">${u.email||'—'}</td>
     <td style="padding:12px 16px"><div style="display:flex;gap:4px;flex-wrap:wrap">${roleBadges}</div></td>
     <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
+    <td style="padding:12px 16px;color:#475569;white-space:nowrap;text-align:center">${_bdayShow || '—'}</td>
     <td style="padding:12px 16px"><div style="display:flex;gap:6px">
       <button class="btn btn-o" style="padding:5px 10px;font-size:14px" onclick="showEditUserModal(this)">編輯</button>
       <button style="padding:5px 10px;font-size:14px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
@@ -7266,19 +7290,24 @@ async function loadAdminUsers() {
   if (!isAdmin()) return; // 非管理者不呼叫
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
   const res = await callAPI('listUsers');
   if (!res.ok) {
     if (res._authError) {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
     } else {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#94a3b8">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#94a3b8">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
     }
     return;
   }
   const users = res.users || [];
+  // 建立全域生日表，供午茶日壽星自動帶入（單一來源：使用者管理）
+  window._BF_USER_BDAYS = users.map(function(u){
+    var p = _bdayParse(u.birthday || u.birthDay || '');
+    return p ? { name: u.name, m: p.m, d: p.d } : null;
+  }).filter(Boolean);
   if (users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">尚無使用者資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">尚無使用者資料</td></tr>';
   } else {
     tbody.innerHTML = users.map(buildAdminUserRow).join('');
   }
@@ -7331,6 +7360,8 @@ function showEditUserModal(btn){
   const role=row.querySelector('td:nth-child(6) span').textContent.trim();
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
+  const bdayEl=document.getElementById('edit-birthday');
+  if(bdayEl){ var rawBday=row.dataset.birthday||''; bdayEl.value=/^\d{4}-\d{2}-\d{2}/.test(rawBday)?rawBday.slice(0,10):''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   if(editDept&&deptVal){editDept.value=deptVal;}
@@ -7364,7 +7395,9 @@ function doEditUser(){
   });
   const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
   const newDept  = document.getElementById('edit-dept')?.value||'';
+  const newBday  = document.getElementById('edit-birthday')?.value||'';
   const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
+  if (_editRow) _editRow.dataset.birthday = newBday; // 本地即時反映
   // 後端相容：role 存代表角色（manager 優先，否則第一個非員工角色），roles 存完整清單
   var rolesLabels = rolesArr.map(function(r){ return ROLE_KEY_TO_LABEL[r]||r; });
   var primary = rolesArr.includes('manager') ? '管理者'
@@ -7376,7 +7409,7 @@ function doEditUser(){
   if (currentUser && currentUser.email===email) { currentUser.roles = getCurrentRoles(); applyNavVisibility(); }
   closeEditUserModal();
   toast('⏳ 儲存中...');
-  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,role:primary,roles:rolesLabels.join(',')}).then(res=>{
+  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,birthday:newBday,role:primary,roles:rolesLabels.join(',')}).then(res=>{
     if(res.ok){
       toast('✅ 已儲存變更');
       loadAdminUsers();
@@ -9128,9 +9161,14 @@ var _HT_BDAY_DB = [
 
 // 取得某月份的壽星名單（回傳帶日期的物件陣列）
 function _htBdaysForMonth(monthNum) {
-  return _HT_BDAY_DB
-    .filter(function(p){ return p.m === monthNum; })
-    .sort(function(a, b){ return a.d - b.d; });
+  // 使用者管理設定的生日為準；未設定者沿用內建 _HT_BDAY_DB 作後備
+  var ub = (typeof window !== 'undefined' && window._BF_USER_BDAYS) || [];
+  var userNames = {};
+  ub.forEach(function(p){ if (p && p.name) userNames[p.name] = true; });
+  var out = {};
+  _HT_BDAY_DB.forEach(function(p){ if (p.m === monthNum && !userNames[p.name]) out[p.name] = {name:p.name, m:p.m, d:p.d}; });
+  ub.forEach(function(p){ if (p && p.m === monthNum) out[p.name] = {name:p.name, m:p.m, d:p.d}; });
+  return Object.keys(out).map(function(k){ return out[k]; }).sort(function(a, b){ return a.d - b.d; });
 }
 
 // ── API 呼叫 (沿用既有 API_URL + token 機制) ──
