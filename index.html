@@ -2677,10 +2677,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <div style="font-size:12px;color:#64748b;margin-bottom:5px">每人預算（元）</div>
             <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
           </div>
-          <!-- 壽星人數 -->
+          <!-- 壽星人數（唯讀，由下方名單連動） -->
           <div>
             <div style="font-size:12px;color:#64748b;margin-bottom:5px">壽星人數（位）</div>
-            <input id="ht-event-bday-count" type="number" min="0" onchange="htSetBirthdayCount()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
+            <div style="padding:7px 0;display:flex;align-items:baseline;gap:6px">
+              <span id="ht-event-bday-disp" style="font-size:14px;font-weight:600;color:#0f172a">0</span>
+              <span style="font-size:11px;color:#94a3b8">見下方名單管理</span>
+            </div>
           </div>
           <!-- 主辦人 1 -->
           <div>
@@ -2776,6 +2779,26 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:16px;margin-top:10px">
           <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">類別明細</div>
           <div id="ht-budget-category-detail"></div>
+        </div>
+      </div>
+
+      <!-- 本月壽星（自動帶入＋可加減，連動試算公式） -->
+      <div id="ht-dtab-birthday">
+        <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:#0f172a">🎂 本月壽星</div>
+              <div style="font-size:12px;color:#94a3b8;margin-top:2px">每位壽星 NT$40，加減會自動更新總預算</div>
+            </div>
+            <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增
+            </button>
+          </div>
+          <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;color:#64748b">慶生費用合計</span>
+            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#f59e0b">NT$0</span>
+          </div>
         </div>
       </div>
 
@@ -10589,6 +10612,7 @@ window.htOpenDetail = async function(eventId) {
   htRenderDetailHeader();
   htRenderItems();
   htRenderBudget();
+  htRenderBirthday();
   // 預先載入近兩場品項，供重複偵測使用
   _htPastItemsCache = null;
   var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
@@ -10636,8 +10660,8 @@ function htRenderDetailHeader() {
   document.getElementById('ht-event-budget-pp').value = ev.budgetPerPerson || '';
   var _monthEl = document.getElementById('ht-event-month-display');
   if (_monthEl) _monthEl.textContent = fmtMonth(ev.month);
-  var _bcEl = document.getElementById('ht-event-bday-count');
-  if (_bcEl) _bcEl.value = (ev.birthdays || []).length;
+  var _bdEl = document.getElementById('ht-event-bday-disp');
+  if (_bdEl) _bdEl.textContent = (ev.birthdays || []).length;
   // 填入主辦人下拉
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
@@ -10687,8 +10711,8 @@ window.htSwitchDetailTab = function(tab) {
 window.htUpdateCalcBudget = function() {
   var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
   var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
-  var bcEl = document.getElementById('ht-event-bday-count');
-  var bdayCount = bcEl ? (Number(bcEl.value) || 0) : ((_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0);
+  // 壽星人數＝本月壽星名單長度（名單為唯一來源，加減姓名即連動）
+  var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
   var baseBudget = hc * bp;
   var bdayBudget = bdayCount * 40;
   var total = baseBudget + bdayBudget;
@@ -10699,28 +10723,11 @@ window.htUpdateCalcBudget = function() {
     if (bdayCount > 0) fStr += '　＋　' + bdayCount + ' 位壽星 × NT$40';
     fmEl.textContent = fStr;
   }
+  var dispEl = document.getElementById('ht-event-bday-disp');
+  if (dispEl) dispEl.textContent = bdayCount;
   if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
   _htUpdateBalance();
   _htUpdateQtyHint();
-};
-// 設定壽星人數（取代原本的壽星名單）：以 birthdays 陣列長度表示人數，保留既有姓名、不足補佔位
-window.htSetBirthdayCount = async function() {
-  if (!_htEvent) return;
-  var bcEl = document.getElementById('ht-event-bday-count');
-  var n = Math.max(0, Number(bcEl ? bcEl.value : 0) || 0);
-  var cur = (_htEvent.birthdays || []).slice();
-  var next = cur.slice(0, n);
-  while (next.length < n) next.push('壽星' + (next.length + 1));
-  _htEvent.birthdays = next;
-  _htEvent.birthdayBudget = n * 40;
-  htUpdateCalcBudget();
-  htRenderBudget();
-  htRenderDetailHeader();
-  var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
-  var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
-  var r = await htApi('htUpdate', { eventId: _htEvent.eventId, birthdays: next, totalBudget: hc * bp + n * 40 });
-  if (r && r.ok) { _htEvent.totalBudget = hc * bp + n * 40; }
-  else { toast('壽星人數儲存失敗'); }
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
