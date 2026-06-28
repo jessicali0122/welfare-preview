@@ -1988,7 +1988,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <div>
               <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#ef4444">*</span></label>
               <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
-                <option>某員工A</option><option>某員工B</option><option>某員工E</option><option>某員工C</option><option>某員工F</option><option>某員工G</option><option>某員工H</option><option>某員工I</option><option>某員工J</option><option>某員工D</option>
               </select>
             </div>
             <div>
@@ -1999,7 +1998,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
                 </label>
               </div>
               <select class="inp" id="payee-select" disabled>
-                <option>某員工A</option><option>某員工B</option><option>某員工E</option><option>某員工C</option><option>某員工F</option><option>某員工G</option><option>某員工H</option><option>某員工I</option><option>某員工J</option><option>某員工D</option>
               </select>
             </div>
             <div>
@@ -3112,7 +3110,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
-        <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
+        <input class="inp" id="add-email" placeholder="test@tsagroup.com.tw">
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
@@ -3255,7 +3253,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>李小明,li@tsagroup.com.tw,T0099,後勤部,申請人</code>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>王測試,test@tsagroup.com.tw,T0099,後勤部,申請人</code>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o" style="flex:1;justify-content:center" onclick="closeImportModal()">取消</button>
@@ -3327,8 +3325,9 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 let currentUser  = null; // { email, name, token }
 let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
 
-// ── 管理者名單（初始硬編碼，登入後由 getMembers 動態更新；需與 GAS CONFIG.ADMIN_EMAILS 一致）──
-let ADMIN_EMAILS = ['user-a@tsagroup.com.tw'];
+// ── 管理者名單（初始為空，登入後由 getMembers 動態更新；需與 GAS CONFIG.ADMIN_EMAILS 一致）──
+// 注意：請勿在此硬編碼真實 email，避免公開 repo 洩露帳號資訊；登入後 2.5 秒內由 _syncMembersFromServer() 補上
+let ADMIN_EMAILS = [];
 
 // ── 簽核人清單（由 loadAdminFlow 動態載入）──
 let APPROVER_EMAILS = [];
@@ -3738,7 +3737,7 @@ function startTokenRefreshTimer() {
   if (!demo) return;
   if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return; // 生產環境禁止 demo
   // 同時設定詞法 currentUser 和 window.currentUser 確保一致
-  currentUser = { email: 'user-a@tsagroup.com.tw', name: '某員工A', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999, roles: ['manager'] };
+  currentUser = { email: 'demo@tsagroup.com.tw', name: '測試使用者', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999, roles: ['manager'] };
   window.currentUser = currentUser;
   // DOMContentLoaded 可能已觸發，改用 setTimeout 確保 DOM 就緒
   setTimeout(function(){
@@ -6021,19 +6020,9 @@ function sw(name,elOrName,_fromPop){
 }
 
 // ── 員工編號 & 部門對照表 ──
-// 本地使用者清單（email 正確版，供 fallback 及 getChineseNameByEmail 使用）
-const LOCAL_USER_LIST = [
-  {name:'某員工A',  email:'user-a@tsagroup.com.tw',         dept:'後勤部',         employeeId:'T-XXXX'},
-  {name:'某員工B',  email:'user-b@tsagroup.com.tw',       dept:'資訊部',         employeeId:'T-XXXX'},
-  {name:'某員工C',  email:'user-c@tsagroup.com.tw',        dept:'後勤部',         employeeId:'T-XXXX'},
-  {name:'某員工D',  email:'user-d@tsagroup.com.tw',      dept:'財務會計部',     employeeId:'T-XXXX'},
-  {name:'某員工E',  email:'user-e@tsagroup.com.tw',         dept:'數位廣告部',     employeeId:'T-XXXX'},
-  {name:'某員工F',  email:'user-f@tsagroup.com.tw',            dept:'供應鏈部',       employeeId:'T-XXXX'},
-  {name:'某員工G',  email:'user-g@tsagroup.com.tw',     dept:'人力資源部',     employeeId:'T-XXXX'},
-  {name:'某員工H',    email:'user-h@tsagroup.com.tw',        dept:'行銷部',         employeeId:'T-XXXX'},
-  {name:'某員工I',  email:'user-i@tsagroup.com.tw',           dept:'人力資源部',     employeeId:'T-XXXX'},
-  {name:'某員工J',  email:'user-j@tsagroup.com.tw',             dept:'通路事業發展部', employeeId:'T-XXXX'},
-];
+// 本地使用者清單（僅供首次載入前的暫時 fallback；登入後 _syncMembersFromServer() 會以伺服器資料完整覆蓋）
+// 注意：請勿在此硬編碼真實姓名/email/員編，避免公開 repo 洩露同事個資
+const LOCAL_USER_LIST = [];
 // email → 中文姓名快速查表
 const LOCAL_EMAIL_TO_NAME = {};
 LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
@@ -6130,7 +6119,7 @@ function catAllBadges(catStr) {
 }
 
 // 取得某關卡的簽核人姓名（供狀態欄顯示用）
-// 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 某員工B」這類含職稱的名稱
+// 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 王小明」這類含職稱的名稱
 function getStepApproverName(step) {
   const info = getStepApproverInfo(step);
   return info.name;
@@ -6806,12 +6795,9 @@ function updateDetailFlow(c){
   if (typeof c === 'string') return;
 
   // 只顯示「啟用中」的關卡（與後端 getActiveApprovers() 一致）
-  const allApprovers = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [
-    { label:'第一關：總幹事審核',     name:'某員工B',   email:'user-b@tsagroup.com.tw',   enabled:true },
-    { label:'第二關：副主任委員審核', name:'某員工C',   email:'user-c@tsagroup.com.tw',    enabled:true },
-    { label:'第三關：主任委員審核',   name:'某員工A',   email:'user-a@tsagroup.com.tw',     enabled:true },
-    { label:'第四關：財務委員審核',   name:'某員工D',   email:'user-d@tsagroup.com.tw',  enabled:true },
-  ];
+  // 硬編碼 fallback 已清空（原內容含真實姓名/email，公開 repo 不宜保留）；
+  // 正常情況下 _flowApprovers 會在登入後由 _preloadFlowInfo() 從後端載入，此 fallback 僅供後端異常時的最後防線
+  const allApprovers = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [];
   // 只取啟用的關卡（enabled !== false）
   let APPROVERS = allApprovers.filter(function(a){ return a.enabled !== false; });
   // ★ Fix：以後端回傳的 totalSteps 為基準，防止前端流程設定暫存與案件實際關卡數不一致
@@ -9134,30 +9120,15 @@ var _htRecData  = null;
 var _htRecTab   = 'all';
 
 // ── TSA 全員生日資料庫 ──
-var _HT_BDAY_DB = [
-  {name:'某員工K', m:1,  d:1 }, {name:'某員工L', m:1,  d:4 }, {name:'某員工M', m:1,  d:7 },
-  {name:'某員工N', m:1,  d:7 }, {name:'某員工O', m:1,  d:10}, {name:'某員工J', m:1,  d:12},
-  {name:'某員工P', m:1,  d:13}, {name:'某員工Q', m:1,  d:18}, {name:'某員工R', m:1,  d:19},
-  {name:'某員工S',   m:1,  d:21}, {name:'某員工A', m:1,  d:22}, {name:'某員工T', m:1,  d:24},
-  {name:'某員工U', m:1,  d:26},
-  {name:'某員工V', m:2,  d:9 }, {name:'某員工W', m:2,  d:16}, {name:'某員工X', m:2,  d:21},
-  {name:'某員工Y', m:2,  d:27},
-  {name:'某員工Z', m:3,  d:11}, {name:'某員工AA', m:3,  d:18}, {name:'某員工AB', m:3,  d:29},
-  {name:'某員工AC', m:5,  d:6 }, {name:'某員工AD', m:5,  d:26}, {name:'某員工AE', m:5,  d:29},
-  {name:'某員工AF', m:6,  d:11}, {name:'某員工AG', m:6,  d:16}, {name:'某員工AH', m:6,  d:21},
-  {name:'某員工AI', m:6,  d:22}, {name:'某員工AJ', m:6,  d:29},
-  {name:'某員工AK', m:7,  d:9 }, {name:'某員工AL',   m:7,  d:17}, {name:'某員工AM', m:7,  d:20},
-  {name:'某員工AN', m:7,  d:28},
-  {name:'某員工AO', m:8,  d:4 }, {name:'某員工AP', m:8,  d:14}, {name:'某員工B', m:8,  d:18},
-  {name:'某員工AQ', m:8,  d:24}, {name:'某員工AR', m:8,  d:27}, {name:'某員工AS', m:8,  d:28},
-  {name:'某員工AT', m:8,  d:29},
-  {name:'某員工G', m:9,  d:17}, {name:'某員工AU', m:9,  d:21},
-  {name:'某員工AV', m:10, d:9 }, {name:'某員工H',   m:10, d:20}, {name:'某員工D', m:10, d:29},
-  {name:'某員工AW', m:11, d:1 }, {name:'某員工AX', m:11, d:5 }, {name:'某員工AY', m:11, d:4 },
-  {name:'某員工AZ', m:11, d:22}, {name:'某員工C', m:11, d:28}, {name:'某員工BA', m:11, d:30},
-  {name:'某員工F', m:12, d:1 }, {name:'某員工BB', m:12, d:1 }, {name:'某員工I', m:12, d:2 },
-  {name:'某員工BC', m:12, d:7 }, {name:'某員工BD', m:12, d:16}, {name:'某員工E', m:12, d:29}
-];
+// 已清空：原內容硬編碼約 47 位同事真實姓名+生日，公開 repo 會洩露個資，故先移除。
+// TODO（功能暫時失效，待修復）：
+//   「壽星自動帶入」功能（_htBdaysForMonth）原本靠這份清單作為 fallback，
+//   現在改成完全依賴 window._BF_USER_BDAYS，但該變數目前只在管理者開啟
+//   「使用者管理」頁（loadAdminUsers）時才會被填入 → 一般員工開活動詳情頁時
+//   不會自動帶出壽星。修復方向：讓 _syncMembersFromServer()（所有登入者都會
+//   執行）也順手把生日資料寫進 window._BF_USER_BDAYS，而不是只靠 loadAdminUsers。
+//   後端 GAS 的 getMembers 需要連同 birthday 欄位一起回傳。
+var _HT_BDAY_DB = [];
 
 // 取得某月份的壽星名單（回傳帶日期的物件陣列）
 function _htBdaysForMonth(monthNum) {
