@@ -262,8 +262,8 @@ input[type=radio]{accent-color:#e16b8c}
 .admin-tab.active{color:#e16b8c;border-bottom-color:#e16b8c}
 /* ── 分段控制器 tabs：午茶日 & 按摩預約（與案件追蹤一致） ── */
 .seg-track{display:flex;background:#eef0f4;border-radius:13px;padding:3px;gap:2px}
-.ht-tab-btn,.massage-tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
-.ht-tab-btn.active,.massage-tab.active{background:#fff;color:#e16b8c;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
+.ht-tab-btn,.massage-tab,.ms-myseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
+.ht-tab-btn.active,.massage-tab.active,.ms-myseg.active{background:#fff;color:#e16b8c;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;padding-left:9px;border-left:3px solid #e16b8c}
 input[type=checkbox]{accent-color:#e16b8c}
 
@@ -2852,8 +2852,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     <!-- 左右並排：左日曆、右時段名單 -->
     <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
 
-      <!-- 左：日曆 -->
-      <div style="flex:0 0 320px;max-width:340px;min-width:280px">
+      <!-- 左：日曆（放大，與右側均分） -->
+      <div style="flex:1 1 380px;min-width:300px;max-width:560px">
         <div style="background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #f1f5f9;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.background='#fdf4f7'" onmouseout="this.style.background='#fff'">‹</button>
@@ -2895,16 +2895,23 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   </div>
 
   <!-- 📋 我的預約 panel -->
-  <div id="ms-panel-my" style="margin-top:20px">
-    <div style="margin-bottom:20px">
-      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">即將到來</div>
+  <div id="ms-panel-my" style="margin-top:24px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
+      <span style="font-size:15px;font-weight:800;color:#0f172a">我的預約紀錄</span>
+    </div>
+    <!-- 即將到來 / 歷史紀錄 分段切換 -->
+    <div class="seg-track" style="max-width:300px;margin-bottom:14px">
+      <button class="ms-myseg active" id="ms-myseg-upcoming" onclick="msSwitchMyTab('upcoming')">即將到來</button>
+      <button class="ms-myseg" id="ms-myseg-history" onclick="msSwitchMyTab('history')">歷史紀錄</button>
+    </div>
+    <div id="ms-my-upcoming-wrap">
       <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
         <div style="font-size:32px;margin-bottom:8px">📭</div>尚無即將到來的預約
       </div>
     </div>
-    <div>
-      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">歷史紀錄</div>
+    <div id="ms-my-history-wrap" style="display:none">
       <div id="ms-my-history" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ms-my-history-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
         <div style="font-size:32px;margin-bottom:8px">🗂️</div>無歷史紀錄
@@ -2933,10 +2940,23 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
         <div style="font-size:13px;font-weight:700;color:#0f172a">開放日期管理</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <input id="ms-open-date-inp" type="date" style="flex:1;min-width:140px;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#f8fafc;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-        <button onclick="msAddOpenDate()" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 開放此日</button>
+      <!-- 整合式：選日期 + 設定該日時段與名額，一次完成 -->
+      <div id="ms-open-editor" style="background:#f8fafc;border:1px solid #eef0f4;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div id="ms-open-editor-title" style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px">新增開放日</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:5px">選擇日期</div>
+        <input id="ms-open-date-inp" type="date" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
+          <span style="font-size:12px;color:#64748b">開放時段與名額</span>
+          <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
+        </div>
+        <div id="ms-draft-slots"></div>
+        <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #c7d2fe;color:#6366f1;border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="display:none;flex:0 0 auto;background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
+          <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
+        </div>
       </div>
+      <div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px">已開放日期</div>
       <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
@@ -2966,12 +2986,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
           <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#e16b8c,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">預設時段樣板</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">常用時段樣板</div>
         </div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
         <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
         <div style="display:flex;gap:6px">
-          <input id="ms-new-slot-time" type="time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#f8fafc">
-          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#f8fafc;text-align:center">
+          <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer"></select>
+          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#fff;text-align:center">
           <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
         </div>
       </div>
@@ -11805,6 +11826,16 @@ function msRenderMyBookings() {
   hiEmpty.style.display = history.length ? 'none' : ''; hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
 }
 
+// 即將到來 / 歷史紀錄 分段切換
+window.msSwitchMyTab = function(tab) {
+  var isUp = tab !== 'history';
+  document.querySelectorAll('.ms-myseg').forEach(function(b){ b.classList.toggle('active', b.id === 'ms-myseg-' + tab); });
+  var upWrap = document.getElementById('ms-my-upcoming-wrap');
+  var hiWrap = document.getElementById('ms-my-history-wrap');
+  if (upWrap) upWrap.style.display = isUp ? '' : 'none';
+  if (hiWrap) hiWrap.style.display = isUp ? 'none' : '';
+};
+
 function msBookingCard(b, isUpcoming) {
   var s = b.status || 'booked';
   var labelText = b.deleteRequested ? '🗑 申請刪除中' : b.cancelRequested ? '⏳ 申請取消中' : {booked:'💆 已預約',cancelled:'✕ 已取消',attended:'✓ 已報到',noshow:'⚠ 缺席'}[s] || '已預約';
@@ -11850,6 +11881,7 @@ function msRenderAdmin() {
   var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-free': s.cancelFreeLimit||1, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||24, 'ms-cfg-violation': s.violationPenaltyCount||3 };
   Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if(el) el.value = fields[id]; });
   msRenderSlotTemplates();
+  msRenderDraftSlots();
   msRenderAdminTable();
 }
 
@@ -11930,20 +11962,88 @@ function msRenderOpenDates() {
       + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + parseInt(parts2[1]) + '月' + parseInt(parts2[2]) + '日 <span style="font-size:12px;color:#94a3b8">(' + ds + ')</span></div>'
       + '<div style="font-size:12px;color:#64748b;margin-top:3px">' + slots2.map(function(s){return s.time+' ×'+s.capacity;}).join(' · ') + ' &nbsp;·&nbsp; 已預約 ' + dayBk2.length + '/' + total2 + '</div>'
       + '</div>'
+      + '<button onclick="msEditDay(\'' + ds + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">編輯</button>'
       + '<button onclick="msCloseDate(\'' + ds + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">關閉</button>'
       + '</div>';
   }).join('');
 }
 
-window.msAddOpenDate = function() {
+// ── 開放日期：整合式草稿編輯器（日期＋時段＋名額一次完成、每天可單獨編輯） ──
+var _msDraftSlots = [];
+function _msTimeSelectHtml(selected) {
+  var opts = '';
+  for (var h = 8; h <= 20; h++) {
+    for (var mn = 0; mn < 60; mn += 30) {
+      var t = pad2(h) + ':' + pad2(mn);
+      opts += '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+    }
+  }
+  return opts;
+}
+function msRenderDraftSlots() {
+  var el = document.getElementById('ms-draft-slots'); if (!el) return;
+  if (!_msDraftSlots.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:4px 0 8px">尚未設定時段——點下方「新增時段」或「套用常用時段」</div>';
+    return;
+  }
+  var selStyle = 'border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer';
+  var capStyle = 'width:62px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;text-align:center;outline:none';
+  el.innerHTML = _msDraftSlots.map(function(s, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+      + '<select onchange="msDraftSlotChange(' + i + ',\'time\',this.value)" style="' + selStyle + ';flex:1">' + _msTimeSelectHtml(s.time) + '</select>'
+      + '<span style="font-size:12px;color:#64748b;white-space:nowrap">名額</span>'
+      + '<input type="number" min="1" max="20" value="' + s.capacity + '" onchange="msDraftSlotChange(' + i + ',\'capacity\',this.value)" style="' + capStyle + '">'
+      + '<button onclick="msDraftRemoveSlot(' + i + ')" title="移除" style="background:none;border:none;color:#cbd5e1;font-size:16px;cursor:pointer;font-family:inherit;padding:0 4px" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#cbd5e1\'">✕</button>'
+      + '</div>';
+  }).join('');
+}
+window.msDraftAddSlot = function() { _msDraftSlots.push({ time:'10:00', capacity:2 }); msRenderDraftSlots(); };
+window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
+window.msDraftSlotChange = function(i, f, v) {
+  if (!_msDraftSlots[i]) return;
+  if (f === 'capacity') _msDraftSlots[i].capacity = Math.max(1, parseInt(v) || 1);
+  else _msDraftSlots[i].time = v;
+};
+window.msDraftApplyTemplate = function() {
+  _msDraftSlots = (_msSlotTemplates || []).map(function(t){ return { time:t.time, capacity:t.capacity }; });
+  if (!_msDraftSlots.length) { toast('尚未設定常用時段'); return; }
+  msRenderDraftSlots();
+};
+// 重置編輯器為「新增」狀態
+window.msResetOpenEditor = function() {
+  _msDraftSlots = [];
+  var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = '';
+  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '新增開放日';
+  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = 'none';
+  msRenderDraftSlots();
+};
+// 載入某日到編輯器修改
+window.msEditDay = function(ds) {
+  var entry = (_msData && _msData.openDates || {})[ds]; if (!entry) return;
+  var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = ds;
+  _msDraftSlots = (entry.slots || []).map(function(s){ return { time:s.time, capacity:s.capacity }; });
+  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '編輯 ' + ds + ' 的開放時段';
+  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = '';
+  msRenderDraftSlots();
+  var ed = document.getElementById('ms-open-editor'); if (ed) ed.scrollIntoView({ behavior:'smooth', block:'center' });
+};
+// 確認開放（新增或覆蓋既有日期）
+window.msConfirmOpenDate = function() {
+  if (!_msData) return;
   var dateVal = document.getElementById('ms-open-date-inp').value;
   if (!dateVal) { toast('請選擇日期'); return; }
-  if (!_msData) return;
+  if (!_msDraftSlots.length) { toast('請至少新增一個時段'); return; }
+  // 去重（同時間取後者）、排序
+  var byTime = {};
+  _msDraftSlots.forEach(function(s){ byTime[s.time] = { time:s.time, capacity:Math.max(1, s.capacity||1) }; });
+  var slots = Object.keys(byTime).sort().map(function(k){ return byTime[k]; });
   if (!_msData.openDates) _msData.openDates = {};
-  if (_msData.openDates[dateVal]) { toast('此日期已開放'); return; }
-  _msData.openDates[dateVal] = { slots: _msSlotTemplates.map(function(t){return {time:t.time,capacity:t.capacity};}) };
-  msRenderOpenDates(); msRenderCal(); toast('✅ ' + dateVal + ' 已開放');
-  htApi('massageSetOpenDate', { date: dateVal, slots: _msData.openDates[dateVal].slots }).catch(function(){});
+  var existed = !!_msData.openDates[dateVal];
+  _msData.openDates[dateVal] = { slots: slots };
+  msRenderOpenDates(); msRenderCal();
+  toast(existed ? ('✅ 已更新 ' + dateVal + ' 的時段') : ('✅ ' + dateVal + ' 已開放'));
+  msResetOpenEditor();
+  htApi('massageSetOpenDate', { date: dateVal, slots: slots }).catch(function(){});
 };
 
 window.msCloseDate = function(ds) {
@@ -11955,6 +12055,8 @@ window.msCloseDate = function(ds) {
 
 // ── 時段樣板 ──
 function msRenderSlotTemplates() {
+  var newSel = document.getElementById('ms-new-slot-time');
+  if (newSel && !newSel.options.length) newSel.innerHTML = _msTimeSelectHtml('10:00');
   var list = document.getElementById('ms-slot-template-list'); if (!list) return;
   list.innerHTML = _msSlotTemplates.map(function(t,i){
     return '<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:9px 12px;border:1px solid #e2e8f0">'
