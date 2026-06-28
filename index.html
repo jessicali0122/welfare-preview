@@ -11405,6 +11405,27 @@ var _msSlotTemplates = [];
 var _msTab = 'calendar';
 var _msPendingRequests = [];
 
+// ── 本地持久化（後端尚未實作 massage 端點，回「未知動作」，故以 localStorage 保存）──
+function _msStoreKey() {
+  return 'bf_ms_' + (((_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email)) || 'guest');
+}
+function _msSaveLocal() {
+  if (!_msData) return;
+  try {
+    localStorage.setItem(_msStoreKey(), JSON.stringify({
+      openDates: _msData.openDates || {},
+      myBookings: _msData.myBookings || [],
+      allBookings: _msData.allBookings || [],
+      pendingRequests: _msPendingRequests || [],
+      settings: _msData.settings || null
+    }));
+  } catch(e) {}
+}
+function _msLoadLocal() {
+  try { var s = localStorage.getItem(_msStoreKey()); return s ? JSON.parse(s) : null; }
+  catch(e) { return null; }
+}
+
 // ── 初始化 ──
 window.massageLoad = async function() {
   var now = new Date();
@@ -11431,6 +11452,15 @@ window.massageLoad = async function() {
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: []
     };
+    // 套用本地保存的資料（開放日期、預約、設定）
+    var _saved = _msLoadLocal();
+    if (_saved) {
+      if (_saved.openDates) _msData.openDates = _saved.openDates;
+      if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
+      if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
+      if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
+      if (_saved.settings) _msData.settings = _saved.settings;
+    }
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
   }
@@ -11559,6 +11589,7 @@ function msRenderCal() {
   msRenderUpcoming();
   if (_msSelectedDate) msShowSlots(_msSelectedDate);
   else { document.getElementById('ms-slots-panel').style.display = 'none'; document.getElementById('ms-no-slots').style.display = ''; }
+  _msSaveLocal(); // 每次日曆重繪時保存本地狀態（涵蓋預約/取消/報到/開放日期等變更）
 }
 
 window.msSelectDate = function(dateStr) { _msSelectedDate = dateStr; msRenderCal(); };
@@ -11699,15 +11730,18 @@ window.msBook = async function(date, timeSlot) {
   if (!_msData) return;
   if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
   var bid = 'BK' + Date.now();
+  // 後端 massage 端點尚未實作（回「未知動作」），採本地優先；若日後實作則沿用回傳的 bookingId
   try {
     var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
-    bid = (r && r.bookingId) || bid;
-    if (r && r.ok) { toast('✅ 預約成功！'); } else { toast('❌ ' + ((r&&r.error)||'預約失敗')); return; }
-  } catch(e) { toast('✅ 預約成功！'); }
+    if (r && r.ok && r.bookingId) bid = r.bookingId;
+  } catch(e) {}
+  var uname = (window.currentUser && window.currentUser.name) || '';
   if (!_msData.myBookings) _msData.myBookings = [];
-  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:(window.currentUser&&window.currentUser.name)||'' });
+  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname });
   if (!_msData.allBookings) _msData.allBookings = [];
-  _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:(window.currentUser&&window.currentUser.name)||'', createdAt:new Date().toISOString() });
+  _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:uname, createdAt:new Date().toISOString() });
+  _msSaveLocal();
+  toast('✅ 預約成功！');
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
 };
 
@@ -11861,6 +11895,7 @@ window.msApproveRequest = function(reqId) {
     toast('✅ 已批准刪除申請');
   }
   msRenderPendingRequests(); msRenderAdminTable();
+  _msSaveLocal();
   htApi('massageApproveRequest', { reqId }).catch(function(){});
 };
 
@@ -11871,6 +11906,7 @@ window.msRejectRequest = function(reqId) {
   var mb = (_msData.myBookings||[]).find(function(b){return b.bookingId===req.bookingId;});
   if (mb) { mb.cancelRequested = false; mb.deleteRequested = false; }
   msRenderPendingRequests(); toast('已拒絕申請');
+  _msSaveLocal();
   htApi('massageRejectRequest', { reqId }).catch(function(){});
 };
 
@@ -11941,8 +11977,10 @@ window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTe
 
 window.msSaveSettings = async function() {
   var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelFreeLimit: parseInt(document.getElementById('ms-cfg-cancel-free').value)||1, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||24, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
-  try { var r = await htApi('massageSaveSettings', { settings: s }); if (r&&r.ok) { if(_msData) _msData.settings=s; toast('✅ 設定已儲存'); } else toast('❌ 儲存失敗'); }
-  catch(e) { if(_msData) _msData.settings=s; toast('✅ 設定已儲存'); }
+  if (_msData) _msData.settings = s;
+  _msSaveLocal();
+  toast('✅ 設定已儲存');
+  try { await htApi('massageSaveSettings', { settings: s }); } catch(e) {}
 };
 
 // ── 所有預約紀錄（admin） ──
