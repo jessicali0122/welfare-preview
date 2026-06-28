@@ -2654,39 +2654,51 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     <!-- Tab: 品項規劃 -->
     <div id="ht-dtab-plan">
       <!-- 快速設定列 -->
-      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 16px;margin-bottom:16px">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <input id="ht-event-date" type="text" placeholder="活動日期" onchange="htSaveEventInfo()" style="border:none;background:none;font-size:14px;color:#0f172a;font-family:inherit;width:100px;outline:none;font-weight:600">
+      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:#e16b8c;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:14px 18px">
+          <!-- 月份（建立時設定，唯讀） -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">月份</div>
+            <div id="ht-event-month-display" style="font-size:14px;font-weight:600;color:#0f172a;padding:7px 0">—</div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span style="font-size:14px;color:#64748b">人數</span>
-            <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:52px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+          <!-- 活動日期 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">活動日期</div>
+            <input id="ht-event-date" type="text" placeholder="選擇日期" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff;cursor:pointer">
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span style="font-size:14px;color:#64748b">每人預算</span>
-            <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:70px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
-            <span style="font-size:12px;color:#94a3b8">元</span>
+          <!-- 人數 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">人數</div>
+            <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
           </div>
-          <div style="margin-left:auto;text-align:right">
-            <div style="font-size:12px;color:#64748b">總預算 <span id="ht-calc-budget" style="font-weight:700;color:#e16b8c">NT$0</span></div>
-            <div id="ht-budget-formula" style="font-size:12px;color:#94a3b8;margin-top:2px"></div>
+          <!-- 每人預算 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">每人預算（元）</div>
+            <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
+          </div>
+          <!-- 壽星人數 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">壽星人數（位）</div>
+            <input id="ht-event-bday-count" type="number" min="0" onchange="htSetBirthdayCount()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
+          </div>
+          <!-- 主辦人 1 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">主辦人 1</div>
+            <select id="ht-event-org1" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
+          </div>
+          <!-- 主辦人 2 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">主辦人 2</div>
+            <select id="ht-event-org2" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
           </div>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #fde4ef">
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span style="font-size:12px;color:#64748b">主辦人 1</span>
-            <select id="ht-event-org1" onchange="htSaveEventInfo()" style="border:1px solid #f1d0de;border-radius:6px;padding:3px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff;max-width:140px" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span style="font-size:12px;color:#64748b">主辦人 2</span>
-            <select id="ht-event-org2" onchange="htSaveEventInfo()" style="border:1px solid #f1d0de;border-radius:6px;padding:3px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff;max-width:140px" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
-          </div>
+        <!-- 試算公式（唯一一處） -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #fde4ef;font-size:14px;color:#374151;line-height:1.8">
+          <span style="font-size:12px;font-weight:700;color:#e16b8c">📐 試算　</span>
+          <span id="ht-budget-formula" style="color:#64748b"></span>
+          <span style="color:#94a3b8">　＝　總預算 </span>
+          <span id="ht-calc-budget" style="font-weight:800;color:#e16b8c;font-size:17px">NT$0</span>
         </div>
       </div>
 
@@ -2764,26 +2776,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:16px;margin-top:10px">
           <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:10px">類別明細</div>
           <div id="ht-budget-category-detail"></div>
-        </div>
-      </div>
-
-      <!-- 壽星 -->
-      <div id="ht-dtab-birthday">
-        <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div>
-              <div style="font-size:14px;font-weight:700;color:#0f172a">🎂 本月壽星</div>
-              <div style="font-size:12px;color:#94a3b8;margin-top:2px">每位壽星 NT$40</div>
-            </div>
-            <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增
-            </button>
-          </div>
-          <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
-          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:14px;color:#64748b">慶生費用合計</span>
-            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#f59e0b">NT$0</span>
-          </div>
         </div>
       </div>
 
@@ -10574,7 +10566,6 @@ window.htOpenDetail = async function(eventId) {
   htRenderDetailHeader();
   htRenderItems();
   htRenderBudget();
-  htRenderBirthday();
   // 預先載入近兩場品項，供重複偵測使用
   _htPastItemsCache = null;
   var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
@@ -10620,6 +10611,10 @@ function htRenderDetailHeader() {
   if (_edEl && _edEl._flatpickr) _edEl._flatpickr.setDate(ev.date || '', false); else _edEl.value = ev.date || '';
   document.getElementById('ht-event-headcount').value = ev.headcount || '';
   document.getElementById('ht-event-budget-pp').value = ev.budgetPerPerson || '';
+  var _monthEl = document.getElementById('ht-event-month-display');
+  if (_monthEl) _monthEl.textContent = fmtMonth(ev.month);
+  var _bcEl = document.getElementById('ht-event-bday-count');
+  if (_bcEl) _bcEl.value = (ev.birthdays || []).length;
   // 填入主辦人下拉
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
@@ -10669,20 +10664,40 @@ window.htSwitchDetailTab = function(tab) {
 window.htUpdateCalcBudget = function() {
   var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
   var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
-  var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
+  var bcEl = document.getElementById('ht-event-bday-count');
+  var bdayCount = bcEl ? (Number(bcEl.value) || 0) : ((_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0);
   var baseBudget = hc * bp;
   var bdayBudget = bdayCount * 40;
   var total = baseBudget + bdayBudget;
   document.getElementById('ht-calc-budget').textContent = fmtMoney(total);
   var fmEl = document.getElementById('ht-budget-formula');
   if (fmEl) {
-    var fStr = hc + '人 × NT$' + bp;
-    if (bdayCount > 0) fStr += ' + ' + bdayCount + '位壽星 × NT$40';
+    var fStr = hc + ' 人 × NT$' + bp;
+    if (bdayCount > 0) fStr += '　＋　' + bdayCount + ' 位壽星 × NT$40';
     fmEl.textContent = fStr;
   }
   if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
   _htUpdateBalance();
   _htUpdateQtyHint();
+};
+// 設定壽星人數（取代原本的壽星名單）：以 birthdays 陣列長度表示人數，保留既有姓名、不足補佔位
+window.htSetBirthdayCount = async function() {
+  if (!_htEvent) return;
+  var bcEl = document.getElementById('ht-event-bday-count');
+  var n = Math.max(0, Number(bcEl ? bcEl.value : 0) || 0);
+  var cur = (_htEvent.birthdays || []).slice();
+  var next = cur.slice(0, n);
+  while (next.length < n) next.push('壽星' + (next.length + 1));
+  _htEvent.birthdays = next;
+  _htEvent.birthdayBudget = n * 40;
+  htUpdateCalcBudget();
+  htRenderBudget();
+  htRenderDetailHeader();
+  var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
+  var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
+  var r = await htApi('htUpdate', { eventId: _htEvent.eventId, birthdays: next, totalBudget: hc * bp + n * 40 });
+  if (r && r.ok) { _htEvent.totalBudget = hc * bp + n * 40; }
+  else { toast('壽星人數儲存失敗'); }
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
@@ -10751,12 +10766,13 @@ async function _htShowRepeatWarning() {
 }
 
 function _htUserSelectHtml(idx, cur) {
-  var organizers = [(_htEvent && _htEvent.organizer1) || '', (_htEvent && _htEvent.organizer2) || ''].filter(Boolean);
+  // 負責人選項＝系統管理裡的成員（LOCAL_USER_LIST）
   var o = '<option value="">—</option>';
-  organizers.forEach(function(name) {
-    o += '<option value="' + htEsc(name) + '"' + (name === cur ? ' selected' : '') + '>' + htEsc(name) + '</option>';
+  LOCAL_USER_LIST.forEach(function(u) {
+    o += '<option value="' + htEsc(u.name) + '"' + (u.name === cur ? ' selected' : '') + '>' + htEsc(u.name) + '</option>';
   });
-  if (cur && !organizers.includes(cur)) {
+  // 舊資料若負責人不在成員清單中，補一個選項避免被清空
+  if (cur && LOCAL_USER_LIST.every(function(u){ return u.name !== cur; })) {
     o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
   }
   return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#1e293b" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'">' + o + '</select>';
@@ -10912,32 +10928,13 @@ function htRenderBudget() {
   var pct       = total > 0 ? Math.min(Math.round(actual/total*100),100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
-  // 預算公式說明
-  var formulaHtml = '<div style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:2">'
-    + '<div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:6px">📐 預算計算式</div>'
-    + '<div style="color:#374151">'
-    + hc + ' 人 × NT$' + bp + ' = <strong>' + fmtMoney(baseBudget) + '</strong>'
-    + (bdayCount > 0
-      ? '<br>+ ' + bdayCount + ' 位壽星 × NT$40 = <strong>' + fmtMoney(bdayBudget) + '</strong>'
-      : '')
-    + '<br style="display:' + (bdayCount > 0 ? 'block' : 'none') + '">'
-    + '<span style="border-top:1px solid #fde4ef;display:block;margin:4px 0;padding-top:4px">當月總預算 <strong style="font-size:16px;color:#e16b8c">' + fmtMoney(total) + '</strong></span>'
-    + '</div>'
-    + '</div>';
-  document.getElementById('ht-budget-cards').insertAdjacentHTML('beforebegin', '');
-
+  // 預算計算式已移至左側「活動設定」面板（避免重複），此處僅保留結算卡片
   var cards = [
     { label:'總預算', val: fmtMoney(total), icon:'💰', color:'#6366f1' },
     { label:'午茶支出', val: fmtMoney(actual), icon:'☕', color:'#e16b8c' },
     { label:'慶生預算', val: fmtMoney(bdayBudget), icon:'🎂', color:'#f59e0b' },
     { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️', color: surplusColor },
   ];
-  document.getElementById('ht-budget-formula-box') && (document.getElementById('ht-budget-formula-box').outerHTML = '');
-  var fbox = document.createElement('div');
-  fbox.id = 'ht-budget-formula-box';
-  fbox.innerHTML = formulaHtml;
-  var cardsEl = document.getElementById('ht-budget-cards');
-  cardsEl.parentNode.insertBefore(fbox, cardsEl);
   document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
     return '<div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:18px">'
       + '<div style="font-size:22px;margin-bottom:8px">'+c.icon+'</div>'
@@ -11126,9 +11123,13 @@ function htRenderMenuCard() {
 }
 
 window.htPrintMenu = function() {
+  if (!_htEvent) { toast('請先開啟活動'); return; }
+  // 申請單內容只在切到 menu tab 時才渲染，但該分頁已停用，故列印前先即時產生內容
+  htRenderMenuCard();
   var card = document.getElementById('ht-menu-card');
-  if (!card) return;
+  if (!card || !card.innerHTML.trim()) { toast('沒有可列印的內容'); return; }
   var w = window.open('', '_blank');
+  if (!w) { toast('列印視窗被瀏覽器封鎖，請允許彈出視窗後再試'); return; }
   w.document.write('<html><head><meta charset="utf-8"><title>TSA High Tea Day 申請單</title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">'
     + '<style>'
@@ -11147,6 +11148,7 @@ function htRenderBirthday() {
   var ev = _htEvent;
   var list = ev.birthdays || [];
   var el = document.getElementById('ht-birthday-list');
+  if (!el) return; // 壽星名單已改為「活動設定」面板的人數輸入，此區塊已移除
   var monthNum = parseInt((_evMonth(ev) || '').slice(5, 7), 10) || 0;
   var dbBdays = monthNum ? _htBdaysForMonth(monthNum) : [];
 
