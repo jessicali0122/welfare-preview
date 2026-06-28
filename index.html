@@ -9099,6 +9099,8 @@ async function htApi(action, payload) {
   try { return await res.json(); }
   catch(e) { return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }
 }
+// 匯出全域：按摩預約模組為獨立 IIFE，需透過 window 取用 htApi（否則 ReferenceError）
+window.htApi = htApi;
 
 // ── OCR 掃描收據 ──
 window.htOcrScan = async function(input) {
