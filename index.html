@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629162043';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629162211';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2333,12 +2333,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <span style="font-size:14px;font-weight:600;color:#e16b8c">批次設定標籤：</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
             <button onclick="applyTag('manager')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
-            <button onclick="applyTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委會</button>
+            <button onclick="applyTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委</button>
             <button onclick="applyTag('hr')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #7dd3fc;background:#fff;color:#0ea5e9;cursor:pointer;font-weight:600">HR</button>
             <button onclick="applyTag('employee')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-weight:600">員工</button>
             <div style="width:1px;height:20px;background:#e2e8f0;margin:0 2px"></div>
             <button onclick="removeTag('manager')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 管理者</button>
-            <button onclick="removeTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 福委會</button>
+            <button onclick="removeTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 福委</button>
             <button onclick="removeTag('hr')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ HR</button>
           </div>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
@@ -3212,7 +3212,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <input type="checkbox" value="employee" checked disabled style="width:16px;height:16px"> 員工 <span style="font-size:12px">（基底）</span>
           </label>
           <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
-            <input type="checkbox" value="welfare" style="width:16px;height:16px"> 福委會
+            <input type="checkbox" value="welfare" style="width:16px;height:16px"> 福委
           </label>
           <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
             <input type="checkbox" value="hr" style="width:16px;height:16px"> HR
@@ -3282,8 +3282,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8;display:block">姓名,員工編號,部門,Email,標籤,加入時間,生日,狀態<br>王測試,T0099,後勤部,test@tsagroup.com.tw,福委會,2026/01/01,01-22,</code>
-        <div style="font-size:12px;color:#94a3b8;margin-top:6px">標籤可填：管理者／福委會／HR／員工（多個以 / 分隔）</div>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8;display:block">姓名,員工編號,部門,Email,標籤,加入時間,生日,狀態<br>王測試,T0099,後勤部,test@tsagroup.com.tw,福委,2026/01/01,01-22,</code>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px">標籤可填：管理者／福委／HR／員工（多個以 / 分隔）</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o" style="flex:1;justify-content:center" onclick="closeImportModal()">取消</button>
@@ -3365,8 +3365,8 @@ let APPROVER_EMAILS = [];
 // ══════════════════════════════════════════════════════════
 //  角色 / 權限地基（capability 模型，支援多重角色）
 // ══════════════════════════════════════════════════════════
-// 四種角色：employee 員工（基底）/ welfare 福委會 / hr / manager 管理者
-const ROLE_LABELS = { employee:'員工', welfare:'福委會', hr:'HR', manager:'管理者' };
+// 四種角色：employee 員工（基底）/ welfare 福委 / hr / manager 管理者
+const ROLE_LABELS = { employee:'員工', welfare:'福委', hr:'HR', manager:'管理者' };
 const ROLE_KEYS = ['employee','welfare','hr','manager'];
 
 // 能力 → 擁有該能力的角色清單（manager 自動全開，不必列）
@@ -7407,7 +7407,7 @@ function showEditUserModal(btn){
   document.getElementById('edit-user-modal').classList.add('open');
 }
 // 角色 key ↔ 中文標籤（與後端 role 欄位相容）
-const ROLE_KEY_TO_LABEL = { employee:'員工', welfare:'福委會', hr:'HR', manager:'管理者' };
+const ROLE_KEY_TO_LABEL = { employee:'員工', welfare:'福委', hr:'HR', manager:'管理者' };
 function closeEditUserModal(){
   document.getElementById('edit-user-modal').classList.remove('open');
   _editRow=null;
