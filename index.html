@@ -12009,11 +12009,10 @@ window.msBook = async function(date, timeSlot) {
   if (!_msData) return;
   if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
   var bid = 'BK' + Date.now();
-  // 後端 massage 端點尚未實作（回「未知動作」），採本地優先；若日後實作則沿用回傳的 bookingId
+  // 後端 massage 端點尚未實作，採本地優先；若日後實作則沿用回傳的 bookingId
   try {
     var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
-    if (!r || !r.ok) { toast('預約失敗', 'error'); return; }
-    if (r.bookingId) bid = r.bookingId;
+    if (r && r.ok && r.bookingId) bid = r.bookingId;
   } catch(e) {}
   var uname = (window.currentUser && window.currentUser.name) || '';
   if (!_msData.myBookings) _msData.myBookings = [];
@@ -12310,10 +12309,19 @@ window.msConfirmOpenDate = function() {
 };
 
 window.msCloseDate = function(ds) {
-  if (!confirm('確定關閉 ' + ds + ' 的預約嗎？')) return;
-  if (_msData && _msData.openDates) delete _msData.openDates[ds];
-  msRenderOpenDates(); msRenderCal(); toast('已關閉 ' + ds);
-  htApi('massageCloseDate', { date: ds }).catch(function(){});
+  var parts = ds.split('-');
+  var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  _showConfirmModal(
+    '關閉預約日期',
+    '確定要關閉 <strong>' + label + '</strong> 的按摩預約嗎？<br>關閉後此日期將不再開放預約。',
+    '確定關閉', '#dc2626',
+    function() {
+      if (_msData && _msData.openDates) delete _msData.openDates[ds];
+      _msSaveLocal();
+      msRenderOpenDates(); msRenderCal(); toast('已關閉 ' + label + ' 的預約');
+      htApi('massageCloseDate', { date: ds }).catch(function(){});
+    }
+  );
 };
 
 // ── 時段樣板 ──
