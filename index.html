@@ -3013,9 +3013,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
               <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
             </label>
-            <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
-              <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-            </label>
             <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">取消期限（預約時間前幾小時）
               <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
             </label>
@@ -11975,14 +11972,13 @@ function msShowSlots(dateStr) {
   var monthStart2 = new Date(now.getFullYear(), now.getMonth(), 1);
   var monthBookCnt = myBookings.filter(function(b){ return b.status==='booked' && new Date(b.date) >= monthStart2; }).length;
   var overMonthLimit = monthBookCnt >= (settings.monthlyLimit || 2);
-  var cancelFreeLeft = (settings.cancelFreeLimit || 1) - (_msData.monthlyCancelCount || 0);
   list.innerHTML = slots.map(function(s) {
     var isMySlot = myBook && myBook.timeSlot === s.time;
     var isTodayDate = dateStr === fmtDateStr(new Date());
     var canCheckIn = isMySlot && isTodayDate && myBook && myBook.status === 'booked';
     var appointmentTime = new Date(dateStr + 'T' + s.time + ':00');
     var deadlineHrs = settings.cancelDeadlineHours || 24;
-    var canCancelNormal = isMySlot && myBook && myBook.status==='booked' && !myBook.cancelRequested && !myBook.deleteRequested && (appointmentTime - now) > deadlineHrs * 3600000 && cancelFreeLeft > 0;
+    var canCancelNormal = isMySlot && myBook && myBook.status==='booked' && !myBook.cancelRequested && !myBook.deleteRequested && (appointmentTime - now) > deadlineHrs * 3600000;
     var accentColor = isMySlot ? (myBook && myBook.status==='attended'?'#22c55e':'#e16b8c') : (s.remaining>0?'#6366f1':'#e2e8f0');
     var badge = '';
     if (isMySlot && myBook) {
@@ -12112,7 +12108,9 @@ window.msRequestCancel = function(bookingId, date) {
     '提交申請', '#d97706',
     async function() {
       var reason = (document.getElementById('_ms_cancel_reason') && document.getElementById('_ms_cancel_reason').value) || '';
-      var req = { reqId:'REQ'+Date.now(), type:'cancel', bookingId, date, reason, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
+      var _rUe = (_msData&&_msData.userEmail)||(window.currentUser&&window.currentUser.email)||'';
+      var _rUn = (window.LOCAL_EMAIL_TO_NAME&&window.LOCAL_EMAIL_TO_NAME[_rUe])||(window.currentUser&&window.currentUser.name)||_rUe.split('@')[0]||'';
+      var req = { reqId:'REQ'+Date.now(), type:'cancel', bookingId, date, reason, userName:_rUn, userEmail:_rUe, createdAt:new Date().toISOString(), status:'pending' };
       _msPendingRequests.push(req);
       if (_msData) { _msData.pendingRequests = _msPendingRequests; var bk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;}); if(bk) bk.cancelRequested = true; }
       toast('✅ 已提交取消申請，等待管理員審核');
@@ -12134,7 +12132,9 @@ window.msRequestDelete = function(bookingId, date) {
       var bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
       if (bk && bk.deleteRequested) { toast('已申請刪除', 'warning'); return; }
       if (bk) bk.deleteRequested = true;
-      var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
+      var _dUe = (_msData&&_msData.userEmail)||(window.currentUser&&window.currentUser.email)||'';
+      var _dUn = (window.LOCAL_EMAIL_TO_NAME&&window.LOCAL_EMAIL_TO_NAME[_dUe])||(window.currentUser&&window.currentUser.name)||_dUe.split('@')[0]||'';
+      var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:_dUn, userEmail:_dUe, createdAt:new Date().toISOString(), status:'pending' };
       _msPendingRequests.push(req);
       if (_msData) _msData.pendingRequests = _msPendingRequests;
       toast('✅ 已提交刪除申請，等待管理員審核');
@@ -12187,8 +12187,7 @@ function msBookingCard(b, isUpcoming) {
   var now = new Date();
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot||'00:00') + ':00');
   var settings = (_msData && _msData.settings) || {};
-  var cancelFreeLeft = (settings.cancelFreeLimit||1) - (_msData.monthlyCancelCount||0);
-  var canCancelNormal = isUpcoming && s==='booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime-now) > (settings.cancelDeadlineHours||24)*3600000 && cancelFreeLeft > 0;
+  var canCancelNormal = isUpcoming && s==='booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime-now) > (settings.cancelDeadlineHours||24)*3600000;
   var isTodayDate = b.date === fmtDateStr(new Date());
   var canCheckIn = isUpcoming && s==='booked' && isTodayDate && !b.deleteRequested;
   var actions = '';
@@ -12228,7 +12227,7 @@ function msRenderAdmin() {
   msRenderPendingRequests();
   msRenderOpenDates();
   var s = _msData.settings || {};
-  var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-free': s.cancelFreeLimit||1, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||24, 'ms-cfg-violation': s.violationPenaltyCount||3 };
+  var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||24, 'ms-cfg-violation': s.violationPenaltyCount||3 };
   Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if(el) el.value = fields[id]; });
   msRenderSlotTemplates();
   msRenderDraftSlots();
@@ -12441,7 +12440,7 @@ window.msAddSlotTemplate = function() {
 window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTemplates(); };
 
 window.msSaveSettings = async function() {
-  var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelFreeLimit: parseInt(document.getElementById('ms-cfg-cancel-free').value)||1, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||24, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
+  var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||24, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
   if (_msData) _msData.settings = s;
   _msSaveLocal();
   toast('✅ 設定已儲存');
