@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629095200';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629102138';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3119,6 +3119,10 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
         </select>
       </div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日 <span style="font-size:12px;color:#94a3b8;font-weight:400">（選填，用於壽星自動帶入）</span></label>
+        <input class="inp" id="add-birthday" type="date">
+      </div>
       <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b">
         ℹ️ 新增後系統將自動發送邀請信至填寫的 Email
       </div>
@@ -3244,20 +3248,23 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <button onclick="closeImportModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
     </div>
     <div style="padding:20px">
-      <div style="border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#f8fafc;margin-bottom:16px">
+      <div id="import-drop-zone" style="border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#f8fafc;margin-bottom:16px;transition:border-color .2s,background .2s" onclick="document.getElementById('import-file-input').click()" ondragover="event.preventDefault();this.style.borderColor='#e16b8c';this.style.background='#fdf2f8'" ondragleave="this.style.borderColor='#cbd5e1';this.style.background='#f8fafc'" ondrop="event.preventDefault();this.style.borderColor='#cbd5e1';this.style.background='#f8fafc';handleImportDrop(event)">
         <div style="width:44px;height:44px;background:#f1f5f9;border-radius:10px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
-        <div style="font-size:14px;font-weight:600;color:#374151">點擊或拖放 CSV / Excel 檔案</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px">支援 .csv · .xlsx · 最大 5MB</div>
+        <div id="import-file-label" style="font-size:14px;font-weight:600;color:#374151">點擊或拖放 CSV 檔案</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">支援 .csv · 最大 5MB</div>
+        <input id="import-file-input" type="file" accept=".csv,text/csv" style="display:none" onchange="handleImportFileSelect(this)">
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>王測試,test@tsagroup.com.tw,T0099,後勤部,申請人</code>
+        <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 欄位順序（第一列為標題列）：</div>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8">姓名,Email,員工編號,部門,角色,生日<br>王小明,test@tsagroup.com.tw,T0099,後勤部,申請人,1990-05-15</code>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px">• 角色可填：申請人 / 福委 / HR / 管理者<br>• 生日可留空，格式 YYYY-MM-DD<br>• Email 須為 @tsagroup.com.tw</div>
       </div>
+      <div id="import-preview" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#166534"></div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o" style="flex:1;justify-content:center" onclick="closeImportModal()">取消</button>
-        <button class="btn btn-p" style="flex:1;justify-content:center" onclick="doImport()">確認匯入</button>
+        <button id="import-confirm-btn" class="btn btn-p" style="flex:1;justify-content:center" onclick="doImport()">確認匯入</button>
       </div>
     </div>
   </div>
@@ -7321,13 +7328,15 @@ function closeAddUserModal(){
   document.getElementById('add-empid').value='';
   document.getElementById('add-email').value='';
   document.getElementById('add-dept').value='';
+  var bdEl=document.getElementById('add-birthday');
+  if(bdEl) bdEl.value='';
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
   const empId=document.getElementById('add-empid').value.trim();
   const email=document.getElementById('add-email').value.trim();
-  const role='申請人';
   const dept=document.getElementById('add-dept').value;
+  const birthday=(document.getElementById('add-birthday')||{}).value||'';
   if(!name){toast('⚠️ 請填寫姓名');return;}
   if(!empId){toast('⚠️ 請填寫員工編號');return;}
   if(!email){toast('⚠️ 請填寫 Email');return;}
@@ -7335,7 +7344,7 @@ function doAddUser(){
   if(!dept){toast('⚠️ 請選擇部門');return;}
   closeAddUserModal();
   toast('⏳ 新增中...');
-  callAPI('addUser',{name,employeeId:empId,email,department:dept,role:'申請人'}).then(res=>{
+  callAPI('addUser',{name,employeeId:empId,email,department:dept,role:'申請人',birthday}).then(res=>{
     if(res.ok){
       toast('✅ 已新增 '+name);
       loadAdminUsers();
@@ -7492,9 +7501,119 @@ async function exportUsers(){
   URL.revokeObjectURL(url);
   toast('✅ 已匯出 ' + users.length + ' 位使用者（CSV）');
 }
-function showImportModal(){document.getElementById('import-modal').classList.add('open');}
-function closeImportModal(){document.getElementById('import-modal').classList.remove('open');}
-function doImport(){closeImportModal();toast('⚠️ 批次匯入功能尚未開放，請透過「新增使用者」逐筆新增');}
+function showImportModal(){
+  document.getElementById('import-modal').classList.add('open');
+  document.getElementById('import-file-label').textContent='點擊或拖放 CSV 檔案';
+  document.getElementById('import-preview').style.display='none';
+  document.getElementById('import-file-input').value='';
+  window._importRows=null;
+}
+function closeImportModal(){
+  document.getElementById('import-modal').classList.remove('open');
+  window._importRows=null;
+}
+function handleImportDrop(e){
+  var f=e.dataTransfer.files[0];
+  if(f) _readImportFile(f);
+}
+function handleImportFileSelect(inp){
+  var f=inp.files[0];
+  if(f) _readImportFile(f);
+}
+function _readImportFile(f){
+  if(!f.name.endsWith('.csv') && f.type!=='text/csv'){
+    toast('⚠️ 請上傳 .csv 檔案');return;
+  }
+  if(f.size>5*1024*1024){toast('⚠️ 檔案超過 5MB');return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    var text=e.target.result;
+    // strip BOM
+    if(text.charCodeAt(0)===0xFEFF) text=text.slice(1);
+    var rows=_parseCSV(text);
+    if(rows.length<2){toast('⚠️ CSV 無資料列');return;}
+    // skip header
+    var dataRows=rows.slice(1).filter(function(r){return r.some(function(c){return c.trim();});});
+    var parsed=[];
+    var errors=[];
+    dataRows.forEach(function(r,i){
+      var name=(r[0]||'').trim();
+      var email=(r[1]||'').trim();
+      var empId=(r[2]||'').trim();
+      var dept=(r[3]||'').trim();
+      var role=(r[4]||'申請人').trim()||'申請人';
+      var birthday=(r[5]||'').trim();
+      var rowNum=i+2;
+      if(!name){errors.push('第'+rowNum+'列：缺少姓名');return;}
+      if(!email){errors.push('第'+rowNum+'列：缺少 Email');return;}
+      if(!email.endsWith('@tsagroup.com.tw')){errors.push('第'+rowNum+'列：'+email+' 非 @tsagroup.com.tw');return;}
+      if(!empId){errors.push('第'+rowNum+'列：缺少員工編號');return;}
+      var validRoles=['申請人','福委','HR','管理者'];
+      if(!validRoles.includes(role)) role='申請人';
+      parsed.push({name,email,employeeId:empId,department:dept,role,birthday});
+    });
+    window._importRows=parsed;
+    var prev=document.getElementById('import-preview');
+    if(errors.length){
+      prev.style.cssText='display:block;background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#991b1b';
+      prev.innerHTML='<b>⚠️ 發現錯誤，請修正後重新上傳：</b><br>'+errors.map(function(e){return '• '+e;}).join('<br>');
+      window._importRows=null;
+    } else {
+      prev.style.cssText='display:block;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#166534';
+      prev.innerHTML='<b>✅ 已讀取 '+parsed.length+' 筆資料，確認後開始匯入</b><br>'
+        +parsed.slice(0,5).map(function(p){return '• '+p.name+'（'+p.email+'）'+(p.birthday?' 生日:'+p.birthday:'');}).join('<br>')
+        +(parsed.length>5?'<br>…以及 '+(parsed.length-5)+' 筆':'');
+    }
+    document.getElementById('import-file-label').textContent=f.name;
+  };
+  reader.readAsText(f,'UTF-8');
+}
+function _parseCSV(text){
+  var rows=[];
+  var lines=text.split(/\r?\n/);
+  lines.forEach(function(line){
+    if(!line.trim()){return;}
+    var cells=[];
+    var cur='';
+    var inQ=false;
+    for(var i=0;i<line.length;i++){
+      var ch=line[i];
+      if(ch==='"'){
+        if(inQ && line[i+1]==='"'){cur+='"';i++;}
+        else{inQ=!inQ;}
+      } else if(ch===',' && !inQ){
+        cells.push(cur);cur='';
+      } else {cur+=ch;}
+    }
+    cells.push(cur);
+    rows.push(cells);
+  });
+  return rows;
+}
+async function doImport(){
+  var rows=window._importRows;
+  if(!rows||!rows.length){toast('⚠️ 請先選擇有效的 CSV 檔案');return;}
+  closeImportModal();
+  var ok=0,fail=[];
+  toast('⏳ 匯入中（0/'+rows.length+'）...');
+  for(var i=0;i<rows.length;i++){
+    try{
+      var res=await callAPI('addUser',rows[i]);
+      if(res&&res.ok){ok++;}
+      else{fail.push(rows[i].name+'：'+(res&&res.error||'失敗'));}
+    }catch(e){fail.push(rows[i].name+'：系統錯誤');}
+    if((i+1)%5===0||i===rows.length-1){
+      toast('⏳ 匯入中（'+(i+1)+'/'+rows.length+'）...');
+    }
+  }
+  loadAdminUsers();
+  if(fail.length===0){
+    toast('✅ 成功匯入 '+ok+' 位使用者');
+  } else {
+    toast('⚠️ 成功 '+ok+' 筆，失敗 '+fail.length+' 筆：'+fail.slice(0,3).join('、'));
+  }
+  window._importRows=null;
+}
 
 
 // ══════════════════════════════════════════
