@@ -265,6 +265,10 @@ input[type=radio]{accent-color:#e16b8c}
 .ht-tab-btn,.massage-tab,.ms-myseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active{background:#fff;color:#e16b8c;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;padding-left:9px;border-left:3px solid #e16b8c}
+/* 按摩管理子頁籤：底線樣式，與外層膠囊頁籤視覺區別 */
+.ms-admin-track{display:flex;border-bottom:2px solid #eef0f4;gap:0;margin-bottom:20px}
+.ms-admin-tab{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:10px 8px;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
+.ms-admin-tab.active{color:#6366f1;font-weight:700;border-bottom-color:#6366f1}
 input[type=checkbox]{accent-color:#e16b8c}
 
 /* ── FORM INNER GRIDS MOBILE ── */
@@ -515,30 +519,20 @@ input[type=checkbox]{accent-color:#e16b8c}
   /* 日期選擇器：手機版自動靠左，不超出螢幕 */
   .dp-panel{width:calc(100vw - 32px)!important;max-width:320px!important;left:0!important;right:auto!important}
 }
-/* ── 使用者管理表格：手機版隱藏次要欄位 ── */
+/* ── 使用者管理表格：手機版橫向滾動，所有欄位保留 ── */
 @media(max-width:768px){
-  /* 隱藏：員工編號(3)、部門(4)、Email(5)、加入時間(7)、生日(8) */
-  #admin-panel-users th:nth-child(3),
-  #admin-panel-users td:nth-child(3),
-  #admin-panel-users th:nth-child(4),
-  #admin-panel-users td:nth-child(4),
-  #admin-panel-users th:nth-child(5),
-  #admin-panel-users td:nth-child(5),
-  #admin-panel-users th:nth-child(7),
-  #admin-panel-users td:nth-child(7),
-  #admin-panel-users th:nth-child(8),
-  #admin-panel-users td:nth-child(8){display:none!important}
-  /* 標籤欄限寬，操作按鈕縮小 */
-  #admin-panel-users th:nth-child(6),
-  #admin-panel-users td:nth-child(6){max-width:100px}
-  #admin-panel-users td:nth-child(9) button{font-size:12px!important;padding:4px 8px!important}
-  /* 姓名欄固定在左側，即使橫向滾動也保持可見 */
-  #admin-panel-users th:nth-child(2),
-  #admin-panel-users td:nth-child(2){position:sticky!important;left:36px;background:#fff!important;z-index:2}
+  /* checkbox + 姓名欄固定在左側，橫向滾動時保持可見 */
   #admin-panel-users th:nth-child(1),
-  #admin-panel-users td:nth-child(1){position:sticky!important;left:0;background:#fff!important;z-index:2}
-  /* 手機版：checkbox(36) + 姓名(~110) + 標籤(100) + 操作(~120) ≈ 366px，剛好塞入螢幕 */
-  #admin-panel-users table{min-width:360px!important}
+  #admin-panel-users td:nth-child(1){position:sticky!important;left:0;background:#fff!important;z-index:2;min-width:36px}
+  #admin-panel-users th:nth-child(2),
+  #admin-panel-users td:nth-child(2){position:sticky!important;left:36px;background:#fff!important;z-index:2;min-width:88px}
+  /* 壓縮各欄字體與間距，讓全欄在橫向滾動中呈現 */
+  #admin-panel-users th,
+  #admin-panel-users td{font-size:12px!important;padding:8px 8px!important;white-space:nowrap}
+  #admin-panel-users td:nth-child(9) button{font-size:11px!important;padding:3px 7px!important}
+  #admin-panel-users td:nth-child(6){max-width:120px}
+  /* 讓表格足夠寬以容納所有欄位並開啟橫向滾動 */
+  #admin-panel-users table{min-width:720px!important}
   /* 批次標籤列手機版：縮小字體與 padding，確保按鈕不擠爆 */
   #batch-tag-bar{padding:8px 10px;gap:6px}
   #batch-tag-bar button{font-size:12px!important;padding:4px 8px!important}
@@ -2977,11 +2971,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <!-- ⚙️ 管理 panel (admin only) -->
   <div id="ms-panel-admin" style="display:none">
 
-    <!-- 管理子頁籤 -->
-    <div class="seg-track" style="margin-bottom:20px">
-      <button class="massage-tab active" id="ms-atab-dates" onclick="msAdminSwitchTab('dates')">📅 日期管理</button>
-      <button class="massage-tab" id="ms-atab-settings" onclick="msAdminSwitchTab('settings')">⚙️ 規則設定</button>
-      <button class="massage-tab" id="ms-atab-records" onclick="msAdminSwitchTab('records')">📋 預約紀錄<span id="ms-pending-badge" style="display:none;background:#e16b8c;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle"></span></button>
+    <!-- 管理子頁籤（底線樣式） -->
+    <div class="ms-admin-track">
+      <button class="ms-admin-tab active" id="ms-atab-dates" onclick="msAdminSwitchTab('dates')">📅 日期管理</button>
+      <button class="ms-admin-tab" id="ms-atab-settings" onclick="msAdminSwitchTab('settings')">⚙️ 規則設定</button>
+      <button class="ms-admin-tab" id="ms-atab-records" onclick="msAdminSwitchTab('records')">📋 預約紀錄<span id="ms-pending-badge" style="display:none;background:#e16b8c;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle"></span></button>
     </div>
 
     <!-- 📅 日期管理 -->
@@ -3183,8 +3177,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
         <div style="display:flex;gap:8px">
-          <select class="inp" id="add-bday-mm" style="flex:1"><option value="">幾月</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
-          <select class="inp" id="add-bday-dd" style="flex:1"><option value="">幾日</option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
+          <select class="inp" id="add-bday-mm" style="flex:1"><option value=""></option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
+          <select class="inp" id="add-bday-dd" style="flex:1"><option value=""></option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
         </div>
       </div>
 
@@ -3257,8 +3251,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
         <div style="display:flex;gap:8px">
-          <select class="inp" id="edit-bday-mm" style="flex:1"><option value="">幾月</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
-          <select class="inp" id="edit-bday-dd" style="flex:1"><option value="">幾日</option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
+          <select class="inp" id="edit-bday-mm" style="flex:1"><option value=""></option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
+          <select class="inp" id="edit-bday-dd" style="flex:1"><option value=""></option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
         </div>
         <div style="font-size:12px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
       </div>
@@ -12505,7 +12499,7 @@ window.msAdminSwitchTab = function(tab) {
   ['dates','settings','records'].forEach(function(t) {
     var btn = document.getElementById('ms-atab-'+t);
     var panel = document.getElementById('ms-apanel-'+t);
-    if (btn) btn.classList.toggle('active', t===tab);
+    if (btn) { btn.classList.toggle('active', t===tab); }
     if (panel) panel.style.display = t===tab ? '' : 'none';
   });
 };
