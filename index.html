@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629122641';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629122906';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2331,13 +2331,14 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           </div>
         </div>
         <div id="batch-tag-bar" style="display:none;margin-top:10px;padding:10px 12px;background:#fdf2f8;border-radius:8px;align-items:center;gap:10px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:600;color:#e16b8c">批次設定角色：</span>
+          <span style="font-size:14px;font-weight:600;color:#e16b8c">批次新增角色（可複選）：</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button onclick="applyTag('申請人')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">申請人</button>
-            <button onclick="applyTag('福委')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委</button>
-            <button onclick="applyTag('HR')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #6ee7b7;background:#fff;color:#10b981;cursor:pointer;font-weight:600">HR</button>
-            <button onclick="applyTag('管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
+            <button id="btag-employee" onclick="toggleBatchTag(this,'申請人')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">申請人</button>
+            <button id="btag-welfare" onclick="toggleBatchTag(this,'福委')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委</button>
+            <button id="btag-hr" onclick="toggleBatchTag(this,'HR')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #6ee7b7;background:#fff;color:#10b981;cursor:pointer;font-weight:600">HR</button>
+            <button id="btag-manager" onclick="toggleBatchTag(this,'管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fca5a5;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">管理者</button>
           </div>
+          <button id="btag-confirm" onclick="applyTagsConfirm()" style="display:none;padding:4px 16px;border-radius:20px;font-size:14px;border:none;background:#e16b8c;color:#fff;cursor:pointer;font-weight:600">套用</button>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
         </div>
         <div id="batch-remove-bar" style="display:none;margin-top:10px;padding:10px 12px;background:#fef2f2;border-radius:8px;align-items:center;gap:10px;flex-wrap:wrap">
@@ -7415,7 +7416,7 @@ function showEditUserModal(btn){
   const name=row.querySelector('td:nth-child(2) span').textContent;
   const empId=row.querySelector('td:nth-child(3)')?row.querySelector('td:nth-child(3)').textContent.trim():'';
   const email=row.querySelector('td:nth-child(5)').textContent.trim();
-  const role=row.querySelector('td:nth-child(7) span')?.textContent.trim()||'';
+  const role=row.querySelector('td:nth-child(7) span')?.textContent?.trim()||'';
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
@@ -7518,7 +7519,56 @@ function executeDeleteUser(){
 
 
 function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';document.getElementById('batch-remove-bar').style.display='none';}
-function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
+function hideBatchTag(){
+  document.getElementById('batch-tag-bar').style.display='none';
+  // 重置所有 toggle 狀態
+  document.querySelectorAll('#batch-tag-bar button[id^="btag-"]').forEach(function(b){b.dataset.sel='';b.style.opacity='1';b.style.boxShadow='';});
+  var c=document.getElementById('btag-confirm'); if(c) c.style.display='none';
+}
+const _BTAG_STYLES={
+  '申請人':{border:'1.5px solid #e16b8c',bg:'#e16b8c',color:'#fff'},
+  '福委':{border:'1.5px solid #6366f1',bg:'#6366f1',color:'#fff'},
+  'HR':{border:'1.5px solid #10b981',bg:'#10b981',color:'#fff'},
+  '管理者':{border:'1.5px solid #ef4444',bg:'#ef4444',color:'#fff'},
+};
+function toggleBatchTag(btn, roleName){
+  var sel = btn.dataset.sel === '1';
+  if(sel){
+    btn.dataset.sel=''; btn.style.background='#fff'; btn.style.color=btn.dataset.origColor||''; btn.style.fontWeight='600';
+  } else {
+    if(!btn.dataset.origColor) btn.dataset.origColor=btn.style.color;
+    var s=_BTAG_STYLES[roleName]||{bg:'#e16b8c',color:'#fff'};
+    btn.dataset.sel='1'; btn.style.background=s.bg; btn.style.color=s.color;
+  }
+  var anySelected=Array.from(document.querySelectorAll('#batch-tag-bar button[id^="btag-"]')).some(function(b){return b.dataset.sel==='1';});
+  var c=document.getElementById('btag-confirm'); if(c) c.style.display=anySelected?'':'none';
+}
+async function applyTagsConfirm(){
+  const checked=document.querySelectorAll('.user-cb:checked');
+  if(checked.length===0){toast('⚠️ 請先勾選使用者');return;}
+  const LABEL_MAP={'申請人':'employee','福委':'welfare','HR':'hr','管理者':'manager'};
+  var newKeys=[];
+  document.querySelectorAll('#batch-tag-bar button[id^="btag-"]').forEach(function(b){
+    if(b.dataset.sel==='1'){ var k=LABEL_MAP[b.textContent.trim()]; if(k) newKeys.push(k); }
+  });
+  if(newKeys.length===0){toast('⚠️ 請選擇至少一個角色');return;}
+  toast('⏳ 批次設定角色中...');
+  let ok=0,fail=0;
+  for(const cb of Array.from(checked)){
+    const row=cb.closest('tr');
+    const email=row?.dataset.email||''; if(!email){fail++;continue;}
+    var curKeys=(row.dataset.roles||'employee').split(',').filter(Boolean);
+    newKeys.forEach(function(k){ if(!curKeys.includes(k)) curKeys.push(k); });
+    var rolesLabels=curKeys.map(function(k){return ROLE_KEY_TO_LABEL[k]||k;});
+    var primary=curKeys.includes('manager')?'管理者':curKeys.includes('hr')?'HR':curKeys.includes('welfare')?'福委會':'員工';
+    const res=await callAPI('editUser',{email,role:primary,roles:rolesLabels.join(',')});
+    if(res.ok)ok++;else fail++;
+  }
+  if(fail===0)toast('✅ 已對 '+ok+' 位使用者新增角色「'+newKeys.map(function(k){return ROLE_KEY_TO_LABEL[k]||k;}).join('、')+'」');
+  else toast('⚠️ 完成 '+ok+' 筆，'+fail+' 筆失敗');
+  hideBatchTag();
+  loadAdminUsers();
+}
 function showBatchRemove(){document.getElementById('batch-remove-bar').style.display='flex';document.getElementById('batch-tag-bar').style.display='none';}
 function hideBatchRemove(){document.getElementById('batch-remove-bar').style.display='none';}
 async function removeTag(roleName){
