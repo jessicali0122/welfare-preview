@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629161053';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629161724';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2340,6 +2340,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <button onclick="removeTag('manager')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 管理者</button>
             <button onclick="removeTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 福委會</button>
             <button onclick="removeTag('hr')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ HR</button>
+            <button onclick="removeTag('employee')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 員工</button>
           </div>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
         </div>
@@ -3201,15 +3202,15 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
-          <input class="inp" id="edit-birthday" type="date">
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
+          <input class="inp" id="edit-birthday" type="text" placeholder="例：01-22（MM-DD）">
+          <div style="font-size:12px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
         </div>
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:7px">角色（可複選）</label>
         <div id="edit-roles" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:not-allowed;background:#f8fafc;font-size:14px;color:#94a3b8">
-            <input type="checkbox" value="employee" checked disabled style="width:16px;height:16px"> 員工 <span style="font-size:11px">（基底）</span>
+            <input type="checkbox" value="employee" checked disabled style="width:16px;height:16px"> 員工 <span style="font-size:12px">（基底）</span>
           </label>
           <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
             <input type="checkbox" value="welfare" style="width:16px;height:16px"> 福委會
@@ -3218,7 +3219,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <input type="checkbox" value="hr" style="width:16px;height:16px"> HR
           </label>
           <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
-            <input type="checkbox" value="manager" style="width:16px;height:16px"> 管理者 <span style="font-size:11px;color:#94a3b8">（全權限）</span>
+            <input type="checkbox" value="manager" style="width:16px;height:16px"> 管理者 <span style="font-size:12px;color:#94a3b8">（全權限）</span>
           </label>
         </div>
         <div style="font-size:12px;color:#94a3b8;margin-top:6px">勾選多個角色 → 權限取聯集。「管理者」自動擁有全部權限。</div>
@@ -3282,7 +3283,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8;display:block">姓名,員工編號,部門,Email,標籤,加入時間,生日<br>王測試,T0099,後勤部,test@tsagroup.com.tw,福委會,2026/01/01,01-22</code>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8;display:block">姓名,員工編號,部門,Email,標籤,加入時間,生日,狀態<br>王測試,T0099,後勤部,test@tsagroup.com.tw,福委會,2026/01/01,01-22,</code>
         <div style="font-size:12px;color:#94a3b8;margin-top:6px">標籤可填：管理者／福委會／HR／員工（多個以 / 分隔）</div>
       </div>
       <div style="display:flex;gap:8px">
@@ -7387,7 +7388,7 @@ function showEditUserModal(btn){
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
-  if(bdayEl){ var rawBday=row.dataset.birthday||''; bdayEl.value=/^\d{4}-\d{2}-\d{2}/.test(rawBday)?rawBday.slice(0,10):''; }
+  if(bdayEl){ bdayEl.value=row.dataset.birthday||''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   if(editDept&&deptVal){editDept.value=deptVal;}
