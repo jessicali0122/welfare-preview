@@ -2889,9 +2889,10 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f9a8c4"></div><span style="font-size:12px;color:#64748b">有空位</span></div>
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#64748b">已預約</span></div>
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e2e8f0"></div><span style="font-size:12px;color:#64748b">額滿/不開放</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:18px;border-radius:50%;background:rgba(225,107,140,.1);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#e16b8c">8</div><span style="font-size:12px;color:#64748b">有空位</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#be185d,#e16b8c);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff">8</div><span style="font-size:12px;color:#64748b">已預約</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:18px;border-radius:50%;background:transparent;outline:2px dashed #94a3b8;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#64748b">8</div><span style="font-size:12px;color:#64748b">今天</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:18px;height:18px;border-radius:50%;background:transparent;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#cbd5e1">8</div><span style="font-size:12px;color:#64748b">額滿/不開放</span></div>
         </div>
       </div>
 
@@ -3048,15 +3049,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div id="ms-admin-records-list"></div>
       </div>
 
-      <!-- 動作紀錄 -->
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📋</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">動作紀錄</div>
-          <div style="font-size:11px;color:#94a3b8;margin-left:4px">所有預約、取消、刪除、報到動作</div>
-        </div>
-        <div id="ms-action-log-list"></div>
-      </div>
     </div>
   </div>
 
@@ -11899,15 +11891,16 @@ function msRenderCal() {
     var clickable = !isPast && hasSlots;
     var isSelected = _msSelectedDate === dateStr;
     var bg, color, shadow = '', fw = isToday ? '800' : '600';
+    var outline = '';
     if (isSelected)      { bg = 'linear-gradient(135deg,#e16b8c,#f43f5e)'; color = '#fff'; shadow = '0 4px 12px rgba(225,107,140,.4)'; }
     else if (myBook)     { bg = 'linear-gradient(135deg,#be185d,#e16b8c)'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
     else if (hasAvail)   { bg = 'rgba(225,107,140,.1)'; color = '#e16b8c'; }
-    else if (isToday)    { bg = '#0f172a'; color = '#fff'; }
+    else if (isToday)    { bg = 'transparent'; color = '#64748b'; outline = '2px dashed #94a3b8'; }
     else                 { bg = 'transparent'; color = (isPast || !hasSlots) ? '#cbd5e1' : '#374151'; }
     html += '<div'
       + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
       + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;background:' + bg + ';color:' + color + ';font-size:13px;font-weight:' + fw
-      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative' + (shadow ? ';box-shadow:' + shadow : '') + '"'
+      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative' + (shadow ? ';box-shadow:' + shadow : '') + (outline ? ';outline:' + outline : '') + '"'
       + (clickable && !isSelected && !myBook ? ' onmouseover="this.style.background=\'rgba(225,107,140,.18)\'" onmouseout="this.style.background=\'' + bg + '\'"' : '')
       + '>' + d
       + (myBook && !isSelected ? '<span style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
@@ -12171,7 +12164,7 @@ window.msCheckIn = async function(bookingId, date) {
   _msUpdateBookingStatus(bookingId, 'attended');
   _msLogAction('attended', _bk || { bookingId, date }, { scanTime: now.toISOString() });
   _msSaveLocal();
-  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings(); msRenderActionLog();
+  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
 };
 
 function _msUpdateBookingStatus(bookingId, status) {
@@ -12402,39 +12395,8 @@ function msRenderAdmin() {
   msRenderSlotTemplates();
   msRenderDraftSlots();
   msRenderAdminTable();
-  msRenderActionLog();
 }
 
-// ── 動作紀錄（admin only） ──
-function msRenderActionLog() {
-  var el = document.getElementById('ms-action-log-list');
-  if (!el) return;
-  if (!_msActionLog.length) {
-    el.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無動作紀錄</div>';
-    return;
-  }
-  var actionLabels = { booked:'預約成功', cancelled:'取消預約', deleted:'刪除預約', attended:'完成報到', unchecked:'取消報到' };
-  var actionColors = { booked:'#6366f1', cancelled:'#94a3b8', deleted:'#dc2626', attended:'#16a34a', unchecked:'#d97706' };
-  var actionBg = { booked:'#ede9fe', cancelled:'#f1f5f9', deleted:'#fef2f2', attended:'#dcfce7', unchecked:'#fffbeb' };
-  el.innerHTML = _msActionLog.slice(0,50).map(function(log) {
-    var nm = (window.LOCAL_EMAIL_TO_NAME&&log.userEmail&&window.LOCAL_EMAIL_TO_NAME[log.userEmail]) || log.userName || log.userEmail || '—';
-    var byAdmin = log.extra && log.extra.byAdmin;
-    var lateStr = (log.extra && log.extra.lateMin != null)
-      ? (log.extra.lateMin > 0 ? ' · 遲到 ' + log.extra.lateMin + ' 分鐘' : ' · 準時') : '';
-    var dt = new Date(log.at);
-    var dtStr = (dt.getMonth()+1) + '/' + dt.getDate() + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());
-    var color = actionColors[log.action] || '#64748b';
-    var bg = actionBg[log.action] || '#f1f5f9';
-    var label = actionLabels[log.action] || log.action;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f8fafc;flex-wrap:wrap">'
-      + '<span style="background:' + bg + ';color:' + color + ';border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap">' + label + '</span>'
-      + '<span style="font-size:13px;font-weight:600;color:#0f172a;flex:1;min-width:60px">' + htEsc(nm) + '</span>'
-      + '<span style="font-size:12px;color:#64748b;white-space:nowrap">' + (log.date||'') + ' ' + (log.timeSlot||'') + lateStr + '</span>'
-      + (byAdmin ? '<span style="font-size:11px;color:#94a3b8">管理員操作</span>' : '')
-      + '<span style="font-size:11px;color:#cbd5e1;white-space:nowrap">' + dtStr + '</span>'
-      + '</div>';
-  }).join('');
-}
 
 // ── 待審核申請 ──
 function msRenderPendingRequests() {
@@ -12483,7 +12445,7 @@ window.msApproveRequest = function(reqId) {
     toast('✅ 已批准刪除申請');
   }
   msRenderPendingRequests(); msRenderAdminTable();
-  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings(); msRenderActionLog();
+  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   _msSaveLocal();
   htApi('massageApproveRequest', { reqId }).catch(function(){});
 };
@@ -12757,7 +12719,7 @@ window.msAdminCancel = function(bookingId) {
     var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
     _msUpdateBookingStatus(bookingId,'cancelled');
     _msLogAction('cancelled', _bk || { bookingId }, { byAdmin: true });
-    _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+    _msSaveLocal(); msRenderAdminTable(); msRenderCal();
     htApi('massageAdminCancel',{bookingId}).catch(function(){}); toast('已取消預約');
   });
 };
@@ -12765,7 +12727,7 @@ window.msAdminCheckIn = function(bookingId) {
   var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
   _msUpdateBookingStatus(bookingId,'attended');
   _msLogAction('attended', _bk || { bookingId }, { byAdmin: true, scanTime: new Date().toISOString() });
-  _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+  _msSaveLocal(); msRenderAdminTable(); msRenderCal();
   htApi('massageCheckIn',{bookingId}).catch(function(){}); toast('✅ 已確認報到');
 };
 window.msAdminUnCheckIn = function(bookingId) {
@@ -12773,7 +12735,7 @@ window.msAdminUnCheckIn = function(bookingId) {
     var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
     _msUpdateBookingStatus(bookingId,'booked');
     _msLogAction('unchecked', _bk || { bookingId }, { byAdmin: true });
-    _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+    _msSaveLocal(); msRenderAdminTable(); msRenderCal();
     htApi('massageAdminUnCheckIn',{bookingId}).catch(function(){}); toast('已取消報到');
   });
 };
