@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629160834';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629161053';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3118,12 +3118,18 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
         <input class="inp" id="add-email" placeholder="test@tsagroup.com.tw">
       </div>
-      <div>
-        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
-        <select class="inp" id="add-dept">
-          <option value="">請選擇部門</option>
-          <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-        </select>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
+          <select class="inp" id="add-dept">
+            <option value="">請選擇部門</option>
+            <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
+          <input class="inp" id="add-bday" placeholder="例：01-22（MM-DD）" maxlength="5">
+        </div>
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b">
         ℹ️ 新增後系統將自動發送邀請信至填寫的 Email
@@ -7344,13 +7350,14 @@ function closeAddUserModal(){
   document.getElementById('add-empid').value='';
   document.getElementById('add-email').value='';
   document.getElementById('add-dept').value='';
+  document.getElementById('add-bday').value='';
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
   const empId=document.getElementById('add-empid').value.trim();
   const email=document.getElementById('add-email').value.trim();
-  const role='申請人';
   const dept=document.getElementById('add-dept').value;
+  const bday=document.getElementById('add-bday').value.trim();
   if(!name){toast('⚠️ 請填寫姓名');return;}
   if(!empId){toast('⚠️ 請填寫員工編號');return;}
   if(!email){toast('⚠️ 請填寫 Email');return;}
@@ -7358,7 +7365,7 @@ function doAddUser(){
   if(!dept){toast('⚠️ 請選擇部門');return;}
   closeAddUserModal();
   toast('⏳ 新增中...');
-  callAPI('addUser',{name,employeeId:empId,email,department:dept,role:'申請人'}).then(res=>{
+  callAPI('addUser',{name,employeeId:empId,email,department:dept,birthday:bday}).then(res=>{
     if(res.ok){
       toast('✅ 已新增 '+name);
       loadAdminUsers();
