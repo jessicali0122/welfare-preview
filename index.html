@@ -3853,12 +3853,13 @@ function showApp() {
     setTimeout(function(){ _preloadFlowInfo(); }, 800);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
-    setTimeout(function(){ _syncMembersFromServer(); }, 2500);
+    setTimeout(function(){ _syncMembersFromServer(); }, 500);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
-    setTimeout(applyNavVisibility, 100);
+    // 只有在角色資料已就緒時才提前套用選單可見性；否則等 _syncMembersFromServer() 完成後再套用（避免閃爍隱藏）
+    setTimeout(function(){ if (currentUser && USER_ROLES[currentUser.email]) applyNavVisibility(); }, 100);
     // 搜尋欄綁 Enter 鍵
     setTimeout(function(){
       const searchEl = document.getElementById('app-search');
