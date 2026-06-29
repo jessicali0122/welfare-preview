@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629173435';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629174000';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3674,6 +3674,11 @@ window.onload = async function() {
         sessionStorage.removeItem('bf_token');
         currentUser = null;
       } else {
+        // 有快取 roles 就立即套用，讓選單不用等 GAS
+        if (currentUser.cachedRoles && Array.isArray(currentUser.cachedRoles)) {
+          USER_ROLES[currentUser.email] = currentUser.cachedRoles;
+          if (typeof applyNavVisibility === 'function') applyNavVisibility();
+        }
         showApp();
         return;
       }
@@ -6097,6 +6102,15 @@ async function _syncMembersFromServer() {
       return p ? { name: u.name, m: p.m, d: p.d } : null;
     }).filter(Boolean);
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
+    // 把角色快取進 localStorage，下次頁面載入可立即套用
+    try {
+      var _cu = currentUser || window.currentUser;
+      if (_cu && _cu.email) {
+        var _saved = JSON.parse(localStorage.getItem('bf_user') || '{}');
+        _saved.cachedRoles = getCurrentRoles();
+        localStorage.setItem('bf_user', JSON.stringify(_saved));
+      }
+    } catch(e) {}
     // 角色到位後，若正在總覽則重繪積木區塊（避免登入初期短暫顯示員工版）
     if (typeof applyDashboardBlocks === 'function' &&
         document.getElementById('view-dashboard')?.classList.contains('active')) {
