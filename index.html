@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629141910';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629142451';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1340,7 +1340,7 @@ tbody td{font-size:var(--fs-base)!important}
   /* 活動日曆：右側行程列表取消 sticky */
   #ht-panel-calendar [style*="position:sticky"]{position:static!important}
   /* 活動日曆月份節日文字縮小 */
-  #ht-cal-grid>div{min-height:60px}
+  #ht-cal-grid>div{min-height:44px}
   /* 年曆時間軸：手機版微縮，避免 12 個月份標籤過擠（仍維持可讀 12px） */
   #ht-year-timeline span[style*="font-size:14px"]{font-size:12px!important}
   #ht-year-timeline [style*="left:3%;right:3%;top:52px"]{left:1%!important;right:1%!important}
@@ -11916,14 +11916,16 @@ function msRenderCal() {
     else if (hasAvail)   { bg = 'rgba(225,107,140,.1)'; color = '#e16b8c'; }
     else if (isToday)    { bg = '#0f172a'; color = '#fff'; }
     else                 { bg = 'transparent'; color = (isPast || !hasSlots) ? '#cbd5e1' : '#374151'; }
-    html += '<div'
+    var innerStyle = 'width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:' + bg + ';color:' + color + ';font-size:14px;font-weight:' + fw
+      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative;flex-shrink:0' + (shadow ? ';box-shadow:' + shadow : '');
+    html += '<div style="display:flex;align-items:center;justify-content:center;padding:3px 0">'
+      + '<div'
       + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
-      + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;background:' + bg + ';color:' + color + ';font-size:14px;font-weight:' + fw
-      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative' + (shadow ? ';box-shadow:' + shadow : '') + '"'
+      + ' style="' + innerStyle + '"'
       + (clickable && !isSelected && !myBook ? ' onmouseover="this.style.background=\'rgba(225,107,140,.18)\'" onmouseout="this.style.background=\'' + bg + '\'"' : '')
       + '>' + d
       + (myBook && !isSelected ? '<span style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
-      + '</div>';
+      + '</div></div>';
   }
   grid.innerHTML = html;
   msRenderUpcoming();
