@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260626212747';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629095200';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -27,7 +27,7 @@
 <title>福委會請款簽核系統</title>
 <link rel="icon" id="main-favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='%231e9d6b' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='%231e9d6b'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='%231e9d6b'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='%231e9d6b'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='%231e9d6b'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='%231e9d6b'/></svg>">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BeneFlow">
 <meta name="theme-color" content="#1e9d6b">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
@@ -106,8 +106,7 @@ function _loadFlatpickr(cb) {
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
-html,body{margin:0;background:#fff;overflow-x:hidden;width:100%}
-body{margin:0;background:#fff}
+html,body{margin:0;background:#e7dcf0;overflow-x:hidden;width:100%}
 :root{--brand:#9b6fc0;--brand-dark:#6b4a9a;--brand-light:#f1e9f9;--brand-mid:#b794d4;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
 
@@ -261,6 +260,10 @@ input[type=radio]{accent-color:#e16b8c}
 .notif-item.unread{padding-left:13px}
 .admin-tab{padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;border:none;border-bottom:2px solid transparent;color:#64748b;transition:all .15s;background:none;font-family:'Noto Sans TC',sans-serif}
 .admin-tab.active{color:#e16b8c;border-bottom-color:#e16b8c}
+/* ── 分段控制器 tabs：午茶日 & 按摩預約（與案件追蹤一致） ── */
+.seg-track{display:flex;background:#eef0f4;border-radius:13px;padding:3px;gap:2px}
+.ht-tab-btn,.massage-tab,.ms-myseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#64748b;font-size:13px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
+.ht-tab-btn.active,.massage-tab.active,.ms-myseg.active{background:#fff;color:#e16b8c;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#0f172a;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;padding-left:9px;border-left:3px solid #e16b8c}
 input[type=checkbox]{accent-color:#e16b8c}
 
@@ -433,7 +436,7 @@ input[type=checkbox]{accent-color:#e16b8c}
   /* ── 防止任何子元素撐破寬度 ── */
   .card,.stat,.view{max-width:100%!important;box-sizing:border-box!important}
   main{padding:12px!important}
-  header{padding:0 12px!important;gap:8px}
+  header{padding-top:env(safe-area-inset-top,0px)!important;padding-left:12px!important;padding-right:12px!important;padding-bottom:0!important;gap:8px}
   /* table-wrap 保留橫向捲動，讓表格可以左右滑 */
   /* 注意：不加 -webkit-overflow-scrolling:touch，避免建立獨立 scroll context 攔截垂直滑動 */
   .table-wrap{overflow-x:auto!important;max-width:calc(100vw - 24px)!important;touch-action:pan-x pan-y}
@@ -485,7 +488,7 @@ input[type=checkbox]{accent-color:#e16b8c}
   #detail-grid>div:last-child{position:static!important}
   #analytics-grid{grid-template-columns:repeat(2,1fr)!important}
   #form-grid{grid-template-columns:1fr!important}
-  #stats-grid .stat{padding:14px 14px!important;min-height:110px!important}
+  #stats-grid .stat{padding:14px 14px!important;min-height:175px!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
   #dashboard-top-grid>:first-child{grid-column:1/-1!important}
   #stats-grid{grid-template-columns:repeat(2,1fr)!important;gap:10px!important}
@@ -707,6 +710,16 @@ input[type=checkbox]{accent-color:#e16b8c}
   #form-desktop-btns{display:none!important}
   /* 右欄取消 sticky，讓底部 bar 取代 */
   #form-grid>div:last-child{position:static!important}
+  /* 按摩預約日曆：手機版改垂直堆疊，日曆佔全寬，align-items:stretch 確保第二欄也撐滿 */
+  #ms-cal-layout{flex-direction:column!important;align-items:stretch!important}
+  #ms-cal-layout>div:first-child{flex:none!important;width:100%!important;max-width:100%!important;min-width:0!important}
+  #ms-cal-layout>div:last-child{width:100%!important;min-width:0!important;flex:none!important}
+  /* 午茶日 detail grid：手機版改單欄，避免左欄被壓縮到 52px 導致品項文字消失 */
+  #ht-detail-grid{grid-template-columns:1fr!important}
+  /* 午茶日新增 Modal：手機版改底部抽屜（fix iOS overflow-y:auto 無法滑動） */
+  #ht-create-modal{align-items:flex-end!important;padding:0!important;backdrop-filter:none!important;background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important}
+  #ht-create-modal>div{max-height:88vh!important;overflow:hidden auto!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
+  #ht-create-modal>div::before{content:'';display:block;flex-shrink:0;width:36px;height:4px;background:#d1d5db;border-radius:2px;margin:0 auto 12px}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制防止過長訊息擋住畫面 */
   #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(300px,calc(100vw - 48px))!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;text-align:center!important;line-height:1.4!important}
   /* submit-result-card 手機版由上方那段 CSS 控制（top:12px），此處不重複設定 bottom */
@@ -1315,10 +1328,9 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析統計卡片：可橫滑，避免文字擠壓 */
   #ht-analytics-stats{grid-template-columns:1fr!important;gap:8px!important}
   /* ── 午茶日工具列手機版 ── */
-  /* Tab bar 縮小圖示+文字 */
-  .ht-tab-btn{padding:8px 2px!important;min-width:0!important}
-  .ht-tab-btn span:first-child{font-size:16px!important}
-  .ht-tab-btn span:last-child{font-size:12px!important;letter-spacing:0!important}
+  .ht-tab-btn,.massage-tab{padding:8px 8px!important;font-size:13px!important}
+  /* 案件追蹤 3-tab 在手機改為整列、新增申請鈕換行，避免擠壓「待審核」徽章 */
+  #apps-tab-bar > div:first-child{flex-basis:100%!important;min-width:0!important}
   /* 詳情頁雙欄 → 單欄 */
   #ht-detail-panel [style*="grid-template-columns:1fr 320px"]{grid-template-columns:1fr!important}
   /* 品項分析左右並排 → 上下 */
@@ -1389,14 +1401,14 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 @keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
 #login-screen .lg-bloom{position:absolute;top:50%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%);transition:left .5s,top .5s}
 #login-screen .lg-cardfade{position:absolute;bottom:0;left:0;right:0;height:42%;z-index:4;pointer-events:none;background:linear-gradient(to bottom,transparent 0%,rgba(255,250,254,.4) 55%,#fff 90%)}
-#login-screen .lg-card{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:15;padding:34px 32px max(34px,env(safe-area-inset-bottom,0px));box-sizing:border-box;animation:lgRise .7s cubic-bezier(.2,.8,.2,1) both}
-@keyframes lgRise{from{opacity:0;transform:translate(-50%,28px)}to{opacity:1;transform:translate(-50%,0)}}
+#login-screen .lg-card{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:115;padding:34px 32px calc(env(safe-area-inset-bottom,0px) + 34px);box-sizing:border-box;animation:lgRise .6s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes lgRise{from{transform:translate(-50%,32px)}to{transform:translate(-50%,0)}}
 #login-screen .lg-hello{font-weight:700;font-size:38px;color:#6b4a9a;line-height:1;margin-bottom:6px}
 #login-screen .lg-sub{font-weight:400;font-size:16px;color:#a98fc8;margin-bottom:24px;display:flex;align-items:center;gap:8px}
 #login-screen #google-login-btn{width:100%;height:52px;border-radius:16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(183,168,214,.55);display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;color:#5a3a8a;font-weight:500;cursor:pointer;backdrop-filter:blur(6px);transition:transform .15s,box-shadow .2s;font-family:'Noto Sans TC',sans-serif}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(160,120,200,.18)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
-#login-screen .lg-note{font-size:12px;color:#bca5d4;margin-top:12px;text-align:center}
+#login-screen .lg-note{font-size:13px;color:#8b6aaf;font-weight:500;margin-top:14px;text-align:center}
 </style>
 <div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#e7dcf0">
   <div class="lg-grad"></div>
@@ -1548,7 +1560,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 <div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
 
   <!-- TOPBAR -->
-  <header style="height:56px;padding-top:env(safe-area-inset-top,0px);background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
+  <header style="height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
     <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
@@ -1632,19 +1644,18 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <!-- ===== MY APPLICATIONS ===== -->
   <div class="view" id="view-applications">
     <!-- 3-tab pill bar -->
-    <div id="apps-tab-bar" style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap">
-      <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s;background:#fde4ef;color:#e16b8c;box-shadow:0 2px 8px rgba(225,107,140,.15)">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>費用分析
-      </button>
-      <button id="apps-tab-all" onclick="appsSetTab('all')" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:#f1f5f9;color:#64748b">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件
-        <span id="apps-tab-all-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px">0</span>
-      </button>
-      <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:8px;padding:12px 20px;border:none;border-radius:14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;background:#f1f5f9;color:#64748b">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>待審核
-        <span id="apps-tab-mine-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px">0</span>
-      </button>
-      <div style="flex:1"></div>
+    <div id="apps-tab-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+      <div style="display:flex;flex:1;min-width:220px;background:#eef0f4;border-radius:13px;padding:3px;gap:2px">
+        <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#e16b8c;box-shadow:0 1px 4px rgba(0,0,0,.1);white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>費用分析
+        </button>
+        <button id="apps-tab-all" onclick="appsSetTab('all')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s;background:transparent;color:#64748b;white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件<span id="apps-tab-all-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px">0</span>
+        </button>
+        <button id="apps-tab-mine" onclick="appsSetTab('pending')" data-cap="reimbursement.approve" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s;background:transparent;color:#64748b;white-space:nowrap">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>待審核<span id="apps-tab-mine-badge" style="background:#94a3b8;color:#fff;font-size:11px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px">0</span>
+        </button>
+      </div>
       <button id="apps-add-btn" class="btn btn-p" onclick="openNewForm()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
@@ -1733,25 +1744,25 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
     <!-- KPI 卡片 -->
     <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-      <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #f5c6d6;border-top:4px solid #e16b8c;box-shadow:0 2px 12px rgba(225,107,140,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
-        <div style="font-size:14px;font-weight:700;color:#a0385a;letter-spacing:.2px">💰 已核准總金額</div>
-        <div id="analytics-approved" style="font-size:22px;font-weight:900;color:#111827;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
-        <div style="font-size:12px;color:#9ca3af;margin-top:auto;padding-top:8px">↑ 已完成案件累計</div>
+      <div class="stat" style="border-radius:16px;background:linear-gradient(145deg,#fde4ef 0%,#fdf0f6 55%,#fff 100%);border:none;box-shadow:0 4px 18px rgba(225,107,140,.14);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:175px">
+        <div style="font-size:13px;font-weight:700;color:#a0385a;letter-spacing:.2px">💰 已核准總金額</div>
+        <div id="analytics-approved" style="font-size:24px;font-weight:900;color:#8b1f3f;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
+        <div style="font-size:12px;color:#c06080;margin-top:auto;padding-top:8px">↑ 已完成案件累計</div>
       </div>
-      <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #b2dfe0;border-top:4px solid #38a3a5;box-shadow:0 2px 12px rgba(56,163,165,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
-        <div style="font-size:14px;font-weight:700;color:#1e6b6c;letter-spacing:.2px">已核准件數</div>
-        <div id="analytics-count" style="font-size:28px;font-weight:900;color:#111827;line-height:1;margin-top:10px">—</div>
-        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#9ca3af">已完成案件數</div></div>
+      <div class="stat" style="border-radius:16px;background:linear-gradient(145deg,#ccf0f0 0%,#e0f7f7 55%,#f4fdfd 100%);border:none;box-shadow:0 4px 18px rgba(56,163,165,.14);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:175px">
+        <div style="font-size:13px;font-weight:700;color:#1e6b6c;letter-spacing:.2px">已核准件數</div>
+        <div id="analytics-count" style="font-size:30px;font-weight:900;color:#155b5c;line-height:1;margin-top:10px">—</div>
+        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#38a3a5">已完成案件數</div></div>
       </div>
-      <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #fce4a8;border-top:4px solid #f9c97e;box-shadow:0 2px 12px rgba(249,201,126,.10);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px">
-        <div style="font-size:14px;font-weight:700;color:#b8832a;letter-spacing:.2px">平均每件金額</div>
-        <div id="analytics-avg-amount" style="font-size:22px;font-weight:900;color:#111827;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
-        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#9ca3af">核准案件平均值</div></div>
+      <div class="stat" style="border-radius:16px;background:linear-gradient(145deg,#fef3c7 0%,#fef9e7 55%,#fffdf5 100%);border:none;box-shadow:0 4px 18px rgba(245,158,11,.14);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:175px">
+        <div style="font-size:13px;font-weight:700;color:#92610a;letter-spacing:.2px">平均每件金額</div>
+        <div id="analytics-avg-amount" style="font-size:24px;font-weight:900;color:#7c520a;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
+        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#d97706">核准案件平均值</div></div>
       </div>
-      <div class="stat" style="border-radius:16px;background:#fff;border:1.5px solid #dde3ec;border-top:4px solid #94a3b8;box-shadow:0 2px 12px rgba(100,116,139,.08);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:110px" title="曾被退件的案件（含退件重送後核准）÷ 所有已結案案件">
-        <div style="font-size:14px;font-weight:700;color:#374151;letter-spacing:.2px">退件率</div>
-        <div id="analytics-reject-rate" style="font-size:28px;font-weight:900;color:#111827;line-height:1;margin-top:10px">—</div>
-        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#9ca3af">含退件重送</div></div>
+      <div class="stat" style="border-radius:16px;background:linear-gradient(145deg,#e2e8f0 0%,#edf1f6 55%,#f8fafc 100%);border:none;box-shadow:0 4px 18px rgba(100,116,139,.12);padding:18px 20px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:175px" title="曾被退件的案件（含退件重送後核准）÷ 所有已結案案件">
+        <div style="font-size:13px;font-weight:700;color:#374151;letter-spacing:.2px">退件率</div>
+        <div id="analytics-reject-rate" style="font-size:30px;font-weight:900;color:#374151;line-height:1;margin-top:10px">—</div>
+        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#64748b">含退件重送</div></div>
       </div>
     </div>
 
@@ -1977,7 +1988,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <div>
               <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#ef4444">*</span></label>
               <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
-                <option>李潔慧</option><option>王鈞逸</option><option>何舒維</option><option>邱湘芬</option><option>陳姿璇</option><option>黃如華</option><option>黃岩</option><option>鄒馨瑩</option><option>蔡鴻陵</option><option>鄭安汝</option>
               </select>
             </div>
             <div>
@@ -1988,7 +1998,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
                 </label>
               </div>
               <select class="inp" id="payee-select" disabled>
-                <option>李潔慧</option><option>王鈞逸</option><option>何舒維</option><option>邱湘芬</option><option>陳姿璇</option><option>黃如華</option><option>黃岩</option><option>鄒馨瑩</option><option>蔡鴻陵</option><option>鄭安汝</option>
               </select>
             </div>
             <div>
@@ -2339,10 +2348,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <th style="text-align:center">Email</th>
             <th style="text-align:center">標籤</th>
             <th style="text-align:center">加入時間</th>
+            <th style="text-align:center">生日</th>
             <th style="text-align:center">操作</th>
           </tr></thead>
           <tbody id="admin-users-tbody">
-            <tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
+            <tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入使用者名單中...</td></tr>
           </tbody>
         </table>
         </div>
@@ -2426,24 +2436,35 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
   <!-- ── 列表頁 ── -->
   <div id="ht-list-panel">
-    <!-- 頁頭工具列（重設計） -->
-    <div style="margin-bottom:20px;padding-top:10px">
-      <!-- Tab 列 -->
-      <div style="display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
-        <div style="display:flex;gap:0">
-          <button class="ht-tab-btn admin-tab active" id="ht-tab-events" onclick="htSwitchListTab('events')"
-            style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
-            🗓️ 活動指南
-          </button>
-          <button class="ht-tab-btn admin-tab" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')"
-            style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
-            🗺️ 探店靈感
-          </button>
-        </div>
-        <button data-cap="hightea.manage" onclick="htOpenCreate()" style="display:flex;align-items:center;gap:8px;padding:10px 20px;border-radius:20px;border:none;background:linear-gradient(135deg,#f43f5e,#e16b8c);color:#fff;font-family:inherit;cursor:pointer;font-size:14px;font-weight:700;white-space:nowrap;transition:all .2s;box-shadow:0 4px 14px rgba(225,107,140,.4)" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 20px rgba(225,107,140,.5)'" onmouseout="this.style.transform='';this.style.boxShadow='0 4px 14px rgba(225,107,140,.4)'">
-          ✨ 新增活動
+
+    <!-- Hero 橫幅 -->
+    <div style="background:linear-gradient(135deg,#fde4ef 0%,#fdf0f6 60%,#f0f4fb 100%);border-radius:20px;padding:20px 22px;margin-bottom:20px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden">
+      <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#f77aaa,#e16b8c);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:0 4px 14px rgba(225,107,140,.3)">🍵</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:17px;font-weight:800;color:#0f172a;margin-bottom:3px">騰勢高光午茶日</div>
+        <div id="ht-hero-sub" style="font-size:13px;color:#94a3b8">精選品牌下午茶，與夥伴共享美好時光</div>
+      </div>
+      <div id="ht-hero-next-wrap" style="display:none;text-align:right;flex-shrink:0">
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">下次活動</div>
+        <div id="ht-hero-next" style="font-size:14px;font-weight:800;color:#e16b8c">—</div>
+      </div>
+      <div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(225,107,140,.07);pointer-events:none"></div>
+      <div style="position:absolute;right:40px;bottom:-30px;width:70px;height:70px;border-radius:50%;background:rgba(99,102,241,.05);pointer-events:none"></div>
+    </div>
+
+    <!-- Tab 列（分段控制器，與案件追蹤一致） -->
+    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
+      <div class="seg-track" style="flex:1;min-width:200px">
+        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')">
+          🗓️ 活動指南
+        </button>
+        <button class="ht-tab-btn" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')">
+          🗺️ 探店靈感
         </button>
       </div>
+      <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap">
+        ✨ 新增活動
+      </button>
     </div>
     <div id="ht-current-month-chip" style="display:none"></div>
 
@@ -2531,15 +2552,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
     <!-- 探店靈感 Tab -->
     <div id="ht-panel-discover" style="display:none">
-      <!-- 歷史訂購推薦（善用歷次午茶日訂購紀錄） -->
-      <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
-          <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
-          <span style="font-size:16px;font-weight:700;color:#0f172a">🏆 歷史訂購推薦</span>
-        </div>
-        <div style="font-size:12px;color:#94a3b8;margin:0 0 14px 12px">依本公司歷次午茶日訂購紀錄與評分</div>
-        <div id="ht-discover-rec-list"></div>
-      </div>
       <!-- 快速探索 -->
       <div style="background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.06);padding:20px;margin-bottom:16px">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -2635,53 +2647,68 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
 
     <!-- 主版面：左欄（品項）+ 右欄（預算/壽星）-->
-    <div style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
+    <div id="ht-detail-grid" style="display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start">
     <!-- ── 左欄 ── -->
     <div>
     <!-- Tab: 品項規劃 -->
     <div id="ht-dtab-plan">
       <!-- 快速設定列 -->
-      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 16px;margin-bottom:16px">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center">
-          <div style="display:flex;align-items:center;gap:8px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-            <input id="ht-event-date" type="text" placeholder="活動日期" onchange="htSaveEventInfo()" style="border:none;background:none;font-size:14px;color:#0f172a;font-family:inherit;width:100px;outline:none;font-weight:600">
+      <div id="ht-event-info-bar" style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:16px 18px;margin-bottom:16px">
+        <div style="font-size:13px;font-weight:700;color:#e16b8c;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
+          <!-- 月份（建立時設定，唯讀） -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">月份</div>
+            <div id="ht-event-month-display" style="font-size:14px;font-weight:600;color:#0f172a;padding:7px 0">—</div>
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            <span style="font-size:14px;color:#64748b">人數</span>
-            <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:52px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
+          <!-- 活動日期 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">活動日期</div>
+            <input id="ht-event-date" type="text" placeholder="選擇日期" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff;cursor:pointer">
           </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span style="font-size:14px;color:#64748b">每人預算</span>
-            <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:70px;border:1px solid #f1d0de;border-radius:6px;padding:3px 6px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;text-align:center">
-            <span style="font-size:12px;color:#94a3b8">元</span>
+          <!-- 人數 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">人數</div>
+            <input id="ht-event-headcount" type="number" min="1" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
           </div>
-          <div style="margin-left:auto;text-align:right">
-            <div style="font-size:12px;color:#64748b">總預算 <span id="ht-calc-budget" style="font-weight:700;color:#e16b8c">NT$0</span></div>
-            <div id="ht-budget-formula" style="font-size:12px;color:#94a3b8;margin-top:2px"></div>
+          <!-- 每人預算 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">每人預算（元）</div>
+            <input id="ht-event-budget-pp" type="number" min="0" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;background:#fff">
+          </div>
+          <!-- 壽星人數（唯讀，由下方名單連動） -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">壽星人數（位）</div>
+            <div style="padding:7px 0;display:flex;align-items:baseline;gap:6px">
+              <span id="ht-event-bday-disp" style="font-size:14px;font-weight:600;color:#0f172a">0</span>
+              <span style="font-size:11px;color:#94a3b8">見下方名單管理</span>
+            </div>
+          </div>
+          <!-- 主辦人 1 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">主辦人 1</div>
+            <select id="ht-event-org1" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
+          </div>
+          <!-- 主辦人 2 -->
+          <div>
+            <div style="font-size:12px;color:#64748b;margin-bottom:5px">主辦人 2</div>
+            <select id="ht-event-org2" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #f1d0de;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
           </div>
         </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #fde4ef">
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span style="font-size:12px;color:#64748b">主辦人 1</span>
-            <select id="ht-event-org1" onchange="htSaveEventInfo()" style="border:1px solid #f1d0de;border-radius:6px;padding:3px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff;max-width:140px" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
-          </div>
-          <div style="display:flex;align-items:center;gap:6px">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            <span style="font-size:12px;color:#64748b">主辦人 2</span>
-            <select id="ht-event-org2" onchange="htSaveEventInfo()" style="border:1px solid #f1d0de;border-radius:6px;padding:3px 8px;font-size:14px;font-family:inherit;color:#0f172a;font-weight:600;outline:none;cursor:pointer;background:#fff;max-width:140px" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#f1d0de'"></select>
-          </div>
+        <!-- 試算公式（唯一一處） -->
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #fde4ef;font-size:14px;color:#374151;line-height:1.8">
+          <span style="font-size:12px;font-weight:700;color:#e16b8c">📐 試算　</span>
+          <span id="ht-budget-formula" style="color:#64748b"></span>
+          <span style="color:#94a3b8">　＝　總預算 </span>
+          <span id="ht-calc-budget" style="font-weight:800;color:#e16b8c;font-size:17px">NT$0</span>
         </div>
       </div>
 
       <!-- 防重複提示 -->
       <div id="ht-repeat-warning" style="display:none;background:#fffbeb;border:1.5px solid #fde68a;border-radius:12px;padding:12px 16px;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 上次（近兩場）用過的店家</div>
+        <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ 與近兩場重複的廠商或品名</div>
         <div id="ht-repeat-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
-        <div style="font-size:12px;color:#a16207;margin-top:6px">建議這次換換口味，避免重複。</div>
+        <div style="font-size:12px;color:#a16207;margin-top:6px">建議換換口味，避免重複。</div>
       </div>
 
       <!-- 品項表格 -->
@@ -2698,6 +2725,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             </button>
             <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
           </div>
+        </div>
+        <!-- 預算餘額列 -->
+        <div id="ht-balance-bar" style="padding:10px 20px;background:#f8fafc;border-bottom:1px solid #f1f5f9;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
+          <span style="font-size:13px;color:#64748b">總預算 <strong id="ht-bal-total" style="color:#374151">NT$0</strong></span>
+          <span style="font-size:13px;color:#64748b">已用 <strong id="ht-bal-used" style="color:#e16b8c">NT$0</strong></span>
+          <span style="font-size:13px;font-weight:700;color:#374151">餘額 <strong id="ht-bal-remain" style="color:#1e9d6b">NT$0</strong></span>
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
@@ -2731,48 +2764,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
       </div>
     </div>
-    <!-- 智慧推薦（左欄底部，可展開） -->
-    <div style="margin-top:12px">
-      <button onclick="(function(b,p){p.style.display=p.style.display==='none'?'':p.style.display==='none'?'':'none';b.querySelector('span').textContent=p.style.display===''?'▲':'▼';if(p.style.display==='')htRenderRecommend();})(this,document.getElementById('ht-recommend-body'))" style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fdeef5'" onmouseout="this.style.background='#fff8fb'">
-        <span style="font-size:14px;font-weight:700;color:#e16b8c">✨ 智慧推薦 &amp; 預算優化器</span>
-        <span style="font-size:12px;color:#e16b8c">▼</span>
-      </button>
-      <div id="ht-recommend-body" style="display:none;margin-top:8px">
-        <div id="ht-dtab-recommend">
-          <div style="background:linear-gradient(135deg,#fff8fb,#f0f9ff);border:1.5px solid #e0f0ff;border-radius:16px;padding:20px;margin-bottom:12px">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px">🧮 預算優化器</div>
-            <div style="font-size:12px;color:#64748b;margin-bottom:14px">根據人數與預算自動計算各類別最佳配比</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:14px;color:#64748b">人數</span>
-                <input id="ht-opt-headcount" type="number" min="1" value="" placeholder="人數" style="width:70px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit;color:#0f172a;text-align:center">
-              </div>
-              <div style="display:flex;align-items:center;gap:6px">
-                <span style="font-size:14px;color:#64748b">每人預算</span>
-                <input id="ht-opt-budget" type="number" min="0" value="" placeholder="金額" style="width:80px;border:1.5px solid #e2e8f0;border-radius:8px;padding:6px 8px;font-size:14px;font-family:inherit;color:#0f172a;text-align:center">
-                <span style="font-size:12px;color:#94a3b8">元</span>
-              </div>
-              <button onclick="htRunOptimize()" style="padding:8px 16px;border-radius:8px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">計算</button>
-            </div>
-            <div id="ht-optimize-result" style="margin-top:14px;display:none"></div>
-          </div>
-          <div style="background:#fff;border-radius:16px;border:1px solid #f1f5f9;padding:20px">
-            <div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:4px">⭐ 歷史高分品項推薦</div>
-            <div style="font-size:12px;color:#94a3b8;margin-bottom:14px">根據歷次活動品項紀錄自動推薦</div>
-            <div id="ht-recommend-tabs" style="display:flex;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:14px">
-              <button class="ht-rtab admin-tab active" onclick="htSwitchRecTab('all')" style="cursor:pointer;font-family:inherit">全部</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('甜點')" style="cursor:pointer;font-family:inherit">甜點</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('主食')" style="cursor:pointer;font-family:inherit">主食</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('飲料')" style="cursor:pointer;font-family:inherit">飲料</button>
-              <button class="ht-rtab admin-tab" onclick="htSwitchRecTab('水果')" style="cursor:pointer;font-family:inherit">水果</button>
-            </div>
-            <div id="ht-recommend-list" style="display:grid;gap:8px">
-              <div style="color:#94a3b8;font-size:14px;text-align:center;padding:24px">填入人數與預算後點擊「計算」，即可獲得智慧推薦清單</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
     </div><!-- end 左欄 -->
 
     <!-- ── 右欄 ── -->
@@ -2790,13 +2781,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
       </div>
 
-      <!-- 壽星 -->
+      <!-- 本月壽星（自動帶入＋可加減，連動試算公式） -->
       <div id="ht-dtab-birthday">
         <div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:16px">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <div>
               <div style="font-size:14px;font-weight:700;color:#0f172a">🎂 本月壽星</div>
-              <div style="font-size:12px;color:#94a3b8;margin-top:2px">每位壽星 NT$40</div>
+              <div style="font-size:12px;color:#94a3b8;margin-top:2px">每位壽星 NT$40，加減會自動更新總預算</div>
             </div>
             <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #f59e0b;background:#fffbeb;color:#d97706;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#fef3c7'" onmouseout="this.style.background='#fffbeb'">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增
@@ -2826,33 +2817,36 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 <!-- ══ 按摩預約 View ══ -->
 <div class="view" id="view-massage">
 
-  <!-- 狀態條（輕量取代 Hero） -->
-  <div id="ms-hero" style="display:flex;align-items:center;gap:12px;background:#fff;border-radius:14px;padding:12px 16px;margin-bottom:14px;box-shadow:0 1px 6px rgba(0,0,0,.06)">
-    <div style="font-size:24px">💆</div>
-    <div style="flex:1">
-      <div style="font-size:14px;font-weight:800;color:#0f172a">按摩預約</div>
-      <div id="ms-hero-sub" style="font-size:12px;color:#94a3b8">本月已預約 <span id="ms-hero-month" style="font-weight:700;color:#e16b8c">—</span></div>
+  <!-- Hero 橫幅 -->
+  <div id="ms-hero" style="background:linear-gradient(135deg,#fde4ef 0%,#fdf0f6 60%,#f0e8fb 100%);border-radius:20px;padding:20px 22px;margin-bottom:20px;display:flex;align-items:center;gap:16px;position:relative;overflow:hidden">
+    <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,#f77aaa,#e16b8c);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:0 4px 14px rgba(225,107,140,.3)">💆</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:17px;font-weight:800;color:#0f172a;margin-bottom:3px">員工按摩預約</div>
+      <div id="ms-hero-sub" style="font-size:13px;color:#94a3b8">本月已預約 <span id="ms-hero-month" style="font-weight:700;color:#e16b8c">—</span></div>
     </div>
-    <div id="ms-hero-next-wrap" style="display:none;text-align:right">
-      <div style="font-size:11px;color:#94a3b8">下次預約</div>
-      <div id="ms-hero-next" style="font-size:13px;font-weight:700;color:#e16b8c">—</div>
+    <div id="ms-hero-next-wrap" style="display:none;text-align:right;flex-shrink:0">
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:2px">下次預約</div>
+      <div id="ms-hero-next" style="font-size:14px;font-weight:800;color:#e16b8c">—</div>
     </div>
-    <div id="ms-suspend-warn" style="display:none;background:#fee2e2;border-radius:8px;padding:4px 10px">
+    <div id="ms-suspend-warn" style="display:none;background:#fee2e2;border-radius:10px;padding:6px 12px;flex-shrink:0">
       <div style="font-size:12px;font-weight:700;color:#ef4444">⚠️ 帳號暫停預約</div>
     </div>
+    <!-- 裝飾圓 -->
+    <div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(225,107,140,.07);pointer-events:none"></div>
+    <div style="position:absolute;right:40px;bottom:-30px;width:70px;height:70px;border-radius:50%;background:rgba(225,107,140,.05);pointer-events:none"></div>
   </div>
 
-  <!-- 注意事項（折疊） -->
-  <div style="background:#fff;border-radius:14px;margin-bottom:16px;box-shadow:0 1px 6px rgba(0,0,0,.06);overflow:hidden">
-    <button onclick="msToggleNotice()" style="width:100%;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font-family:inherit">
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:14px">📋</span>
+  <!-- 注意事項（折疊卡片） -->
+  <div style="background:#fff;border-radius:16px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,.06);overflow:hidden">
+    <button onclick="msToggleNotice()" style="width:100%;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fdf8fb'" onmouseout="this.style.background=''">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div style="width:32px;height:32px;border-radius:9px;background:#fde4ef;display:flex;align-items:center;justify-content:center;font-size:15px">📋</div>
         <span style="font-size:14px;font-weight:700;color:#0f172a">按摩注意事項</span>
       </div>
-      <span id="ms-notice-arrow" style="font-size:12px;color:#94a3b8;transition:transform .2s">▼</span>
+      <span id="ms-notice-arrow" style="font-size:11px;color:#94a3b8;transition:transform .2s">▼</span>
     </button>
-    <div id="ms-notice-body" style="display:none;padding:0 16px 16px">
-      <div style="background:#f8f5f3;border-radius:10px;padding:14px 16px;border-left:3px solid #6366f1;font-size:13px;color:#374151;line-height:1.8">
+    <div id="ms-notice-body" style="display:none;padding:0 18px 18px">
+      <div style="background:#fafafa;border-radius:12px;padding:16px 18px;border-left:3px solid #e16b8c;font-size:13px;color:#374151;line-height:1.9">
         <p style="margin:0 0 10px">1. 為讓每個夥伴都有機會參與，<strong>每月請儘量控制最多預約二次為主</strong>。連續二週為一排程區間，線上填寫限填一次，如當日仍有空檔可於紙本補位。</p>
         <p style="margin:0 0 10px">2. 完成預約後，務必留意預約時間並設小鬧鐘準時參與；按摩完畢後請協助「呼喚下一位夥伴」；若臨時無法參與，<strong>請記得找夥伴遞補</strong>哦～</p>
         <p style="margin:0">3. 按摩過程請保持輕鬆愉悅的心情，完成充電後一起面對更多工作挑戰。Think Big! 👍 Start Small! 🫰 Act Quickly and Massage more! 💪</p>
@@ -2860,12 +2854,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
   </div>
 
-  <!-- Tab 列（僅管理者看到管理頁籤） -->
-  <div id="ms-tab-bar" style="display:none;gap:0;border-bottom:2px solid #e2e8f0;margin-bottom:16px">
-    <button class="massage-tab admin-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
+  <!-- Tab 列（僅管理者看到管理頁籤；分段控制器，與案件追蹤一致） -->
+  <div id="ms-tab-bar" class="seg-track" style="display:none;max-width:360px;margin-bottom:20px">
+    <button class="massage-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')">
       📅 預約 &amp; 我的記錄
     </button>
-    <button class="massage-tab admin-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')" style="display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit">
+    <button class="massage-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')">
       ⚙️ 管理
     </button>
   </div>
@@ -2880,8 +2874,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     <!-- 左右並排：左日曆、右時段名單 -->
     <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
 
-      <!-- 左：日曆 -->
-      <div style="flex:0 0 320px;max-width:340px;min-width:280px">
+      <!-- 左：日曆（放大，與右側均分） -->
+      <div style="flex:1 1 0;min-width:300px">
         <div style="background:#fff;border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #f1f5f9;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#374151" onmouseover="this.style.background='#fdf4f7'" onmouseout="this.style.background='#fff'">‹</button>
@@ -2916,23 +2910,30 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
         <div id="ms-no-slots" style="text-align:center;padding:48px 20px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
           <div style="font-size:40px;margin-bottom:10px">📅</div>
-          請從左側日曆選擇日期<br>查看各時段預約狀況
+          請選擇日期<br>查看各時段預約狀況
         </div>
       </div>
     </div>
   </div>
 
   <!-- 📋 我的預約 panel -->
-  <div id="ms-panel-my" style="margin-top:20px">
-    <div style="margin-bottom:20px">
-      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">即將到來</div>
+  <div id="ms-panel-my" style="margin-top:24px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#e16b8c,#f9a8d4);border-radius:2px"></span>
+      <span style="font-size:15px;font-weight:800;color:#0f172a">我的預約紀錄</span>
+    </div>
+    <!-- 即將到來 / 歷史紀錄 分段切換 -->
+    <div class="seg-track" style="max-width:300px;margin-bottom:14px">
+      <button class="ms-myseg active" id="ms-myseg-upcoming" onclick="msSwitchMyTab('upcoming')">即將到來</button>
+      <button class="ms-myseg" id="ms-myseg-history" onclick="msSwitchMyTab('history')">歷史紀錄</button>
+    </div>
+    <div id="ms-my-upcoming-wrap">
       <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
         <div style="font-size:32px;margin-bottom:8px">📭</div>尚無即將到來的預約
       </div>
     </div>
-    <div>
-      <div style="font-size:13px;font-weight:700;color:#94a3b8;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px">歷史紀錄</div>
+    <div id="ms-my-history-wrap" style="display:none">
       <div id="ms-my-history" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ms-my-history-empty" style="display:none;text-align:center;padding:28px;color:#94a3b8;font-size:14px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
         <div style="font-size:32px;margin-bottom:8px">🗂️</div>無歷史紀錄
@@ -2961,10 +2962,23 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
         <div style="font-size:13px;font-weight:700;color:#0f172a">開放日期管理</div>
       </div>
-      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <input id="ms-open-date-inp" type="date" style="flex:1;min-width:140px;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#f8fafc;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-        <button onclick="msAddOpenDate()" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">＋ 開放此日</button>
+      <!-- 整合式：選日期 + 設定該日時段與名額，一次完成 -->
+      <div id="ms-open-editor" style="background:#f8fafc;border:1px solid #eef0f4;border-radius:12px;padding:14px;margin-bottom:16px">
+        <div id="ms-open-editor-title" style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px">新增開放日</div>
+        <div style="font-size:12px;color:#64748b;margin-bottom:5px">選擇日期</div>
+        <input id="ms-open-date-inp" type="date" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
+          <span style="font-size:12px;color:#64748b">開放時段與名額</span>
+          <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
+        </div>
+        <div id="ms-draft-slots"></div>
+        <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #c7d2fe;color:#6366f1;border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="display:none;flex:0 0 auto;background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
+          <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
+        </div>
       </div>
+      <div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px">已開放日期</div>
       <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
@@ -2994,12 +3008,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
           <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#e16b8c,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">預設時段樣板</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">常用時段樣板</div>
         </div>
+        <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
         <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
         <div style="display:flex;gap:6px">
-          <input id="ms-new-slot-time" type="time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#f8fafc">
-          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#f8fafc;text-align:center">
+          <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer"></select>
+          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#fff;text-align:center">
           <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
         </div>
       </div>
@@ -3095,7 +3110,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
-        <input class="inp" id="add-email" placeholder="li@tsagroup.com.tw">
+        <input class="inp" id="add-email" placeholder="test@tsagroup.com.tw">
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
@@ -3172,6 +3187,11 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
           </select>
         </div>
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
+          <input class="inp" id="edit-birthday" type="date">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
+        </div>
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:7px">角色（可複選）</label>
@@ -3233,7 +3253,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>李小明,li@tsagroup.com.tw,T0099,後勤部,申請人</code>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>王測試,test@tsagroup.com.tw,T0099,後勤部,申請人</code>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o" style="flex:1;justify-content:center" onclick="closeImportModal()">取消</button>
@@ -3261,7 +3281,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <span id="src-status-icon">⏳</span><span id="src-status-text">上傳附件中...</span>
     </div>
     <div style="margin-top:8px;display:flex;gap:8px">
-      <button id="src-view-btn" class="btn btn-p" style="flex:1;justify-content:center;font-size:14px;padding:7px 0" onclick="">查看案件</button>
+      <button id="src-view-btn" class="btn btn-p" style="flex:1;justify-content:center;font-size:14px;padding:7px 0" onclick="if(window._lastSubmittedCaseId){loadCaseDetail(window._lastSubmittedCaseId)}else{switchView('view-tracker')}">查看案件</button>
       <button class="btn btn-o" style="font-size:14px;padding:7px 12px" onclick="document.getElementById('submit-result-card').style.display='none'">關閉</button>
     </div>
   </div>
@@ -3305,8 +3325,9 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 let currentUser  = null; // { email, name, token }
 let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
 
-// ── 管理者名單（初始硬編碼，登入後由 getMembers 動態更新；需與 GAS CONFIG.ADMIN_EMAILS 一致）──
-let ADMIN_EMAILS = ['jessica@tsagroup.com.tw'];
+// ── 管理者名單（初始為空，登入後由 getMembers 動態更新；需與 GAS CONFIG.ADMIN_EMAILS 一致）──
+// 注意：請勿在此硬編碼真實 email，避免公開 repo 洩露帳號資訊；登入後 2.5 秒內由 _syncMembersFromServer() 補上
+let ADMIN_EMAILS = [];
 
 // ── 簽核人清單（由 loadAdminFlow 動態載入）──
 let APPROVER_EMAILS = [];
@@ -3387,9 +3408,10 @@ window.applyNavVisibility = applyNavVisibility;
 
 // 判斷目前登入者是否為某案件當關的簽核人
 function isMyTurnToApprove(c) {
-  if (!currentUser || !c.status || !c.status.includes('待')) return false;
+  var _cu = window.currentUser; if (!_cu) return false;
+  if (!c.status || !c.status.includes('待')) return false;
   const stepIdx = (c.step || 1) - 1;
-  return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length && APPROVER_EMAILS[stepIdx] === currentUser.email;
+  return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length && APPROVER_EMAILS[stepIdx] === _cu.email;
 }
 
 // ── 根據角色套用 / 移除受限功能 ──
@@ -3454,7 +3476,7 @@ function applyRolePermissions() {
       selectAll.style.cursor = admin ? '' : 'not-allowed';
     }
     batchArea.querySelectorAll('button').forEach(btn => {
-      if (!btn.closest('form') && btn.textContent.includes('刪除') || btn.textContent.includes('批次')) {
+      if (!btn.closest('form') && (btn.textContent.includes('刪除') || btn.textContent.includes('批次'))) {
         btn.disabled = !admin;
         btn.style.opacity = admin ? '' : '0.3';
         btn.style.cursor = admin ? 'pointer' : 'not-allowed';
@@ -3501,21 +3523,35 @@ function _showLoggingIn() {
   if (!document.getElementById('bf-spin-style')) {
     var st = document.createElement('style');
     st.id = 'bf-spin-style';
-    st.textContent = '@keyframes bf-spin{to{transform:rotate(360deg)}}';
+    st.textContent = '@keyframes bf-spin{to{transform:rotate(360deg)}}@keyframes bf-ring-pulse{0%{transform:scale(.85);opacity:.7}50%{transform:scale(1.05);opacity:.25}100%{transform:scale(.85);opacity:.7}}@keyframes bf-dot{0%,80%,100%{transform:scale(.6);opacity:.35}40%{transform:scale(1.1);opacity:1}}';
     document.head.appendChild(st);
   }
   var d = document.createElement('div');
   d.id = 'bf-logging-in';
-  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px';
+  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:env(safe-area-inset-bottom,0px)';
   d.innerHTML =
-    '<svg width="46" height="46" viewBox="0 0 48 48" fill="none"><path d="M18 44 C18 44 19 35 20 26 C21 18 24 10 27 4" stroke="#1e9d6b" stroke-width="2.5" stroke-linecap="round"/><path d="M20 37 C16 33 9 34 8 39 C13 41 18 39 20 37Z" fill="#1e9d6b"/><path d="M21 28 C25 24 32 25 32 30 C27 32 22 30 21 28Z" fill="#1e9d6b"/><path d="M21 21 C17 16 10 17 10 22 C15 24 20 22 21 21Z" fill="#1e9d6b"/><path d="M23 14 C27 10 34 11 33 16 C28 17 24 15 23 14Z" fill="#1e9d6b"/></svg>' +
-    '<div style="width:26px;height:26px;border:3px solid #e2e8f0;border-top-color:#1e9d6b;border-radius:50%;animation:bf-spin .8s linear infinite"></div>' +
-    '<div style="color:#64748b;font-size:16px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif">登入中…</div>';
+    '<div style="position:relative;width:88px;height:88px">' +
+      '<div style="position:absolute;inset:0;border-radius:50%;border:2.5px solid rgba(255,255,255,.45);animation:bf-ring-pulse 2s ease-in-out infinite"></div>' +
+      '<div style="position:absolute;inset:8px;border-radius:50%;border:3px solid transparent;border-top:3px solid rgba(255,255,255,.95);border-right:3px solid rgba(255,255,255,.45);animation:bf-spin .9s linear infinite"></div>' +
+      '<div style="position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.28);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center">' +
+        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke-dasharray="32" stroke-dashoffset="32" style="animation:bf-spin 1.8s linear infinite reverse"/><circle cx="12" cy="12" r="3" fill="rgba(255,255,255,.9)" stroke="none"/></svg>' +
+      '</div>' +
+    '</div>' +
+    '<div style="display:flex;gap:10px;align-items:center">' +
+      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:0s"></div>' +
+      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.22s"></div>' +
+      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.44s"></div>' +
+    '</div>' +
+    '<div style="color:rgba(255,255,255,.9);font-size:15px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.8px;text-shadow:0 1px 6px rgba(120,80,160,.3)">登入中…</div>';
   document.body.appendChild(d);
+  document.documentElement.style.background = '#c5b8e0';
+  document.body.style.background = '#c5b8e0';
 }
 function _hideLoggingIn() {
   var d = document.getElementById('bf-logging-in');
   if (d) d.remove();
+  document.documentElement.style.background = '';
+  document.body.style.background = '';
 }
 
 // sessionStorage 在無痕模式的 fallback
@@ -3524,7 +3560,7 @@ function _safeSsSet(k, v) { try { sessionStorage.setItem(k, v); } catch(e) { try
 // 公司帳號登入：OAuth implicit flow 全頁轉址
 function doGoogleLogin() {
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
-  sessionStorage.setItem('bf_oauth_nonce', nonce);
+  _safeSsSet('bf_oauth_nonce', nonce);
   var params = new URLSearchParams({
     client_id    : GOOGLE_CLIENT_ID,
     redirect_uri : location.origin + location.pathname,
@@ -3702,7 +3738,7 @@ function startTokenRefreshTimer() {
   if (!demo) return;
   if (location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') return; // 生產環境禁止 demo
   // 同時設定詞法 currentUser 和 window.currentUser 確保一致
-  currentUser = { email: 'jessica@tsagroup.com.tw', name: '李潔慧', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999, roles: ['manager'] };
+  currentUser = { email: 'demo@tsagroup.com.tw', name: '測試使用者', token: 'demo', tokenExpiry: Date.now()+99999999, sessionExpiry: Date.now()+99999999, roles: ['manager'] };
   window.currentUser = currentUser;
   // DOMContentLoaded 可能已觸發，改用 setTimeout 確保 DOM 就緒
   setTimeout(function(){
@@ -3721,6 +3757,8 @@ function parseJwt(token) {
 function showApp() {
   window._appShown = true;
   _hideLoggingIn();  // 移除「登入中…」過場
+  document.documentElement.style.background = '#fafafa';
+  document.body.style.background = '#fafafa';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
@@ -4230,7 +4268,9 @@ function fmtDate(s) {
   if (/^\d{4}\/\d{2}\/\d{2} \d{2}:\d{2}/.test(str)) return str.substring(0, 16);
   var d = new Date(str);
   if (isNaN(d.getTime())) return str;
-  var tw = new Date(d.getTime() + 8 * 3600 * 1000);
+  // If string already includes +08:00/+0800, JS Date already accounts for it — don't add 8h again
+  var _hasTz08 = /\+08:?00$/.test(str.trim()) || /\+0800$/.test(str.trim());
+  var tw = _hasTz08 ? d : new Date(d.getTime() + 8 * 3600 * 1000);
   var p = function(n){ return String(n).padStart(2,'0'); };
   return tw.getUTCFullYear() + '/' + p(tw.getUTCMonth()+1) + '/' + p(tw.getUTCDate()) + ' ' + p(tw.getUTCHours()) + ':' + p(tw.getUTCMinutes());
 }
@@ -4700,8 +4740,8 @@ function appsSetTab(tab) {
     all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' },
     mine:      { el: document.getElementById('apps-tab-mine'),      active: tab==='pending' }
   };
-  var activeStyle   = { bg:'#fde4ef', color:'#e16b8c', shadow:'0 2px 8px rgba(225,107,140,.18)', weight:'700' };
-  var inactiveStyle = { bg:'#f1f5f9', color:'#64748b', shadow:'none',                             weight:'600' };
+  var activeStyle   = { bg:'#fff', color:'#e16b8c', shadow:'0 1px 4px rgba(0,0,0,.1)', weight:'700' };
+  var inactiveStyle = { bg:'transparent', color:'#64748b', shadow:'none',               weight:'500' };
   Object.keys(tabs).forEach(function(k) {
     var t = tabs[k]; if (!t.el) return;
     var s = t.active ? activeStyle : inactiveStyle;
@@ -5304,32 +5344,6 @@ async function loadDetail(caseId, _fromPop) {
     const canApprove  = isMyTurnToApprove(c) || (isAdmin() && isPending);
     approveBox.style.display = canApprove ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
-    // 異常偵測
-    var anomalyEl = document.getElementById('anomaly-warnings');
-    if (!anomalyEl) {
-      anomalyEl = document.createElement('div');
-      anomalyEl.id = 'anomaly-warnings';
-      approveBox.insertBefore(anomalyEl, approveBox.firstChild);
-    }
-    anomalyEl.innerHTML = '';
-    if (canApprove) {
-      var hasAtt = !!(c.files && c.files.length > 0);
-      var _anomalyCaseId = c.caseId;
-      htApi('htCheckAnomaly', { amount: c.totalAmount || 0, applicantEmail: c.email || '', caseId: c.caseId, hasAttachment: hasAtt }).then(function(res) {
-        if (_anomalyCaseId !== c.caseId) return; // 已切換案件
-        if (res && res.warnings && res.warnings.length > 0) {
-          var wHtml = '<div style="margin-bottom:12px;display:flex;flex-direction:column;gap:6px">';
-          res.warnings.forEach(function(w) {
-            var bg = w.level === 'warn' ? '#fef3c7' : '#eff6ff';
-            var color = w.level === 'warn' ? '#d97706' : '#3b82f6';
-            var icon = w.level === 'warn' ? '⚠️' : 'ℹ️';
-            wHtml += '<div style="padding:8px 12px;background:'+bg+';border-radius:8px;font-size:13px;color:'+color+';border-left:3px solid '+color+'">'+icon+' '+htEsc(w.msg)+'</div>';
-          });
-          wHtml += '</div>';
-          anomalyEl.innerHTML = wHtml;
-        }
-      }).catch(function(){});
-    }
     // 每次切換案件時清空退件原因，避免帶入上一筆的內容
     const _ta = approveBox.querySelector('textarea');
     if (_ta) _ta.value = '';
@@ -5582,7 +5596,7 @@ async function submitForm() {
 
 async function confirmSubmitForm() {
   // 保留相容性（舊 receipt-confirm 按鈕仍可能呼叫此函式）
-  document.getElementById('receipt-confirm').classList.remove('open');
+  document.getElementById('receipt-confirm')?.classList.remove('open');
   const d = window._pendingSubmitData;
   if (!d) return;
   showSubmitPreview(d.subjectEl, d.reasonEl, d.departmentEl, d.payeeEl, d.items, false);
@@ -5626,10 +5640,12 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   if (res.ok) {
     _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
     _submitLock = false;
+    if (typeof _autoSaveGasTimer !== 'undefined' && _autoSaveGasTimer) { clearTimeout(_autoSaveGasTimer); _autoSaveGasTimer = null; }
     window._uploadedDraftFiles = []; // 清除草稿附件追蹤
     localStorage.removeItem('bf_draft');
     _cacheClear();
     const submittedCaseId = res.caseId;
+    window._lastSubmittedCaseId = submittedCaseId;
     // 取出待上傳檔案並清空全域清單 & UI
     const filesToUpload = [...(window._pendingFiles || [])];
     window._pendingFiles = [];
@@ -6009,19 +6025,9 @@ function sw(name,elOrName,_fromPop){
 }
 
 // ── 員工編號 & 部門對照表 ──
-// 本地使用者清單（email 正確版，供 fallback 及 getChineseNameByEmail 使用）
-const LOCAL_USER_LIST = [
-  {name:'李潔慧',  email:'jessica@tsagroup.com.tw',         dept:'後勤部',         employeeId:'T0033'},
-  {name:'王鈞逸',  email:'jimmywang@tsagroup.com.tw',       dept:'資訊部',         employeeId:'T0076'},
-  {name:'邱湘芬',  email:'stefanie@tsagroup.com.tw',        dept:'後勤部',         employeeId:'T0028'},
-  {name:'鄭安汝',  email:'reneecheng@tsagroup.com.tw',      dept:'財務會計部',     employeeId:'T0092'},
-  {name:'何舒維',  email:'mollyho@tsagroup.com.tw',         dept:'數位廣告部',     employeeId:'T0083'},
-  {name:'陳姿璇',  email:'dori@tsagroup.com.tw',            dept:'供應鏈部',       employeeId:'T0018'},
-  {name:'黃如華',  email:'amandahuang@tsagroup.com.tw',     dept:'人力資源部',     employeeId:'T0051'},
-  {name:'黃岩',    email:'kelvinng@tsagroup.com.tw',        dept:'行銷部',         employeeId:'T0069'},
-  {name:'鄒馨瑩',  email:'sandy@tsagroup.com.tw',           dept:'人力資源部',     employeeId:'T0012'},
-  {name:'蔡鴻陵',  email:'ian@tsagroup.com.tw',             dept:'通路事業發展部', employeeId:'T0020'},
-];
+// 本地使用者清單（僅供首次載入前的暫時 fallback；登入後 _syncMembersFromServer() 會以伺服器資料完整覆蓋）
+// 注意：請勿在此硬編碼真實姓名/email/員編，避免公開 repo 洩露同事個資
+const LOCAL_USER_LIST = [];
 // email → 中文姓名快速查表
 const LOCAL_EMAIL_TO_NAME = {};
 LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
@@ -6057,6 +6063,11 @@ async function _syncMembersFromServer() {
     if (currentUser && USER_ROLES[currentUser.email]) {
       currentUser.roles = getCurrentRoles();
     }
+    // 建立壽星資料庫（所有登入者皆可使用）
+    window._BF_USER_BDAYS = res.members.map(function(u) {
+      var p = typeof _bdayParse === 'function' ? _bdayParse(u.birthday || u.birthDay || '') : null;
+      return p ? { name: u.name, m: p.m, d: p.d } : null;
+    }).filter(Boolean);
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
     // 角色到位後，若正在總覽則重繪積木區塊（避免登入初期短暫顯示員工版）
     if (typeof applyDashboardBlocks === 'function' &&
@@ -6118,7 +6129,7 @@ function catAllBadges(catStr) {
 }
 
 // 取得某關卡的簽核人姓名（供狀態欄顯示用）
-// 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 王鈞逸」這類含職稱的名稱
+// 優先查 LOCAL_EMAIL_TO_NAME 取純中文名，避免流程設定中有「總幹事 王小明」這類含職稱的名稱
 function getStepApproverName(step) {
   const info = getStepApproverInfo(step);
   return info.name;
@@ -6794,12 +6805,9 @@ function updateDetailFlow(c){
   if (typeof c === 'string') return;
 
   // 只顯示「啟用中」的關卡（與後端 getActiveApprovers() 一致）
-  const allApprovers = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [
-    { label:'第一關：總幹事審核',     name:'王鈞逸',   email:'jimmywang@tsagroup.com.tw',   enabled:true },
-    { label:'第二關：副主任委員審核', name:'邱湘芬',   email:'stefanie@tsagroup.com.tw',    enabled:true },
-    { label:'第三關：主任委員審核',   name:'李潔慧',   email:'jessica@tsagroup.com.tw',     enabled:true },
-    { label:'第四關：財務委員審核',   name:'鄭安汝',   email:'reneecheng@tsagroup.com.tw',  enabled:true },
-  ];
+  // 硬編碼 fallback 已清空（原內容含真實姓名/email，公開 repo 不宜保留）；
+  // 正常情況下 _flowApprovers 會在登入後由 _preloadFlowInfo() 從後端載入，此 fallback 僅供後端異常時的最後防線
+  const allApprovers = (_flowApprovers && _flowApprovers.length > 0) ? _flowApprovers : [];
   // 只取啟用的關卡（enabled !== false）
   let APPROVERS = allApprovers.filter(function(a){ return a.enabled !== false; });
   // ★ Fix：以後端回傳的 totalSteps 為基準，防止前端流程設定暫存與案件實際關卡數不一致
@@ -7226,6 +7234,21 @@ const ROLE_BADGE_STYLE = {
   hr:       'background:#e0f2fe;color:#0ea5e9',
   employee: 'background:#f1f5f9;color:#64748b'
 };
+// 解析生日字串 → {m,d}（支援 YYYY-MM-DD / MM-DD / M月D日）
+function _bdayParse(v) {
+  if (!v) return null;
+  var s = String(v).trim();
+  var ymd = s.match(/^(\d{4})\D(\d{1,2})\D(\d{1,2})/);
+  if (ymd) { var mo=+ymd[2], d=+ymd[3]; if(mo>=1&&mo<=12&&d>=1&&d<=31) return {m:mo,d:d}; }
+  var md = s.match(/^(\d{1,2})\D+(\d{1,2})/);
+  if (md) { var mo2=+md[1], d2=+md[2]; if(mo2>=1&&mo2<=12&&d2>=1&&d2<=31) return {m:mo2,d:d2}; }
+  return null;
+}
+// 生日顯示 → MM/DD
+function _bdayDisplay(v) {
+  var p = _bdayParse(v);
+  return p ? (p.m+'/'+p.d) : (v ? String(v) : '');
+}
 function buildAdminUserRow(u) {
   const avatarColor = adminUserAvatarColor(u.name);
   const firstChar = (u.name || '?').charAt(0);
@@ -7241,7 +7264,9 @@ function buildAdminUserRow(u) {
   const roleBadges = display.map(function(r){
     return '<span style="'+(ROLE_BADGE_STYLE[r]||ROLE_BADGE_STYLE.employee)+';padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap">'+(ROLE_KEY_TO_LABEL[r]||r)+'</span>';
   }).join(' ');
-  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-roles="${roles.join(',')}" style="border-bottom:1px solid #f8fafc">
+  var _bday = u.birthday || u.birthDay || '';
+  var _bdayShow = _bdayDisplay(_bday);
+  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-roles="${roles.join(',')}" data-birthday="${_bday}" style="border-bottom:1px solid #f8fafc">
     <td style="padding:12px 16px"><input type="checkbox" class="user-cb"></td>
     <td style="padding:12px 16px">${nameChip(u.name||'—', 28, u.email)}</td>
     <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#475569;font-family:monospace;letter-spacing:.05em">${u.employeeId||'—'}</td>
@@ -7249,6 +7274,7 @@ function buildAdminUserRow(u) {
     <td style="padding:12px 16px;color:#64748b">${u.email||'—'}</td>
     <td style="padding:12px 16px"><div style="display:flex;gap:4px;flex-wrap:wrap">${roleBadges}</div></td>
     <td style="padding:12px 16px;color:#94a3b8;white-space:nowrap">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
+    <td style="padding:12px 16px;color:#475569;white-space:nowrap;text-align:center">${_bdayShow || '—'}</td>
     <td style="padding:12px 16px"><div style="display:flex;gap:6px">
       <button class="btn btn-o" style="padding:5px 10px;font-size:14px" onclick="showEditUserModal(this)">編輯</button>
       <button style="padding:5px 10px;font-size:14px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
@@ -7260,19 +7286,24 @@ async function loadAdminUsers() {
   if (!isAdmin()) return; // 非管理者不呼叫
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
+  tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏳ 載入中...</td></tr>';
   const res = await callAPI('listUsers');
   if (!res.ok) {
     if (res._authError) {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
     } else {
-      tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#94a3b8">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#ef4444;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#94a3b8">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
     }
     return;
   }
   const users = res.users || [];
+  // 建立全域生日表，供午茶日壽星自動帶入（單一來源：使用者管理）
+  window._BF_USER_BDAYS = users.map(function(u){
+    var p = _bdayParse(u.birthday || u.birthDay || '');
+    return p ? { name: u.name, m: p.m, d: p.d } : null;
+  }).filter(Boolean);
   if (users.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">尚無使用者資料</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#94a3b8;font-size:14px">尚無使用者資料</td></tr>';
   } else {
     tbody.innerHTML = users.map(buildAdminUserRow).join('');
   }
@@ -7325,6 +7356,8 @@ function showEditUserModal(btn){
   const role=row.querySelector('td:nth-child(6) span').textContent.trim();
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
+  const bdayEl=document.getElementById('edit-birthday');
+  if(bdayEl){ var rawBday=row.dataset.birthday||''; bdayEl.value=/^\d{4}-\d{2}-\d{2}/.test(rawBday)?rawBday.slice(0,10):''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   if(editDept&&deptVal){editDept.value=deptVal;}
@@ -7358,7 +7391,9 @@ function doEditUser(){
   });
   const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
   const newDept  = document.getElementById('edit-dept')?.value||'';
+  const newBday  = document.getElementById('edit-birthday')?.value||'';
   const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
+  if (_editRow) _editRow.dataset.birthday = newBday; // 本地即時反映
   // 後端相容：role 存代表角色（manager 優先，否則第一個非員工角色），roles 存完整清單
   var rolesLabels = rolesArr.map(function(r){ return ROLE_KEY_TO_LABEL[r]||r; });
   var primary = rolesArr.includes('manager') ? '管理者'
@@ -7370,7 +7405,7 @@ function doEditUser(){
   if (currentUser && currentUser.email===email) { currentUser.roles = getCurrentRoles(); applyNavVisibility(); }
   closeEditUserModal();
   toast('⏳ 儲存中...');
-  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,role:primary,roles:rolesLabels.join(',')}).then(res=>{
+  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,birthday:newBday,role:primary,roles:rolesLabels.join(',')}).then(res=>{
     if(res.ok){
       toast('✅ 已儲存變更');
       loadAdminUsers();
@@ -7505,7 +7540,7 @@ function syncApplicantFilter() {
   });
   // 被刪除的人：標記但保留
   existing.forEach(name => {
-    if (!current.includes(name) && !_deletedUsers.includes(name)) {
+    if (!current.includes(name) && !_deletedUsers.includes(name) && name) {
       _deletedUsers.push(name);
     }
   });
@@ -8828,7 +8863,7 @@ function calcRowFromTotal(inp) {
   const card = inp.closest('.item-card');
   const total = parseFloat(inp.value) || 0;
   const activeBtn = card?.querySelector('.tax-btn.tax-active');
-  const rate = activeBtn ? parseFloat(activeBtn.getAttribute('onclick').match(/[\d.]+/)?.[0] ?? '0.05') : 0.05;
+  const rate = activeBtn ? parseFloat(activeBtn.dataset.taxRate ?? activeBtn.getAttribute('onclick').match(/[\d.]+/)?.[0] ?? '0.05') : 0.05;
   const pretaxEl = card?.querySelector('.pretax');
   const taxEl    = card?.querySelector('.taxamt');
   if (!card || !pretaxEl || !taxEl) return;
@@ -9095,36 +9130,26 @@ var _htRecData  = null;
 var _htRecTab   = 'all';
 
 // ── TSA 全員生日資料庫 ──
-var _HT_BDAY_DB = [
-  {name:'李亭儀', m:1,  d:1 }, {name:'張嘉文', m:1,  d:4 }, {name:'蔡婉綺', m:1,  d:7 },
-  {name:'曾宥榛', m:1,  d:7 }, {name:'劉怡伶', m:1,  d:10}, {name:'蔡鴻陵', m:1,  d:12},
-  {name:'徐維亨', m:1,  d:13}, {name:'徐唯庭', m:1,  d:18}, {name:'李亭恩', m:1,  d:19},
-  {name:'李軒',   m:1,  d:21}, {name:'李潔慧', m:1,  d:22}, {name:'林菀宣', m:1,  d:24},
-  {name:'吳政哲', m:1,  d:26},
-  {name:'游千慧', m:2,  d:9 }, {name:'施彥宇', m:2,  d:16}, {name:'藍聖鈞', m:2,  d:21},
-  {name:'王品喬', m:2,  d:27},
-  {name:'李品嫺', m:3,  d:11}, {name:'呂世評', m:3,  d:18}, {name:'戴鋅霈', m:3,  d:29},
-  {name:'曾子柔', m:5,  d:6 }, {name:'林冠汝', m:5,  d:26}, {name:'馮文馨', m:5,  d:29},
-  {name:'沈俞君', m:6,  d:11}, {name:'黃淑珍', m:6,  d:16}, {name:'陳家翔', m:6,  d:21},
-  {name:'阮彥馨', m:6,  d:22}, {name:'王婷茹', m:6,  d:29},
-  {name:'歐倩妤', m:7,  d:9 }, {name:'顏政',   m:7,  d:17}, {name:'張智翔', m:7,  d:20},
-  {name:'林蕙芸', m:7,  d:28},
-  {name:'梁筠珮', m:8,  d:4 }, {name:'李雨璇', m:8,  d:14}, {name:'王鈞逸', m:8,  d:18},
-  {name:'李貞霓', m:8,  d:24}, {name:'林仕涵', m:8,  d:27}, {name:'吳雅筑', m:8,  d:28},
-  {name:'廖珮妤', m:8,  d:29},
-  {name:'黃如華', m:9,  d:17}, {name:'盧胤勳', m:9,  d:21},
-  {name:'蔡書溶', m:10, d:9 }, {name:'黃岩',   m:10, d:20}, {name:'鄭安汝', m:10, d:29},
-  {name:'吳映萱', m:11, d:1 }, {name:'林佩芬', m:11, d:5 }, {name:'陳冠孜', m:11, d:4 },
-  {name:'黃馨儀', m:11, d:22}, {name:'邱湘芬', m:11, d:28}, {name:'黃文傳', m:11, d:30},
-  {name:'陳姿璇', m:12, d:1 }, {name:'馬呈欣', m:12, d:1 }, {name:'鄒馨瑩', m:12, d:2 },
-  {name:'王雨涵', m:12, d:7 }, {name:'林俐廷', m:12, d:16}, {name:'何舒維', m:12, d:29}
-];
+// 已清空：原內容硬編碼約 47 位同事真實姓名+生日，公開 repo 會洩露個資，故先移除。
+// TODO（功能暫時失效，待修復）：
+//   「壽星自動帶入」功能（_htBdaysForMonth）原本靠這份清單作為 fallback，
+//   現在改成完全依賴 window._BF_USER_BDAYS，但該變數目前只在管理者開啟
+//   「使用者管理」頁（loadAdminUsers）時才會被填入 → 一般員工開活動詳情頁時
+//   不會自動帶出壽星。修復方向：讓 _syncMembersFromServer()（所有登入者都會
+//   執行）也順手把生日資料寫進 window._BF_USER_BDAYS，而不是只靠 loadAdminUsers。
+//   後端 GAS 的 getMembers 需要連同 birthday 欄位一起回傳。
+var _HT_BDAY_DB = [];
 
 // 取得某月份的壽星名單（回傳帶日期的物件陣列）
 function _htBdaysForMonth(monthNum) {
-  return _HT_BDAY_DB
-    .filter(function(p){ return p.m === monthNum; })
-    .sort(function(a, b){ return a.d - b.d; });
+  // 使用者管理設定的生日為準；未設定者沿用內建 _HT_BDAY_DB 作後備
+  var ub = (typeof window !== 'undefined' && window._BF_USER_BDAYS) || [];
+  var userNames = {};
+  ub.forEach(function(p){ if (p && p.name) userNames[p.name] = true; });
+  var out = {};
+  _HT_BDAY_DB.forEach(function(p){ if (p.m === monthNum && !userNames[p.name]) out[p.name] = {name:p.name, m:p.m, d:p.d}; });
+  ub.forEach(function(p){ if (p && p.m === monthNum) out[p.name] = {name:p.name, m:p.m, d:p.d}; });
+  return Object.keys(out).map(function(k){ return out[k]; }).sort(function(a, b){ return a.d - b.d; });
 }
 
 // ── API 呼叫 (沿用既有 API_URL + token 機制) ──
@@ -9134,8 +9159,11 @@ async function htApi(action, payload) {
   //   會永遠取到 undefined → token 變空字串 → 後端回「請先登入公司帳號」。
   var body = Object.assign({ action: action, token: ((currentUser && currentUser.token) || (window.currentUser && window.currentUser.token)) || '' }, payload || {});
   var res  = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' });
-  return res.json();
+  try { return await res.json(); }
+  catch(e) { return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }
 }
+// 匯出全域：按摩預約模組為獨立 IIFE，需透過 window 取用 htApi（否則 ReferenceError）
+window.htApi = htApi;
 
 // ── OCR 掃描收據 ──
 window.htOcrScan = async function(input) {
@@ -9238,6 +9266,22 @@ function _htUpdateCountdown() {
     return isNaN(d.getTime()) || d < now ? null : { ev: e, d: d };
   }).filter(Boolean).sort(function(a,b){ return a.d - b.d; });
   var wtip = document.getElementById('ht-weather-tip');
+  // ── Hero 下次活動 ──
+  var heroWrap = document.getElementById('ht-hero-next-wrap');
+  var heroNext = document.getElementById('ht-hero-next');
+  if (heroWrap && heroNext) {
+    if (!upcoming.length) {
+      heroWrap.style.display = 'none';
+    } else {
+      var nxt = upcoming[0];
+      var nds = String(nxt.ev.date||'').replace(/\//g,'-');
+      var nparts = nds.split('-');
+      var nwd = ['日','一','二','三','四','五','六'][nxt.d.getDay()];
+      var ndiff = Math.round((nxt.d - now) / 86400000);
+      heroNext.textContent = parseInt(nparts[1]) + '/' + parseInt(nparts[2]) + '（' + nwd + '）' + (ndiff===0?'今天':ndiff===1?'明天':'還有'+ndiff+'天');
+      heroWrap.style.display = '';
+    }
+  }
   if (!upcoming.length) { banner.style.display = 'none'; if (wtip) wtip.style.display = 'none'; return; }
   var next = upcoming[0];
   var diffDays = Math.round((next.d - now) / 86400000);
@@ -9753,14 +9797,27 @@ function _htInitCreatePickers(presetYm) {
   var mEl = document.getElementById('ht-new-month');
   var dEl = document.getElementById('ht-new-date');
   if (mEl && !mEl._flatpickr) {
-    var mopts = { locale: 'zh_tw', disableMobile: true, appendTo: document.body };
+    var mopts = {
+      locale: 'zh_tw', disableMobile: true, appendTo: document.body,
+      onChange: function(dates) {
+        if (!dates.length) return;
+        var selYm = dates[0].getFullYear() + '-' + String(dates[0].getMonth()+1).padStart(2,'0');
+        var budEl = document.getElementById('ht-new-budget');
+        if (budEl) budEl.value = _htBudgetForMonth(selYm);
+      }
+    };
     if (typeof monthSelectPlugin !== 'undefined') {
       mopts.plugins = [ new monthSelectPlugin({ shorthand: false, dateFormat: 'Y 年 n 月' }) ];
-    } else { mopts.dateFormat = 'Y-m'; } // plugin 萬一沒載到的 fallback
+    } else { mopts.dateFormat = 'Y-m'; }
     _htMonthFp = flatpickr(mEl, mopts);
   }
   if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl);
-  if (_htMonthFp && presetYm) _htMonthFp.setDate(presetYm, false);
+  // monthSelectPlugin 的 dateFormat 為 'Y 年 n 月'，無法解析 'YYYY-MM' 字串（會落回 1 月），
+  // 故改傳 Date 物件確保預設月份正確。
+  if (_htMonthFp && presetYm) {
+    var _pp = String(presetYm).split('-');
+    _htMonthFp.setDate(new Date(parseInt(_pp[0], 10), parseInt(_pp[1], 10) - 1, 1), false);
+  }
   if (_htDateFp) _htDateFp.clear();
 }
 function _htSeasonHoliday(ym) {
@@ -9856,6 +9913,7 @@ window.htModalRunAI = async function() {
   resEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:8px 0">正在智慧規劃中，請稍候…</div>';
   resEl.style.display = '';
   _htModalRecResult = null;
+  var r = null;
   try {
     var hc = Number(document.getElementById('ht-new-headcount').value) || 10;
     var bp = Number(document.getElementById('ht-new-budget').value) || 200;
@@ -9867,7 +9925,7 @@ window.htModalRunAI = async function() {
     }
     var sh = _htSeasonHoliday(ym);
     var excludeItems = await _htLoadExcludeItems();
-    var r = await htApi('htRecommendAI', {
+    r = await htApi('htRecommendAI', {
       headcount: hc, budgetPerPerson: bp,
       categoryRatios: preset.ratios,
       seasonHint: sh.label,
@@ -9891,17 +9949,23 @@ window.htModalRunAI = async function() {
     html += '</div>';
     resEl.innerHTML = html;
   } catch(e) {
-    resEl.innerHTML = '<div style="color:#e16b8c;font-size:14px;padding:8px 0">推薦失敗，請稍後再試</div>';
+    var errRaw = (r && r.error) || (e && e.message && e.message !== '無推薦結果' ? e.message : '') || '';
+    var errDetail = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
+    resEl.innerHTML = '<div style="color:#e16b8c;font-size:13px;padding:8px 0">推薦失敗：' + htEsc(errDetail) + '</div>';
   }
   btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
 };
+function _htBudgetForMonth(ym) {
+  var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
+  return m === 7 ? 400 : 200;
+}
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
   var now = new Date();
   var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   _htInitCreatePickers(ym);
   document.getElementById('ht-new-headcount').value = LOCAL_USER_LIST.length || '';
-  document.getElementById('ht-new-budget').value = '200';
+  document.getElementById('ht-new-budget').value = _htBudgetForMonth(ym);
   document.getElementById('ht-new-notes').value = '';
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
@@ -9982,7 +10046,7 @@ window.htSubmitCreate = async function() {
   htCloseCreate();
   toast('✅ 活動已建立');
   await htLoadList();
-  htOpenDetail(r.eventId);
+  if (r && r.eventId) { htOpenDetail(r.eventId); } else { toast('建立失敗', 'error'); }
 };
 
 // ── 探店靈感 ──
@@ -10378,7 +10442,7 @@ function _htRenderDiscoverRec() {
       +   '<div style="font-size:12px;color:#94a3b8;margin-top:2px">訂過 ' + v.totalOrders + ' 次</div>'
       + '</div>'
       + ratingBadge
-      + '<button onclick="htMapSearchVendor((window._htRecPicks[' + i + ']||{}).name)" style="flex-shrink:0;padding:6px 12px;border:1.5px solid #fbcfe8;border-radius:20px;background:#fff;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background=\'#fdf2f8\'" onmouseout="this.style.background=\'#fff\'">🗺 在地圖找</button>'
+      + '<button onclick="htMapSearchVendor(' + JSON.stringify(v.name) + ')" style="flex-shrink:0;padding:6px 12px;border:1.5px solid #fbcfe8;border-radius:20px;background:#fff;color:#e16b8c;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background=\'#fdf2f8\'" onmouseout="this.style.background=\'#fff\'">🗺 在地圖找</button>'
       + '</div>';
   }).join('') + '</div>';
 }
@@ -10567,10 +10631,35 @@ window.htOpenDetail = async function(eventId) {
 
   htRenderDetailHeader();
   htRenderItems();
-  _htShowRepeatWarning();
   htRenderBudget();
   htRenderBirthday();
+  // 預先載入近兩場品項，供重複偵測使用
+  _htPastItemsCache = null;
+  var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
+  if (_pastIds.length) {
+    Promise.all(_pastIds.map(function(id){ return htApi('htGetItems', { eventId: id }); })).then(function(results) {
+      _htPastItemsCache = { vendors: {}, names: {} };
+      results.forEach(function(res) {
+        var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+        items.forEach(function(it) {
+          var vn = _htCanonVendor(it.vendor);
+          if (vn && !/^\d+$/.test(vn)) _htPastItemsCache.vendors[vn] = true;
+          var nm = (it.name || '').trim();
+          if (nm) _htPastItemsCache.names[nm] = true;
+        });
+      });
+      _htCheckRepeatWarning();
+    }).catch(function(){});
+  }
+  _htUpdateQtyHint();
 };
+
+function _htUpdateQtyHint() {
+  var qtyHint = document.getElementById('ht-qty-hint');
+  if (!qtyHint) return;
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  qtyHint.textContent = hc > 0 ? '建議每項訂 ' + Math.ceil(hc / 8) + ' 份（' + hc + ' 人 ÷ 8）' : '';
+}
 
 function htRenderDetailHeader() {
   var ev = _htEvent;
@@ -10589,6 +10678,10 @@ function htRenderDetailHeader() {
   if (_edEl && _edEl._flatpickr) _edEl._flatpickr.setDate(ev.date || '', false); else _edEl.value = ev.date || '';
   document.getElementById('ht-event-headcount').value = ev.headcount || '';
   document.getElementById('ht-event-budget-pp').value = ev.budgetPerPerson || '';
+  var _monthEl = document.getElementById('ht-event-month-display');
+  if (_monthEl) _monthEl.textContent = fmtMonth(ev.month);
+  var _bdEl = document.getElementById('ht-event-bday-disp');
+  if (_bdEl) _bdEl.textContent = (ev.birthdays || []).length;
   // 填入主辦人下拉
   var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
@@ -10638,6 +10731,7 @@ window.htSwitchDetailTab = function(tab) {
 window.htUpdateCalcBudget = function() {
   var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
   var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
+  // 壽星人數＝本月壽星名單長度（名單為唯一來源，加減姓名即連動）
   var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
   var baseBudget = hc * bp;
   var bdayBudget = bdayCount * 40;
@@ -10645,10 +10739,15 @@ window.htUpdateCalcBudget = function() {
   document.getElementById('ht-calc-budget').textContent = fmtMoney(total);
   var fmEl = document.getElementById('ht-budget-formula');
   if (fmEl) {
-    var fStr = hc + '人 × NT$' + bp;
-    if (bdayCount > 0) fStr += ' + ' + bdayCount + '位壽星 × NT$40';
+    var fStr = hc + ' 人 × NT$' + bp;
+    if (bdayCount > 0) fStr += '　＋　' + bdayCount + ' 位壽星 × NT$40';
     fmEl.textContent = fStr;
   }
+  var dispEl = document.getElementById('ht-event-bday-disp');
+  if (dispEl) dispEl.textContent = bdayCount;
+  if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
+  _htUpdateBalance();
+  _htUpdateQtyHint();
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
@@ -10717,11 +10816,64 @@ async function _htShowRepeatWarning() {
 }
 
 function _htUserSelectHtml(idx, cur) {
+  // 負責人選項＝系統管理裡的成員（LOCAL_USER_LIST）
   var o = '<option value="">—</option>';
   LOCAL_USER_LIST.forEach(function(u) {
     o += '<option value="' + htEsc(u.name) + '"' + (u.name === cur ? ' selected' : '') + '>' + htEsc(u.name) + '</option>';
   });
+  // 舊資料若負責人不在成員清單中，補一個選項避免被清空
+  if (cur && LOCAL_USER_LIST.every(function(u){ return u.name !== cur; })) {
+    o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
+  }
   return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#1e293b" onfocus="this.style.borderColor=\'#e16b8c\'" onblur="this.style.borderColor=\'#f1f5f9\'">' + o + '</select>';
+}
+
+var _htPastItemsCache = null;
+
+function _htAutoCategory(name) {
+  var n = (name || '').toLowerCase();
+  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋/.test(n)) return '甜點';
+  if (/拿鐵|奶茶|珍珠|飲料|茶|咖啡|果汁|氣泡|飲品|礦泉水|手搖|可樂|紅茶|綠茶|冰沙|豆漿|燕麥奶|抹茶/.test(n)) return '飲料';
+  if (/三明治|便當|壽司|沙拉|輕食|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅/.test(n)) return '主食';
+  if (/水果|草莓|芒果|西瓜|葡萄|蘋果|梨|桃|荔枝|龍眼|鳳梨|藍莓|奇異果|香蕉|橘子|柳橙|百香果|哈密瓜/.test(n)) return '水果';
+  return null;
+}
+
+function _htUpdateBalance() {
+  var totalEl = document.getElementById('ht-bal-total');
+  var usedEl  = document.getElementById('ht-bal-used');
+  var remEl   = document.getElementById('ht-bal-remain');
+  if (!totalEl || !usedEl || !remEl) return;
+  var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  var bp = (_htEvent && _htEvent.budgetPerPerson) || 0;
+  var totalBudget = hc * bp + bdayCount * 40;
+  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0);
+  var remain = totalBudget - used;
+  totalEl.textContent = fmtMoney(totalBudget);
+  usedEl.textContent  = fmtMoney(used);
+  remEl.textContent   = fmtMoney(Math.abs(remain));
+  remEl.style.color   = remain >= 0 ? '#1e9d6b' : '#ef4444';
+  remEl.parentElement.childNodes[0].textContent = remain >= 0 ? '餘額 ' : '超支 ';
+}
+
+function _htCheckRepeatWarning() {
+  var warning = document.getElementById('ht-repeat-warning');
+  var chips   = document.getElementById('ht-repeat-chips');
+  if (!warning || !chips || !_htPastItemsCache) return;
+  var hits = {};
+  _htItems.forEach(function(it) {
+    var vn = _htCanonVendor(it.vendor);
+    if (vn && !/^\d+$/.test(vn) && _htPastItemsCache.vendors[vn]) hits[vn] = '廠商';
+    var nm = (it.name || '').trim();
+    if (nm && _htPastItemsCache.names[nm]) hits[nm] = '品名';
+  });
+  var keys = Object.keys(hits);
+  if (!keys.length) { warning.style.display = 'none'; return; }
+  chips.innerHTML = keys.map(function(k) {
+    return '<span style="display:inline-block;padding:3px 10px;background:#fef3c7;border:1px solid #fbbf24;border-radius:12px;font-size:12px;color:#92400e">🔁 ' + htEsc(k) + ' <span style="opacity:.65">(' + hits[k] + ')</span></span>';
+  }).join('');
+  warning.style.display = '';
 }
 
 function htRenderItems() {
@@ -10740,21 +10892,23 @@ function htRenderItems() {
     var td = 'style="padding:8px 6px;vertical-align:middle"';
     var tdR = 'style="padding:8px 6px;vertical-align:middle;text-align:right"';
     return '<tr style="border-bottom:1px solid #f5f5f5" id="ht-row-'+idx+'">'
-      + '<td '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
-      + '<td '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
-      + '<td '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#1e293b;background:#fff;cursor:pointer">'+catOpts+'</select></td>'
-      + '<td '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
-      + '<td '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
-      + '<td style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#be185d;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
-      + '<td '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
-      + '<td style="padding:8px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
-      + '<td style="padding:8px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#cbd5e1\'" title="刪除">×</button></td>'
+      + '<td data-label="品名" '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
+      + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
+      + '<td data-label="類別" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #f1f5f9;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#1e293b;background:#fff;cursor:pointer">'+catOpts+'</select></td>'
+      + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
+      + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#e16b8c\';this.style.background=\'#fffbfc\'" onblur="this.style.borderColor=\'#f1f5f9\';this.style.background=\'#fff\'"></td>'
+      + '<td data-label="小計" style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#be185d;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
+      + '<td data-label="負責人" '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
+      + '<td data-label="已訂" style="padding:8px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
+      + '<td class="ht-it-del" style="padding:8px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#cbd5e1;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#cbd5e1\'" title="刪除">×</button></td>'
       + '</tr>';
   }).join('');
   document.getElementById('ht-total-cell').textContent = fmtMoney(total);
+  _htUpdateBalance();
 }
 
 function htEsc(s) { return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+window.htEsc = htEsc; // 按摩模組（獨立 IIFE）會用到，需匯出全域
 
 window.htItemChange = function(el) {
   var idx = parseInt(el.dataset.idx);
@@ -10764,9 +10918,21 @@ window.htItemChange = function(el) {
     _htItems[idx][f] = Number(val) || 0;
     _htItems[idx].subtotal = (_htItems[idx].unitPrice||0) * (_htItems[idx].qty||0);
     document.getElementById('ht-sub-'+idx).textContent = fmtMoney(_htItems[idx].subtotal);
-    // update total
     var t = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
     document.getElementById('ht-total-cell').textContent = fmtMoney(t);
+    _htUpdateBalance();
+  } else if (f === 'name') {
+    _htItems[idx][f] = val;
+    var autocat = _htAutoCategory(val);
+    if (autocat) {
+      _htItems[idx].category = autocat;
+      var row = document.getElementById('ht-row-' + idx);
+      if (row) { var cs = row.querySelector('[data-f="category"]'); if (cs) cs.value = autocat; }
+    }
+    _htCheckRepeatWarning();
+  } else if (f === 'vendor') {
+    _htItems[idx][f] = val;
+    _htCheckRepeatWarning();
   } else {
     _htItems[idx][f] = val;
   }
@@ -10813,32 +10979,13 @@ function htRenderBudget() {
   var pct       = total > 0 ? Math.min(Math.round(actual/total*100),100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
-  // 預算公式說明
-  var formulaHtml = '<div style="background:#fff8fb;border:1.5px solid #fde4ef;border-radius:12px;padding:14px 18px;margin-bottom:16px;font-size:14px;line-height:2">'
-    + '<div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:6px">📐 預算計算式</div>'
-    + '<div style="color:#374151">'
-    + hc + ' 人 × NT$' + bp + ' = <strong>' + fmtMoney(baseBudget) + '</strong>'
-    + (bdayCount > 0
-      ? '<br>+ ' + bdayCount + ' 位壽星 × NT$40 = <strong>' + fmtMoney(bdayBudget) + '</strong>'
-      : '')
-    + '<br style="display:' + (bdayCount > 0 ? 'block' : 'none') + '">'
-    + '<span style="border-top:1px solid #fde4ef;display:block;margin:4px 0;padding-top:4px">當月總預算 <strong style="font-size:16px;color:#e16b8c">' + fmtMoney(total) + '</strong></span>'
-    + '</div>'
-    + '</div>';
-  document.getElementById('ht-budget-cards').insertAdjacentHTML('beforebegin', '');
-
+  // 預算計算式已移至左側「活動設定」面板（避免重複），此處僅保留結算卡片
   var cards = [
     { label:'總預算', val: fmtMoney(total), icon:'💰', color:'#6366f1' },
     { label:'午茶支出', val: fmtMoney(actual), icon:'☕', color:'#e16b8c' },
     { label:'慶生預算', val: fmtMoney(bdayBudget), icon:'🎂', color:'#f59e0b' },
     { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️', color: surplusColor },
   ];
-  document.getElementById('ht-budget-formula-box') && (document.getElementById('ht-budget-formula-box').outerHTML = '');
-  var fbox = document.createElement('div');
-  fbox.id = 'ht-budget-formula-box';
-  fbox.innerHTML = formulaHtml;
-  var cardsEl = document.getElementById('ht-budget-cards');
-  cardsEl.parentNode.insertBefore(fbox, cardsEl);
   document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
     return '<div style="background:#fff;border-radius:14px;border:1px solid #f1f5f9;padding:18px">'
       + '<div style="font-size:22px;margin-bottom:8px">'+c.icon+'</div>'
@@ -10876,7 +11023,10 @@ window.htRunOptimize = async function() {
   var hc = Number(document.getElementById('ht-opt-headcount').value);
   var bp = Number(document.getElementById('ht-opt-budget').value);
   if (!hc || !bp) { toast('請填寫人數與每人預算'); return; }
+  var calcBtn = document.querySelector('button[onclick="htRunOptimize()"]');
+  if (calcBtn) { calcBtn.disabled = true; calcBtn.textContent = '計算中…'; }
   var r = await htApi('htRecommendAI', { headcount: hc, budgetPerPerson: bp });
+  if (calcBtn) { calcBtn.disabled = false; calcBtn.textContent = '計算'; }
   if (!r || !r.ok) { toast('計算失敗：' + (r && r.error || '')); return; }
   _htRecData = r;
   var resultEl = document.getElementById('ht-optimize-result');
@@ -10914,7 +11064,7 @@ window.htRenderRecommend = htRenderRecommend;
 window.htSwitchRecTab = function(tab) {
   _htRecTab = tab;
   document.querySelectorAll('.ht-rtab').forEach(function(b){
-    var isActive = b.textContent.trim() === (tab==='all'?'全部':tab);
+    var isActive = b.dataset.tab ? b.dataset.tab === tab : b.textContent.trim() === (tab==='all'?'全部':tab);
     b.classList.toggle('active', isActive);
   });
   if (_htRecData) htRenderRecommendList(_htRecData);
@@ -11012,7 +11162,7 @@ function htRenderMenuCard() {
     + '</tr></thead>'
     + '<tbody>'
     + '<tr><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px">總人數/預算</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-size:14px">' + bp + '</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:center;font-size:14px">' + hc + '</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + (hc * bp).toLocaleString() + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>'
-    + (bdayList.length > 0 ? '<tr><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px">' + fmtMonth(ev.month).replace(/\d+年/, '') + '慶生 ' + bdayList.length + ' 位壽星（$40）</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-size:14px">40</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:center;font-size:14px">' + hc + '</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + bdayActual.toLocaleString() + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>' : '')
+    + (bdayList.length > 0 ? '<tr><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px">' + fmtMonth(ev.month).replace(/\d+年/, '') + '慶生 ' + bdayList.length + ' 位壽星（$40）</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-size:14px">40</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:center;font-size:14px">' + bdayList.length + '</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + bdayActual.toLocaleString() + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>' : '')
     + '<tr><td colspan="3" style="border:1px solid #d1d5db;padding:10px 14px;text-align:right;font-weight:700;font-size:14px">支出合計：</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + grandTotal.toLocaleString() + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>'
     + '<tr><td colspan="3" style="border:1px solid #d1d5db;padding:10px 14px;text-align:right;font-weight:700;font-size:14px">總預算：</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + budget.toLocaleString() + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>'
     + '<tr><td colspan="3" style="border:1px solid #d1d5db;padding:10px 14px;text-align:right;font-weight:700;font-size:14px;color:' + (surplus >= 0 ? '#15803d' : '#dc2626') + '">預算結餘：</td><td style="border:1px solid #d1d5db;padding:10px 12px;text-align:right;font-weight:800;font-size:14px;color:' + (surplus >= 0 ? '#15803d' : '#dc2626') + '">' + Math.abs(surplus).toLocaleString() + (surplus < 0 ? '（超支）' : '') + '</td><td style="border:1px solid #d1d5db;padding:10px 14px;font-size:14px"></td></tr>'
@@ -11024,9 +11174,13 @@ function htRenderMenuCard() {
 }
 
 window.htPrintMenu = function() {
+  if (!_htEvent) { toast('請先開啟活動'); return; }
+  // 申請單內容只在切到 menu tab 時才渲染，但該分頁已停用，故列印前先即時產生內容
+  htRenderMenuCard();
   var card = document.getElementById('ht-menu-card');
-  if (!card) return;
+  if (!card || !card.innerHTML.trim()) { toast('沒有可列印的內容'); return; }
   var w = window.open('', '_blank');
+  if (!w) { toast('列印視窗被瀏覽器封鎖，請允許彈出視窗後再試'); return; }
   w.document.write('<html><head><meta charset="utf-8"><title>TSA High Tea Day 申請單</title>'
     + '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">'
     + '<style>'
@@ -11045,6 +11199,7 @@ function htRenderBirthday() {
   var ev = _htEvent;
   var list = ev.birthdays || [];
   var el = document.getElementById('ht-birthday-list');
+  if (!el) return; // 壽星名單已改為「活動設定」面板的人數輸入，此區塊已移除
   var monthNum = parseInt((_evMonth(ev) || '').slice(5, 7), 10) || 0;
   var dbBdays = monthNum ? _htBdaysForMonth(monthNum) : [];
 
@@ -11070,7 +11225,7 @@ function htRenderBirthday() {
             + '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="margin-left:6px;background:#e16b8c;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
             : '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="background:#e16b8c;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
           )
-        + '</div>';
+        + '</div></div>';
     }).join('');
   } else {
     html = '<div style="color:#94a3b8;font-size:14px;text-align:center;padding:20px">本月無壽星</div>';
@@ -11247,8 +11402,9 @@ window.htAssistRun = async function() {
     payload.corporateNeeds = cn;
     payload.context = '請推薦適合企業公司下午茶的品項組合，重點考量：' + cn.join('、') + '。';
   }
+  var r = null;
   try {
-    var r = await htApi('htRecommendAI', payload);
+    r = await htApi('htRecommendAI', payload);
     var items = (r && (r.topItems || r.items)) || [];
     if (!items.length) throw new Error((r && r.error) || '無推薦結果');
     var modeLabel = { plan:'本月規劃', trend:'社群熱品', corp:'企業團餐' }[_htAssistMode] || '';
@@ -11277,7 +11433,9 @@ window.htAssistRun = async function() {
     html += '</div>';
     resEl.innerHTML = html;
   } catch(e) {
-    resEl.innerHTML = '<div style="text-align:center;padding:20px;color:#e16b8c;font-size:14px">推薦失敗，請稍後再試</div>';
+    var errRaw = (e && e.message && e.message !== '無推薦結果') ? e.message : '';
+    var errMsg = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
+    resEl.innerHTML = '<div style="text-align:center;padding:20px;color:#e16b8c;font-size:14px">推薦失敗：' + htEsc(errMsg) + '</div>';
   }
   goBtn.disabled = false; goBtn.textContent = '🔄 重新規劃';
 };
@@ -11296,6 +11454,27 @@ var _msData = null;
 var _msSlotTemplates = [];
 var _msTab = 'calendar';
 var _msPendingRequests = [];
+
+// ── 本地持久化（後端尚未實作 massage 端點，回「未知動作」，故以 localStorage 保存）──
+function _msStoreKey() {
+  return 'bf_ms_' + (((_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email)) || 'guest');
+}
+function _msSaveLocal() {
+  if (!_msData) return;
+  try {
+    localStorage.setItem(_msStoreKey(), JSON.stringify({
+      openDates: _msData.openDates || {},
+      myBookings: _msData.myBookings || [],
+      allBookings: _msData.allBookings || [],
+      pendingRequests: _msPendingRequests || [],
+      settings: _msData.settings || null
+    }));
+  } catch(e) {}
+}
+function _msLoadLocal() {
+  try { var s = localStorage.getItem(_msStoreKey()); return s ? JSON.parse(s) : null; }
+  catch(e) { return null; }
+}
 
 // ── 初始化 ──
 window.massageLoad = async function() {
@@ -11323,6 +11502,15 @@ window.massageLoad = async function() {
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: []
     };
+    // 套用本地保存的資料（開放日期、預約、設定）
+    var _saved = _msLoadLocal();
+    if (_saved) {
+      if (_saved.openDates) _msData.openDates = _saved.openDates;
+      if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
+      if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
+      if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
+      if (_saved.settings) _msData.settings = _saved.settings;
+    }
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
   }
@@ -11451,6 +11639,7 @@ function msRenderCal() {
   msRenderUpcoming();
   if (_msSelectedDate) msShowSlots(_msSelectedDate);
   else { document.getElementById('ms-slots-panel').style.display = 'none'; document.getElementById('ms-no-slots').style.display = ''; }
+  _msSaveLocal(); // 每次日曆重繪時保存本地狀態（涵蓋預約/取消/報到/開放日期等變更）
 }
 
 window.msSelectDate = function(dateStr) { _msSelectedDate = dateStr; msRenderCal(); };
@@ -11474,9 +11663,9 @@ function msRenderUpcoming() {
     var avail = total - allBooked;
     var dateObj = new Date(d);
     var label = (dateObj.getMonth()+1)+'/'+(dateObj.getDate())+' ('+['日','一','二','三','四','五','六'][dateObj.getDay()]+')';
-    return '<div onclick="msFocusDate(\''+d+'\')" style="flex-shrink:0;padding:10px 14px;background:'+(avail>0?'#f0fdf4':'#f8fafc')+';border:1.5px solid '+(avail>0?'#86efac':'#e2e8f0')+';border-radius:12px;cursor:pointer;min-width:90px;text-align:center">'
+    return '<div onclick="msFocusDate(\''+d+'\')" style="flex-shrink:0;padding:10px 14px;background:'+(avail>0?'#fff0f5':'#f8fafc')+';border:1.5px solid '+(avail>0?'#f9a8c9':'#e2e8f0')+';border-radius:12px;cursor:pointer;min-width:90px;text-align:center">'
       +'<div style="font-size:13px;font-weight:700;color:#0f172a">'+label+'</div>'
-      +'<div style="font-size:11px;color:'+(avail>0?'#16a34a':'#94a3b8')+'">'+( avail>0 ? '剩 '+avail+' 位' : '已額滿')+'</div>'
+      +'<div style="font-size:11px;color:'+(avail>0?'#e16b8c':'#94a3b8')+'">'+( avail>0 ? '剩 '+avail+' 位' : '已額滿')+'</div>'
       +(myBooked?'<div style="font-size:10px;color:#6366f1">✓ 已預約</div>':'')
       +'</div>';
   }).join('');
@@ -11530,7 +11719,7 @@ function msShowSlots(dateStr) {
       else badge = '<span style="background:linear-gradient(135deg,#fde4ef,#fff0f5);color:#e16b8c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">💆 已預約</span>';
     }
     var remaining = s.remaining > 0
-      ? '<span style="background:#f0fdf4;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">剩 ' + s.remaining + ' 位</span>'
+      ? '<span style="background:#fff0f5;color:#e16b8c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">剩 ' + s.remaining + ' 位</span>'
       : '<span style="background:#f1f5f9;color:#94a3b8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">額滿</span>';
     var actionBtn = '';
     if (isMySlot && myBook && myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
@@ -11581,32 +11770,42 @@ function msSlotsForDate(dateStr, slotTemplates) {
   var tmpl = slotTemplates || _msSlotTemplates;
   var allBk = (_msData && _msData.allBookings) || [];
   return tmpl.map(function(t){
-    var booked = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && b.status==='booked'; }).length;
+    var booked = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && (b.status==='booked' || b.status==='attended'); }).length;
     return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked) };
   }).sort(function(a,b){ return a.time.localeCompare(b.time); });
 }
 
 // ── 預約 ──
 window.msBook = async function(date, timeSlot) {
+  if (window._msBookLock) return;
+  window._msBookLock = true;
+  try {
   if (!_msData) return;
   if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
   var bid = 'BK' + Date.now();
+  // 後端 massage 端點尚未實作（回「未知動作」），採本地優先；若日後實作則沿用回傳的 bookingId
   try {
     var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
-    bid = (r && r.bookingId) || bid;
-    if (r && r.ok) { toast('✅ 預約成功！'); } else { toast('❌ ' + ((r&&r.error)||'預約失敗')); return; }
-  } catch(e) { toast('✅ 預約成功！'); }
+    if (!r || !r.ok) { toast('預約失敗', 'error'); return; }
+    if (r.bookingId) bid = r.bookingId;
+  } catch(e) {}
+  var uname = (window.currentUser && window.currentUser.name) || '';
   if (!_msData.myBookings) _msData.myBookings = [];
-  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:(window.currentUser&&window.currentUser.name)||'' });
+  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname });
   if (!_msData.allBookings) _msData.allBookings = [];
-  _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:(window.currentUser&&window.currentUser.name)||'', createdAt:new Date().toISOString() });
+  _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:uname, createdAt:new Date().toISOString() });
+  _msSaveLocal();
+  toast('✅ 預約成功！');
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  } finally { window._msBookLock = false; }
 };
 
 // ── 取消（在限額內直接取消） ──
 window.msCancel = async function(bookingId, date) {
   if (!confirm('確定要取消 ' + date + ' 的預約嗎？')) return;
-  try { await htApi('massageCancel', { bookingId }); } catch(e) {}
+  var ok = false;
+  try { var cr = await htApi('massageCancel', { bookingId }); ok = cr && cr.ok; } catch(e) {}
+  if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
   _msUpdateBookingStatus(bookingId, 'cancelled');
   _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
   toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings();
@@ -11628,6 +11827,7 @@ window.msRequestCancel = async function(bookingId, date) {
 window.msRequestDelete = async function(bookingId, date) {
   if (!confirm('申請刪除後需等待管理員審核，確定嗎？')) return;
   var bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
+  if (bk && bk.deleteRequested) { toast('已申請刪除', 'warning'); return; }
   if (bk) bk.deleteRequested = true;
   var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
   _msPendingRequests.push(req);
@@ -11657,10 +11857,20 @@ function msRenderMyBookings() {
   var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; }).sort(function(a,b){return a.date.localeCompare(b.date);});
   var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; }).sort(function(a,b){return b.date.localeCompare(a.date);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
-  upEmpty.style.display = upcoming.length ? 'none' : ''; upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join('');
+  if (upEmpty) upEmpty.style.display = upcoming.length ? 'none' : ''; if (upEl) upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join('');
   var hiEl = document.getElementById('ms-my-history'); var hiEmpty = document.getElementById('ms-my-history-empty');
-  hiEmpty.style.display = history.length ? 'none' : ''; hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
+  if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : ''; if (hiEl) hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
 }
+
+// 即將到來 / 歷史紀錄 分段切換
+window.msSwitchMyTab = function(tab) {
+  var isUp = tab !== 'history';
+  document.querySelectorAll('.ms-myseg').forEach(function(b){ b.classList.toggle('active', b.id === 'ms-myseg-' + tab); });
+  var upWrap = document.getElementById('ms-my-upcoming-wrap');
+  var hiWrap = document.getElementById('ms-my-history-wrap');
+  if (upWrap) upWrap.style.display = isUp ? '' : 'none';
+  if (hiWrap) hiWrap.style.display = isUp ? 'none' : '';
+};
 
 function msBookingCard(b, isUpcoming) {
   var s = b.status || 'booked';
@@ -11707,6 +11917,7 @@ function msRenderAdmin() {
   var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-free': s.cancelFreeLimit||1, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||24, 'ms-cfg-violation': s.violationPenaltyCount||3 };
   Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if(el) el.value = fields[id]; });
   msRenderSlotTemplates();
+  msRenderDraftSlots();
   msRenderAdminTable();
 }
 
@@ -11753,6 +11964,8 @@ window.msApproveRequest = function(reqId) {
     toast('✅ 已批准刪除申請');
   }
   msRenderPendingRequests(); msRenderAdminTable();
+  msRenderCal(); msRenderMyBookings();
+  _msSaveLocal();
   htApi('massageApproveRequest', { reqId }).catch(function(){});
 };
 
@@ -11763,6 +11976,7 @@ window.msRejectRequest = function(reqId) {
   var mb = (_msData.myBookings||[]).find(function(b){return b.bookingId===req.bookingId;});
   if (mb) { mb.cancelRequested = false; mb.deleteRequested = false; }
   msRenderPendingRequests(); toast('已拒絕申請');
+  _msSaveLocal();
   htApi('massageRejectRequest', { reqId }).catch(function(){});
 };
 
@@ -11785,20 +11999,88 @@ function msRenderOpenDates() {
       + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + parseInt(parts2[1]) + '月' + parseInt(parts2[2]) + '日 <span style="font-size:12px;color:#94a3b8">(' + ds + ')</span></div>'
       + '<div style="font-size:12px;color:#64748b;margin-top:3px">' + slots2.map(function(s){return s.time+' ×'+s.capacity;}).join(' · ') + ' &nbsp;·&nbsp; 已預約 ' + dayBk2.length + '/' + total2 + '</div>'
       + '</div>'
+      + '<button onclick="msEditDay(\'' + ds + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">編輯</button>'
       + '<button onclick="msCloseDate(\'' + ds + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">關閉</button>'
       + '</div>';
   }).join('');
 }
 
-window.msAddOpenDate = function() {
+// ── 開放日期：整合式草稿編輯器（日期＋時段＋名額一次完成、每天可單獨編輯） ──
+var _msDraftSlots = [];
+function _msTimeSelectHtml(selected) {
+  var opts = '';
+  for (var h = 8; h <= 20; h++) {
+    for (var mn = 0; mn < 60; mn += 30) {
+      var t = pad2(h) + ':' + pad2(mn);
+      opts += '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
+    }
+  }
+  return opts;
+}
+function msRenderDraftSlots() {
+  var el = document.getElementById('ms-draft-slots'); if (!el) return;
+  if (!_msDraftSlots.length) {
+    el.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:4px 0 8px">尚未設定時段——點下方「新增時段」或「套用常用時段」</div>';
+    return;
+  }
+  var selStyle = 'border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer';
+  var capStyle = 'width:62px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;text-align:center;outline:none';
+  el.innerHTML = _msDraftSlots.map(function(s, i) {
+    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+      + '<select onchange="msDraftSlotChange(' + i + ',\'time\',this.value)" style="' + selStyle + ';flex:1">' + _msTimeSelectHtml(s.time) + '</select>'
+      + '<span style="font-size:12px;color:#64748b;white-space:nowrap">名額</span>'
+      + '<input type="number" min="1" max="20" value="' + s.capacity + '" onchange="msDraftSlotChange(' + i + ',\'capacity\',this.value)" style="' + capStyle + '">'
+      + '<button onclick="msDraftRemoveSlot(' + i + ')" title="移除" style="background:none;border:none;color:#cbd5e1;font-size:16px;cursor:pointer;font-family:inherit;padding:0 4px" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#cbd5e1\'">✕</button>'
+      + '</div>';
+  }).join('');
+}
+window.msDraftAddSlot = function() { _msDraftSlots.push({ time:'10:00', capacity:2 }); msRenderDraftSlots(); };
+window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
+window.msDraftSlotChange = function(i, f, v) {
+  if (!_msDraftSlots[i]) return;
+  if (f === 'capacity') _msDraftSlots[i].capacity = Math.max(1, parseInt(v) || 1);
+  else _msDraftSlots[i].time = v;
+};
+window.msDraftApplyTemplate = function() {
+  _msDraftSlots = (_msSlotTemplates || []).map(function(t){ return { time:t.time, capacity:t.capacity }; });
+  if (!_msDraftSlots.length) { toast('尚未設定常用時段'); return; }
+  msRenderDraftSlots();
+};
+// 重置編輯器為「新增」狀態
+window.msResetOpenEditor = function() {
+  _msDraftSlots = [];
+  var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = '';
+  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '新增開放日';
+  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = 'none';
+  msRenderDraftSlots();
+};
+// 載入某日到編輯器修改
+window.msEditDay = function(ds) {
+  var entry = (_msData && _msData.openDates || {})[ds]; if (!entry) return;
+  var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = ds;
+  _msDraftSlots = (entry.slots || []).map(function(s){ return { time:s.time, capacity:s.capacity }; });
+  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '編輯 ' + ds + ' 的開放時段';
+  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = '';
+  msRenderDraftSlots();
+  var ed = document.getElementById('ms-open-editor'); if (ed) ed.scrollIntoView({ behavior:'smooth', block:'center' });
+};
+// 確認開放（新增或覆蓋既有日期）
+window.msConfirmOpenDate = function() {
+  if (!_msData) return;
   var dateVal = document.getElementById('ms-open-date-inp').value;
   if (!dateVal) { toast('請選擇日期'); return; }
-  if (!_msData) return;
+  if (!_msDraftSlots.length) { toast('請至少新增一個時段'); return; }
+  // 去重（同時間取後者）、排序
+  var byTime = {};
+  _msDraftSlots.forEach(function(s){ byTime[s.time] = { time:s.time, capacity:Math.max(1, s.capacity||1) }; });
+  var slots = Object.keys(byTime).sort().map(function(k){ return byTime[k]; });
   if (!_msData.openDates) _msData.openDates = {};
-  if (_msData.openDates[dateVal]) { toast('此日期已開放'); return; }
-  _msData.openDates[dateVal] = { slots: _msSlotTemplates.map(function(t){return {time:t.time,capacity:t.capacity};}) };
-  msRenderOpenDates(); msRenderCal(); toast('✅ ' + dateVal + ' 已開放');
-  htApi('massageSetOpenDate', { date: dateVal, slots: _msData.openDates[dateVal].slots }).catch(function(){});
+  var existed = !!_msData.openDates[dateVal];
+  _msData.openDates[dateVal] = { slots: slots };
+  msRenderOpenDates(); msRenderCal();
+  toast(existed ? ('✅ 已更新 ' + dateVal + ' 的時段') : ('✅ ' + dateVal + ' 已開放'));
+  msResetOpenEditor();
+  htApi('massageSetOpenDate', { date: dateVal, slots: slots }).catch(function(){});
 };
 
 window.msCloseDate = function(ds) {
@@ -11810,6 +12092,8 @@ window.msCloseDate = function(ds) {
 
 // ── 時段樣板 ──
 function msRenderSlotTemplates() {
+  var newSel = document.getElementById('ms-new-slot-time');
+  if (newSel && !newSel.options.length) newSel.innerHTML = _msTimeSelectHtml('10:00');
   var list = document.getElementById('ms-slot-template-list'); if (!list) return;
   list.innerHTML = _msSlotTemplates.map(function(t,i){
     return '<div style="display:flex;align-items:center;gap:8px;background:#f8fafc;border-radius:10px;padding:9px 12px;border:1px solid #e2e8f0">'
@@ -11833,8 +12117,10 @@ window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTe
 
 window.msSaveSettings = async function() {
   var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelFreeLimit: parseInt(document.getElementById('ms-cfg-cancel-free').value)||1, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||24, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
-  try { var r = await htApi('massageSaveSettings', { settings: s }); if (r&&r.ok) { if(_msData) _msData.settings=s; toast('✅ 設定已儲存'); } else toast('❌ 儲存失敗'); }
-  catch(e) { if(_msData) _msData.settings=s; toast('✅ 設定已儲存'); }
+  if (_msData) _msData.settings = s;
+  _msSaveLocal();
+  toast('✅ 設定已儲存');
+  try { await htApi('massageSaveSettings', { settings: s }); } catch(e) {}
 };
 
 // ── 所有預約紀錄（admin） ──
@@ -11932,13 +12218,13 @@ function bulletinRender() {
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">'
       + '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">'
       + (p.pinned ? '<span style="font-size:11px;background:#ede9fe;color:#6366f1;border-radius:20px;padding:2px 8px;font-weight:700;white-space:nowrap;flex-shrink:0">📌 置頂</span>' : '')
-      + '<span style="font-size:14px;font-weight:700;color:#0f172a">' + p.title + '</span>'
+      + '<span style="font-size:14px;font-weight:700;color:#0f172a">' + htEsc(p.title) + '</span>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
       + '<span style="font-size:12px;color:#94a3b8">' + dt + '</span>'
       + (isAdmin ? '<button onclick="bulletinDelete(\'' + p.id + '\')" style="background:none;color:#cbd5e1;border:none;cursor:pointer;font-size:14px;padding:0 2px;line-height:1" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#cbd5e1\'">✕</button>' : '')
       + '</div></div>'
-      + '<div style="font-size:13px;color:#374151;line-height:1.7;white-space:pre-line">' + p.content + '</div>'
+      + '<div style="font-size:13px;color:#374151;line-height:1.7;white-space:pre-line">' + htEsc(p.content) + '</div>'
       + '<div style="font-size:11px;color:#94a3b8;margin-top:6px">— ' + (p.author||'') + '</div>'
       + '</div></div>';
   }).join('');
@@ -11948,7 +12234,7 @@ window.bulletinOpenNew = function() {
   document.getElementById('bulletin-title-inp').value = '';
   document.getElementById('bulletin-body-inp').value = '';
   document.getElementById('bulletin-pin-inp').checked = false;
-  document.getElementById('bulletin-modal').style.display = '';
+  document.getElementById('bulletin-modal').style.display = 'flex';
 };
 window.bulletinCloseModal = function() { document.getElementById('bulletin-modal').style.display = 'none'; };
 window.bulletinSubmit = function() {
@@ -12167,26 +12453,6 @@ if (document.getElementById('bulletin-list')) bulletinRender();
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">常用店家快選</div>
         <div id="ht-modal-store-chips" style="display:flex;flex-wrap:wrap;gap:6px"></div>
       </div>
-      <!-- 智慧規劃 -->
-      <div style="border-top:1.5px dashed #f5b8cb;padding-top:14px">
-        <div style="font-size:14px;font-weight:700;color:#e16b8c;margin-bottom:10px">✨ 智慧規劃</div>
-        <div style="margin-bottom:10px">
-          <span id="ht-modal-season-hint" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
-          <div id="ht-modal-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="ht-ratio-chip" data-preset="balanced" onclick="htSelectRatioPreset(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
-            <button class="ht-ratio-chip" data-preset="sweet" onclick="htSelectRatioPreset(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
-            <button class="ht-ratio-chip" data-preset="light" onclick="htSelectRatioPreset(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
-            <button class="ht-ratio-chip" data-preset="savory" onclick="htSelectRatioPreset(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
-          </div>
-          <div id="ht-modal-ratio-detail" style="font-size:12px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
-        </div>
-        <button id="ht-modal-ai-btn" onclick="htModalRunAI()" style="width:100%;margin-top:12px;padding:10px;border:2px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe0ec'" onmouseout="this.style.background='#fff0f5'">✨ AI 幫我規劃品項</button>
-        <div id="ht-modal-ai-result" style="display:none"></div>
-      </div>
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
       <button onclick="htCloseCreate()" style="padding:11px 20px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">取消</button>
@@ -12222,6 +12488,7 @@ if (document.getElementById('bulletin-list')) bulletinRender();
 
 </body>
 </html>
+
 
 
 
