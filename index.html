@@ -2939,6 +2939,16 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
   </div>
 
+  <!-- 📋 確認預約名單（所有人可見，僅顯示已確認） -->
+  <div id="ms-public-bookings-wrap" style="margin-top:24px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <span style="display:inline-block;width:4px;height:16px;background:linear-gradient(180deg,#6366f1,#a78bfa);border-radius:2px"></span>
+      <span style="font-size:15px;font-weight:800;color:#0f172a">確認預約名單</span>
+      <span style="font-size:12px;color:#94a3b8;font-weight:400">近期已確認的按摩預約</span>
+    </div>
+    <div id="ms-public-bookings"></div>
+  </div>
+
   <!-- 📋 我的預約 panel -->
   <div id="ms-panel-my" style="margin-top:24px">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -11776,7 +11786,7 @@ window.massageLoad = async function() {
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
   }
-  msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   var tabBar = document.getElementById('ms-tab-bar');
   if (tabBar) tabBar.style.display = (_msData && _msData.isAdmin) ? 'flex' : 'none';
   // QR 報到：偵測 sessionStorage 中待處理的報到意圖
@@ -11786,7 +11796,7 @@ window.massageLoad = async function() {
     try { sessionStorage.removeItem('ms_qr_checkin'); } catch(e) {}
     setTimeout(function() { _msShowCheckinResult(_pendingQrDate); }, 600);
   }
-  msFetchData().then(function(){ msRenderCal(); msRenderQuota(); msRenderMyBookings(); }).catch(function(){});
+  msFetchData().then(function(){ msRenderCal(); msRenderQuota(); msRenderMyBookings(); msRenderPublicBookings(); }).catch(function(){});
 };
 
 async function msFetchData() {
@@ -12064,7 +12074,7 @@ window.msBook = async function(date, timeSlot) {
   _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:uname, createdAt:new Date().toISOString() });
   _msSaveLocal();
   toast('✅ 預約成功！');
-  msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   } finally { window._msBookLock = false; }
 };
 
@@ -12076,7 +12086,7 @@ window.msCancel = async function(bookingId, date) {
   if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
   _msUpdateBookingStatus(bookingId, 'cancelled');
   _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
-  toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
 };
 
 // ── 申請取消（超過限額或已過截止時間，需管理員審核） ──
@@ -12087,7 +12097,7 @@ window.msRequestCancel = async function(bookingId, date) {
   _msPendingRequests.push(req);
   if (_msData) { _msData.pendingRequests = _msPendingRequests; var bk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;}); if(bk) bk.cancelRequested = true; }
   toast('✅ 已提交取消申請，等待管理員審核');
-  msRenderCal(); msRenderMyBookings();
+  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   try { await htApi('massageRequestCancel', { bookingId, reason }); } catch(e) {}
 };
 
@@ -12101,7 +12111,7 @@ window.msRequestDelete = async function(bookingId, date) {
   _msPendingRequests.push(req);
   if (_msData) _msData.pendingRequests = _msPendingRequests;
   toast('✅ 已提交刪除申請，等待管理員審核');
-  msRenderCal(); msRenderMyBookings();
+  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   try { await htApi('massageRequestDelete', { bookingId }); } catch(e) {}
 };
 
@@ -12109,7 +12119,7 @@ window.msRequestDelete = async function(bookingId, date) {
 window.msCheckIn = async function(bookingId, date) {
   try { await htApi('massageCheckIn', { bookingId }); } catch(e) {}
   _msUpdateBookingStatus(bookingId, 'attended');
-  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings();
+  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
 };
 
 function _msUpdateBookingStatus(bookingId, status) {
@@ -12232,7 +12242,7 @@ window.msApproveRequest = function(reqId) {
     toast('✅ 已批准刪除申請');
   }
   msRenderPendingRequests(); msRenderAdminTable();
-  msRenderCal(); msRenderMyBookings();
+  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
   _msSaveLocal();
   htApi('massageApproveRequest', { reqId }).catch(function(){});
 };
@@ -12443,6 +12453,51 @@ window.msAdminCheckIn = function(bookingId) {
   htApi('massageCheckIn',{bookingId}).catch(function(){}); toast('✅ 已報到');
 };
 
+// ── 確認預約公開名單（所有使用者可見，僅顯示 booked/attended） ──
+function msRenderPublicBookings() {
+  var el = document.getElementById('ms-public-bookings');
+  if (!el || !_msData) return;
+  // 合併 allBookings + myBookings，去重
+  var seen = {}, allBk = [];
+  (_msData.allBookings || []).concat(_msData.myBookings || []).forEach(function(b) {
+    if (!seen[b.bookingId]) { seen[b.bookingId] = true; allBk.push(b); }
+  });
+  var today = new Date(); today.setHours(0,0,0,0);
+  var confirmed = allBk.filter(function(b) {
+    return (b.status === 'booked' || b.status === 'attended') && new Date(b.date) >= today;
+  }).sort(function(a,b){ return (a.date+(a.timeSlot||'')).localeCompare(b.date+(b.timeSlot||'')); });
+
+  if (!confirmed.length) {
+    el.innerHTML = '<div style="text-align:center;padding:24px;color:#94a3b8;font-size:13px;background:#fff;border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)">近期尚無確認的預約</div>';
+    return;
+  }
+  var byDate = {};
+  confirmed.forEach(function(b){ if (!byDate[b.date]) byDate[b.date] = []; byDate[b.date].push(b); });
+  var myEmail = (_msData.userEmail) || '';
+  var days = ['日','一','二','三','四','五','六'];
+  el.innerHTML = Object.keys(byDate).sort().map(function(ds) {
+    var parts = ds.split('-');
+    var dt = new Date(ds);
+    var dateLabel = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日（' + days[dt.getDay()] + '）';
+    var rows = byDate[ds].map(function(b) {
+      var nm = b.userName || (b.userEmail||'').split('@')[0] || '同事';
+      var mine = myEmail && b.userEmail === myEmail;
+      var attended = b.status === 'attended';
+      var initial = (nm||'?').trim().charAt(0);
+      return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc">'
+        + '<span style="font-size:14px;font-weight:800;color:#374151;min-width:54px">' + htEsc(b.timeSlot||'') + '</span>'
+        + '<span style="width:26px;height:26px;border-radius:50%;background:' + (mine?'linear-gradient(135deg,#e16b8c,#f43f5e)':'linear-gradient(135deg,#6366f1,#a78bfa)') + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + htEsc(initial) + '</span>'
+        + '<span style="font-size:13px;color:#0f172a;flex:1">' + htEsc(nm) + (mine ? '<span style="color:#e16b8c;font-size:11px;margin-left:4px">（我）</span>' : '') + '</span>'
+        + (attended ? '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700">✓ 已報到</span>' : '')
+        + '</div>';
+    }).join('');
+    return '<div style="background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:10px">'
+      + '<div style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:2px">' + dateLabel + '</div>'
+      + '<div style="font-size:11px;color:#94a3b8;margin-bottom:6px">' + byDate[ds].length + ' 人已確認</div>'
+      + rows + '</div>';
+  }).join('');
+}
+
 // ── 管理子頁籤切換 ──
 var _msAdminTab = 'dates';
 window.msAdminSwitchTab = function(tab) {
@@ -12528,7 +12583,7 @@ function _msShowCheckinResult(date) {
   _msUpdateBookingStatus(booking.bookingId, 'attended');
   _msSaveLocal();
   htApi('massageCheckIn', { bookingId: booking.bookingId }).catch(function(){});
-  msRenderMyBookings(); msRenderCal();
+  msRenderMyBookings(); msRenderCal(); msRenderPublicBookings();
 
   var displayName = (currentUser && (currentUser.name || currentUser.email)) || '';
   if (lateMin > 15) {
