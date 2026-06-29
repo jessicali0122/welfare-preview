@@ -2984,7 +2984,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <div id="ms-open-editor" style="background:#f8fafc;border:1px solid #eef0f4;border-radius:12px;padding:14px;margin-bottom:16px">
           <div id="ms-open-editor-title" style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px">新增開放日</div>
           <div style="font-size:12px;color:#64748b;margin-bottom:5px">選擇日期</div>
-          <input id="ms-open-date-inp" type="date" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+          <input id="ms-open-date-inp" type="text" readonly placeholder="請選擇日期…" class="inp" style="width:100%;box-sizing:border-box;cursor:pointer">
           <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
             <span style="font-size:12px;color:#64748b">開放時段與名額</span>
             <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
@@ -12183,6 +12183,13 @@ function msBookingCard(b, isUpcoming) {
 // ── 管理（admin only） ──
 function msRenderAdmin() {
   if (!_msData) return;
+  // 初始化日期選擇器（只做一次）
+  var dateInp = document.getElementById('ms-open-date-inp');
+  if (dateInp && !dateInp._flatpickr) {
+    _loadFlatpickr(function() {
+      initFlatpickr(dateInp, { minDate: 'today', disableMobile: true });
+    });
+  }
   msRenderPendingRequests();
   msRenderOpenDates();
   var s = _msData.settings || {};
