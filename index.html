@@ -3074,6 +3074,16 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           </table>
         </div>
       </div>
+
+      <!-- 動作紀錄 -->
+      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📋</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">動作紀錄</div>
+          <div style="font-size:11px;color:#94a3b8;margin-left:4px">所有預約、取消、刪除、報到動作</div>
+        </div>
+        <div id="ms-action-log-list"></div>
+      </div>
     </div>
   </div>
 
@@ -3654,11 +3664,15 @@ function initGoogleSignIn() { _showLoginBtn(); }
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = async function() {
   // QR 報到意圖偵測：先於 OAuth hash 處理，避免互相干擾
-  if (location.hash && location.hash.startsWith('#ms-checkin-')) {
-    var _qrDate = location.hash.slice(12);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(_qrDate)) {
-      try { sessionStorage.setItem('ms_qr_checkin', _qrDate); } catch(e) {}
+  if (location.hash && (location.hash.startsWith('#ms-qr-') || location.hash.startsWith('#ms-checkin-'))) {
+    var _qrRaw;
+    if (location.hash.startsWith('#ms-qr-')) {
+      _qrRaw = decodeURIComponent(location.hash.slice(7)); // date|timeSlot|bookingId|userEmail
+    } else {
+      var _qrDate = location.hash.slice(12); // legacy format
+      _qrRaw = /^\d{4}-\d{2}-\d{2}$/.test(_qrDate) ? _qrDate + '|||' : null;
     }
+    if (_qrRaw) { try { sessionStorage.setItem('ms_qr_checkin', _qrRaw); } catch(e) {} }
     history.replaceState({}, '', location.pathname);
   }
   // 字型與 flatpickr CSS：在 onload 後才注入，確保不阻塞頁面載入
@@ -11717,6 +11731,7 @@ var _msData = null;
 var _msSlotTemplates = [];
 var _msTab = 'calendar';
 var _msPendingRequests = [];
+var _msActionLog = []; // 動作紀錄：booked / cancelled / deleted / attended
 
 // ── 本地持久化（後端尚未實作 massage 端點，回「未知動作」，故以 localStorage 保存）──
 function _msStoreKey() {
@@ -11730,9 +11745,28 @@ function _msSaveLocal() {
       myBookings: _msData.myBookings || [],
       allBookings: _msData.allBookings || [],
       pendingRequests: _msPendingRequests || [],
-      settings: _msData.settings || null
+      settings: _msData.settings || null,
+      actionLog: _msActionLog || []
     }));
   } catch(e) {}
+}
+
+// 動作紀錄：每個 booking/cancel/delete/attend 動作都記錄
+function _msLogAction(action, booking, extra) {
+  var u = window.currentUser || {};
+  _msActionLog.unshift({
+    at: new Date().toISOString(),
+    action: action,  // 'booked' | 'cancelled' | 'deleted' | 'attended' | 'unchecked'
+    bookingId: (booking && booking.bookingId) || '',
+    userEmail: (booking && booking.userEmail) || u.email || '',
+    userName: (booking && booking.userName) || u.name || '',
+    date: (booking && booking.date) || '',
+    timeSlot: (booking && booking.timeSlot) || '',
+    byEmail: u.email || '',
+    byName: u.name || '',
+    extra: extra || null
+  });
+  if (_msActionLog.length > 200) _msActionLog.length = 200; // 最多保留 200 筆
 }
 function _msLoadLocal() {
   try { var s = localStorage.getItem(_msStoreKey()); return s ? JSON.parse(s) : null; }
@@ -11773,6 +11807,7 @@ window.massageLoad = async function() {
       if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
       if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
       if (_saved.settings) _msData.settings = _saved.settings;
+      if (_saved.actionLog) _msActionLog = _saved.actionLog;
     }
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
@@ -11781,11 +11816,11 @@ window.massageLoad = async function() {
   var tabBar = document.getElementById('ms-tab-bar');
   if (tabBar) tabBar.style.display = (_msData && _msData.isAdmin) ? 'flex' : 'none';
   // QR 報到：偵測 sessionStorage 中待處理的報到意圖
-  var _pendingQrDate = null;
-  try { _pendingQrDate = sessionStorage.getItem('ms_qr_checkin'); } catch(e) {}
-  if (_pendingQrDate) {
+  var _pendingQrPayload = null;
+  try { _pendingQrPayload = sessionStorage.getItem('ms_qr_checkin'); } catch(e) {}
+  if (_pendingQrPayload) {
     try { sessionStorage.removeItem('ms_qr_checkin'); } catch(e) {}
-    setTimeout(function() { _msShowCheckinResult(_pendingQrDate); }, 600);
+    setTimeout(function() { _msShowCheckinResult(_pendingQrPayload); }, 600);
   }
   msFetchData().then(function(){ msRenderCal(); msRenderQuota(); msRenderMyBookings(); msRenderPublicBookings(); }).catch(function(){});
 };
@@ -12066,9 +12101,11 @@ window.msBook = function(date, timeSlot) {
         var uname = (window.currentUser && window.currentUser.name) || (window.currentUser && (window.currentUser.email||'').split('@')[0]) || '';
         var uemail = (_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email) || '';
         if (!_msData.myBookings) _msData.myBookings = [];
-        _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname, userEmail:uemail });
+        var _newBook = { bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname, userEmail:uemail };
+        _msData.myBookings.push(_newBook);
         if (!_msData.allBookings) _msData.allBookings = [];
         _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:uemail, userName:uname, createdAt:new Date().toISOString() });
+        _msLogAction('booked', _newBook);
         _msSaveLocal();
         toast('✅ 預約成功！');
         msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
@@ -12097,6 +12134,9 @@ window.msCancel = function(bookingId, date) {
       if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
       _msUpdateBookingStatus(bookingId, 'cancelled');
       _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
+      var _cancelledBk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
+      _msLogAction('cancelled', _cancelledBk || { bookingId, date });
+      _msSaveLocal();
       toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
     }
   );
@@ -12242,8 +12282,9 @@ function msBookingCard(b, isUpcoming) {
   var _monthIdx = _monthBooks.findIndex(function(x){return x.bookingId===b.bookingId;});
   var _monthNum = _monthIdx>=0 ? _monthIdx+1 : 1;
 
-  // QR code URL（報到用）
-  var _qrUrl = (location.origin||'') + (location.pathname||'') + '#ms-checkin-' + (b.date||'');
+  // QR code URL（報到用）—包含身份資訊，每次渲染依登入 session 動態產生
+  var _qrPayload = [b.date||'', b.timeSlot||'', b.bookingId||'', b.userEmail||''].join('|');
+  var _qrUrl = (location.origin||'') + (location.pathname||'') + '#ms-qr-' + encodeURIComponent(_qrPayload);
 
   // action buttons (pill style matching ticket aesthetic)
   var _btnBase = 'border:none;border-radius:12px;padding:10px 0;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;flex:1;min-width:80px;';
@@ -12323,7 +12364,7 @@ function msBookingCard(b, isUpcoming) {
   + '<div style="padding:8px 20px 16px">'
   + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1.5px;margin-bottom:10px">PASSENGER INFO</div>'
   + '<div style="display:flex;align-items:center;gap:11px">'
-  + '<div style="width:40px;height:40px;border-radius:50%;background:'+_hGrad+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">'+htEsc(_initial)+'</div>'
+  + '<div style="width:28px;height:28px;border-radius:50%;background:'+_hGrad+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0">'+htEsc(_initial)+'</div>'
   + '<div style="flex:1;min-width:0">'
   + '<div style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(_nm)+'</div>'
   + '<div style="font-size:11px;color:#94a3b8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.userEmail||'')+'</div>'
@@ -12368,6 +12409,38 @@ function msRenderAdmin() {
   msRenderSlotTemplates();
   msRenderDraftSlots();
   msRenderAdminTable();
+  msRenderActionLog();
+}
+
+// ── 動作紀錄（admin only） ──
+function msRenderActionLog() {
+  var el = document.getElementById('ms-action-log-list');
+  if (!el) return;
+  if (!_msActionLog.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">尚無動作紀錄</div>';
+    return;
+  }
+  var actionLabels = { booked:'預約成功', cancelled:'取消預約', deleted:'刪除預約', attended:'完成報到', unchecked:'取消報到' };
+  var actionColors = { booked:'#6366f1', cancelled:'#94a3b8', deleted:'#dc2626', attended:'#16a34a', unchecked:'#d97706' };
+  var actionBg = { booked:'#ede9fe', cancelled:'#f1f5f9', deleted:'#fef2f2', attended:'#dcfce7', unchecked:'#fffbeb' };
+  el.innerHTML = _msActionLog.slice(0,50).map(function(log) {
+    var nm = (window.LOCAL_EMAIL_TO_NAME&&log.userEmail&&window.LOCAL_EMAIL_TO_NAME[log.userEmail]) || log.userName || log.userEmail || '—';
+    var byAdmin = log.extra && log.extra.byAdmin;
+    var lateStr = (log.extra && log.extra.lateMin != null)
+      ? (log.extra.lateMin > 0 ? ' · 遲到 ' + log.extra.lateMin + ' 分鐘' : ' · 準時') : '';
+    var dt = new Date(log.at);
+    var dtStr = (dt.getMonth()+1) + '/' + dt.getDate() + ' ' + pad2(dt.getHours()) + ':' + pad2(dt.getMinutes());
+    var color = actionColors[log.action] || '#64748b';
+    var bg = actionBg[log.action] || '#f1f5f9';
+    var label = actionLabels[log.action] || log.action;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f8fafc;flex-wrap:wrap">'
+      + '<span style="background:' + bg + ';color:' + color + ';border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap">' + label + '</span>'
+      + '<span style="font-size:13px;font-weight:600;color:#0f172a;flex:1;min-width:60px">' + htEsc(nm) + '</span>'
+      + '<span style="font-size:12px;color:#64748b;white-space:nowrap">' + (log.date||'') + ' ' + (log.timeSlot||'') + lateStr + '</span>'
+      + (byAdmin ? '<span style="font-size:11px;color:#94a3b8">管理員操作</span>' : '')
+      + '<span style="font-size:11px;color:#cbd5e1;white-space:nowrap">' + dtStr + '</span>'
+      + '</div>';
+  }).join('');
 }
 
 // ── 待審核申請 ──
@@ -12404,16 +12477,20 @@ window.msApproveRequest = function(reqId) {
   if (!req) return;
   req.status = 'approved';
   if (req.type === 'cancel') {
+    var _cancelBk = (_msData.allBookings||[]).find(function(b){return b.bookingId===req.bookingId;});
     _msUpdateBookingStatus(req.bookingId, 'cancelled');
     var mb = (_msData.myBookings||[]).find(function(b){return b.bookingId===req.bookingId;}); if(mb) mb.cancelRequested = false;
+    _msLogAction('cancelled', _cancelBk || req, { byAdmin: true, via: 'approve' });
     toast('✅ 已批准取消申請');
   } else {
+    var _delBk = (_msData.allBookings||[]).find(function(b){return b.bookingId===req.bookingId;});
+    _msLogAction('deleted', _delBk || req, { byAdmin: true, via: 'approve' });
     if (_msData.myBookings) _msData.myBookings = _msData.myBookings.filter(function(b){return b.bookingId!==req.bookingId;});
     if (_msData.allBookings) _msData.allBookings = _msData.allBookings.filter(function(b){return b.bookingId!==req.bookingId;});
     toast('✅ 已批准刪除申請');
   }
   msRenderPendingRequests(); msRenderAdminTable();
-  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings(); msRenderActionLog();
   _msSaveLocal();
   htApi('massageApproveRequest', { reqId }).catch(function(){});
 };
@@ -12607,21 +12684,37 @@ function msRenderAdminRows(rows) {
       + '<td style="padding:10px;font-weight:700;color:#374151">' + (b.timeSlot||'') + '</td>'
       + '<td style="padding:10px"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + cfg.label + '</span></td>'
       + '<td style="padding:10px;white-space:nowrap">'
-      + (st==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消</button> ':'')
-      + (st==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 報到</button>':'')
+      + (st==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消預約</button> ':'')
+      + (st==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 確認報到</button>':'')
+      + (st==='attended'?'<button onclick="msAdminUnCheckIn(\'' + b.bookingId + '\')" style="background:#fffbeb;color:#d97706;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消報到</button>':'')
       + '</td></tr>';
   }).join('');
 }
 
 window.msAdminCancel = function(bookingId) {
   _showConfirmModal('取消預約','確定要取消此預約嗎？','確定取消','#dc2626',function(){
-    _msUpdateBookingStatus(bookingId,'cancelled'); msRenderAdminTable(); msRenderCal();
-    htApi('massageAdminCancel',{bookingId}).catch(function(){}); toast('已取消');
+    var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
+    _msUpdateBookingStatus(bookingId,'cancelled');
+    _msLogAction('cancelled', _bk || { bookingId }, { byAdmin: true });
+    _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+    htApi('massageAdminCancel',{bookingId}).catch(function(){}); toast('已取消預約');
   });
 };
 window.msAdminCheckIn = function(bookingId) {
-  _msUpdateBookingStatus(bookingId,'attended'); msRenderAdminTable(); msRenderCal();
-  htApi('massageCheckIn',{bookingId}).catch(function(){}); toast('✅ 已報到');
+  var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
+  _msUpdateBookingStatus(bookingId,'attended');
+  _msLogAction('attended', _bk || { bookingId }, { byAdmin: true, scanTime: new Date().toISOString() });
+  _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+  htApi('massageCheckIn',{bookingId}).catch(function(){}); toast('✅ 已確認報到');
+};
+window.msAdminUnCheckIn = function(bookingId) {
+  _showConfirmModal('取消報到','確定要取消此員工的報到紀錄嗎？','確定取消','#d97706',function(){
+    var _bk = (_msData&&_msData.allBookings||[]).find(function(x){return x.bookingId===bookingId;});
+    _msUpdateBookingStatus(bookingId,'booked');
+    _msLogAction('unchecked', _bk || { bookingId }, { byAdmin: true });
+    _msSaveLocal(); msRenderAdminTable(); msRenderCal(); msRenderActionLog();
+    htApi('massageAdminUnCheckIn',{bookingId}).catch(function(){}); toast('已取消報到');
+  });
 };
 
 // ── 確認預約公開名單（所有使用者可見，僅顯示 booked/attended） ──
@@ -12708,15 +12801,21 @@ window.msShowCheckInQR = function(ds) {
   });
 };
 
-function _msShowCheckinResult(date) {
+function _msShowCheckinResult(payload) {
   var overlay = document.getElementById('ms-checkin-overlay');
   var iconEl = document.getElementById('ms-checkin-icon');
   var statusEl = document.getElementById('ms-checkin-status');
   var detailEl = document.getElementById('ms-checkin-detail');
   if (!overlay || !iconEl || !statusEl || !detailEl) return;
 
-  var parts = date.split('-');
-  var dateLabel = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  // 解析 payload: "date|timeSlot|bookingId|userEmail"（或 legacy "date|||"）
+  var _parts = (payload||'').split('|');
+  var date = _parts[0] || '';
+  var bookingId = _parts[2] || '';
+  var qrUserEmail = _parts[3] || '';
+
+  var dateParts = date.split('-');
+  var dateLabel = parseInt(dateParts[1]) + '月' + parseInt(dateParts[2]) + '日';
 
   if (!_msData || !currentUser) {
     iconEl.textContent = '❌'; statusEl.textContent = '資料載入中'; statusEl.style.color = '#dc2626';
@@ -12724,9 +12823,17 @@ function _msShowCheckinResult(date) {
     overlay.style.display = 'flex'; return;
   }
 
-  var booking = (_msData.myBookings || []).find(function(b) {
-    return b.date === date && (b.status === 'booked' || b.status === 'attended');
-  });
+  // 優先用 bookingId 找，fallback 用 date + 登入者
+  var booking = bookingId
+    ? (_msData.myBookings || []).find(function(b){ return b.bookingId === bookingId; })
+    : (_msData.myBookings || []).find(function(b){ return b.date === date && (b.status === 'booked' || b.status === 'attended'); });
+
+  // 若 QR 不屬於此登入帳號，拒絕
+  if (!booking && qrUserEmail && currentUser.email && qrUserEmail !== currentUser.email) {
+    iconEl.textContent = '❌'; statusEl.textContent = 'QR Code 不符'; statusEl.style.color = '#dc2626';
+    detailEl.innerHTML = '此 QR Code 屬於其他員工，無法代為報到';
+    overlay.style.display = 'flex'; return;
+  }
 
   if (!booking) {
     iconEl.textContent = '❌'; statusEl.textContent = '查無預約'; statusEl.style.color = '#dc2626';
@@ -12750,19 +12857,21 @@ function _msShowCheckinResult(date) {
   var slotParts = (booking.timeSlot || '00:00').split(':');
   var slotTime = new Date(); slotTime.setHours(parseInt(slotParts[0]), parseInt(slotParts[1]), 0, 0);
   var lateMin = Math.floor((now - slotTime) / 60000);
+  var scanTimeStr = pad2(now.getHours()) + ':' + pad2(now.getMinutes());
 
   _msUpdateBookingStatus(booking.bookingId, 'attended');
+  _msLogAction('attended', booking, { lateMin: lateMin, scanTime: now.toISOString() });
   _msSaveLocal();
-  htApi('massageCheckIn', { bookingId: booking.bookingId }).catch(function(){});
+  htApi('massageCheckIn', { bookingId: booking.bookingId, scanTime: now.toISOString(), lateMin: lateMin }).catch(function(){});
   msRenderMyBookings(); msRenderCal(); msRenderPublicBookings();
 
   var displayName = (currentUser && (currentUser.name || currentUser.email)) || '';
   if (lateMin > 15) {
     iconEl.textContent = '⚠️'; statusEl.textContent = '遲到 ' + lateMin + ' 分鐘'; statusEl.style.color = '#d97706';
-    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '<br>報到成功，但遲到 <strong>' + lateMin + '</strong> 分鐘';
+    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '&nbsp;(掃描時間 ' + scanTimeStr + ')<br>報到成功，但遲到 <strong>' + lateMin + '</strong> 分鐘';
   } else {
     iconEl.textContent = '✅'; statusEl.textContent = '報到成功！'; statusEl.style.color = '#16a34a';
-    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '<br>歡迎，<strong>' + displayName + '</strong>！';
+    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '&nbsp;(掃描時間 ' + scanTimeStr + ')<br>歡迎，<strong>' + displayName + '</strong>！';
   }
   overlay.style.display = 'flex';
 }
