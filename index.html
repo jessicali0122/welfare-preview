@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629102138';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629104537';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3121,7 +3121,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日 <span style="font-size:12px;color:#94a3b8;font-weight:400">（選填，用於壽星自動帶入）</span></label>
-        <input class="inp" id="add-birthday" type="date">
+        <input class="inp" id="add-birthday" type="text" placeholder="MM-DD（例：06-15）" maxlength="5" style="letter-spacing:.05em">
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b">
         ℹ️ 新增後系統將自動發送邀請信至填寫的 Email
@@ -3193,8 +3193,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
-          <input class="inp" id="edit-birthday" type="date">
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
+          <input class="inp" id="edit-birthday" type="text" placeholder="MM-DD（例：06-15）" maxlength="5" style="letter-spacing:.05em">
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">格式 MM-DD，用於午茶日壽星自動帶入</div>
         </div>
       </div>
       <div>
@@ -3258,8 +3258,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 欄位順序（第一列為標題列）：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8">姓名,Email,員工編號,部門,角色,生日<br>王小明,test@tsagroup.com.tw,T0099,後勤部,申請人,1990-05-15</code>
-        <div style="font-size:11px;color:#94a3b8;margin-top:8px">• 角色可填：申請人 / 福委 / HR / 管理者<br>• 生日可留空，格式 YYYY-MM-DD<br>• Email 須為 @tsagroup.com.tw</div>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8">姓名,Email,員工編號,部門,角色,生日<br>王小明,test@tsagroup.com.tw,T0099,後勤部,申請人,05-15</code>
+        <div style="font-size:11px;color:#94a3b8;margin-top:8px">• 角色可填：申請人 / 福委 / HR / 管理者<br>• 生日可留空，格式 MM-DD（例：06-15）<br>• Email 須為 @tsagroup.com.tw</div>
       </div>
       <div id="import-preview" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#166534"></div>
       <div style="display:flex;gap:8px">
@@ -7254,7 +7254,7 @@ function _bdayParse(v) {
 // 生日顯示 → MM/DD
 function _bdayDisplay(v) {
   var p = _bdayParse(v);
-  return p ? (p.m+'/'+p.d) : (v ? String(v) : '');
+  return p ? (p.m+'/'+p.d) : '';
 }
 function buildAdminUserRow(u) {
   const avatarColor = adminUserAvatarColor(u.name);
@@ -7366,7 +7366,7 @@ function showEditUserModal(btn){
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
-  if(bdayEl){ var rawBday=row.dataset.birthday||''; bdayEl.value=/^\d{4}-\d{2}-\d{2}/.test(rawBday)?rawBday.slice(0,10):''; }
+  if(bdayEl){ var rawBday=row.dataset.birthday||''; var bp=_bdayParse(rawBday); bdayEl.value=bp?(String(bp.m).padStart(2,'0')+'-'+String(bp.d).padStart(2,'0')):''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   if(editDept&&deptVal){editDept.value=deptVal;}
