@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629125216';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629135749';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -6112,7 +6112,7 @@ async function _syncMembersFromServer() {
     });
     // 同步管理員清單 + 多重角色對照表
     res.members.forEach(function(u) {
-      if (u.role === '管理者' && !ADMIN_EMAILS.includes(u.email)) {
+      if ((u.role === '管理者' || parseRoles(u.roles||'').includes('manager')) && !ADMIN_EMAILS.includes(u.email)) {
         ADMIN_EMAILS.push(u.email);
       }
       // 解析成新角色陣列（支援「福委,HR」多值）
