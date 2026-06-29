@@ -517,24 +517,28 @@ input[type=checkbox]{accent-color:#e16b8c}
 }
 /* ── 使用者管理表格：手機版隱藏次要欄位 ── */
 @media(max-width:768px){
-  /* 隱藏：Email(5)、加入時間(7)、員工編號(3)、生日(8) */
+  /* 隱藏：員工編號(3)、部門(4)、Email(5)、加入時間(7)、生日(8) */
   #admin-panel-users th:nth-child(3),
   #admin-panel-users td:nth-child(3),
+  #admin-panel-users th:nth-child(4),
+  #admin-panel-users td:nth-child(4),
   #admin-panel-users th:nth-child(5),
   #admin-panel-users td:nth-child(5),
   #admin-panel-users th:nth-child(7),
   #admin-panel-users td:nth-child(7),
   #admin-panel-users th:nth-child(8),
   #admin-panel-users td:nth-child(8){display:none!important}
+  /* 標籤欄限寬，操作按鈕縮小 */
   #admin-panel-users th:nth-child(6),
-  #admin-panel-users td:nth-child(6){max-width:80px}
+  #admin-panel-users td:nth-child(6){max-width:100px}
+  #admin-panel-users td:nth-child(9) button{font-size:12px!important;padding:4px 8px!important}
   /* 姓名欄固定在左側，即使橫向滾動也保持可見 */
   #admin-panel-users th:nth-child(2),
   #admin-panel-users td:nth-child(2){position:sticky!important;left:36px;background:#fff!important;z-index:2}
   #admin-panel-users th:nth-child(1),
   #admin-panel-users td:nth-child(1){position:sticky!important;left:0;background:#fff!important;z-index:2}
-  /* 手機版表格縮小 min-width 讓橫向滾動幅度最小 */
-  #admin-panel-users table{min-width:420px!important}
+  /* 手機版：checkbox(36) + 姓名(~110) + 標籤(100) + 操作(~120) ≈ 366px，剛好塞入螢幕 */
+  #admin-panel-users table{min-width:360px!important}
   /* 批次標籤列手機版：縮小字體與 padding，確保按鈕不擠爆 */
   #batch-tag-bar{padding:8px 10px;gap:6px}
   #batch-tag-bar button{font-size:12px!important;padding:4px 8px!important}
@@ -3131,20 +3135,18 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">Email <span style="color:#ef4444">*</span></label>
         <input class="inp" id="add-email" placeholder="test@tsagroup.com.tw">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
-          <select class="inp" id="add-dept">
-            <option value="">請選擇部門</option>
-            <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
-          </select>
-        </div>
-        <div>
-          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
-          <div style="display:flex;gap:8px">
-            <select class="inp" id="add-bday-mm" style="flex:1"><option value="">月份</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
-            <select class="inp" id="add-bday-dd" style="flex:1"><option value="">日</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select>
-          </div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">部門 <span style="color:#ef4444">*</span></label>
+        <select class="inp" id="add-dept">
+          <option value="">請選擇部門</option>
+          <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
+        <div style="display:flex;gap:8px">
+          <select class="inp" id="add-bday-mm" style="flex:1"><option value="">幾月</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
+          <select class="inp" id="add-bday-dd" style="flex:1"><option value="">幾日</option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
         </div>
       </div>
 
@@ -3213,14 +3215,14 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
           </select>
         </div>
-        <div>
-          <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
-          <div style="display:flex;gap:8px">
-            <select class="inp" id="edit-bday-mm" style="flex:1"><option value="">月份</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
-            <select class="inp" id="edit-bday-dd" style="flex:1"><option value="">日</option><option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option><option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option><option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option><option value="31">31</option></select>
-          </div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
+      </div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
+        <div style="display:flex;gap:8px">
+          <select class="inp" id="edit-bday-mm" style="flex:1"><option value="">幾月</option><option value="01">1月</option><option value="02">2月</option><option value="03">3月</option><option value="04">4月</option><option value="05">5月</option><option value="06">6月</option><option value="07">7月</option><option value="08">8月</option><option value="09">9月</option><option value="10">10月</option><option value="11">11月</option><option value="12">12月</option></select>
+          <select class="inp" id="edit-bday-dd" style="flex:1"><option value="">幾日</option><option value="01">1日</option><option value="02">2日</option><option value="03">3日</option><option value="04">4日</option><option value="05">5日</option><option value="06">6日</option><option value="07">7日</option><option value="08">8日</option><option value="09">9日</option><option value="10">10日</option><option value="11">11日</option><option value="12">12日</option><option value="13">13日</option><option value="14">14日</option><option value="15">15日</option><option value="16">16日</option><option value="17">17日</option><option value="18">18日</option><option value="19">19日</option><option value="20">20日</option><option value="21">21日</option><option value="22">22日</option><option value="23">23日</option><option value="24">24日</option><option value="25">25日</option><option value="26">26日</option><option value="27">27日</option><option value="28">28日</option><option value="29">29日</option><option value="30">30日</option><option value="31">31日</option></select>
         </div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:7px">角色（可複選）</label>
