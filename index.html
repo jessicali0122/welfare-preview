@@ -12163,6 +12163,18 @@ function _msUpdateBookingStatus(bookingId, status) {
   });
 }
 
+// ── QR code 渲染（非同步，card innerHTML 設好後呼叫） ──
+function _msRenderQRCodes(container) {
+  var canvases = container ? container.querySelectorAll('canvas[data-qr-url]') : [];
+  if (!canvases.length) return;
+  _loadQRCode(function() {
+    canvases.forEach(function(canvas) {
+      var url = canvas.getAttribute('data-qr-url');
+      QRCode.toCanvas(canvas, url, { width: 140, margin: 1, color: { dark: '#0f172a', light: '#ffffff' } }, function(){});
+    });
+  });
+}
+
 // ── 我的預約 ──
 function msRenderMyBookings() {
   var myBookings = (_msData && _msData.myBookings) || [];
@@ -12170,9 +12182,11 @@ function msRenderMyBookings() {
   var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; }).sort(function(a,b){return a.date.localeCompare(b.date);});
   var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; }).sort(function(a,b){return b.date.localeCompare(a.date);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
-  if (upEmpty) upEmpty.style.display = upcoming.length ? 'none' : ''; if (upEl) upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join('');
+  if (upEmpty) upEmpty.style.display = upcoming.length ? 'none' : '';
+  if (upEl) { upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join(''); _msRenderQRCodes(upEl); }
   var hiEl = document.getElementById('ms-my-history'); var hiEmpty = document.getElementById('ms-my-history-empty');
-  if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : ''; if (hiEl) hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
+  if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : '';
+  if (hiEl) { hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join(''); _msRenderQRCodes(hiEl); }
 }
 
 // 即將到來 / 歷史紀錄 分段切換
@@ -12221,16 +12235,15 @@ function msBookingCard(b, isUpcoming) {
   var _initial = (_nm||'?').trim().charAt(0);
   var _shortId = (b.bookingId||'').replace(/^BK/i,'').slice(-8);
 
-  // barcode bars (deterministic from bookingId chars)
-  var _bkDigits = (b.bookingId||'BK00000000').replace(/\D/g,'') || '12345678';
-  var _bars = '';
-  for (var _bi=0; _bi<36; _bi++) {
-    var _d = parseInt(_bkDigits[_bi % _bkDigits.length]||4);
-    var _bw = (_d%3===0)?3:(_d%3===1)?2:1;
-    var _bh = 18 + (_d*3 + _bi*2)%26;
-    var _dark = (_bi+_d)%4 !== 0;
-    _bars += '<div style="width:'+_bw+'px;height:'+_bh+'px;background:'+(_dark?'#1e293b':'#e2e8f0')+';border-radius:1px;flex-shrink:0"></div>';
-  }
+  // 月次：本月第幾次預約
+  var _ym = (b.date||'').slice(0,7);
+  var _monthLimit = (settings.monthlyLimit)||2;
+  var _monthBooks = ((_msData&&_msData.myBookings)||[]).filter(function(x){ return x.status!=='cancelled' && (x.date||'').slice(0,7)===_ym; }).sort(function(a,c){return (a.date+a.timeSlot).localeCompare(c.date+c.timeSlot);});
+  var _monthIdx = _monthBooks.findIndex(function(x){return x.bookingId===b.bookingId;});
+  var _monthNum = _monthIdx>=0 ? _monthIdx+1 : 1;
+
+  // QR code URL（報到用）
+  var _qrUrl = (location.origin||'') + (location.pathname||'') + '#ms-checkin-' + (b.date||'');
 
   // action buttons (pill style matching ticket aesthetic)
   var _btnBase = 'border:none;border-radius:12px;padding:10px 0;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;flex:1;min-width:80px;';
@@ -12300,10 +12313,10 @@ function msBookingCard(b, isUpcoming) {
   + '</div>'
 
   // ── 鋸齒切割線 ──
-  + '<div style="position:relative;height:24px;margin:0 -1px">'
-  + '<div style="position:absolute;left:-12px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:#f0f2f5;z-index:1"></div>'
-  + '<div style="position:absolute;right:-12px;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;background:#f0f2f5;z-index:1"></div>'
-  + '<div style="position:absolute;left:16px;right:16px;top:50%;border-top:1.5px dashed #e2e8f0"></div>'
+  + '<div style="position:relative;height:28px;margin:0 -1px">'
+  + '<div style="position:absolute;left:-14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:#f0f2f5;z-index:1"></div>'
+  + '<div style="position:absolute;right:-14px;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;background:#f0f2f5;z-index:1"></div>'
+  + '<div style="position:absolute;left:18px;right:18px;top:50%;border-top:2px dashed #d1d5db"></div>'
   + '</div>'
 
   // ── 預約人資訊 ──
@@ -12316,16 +12329,17 @@ function msBookingCard(b, isUpcoming) {
   + '<div style="font-size:11px;color:#94a3b8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.userEmail||'')+'</div>'
   + '</div>'
   + '<div style="text-align:right;flex-shrink:0">'
-  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px">SEAT</div>'
-  + '<div style="font-size:18px;font-weight:900;color:'+_accent+'">床位</div>'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px;margin-bottom:2px">月次</div>'
+  + '<div style="font-size:15px;font-weight:900;color:'+_accent+';line-height:1">'+_monthNum+' <span style="font-size:11px;font-weight:600;color:#94a3b8">/ '+_monthLimit+'</span></div>'
   + '</div>'
   + '</div>'
   + '</div>'
 
-  // ── 條碼區 ──
-  + '<div style="margin:0 20px 18px;background:#f8fafc;border-radius:14px;padding:14px 16px">'
-  + '<div style="display:flex;align-items:flex-end;justify-content:center;gap:1.5px;height:46px;overflow:hidden;margin-bottom:8px">'+_bars+'</div>'
-  + '<div style="text-align:center;font-size:10px;color:#94a3b8;letter-spacing:2px;font-family:monospace">'+htEsc(b.bookingId||'')+'</div>'
+  // ── QR Code 區 ──
+  + '<div style="margin:0 20px 18px;background:#f8fafc;border-radius:14px;padding:16px;text-align:center">'
+  + '<canvas data-qr-url="'+htEsc(_qrUrl)+'" width="140" height="140" style="border-radius:10px;display:block;margin:0 auto"></canvas>'
+  + '<div style="font-size:10px;color:#94a3b8;letter-spacing:1.5px;font-family:monospace;margin-top:8px">'+htEsc(b.bookingId||'')+'</div>'
+  + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">掃描 QR Code 完成報到</div>'
   + '</div>'
 
   // ── 操作按鈕 ──
