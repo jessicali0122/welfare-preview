@@ -12266,7 +12266,13 @@ function msBookingCard(b, isUpcoming) {
     : {booked:'💆', cancelled:'✕', attended:'✓', noshow:'⚠'}[s] || '💆';
 
   // user info
-  var _nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail]) || b.userName || (b.userEmail||'').split('@')[0] || '員工';
+  // 姓名：先查對照表，再用儲存的 userName，再從 email 取前段，最後 fallback 到當前登入者（「我的預約」一定是本人）
+  var _bEmail = b.userEmail || (window.currentUser && window.currentUser.email) || '';
+  var _nm = (window.LOCAL_EMAIL_TO_NAME&&_bEmail&&window.LOCAL_EMAIL_TO_NAME[_bEmail])
+    || b.userName
+    || (_bEmail||'').split('@')[0]
+    || (window.currentUser && (window.currentUser.name || (window.currentUser.email||'').split('@')[0]))
+    || '員工';
   var _initial = (_nm||'?').trim().charAt(0);
   var _shortId = (b.bookingId||'').replace(/^BK/i,'').slice(-8);
 
