@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629174000';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629175312';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3351,6 +3351,11 @@ var _debouncedAppSearch   = _debounce(function(){ applyAppFilter(); }, 280);
 // ══════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbxqmXRfqubdjDRpYQhBOomC9BUM9_US7Wugal-UJ_CbpNp1MbLKq4YocjVRdGuWQ9cA/exec';
 const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.googleusercontent.com';
+
+// 頁面載入後 1.5s 預熱 GAS，避免登入時 cold start 延遲
+setTimeout(function(){
+  fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ping'})}).catch(function(){});
+},1500);
 
 // ══════════════════════════════════════════
 //  登入狀態
