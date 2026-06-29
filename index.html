@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629104537';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629105713';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2333,6 +2333,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <span style="font-size:14px;font-weight:600;color:#e16b8c">批次設定角色：</span>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <button onclick="applyTag('申請人')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">申請人</button>
+            <button onclick="applyTag('福委')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委</button>
+            <button onclick="applyTag('HR')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #6ee7b7;background:#fff;color:#10b981;cursor:pointer;font-weight:600">HR</button>
             <button onclick="applyTag('管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
           </div>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
@@ -7004,6 +7006,7 @@ function renderFlowList(approvers) {
       ? avatarColors[a.name ? a.name.charCodeAt(0) % avatarColors.length : i % avatarColors.length]
       : '#94a3b8';
     const initial = a.name ? a.name.charAt(0) : '?';
+    const _flowAvatarUrl = a.email ? localStorage.getItem('bf_avatar_' + a.email) : null;
     const isFirst = i === 0;
     const isLast  = i === approvers.length - 1;
 
@@ -7042,7 +7045,9 @@ function renderFlowList(approvers) {
       </div>
       <!-- 審核人 -->
       <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:30px;height:30px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>
+        ${_flowAvatarUrl
+          ? `<img src="${_flowAvatarUrl}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+          : `<div style="width:30px;height:30px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0">${initial}</div>`}
         <div style="min-width:0">
           <div style="font-size:14px;font-weight:600;color:${labelColor};white-space:nowrap">${a.name}</div>
           <div style="font-size:12px;color:#94a3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.email}</div>
@@ -7490,8 +7495,8 @@ async function exportUsers(){
   if (!res.ok) { toast('❌ 匯出失敗：' + res.error); return; }
   const users = res.users || [];
   if (users.length === 0) { toast('⚠️ 目前無使用者資料可匯出'); return; }
-  const header = ['Email','姓名','員工編號','部門','角色'].join(',');
-  const rows = users.map(u => [u.email, u.name, u.employeeId, u.department, u.role].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
+  const header = ['姓名','Email','員工編號','部門','角色','生日'].join(',');
+  const rows = users.map(u => [u.name, u.email, u.employeeId, u.department, u.roles||u.role||'', u.birthday||''].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
   const csv = '﻿' + header + '\n' + rows.join('\n'); // BOM for Excel UTF-8
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
