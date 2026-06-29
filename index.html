@@ -12187,9 +12187,13 @@ window.msRequestDelete = function(bookingId, date) {
 
 // ── 報到 ──
 window.msCheckIn = async function(bookingId, date) {
-  try { await htApi('massageCheckIn', { bookingId }); } catch(e) {}
+  var _bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
+  var now = new Date();
+  try { await htApi('massageCheckIn', { bookingId, scanTime: now.toISOString() }); } catch(e) {}
   _msUpdateBookingStatus(bookingId, 'attended');
-  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+  _msLogAction('attended', _bk || { bookingId, date }, { scanTime: now.toISOString() });
+  _msSaveLocal();
+  toast('✅ 報到成功！'); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings(); msRenderActionLog();
 };
 
 function _msUpdateBookingStatus(bookingId, status) {
@@ -12213,9 +12217,17 @@ function _msRenderQRCodes(container) {
 // ── 我的預約 ──
 function msRenderMyBookings() {
   var myBookings = (_msData && _msData.myBookings) || [];
-  var now = new Date(); now.setHours(0,0,0,0);
-  var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; }).sort(function(a,b){return a.date.localeCompare(b.date);});
-  var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; }).sort(function(a,b){return b.date.localeCompare(a.date);});
+  var now = new Date();
+  var upcoming = myBookings.filter(function(b){
+    if (b.status === 'cancelled' || b.status === 'attended' || b.status === 'noshow') return false;
+    var appt = new Date(b.date + 'T' + (b.timeSlot || '23:59') + ':00');
+    return appt >= now;
+  }).sort(function(a,b){return (a.date+a.timeSlot).localeCompare(b.date+b.timeSlot);});
+  var history = myBookings.filter(function(b){
+    if (b.status === 'cancelled' || b.status === 'attended' || b.status === 'noshow') return true;
+    var appt = new Date(b.date + 'T' + (b.timeSlot || '23:59') + ':00');
+    return appt < now;
+  }).sort(function(a,b){return (b.date+b.timeSlot).localeCompare(a.date+a.timeSlot);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
   if (upEmpty) upEmpty.style.display = upcoming.length ? 'none' : '';
   if (upEl) { upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join(''); _msRenderQRCodes(upEl); }
@@ -12814,8 +12826,12 @@ function msRenderPublicBookings() {
     var dt = new Date(ds);
     var dateLabel = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日（' + days[dt.getDay()] + '）';
     var rows = byDate[ds].map(function(b) {
-      var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail]) || b.userName || (b.userEmail||'').split('@')[0] || '同事';
-      var mine = myEmail && b.userEmail === myEmail;
+      var mine = !!(myEmail && b.userEmail && b.userEmail === myEmail);
+      var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail])
+        || b.userName
+        || (b.userEmail||'').split('@')[0]
+        || (mine && window.currentUser && (window.currentUser.name || (window.currentUser.email||'').split('@')[0]))
+        || '同事';
       var attended = b.status === 'attended';
       var initial = (nm||'?').trim().charAt(0);
       return '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #f8fafc">'
