@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629105713';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629110225';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3123,7 +3123,25 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日 <span style="font-size:12px;color:#94a3b8;font-weight:400">（選填，用於壽星自動帶入）</span></label>
-        <input class="inp" id="add-birthday" type="text" placeholder="MM-DD（例：06-15）" maxlength="5" style="letter-spacing:.05em">
+        <div style="display:flex;gap:8px">
+          <select id="add-bday-m" class="inp" style="flex:1">
+            <option value="">月</option>
+            <option value="01">1 月</option><option value="02">2 月</option><option value="03">3 月</option>
+            <option value="04">4 月</option><option value="05">5 月</option><option value="06">6 月</option>
+            <option value="07">7 月</option><option value="08">8 月</option><option value="09">9 月</option>
+            <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+          </select>
+          <select id="add-bday-d" class="inp" style="flex:1">
+            <option value="">日</option>
+            <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option>
+            <option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option>
+            <option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+            <option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+            <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option>
+            <option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option>
+            <option value="31">31</option>
+          </select>
+        </div>
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:10px 14px;font-size:12px;color:#64748b">
         ℹ️ 新增後系統將自動發送邀請信至填寫的 Email
@@ -3175,7 +3193,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
     <div style="padding:22px;display:flex;flex-direction:column;gap:14px">
       <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0">
-        <div id="edit-user-avatar" style="width:40px;height:40px;border-radius:50%;background:#64748b;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff"></div>
+        <div id="edit-user-avatar-wrap" style="width:40px;height:40px;flex-shrink:0"></div>
         <div>
           <div id="edit-user-name-display" style="font-size:16px;font-weight:700;color:#0f172a"></div>
           <div id="edit-user-email-display" style="font-size:12px;color:#64748b;margin-top:1px"></div>
@@ -3195,8 +3213,26 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">生日</label>
-          <input class="inp" id="edit-birthday" type="text" placeholder="MM-DD（例：06-15）" maxlength="5" style="letter-spacing:.05em">
-          <div style="font-size:11px;color:#94a3b8;margin-top:4px">格式 MM-DD，用於午茶日壽星自動帶入</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="edit-bday-m" class="inp" style="flex:1">
+              <option value="">月</option>
+              <option value="01">1 月</option><option value="02">2 月</option><option value="03">3 月</option>
+              <option value="04">4 月</option><option value="05">5 月</option><option value="06">6 月</option>
+              <option value="07">7 月</option><option value="08">8 月</option><option value="09">9 月</option>
+              <option value="10">10 月</option><option value="11">11 月</option><option value="12">12 月</option>
+            </select>
+            <select id="edit-bday-d" class="inp" style="flex:1">
+              <option value="">日</option>
+              <option value="01">1</option><option value="02">2</option><option value="03">3</option><option value="04">4</option><option value="05">5</option>
+              <option value="06">6</option><option value="07">7</option><option value="08">8</option><option value="09">9</option><option value="10">10</option>
+              <option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option>
+              <option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option>
+              <option value="21">21</option><option value="22">22</option><option value="23">23</option><option value="24">24</option><option value="25">25</option>
+              <option value="26">26</option><option value="27">27</option><option value="28">28</option><option value="29">29</option><option value="30">30</option>
+              <option value="31">31</option>
+            </select>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:4px">用於午茶日壽星自動帶入</div>
         </div>
       </div>
       <div>
@@ -7333,15 +7369,16 @@ function closeAddUserModal(){
   document.getElementById('add-empid').value='';
   document.getElementById('add-email').value='';
   document.getElementById('add-dept').value='';
-  var bdEl=document.getElementById('add-birthday');
-  if(bdEl) bdEl.value='';
+  var _abm=document.getElementById('add-bday-m'), _abd=document.getElementById('add-bday-d');
+  if(_abm) _abm.value=''; if(_abd) _abd.value='';
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
   const empId=document.getElementById('add-empid').value.trim();
   const email=document.getElementById('add-email').value.trim();
   const dept=document.getElementById('add-dept').value;
-  const birthday=(document.getElementById('add-birthday')||{}).value||'';
+  var _abm2=document.getElementById('add-bday-m')?.value||'', _abd2=document.getElementById('add-bday-d')?.value||'';
+  const birthday=(_abm2&&_abd2)?(_abm2+'-'+_abd2):'';
   if(!name){toast('⚠️ 請填寫姓名');return;}
   if(!empId){toast('⚠️ 請填寫員工編號');return;}
   if(!email){toast('⚠️ 請填寫 Email');return;}
@@ -7371,16 +7408,19 @@ function showEditUserModal(btn){
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
-  if(bdayEl){ var rawBday=row.dataset.birthday||''; var bp=_bdayParse(rawBday); bdayEl.value=bp?(String(bp.m).padStart(2,'0')+'-'+String(bp.d).padStart(2,'0')):''; }
+  var _bm=document.getElementById('edit-bday-m'), _bd=document.getElementById('edit-bday-d');
+  if(_bm&&_bd){ var _rbday=row.dataset.birthday||''; var _bp=_bdayParse(_rbday); _bm.value=_bp?String(_bp.m).padStart(2,'0'):''; _bd.value=_bp?String(_bp.d).padStart(2,'0'):''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   if(editDept&&deptVal){editDept.value=deptVal;}
   document.getElementById('edit-user-name-display').textContent=name;
   document.getElementById('edit-user-email-display').textContent=email;
-  const avatarEl=document.getElementById('edit-user-avatar');
-  avatarEl.textContent=name.charAt(0);
-  const colors=['#38a3a5','#16a34a','#06b6d4','#d97706','#1e9d6b','#6366f1'];
-  avatarEl.style.background=colors[name.charCodeAt(0)%colors.length];
+  const avatarWrap=document.getElementById('edit-user-avatar-wrap');
+  const _av=email?localStorage.getItem('bf_avatar_'+email):null;
+  const _aColors=['#38a3a5','#16a34a','#06b6d4','#d97706','#1e9d6b','#6366f1'];
+  avatarWrap.innerHTML=_av
+    ?'<img src="'+_av+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover">'
+    :'<div style="width:40px;height:40px;border-radius:50%;background:'+_aColors[name.charCodeAt(0)%_aColors.length]+';display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff">'+name.charAt(0)+'</div>';
   document.getElementById('edit-user-subtitle').textContent='編輯：'+name;
   // 角色 checkbox：優先讀列上的 data-roles，再回退 USER_ROLES / 解析徽章文字
   const roles = (row.dataset.roles ? row.dataset.roles.split(',').filter(Boolean) : (USER_ROLES[email] || parseRoles(role)));
@@ -7394,6 +7434,8 @@ function showEditUserModal(btn){
 const ROLE_KEY_TO_LABEL = { employee:'員工', welfare:'福委會', hr:'HR', manager:'管理者' };
 function closeEditUserModal(){
   document.getElementById('edit-user-modal').classList.remove('open');
+  var _bm=document.getElementById('edit-bday-m'), _bd=document.getElementById('edit-bday-d');
+  if(_bm) _bm.value=''; if(_bd) _bd.value='';
   _editRow=null;
 }
 function doEditUser(){
@@ -7405,7 +7447,8 @@ function doEditUser(){
   });
   const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
   const newDept  = document.getElementById('edit-dept')?.value||'';
-  const newBday  = document.getElementById('edit-birthday')?.value||'';
+  var _nbM=document.getElementById('edit-bday-m')?.value||'', _nbD=document.getElementById('edit-bday-d')?.value||'';
+  const newBday  = (_nbM&&_nbD) ? (_nbM+'-'+_nbD) : '';
   const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
   if (_editRow) _editRow.dataset.birthday = newBday; // 本地即時反映
   // 後端相容：role 存代表角色（manager 優先，否則第一個非員工角色），roles 存完整清單
