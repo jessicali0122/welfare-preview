@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629110658';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629115555';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2325,6 +2325,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <button id="admin-clear-btn" type="button" class="btn" style="padding:8px 12px;font-size:14px;background:#f1f5f9;color:#94a3b8;border:1.5px solid #e2e8f0;transition:all .15s" onclick="resetAdminFilter()">清除</button>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
             <button class="btn btn-o" style="font-size:14px" onclick="showBatchTag()">批次綁標籤</button>
+            <button class="btn btn-o" style="font-size:14px" onclick="showBatchRemove()">批次移除標籤</button>
             <button class="btn btn-o" style="font-size:14px" onclick="exportUsers()">批次匯出</button>
             <button class="btn btn-o" style="font-size:14px" onclick="showImportModal()">批次匯入</button>
           </div>
@@ -2338,6 +2339,15 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <button onclick="applyTag('管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
           </div>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
+        </div>
+        <div id="batch-remove-bar" style="display:none;margin-top:10px;padding:10px 12px;background:#fef2f2;border-radius:8px;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="font-size:14px;font-weight:600;color:#ef4444">批次移除角色：</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="removeTag('福委')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委</button>
+            <button onclick="removeTag('HR')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #6ee7b7;background:#fff;color:#10b981;cursor:pointer;font-weight:600">HR</button>
+            <button onclick="removeTag('管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fca5a5;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">管理者</button>
+          </div>
+          <button onclick="hideBatchRemove()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
         </div>
       </div>
       <div class="card" style="overflow:hidden">
@@ -3748,7 +3758,8 @@ async function handleGoogleLogin(response) {
   const tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000; // 7 天
   const prevSession   = currentUser?.sessionExpiry;
   const sessionExpiry = prevSession && prevSession > Date.now() ? prevSession : Date.now() + 7 * 24 * 60 * 60 * 1000;
-  currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry };
+  currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry, roles: (ex.roles||ex.role) ? parseRoles(ex.roles||ex.role) : undefined };
+  if(currentUser.roles && currentUser.roles.includes('manager') && !ADMIN_EMAILS.includes(currentUser.email)) ADMIN_EMAILS.push(currentUser.email);
   _safeSsSet('bf_token', sessionToken);
   localStorage.setItem('bf_token', sessionToken); // 備援：sessionStorage 被清除時從這裡讀回
   const { token: _t, ...userToSave } = currentUser;
@@ -3865,7 +3876,7 @@ function showApp() {
     setTimeout(function(){ _preloadFlowInfo(); }, 800);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
-    setTimeout(function(){ _syncMembersFromServer(); }, 2500);
+    setTimeout(function(){ _syncMembersFromServer(); }, 800);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
@@ -7506,8 +7517,35 @@ function executeDeleteUser(){
 }
 
 
-function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';}
+function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';document.getElementById('batch-remove-bar').style.display='none';}
 function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
+function showBatchRemove(){document.getElementById('batch-remove-bar').style.display='flex';document.getElementById('batch-tag-bar').style.display='none';}
+function hideBatchRemove(){document.getElementById('batch-remove-bar').style.display='none';}
+async function removeTag(roleName){
+  const checked=document.querySelectorAll('.user-cb:checked');
+  if(checked.length===0){toast('⚠️ 請先勾選使用者');return;}
+  const LABEL_MAP={'福委':'welfare','福委會':'welfare','HR':'hr','管理者':'manager'};
+  const removeKey=LABEL_MAP[roleName];
+  if(!removeKey){toast('⚠️ 無法移除此角色');return;}
+  toast('⏳ 批次移除角色中...');
+  let ok=0,fail=0;
+  for(const cb of Array.from(checked)){
+    const row=cb.closest('tr');
+    const email=row?.dataset.email||'';
+    if(!email){fail++;continue;}
+    var curKeys=(row.dataset.roles||'employee').split(',').filter(Boolean);
+    curKeys=curKeys.filter(function(k){return k!==removeKey;});
+    if(!curKeys.includes('employee')) curKeys.push('employee');
+    var rolesLabels=curKeys.map(function(k){return ROLE_KEY_TO_LABEL[k]||k;});
+    var primary=curKeys.includes('manager')?'管理者':curKeys.includes('hr')?'HR':curKeys.includes('welfare')?'福委會':'員工';
+    const res=await callAPI('editUser',{email,role:primary,roles:rolesLabels.join(',')});
+    if(res.ok)ok++;else fail++;
+  }
+  if(fail===0)toast('✅ 已對 '+ok+' 位使用者移除角色「'+roleName+'」');
+  else toast('⚠️ 完成 '+ok+' 筆，'+fail+' 筆失敗');
+  hideBatchRemove();
+  loadAdminUsers();
+}
 function adminToggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
 function updateSelectedCount(){
   const n=document.querySelectorAll('.user-cb:checked').length;
