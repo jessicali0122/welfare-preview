@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629150851';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629160834';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2330,10 +2330,16 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           </div>
         </div>
         <div id="batch-tag-bar" style="display:none;margin-top:10px;padding:10px 12px;background:#fdf2f8;border-radius:8px;align-items:center;gap:10px;flex-wrap:wrap">
-          <span style="font-size:14px;font-weight:600;color:#e16b8c">批次設定角色：</span>
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button onclick="applyTag('申請人')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">申請人</button>
-            <button onclick="applyTag('管理者')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
+          <span style="font-size:14px;font-weight:600;color:#e16b8c">批次設定標籤：</span>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <button onclick="applyTag('manager')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #f9a8d4;background:#fff;color:#e16b8c;cursor:pointer;font-weight:600">管理者</button>
+            <button onclick="applyTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #c4b5fd;background:#fff;color:#6366f1;cursor:pointer;font-weight:600">福委會</button>
+            <button onclick="applyTag('hr')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #7dd3fc;background:#fff;color:#0ea5e9;cursor:pointer;font-weight:600">HR</button>
+            <button onclick="applyTag('employee')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #e2e8f0;background:#fff;color:#64748b;cursor:pointer;font-weight:600">員工</button>
+            <div style="width:1px;height:20px;background:#e2e8f0;margin:0 2px"></div>
+            <button onclick="removeTag('manager')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 管理者</button>
+            <button onclick="removeTag('welfare')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ 福委會</button>
+            <button onclick="removeTag('hr')" style="padding:4px 12px;border-radius:20px;font-size:14px;border:1.5px solid #fecaca;background:#fff;color:#ef4444;cursor:pointer;font-weight:600">✕ HR</button>
           </div>
           <button onclick="hideBatchTag()" style="margin-left:auto;font-size:12px;color:#94a3b8;background:none;border:none;cursor:pointer">關閉</button>
         </div>
@@ -3270,7 +3276,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace">姓名,Email,員工編號,部門,角色<br>王測試,test@tsagroup.com.tw,T0099,後勤部,申請人</code>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8;display:block">姓名,員工編號,部門,Email,標籤,加入時間,生日<br>王測試,T0099,後勤部,test@tsagroup.com.tw,福委會,2026/01/01,01-22</code>
+        <div style="font-size:12px;color:#94a3b8;margin-top:6px">標籤可填：管理者／福委會／HR／員工（多個以 / 分隔）</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn btn-o" style="flex:1;justify-content:center" onclick="closeImportModal()">取消</button>
@@ -7522,19 +7529,38 @@ function updateSelectedCount(){
   document.getElementById('selected-count').textContent=n>0?'已選取 '+n+' 位使用者':'共 '+total+' 位使用者';
 }
 document.addEventListener('change',e=>{if(e.target.classList.contains('user-cb'))updateSelectedCount();});
-async function applyTag(roleName){
+async function applyTag(roleKey){
   const checked=document.querySelectorAll('.user-cb:checked');
   if(checked.length===0){toast('⚠️ 請先勾選使用者');return;}
-  toast('⏳ 批次設定角色中...');
+  const label=ROLE_KEY_TO_LABEL[roleKey]||roleKey;
+  toast('⏳ 批次設定標籤中...');
   let ok=0,fail=0;
   for(const cb of Array.from(checked)){
     const row=cb.closest('tr');
     const email=row?.dataset.email||'';
     if(!email){fail++;continue;}
-    const res=await callAPI('editUser',{email,role:roleName});
+    const res=await callAPI('editUser',{email,role:roleKey});
     if(res.ok)ok++;else fail++;
   }
-  if(fail===0)toast('✅ 已對 '+ok+' 位使用者設定角色「'+roleName+'」');
+  if(fail===0)toast('✅ 已對 '+ok+' 位使用者設定標籤「'+label+'」');
+  else toast('⚠️ 完成 '+ok+' 筆，'+fail+' 筆失敗');
+  hideBatchTag();
+  loadAdminUsers();
+}
+async function removeTag(roleKey){
+  const checked=document.querySelectorAll('.user-cb:checked');
+  if(checked.length===0){toast('⚠️ 請先勾選使用者');return;}
+  const label=ROLE_KEY_TO_LABEL[roleKey]||roleKey;
+  toast('⏳ 批次取消標籤中...');
+  let ok=0,fail=0;
+  for(const cb of Array.from(checked)){
+    const row=cb.closest('tr');
+    const email=row?.dataset.email||'';
+    if(!email){fail++;continue;}
+    const res=await callAPI('editUser',{email,removeRole:roleKey});
+    if(res.ok)ok++;else fail++;
+  }
+  if(fail===0)toast('✅ 已對 '+ok+' 位使用者取消標籤「'+label+'」');
   else toast('⚠️ 完成 '+ok+' 筆，'+fail+' 筆失敗');
   hideBatchTag();
   loadAdminUsers();
@@ -7545,9 +7571,15 @@ async function exportUsers(){
   if (!res.ok) { toast('❌ 匯出失敗：' + res.error); return; }
   const users = res.users || [];
   if (users.length === 0) { toast('⚠️ 目前無使用者資料可匯出'); return; }
-  const header = ['Email','姓名','員工編號','部門','角色'].join(',');
-  const rows = users.map(u => [u.email, u.name, u.employeeId, u.department, u.role].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
-  const csv = '﻿' + header + '\n' + rows.join('\n'); // BOM for Excel UTF-8
+  // 欄位順序與系統一致：姓名,員工編號,部門,Email,標籤,加入時間,生日,狀態
+  const header = ['姓名','員工編號','部門','Email','標籤','加入時間','生日','狀態'].join(',');
+  const rows = users.map(u => {
+    const roleLabel = (u.roles||'').split(',').map(k=>ROLE_KEY_TO_LABEL[k.trim()]||k.trim()).filter(Boolean).join('/');
+    const status = u.status==='disabled' ? '停用' : '啟用';
+    return [u.name, u.employeeId, u.department, u.email, roleLabel, u.joinedAt||'', u.birthday||'', status]
+      .map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',');
+  });
+  const csv = '﻿' + header + '\n' + rows.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
