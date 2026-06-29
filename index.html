@@ -12007,10 +12007,13 @@ function msShowSlots(dateStr) {
     }
     // ── 此時段已預約名單 ──
     var slotBookings = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===s.time && (b.status==='booked'||b.status==='attended'); });
-    var myEmail = (_msData && _msData.userEmail) || '';
+    var myEmail = (_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email) || '';
     var nameChips = slotBookings.map(function(b){
-      var nm = b.userName || (b.userEmail||'').split('@')[0] || '同事';
-      var mine = b.userEmail && myEmail && b.userEmail === myEmail;
+      var mine = !!(myEmail && b.userEmail && b.userEmail === myEmail);
+      var nm = b.userName || '';
+      if (!nm && mine && window.currentUser) nm = window.currentUser.name || (window.currentUser.email||'').split('@')[0] || '';
+      if (!nm && b.userEmail) nm = b.userEmail.split('@')[0];
+      if (!nm) nm = '同事';
       var attended = b.status === 'attended';
       var initial = (nm || '?').trim().charAt(0);
       var chipBg = mine ? 'linear-gradient(135deg,#fde4ef,#fff0f5)' : '#f8fafc';
@@ -12031,7 +12034,7 @@ function msShowSlots(dateStr) {
     return '<div style="background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ' + accentColor + '">'
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
       + '<div style="display:flex;align-items:center;gap:7px;min-width:64px"><span style="font-size:15px">🕐</span><span style="font-size:18px;font-weight:800;color:#0f172a;line-height:1">' + s.time + '</span></div>'
-      + '<div style="flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + badge + remaining + '</div>'
+      + '<div style="flex:1;display:flex;gap:6px;flex-wrap:nowrap;align-items:center;min-width:0;overflow:hidden">' + badge + remaining + '</div>'
       + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn + '</div>'
       + '</div>'
       + attendeeRow
@@ -12049,64 +12052,96 @@ function msSlotsForDate(dateStr, slotTemplates) {
 }
 
 // ── 預約 ──
-window.msBook = async function(date, timeSlot) {
-  if (window._msBookLock) return;
-  window._msBookLock = true;
-  try {
-  if (!_msData) return;
-  if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
-  var bid = 'BK' + Date.now();
-  // 後端 massage 端點尚未實作，採本地優先；若日後實作則沿用回傳的 bookingId
-  try {
-    var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
-    if (r && r.ok && r.bookingId) bid = r.bookingId;
-  } catch(e) {}
-  var uname = (window.currentUser && window.currentUser.name) || '';
-  if (!_msData.myBookings) _msData.myBookings = [];
-  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname });
-  if (!_msData.allBookings) _msData.allBookings = [];
-  _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:uname, createdAt:new Date().toISOString() });
-  _msSaveLocal();
-  toast('✅ 預約成功！');
-  msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
-  } finally { window._msBookLock = false; }
+window.msBook = function(date, timeSlot) {
+  var parts = date.split('-');
+  var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日 ' + timeSlot;
+  _showConfirmModal(
+    '確認預約',
+    '確定要預約 <strong>' + label + '</strong> 的按摩時段嗎？',
+    '確認預約', 'linear-gradient(135deg,#6366f1,#a78bfa)',
+    async function() {
+      if (window._msBookLock) return;
+      window._msBookLock = true;
+      try {
+        if (!_msData) return;
+        if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
+        var bid = 'BK' + Date.now();
+        try { var r = await htApi('massageBook', { date: date, timeSlot: timeSlot }); if (r && r.ok && r.bookingId) bid = r.bookingId; } catch(e) {}
+        var uname = (window.currentUser && window.currentUser.name) || (window.currentUser && (window.currentUser.email||'').split('@')[0]) || '';
+        var uemail = (_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email) || '';
+        if (!_msData.myBookings) _msData.myBookings = [];
+        _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname, userEmail:uemail });
+        if (!_msData.allBookings) _msData.allBookings = [];
+        _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:uemail, userName:uname, createdAt:new Date().toISOString() });
+        _msSaveLocal();
+        toast('✅ 預約成功！');
+        msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+      } finally { window._msBookLock = false; }
+    }
+  );
 };
 
 // ── 取消（在限額內直接取消） ──
-window.msCancel = async function(bookingId, date) {
-  if (!confirm('確定要取消 ' + date + ' 的預約嗎？')) return;
-  var ok = false;
-  try { var cr = await htApi('massageCancel', { bookingId }); ok = cr && cr.ok; } catch(e) {}
-  if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
-  _msUpdateBookingStatus(bookingId, 'cancelled');
-  _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
-  toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+window.msCancel = function(bookingId, date) {
+  var parts = date.split('-');
+  var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  _showConfirmModal(
+    '取消預約',
+    '確定要取消 <strong>' + label + '</strong> 的預約嗎？',
+    '確定取消', '#dc2626',
+    async function() {
+      var ok = false;
+      try { var cr = await htApi('massageCancel', { bookingId }); ok = cr && cr.ok; } catch(e) {}
+      if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
+      _msUpdateBookingStatus(bookingId, 'cancelled');
+      _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
+      toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+    }
+  );
 };
 
 // ── 申請取消（超過限額或已過截止時間，需管理員審核） ──
-window.msRequestCancel = async function(bookingId, date) {
-  var reason = prompt('請說明申請取消的原因（選填）：');
-  if (reason === null) return;
-  var req = { reqId:'REQ'+Date.now(), type:'cancel', bookingId, date, reason:reason||'', userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
-  _msPendingRequests.push(req);
-  if (_msData) { _msData.pendingRequests = _msPendingRequests; var bk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;}); if(bk) bk.cancelRequested = true; }
-  toast('✅ 已提交取消申請，等待管理員審核');
-  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
-  try { await htApi('massageRequestCancel', { bookingId, reason }); } catch(e) {}
+window.msRequestCancel = function(bookingId, date) {
+  var parts = date.split('-');
+  var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  _showConfirmModal(
+    '申請取消預約',
+    '確定要申請取消 <strong>' + label + '</strong> 的預約嗎？需等待管理員審核。'
+    + '<br><br><label style="font-size:13px;color:#64748b;display:block;margin-bottom:6px">取消原因（選填）</label>'
+    + '<textarea id="_ms_cancel_reason" rows="3" placeholder="請輸入原因…" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;resize:none;outline:none;color:#0f172a"></textarea>',
+    '提交申請', '#d97706',
+    async function() {
+      var reason = (document.getElementById('_ms_cancel_reason') && document.getElementById('_ms_cancel_reason').value) || '';
+      var req = { reqId:'REQ'+Date.now(), type:'cancel', bookingId, date, reason, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
+      _msPendingRequests.push(req);
+      if (_msData) { _msData.pendingRequests = _msPendingRequests; var bk = (_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;}); if(bk) bk.cancelRequested = true; }
+      toast('✅ 已提交取消申請，等待管理員審核');
+      msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+      try { await htApi('massageRequestCancel', { bookingId, reason }); } catch(e) {}
+    }
+  );
 };
 
 // ── 申請刪除（需管理員審核） ──
-window.msRequestDelete = async function(bookingId, date) {
-  if (!confirm('申請刪除後需等待管理員審核，確定嗎？')) return;
-  var bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
-  if (bk && bk.deleteRequested) { toast('已申請刪除', 'warning'); return; }
-  if (bk) bk.deleteRequested = true;
-  var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
-  _msPendingRequests.push(req);
-  if (_msData) _msData.pendingRequests = _msPendingRequests;
-  toast('✅ 已提交刪除申請，等待管理員審核');
-  msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
-  try { await htApi('massageRequestDelete', { bookingId }); } catch(e) {}
+window.msRequestDelete = function(bookingId, date) {
+  var parts = date.split('-');
+  var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+  _showConfirmModal(
+    '申請刪除預約',
+    '確定要申請刪除 <strong>' + label + '</strong> 的預約紀錄嗎？<br>送出後需等待管理員審核才會刪除。',
+    '確定申請', '#dc2626',
+    async function() {
+      var bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
+      if (bk && bk.deleteRequested) { toast('已申請刪除', 'warning'); return; }
+      if (bk) bk.deleteRequested = true;
+      var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
+      _msPendingRequests.push(req);
+      if (_msData) _msData.pendingRequests = _msPendingRequests;
+      toast('✅ 已提交刪除申請，等待管理員審核');
+      msRenderCal(); msRenderMyBookings(); msRenderPublicBookings();
+      try { await htApi('massageRequestDelete', { bookingId }); } catch(e) {}
+    }
+  );
 };
 
 // ── 報到 ──
