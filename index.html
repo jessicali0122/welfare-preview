@@ -12187,39 +12187,153 @@ window.msSwitchMyTab = function(tab) {
 
 function msBookingCard(b, isUpcoming) {
   var s = b.status || 'booked';
-  var labelText = b.deleteRequested ? '🗑 申請刪除中' : b.cancelRequested ? '⏳ 申請取消中' : {booked:'💆 已預約',cancelled:'✕ 已取消',attended:'✓ 已報到',noshow:'⚠ 缺席'}[s] || '已預約';
-  var badgeBg = b.deleteRequested ? '#fef2f2' : b.cancelRequested ? '#fffbeb' : {booked:'linear-gradient(135deg,#6366f1,#a78bfa)',cancelled:'#f1f5f9',attended:'linear-gradient(135deg,#22c55e,#16a34a)',noshow:'#fef2f2'}[s] || '#ede9fe';
-  var badgeColor = b.deleteRequested ? '#dc2626' : b.cancelRequested ? '#d97706' : {booked:'#fff',cancelled:'#94a3b8',attended:'#fff',noshow:'#dc2626'}[s] || '#6366f1';
+  var _days = ['日','一','二','三','四','五','六'];
+  var _dp = (b.date||'').split('-');
+  var _dt = new Date(b.date + 'T12:00:00');
+  var _dayName = _days[_dt.getDay()];
+  var _month = parseInt(_dp[1]||0);
+  var _day = parseInt(_dp[2]||0);
   var now = new Date();
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot||'00:00') + ':00');
   var settings = (_msData && _msData.settings) || {};
   var canCancelNormal = isUpcoming && s==='booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime-now) > (settings.cancelDeadlineHours||24)*3600000;
   var isTodayDate = b.date === fmtDateStr(new Date());
   var canCheckIn = isUpcoming && s==='booked' && isTodayDate && !b.deleteRequested;
+
+  // header gradient & accent by status
+  var _hGrad = s==='booked'
+    ? (b.cancelRequested ? 'linear-gradient(135deg,#f59e0b,#fbbf24)'
+      : b.deleteRequested ? 'linear-gradient(135deg,#dc2626,#f87171)'
+      : 'linear-gradient(135deg,#6366f1,#a78bfa)')
+    : s==='attended' ? 'linear-gradient(135deg,#16a34a,#22c55e)'
+    : 'linear-gradient(135deg,#94a3b8,#cbd5e1)';
+  var _accent = s==='booked'
+    ? (b.cancelRequested ? '#d97706' : b.deleteRequested ? '#dc2626' : '#6366f1')
+    : s==='attended' ? '#16a34a' : '#94a3b8';
+  var _statusLabel = b.deleteRequested ? '申請刪除中'
+    : b.cancelRequested ? '申請取消中'
+    : {booked:'已預約', cancelled:'已取消', attended:'已報到', noshow:'缺席'}[s] || '已預約';
+  var _statusIcon = b.deleteRequested ? '🗑' : b.cancelRequested ? '⏳'
+    : {booked:'💆', cancelled:'✕', attended:'✓', noshow:'⚠'}[s] || '💆';
+
+  // user info
+  var _nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail]) || b.userName || (b.userEmail||'').split('@')[0] || '員工';
+  var _initial = (_nm||'?').trim().charAt(0);
+  var _shortId = (b.bookingId||'').replace(/^BK/i,'').slice(-8);
+
+  // barcode bars (deterministic from bookingId chars)
+  var _bkDigits = (b.bookingId||'BK00000000').replace(/\D/g,'') || '12345678';
+  var _bars = '';
+  for (var _bi=0; _bi<36; _bi++) {
+    var _d = parseInt(_bkDigits[_bi % _bkDigits.length]||4);
+    var _bw = (_d%3===0)?3:(_d%3===1)?2:1;
+    var _bh = 18 + (_d*3 + _bi*2)%26;
+    var _dark = (_bi+_d)%4 !== 0;
+    _bars += '<div style="width:'+_bw+'px;height:'+_bh+'px;background:'+(_dark?'#1e293b':'#e2e8f0')+';border-radius:1px;flex-shrink:0"></div>';
+  }
+
+  // action buttons (pill style matching ticket aesthetic)
+  var _btnBase = 'border:none;border-radius:12px;padding:10px 0;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;flex:1;min-width:80px;';
   var actions = '';
-  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700">✓ 報到</button>';
+  if (canCheckIn) actions += '<button onclick="msCheckIn(\''+b.bookingId+'\',\''+b.date+'\')" style="'+_btnBase+'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff">✓ 立即報到</button>';
   if (isUpcoming && s==='booked' && !b.deleteRequested && !b.cancelRequested) {
-    if (canCancelNormal) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>';
-    else actions += '<button onclick="msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fffbeb;color:#d97706;border:1.5px solid #fde68a;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600">申請取消</button>';
+    if (canCancelNormal) actions += '<button onclick="msCancel(\''+b.bookingId+'\',\''+b.date+'\')" style="'+_btnBase+'background:#f1f5f9;color:#64748b">取消預約</button>';
+    else actions += '<button onclick="msRequestCancel(\''+b.bookingId+'\',\''+b.date+'\')" style="'+_btnBase+'background:#fffbeb;color:#d97706;border:1.5px solid #fde68a !important">申請取消</button>';
   }
   if (isUpcoming && s==='booked' && !b.deleteRequested) {
-    actions += '<button onclick="msRequestDelete(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit">申請刪除</button>';
+    actions += '<button onclick="msRequestDelete(\''+b.bookingId+'\',\''+b.date+'\')" style="'+_btnBase+'background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca !important">申請刪除</button>';
   }
-  var parts = (b.date||'').split('-');
-  var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  var accentGrad = s==='booked'?(b.cancelRequested?'linear-gradient(#fbbf24,#f59e0b)':b.deleteRequested?'linear-gradient(#f87171,#dc2626)':'linear-gradient(#6366f1,#a78bfa)'):s==='attended'?'linear-gradient(#22c55e,#16a34a)':'linear-gradient(#e2e8f0,#e2e8f0)';
-  return '<div style="background:#fff;border-radius:16px;padding:16px;display:flex;gap:12px;align-items:stretch;box-shadow:0 2px 10px rgba(0,0,0,.06);overflow:hidden">'
-    + '<div style="width:4px;border-radius:2px;background:' + accentGrad + ';flex-shrink:0"></div>'
-    + '<div style="background:#f8fafc;border-radius:12px;padding:10px 12px;min-width:64px;text-align:center;flex-shrink:0">'
-    + '<div style="font-size:22px;font-weight:800;color:#0f172a;line-height:1">' + parseInt(parts[2]||0) + '</div>'
-    + '<div style="font-size:11px;color:#94a3b8;margin-top:2px">' + parseInt(parts[1]||0) + '月</div>'
-    + '<div style="font-size:13px;font-weight:700;color:#374151;margin-top:4px">' + (b.timeSlot||'') + '</div>'
-    + '</div>'
-    + '<div style="flex:1;min-width:0">'
-    + '<span style="background:' + badgeBg + ';color:' + badgeColor + ';border-radius:20px;padding:3px 12px;font-size:11px;font-weight:700;display:inline-block">' + labelText + '</span>'
-    + (ts ? '<div style="font-size:11px;color:#94a3b8;margin-top:6px">預約於 ' + ts + '</div>' : '')
-    + (actions ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">' + actions + '</div>' : '')
-    + '</div></div>';
+
+  return ''
+  // ── 票券外框 ──
+  + '<div style="background:#fff;border-radius:22px;overflow:hidden;box-shadow:0 6px 28px rgba(99,102,241,.13)">'
+
+  // ── 票頭：漸層色帶 ──
+  + '<div style="background:'+_hGrad+';padding:16px 20px;display:flex;justify-content:space-between;align-items:center">'
+  + '<div style="display:flex;align-items:center;gap:9px">'
+  + '<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:17px">'+_statusIcon+'</div>'
+  + '<div>'
+  + '<div style="color:#fff;font-weight:800;font-size:15px;letter-spacing:.3px">按摩預約</div>'
+  + '<div style="color:rgba(255,255,255,.75);font-size:11px;margin-top:1px">'+_statusLabel+'</div>'
+  + '</div>'
+  + '</div>'
+  + '<div style="text-align:right">'
+  + '<div style="color:rgba(255,255,255,.6);font-size:9px;letter-spacing:1.5px;margin-bottom:2px">BOOKING ID</div>'
+  + '<div style="color:#fff;font-size:12px;font-weight:700;font-family:monospace;letter-spacing:.5px">'+htEsc(_shortId)+'</div>'
+  + '</div>'
+  + '</div>'
+
+  // ── 主體：日期 + 時段 ──
+  + '<div style="padding:22px 20px 18px;display:flex;align-items:center;gap:12px">'
+  // 左：大日期
+  + '<div style="text-align:center;min-width:62px">'
+  + '<div style="font-size:46px;font-weight:900;color:#0f172a;line-height:1;letter-spacing:-2px">'+_day+'</div>'
+  + '<div style="font-size:12px;color:#64748b;margin-top:3px;font-weight:500">'+_month+'月 · 週'+_dayName+'</div>'
+  + '</div>'
+  // 中：虛線 + 圖示
+  + '<div style="flex:1;display:flex;align-items:center;gap:6px;padding:0 4px">'
+  + '<div style="flex:1;border-top:1.5px dashed #e2e8f0"></div>'
+  + '<div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0">💆</div>'
+  + '<div style="flex:1;border-top:1.5px dashed #e2e8f0"></div>'
+  + '</div>'
+  // 右：時段
+  + '<div style="text-align:center;min-width:62px">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1.5px;margin-bottom:4px">TIME SLOT</div>'
+  + '<div style="font-size:26px;font-weight:900;color:'+_accent+';letter-spacing:-1px;line-height:1">'+(b.timeSlot||'—')+'</div>'
+  + '</div>'
+  + '</div>'
+
+  // ── 細節列：三格 ──
+  + '<div style="display:flex;margin:0 20px;padding:12px 0;border-top:1px solid #f1f5f9;border-bottom:1px solid #f1f5f9">'
+  + '<div style="flex:1;text-align:center">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px;margin-bottom:4px">MONTH</div>'
+  + '<div style="font-size:13px;font-weight:700;color:#0f172a">'+_month+'月</div>'
+  + '</div>'
+  + '<div style="flex:1;text-align:center;border-left:1px solid #f1f5f9;border-right:1px solid #f1f5f9">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px;margin-bottom:4px">DAY</div>'
+  + '<div style="font-size:13px;font-weight:700;color:#0f172a">週'+_dayName+'</div>'
+  + '</div>'
+  + '<div style="flex:1;text-align:center">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px;margin-bottom:4px">TYPE</div>'
+  + '<div style="font-size:13px;font-weight:700;color:#0f172a">紓壓按摩</div>'
+  + '</div>'
+  + '</div>'
+
+  // ── 鋸齒切割線 ──
+  + '<div style="position:relative;height:20px">'
+  + '<div style="position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#f8fafc"></div>'
+  + '<div style="position:absolute;right:-10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#f8fafc"></div>'
+  + '<div style="position:absolute;left:12px;right:12px;top:50%;border-top:1.5px dashed #e2e8f0"></div>'
+  + '</div>'
+
+  // ── 預約人資訊 ──
+  + '<div style="padding:8px 20px 16px">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1.5px;margin-bottom:10px">PASSENGER INFO</div>'
+  + '<div style="display:flex;align-items:center;gap:11px">'
+  + '<div style="width:40px;height:40px;border-radius:50%;background:'+_hGrad+';color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">'+htEsc(_initial)+'</div>'
+  + '<div style="flex:1;min-width:0">'
+  + '<div style="font-size:14px;font-weight:700;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(_nm)+'</div>'
+  + '<div style="font-size:11px;color:#94a3b8;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.userEmail||'')+'</div>'
+  + '</div>'
+  + '<div style="text-align:right;flex-shrink:0">'
+  + '<div style="font-size:9px;color:#94a3b8;letter-spacing:1px">SEAT</div>'
+  + '<div style="font-size:18px;font-weight:900;color:'+_accent+'">床位</div>'
+  + '</div>'
+  + '</div>'
+  + '</div>'
+
+  // ── 條碼區 ──
+  + '<div style="margin:0 20px 18px;background:#f8fafc;border-radius:14px;padding:14px 16px">'
+  + '<div style="display:flex;align-items:flex-end;justify-content:center;gap:1.5px;height:46px;overflow:hidden;margin-bottom:8px">'+_bars+'</div>'
+  + '<div style="text-align:center;font-size:10px;color:#94a3b8;letter-spacing:2px;font-family:monospace">'+htEsc(b.bookingId||'')+'</div>'
+  + '</div>'
+
+  // ── 操作按鈕 ──
+  + (actions
+    ? '<div style="padding:0 20px 20px;display:flex;gap:8px;flex-wrap:wrap">'+actions+'</div>'
+    : '<div style="height:4px"></div>')
+
+  + '</div>';
 }
 
 // ── 管理（admin only） ──
