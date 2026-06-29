@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629164636';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629165045';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4297,14 +4297,11 @@ function fmtDateOnly(s) {
   if (!s) return '—';
   var str = String(s).trim();
   var p = function(n){ return String(n).padStart(2,'0'); };
-  // 已是 YYYY/MM/DD HH:MM 或 YYYY/MM/DD 格式
-  if (/^\d{4}\/\d{2}\/\d{2}/.test(str)) return str.length > 10 ? str.substring(0, 16) : str;
-  // YYYY-MM-DD 格式
-  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-    var date = str.substring(0, 10).replace(/-/g, '/');
-    var time = str.length > 10 ? str.substring(11, 16) : '';
-    return time ? date + ' ' + time : date;
+  // YYYY/MM/DD 開頭：GAS 已存為台灣時間文字，直接截取
+  if (/^\d{4}\/\d{2}\/\d{2}/.test(str)) {
+    return str.length > 10 ? str.substring(0, 16) : str.substring(0, 10);
   }
+  // ISO / YYYY-MM-DD：GSheet 序列化為 UTC，需 +8h 轉台灣時間
   var d = new Date(str);
   if (isNaN(d.getTime())) return str;
   var tw = new Date(d.getTime() + 8 * 3600 * 1000);
