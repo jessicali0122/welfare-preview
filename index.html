@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629162604';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629163208';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3272,12 +3272,13 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <button onclick="closeImportModal()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
     </div>
     <div style="padding:20px">
-      <div style="border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#f8fafc;margin-bottom:16px">
+      <input type="file" id="import-file-input" accept=".csv" style="display:none" onchange="onImportFileSelected(this)">
+      <div style="border:2px dashed #cbd5e1;border-radius:10px;padding:28px;text-align:center;cursor:pointer;background:#f8fafc;margin-bottom:16px" onclick="document.getElementById('import-file-input').click()">
         <div style="width:44px;height:44px;background:#f1f5f9;border-radius:10px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#e16b8c" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         </div>
-        <div style="font-size:14px;font-weight:600;color:#374151">點擊或拖放 CSV / Excel 檔案</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:4px">支援 .csv · .xlsx · 最大 5MB</div>
+        <div style="font-size:14px;font-weight:600;color:#374151">點擊選取 CSV 檔案</div>
+        <div id="import-file-name" style="font-size:12px;color:#94a3b8;margin-top:4px">尚未選擇檔案</div>
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 格式範例：</div>
@@ -7600,9 +7601,73 @@ function exportUsers(){
   URL.revokeObjectURL(url);
   toast('✅ 已匯出 ' + checked.length + ' 位使用者（CSV）');
 }
-function showImportModal(){document.getElementById('import-modal').classList.add('open');}
+function showImportModal(){
+  document.getElementById('import-modal').classList.add('open');
+  document.getElementById('import-file-input').value='';
+  document.getElementById('import-file-name').textContent='尚未選擇檔案';
+}
 function closeImportModal(){document.getElementById('import-modal').classList.remove('open');}
-function doImport(){closeImportModal();toast('⚠️ 批次匯入功能尚未開放，請透過「新增使用者」逐筆新增');}
+function onImportFileSelected(input){
+  const f=input.files[0];
+  document.getElementById('import-file-name').textContent = f ? f.name : '尚未選擇檔案';
+}
+function parseCSV(text){
+  const lines=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(l=>l.trim());
+  return lines.map(line=>{
+    const cols=[];let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}
+      else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  });
+}
+async function doImport(){
+  const input=document.getElementById('import-file-input');
+  if(!input.files||!input.files[0]){toast('⚠️ 請先選擇 CSV 檔案');return;}
+  const file=input.files[0];
+  const text=await file.text();
+  const rows=parseCSV(text);
+  if(rows.length<2){toast('⚠️ 檔案內容不足，至少需一筆資料');return;}
+  // 第一列為欄位標題，判斷欄位順序
+  const header=rows[0].map(h=>h.trim());
+  const col={
+    name: header.findIndex(h=>/姓名/.test(h)),
+    employeeId: header.findIndex(h=>/員工編號/.test(h)),
+    department: header.findIndex(h=>/部門/.test(h)),
+    email: header.findIndex(h=>/email/i.test(h)),
+    roles: header.findIndex(h=>/標籤/.test(h)),
+    birthday: header.findIndex(h=>/生日/.test(h))
+  };
+  if(col.name<0||col.email<0){toast('❌ CSV 缺少必填欄位（姓名、Email）');return;}
+  const dataRows=rows.slice(1).filter(r=>r.some(c=>c));
+  if(dataRows.length===0){toast('⚠️ 沒有可匯入的資料列');return;}
+  closeImportModal();
+  toast('⏳ 匯入中，共 '+dataRows.length+' 筆...');
+  let ok=0,fail=0,failList=[];
+  for(const r of dataRows){
+    const rolesRaw=(col.roles>=0?r[col.roles]||'':'').replace(/\//g,',');
+    const payload={
+      name: col.name>=0?r[col.name]||'':'',
+      email: col.email>=0?r[col.email]||'':'',
+      employeeId: col.employeeId>=0?r[col.employeeId]||'':'',
+      department: col.department>=0?r[col.department]||'':'',
+      birthday: col.birthday>=0?r[col.birthday]||'':'',
+      roles: rolesRaw||'employee'
+    };
+    if(!payload.name||!payload.email){fail++;failList.push(payload.email||payload.name||'?');continue;}
+    try{
+      const res=await callAPI('addUser',payload);
+      if(res&&res.ok)ok++;
+      else{fail++;failList.push(payload.email);}
+    }catch(e){fail++;failList.push(payload.email);}
+  }
+  if(fail===0){toast('✅ 成功匯入 '+ok+' 位使用者');loadAdminUsers();}
+  else{toast('⚠️ 匯入完成：'+ok+' 成功，'+fail+' 失敗（'+failList.join('、')+'）');loadAdminUsers();}
+}
 
 
 // ══════════════════════════════════════════
