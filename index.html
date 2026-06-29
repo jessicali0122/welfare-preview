@@ -3057,22 +3057,17 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
             <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
             <div style="font-size:13px;font-weight:700;color:#0f172a">所有預約紀錄</div>
           </div>
-          <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:13px;font-family:inherit;background:#f8fafc;width:150px;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+          <input id="ms-admin-search" type="text" placeholder="搜尋姓名 / 日期…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:13px;font-family:inherit;background:#f8fafc;width:160px;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
         </div>
-        <div id="ms-admin-table-wrap" style="overflow-x:auto">
-          <table style="width:100%;border-collapse:collapse;font-size:13px">
-            <thead>
-              <tr style="border-bottom:2px solid #f1f5f9">
-                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">姓名</th>
-                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">日期</th>
-                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">時段</th>
-                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">狀態</th>
-                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作</th>
-              </tr>
-            </thead>
-            <tbody id="ms-admin-tbody"></tbody>
-          </table>
+        <!-- 狀態篩選頁籤 -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+          <button class="ms-rec-filter active" data-filter="all" onclick="msAdminSetFilter('all')" style="border:1.5px solid #6366f1;background:#6366f1;color:#fff;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">全部</button>
+          <button class="ms-rec-filter" data-filter="booked" onclick="msAdminSetFilter('booked')" style="border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">已預約</button>
+          <button class="ms-rec-filter" data-filter="attended" onclick="msAdminSetFilter('attended')" style="border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">已報到</button>
+          <button class="ms-rec-filter" data-filter="cancelled" onclick="msAdminSetFilter('cancelled')" style="border:1.5px solid #e2e8f0;background:#fff;color:#64748b;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">已取消</button>
         </div>
+        <!-- 依日期分群顯示 -->
+        <div id="ms-admin-records-list"></div>
       </div>
 
       <!-- 動作紀錄 -->
@@ -12376,12 +12371,14 @@ function msBookingCard(b, isUpcoming) {
   + '</div>'
   + '</div>'
 
-  // ── QR Code 區 ──
-  + '<div style="margin:0 20px 18px;background:#f8fafc;border-radius:14px;padding:16px;text-align:center">'
-  + '<canvas data-qr-url="'+htEsc(_qrUrl)+'" width="140" height="140" style="border-radius:10px;display:block;margin:0 auto"></canvas>'
-  + '<div style="font-size:10px;color:#94a3b8;letter-spacing:1.5px;font-family:monospace;margin-top:8px">'+htEsc(b.bookingId||'')+'</div>'
-  + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">掃描 QR Code 完成報到</div>'
-  + '</div>'
+  // ── QR Code 區（只在即將到來且狀態為 booked 時顯示） ──
+  + (isUpcoming && s === 'booked'
+    ? '<div style="margin:0 20px 18px;background:#f8fafc;border-radius:14px;padding:16px;text-align:center">'
+      + '<canvas data-qr-url="'+htEsc(_qrUrl)+'" width="140" height="140" style="border-radius:10px;display:block;margin:0 auto"></canvas>'
+      + '<div style="font-size:10px;color:#94a3b8;letter-spacing:1.5px;font-family:monospace;margin-top:8px">'+htEsc(b.bookingId||'')+'</div>'
+      + '<div style="font-size:10px;color:#94a3b8;margin-top:3px">掃描 QR Code 完成報到</div>'
+      + '</div>'
+    : '')
 
   // ── 操作按鈕 ──
   + (actions
@@ -12661,33 +12658,100 @@ window.msSaveSettings = async function() {
 };
 
 // ── 所有預約紀錄（admin） ──
+var _msAdminStatusFilter = 'all';
+
 function msRenderAdminTable() {
-  var tbody = document.getElementById('ms-admin-tbody'); if (!tbody) return;
-  var all = ((_msData && _msData.allBookings) || []).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
-  _allBookings = all; msRenderAdminRows(all);
+  var el = document.getElementById('ms-admin-records-list'); if (!el) return;
+  var all = ((_msData && _msData.allBookings) || []).slice().sort(function(a,b){
+    var dc = (b.date||'').localeCompare(a.date||'');
+    return dc !== 0 ? dc : (a.timeSlot||'').localeCompare(b.timeSlot||'');
+  });
+  _allBookings = all;
+  msRenderAdminRows(all);
 }
+
+window.msAdminSetFilter = function(filter) {
+  _msAdminStatusFilter = filter;
+  document.querySelectorAll('.ms-rec-filter').forEach(function(btn) {
+    var isActive = btn.getAttribute('data-filter') === filter;
+    btn.style.background = isActive ? '#6366f1' : '#fff';
+    btn.style.color = isActive ? '#fff' : '#64748b';
+    btn.style.borderColor = isActive ? '#6366f1' : '#e2e8f0';
+    btn.classList.toggle('active', isActive);
+  });
+  msRenderAdminRows(_allBookings);
+};
 
 window.msAdminFilter = function() {
   var q = (document.getElementById('ms-admin-search').value||'').toLowerCase();
-  msRenderAdminRows(q ? _allBookings.filter(function(b){ return (b.userName||'').toLowerCase().includes(q)||(b.userEmail||'').toLowerCase().includes(q)||(b.date||'').includes(q); }) : _allBookings);
+  msRenderAdminRows(q ? _allBookings.filter(function(b){
+    var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail])||b.userName||'';
+    return nm.toLowerCase().includes(q)||(b.userEmail||'').toLowerCase().includes(q)||(b.date||'').includes(q);
+  }) : _allBookings);
 };
 
 function msRenderAdminRows(rows) {
-  var tbody = document.getElementById('ms-admin-tbody'); if (!tbody) return;
-  var sc = { booked:{label:'已預約',bg:'#ede9fe',color:'#6366f1'}, cancelled:{label:'已取消',bg:'#f1f5f9',color:'#94a3b8'}, attended:{label:'已報到',bg:'#dcfce7',color:'#16a34a'}, noshow:{label:'缺席',bg:'#fef2f2',color:'#dc2626'} };
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:#94a3b8;font-size:14px">📭 無紀錄</td></tr>'; return; }
-  tbody.innerHTML = rows.map(function(b){
-    var st = b.status||'booked'; var cfg = sc[st]||sc.booked;
-    return '<tr style="border-bottom:1px solid #f8fafc" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:10px;font-weight:600;color:#0f172a">' + ((window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail])||b.userName||b.userEmail||'—') + '</td>'
-      + '<td style="padding:10px;color:#374151">' + (b.date||'') + '</td>'
-      + '<td style="padding:10px;font-weight:700;color:#374151">' + (b.timeSlot||'') + '</td>'
-      + '<td style="padding:10px"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + cfg.label + '</span></td>'
-      + '<td style="padding:10px;white-space:nowrap">'
-      + (st==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消預約</button> ':'')
-      + (st==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 確認報到</button>':'')
-      + (st==='attended'?'<button onclick="msAdminUnCheckIn(\'' + b.bookingId + '\')" style="background:#fffbeb;color:#d97706;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消報到</button>':'')
-      + '</td></tr>';
+  var el = document.getElementById('ms-admin-records-list'); if (!el) return;
+  var sc = {
+    booked:   { label:'已預約', bg:'#ede9fe', color:'#6366f1', dot:'#6366f1' },
+    cancelled:{ label:'已取消', bg:'#f1f5f9', color:'#94a3b8', dot:'#cbd5e1' },
+    attended: { label:'已報到', bg:'#dcfce7', color:'#16a34a', dot:'#22c55e' },
+    noshow:   { label:'缺席',   bg:'#fef2f2', color:'#dc2626', dot:'#f87171' }
+  };
+
+  // 依狀態篩選
+  var filtered = _msAdminStatusFilter === 'all'
+    ? rows : rows.filter(function(b){ return (b.status||'booked') === _msAdminStatusFilter; });
+
+  if (!filtered.length) {
+    el.innerHTML = '<div style="text-align:center;padding:28px;color:#94a3b8;font-size:14px">📭 無符合紀錄</div>';
+    return;
+  }
+
+  // 依日期分群
+  var byDate = {};
+  filtered.forEach(function(b) {
+    var d = b.date || '—';
+    if (!byDate[d]) byDate[d] = [];
+    byDate[d].push(b);
+  });
+  var dates = Object.keys(byDate).sort(function(a,b){ return b.localeCompare(a); });
+
+  var today = fmtDateStr(new Date());
+
+  el.innerHTML = dates.map(function(d) {
+    var dp = d.split('-');
+    var mStr = parseInt(dp[1]||0) + '月' + parseInt(dp[2]||0) + '日';
+    var dayDiff = d >= today ? (d === today ? '今天' : '未來') : '過去';
+    var dayBadge = d === today
+      ? '<span style="background:#fef9c3;color:#854d0e;border-radius:20px;padding:1px 8px;font-size:11px;font-weight:700;margin-left:6px">今天</span>'
+      : '';
+
+    var rowsHtml = byDate[d].map(function(b) {
+      var st = b.status||'booked';
+      var cfg = sc[st]||sc.booked;
+      var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail])||b.userName||b.userEmail||'—';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f8fafc;flex-wrap:wrap">'
+        + '<div style="width:8px;height:8px;border-radius:50%;background:'+cfg.dot+';flex-shrink:0"></div>'
+        + '<div style="font-size:13px;font-weight:700;color:#0f172a;min-width:70px">' + htEsc(nm) + '</div>'
+        + '<div style="font-size:13px;font-weight:700;color:#6366f1;min-width:48px">' + htEsc(b.timeSlot||'—') + '</div>'
+        + '<span style="background:'+cfg.bg+';color:'+cfg.color+';border-radius:20px;padding:2px 10px;font-size:11px;font-weight:700">' + cfg.label + '</span>'
+        + '<div style="flex:1"></div>'
+        + '<div style="display:flex;gap:6px;flex-shrink:0">'
+        + (st==='booked'?'<button onclick="msAdminCancel(\''+b.bookingId+'\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消</button>':'')
+        + (st==='booked'?'<button onclick="msAdminCheckIn(\''+b.bookingId+'\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 報到</button>':'')
+        + (st==='attended'?'<button onclick="msAdminUnCheckIn(\''+b.bookingId+'\')" style="background:#fffbeb;color:#d97706;border:none;border-radius:8px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消報到</button>':'')
+        + '</div>'
+        + '</div>';
+    }).join('');
+
+    return '<div style="margin-bottom:16px">'
+      + '<div style="font-size:12px;font-weight:700;color:#64748b;padding:6px 0;border-bottom:2px solid #f1f5f9;margin-bottom:4px;display:flex;align-items:center">'
+      + mStr + dayBadge
+      + '<span style="margin-left:auto;font-size:11px;color:#94a3b8;font-weight:500">' + byDate[d].length + ' 筆</span>'
+      + '</div>'
+      + rowsHtml
+      + '</div>';
   }).join('');
 }
 
