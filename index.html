@@ -12006,7 +12006,7 @@ function msShowSlots(dateStr) {
     var myEmail = (_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email) || '';
     var nameChips = slotBookings.map(function(b){
       var mine = !!(myEmail && b.userEmail && b.userEmail === myEmail);
-      var nm = b.userName || '';
+      var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail]) || b.userName || '';
       if (!nm && mine && window.currentUser) nm = window.currentUser.name || (window.currentUser.email||'').split('@')[0] || '';
       if (!nm && b.userEmail) nm = b.userEmail.split('@')[0];
       if (!nm) nm = '同事';
@@ -12079,6 +12079,12 @@ window.msBook = function(date, timeSlot) {
 
 // ── 取消（在限額內直接取消） ──
 window.msCancel = function(bookingId, date) {
+  var _settings = (_msData && _msData.settings) || {};
+  var _deadlineHrs = _settings.cancelDeadlineHours || 24;
+  var _appointmentTime = new Date(date + 'T00:00:00');
+  if ((_appointmentTime - new Date()) <= _deadlineHrs * 3600000) {
+    toast('已超過取消期限（預約時間前 ' + _deadlineHrs + ' 小時），如需取消請提交申請', 'error'); return;
+  }
   var parts = date.split('-');
   var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
   _showConfirmModal(
@@ -12195,6 +12201,8 @@ function msBookingCard(b, isUpcoming) {
   if (isUpcoming && s==='booked' && !b.deleteRequested && !b.cancelRequested) {
     if (canCancelNormal) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit">取消</button>';
     else actions += '<button onclick="msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fffbeb;color:#d97706;border:1.5px solid #fde68a;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600">申請取消</button>';
+  }
+  if (isUpcoming && s==='booked' && !b.deleteRequested) {
     actions += '<button onclick="msRequestDelete(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit">申請刪除</button>';
   }
   var parts = (b.date||'').split('-');
@@ -12466,7 +12474,7 @@ function msRenderAdminRows(rows) {
   tbody.innerHTML = rows.map(function(b){
     var st = b.status||'booked'; var cfg = sc[st]||sc.booked;
     return '<tr style="border-bottom:1px solid #f8fafc" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:10px;font-weight:600;color:#0f172a">' + (b.userName||b.userEmail||'—') + '</td>'
+      + '<td style="padding:10px;font-weight:600;color:#0f172a">' + ((window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail])||b.userName||b.userEmail||'—') + '</td>'
       + '<td style="padding:10px;color:#374151">' + (b.date||'') + '</td>'
       + '<td style="padding:10px;font-weight:700;color:#374151">' + (b.timeSlot||'') + '</td>'
       + '<td style="padding:10px"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + cfg.label + '</span></td>'
@@ -12515,7 +12523,7 @@ function msRenderPublicBookings() {
     var dt = new Date(ds);
     var dateLabel = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日（' + days[dt.getDay()] + '）';
     var rows = byDate[ds].map(function(b) {
-      var nm = b.userName || (b.userEmail||'').split('@')[0] || '同事';
+      var nm = (window.LOCAL_EMAIL_TO_NAME&&b.userEmail&&window.LOCAL_EMAIL_TO_NAME[b.userEmail]) || b.userName || (b.userEmail||'').split('@')[0] || '同事';
       var mine = myEmail && b.userEmail === myEmail;
       var attended = b.status === 'attended';
       var initial = (nm||'?').trim().charAt(0);
