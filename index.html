@@ -2967,109 +2967,137 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <!-- ⚙️ 管理 panel (admin only) -->
   <div id="ms-panel-admin" style="display:none">
 
-    <!-- 待審核申請 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:14px">📬</div>
-        <div style="font-size:13px;font-weight:700;color:#0f172a">待審核申請</div>
-        <div id="ms-pending-badge" style="display:none;background:#e16b8c;color:#fff;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700"></div>
-      </div>
-      <div id="ms-pending-list">
-        <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">無待審核申請</div>
-      </div>
+    <!-- 管理子頁籤 -->
+    <div class="seg-track" style="margin-bottom:20px">
+      <button class="massage-tab active" id="ms-atab-dates" onclick="msAdminSwitchTab('dates')">📅 日期管理</button>
+      <button class="massage-tab" id="ms-atab-settings" onclick="msAdminSwitchTab('settings')">⚙️ 規則設定</button>
+      <button class="massage-tab" id="ms-atab-records" onclick="msAdminSwitchTab('records')">📋 預約紀錄<span id="ms-pending-badge" style="display:none;background:#e16b8c;color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;font-weight:700;margin-left:4px;vertical-align:middle"></span></button>
     </div>
 
-    <!-- 開放日期管理 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
-        <div style="font-size:13px;font-weight:700;color:#0f172a">開放日期管理</div>
-      </div>
-      <!-- 整合式：選日期 + 設定該日時段與名額，一次完成 -->
-      <div id="ms-open-editor" style="background:#f8fafc;border:1px solid #eef0f4;border-radius:12px;padding:14px;margin-bottom:16px">
-        <div id="ms-open-editor-title" style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px">新增開放日</div>
-        <div style="font-size:12px;color:#64748b;margin-bottom:5px">選擇日期</div>
-        <input id="ms-open-date-inp" type="date" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
-          <span style="font-size:12px;color:#64748b">開放時段與名額</span>
-          <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
-        </div>
-        <div id="ms-draft-slots"></div>
-        <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #c7d2fe;color:#6366f1;border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="display:none;flex:0 0 auto;background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
-          <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
-        </div>
-      </div>
-      <div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px">已開放日期</div>
-      <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-
-    <!-- 限制設定 + 時段樣板（2欄，手機 1欄） -->
-    <div id="ms-admin-settings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <!-- 📅 日期管理 -->
+    <div id="ms-apanel-dates">
       <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">限制設定</div>
+        <div id="ms-open-editor" style="background:#f8fafc;border:1px solid #eef0f4;border-radius:12px;padding:14px;margin-bottom:16px">
+          <div id="ms-open-editor-title" style="font-size:13px;font-weight:700;color:#6366f1;margin-bottom:10px">新增開放日</div>
+          <div style="font-size:12px;color:#64748b;margin-bottom:5px">選擇日期</div>
+          <input id="ms-open-date-inp" type="date" style="width:100%;box-sizing:border-box;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#0f172a;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
+            <span style="font-size:12px;color:#64748b">開放時段與名額</span>
+            <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#6366f1;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
+          </div>
+          <div id="ms-draft-slots"></div>
+          <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #c7d2fe;color:#6366f1;border-radius:10px;padding:8px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="display:none;flex:0 0 auto;background:#fff;border:1.5px solid #e2e8f0;color:#64748b;border-radius:10px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
+            <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
+          </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
-            <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-          </label>
-          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
-            <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-          </label>
-          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">取消期限（預約時間前幾小時）
-            <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-          </label>
-          <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">違規幾次停權
-            <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
-          </label>
-          <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px">儲存設定</button>
-        </div>
+        <div style="font-size:12px;font-weight:700;color:#94a3b8;margin-bottom:8px">已開放日期</div>
+        <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
       </div>
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#e16b8c,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">常用時段樣板</div>
+    </div>
+
+    <!-- ⚙️ 規則設定 -->
+    <div id="ms-apanel-settings" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">限制設定</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
+              <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+            </label>
+            <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
+              <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+            </label>
+            <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">取消期限（預約時間前幾小時）
+              <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+            </label>
+            <label style="font-size:12px;color:#64748b;display:flex;flex-direction:column;gap:4px">違規幾次停權
+              <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#f8fafc" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+            </label>
+            <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:10px;padding:9px 0;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px">儲存設定</button>
+          </div>
         </div>
-        <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
-        <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
-        <div style="display:flex;gap:6px">
-          <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer"></select>
-          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#fff;text-align:center">
-          <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+        <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+            <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#e16b8c,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">常用時段樣板</div>
+          </div>
+          <div style="font-size:11px;color:#94a3b8;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
+          <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+          <div style="display:flex;gap:6px">
+            <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 8px;font-size:13px;font-family:inherit;background:#fff;color:#0f172a;outline:none;cursor:pointer"></select>
+            <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #e2e8f0;border-radius:8px;padding:7px 6px;font-size:13px;font-family:inherit;background:#fff;text-align:center">
+            <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#e16b8c,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- 所有預約紀錄 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
-          <div style="font-size:13px;font-weight:700;color:#0f172a">所有預約紀錄</div>
+    <!-- 📋 預約紀錄 -->
+    <div id="ms-apanel-records" style="display:none">
+      <!-- 待審核申請 -->
+      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:14px">📬</div>
+          <div style="font-size:13px;font-weight:700;color:#0f172a">待審核申請</div>
         </div>
-        <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:13px;font-family:inherit;background:#f8fafc;width:150px;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+        <div id="ms-pending-list">
+          <div style="text-align:center;padding:16px;color:#94a3b8;font-size:13px">無待審核申請</div>
+        </div>
       </div>
-      <div id="ms-admin-table-wrap" style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead>
-            <tr style="border-bottom:2px solid #f1f5f9">
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">姓名</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">日期</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">時段</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">狀態</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作</th>
-            </tr>
-          </thead>
-          <tbody id="ms-admin-tbody"></tbody>
-        </table>
+      <!-- 所有預約紀錄 -->
+      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
+            <div style="font-size:13px;font-weight:700;color:#0f172a">所有預約紀錄</div>
+          </div>
+          <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:13px;font-family:inherit;background:#f8fafc;width:150px;outline:none" onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#e2e8f0'">
+        </div>
+        <div id="ms-admin-table-wrap" style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px">
+            <thead>
+              <tr style="border-bottom:2px solid #f1f5f9">
+                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">姓名</th>
+                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">日期</th>
+                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">時段</th>
+                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">狀態</th>
+                <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作</th>
+              </tr>
+            </thead>
+            <tbody id="ms-admin-tbody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
 </div>
+<!-- QR Code 報到 Modal -->
+<div id="ms-qr-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)" onclick="if(event.target===this)this.style.display='none'">
+  <div onclick="event.stopPropagation()" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:20px;padding:28px 24px;width:90%;max-width:320px;box-shadow:0 20px 60px rgba(0,0,0,.2);text-align:center">
+    <div style="font-size:17px;font-weight:800;color:#0f172a;margin-bottom:4px">📱 報到 QR Code</div>
+    <div id="ms-qr-date-label" style="font-size:14px;color:#64748b;margin-bottom:20px"></div>
+    <canvas id="ms-qr-canvas" style="border-radius:12px;display:block;margin:0 auto;max-width:100%"></canvas>
+    <div style="font-size:12px;color:#94a3b8;margin-top:14px;line-height:1.6">員工掃描此 QR Code 後<br>登入即可自動完成報到</div>
+    <button onclick="document.getElementById('ms-qr-modal').style.display='none'" style="margin-top:18px;background:#f1f5f9;color:#64748b;border:none;border-radius:10px;padding:9px 28px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600">關閉</button>
+  </div>
+</div>
+
+<!-- QR 報到結果 Overlay -->
+<div id="ms-checkin-overlay" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.82);backdrop-filter:blur(10px);align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:24px;padding:40px 28px;width:90%;max-width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35)">
+    <div id="ms-checkin-icon" style="font-size:72px;margin-bottom:16px;line-height:1"></div>
+    <div id="ms-checkin-status" style="font-size:24px;font-weight:800;margin-bottom:10px"></div>
+    <div id="ms-checkin-detail" style="font-size:15px;color:#64748b;line-height:1.7"></div>
+    <button onclick="document.getElementById('ms-checkin-overlay').style.display='none';sw('massage')" style="margin-top:28px;background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:12px;padding:13px 36px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700">確定</button>
+  </div>
+</div>
+
 <!-- ══ end 按摩預約 View ══ -->
   </main>
 </div><!-- end #main-wrapper -->
@@ -3624,6 +3652,14 @@ function initGoogleSignIn() { _showLoginBtn(); }
 
 // 頁面載入：先看 localStorage 有沒有已登入帳號，否則顯示登入按鈕
 window.onload = async function() {
+  // QR 報到意圖偵測：先於 OAuth hash 處理，避免互相干擾
+  if (location.hash && location.hash.startsWith('#ms-checkin-')) {
+    var _qrDate = location.hash.slice(12);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(_qrDate)) {
+      try { sessionStorage.setItem('ms_qr_checkin', _qrDate); } catch(e) {}
+    }
+    history.replaceState({}, '', location.pathname);
+  }
   // 字型與 flatpickr CSS：在 onload 後才注入，確保不阻塞頁面載入
   (function(){
     var lf=document.createElement('link');lf.rel='stylesheet';
@@ -11743,6 +11779,13 @@ window.massageLoad = async function() {
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
   var tabBar = document.getElementById('ms-tab-bar');
   if (tabBar) tabBar.style.display = (_msData && _msData.isAdmin) ? 'flex' : 'none';
+  // QR 報到：偵測 sessionStorage 中待處理的報到意圖
+  var _pendingQrDate = null;
+  try { _pendingQrDate = sessionStorage.getItem('ms_qr_checkin'); } catch(e) {}
+  if (_pendingQrDate) {
+    try { sessionStorage.removeItem('ms_qr_checkin'); } catch(e) {}
+    setTimeout(function() { _msShowCheckinResult(_pendingQrDate); }, 600);
+  }
   msFetchData().then(function(){ msRenderCal(); msRenderQuota(); msRenderMyBookings(); }).catch(function(){});
 };
 
@@ -12224,6 +12267,7 @@ function msRenderOpenDates() {
       + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + parseInt(parts2[1]) + '月' + parseInt(parts2[2]) + '日 <span style="font-size:12px;color:#94a3b8">(' + ds + ')</span></div>'
       + '<div style="font-size:12px;color:#64748b;margin-top:3px">' + slots2.map(function(s){return s.time+' ×'+s.capacity;}).join(' · ') + ' &nbsp;·&nbsp; 已預約 ' + dayBk2.length + '/' + total2 + '</div>'
       + '</div>'
+      + '<button onclick="msShowCheckInQR(\'' + ds + '\')" style="background:#f0fdf4;color:#16a34a;border:1.5px solid #bbf7d0;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">📱 QR</button>'
       + '<button onclick="msEditDay(\'' + ds + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">編輯</button>'
       + '<button onclick="msCloseDate(\'' + ds + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">關閉</button>'
       + '</div>';
@@ -12281,6 +12325,7 @@ window.msResetOpenEditor = function() {
 };
 // 載入某日到編輯器修改
 window.msEditDay = function(ds) {
+  msAdminSwitchTab('dates');
   var entry = (_msData && _msData.openDates || {})[ds]; if (!entry) return;
   var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = ds;
   _msDraftSlots = (entry.slots || []).map(function(s){ return { time:s.time, capacity:s.capacity }; });
@@ -12388,14 +12433,113 @@ function msRenderAdminRows(rows) {
 }
 
 window.msAdminCancel = function(bookingId) {
-  if (!confirm('確定要取消此預約嗎？')) return;
-  _msUpdateBookingStatus(bookingId,'cancelled'); msRenderAdminTable(); msRenderCal();
-  htApi('massageAdminCancel',{bookingId}).catch(function(){}); toast('已取消');
+  _showConfirmModal('取消預約','確定要取消此預約嗎？','確定取消','#dc2626',function(){
+    _msUpdateBookingStatus(bookingId,'cancelled'); msRenderAdminTable(); msRenderCal();
+    htApi('massageAdminCancel',{bookingId}).catch(function(){}); toast('已取消');
+  });
 };
 window.msAdminCheckIn = function(bookingId) {
   _msUpdateBookingStatus(bookingId,'attended'); msRenderAdminTable(); msRenderCal();
   htApi('massageCheckIn',{bookingId}).catch(function(){}); toast('✅ 已報到');
 };
+
+// ── 管理子頁籤切換 ──
+var _msAdminTab = 'dates';
+window.msAdminSwitchTab = function(tab) {
+  _msAdminTab = tab;
+  ['dates','settings','records'].forEach(function(t) {
+    var btn = document.getElementById('ms-atab-'+t);
+    var panel = document.getElementById('ms-apanel-'+t);
+    if (btn) btn.classList.toggle('active', t===tab);
+    if (panel) panel.style.display = t===tab ? '' : 'none';
+  });
+};
+
+// ── QR Code 報到 ──
+function _loadQRCode(cb) {
+  if (typeof QRCode !== 'undefined') { if(cb) cb(); return; }
+  var s = document.createElement('script');
+  s.src = 'https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js';
+  s.onload = function() { if(cb) cb(); };
+  s.onerror = function() { toast('QR Code 程式庫載入失敗，請確認網路連線'); };
+  document.head.appendChild(s);
+}
+
+window.msShowCheckInQR = function(ds) {
+  _loadQRCode(function() {
+    var url = location.origin + location.pathname + '#ms-checkin-' + ds;
+    var parts = ds.split('-');
+    var label = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+    var lbl = document.getElementById('ms-qr-date-label');
+    if (lbl) lbl.textContent = label;
+    var canvas = document.getElementById('ms-qr-canvas');
+    if (!canvas) return;
+    QRCode.toCanvas(canvas, url, { width: 220, margin: 2, color: { dark: '#0f172a', light: '#ffffff' } }, function(err) {
+      if (err) { toast('QR Code 產生失敗'); return; }
+      var modal = document.getElementById('ms-qr-modal');
+      if (modal) modal.style.display = '';
+    });
+  });
+};
+
+function _msShowCheckinResult(date) {
+  var overlay = document.getElementById('ms-checkin-overlay');
+  var iconEl = document.getElementById('ms-checkin-icon');
+  var statusEl = document.getElementById('ms-checkin-status');
+  var detailEl = document.getElementById('ms-checkin-detail');
+  if (!overlay || !iconEl || !statusEl || !detailEl) return;
+
+  var parts = date.split('-');
+  var dateLabel = parseInt(parts[1]) + '月' + parseInt(parts[2]) + '日';
+
+  if (!_msData || !currentUser) {
+    iconEl.textContent = '❌'; statusEl.textContent = '資料載入中'; statusEl.style.color = '#dc2626';
+    detailEl.innerHTML = '請稍後再試';
+    overlay.style.display = 'flex'; return;
+  }
+
+  var booking = (_msData.myBookings || []).find(function(b) {
+    return b.date === date && (b.status === 'booked' || b.status === 'attended');
+  });
+
+  if (!booking) {
+    iconEl.textContent = '❌'; statusEl.textContent = '查無預約'; statusEl.style.color = '#dc2626';
+    detailEl.innerHTML = '您在 <strong>' + dateLabel + '</strong> 沒有按摩預約紀錄';
+    overlay.style.display = 'flex'; return;
+  }
+
+  if (booking.status === 'attended') {
+    iconEl.textContent = '✅'; statusEl.textContent = '已完成報到'; statusEl.style.color = '#16a34a';
+    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot || '') + '<br>此預約已完成報到';
+    overlay.style.display = 'flex'; return;
+  }
+
+  var now = new Date();
+  if (date !== fmtDateStr(now)) {
+    iconEl.textContent = '❌'; statusEl.textContent = '非今日預約'; statusEl.style.color = '#dc2626';
+    detailEl.innerHTML = '此 QR Code 的預約日期為 <strong>' + dateLabel + '</strong>，非今日';
+    overlay.style.display = 'flex'; return;
+  }
+
+  var slotParts = (booking.timeSlot || '00:00').split(':');
+  var slotTime = new Date(); slotTime.setHours(parseInt(slotParts[0]), parseInt(slotParts[1]), 0, 0);
+  var lateMin = Math.floor((now - slotTime) / 60000);
+
+  _msUpdateBookingStatus(booking.bookingId, 'attended');
+  _msSaveLocal();
+  htApi('massageCheckIn', { bookingId: booking.bookingId }).catch(function(){});
+  msRenderMyBookings(); msRenderCal();
+
+  var displayName = (currentUser && (currentUser.name || currentUser.email)) || '';
+  if (lateMin > 15) {
+    iconEl.textContent = '⚠️'; statusEl.textContent = '遲到 ' + lateMin + ' 分鐘'; statusEl.style.color = '#d97706';
+    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '<br>報到成功，但遲到 <strong>' + lateMin + '</strong> 分鐘';
+  } else {
+    iconEl.textContent = '✅'; statusEl.textContent = '報到成功！'; statusEl.style.color = '#16a34a';
+    detailEl.innerHTML = dateLabel + '&nbsp;' + (booking.timeSlot||'') + '<br>歡迎，<strong>' + displayName + '</strong>！';
+  }
+  overlay.style.display = 'flex';
+}
 
 function pad2(n){ return n<10?'0'+n:''+n; }
 function fmtDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
