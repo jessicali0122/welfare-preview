@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260629110317';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260629110426';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3296,7 +3296,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">CSV 欄位順序（第一列為標題列）：</div>
-        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8">姓名,Email,員工編號,部門,角色,生日<br>王小明,test@tsagroup.com.tw,T0099,後勤部,申請人,05-15</code>
+        <code style="font-size:12px;color:#e16b8c;font-family:monospace;line-height:1.8">姓名,員工編號,部門,Email,角色,生日<br>王小明,T0099,後勤部,test@tsagroup.com.tw,申請人,05-15</code>
         <div style="font-size:11px;color:#94a3b8;margin-top:8px">• 角色可填：申請人 / 福委 / HR / 管理者<br>• 生日可留空，格式 MM-DD（例：06-15）<br>• Email 須為 @tsagroup.com.tw</div>
       </div>
       <div id="import-preview" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#166534"></div>
@@ -7538,8 +7538,8 @@ async function exportUsers(){
   if (!res.ok) { toast('❌ 匯出失敗：' + res.error); return; }
   const users = res.users || [];
   if (users.length === 0) { toast('⚠️ 目前無使用者資料可匯出'); return; }
-  const header = ['姓名','Email','員工編號','部門','角色','生日'].join(',');
-  const rows = users.map(u => [u.name, u.email, u.employeeId, u.department, u.roles||u.role||'', u.birthday||''].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
+  const header = ['姓名','員工編號','部門','Email','角色','生日'].join(',');
+  const rows = users.map(u => [u.name, u.employeeId, u.department, u.email, u.roles||u.role||'', u.birthday||''].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(','));
   const csv = '﻿' + header + '\n' + rows.join('\n'); // BOM for Excel UTF-8
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -7586,9 +7586,9 @@ function _readImportFile(f){
     var errors=[];
     dataRows.forEach(function(r,i){
       var name=(r[0]||'').trim();
-      var email=(r[1]||'').trim();
-      var empId=(r[2]||'').trim();
-      var dept=(r[3]||'').trim();
+      var empId=(r[1]||'').trim();
+      var dept=(r[2]||'').trim();
+      var email=(r[3]||'').trim();
       var role=(r[4]||'申請人').trim()||'申請人';
       var birthday=(r[5]||'').trim();
       var rowNum=i+2;
