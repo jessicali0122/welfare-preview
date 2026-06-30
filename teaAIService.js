@@ -37,7 +37,7 @@
     }
     var body = Object.assign({ action: action, token: _getToken() }, data || {});
     var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-    var timer = controller ? setTimeout(function () { controller.abort(); }, 12000) : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 25000) : null;
     return fetch(TEA_AI_GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
