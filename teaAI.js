@@ -132,12 +132,16 @@
 
     /* ── 嘗試透過 GAS 取得結果，失敗時 fallback 到本地 mock ── */
     var svc = window.TeaAIService;
-    if (svc && typeof svc.plan === 'function') {
-      svc.plan({ people: people, budget: budget, types: types, special: special })
+    if (svc && typeof svc.recommendTea === 'function') {
+      svc.recommendTea({ people: people, budget: budget, category: types, requirement: special })
         .then(function (r) {
           _done();
-          if (r && r.ok && Array.isArray(r.plans) && r.plans.length) {
-            _renderResult(r.plans, r.tip || '', r.source || 'gas');
+          if (r && r.success && Array.isArray(r.plans) && r.plans.length) {
+            /* 將 recommendTea 回傳格式轉換成渲染格式 */
+            var plans = r.plans.map(function (p) {
+              return { name: p.title, desc: p.restaurant, items: [], cost: p.price };
+            });
+            _renderResult(plans, '', 'gas');
           } else {
             _localMockResult(people, budget, types, special);
           }
