@@ -3099,11 +3099,10 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <table id="ms-log-table" style="display:none;width:100%;border-collapse:collapse;font-size:12px">
           <thead>
             <tr style="border-bottom:2px solid #f1f5f9">
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">時間</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作時間</th>
               <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">動作</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">操作者</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">對象</th>
-              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">日期/時段</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">人員</th>
+              <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">預約日期/時段</th>
               <th style="text-align:left;padding:8px 10px;color:#64748b;font-weight:600;white-space:nowrap">備註</th>
             </tr>
           </thead>
@@ -12310,13 +12309,19 @@ function msRenderLog() {
     tbody.innerHTML = logs.map(function(l) {
       var ts = l.timestamp ? new Date(l.timestamp).toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
       var action = ACTION_LABEL[l.action] || l.action;
+      // 操作者 vs 對象：管理員代操作時才顯示「A → B」，否則只顯示操作者
+      var isSelf = !l.targetEmail || l.targetEmail === l.actorEmail;
+      var person = isSelf
+        ? htEsc(l.actorName || l.actorEmail)
+        : htEsc(l.actorName || l.actorEmail) + ' → ' + htEsc(l.targetEmail);
+      // 備註：與動作文字相同時不重複顯示
+      var detail = (l.detail && l.detail !== action) ? htEsc(l.detail) : '';
       return '<tr style="border-bottom:1px solid #f1f5f9">'
-        + '<td style="padding:8px 10px;color:#64748b;white-space:nowrap">' + htEsc(ts) + '</td>'
-        + '<td style="padding:8px 10px;font-weight:600;color:#0f172a;white-space:nowrap">' + htEsc(action) + '</td>'
-        + '<td style="padding:8px 10px;color:#374151">' + htEsc(l.actorName || l.actorEmail) + '</td>'
-        + '<td style="padding:8px 10px;color:#374151">' + htEsc(l.targetEmail || '') + '</td>'
+        + '<td style="padding:8px 10px;color:#64748b;white-space:nowrap">' + ts + '</td>'
+        + '<td style="padding:8px 10px;font-weight:600;color:#0f172a;white-space:nowrap">' + action + '</td>'
+        + '<td style="padding:8px 10px;color:#374151">' + person + '</td>'
         + '<td style="padding:8px 10px;color:#374151;white-space:nowrap">' + htEsc(l.date || '') + (l.timeSlot ? ' ' + htEsc(l.timeSlot) : '') + '</td>'
-        + '<td style="padding:8px 10px;color:#64748b">' + htEsc(l.detail || '') + '</td>'
+        + '<td style="padding:8px 10px;color:#64748b">' + detail + '</td>'
         + '</tr>';
     }).join('');
     if (table) table.style.display = '';
