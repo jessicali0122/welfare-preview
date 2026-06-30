@@ -2969,11 +2969,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <!-- ⚙️ 管理 panel (admin only) -->
   <div id="ms-panel-admin" style="display:none">
 
-    <!-- 清理過期預約（一次性工具） -->
-    <div id="ms-cleanup-wrap" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <div style="font-size:13px;color:#92400e">⚠️ 若有時段已過但仍顯示為「已預約」的紀錄，點此清除</div>
-      <button onclick="msCleanupExpired()" style="padding:7px 18px;border:none;border-radius:20px;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">清理過期預約</button>
-    </div>
 
     <!-- 待審核申請 -->
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px">
@@ -12347,6 +12342,8 @@ function msRenderLog() {
 
 function msRenderAdmin() {
   if (!_msData) return;
+  // 背景靜默清理過期預約，不顯示 toast
+  htApi('cleanupExpiredBookings', {}).catch(function(){});
   msRenderPendingRequests();
   msRenderOpenDates();
   var s = _msData.settings || {};
