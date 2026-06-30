@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630142031';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630142443';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12271,6 +12271,51 @@ function msBookingCard(b, isUpcoming) {
 }
 
 // ── 管理（admin only） ──
+function msRenderLog() {
+  var loading = document.getElementById('ms-log-loading');
+  var table   = document.getElementById('ms-log-table');
+  var tbody   = document.getElementById('ms-log-tbody');
+  if (!tbody) return;
+  if (loading) loading.style.display = '';
+  if (table)   table.style.display = 'none';
+
+  htApi('massageGetLog', {}).then(function(r) {
+    if (loading) loading.style.display = 'none';
+    if (!r || !r.ok) {
+      if (loading) { loading.style.display = ''; loading.textContent = '載入失敗：' + (r && r.error ? r.error : '未知錯誤'); }
+      return;
+    }
+    var logs = r.logs || [];
+    if (!logs.length) {
+      if (loading) { loading.style.display = ''; loading.textContent = '目前無操作紀錄'; }
+      return;
+    }
+    var ACTION_LABEL = {
+      massageBook: '新增預約', massageCancel: '取消預約',
+      massageRequestCancel: '申請取消', massageRequestDelete: '申請刪除',
+      massageApproveRequest: '核准申請', massageRejectRequest: '拒絕申請',
+      massageCheckIn: '打卡', massageForceCheckIn: '強制打卡',
+      massageMarkNoshow: '標記缺席', massageModifyBooking: '修改預約',
+      massageAdminDelete: '管理員刪除'
+    };
+    tbody.innerHTML = logs.map(function(l) {
+      var ts = l.timestamp ? new Date(l.timestamp).toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+      var action = ACTION_LABEL[l.action] || l.action;
+      return '<tr style="border-bottom:1px solid #f1f5f9">'
+        + '<td style="padding:8px 10px;color:#64748b;white-space:nowrap">' + htEsc(ts) + '</td>'
+        + '<td style="padding:8px 10px;font-weight:600;color:#0f172a;white-space:nowrap">' + htEsc(action) + '</td>'
+        + '<td style="padding:8px 10px;color:#374151">' + htEsc(l.actorName || l.actorEmail) + '</td>'
+        + '<td style="padding:8px 10px;color:#374151">' + htEsc(l.targetEmail || '') + '</td>'
+        + '<td style="padding:8px 10px;color:#374151;white-space:nowrap">' + htEsc(l.date || '') + (l.timeSlot ? ' ' + htEsc(l.timeSlot) : '') + '</td>'
+        + '<td style="padding:8px 10px;color:#64748b">' + htEsc(l.detail || '') + '</td>'
+        + '</tr>';
+    }).join('');
+    if (table) table.style.display = '';
+  }).catch(function() {
+    if (loading) { loading.style.display = ''; loading.textContent = '載入失敗，請稍後再試'; }
+  });
+}
+
 function msRenderAdmin() {
   if (!_msData) return;
   msRenderPendingRequests();
