@@ -12279,21 +12279,6 @@ function msBookingCard(b, isUpcoming) {
 }
 
 // ── 管理（admin only） ──
-window.msCleanupExpired = async function() {
-  var btn = event && event.target;
-  if (btn) { btn.disabled = true; btn.textContent = '清理中…'; }
-  var r = await htApi('cleanupExpiredBookings', {});
-  if (btn) { btn.disabled = false; btn.textContent = '清理過期預約'; }
-  if (r && r.ok) {
-    toast('✅ 已清理 ' + r.count + ' 筆過期預約');
-    var wrap = document.getElementById('ms-cleanup-wrap');
-    if (wrap) wrap.style.display = 'none';
-    await msFetchData();
-    msRenderMyBookings(); msRenderQuota();
-  } else {
-    toast('清理失敗：' + (r && r.error ? r.error : '未知錯誤'), 'error');
-  }
-};
 
 function msRenderLog() {
   var loading = document.getElementById('ms-log-loading');
@@ -12342,8 +12327,6 @@ function msRenderLog() {
 
 function msRenderAdmin() {
   if (!_msData) return;
-  // 背景靜默清理過期預約，不顯示 toast
-  htApi('cleanupExpiredBookings', {}).catch(function(){});
   msRenderPendingRequests();
   msRenderOpenDates();
   var s = _msData.settings || {};
