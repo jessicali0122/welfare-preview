@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630141914';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630142031';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12113,7 +12113,7 @@ window.msBook = async function(date, timeSlot) {
   // 後端 massage 端點尚未實作（回「未知動作」），採本地優先；若日後實作則沿用回傳的 bookingId
   try {
     var r = await htApi('massageBook', { date: date, timeSlot: timeSlot });
-    if (!r || !r.ok) { toast('預約失敗', 'error'); return; }
+    if (!r || !r.ok) { toast('預約失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
     if (r.bookingId) bid = r.bookingId;
   } catch(e) {}
   var uname = (window.currentUser && window.currentUser.name) || '';
