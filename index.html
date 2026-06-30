@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630135049';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630140326';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -31,6 +31,7 @@
 <meta name="apple-mobile-web-app-title" content="BeneFlow">
 <meta name="theme-color" content="#1e9d6b">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
+<link rel="stylesheet" href="teaAI.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script>
 (function(){
@@ -2472,6 +2473,9 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <button class="ht-tab-btn" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')">
           🗺️ 探店靈感
         </button>
+        <button class="ht-tab-btn" id="ht-tab-ai" data-cap="hightea.manage" onclick="htSwitchListTab('ai')">
+          ✨ AI 助手
+        </button>
       </div>
       <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap">
         ✨ 新增活動
@@ -2635,6 +2639,9 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
 
   </div>
+
+  <!-- ── AI 午茶助手面板 ── -->
+  <div id="ht-panel-ai" style="display:none"></div>
 
   <!-- ── 活動詳情頁 ── -->
   <div id="ht-detail-panel" style="display:none">
@@ -3909,6 +3916,7 @@ function showApp() {
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
     setTimeout(applyNavVisibility, 100);
+    setTimeout(function(){ if (typeof teaAIBoot === 'function') teaAIBoot(); }, 200);
     // 搜尋欄綁 Enter 鍵
     setTimeout(function(){
       const searchEl = document.getElementById('app-search');
@@ -9670,6 +9678,7 @@ function htRenderList() {
   if (_htListTab === 'events') { _htMergeLayout(); htRenderYearTimeline(); htRenderCalendar(); htRenderEvents(); }
   else if (_htListTab === 'analytics') htRenderAnalytics();
   else if (_htListTab === 'discover') htRenderDiscover();
+  else if (_htListTab === 'ai' && typeof teaAIBoot === 'function') teaAIBoot();
 }
 
 window.htSwitchListTab = function(tab) {
@@ -9683,7 +9692,7 @@ window.htSwitchListTab = function(tab) {
     b.style.borderColor = '';
     b.classList.toggle('active', active);
   });
-  ['events','analytics','discover'].forEach(function(p){
+  ['events','analytics','discover','ai'].forEach(function(p){
     var el = document.getElementById('ht-panel-' + p);
     if (el) el.style.display = p === tab ? '' : 'none';
   });
@@ -12842,6 +12851,7 @@ if (document.getElementById('bulletin-list')) bulletinRender();
   </div>
 </div>
 
+<script src="teaAI.js"></script>
 </body>
 </html>
 
