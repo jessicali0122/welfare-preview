@@ -99,15 +99,15 @@
   /* ── 執行規劃 ── */
   window.teaAIPlan = function () {
     if (!canAI()) return;
-    var peopleEl = document.getElementById('teaai-people');
-    var budgetEl = document.getElementById('teaai-budget');
+    var peopleEl  = document.getElementById('teaai-people');
+    var budgetEl  = document.getElementById('teaai-budget');
     var specialEl = document.getElementById('teaai-special');
     var resultArea = document.getElementById('teaai-result-area');
-    var runBtn = document.getElementById('teaai-run-btn');
+    var runBtn    = document.getElementById('teaai-run-btn');
 
-    var people = parseInt((peopleEl && peopleEl.value) || '0', 10);
-    var budget = parseInt((budgetEl && budgetEl.value) || '0', 10);
-    var types = [];
+    var people  = parseInt((peopleEl  && peopleEl.value)  || '0', 10);
+    var budget  = parseInt((budgetEl  && budgetEl.value)  || '0', 10);
+    var types   = [];
     document.querySelectorAll('#ht-panel-ai .teaai-check-label.checked').forEach(function (lbl) {
       types.push(lbl.querySelector('input').value);
     });
@@ -126,30 +126,60 @@
         + '</div>';
     }
 
-    setTimeout(function () {
+    function _done() {
       if (runBtn) { runBtn.disabled = false; runBtn.textContent = '✨ AI 幫我規劃'; }
-      _showMockResult(people, budget, types, special);
-    }, 1800);
+    }
+
+    /* ── 嘗試透過 GAS 取得結果，失敗時 fallback 到本地 mock ── */
+    var svc = window.TeaAIService;
+    if (svc && typeof svc.plan === 'function') {
+      svc.plan({ people: people, budget: budget, types: types, special: special })
+        .then(function (r) {
+          _done();
+          if (r && r.ok && Array.isArray(r.plans) && r.plans.length) {
+            _renderResult(r.plans, r.tip || '', r.source || 'gas');
+          } else {
+            _localMockResult(people, budget, types, special);
+          }
+        })
+        .catch(function () {
+          _done();
+          _localMockResult(people, budget, types, special);
+        });
+    } else {
+      /* TeaAIService 尚未載入時直接用本地 mock */
+      setTimeout(function () {
+        _done();
+        _localMockResult(people, budget, types, special);
+      }, 1800);
+    }
   };
 
-  /* ── Mock 結果 ── */
-  function _showMockResult(people, budget, types, special) {
+  /* ── 本地 Mock（GAS 未回應時的 fallback）── */
+  function _localMockResult(people, budget, types, special) {
+    var perPerson = Math.round(budget / people);
+    var want = types.length ? types : ['飲料', '甜點'];
+    var plans = _buildPlans(people, budget, perPerson, want, special);
+    var tip   = _buildTip(people, budget, special);
+    _renderResult(plans, tip, 'mock');
+  }
+
+  /* ── 共用渲染（GAS 結果 & 本地 mock 皆走這裡）── */
+  function _renderResult(plans, tip, source) {
     var resultArea = document.getElementById('teaai-result-area');
     if (!resultArea) return;
 
-    var perPerson = Math.round(budget / people);
-    var hasType = types.length > 0;
-    var want = hasType ? types : ['飲料', '甜點'];
-
-    /* 依預算產生適合的推薦方案 */
-    var plans = _buildPlans(people, budget, perPerson, want, special);
-
-    var tip = _buildTip(people, budget, special);
+    var sourceLabel = source === 'gemini'
+      ? '<span class="teaai-result-tag" style="background:#ede9fe;color:#7c3aed">✨ Gemini</span>'
+      : source === 'mock'
+        ? '<span class="teaai-result-tag" style="background:#f1f5f9;color:#64748b">本地預覽</span>'
+        : '';
 
     var html = '<div class="teaai-result-wrap">'
       + '<div class="teaai-result-header">'
-      +   '🎯 AI 推薦方案'
+      +   '🎯 AI 推薦方案 '
       +   '<span class="teaai-result-tag">共 ' + plans.length + ' 個方案</span>'
+      +   sourceLabel
       + '</div>';
 
     plans.forEach(function (plan, i) {
@@ -165,30 +195,30 @@
         +   '<div class="teaai-plan-row">'
         +     '<span class="teaai-plan-row-label">品項</span>'
         +     '<div class="teaai-plan-items">'
-        +     plan.items.map(function (it) {
+        +     (plan.items || []).map(function (it) {
                 return '<span class="teaai-plan-item-chip">' + htEsc(it) + '</span>';
               }).join('')
         +     '</div>'
         +   '</div>'
         +   '<div class="teaai-plan-row">'
         +     '<span class="teaai-plan-row-label">預估花費</span>'
-        +     '<span class="teaai-plan-budget-chip">NT$' + plan.cost.toLocaleString() + '</span>'
+        +     '<span class="teaai-plan-budget-chip">NT$' + Number(plan.cost || 0).toLocaleString() + '</span>'
         +   '</div>'
         + '</div>'
         + '</div>';
     });
 
-    html += '<div class="teaai-plan-tip">'
-      + '<span class="teaai-plan-tip-icon">💡</span>'
-      + htEsc(tip)
-      + '</div>';
+    if (tip) {
+      html += '<div class="teaai-plan-tip">'
+        + '<span class="teaai-plan-tip-icon">💡</span>'
+        + htEsc(tip)
+        + '</div>';
+    }
 
     html += '<button class="teaai-redo-btn" onclick="teaAIPlan()">🔄 重新規劃</button>';
     html += '</div>';
 
     resultArea.innerHTML = html;
-
-    /* 捲動到結果 */
     resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
