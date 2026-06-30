@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630174359';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630174725';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2968,6 +2968,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
   <!-- ⚙️ 管理 panel (admin only) -->
   <div id="ms-panel-admin" style="display:none">
+
+    <!-- 清理過期預約（一次性工具） -->
+    <div id="ms-cleanup-wrap" style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:14px;padding:14px 18px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="font-size:13px;color:#92400e">⚠️ 若有時段已過但仍顯示為「已預約」的紀錄，點此清除</div>
+      <button onclick="msCleanupExpired()" style="padding:7px 18px;border:none;border-radius:20px;background:#f97316;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">清理過期預約</button>
+    </div>
 
     <!-- 待審核申請 -->
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);margin-bottom:14px">
@@ -12278,6 +12284,22 @@ function msBookingCard(b, isUpcoming) {
 }
 
 // ── 管理（admin only） ──
+window.msCleanupExpired = async function() {
+  var btn = event && event.target;
+  if (btn) { btn.disabled = true; btn.textContent = '清理中…'; }
+  var r = await htApi('cleanupExpiredBookings', {});
+  if (btn) { btn.disabled = false; btn.textContent = '清理過期預約'; }
+  if (r && r.ok) {
+    toast('✅ 已清理 ' + r.count + ' 筆過期預約');
+    var wrap = document.getElementById('ms-cleanup-wrap');
+    if (wrap) wrap.style.display = 'none';
+    await msFetchData();
+    msRenderMyBookings(); msRenderQuota();
+  } else {
+    toast('清理失敗：' + (r && r.error ? r.error : '未知錯誤'), 'error');
+  }
+};
+
 function msRenderLog() {
   var loading = document.getElementById('ms-log-loading');
   var table   = document.getElementById('ms-log-table');
