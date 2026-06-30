@@ -4226,8 +4226,8 @@ function logout() {
 // ══════════════════════════════════════════
 // ── API 快取（TTL 30 秒，只快取唯讀查詢）──
 const _apiCache = {};
-const _CACHE_TTL = 30000; // 30 秒
-const _CACHEABLE = new Set(['list', 'get']); // 只快取唯讀的 list 和 get
+const _CACHE_TTL = 300000; // 5 分鐘（原 30 秒太短，換 tab 就重打 GAS）
+const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow']); // 唯讀 action 快取
 
 function _cacheKey(action, data) {
   return action + ':' + JSON.stringify(data);

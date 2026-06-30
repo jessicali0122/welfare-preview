@@ -30,21 +30,27 @@
     return (u && u.token) || '';
   }
 
-  /* ── 核心 POST 方法 ── */
+  /* ── 核心 POST 方法（12 秒逾時，確保 fallback 能及時觸發）── */
   function _post(action, data) {
     if (!TEA_AI_GAS_URL) {
       return Promise.reject(new Error('TEA_AI_GAS_URL 尚未設定'));
     }
     var body = Object.assign({ action: action, token: _getToken() }, data || {});
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 12000) : null;
     return fetch(TEA_AI_GAS_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(body),
-      redirect: 'follow'
+      redirect: 'follow',
+      signal: controller ? controller.signal : undefined
     }).then(function (res) {
+      if (timer) clearTimeout(timer);
       return res.json();
     }).catch(function (err) {
-      return { ok: false, error: err.message || '網路錯誤' };
+      if (timer) clearTimeout(timer);
+      var msg = (err.name === 'AbortError') ? 'AI 服務逾時，已切換至本地模式' : (err.message || '網路錯誤');
+      return { ok: false, error: msg };
     });
   }
 
