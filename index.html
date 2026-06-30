@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630174122';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630174359';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12026,8 +12026,15 @@ function msShowSlots(dateStr) {
   var settings = (_msData && _msData.settings) || {};
   var suspended = _msData && _msData.suspended;
   var now = new Date();
-  var monthStart2 = new Date(now.getFullYear(), now.getMonth(), 1);
-  var monthBookCnt = myBookings.filter(function(b){ return b.status==='booked' && new Date(b.date) >= monthStart2; }).length;
+  // 依「選取日期」的月份計算，而非固定用今天月份（避免跨月顯示錯誤）
+  var viewDate = new Date(dateStr + 'T00:00:00');
+  var viewMonthStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
+  var viewMonthEnd   = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
+  var monthBookCnt = myBookings.filter(function(b){
+    if (b.status !== 'booked') return false;
+    var bd = new Date(b.date + 'T00:00:00');
+    return bd >= viewMonthStart && bd < viewMonthEnd;
+  }).length;
   var overMonthLimit = monthBookCnt >= (settings.monthlyLimit || 2);
   var cancelFreeLeft = (settings.cancelFreeLimit || 1) - (_msData.monthlyCancelCount || 0);
   list.innerHTML = slots.map(function(s) {
