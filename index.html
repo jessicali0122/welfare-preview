@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630142800';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260630174122';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12054,7 +12054,7 @@ function msShowSlots(dateStr) {
       actionBtn += '<button onclick="msOpenModify(\'' + myBook.bookingId + '\',\'' + dateStr + '\',\'' + s.time + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">✏ 修改</button>';
       if (canCancelNormal) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">取消</button>';
       else actionBtn += '<button onclick="msRequestCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fffbeb;color:#d97706;border:1.5px solid #fde68a;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">申請取消</button>';
-    } else if (!isMySlot && s.remaining > 0 && !suspended && !overMonthLimit) {
+    } else if (!isMySlot && s.remaining > 0 && !suspended && !overMonthLimit && new Date(dateStr + 'T' + s.time + ':00') > new Date()) {
       actionBtn = '<button onclick="msBook(\'' + dateStr + '\',\'' + s.time + '\')" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;box-shadow:0 3px 10px rgba(99,102,241,.3)">立即預約</button>';
     } else if (overMonthLimit && !isMySlot && s.remaining > 0) {
       actionBtn = '<span style="font-size:12px;color:#f59e0b;background:#fffbeb;border-radius:20px;padding:5px 12px;font-weight:600">本月已達上限</span>';
