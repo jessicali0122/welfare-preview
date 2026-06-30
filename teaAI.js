@@ -137,12 +137,19 @@
         .then(function (r) {
           _done();
           if (r && r.success && Array.isArray(r.plans) && r.plans.length) {
-            /* 將 recommendTea 回傳格式轉換成渲染格式 */
             var plans = r.plans.map(function (p) {
-              return { name: p.title, desc: p.restaurant, items: [], cost: p.price };
+              return {
+                name:  p.title      || '推薦方案',
+                desc:  p.restaurant || '',
+                items: Array.isArray(p.items) ? p.items : [],
+                cost:  p.price      || 0,
+                reason: p.reason    || ''
+              };
             });
-            _renderResult(plans, '', 'gas');
+            _renderResult(plans, '', 'gemini');
           } else {
+            var errMsg = (r && r.error) ? r.error : '';
+            if (errMsg) _teaToast('AI 規劃失敗：' + errMsg);
             _localMockResult(people, budget, types, special);
           }
         })
@@ -208,6 +215,10 @@
         +     '<span class="teaai-plan-row-label">預估花費</span>'
         +     '<span class="teaai-plan-budget-chip">NT$' + Number(plan.cost || 0).toLocaleString() + '</span>'
         +   '</div>'
+        + (plan.reason ? '<div class="teaai-plan-row" style="align-items:flex-start">'
+        +   '<span class="teaai-plan-row-label">理由</span>'
+        +   '<span style="font-size:12px;color:#64748b;line-height:1.6">' + htEsc(plan.reason) + '</span>'
+        + '</div>' : '')
         + '</div>'
         + '</div>';
     });
