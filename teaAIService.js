@@ -77,6 +77,26 @@
     },
 
     /**
+     * 新版推薦端點 recommendTea
+     *
+     * @param {object} params
+     *   people      {number}   人數
+     *   budget      {number}   預算（元）
+     *   category    {string[]} 餐點類型
+     *   requirement {string}   特殊需求
+     *
+     * @returns {Promise<{success:boolean, plans:Array}>}
+     */
+    recommendTea: function (params) {
+      return _post('recommendTea', {
+        people:      params.people,
+        budget:      params.budget,
+        category:    params.category    || [],
+        requirement: params.requirement || ''
+      });
+    },
+
+    /**
      * 預留：讀取 AI 歷史紀錄
      * @returns {Promise<{ok:boolean, records:Array}>}
      */
