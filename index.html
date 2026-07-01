@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260630174725';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260701172352';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3266,9 +3266,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div>
         <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:7px">角色（可複選）</label>
         <div id="edit-roles" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <label style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:not-allowed;background:#f8fafc;font-size:14px;color:#94a3b8">
-            <input type="checkbox" value="employee" checked disabled style="width:16px;height:16px"> 員工 <span style="font-size:12px">（基底）</span>
-          </label>
           <label class="ms-role-opt" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:14px;color:#374151">
             <input type="checkbox" value="welfare" style="width:16px;height:16px"> 福委
           </label>
@@ -7361,11 +7358,9 @@ function buildAdminUserRow(u) {
   var roles = (USER_ROLES[u.email] || parseRoles(u.roles || u.role));
   if (ADMIN_EMAILS.includes(u.email) && !roles.includes('manager')) roles = roles.concat(['manager']);
   USER_ROLES[u.email] = roles;
-  // 顯示順序：manager > welfare > hr > employee
-  const order = ['manager','welfare','hr','employee'];
-  const shown = order.filter(function(r){ return roles.includes(r); });
-  // 若只有 employee 才顯示員工，否則隱藏基底以節省空間
-  const display = shown.length > 1 ? shown.filter(function(r){return r!=='employee';}) : shown;
+  // 顯示順序：manager > welfare > hr（employee 為預設基底，不顯示標籤）
+  const order = ['manager','welfare','hr'];
+  const display = order.filter(function(r){ return roles.includes(r); });
   const roleBadges = display.map(function(r){
     return '<span style="'+(ROLE_BADGE_STYLE[r]||ROLE_BADGE_STYLE.employee)+';padding:3px 9px;border-radius:20px;font-size:12px;font-weight:600;white-space:nowrap">'+(ROLE_KEY_TO_LABEL[r]||r)+'</span>';
   }).join(' ');
@@ -7468,7 +7463,8 @@ function showEditUserModal(btn){
   const name=row.querySelector('td:nth-child(2) span').textContent;
   const empId=row.querySelector('td:nth-child(3)')?row.querySelector('td:nth-child(3)').textContent.trim():'';
   const email=row.querySelector('td:nth-child(5)').textContent.trim();
-  const role=row.querySelector('td:nth-child(6) span').textContent.trim();
+  const roleEl=row.querySelector('td:nth-child(6) span');
+  const role=roleEl?roleEl.textContent.trim():'';
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
@@ -7486,7 +7482,6 @@ function showEditUserModal(btn){
   // 角色 checkbox：優先讀列上的 data-roles，再回退 USER_ROLES / 解析徽章文字
   const roles = (row.dataset.roles ? row.dataset.roles.split(',').filter(Boolean) : (USER_ROLES[email] || parseRoles(role)));
   document.querySelectorAll('#edit-roles input[type="checkbox"]').forEach(function(cb){
-    if (cb.value === 'employee') return; // 基底固定勾選
     cb.checked = roles.includes(cb.value);
   });
   document.getElementById('edit-user-modal').classList.add('open');
@@ -7667,7 +7662,7 @@ function exportUsers(){
     const empId = tr.dataset.empid || '';
     const dept = tr.dataset.dept || '';
     const email = tr.dataset.email || '';
-    const roleKeys = (tr.dataset.roles||'').split(',').filter(Boolean);
+    const roleKeys = (tr.dataset.roles||'').split(',').filter(function(r){ return r && r!=='employee'; });
     const roleLabel = roleKeys.map(k=>ROLE_KEY_TO_LABEL[k]||k).join('/');
     const joinedAt = tr.dataset.joinedat || '';
     const birthday = tr.dataset.birthday || '';
