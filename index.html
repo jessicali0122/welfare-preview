@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260701174128';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260701175503';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1255,8 +1255,8 @@ tbody td{font-size:var(--fs-base)!important}
   #stat-balance{font-size:26px!important}
   /* 按摩管理設定：手機 1欄 */
   #ms-admin-settings-grid{grid-template-columns:1fr!important}
-  /* 總覽我的福利：手機 1欄 */
-  #dash-my-welfare{grid-template-columns:1fr!important}
+  /* 總覽入口卡片：手機 1欄 */
+  #dash-hub{grid-template-columns:1fr!important}
   /* 按摩時段卡片按鈕：手機換行友好 */
   #ms-slots-list .ms-slot-actions{flex-direction:column}
 }
@@ -1610,6 +1610,42 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
+    <!-- 入口式導覽：四大模組入口卡片（依角色顯示，點擊直接進入） -->
+    <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+      <div class="dash-hub-card" data-cap="reimbursement.view" onclick="sw('applications')" style="cursor:pointer;background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,.06)';this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#f77aaa,#e16b8c);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📑</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:#0f172a">案件追蹤</div>
+          <div id="dash-hub-cases-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">查看與審核請款案件</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="dash-hub-card" onclick="sw('hightea')" style="cursor:pointer;background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,.06)';this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#f59e0b,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">☕</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:#0f172a">午茶日</div>
+          <div id="dash-hub-hightea-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">載入中…</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="dash-hub-card" onclick="sw('massage')" style="cursor:pointer;background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,.06)';this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💆</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:#0f172a">按摩預約</div>
+          <div id="dash-hub-massage-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">載入中…</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="dash-hub-card" data-cap="admin.users" onclick="sw('admin')" style="cursor:pointer;background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,.06)';this.style.transform=''">
+        <div style="width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,#94a3b8,#64748b);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">⚙️</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:#0f172a">系統管理</div>
+          <div id="dash-hub-admin-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">使用者、角色與系統設定</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+    </div>
+
     <div id="bulletin-section" style="margin-bottom:24px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
         <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📢 公佈欄</div>
@@ -1618,26 +1654,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       </div>
       <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
         <div style="text-align:center;padding:20px;color:#94a3b8;font-size:14px">載入中...</div>
-      </div>
-    </div>
-
-    <!-- 我的福利摘要（全員可見） -->
-    <div id="dash-my-welfare" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:15px">💆</div>
-          <div style="font-size:14px;font-weight:700;color:#0f172a">我的按摩預約</div>
-        </div>
-        <div id="dash-massage-summary" style="font-size:13px;color:#64748b;line-height:1.6;flex:1">載入中…</div>
-        <button onclick="sw('massage')" style="margin-top:12px;align-self:flex-start;background:#ede9fe;color:#6366f1;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">前往預約 →</button>
-      </div>
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;flex-direction:column">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#f59e0b,#fbbf24);display:flex;align-items:center;justify-content:center;font-size:15px">☕</div>
-          <div style="font-size:14px;font-weight:700;color:#0f172a">午茶日</div>
-        </div>
-        <div id="dash-hightea-summary" style="font-size:13px;color:#64748b;line-height:1.6;flex:1">載入中…</div>
-        <button onclick="sw('hightea')" style="margin-top:12px;align-self:flex-start;background:#fef3c7;color:#b8832a;border:none;border-radius:20px;padding:7px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">查看 →</button>
       </div>
     </div>
 
@@ -4388,12 +4404,18 @@ function applyDashboardBlocks() {
   if (statsGrid) statsGrid.style.display = showReimburse ? 'grid' : 'none';
   if (statsHeading) statsHeading.style.display = showReimburse ? 'flex' : 'none';
 
-  // 我的按摩預約摘要
-  var ms = document.getElementById('dash-massage-summary');
-  if (ms) ms.textContent = '每月可預約 2 次，點此查看可預約時段與你目前的預約狀態。';
-  // 午茶日摘要
-  var ht = document.getElementById('dash-hightea-summary');
-  if (ht) ht.textContent = '查看下次午茶日活動資訊與店家推薦。';
+  // 入口卡片：按摩預約提示（若模組已載入過資料則顯示真實下次預約，否則顯示預設文字）
+  var msSub = document.getElementById('dash-hub-massage-sub');
+  if (msSub) {
+    var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
+    msSub.textContent = msHint || '每月可預約 2 次，點此查看時段';
+  }
+  // 入口卡片：午茶日提示
+  var htSub = document.getElementById('dash-hub-hightea-sub');
+  if (htSub) {
+    var htHint = (typeof window.htGetNextEventHint === 'function') ? window.htGetNextEventHint() : null;
+    htSub.textContent = htHint || '查看活動資訊與店家推薦';
+  }
 
   // 隱藏無權限的 tab
   var mineTab = document.getElementById('apps-tab-mine');
@@ -4454,6 +4476,9 @@ async function loadDashboard() {
   updateBadge(myTurnPending.length);
   const myTurnEl = document.getElementById('stat-my-turn');
   if (myTurnEl) myTurnEl.textContent = myTurnPending.length > 0 ? '其中 ' + myTurnPending.length + ' 件輪到您審核' : '';
+  // 入口卡片：案件追蹤提示
+  const casesSubEl = document.getElementById('dash-hub-cases-sub');
+  if (casesSubEl) casesSubEl.textContent = myTurnPending.length > 0 ? myTurnPending.length + ' 件待您審核' : '查看與審核請款案件';
 }
 
 // ── 系統操作紀錄（管理者專用）──
@@ -9556,6 +9581,21 @@ function _htUpdateCountdown() {
   _htLoadWeather(String(next.ev.date || '').replace(/\//g, '-'));
 };
 
+// ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
+window.htGetNextEventHint = function() {
+  if (!_htEvents.length) return null;
+  var now = new Date(); now.setHours(0,0,0,0);
+  var upcoming = _htEvents.map(function(e) {
+    var ds = String(e.date||'').replace(/\//g,'-');
+    if (!ds) return null;
+    var d = new Date(ds); d.setHours(0,0,0,0);
+    return isNaN(d.getTime()) || d < now ? null : { ev: e, d: d };
+  }).filter(Boolean).sort(function(a,b){ return a.d - b.d; });
+  if (!upcoming.length) return '目前尚無排定的午茶日活動';
+  var diffDays = Math.round((upcoming[0].d - now) / 86400000);
+  return diffDays === 0 ? '今天就是午茶日！🎉' : diffDays === 1 ? '明天就是午茶日！' : '距離下次午茶日還有 ' + diffDays + ' 天';
+};
+
 // ── 午茶日當天天氣（open-meteo，免費免金鑰；新莊座標）──
 function _htWeatherEmoji(code) {
   if (code === 0) return { e: '☀️', t: '晴朗' };
@@ -11881,6 +11921,19 @@ function msRenderQuota() {
     } else { nw.style.display = 'none'; nw.onclick = null; }
   }
 }
+
+// ── 給總覽入口卡片用：回傳「下次預約」提示文字，尚無資料則回傳 null（不會另外打 API）──
+window.msGetNextBookingHint = function() {
+  if (!_msData) return null;
+  var now = new Date();
+  var upcoming = (_msData.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
+    .sort(function(a,b){ return a.date.localeCompare(b.date); });
+  if (!upcoming.length) return '本月已預約 ' + ((_msData.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date)>=new Date(now.getFullYear(),now.getMonth(),1);}).length) + ' / ' + ((_msData.settings||{}).monthlyLimit||2) + ' 次';
+  var nd = upcoming[0].date || '';
+  var parts = nd.split('-');
+  var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
+  return '下次預約 ' + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '(' + wd + ') ' + (upcoming[0].timeSlot || '');
+};
 
 // ── 注意事項折疊 ──
 window.msToggleNotice = function() {
