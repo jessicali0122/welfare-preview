@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260701173724';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260701174128';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -8177,6 +8177,8 @@ window.sw = function(view, ...args) {
   }
   if (typeof updateVH === 'function') setTimeout(updateVH, 50);
   if (view !== 'hightea') { var p = document.getElementById('ht-assist-panel'); if (p) p.style.display = 'none'; }
+  if (view === 'massage') { if (typeof window.msStartPolling === 'function') window.msStartPolling(); }
+  else if (typeof window.msStopPolling === 'function') window.msStopPolling();
 };
 
 // 初始同步
@@ -12412,10 +12414,17 @@ function msRenderOpenDates() {
     var dayBk2 = allBk2.filter(function(b){return b.date===ds && b.status==='booked';});
     var total2 = slots2.reduce(function(sum,s){return sum+s.capacity;},0);
     var isPast = new Date(ds) < today2;
+    var slotInputs = slots2.map(function(s, i) {
+      return '<span style="display:inline-flex;align-items:center;gap:2px;background:#fff;border:1px solid #e2e8f0;border-radius:6px;padding:2px 3px 2px 7px;margin:2px 4px 2px 0">'
+        + htEsc(s.time) + ' ×<input type="number" min="1" max="20" value="' + s.capacity + '" title="直接改名額，離開輸入框即自動儲存"'
+        + ' onchange="msInlineEditCapacity(\'' + ds + '\',' + i + ',this.value)" onclick="event.stopPropagation()"'
+        + ' style="width:32px;border:none;background:transparent;font-family:inherit;font-size:12px;font-weight:700;color:#0f172a;padding:2px 0;text-align:center;outline:none">'
+        + '</span>';
+    }).join('');
     return '<div style="background:#f8fafc;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
       + '<div style="flex:1;min-width:0">'
       + '<div style="font-size:14px;font-weight:700;color:#0f172a">' + parseInt(parts2[1]) + '月' + parseInt(parts2[2]) + '日 <span style="font-size:12px;color:#94a3b8">(' + ds + ')</span></div>'
-      + '<div style="font-size:12px;color:#64748b;margin-top:3px">' + slots2.map(function(s){return s.time+' ×'+s.capacity;}).join(' · ') + ' &nbsp;·&nbsp; 已預約 ' + dayBk2.length + '/' + total2 + '</div>'
+      + '<div style="font-size:12px;color:#64748b;margin-top:5px;display:flex;flex-wrap:wrap;align-items:center">' + slotInputs + '<span style="margin-left:2px">已預約 ' + dayBk2.length + '/' + total2 + '</span></div>'
       + '</div>'
       + '<button onclick="msEditDay(\'' + ds + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">編輯</button>'
       + (isPast?'<button onclick="msMarkNoshowDate(\'' + ds + '\')" style="background:#fff7ed;color:#ea580c;border:1.5px solid #fed7aa;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">結算缺席</button>':'')
@@ -12423,6 +12432,20 @@ function msRenderOpenDates() {
       + '</div>';
   }).join('');
 }
+
+// ── 行內編輯：直接在清單上改單一時段名額，離開輸入框即自動儲存（不用開編輯表單）──
+window.msInlineEditCapacity = async function(ds, idx, newVal) {
+  var entry = _msData && _msData.openDates && _msData.openDates[ds];
+  if (!entry || !entry.slots || !entry.slots[idx]) return;
+  var cap = Math.max(1, parseInt(newVal) || 1);
+  var slots = entry.slots.map(function(s, i) { return { time: s.time, capacity: i === idx ? cap : s.capacity }; });
+  var r;
+  try { r = await htApi('massageEditDate', { date: ds, slots: slots }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 更新失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); msRenderOpenDates(); return; }
+  entry.slots = slots;
+  toast('✅ 已更新 ' + ds + ' ' + slots[idx].time + ' 名額為 ' + cap);
+  msRenderOpenDates(); msRenderCal();
+};
 
 // ── 開放日期：整合式草稿編輯器（日期＋時段＋名額一次完成、每天可單獨編輯） ──
 var _msDraftSlots = [];
@@ -12588,6 +12611,24 @@ window.msAdminCheckIn = function(bookingId) {
 function pad2(n){ return n<10?'0'+n:''+n; }
 function fmtDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 var _allBookings = [];
+
+// ── 即時同步：待在按摩預約頁時，定期向後端拉取最新資料 ──
+// 只重繪日曆/名額/我的預約/待審清單，不動管理員正在編輯中的開放日期草稿表單，避免蓋掉輸入到一半的內容
+var _msPollTimer = null;
+window.msStartPolling = function() {
+  if (_msPollTimer) return;
+  _msPollTimer = setInterval(function() {
+    if (document.hidden) return;
+    msFetchData().then(function() {
+      msRenderCal(); msRenderQuota(); msRenderMyBookings();
+      if (_msSelectedDate) msShowSlots(_msSelectedDate);
+      if (_msTab === 'admin') { msRenderPendingRequests(); msRenderOpenDates(); }
+    }).catch(function(){});
+  }, 20000);
+};
+window.msStopPolling = function() {
+  if (_msPollTimer) { clearInterval(_msPollTimer); _msPollTimer = null; }
+};
 
 })(); // end 按摩預約 module
 </script>
