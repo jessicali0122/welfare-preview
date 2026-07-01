@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260701175503';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260701180153';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
 <link rel="stylesheet" href="teaAI.css">
 <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
   try{
@@ -3128,6 +3129,30 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
   </div>
 
+</div>
+<!-- 修改預約 Modal -->
+<div id="ms-modify-modal" class="modal-bg">
+  <div style="background:#fff;border-radius:16px;width:380px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:18px 20px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:700;color:#0f172a">修改預約</div>
+      <button onclick="msCloseModify()" style="background:none;border:none;color:#94a3b8;cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:13px;color:#64748b">原預約：<span id="ms-modify-original" style="font-weight:700;color:#0f172a"></span></div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">新日期</label>
+        <select id="ms-modify-date" class="inp" onchange="msModifyDateChange()"></select>
+      </div>
+      <div>
+        <label style="font-size:13px;font-weight:600;color:#374151;display:block;margin-bottom:5px">新時段</label>
+        <select id="ms-modify-time" class="inp"></select>
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #f1f5f9;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-o" onclick="msCloseModify()">取消</button>
+      <button class="btn btn-p" onclick="msConfirmModify()">確認修改</button>
+    </div>
+  </div>
 </div>
 <!-- ══ end 按摩預約 View ══ -->
   </main>
@@ -12234,6 +12259,91 @@ function _msUpdateBookingStatus(bookingId, status) {
     var b = arr.find(function(x){return x.bookingId===bookingId;}); if(b) b.status=status;
   });
 }
+
+// ── 修改預約 ──
+var _msModifyBookingId = null, _msModifyOrigDate = null, _msModifyOrigTime = null;
+window.msOpenModify = function(bookingId, date, timeSlot) {
+  _msModifyBookingId = bookingId; _msModifyOrigDate = date; _msModifyOrigTime = timeSlot;
+  var origEl = document.getElementById('ms-modify-original');
+  if (origEl) origEl.textContent = date + ' ' + timeSlot;
+  var dateSel = document.getElementById('ms-modify-date');
+  var openDates = (_msData && _msData.openDates) || {};
+  var today = new Date(); today.setHours(0,0,0,0);
+  var futureDates = Object.keys(openDates).filter(function(d){ return new Date(d) >= today; }).sort();
+  dateSel.innerHTML = futureDates.map(function(d){ return '<option value="' + d + '"' + (d === date ? ' selected' : '') + '>' + d + '</option>'; }).join('');
+  msModifyDateChange();
+  document.getElementById('ms-modify-modal').classList.add('open');
+};
+window.msModifyDateChange = function() {
+  var d = document.getElementById('ms-modify-date').value;
+  var timeSel = document.getElementById('ms-modify-time');
+  var slots = msSlotsForDate(d);
+  timeSel.innerHTML = slots.map(function(s) {
+    var isOrig = (d === _msModifyOrigDate && s.time === _msModifyOrigTime);
+    var disabled = s.remaining <= 0 && !isOrig;
+    return '<option value="' + s.time + '"' + (disabled ? ' disabled' : '') + (isOrig ? ' selected' : '') + '>' + s.time + (disabled ? '（額滿）' : '（剩 ' + s.remaining + ' 位）') + '</option>';
+  }).join('');
+};
+window.msCloseModify = function() { document.getElementById('ms-modify-modal').classList.remove('open'); };
+window.msConfirmModify = async function() {
+  var newDate = document.getElementById('ms-modify-date').value;
+  var newTimeSlot = document.getElementById('ms-modify-time').value;
+  if (!newDate || !newTimeSlot) { toast('請選擇日期與時段'); return; }
+  var r;
+  try { r = await htApi('massageModifyBooking', { bookingId: _msModifyBookingId, newDate: newDate, newTimeSlot: newTimeSlot }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 修改失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  [(_msData.myBookings||[]), (_msData.allBookings||[])].forEach(function(arr){
+    var b = arr.find(function(x){return x.bookingId===_msModifyBookingId;});
+    if (b) { b.date = newDate; b.timeSlot = newTimeSlot; }
+  });
+  msCloseModify();
+  toast('✅ 已修改為 ' + newDate + ' ' + newTimeSlot);
+  msRenderCal(); msRenderMyBookings();
+  if (_msSelectedDate) msShowSlots(_msSelectedDate);
+};
+
+// ── 結算缺席（整天批次結算）──
+window.msMarkNoshowDate = async function(ds) {
+  if (!confirm('確定要將 ' + ds + ' 所有已預約但未報到的人標記為缺席嗎？（會計入違規次數）')) return;
+  var r;
+  try { r = await htApi('massageMarkNoshow', { date: ds }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 結算失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  [(_msData.myBookings||[]), (_msData.allBookings||[])].forEach(function(arr){
+    arr.forEach(function(b){ if (b.date === ds && b.status === 'booked') b.status = 'noshow'; });
+  });
+  toast('✅ 已結算 ' + (r.count||0) + ' 筆缺席');
+  msRenderOpenDates(); msRenderAdminTable(); msRenderCal(); msRenderMyBookings();
+};
+
+// ── 今日報到 QR Code（管理員產生 → 員工掃碼報到）──
+window.msGenerateQR = async function() {
+  var today = fmtDateStr(new Date());
+  var r;
+  try { r = await htApi('massageGenerateQRToken', { date: today }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 產生失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  var url = window.location.origin + window.location.pathname + '?ms_token=' + r.token;
+  var wrap = document.getElementById('ms-qr-canvas-wrap');
+  var display = document.getElementById('ms-qr-display');
+  var hint = document.getElementById('ms-qr-hint');
+  if (wrap) {
+    wrap.innerHTML = '';
+    if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
+    else wrap.textContent = url;
+  }
+  if (hint) hint.textContent = '限今天（' + today + '）使用，一次性掃描即完成報到';
+  if (display) display.style.display = '';
+  toast('✅ QR Code 已產生');
+};
+window.msCheckInFromQR = async function(token) {
+  var r;
+  try { r = await htApi('massageCheckInQR', { token: token }); } catch(e) {}
+  var url = new URL(window.location.href);
+  url.searchParams.delete('ms_token');
+  window.history.replaceState({}, '', url.toString());
+  if (!r || !r.ok) { toast('❌ 報到失敗：' + (r && r.error ? r.error : 'QR Code 無效或已使用'), 'error'); return; }
+  toast('✅ 報到成功！');
+  msRenderCal(); msRenderMyBookings();
+};
 
 // ── 我的預約 ──
 function msRenderMyBookings() {
