@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260701173225';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260701173724';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12484,7 +12484,7 @@ window.msEditDay = function(ds) {
   var ed = document.getElementById('ms-open-editor'); if (ed) ed.scrollIntoView({ behavior:'smooth', block:'center' });
 };
 // 確認開放（新增或覆蓋既有日期）
-window.msConfirmOpenDate = function() {
+window.msConfirmOpenDate = async function() {
   if (!_msData) return;
   var dateVal = document.getElementById('ms-open-date-inp').value;
   if (!dateVal) { toast('請選擇日期'); return; }
@@ -12493,13 +12493,15 @@ window.msConfirmOpenDate = function() {
   var byTime = {};
   _msDraftSlots.forEach(function(s){ byTime[s.time] = { time:s.time, capacity:Math.max(1, s.capacity||1) }; });
   var slots = Object.keys(byTime).sort().map(function(k){ return byTime[k]; });
+  var existed = !!(_msData.openDates && _msData.openDates[dateVal]);
+  var r;
+  try { r = await htApi(existed ? 'massageEditDate' : 'massageOpenDate', { date: dateVal, slots: slots }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 儲存失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
   if (!_msData.openDates) _msData.openDates = {};
-  var existed = !!_msData.openDates[dateVal];
   _msData.openDates[dateVal] = { slots: slots };
   msRenderOpenDates(); msRenderCal();
   toast(existed ? ('✅ 已更新 ' + dateVal + ' 的時段') : ('✅ ' + dateVal + ' 已開放'));
   msResetOpenEditor();
-  htApi('massageSetOpenDate', { date: dateVal, slots: slots }).catch(function(){});
 };
 
 window.msCloseDate = function(ds) {
