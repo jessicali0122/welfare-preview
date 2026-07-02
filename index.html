@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702151431';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702172047';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -30,9 +30,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BeneFlow">
 <meta name="theme-color" content="#1e9d6b">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css"/>
 <link rel="stylesheet" href="teaAI.css">
-<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script>
 (function(){
@@ -108,7 +106,7 @@ function _loadFlatpickr(cb) {
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
-html,body{margin:0;background:#e7dcf0;overflow-x:hidden;width:100%}
+html,body{margin:0;background:#FAF8F4;overflow-x:hidden;width:100%}
 :root{--brand:#9b6fc0;--brand-dark:#6b4a9a;--brand-light:#f1e9f9;--brand-mid:#b794d4;--amber:#f59e0b;--amber-dark:#d97706;--amber-light:#fef3c7;--amber-mid:#fbbf24}
 .view{display:none}.view.active{display:block}
 
@@ -1404,44 +1402,30 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 </script>
 
 
-<!-- ===== LOGIN SCREEN ===== -->
+<!-- ===== LOGIN SCREEN（文青大地色改版）===== -->
 <style>
 #login-screen{font-family:'Noto Sans TC',sans-serif}
-#login-screen .lg-grad{position:absolute;inset:0;z-index:1;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%)}
-#login-screen .lg-mapwrap{position:absolute;inset:-8%;z-index:2;pointer-events:none;filter:hue-rotate(200deg) saturate(0.45) brightness(1.18) contrast(0.78);opacity:0.32;animation:mapFloat 9s ease-in-out infinite}
-@keyframes mapFloat{0%,100%{transform:translateY(0) scale(1)}33%{transform:translateY(-14px) scale(1.012)}66%{transform:translateY(-6px) scale(1.006)}}
-#lg-leaflet-map{position:absolute;inset:0;background:transparent}
-.lg-pin-wrap{position:absolute;inset:0;z-index:3;pointer-events:none}
-.lg-pin{position:absolute;transform:translate(-50%,-100%)}
-.lg-pin-dot{width:14px;height:14px;border-radius:50%;background:rgba(255,255,255,.55);border:2px solid rgba(255,255,255,.9);box-shadow:0 1px 6px rgba(255,255,255,.45)}
-.lg-pin-pulse{display:none}
-@keyframes pinPulse{0%{width:14px;height:14px;opacity:.7}100%{width:52px;height:52px;opacity:0}}
-#login-screen .lg-rings{position:absolute;top:50%;left:50%;z-index:3;pointer-events:none;transition:left .5s,top .5s}
-#login-screen .lg-ring{display:none}
-#login-screen .lg-ring:nth-child(2){animation-delay:1.3s}
-#login-screen .lg-ring:nth-child(3){animation-delay:2.6s}
-@keyframes lgPulse{0%{width:30px;height:30px;opacity:.7}100%{width:360px;height:360px;opacity:0}}
-#login-screen .lg-bloom{position:absolute;top:50%;left:50%;width:42vh;height:42vh;max-width:340px;max-height:340px;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.2) 0%,transparent 65%);transition:left .5s,top .5s}
-#login-screen .lg-cardfade{position:absolute;bottom:0;left:0;right:0;height:42%;z-index:4;pointer-events:none;background:linear-gradient(to bottom,transparent 0%,rgba(255,250,254,.4) 55%,#fff 90%)}
-#login-screen .lg-card{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:115;padding:34px 32px calc(env(safe-area-inset-bottom,0px) + 34px);box-sizing:border-box;animation:lgRise .6s cubic-bezier(.2,.8,.2,1) forwards}
+#login-screen .lg-paw{position:absolute;pointer-events:none;opacity:.05;z-index:1}
+#login-screen .lg-paw svg{width:100%;height:100%;fill:#8A7355}
+#login-screen .lg-card{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:460px;z-index:115;padding:0 24px calc(env(safe-area-inset-bottom,0px) + 34px);box-sizing:border-box;animation:lgRise .6s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes lgRise{from{transform:translate(-50%,32px)}to{transform:translate(-50%,0)}}
-#login-screen .lg-hello{font-weight:700;font-size:38px;color:#6b4a9a;line-height:1;margin-bottom:6px}
-#login-screen .lg-sub{font-weight:400;font-size:16px;color:#a98fc8;margin-bottom:24px;display:flex;align-items:center;gap:8px}
-#login-screen #google-login-btn{width:100%;height:52px;border-radius:16px;background:rgba(255,255,255,.72);border:1.5px solid rgba(183,168,214,.55);display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;color:#5a3a8a;font-weight:500;cursor:pointer;backdrop-filter:blur(6px);transition:transform .15s,box-shadow .2s;font-family:'Noto Sans TC',sans-serif}
-#login-screen #google-login-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(160,120,200,.18)}
+#login-screen .lg-eyebrow{font-weight:500;font-size:12px;letter-spacing:6px;color:#B08968;margin-bottom:14px;text-align:center}
+#login-screen .lg-hello{font-weight:600;font-size:40px;letter-spacing:2px;color:#4A4038;line-height:1.1;margin-bottom:8px;text-align:center}
+#login-screen .lg-sub{font-weight:400;font-size:14px;letter-spacing:2px;color:#8C8074;margin-bottom:32px;display:flex;align-items:center;justify-content:center;gap:8px}
+#login-screen .lg-box{position:relative;background:#fff;border:1px solid #E8E2D8;border-radius:4px;padding:32px 28px 24px;box-shadow:0 2px 12px rgba(138,115,85,.06)}
+#login-screen .lg-peek{position:absolute;top:-46px;left:50%;transform:translateX(-50%);pointer-events:none}
+#login-screen #google-login-btn{width:100%;height:52px;border-radius:2px;background:#fff;border:1px solid #E8E2D8;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;letter-spacing:2px;color:#4A4038;font-weight:500;cursor:pointer;transition:transform .15s,box-shadow .2s,border-color .2s;font-family:'Noto Sans TC',sans-serif}
+#login-screen #google-login-btn:hover{transform:translateY(-1px);border-color:#8A7355;box-shadow:0 4px 12px rgba(138,115,85,.12)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
-#login-screen .lg-note{font-size:13px;color:#8b6aaf;font-weight:500;margin-top:14px;text-align:center}
+#login-screen .lg-note{font-size:12px;letter-spacing:2px;color:#8C8074;font-weight:500;margin-top:16px;text-align:center}
 </style>
-<div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#e7dcf0">
-  <div class="lg-grad"></div>
-  <div class="lg-mapwrap"><div id="lg-leaflet-map"></div></div>
-  <div class="lg-pin-wrap" id="lg-pin-wrap"></div>
-  <div class="lg-rings"><div class="lg-ring"></div><div class="lg-ring"></div><div class="lg-ring"></div></div>
-  <div class="lg-bloom"></div>
-  <div class="lg-cardfade"></div>
+<div id="login-screen" style="display:block;height:100vh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#FAF8F4">
+  <div class="lg-paw" style="top:8%;left:8%;width:100px;height:100px;transform:rotate(-16deg)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg></div>
+  <div class="lg-paw" style="top:24%;right:10%;width:64px;height:64px;transform:rotate(20deg)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg></div>
+  <div class="lg-paw" style="top:44%;left:16%;width:56px;height:56px;transform:rotate(8deg)"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg></div>
   <div class="lg-card">
     <div class="lg-hello">Hello</div>
-    <div class="lg-sub">Welcome to TSA
+    <div class="lg-sub">Create a better life
       <svg width="20" height="20" viewBox="0 0 32 32" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
         <path d="M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1" stroke="#1e9d6b" stroke-width="2" stroke-linecap="round" fill="none"/>
         <path d="M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z" fill="#3dba84"/>
@@ -1451,6 +1435,17 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         <path d="M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z" fill="#3dba84"/>
       </svg>
     </div>
+    <div class="lg-box">
+    <div class="lg-peek">
+      <svg width="120" height="58" viewBox="0 0 120 58" style="stroke:#8A7355;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round">
+        <path d="M38 22 L34 4 L50 12" fill="#fff"/><path d="M78 22 L82 4 L66 12" fill="#fff"/>
+        <path d="M34 26 Q30 56 58 56 Q86 56 82 26 Q74 12 58 12 Q42 12 34 26 Z" fill="#fff"/>
+        <circle cx="48" cy="34" r="4" fill="#8A7355" stroke="none"/><circle cx="70" cy="34" r="4" fill="#8A7355" stroke="none"/>
+        <path d="M55 42 Q59 46 63 42" stroke-width="2"/>
+        <circle cx="41" cy="41" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="77" cy="41" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
+        <path d="M44 58 Q44 48 50 48 Q56 48 56 58 M62 58 Q62 48 68 48 Q74 48 74 58" fill="#fff"/>
+      </svg>
+    </div>
     <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
     <button id="google-login-btn" onclick="doGoogleLogin()" type="button">
       <svg width="18" height="18" viewBox="0 0 48 48" style="flex-shrink:0"><path fill="#4285F4" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.6 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#34A853" d="M6.3 14.7l6.6 4.8C14.5 15.7 18.9 12 24 12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.5 29.3 4 24 4 16.3 4 9.7 8.5 6.3 14.7z"/><path fill="#FBBC05" d="M24 44c5.2 0 9.8-1.9 13.3-5l-6.2-5.2C29.4 35.5 26.8 36 24 36c-5.2 0-9.5-3.4-11.2-8.1l-6.5 5C9.6 39.4 16.3 44 24 44z"/><path fill="#EA4335" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.4 4.3-4.5 5.7l6.2 5.2C42 35 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
@@ -1458,64 +1453,25 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </button>
     <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:rgba(254,242,242,.92);border-radius:8px;border:1px solid #fecaca"></div>
     <div class="lg-note">僅限 @tsagroup.com.tw 帳號</div>
+    </div>
   </div>
 </div>
 
-<script>
-(function(){
-  var LAT=25.06094937503631, LNG=121.4537706698206;
-  var map=L.map('lg-leaflet-map',{
-    center:[LAT,LNG],zoom:15,
-    zoomControl:false,attributionControl:false,
-    dragging:false,touchZoom:false,doubleClickZoom:false,
-    scrollWheelZoom:false,keyboard:false,boxZoom:false
-  });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18}).addTo(map);
-  var wrap=document.getElementById('lg-pin-wrap');
-  function placePinOnScreen(){
-    var pt=map.latLngToContainerPoint([LAT,LNG]);
-    var mapRect=document.getElementById('lg-leaflet-map').getBoundingClientRect();
-    var wrapRect=wrap.getBoundingClientRect();
-    var x=mapRect.left-wrapRect.left+pt.x;
-    var y=mapRect.top-wrapRect.top+pt.y;
-    var existing=wrap.querySelector('.lg-pin');
-    if(!existing){
-      var pin=document.createElement('div');
-      pin.className='lg-pin';
-      pin.style.left=x+'px'; pin.style.top=y+'px';
-      pin.innerHTML='<div class="lg-pin-pulse"></div><div class="lg-pin-dot"></div>';
-      wrap.appendChild(pin);
-    } else {
-      existing.style.left=x+'px'; existing.style.top=y+'px';
-    }
-  }
-  function positionElements(){
-    var pt=map.latLngToContainerPoint([LAT,LNG]);
-    var mapRect=document.getElementById('lg-leaflet-map').getBoundingClientRect();
-    var screenX=mapRect.left+pt.x;
-    var screenY=mapRect.top+pt.y;
-    var loginRect=document.getElementById('login-screen').getBoundingClientRect();
-    var relX=screenX-loginRect.left;
-    var relY=screenY-loginRect.top;
-    var rings=document.querySelector('#login-screen .lg-rings');
-    var bloom=document.querySelector('#login-screen .lg-bloom');
-    if(rings){rings.style.left=relX+'px';rings.style.top=relY+'px';}
-    if(bloom){bloom.style.left=relX+'px';bloom.style.top=relY+'px';}
-    var wrap=document.getElementById('lg-pin-wrap');
-    var existing=wrap.querySelector('.lg-pin');
-    if(!existing){
-      var pin=document.createElement('div');
-      pin.className='lg-pin';
-      pin.style.left=relX+'px'; pin.style.top=relY+'px';
-      pin.innerHTML='<div class="lg-pin-pulse"></div><div class="lg-pin-dot"></div>';
-      wrap.appendChild(pin);
-    } else {
-      existing.style.left=relX+'px'; existing.style.top=relY+'px';
-    }
-  }
-  map.whenReady(function(){ setTimeout(positionElements,200); });
-})();
-</script>
+<!-- ===== 文青大地色全域主題覆寫 ===== -->
+<style id="wf-theme">
+/* 內容區底色統一米白 */
+#main-content{background:#FAF8F4!important}
+/* 卡片：細米棕邊線＋柔和棕影 */
+.card{border:1px solid #E8E2D8!important;box-shadow:0 2px 12px rgba(138,115,85,.05)!important}
+/* 頂欄與側欄融入米白 */
+header{background:#FFFFFF!important;border-bottom:1px solid #E8E2D8!important;box-shadow:none!important}
+#sidebar-wrapper{background:#fff;box-shadow:1px 0 0 #E8E2D8!important}
+/* 頁面大標／區塊標題改墨棕 */
+#ptitle{color:#4A4038!important}
+.section-title{color:#4A4038!important}
+/* 表格表頭配色 */
+thead th{color:#8C8074!important}
+</style>
 <!-- ===== MAIN APP (hidden until login) ===== -->
 <div id="app" style="display:none;height:100vh;overflow:hidden;background:#fff">
 <div id="mobile-overlay" onclick="closeSidebar()"></div>
@@ -1615,7 +1571,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   <main id="main-content" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;background:#fafafa;overscroll-behavior-y:contain">
 
   <!-- ===== DASHBOARD ===== -->
-  <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100vh - 152px);background:linear-gradient(160deg,#faf5ea 0%,#f3e8d5 55%,#ede0c6 100%);border-radius:24px;padding:28px;box-sizing:border-box;overflow:hidden">
+  <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100vh - 152px);background:#FAF8F4;border-radius:24px;padding:28px;box-sizing:border-box;overflow:hidden">
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div style="position:absolute;inset:0;pointer-events:none;z-index:0">
       <svg style="position:absolute;top:6%;left:4%;width:34px;height:34px;transform:rotate(-18deg)" viewBox="0 0 24 24" fill="#b8935a" opacity=".1"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>
@@ -1628,89 +1584,108 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <svg style="position:absolute;top:40%;left:2%;width:18px;height:18px;transform:rotate(-4deg)" viewBox="0 0 24 24" fill="#b8935a" opacity=".07"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>
     </div>
     <div style="max-width:960px;margin:0 auto;position:relative;z-index:1">
-    <!-- Hero 歡迎橫幅 -->
-    <div style="position:relative;background:linear-gradient(135deg,#fdfaf3 0%,#f6ecd9 100%);border:1px solid #ecdfc4;border-radius:20px;padding:30px 34px;margin-bottom:24px;overflow:hidden;display:flex;align-items:center;gap:20px;min-height:150px">
-      <div style="flex:1;min-width:0;position:relative;z-index:1">
-        <div style="font-size:11px;font-weight:800;color:#b8935a;letter-spacing:2.5px;text-transform:uppercase;margin-bottom:8px">BENEFLOW WELFARE</div>
-        <div id="dashboard-greeting" style="font-size:24px;font-weight:800;color:#4a3a20;display:flex;align-items:center;gap:8px;letter-spacing:-.3px">Hi，你好</div>
-        <div id="tw-datetime" style="font-size:13px;color:#9c8360;margin-top:5px;font-weight:500">載入中...</div>
-        <div id="dash-birthday-chip" style="display:none;align-items:center;gap:6px;margin-top:12px;background:#fff;border:1px solid #f0d9a8;border-radius:20px;padding:5px 14px;width:fit-content">
-          <span style="font-size:14px">🎂</span>
-          <span style="font-size:13px;font-weight:700;color:#b8791f">生日快樂！祝你今天特別幸福 🎉</span>
-        </div>
+    <!-- Hero 歡迎區（文青置中版）-->
+    <div style="position:relative;padding:36px 20px 8px;margin-bottom:24px;text-align:center">
+      <div style="font-size:12px;font-weight:500;color:#B08968;letter-spacing:6px;text-transform:uppercase;margin-bottom:16px">BENEFLOW WELFARE</div>
+      <div id="dashboard-greeting" style="font-size:32px;font-weight:600;color:#4A4038;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:2px">你好</div>
+      <div id="tw-datetime" style="font-size:14px;color:#8C8074;margin-top:10px;font-weight:500;letter-spacing:2px">載入中...</div>
+      <div style="font-size:14px;color:#8C8074;margin-top:20px;letter-spacing:2px;line-height:2">照顧好每一位夥伴，也照顧好每一位毛孩。</div>
+      <div id="dash-birthday-chip" style="display:none;align-items:center;gap:6px;margin-top:14px;background:#fff;border:1px solid #E8E2D8;border-radius:20px;padding:6px 14px;width:fit-content;margin-left:auto;margin-right:auto">
+        <span style="font-size:14px">🎂</span>
+        <span style="font-size:14px;font-weight:700;color:#B08968">生日快樂！祝你今天特別幸福 🎉</span>
       </div>
-      <img src="assets/fukubo/fukubo-hero.png" alt="福寶" style="height:160px;width:auto;flex-shrink:0;position:relative;z-index:1;filter:drop-shadow(0 10px 18px rgba(120,90,40,.18))">
-      <div style="position:absolute;right:-30px;top:-30px;width:140px;height:140px;border-radius:50%;background:rgba(216,178,110,.14);pointer-events:none"></div>
-      <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:9px 16px;font-size:14px;flex-shrink:0;display:none">
+      <!-- 趴趴探頭貓狗 -->
+      <div style="display:flex;justify-content:center;margin-top:24px">
+        <svg width="220" height="110" viewBox="0 0 220 110" style="stroke:#8A7355;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round">
+          <path d="M10 84 L210 84" stroke-width="2"/>
+          <path d="M34 40 L30 20 L48 30" fill="#FAF8F4"/><path d="M78 40 L82 20 L64 30" fill="#FAF8F4"/>
+          <path d="M30 44 Q26 78 56 78 Q86 78 82 44 Q74 28 56 28 Q38 28 30 44 Z" fill="#FAF8F4"/>
+          <circle cx="44" cy="56" r="4" fill="#8A7355" stroke="none"/><circle cx="68" cy="56" r="4" fill="#8A7355" stroke="none"/>
+          <path d="M52 64 Q56 68 60 64" stroke-width="2"/>
+          <circle cx="37" cy="63" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="75" cy="63" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
+          <path d="M42 84 Q42 74 48 74 Q54 74 54 84 M58 84 Q58 74 64 74 Q70 74 70 84" fill="#FAF8F4"/>
+          <path d="M138 32 Q124 34 126 52 Q127 62 134 64" fill="#FAF8F4"/><path d="M182 32 Q196 34 194 52 Q193 62 186 64" fill="#FAF8F4"/>
+          <path d="M134 44 Q130 78 160 78 Q190 78 186 44 Q178 26 160 26 Q142 26 134 44 Z" fill="#FAF8F4"/>
+          <circle cx="148" cy="54" r="4" fill="#8A7355" stroke="none"/><circle cx="172" cy="54" r="4" fill="#8A7355" stroke="none"/>
+          <ellipse cx="160" cy="63" rx="4" ry="3" fill="#8A7355" stroke="none"/>
+          <circle cx="141" cy="62" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="179" cy="62" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
+          <path d="M146 84 Q146 74 152 74 Q158 74 158 84 M162 84 Q162 74 168 74 Q174 74 174 84" fill="#FAF8F4"/>
+        </svg>
+      </div>
+      <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:10px 16px;font-size:14px;flex-shrink:0;display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
 
-    <div id="bulletin-section" style="margin-bottom:24px;background:#fff;border-radius:16px;border:1px solid #f1f5f9;box-shadow:0 2px 10px rgba(0,0,0,.05);padding:18px 20px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📢 公佈欄</div>
-        <div style="flex:1;height:1px;background:#f1f5f9"></div>
-        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #1e9d6b;background:#fff;color:#1e9d6b;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='#1e9d6b';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#1e9d6b'">＋ 新增公告</button>
+    <div id="bulletin-section" style="margin-bottom:24px;background:#fff;border-radius:4px;border:1px solid #E8E2D8;box-shadow:0 2px 12px rgba(138,115,85,.05);padding:24px 28px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;border-bottom:1px solid #E8E2D8;padding-bottom:14px">
+        <div style="font-size:18px;font-weight:600;color:#4A4038;white-space:nowrap;letter-spacing:4px">公 佈 欄</div>
+        <div style="font-size:12px;letter-spacing:4px;color:#B08968">NOTICE</div>
+        <div style="flex:1"></div>
+        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:14px;padding:6px 16px;border-radius:2px;border:1px solid #8A7355;background:#fff;color:#8A7355;cursor:pointer;font-family:inherit;font-weight:500;letter-spacing:2px;transition:all .15s" onmouseover="this.style.background='#8A7355';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#8A7355'">＋ 新增公告</button>
       </div>
       <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
-        <div style="text-align:center;padding:20px;color:#94a3b8;font-size:14px">載入中...</div>
+        <div style="text-align:center;padding:20px;color:#8C8074;font-size:14px;letter-spacing:2px">載入中...</div>
       </div>
     </div>
 
     <!-- 入口式導覽：四大模組入口卡片（依角色顯示，點擊直接進入） -->
-    <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
-      <div class="dash-hub-card" data-cap="reimbursement.view" onclick="hubNav(this,'applications')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid #f5e1e8;display:flex">
-        <div style="width:3px;background:#e16b8c;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0;padding:18px 20px;display:flex;align-items:center;gap:14px">
-          <div class="hub-icon-glow" style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffd6e5,#f78fb3);box-shadow:0 4px 14px rgba(225,107,140,.35),inset 0 1px 2px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c94e72" stroke-width="1.8"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+    <div style="font-size:12px;letter-spacing:6px;color:#B08968;text-align:center;margin-bottom:18px">SERVICES・服務項目</div>
+    <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="dash-hub-card" data-cap="reimbursement.view" onclick="hubNav(this,'applications')" style="cursor:pointer;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(138,115,85,.05);border:1px solid #E8E2D8;display:flex">
+        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
+          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#F5F0E8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <img src="assets/icons/clipboard.png" alt="" style="width:32px;height:32px">
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:800;color:#0f172a">案件追蹤</div>
-            <div id="dash-hub-cases-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">查看與審核請款案件</div>
+            <div style="font-size:16px;font-weight:600;color:#4A4038;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">案件追蹤<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#B08968">CASES</span></div>
+            <div id="dash-hub-cases-sub" style="font-size:12px;color:#8C8074;margin-top:4px;letter-spacing:1px">查看與審核請款案件</div>
           </div>
-          <div class="hub-perf" style="flex-shrink:0;width:18px;height:1px;background:repeating-linear-gradient(90deg,#e2b8c8 0,#e2b8c8 3px,transparent 3px,transparent 6px)"></div>
+          <div class="hub-perf" style="flex-shrink:0;color:#B08968;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'hightea')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid #f7e8c9;display:flex">
-        <div style="width:3px;background:#f59e0b;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0;padding:18px 20px;display:flex;align-items:center;gap:14px">
-          <div class="hub-icon-glow" style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ffe8b8,#f6c667);box-shadow:0 4px 14px rgba(245,158,11,.35),inset 0 1px 2px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a8681a" stroke-width="1.8"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      <div class="dash-hub-card" onclick="hubNav(this,'hightea')" style="cursor:pointer;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(138,115,85,.05);border:1px solid #E8E2D8;display:flex">
+        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
+          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#F5F0E8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <img src="assets/icons/bubbletea.png" alt="" style="width:32px;height:32px">
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:800;color:#0f172a">午茶日</div>
-            <div id="dash-hub-hightea-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">載入中…</div>
+            <div style="font-size:16px;font-weight:600;color:#4A4038;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#B08968">TEA DAY</span></div>
+            <div id="dash-hub-hightea-sub" style="font-size:12px;color:#8C8074;margin-top:4px;letter-spacing:1px">載入中…</div>
           </div>
-          <div class="hub-perf" style="flex-shrink:0;width:18px;height:1px;background:repeating-linear-gradient(90deg,#f0dca8 0,#f0dca8 3px,transparent 3px,transparent 6px)"></div>
+          <div class="hub-perf" style="flex-shrink:0;color:#B08968;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'massage')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid #e3ddfa;display:flex">
-        <div style="width:3px;background:#6366f1;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0;padding:18px 20px;display:flex;align-items:center;gap:14px">
-          <div class="hub-icon-glow" style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e0d9ff,#b3a3f7);box-shadow:0 4px 14px rgba(99,102,241,.35),inset 0 1px 2px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5b4bb8" stroke-width="1.8"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg>
+      <div class="dash-hub-card" onclick="hubNav(this,'massage')" style="cursor:pointer;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(138,115,85,.05);border:1px solid #E8E2D8;display:flex">
+        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
+          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#F5F0E8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <img src="assets/icons/massage.png" alt="" style="width:32px;height:32px">
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:800;color:#0f172a">按摩預約</div>
-            <div id="dash-hub-massage-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">載入中…</div>
+            <div style="font-size:16px;font-weight:600;color:#4A4038;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#B08968">MASSAGE</span></div>
+            <div id="dash-hub-massage-sub" style="font-size:12px;color:#8C8074;margin-top:4px;letter-spacing:1px">載入中…</div>
           </div>
-          <div class="hub-perf" style="flex-shrink:0;width:18px;height:1px;background:repeating-linear-gradient(90deg,#cbc3f5 0,#cbc3f5 3px,transparent 3px,transparent 6px)"></div>
+          <div class="hub-perf" style="flex-shrink:0;color:#B08968;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" data-cap="admin.users" onclick="hubNav(this,'admin')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.05);border:1px solid #e2e6ea;display:flex">
-        <div style="width:3px;background:#64748b;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0;padding:18px 20px;display:flex;align-items:center;gap:14px">
-          <div class="hub-icon-glow" style="width:44px;height:44px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#eef1f4,#b7c0cc);box-shadow:0 4px 14px rgba(100,116,139,.35),inset 0 1px 2px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#51606f" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
+      <div class="dash-hub-card" data-cap="admin.users" onclick="hubNav(this,'admin')" style="cursor:pointer;background:#fff;border-radius:4px;overflow:hidden;box-shadow:0 2px 12px rgba(138,115,85,.05);border:1px solid #E8E2D8;display:flex">
+        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
+          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#F5F0E8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <img src="assets/icons/gear.png" alt="" style="width:32px;height:32px">
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:15px;font-weight:800;color:#0f172a">系統管理</div>
-            <div id="dash-hub-admin-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">使用者、角色與系統設定</div>
+            <div style="font-size:16px;font-weight:600;color:#4A4038;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#B08968">ADMIN</span></div>
+            <div id="dash-hub-admin-sub" style="font-size:12px;color:#8C8074;margin-top:4px;letter-spacing:1px">使用者、角色與系統設定</div>
           </div>
-          <div class="hub-perf" style="flex-shrink:0;width:18px;height:1px;background:repeating-linear-gradient(90deg,#ccd3da 0,#ccd3da 3px,transparent 3px,transparent 6px)"></div>
+          <div class="hub-perf" style="flex-shrink:0;color:#B08968;font-size:16px">→</div>
         </div>
       </div>
+    </div>
+    <!-- 品牌語 -->
+    <div style="text-align:center;padding:24px 0 8px">
+      <div style="width:2px;height:28px;background:#E8E2D8;margin:0 auto 16px"></div>
+      <div style="font-size:14px;color:#8C8074;letter-spacing:4px;line-height:2">健康，是我們給人與毛孩最好的禮物</div>
+      <div style="font-size:12px;letter-spacing:4px;color:#B08968;margin-top:8px">FOR PEOPLE &amp; THEIR FURRY FAMILY</div>
     </div>
     </div>
 
@@ -3692,29 +3667,23 @@ function _showLoggingIn() {
   if (!document.getElementById('bf-spin-style')) {
     var st = document.createElement('style');
     st.id = 'bf-spin-style';
-    st.textContent = '@keyframes bf-spin{to{transform:rotate(360deg)}}@keyframes bf-ring-pulse{0%{transform:scale(.85);opacity:.7}50%{transform:scale(1.05);opacity:.25}100%{transform:scale(.85);opacity:.7}}@keyframes bf-dot{0%,80%,100%{transform:scale(.6);opacity:.35}40%{transform:scale(1.1);opacity:1}}';
+    st.textContent = '@keyframes bf-paw-pulse{0%,100%{opacity:.4;transform:scale(.94)}50%{opacity:1;transform:scale(1)}}@keyframes bf-dot{0%,80%,100%{transform:scale(.6);opacity:.35}40%{transform:scale(1.1);opacity:1}}';
     document.head.appendChild(st);
   }
   var d = document.createElement('div');
   d.id = 'bf-logging-in';
-  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#fcaec1 0%,#fcd1db 28%,#e8d5ec 48%,#b7a8d6 72%,#add9f3 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:env(safe-area-inset-bottom,0px)';
+  d.style.cssText = 'position:fixed;inset:0;z-index:300;background:#FAF8F4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding-bottom:env(safe-area-inset-bottom,0px)';
   d.innerHTML =
-    '<div style="position:relative;width:88px;height:88px">' +
-      '<div style="position:absolute;inset:0;border-radius:50%;border:2.5px solid rgba(255,255,255,.45);animation:bf-ring-pulse 2s ease-in-out infinite"></div>' +
-      '<div style="position:absolute;inset:8px;border-radius:50%;border:3px solid transparent;border-top:3px solid rgba(255,255,255,.95);border-right:3px solid rgba(255,255,255,.45);animation:bf-spin .9s linear infinite"></div>' +
-      '<div style="position:absolute;inset:20px;border-radius:50%;background:rgba(255,255,255,.28);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center">' +
-        '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" stroke-dasharray="32" stroke-dashoffset="32" style="animation:bf-spin 1.8s linear infinite reverse"/><circle cx="12" cy="12" r="3" fill="rgba(255,255,255,.9)" stroke="none"/></svg>' +
-      '</div>' +
-    '</div>' +
+    '<svg width="56" height="56" viewBox="0 0 24 24" fill="#8A7355" style="animation:bf-paw-pulse 1.2s ease-in-out infinite"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>' +
     '<div style="display:flex;gap:10px;align-items:center">' +
-      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:0s"></div>' +
-      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.22s"></div>' +
-      '<div style="width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.8);animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.44s"></div>' +
+      '<div style="width:6px;height:6px;border-radius:50%;background:#B08968;animation:bf-dot 1.3s ease-in-out infinite;animation-delay:0s"></div>' +
+      '<div style="width:6px;height:6px;border-radius:50%;background:#B08968;animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.22s"></div>' +
+      '<div style="width:6px;height:6px;border-radius:50%;background:#B08968;animation:bf-dot 1.3s ease-in-out infinite;animation-delay:.44s"></div>' +
     '</div>' +
-    '<div style="color:rgba(255,255,255,.9);font-size:15px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.8px;text-shadow:0 1px 6px rgba(120,80,160,.3)">登入中…</div>';
+    '<div style="color:#8C8074;font-size:14px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:4px">登入中</div>';
   document.body.appendChild(d);
-  document.documentElement.style.background = '#c5b8e0';
-  document.body.style.background = '#c5b8e0';
+  document.documentElement.style.background = '#FAF8F4';
+  document.body.style.background = '#FAF8F4';
 }
 function _hideLoggingIn() {
   var d = document.getElementById('bf-logging-in');
@@ -3974,7 +3943,7 @@ function showApp() {
     }).catch(function(){});  // 同步失敗不影響登入
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting)greeting.innerHTML='Hi，'+displayName+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';
+    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'，'+displayName+' <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg>';}
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     // 同步用戶資訊到手機側欄
