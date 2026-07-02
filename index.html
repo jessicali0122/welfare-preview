@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260701180153';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702090949';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12128,19 +12128,27 @@ function msShowSlots(dateStr) {
       else if (myBook.status==='attended') badge = '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">✓ 已報到</span>';
       else badge = '<span style="background:linear-gradient(135deg,#fde4ef,#fff0f5);color:#e16b8c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">💆 已預約</span>';
     }
+    var waitCount = ((_msData && _msData.waitlistCounts) || {})[dateStr + '|' + s.time] || 0;
+    var myWaitEntry = ((_msData && _msData.myWaitlist) || []).find(function(w){ return w.date === dateStr && w.timeSlot === s.time; });
     var remaining = s.remaining > 0
       ? '<span style="background:#fff0f5;color:#e16b8c;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">剩 ' + s.remaining + ' 位</span>'
-      : '<span style="background:#f1f5f9;color:#94a3b8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">額滿</span>';
+      : '<span style="background:#f1f5f9;color:#94a3b8;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">額滿' + (waitCount > 0 ? ' · 候補 ' + waitCount + ' 人' : '') + '</span>';
+    var isFuture = new Date(dateStr + 'T' + s.time + ':00') > new Date();
     var actionBtn = '';
     if (isMySlot && myBook && myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
       if (canCheckIn) actionBtn += '<button onclick="msCheckIn(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">✓ 立即報到</button>';
       actionBtn += '<button onclick="msOpenModify(\'' + myBook.bookingId + '\',\'' + dateStr + '\',\'' + s.time + '\')" style="background:#eef2ff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">✏ 修改</button>';
       if (canCancelNormal) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">取消</button>';
       else actionBtn += '<button onclick="msRequestCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fffbeb;color:#d97706;border:1.5px solid #fde68a;border-radius:20px;padding:7px 12px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">申請取消</button>';
-    } else if (!isMySlot && s.remaining > 0 && !suspended && !overMonthLimit && new Date(dateStr + 'T' + s.time + ':00') > new Date()) {
+    } else if (!isMySlot && myWaitEntry) {
+      badge = '<span style="background:#eef2ff;color:#6366f1;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">🕐 候補中（第 ' + myWaitEntry.position + ' 位）</span>';
+      actionBtn = '<button onclick="msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;white-space:nowrap">取消候補</button>';
+    } else if (!isMySlot && s.remaining > 0 && !suspended && !overMonthLimit && isFuture) {
       actionBtn = '<button onclick="msBook(\'' + dateStr + '\',\'' + s.time + '\')" style="background:linear-gradient(135deg,#6366f1,#a78bfa);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap;box-shadow:0 3px 10px rgba(99,102,241,.3)">立即預約</button>';
     } else if (overMonthLimit && !isMySlot && s.remaining > 0) {
       actionBtn = '<span style="font-size:12px;color:#f59e0b;background:#fffbeb;border-radius:20px;padding:5px 12px;font-weight:600">本月已達上限</span>';
+    } else if (!isMySlot && s.remaining <= 0 && !suspended && !overMonthLimit && isFuture) {
+      actionBtn = '<button onclick="msJoinWaitlist(\'' + dateStr + '\',\'' + s.time + '\')" style="background:#fff;color:#6366f1;border:1.5px solid #c7d2fe;border-radius:20px;padding:7px 14px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">🕐 候補</button>';
     }
     // ── 此時段已預約名單 ──
     var slotBookings = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===s.time && (b.status==='booked'||b.status==='attended'); });
@@ -12219,6 +12227,36 @@ window.msCancel = async function(bookingId, date) {
   _msUpdateBookingStatus(bookingId, 'cancelled');
   _msData.monthlyCancelCount = (_msData.monthlyCancelCount||0)+1;
   toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings();
+};
+
+// ── 候補：加入 / 取消 ──
+window.msJoinWaitlist = async function(date, timeSlot) {
+  var r;
+  try { r = await htApi('massageJoinWaitlist', { date: date, timeSlot: timeSlot }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 候補失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  if (!_msData.myWaitlist) _msData.myWaitlist = [];
+  _msData.myWaitlist.push({ waitlistId: r.waitlistId, date: date, timeSlot: timeSlot, status: 'waiting', position: r.position });
+  if (!_msData.waitlistCounts) _msData.waitlistCounts = {};
+  var key = date + '|' + timeSlot;
+  _msData.waitlistCounts[key] = (_msData.waitlistCounts[key] || 0) + 1;
+  toast('✅ 已加入候補，目前第 ' + r.position + ' 位');
+  msRenderCal(); msRenderMyBookings();
+  if (_msSelectedDate) msShowSlots(_msSelectedDate);
+};
+window.msLeaveWaitlist = async function(waitlistId) {
+  if (!confirm('確定要取消這筆候補嗎？')) return;
+  var r;
+  try { r = await htApi('massageLeaveWaitlist', { waitlistId: waitlistId }); } catch(e) {}
+  if (!r || !r.ok) { toast('❌ 取消失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  var entry = (_msData.myWaitlist||[]).find(function(w){ return w.waitlistId === waitlistId; });
+  if (entry) {
+    var key = entry.date + '|' + entry.timeSlot;
+    if (_msData.waitlistCounts && _msData.waitlistCounts[key]) _msData.waitlistCounts[key]--;
+  }
+  _msData.myWaitlist = (_msData.myWaitlist||[]).filter(function(w){ return w.waitlistId !== waitlistId; });
+  toast('已取消候補');
+  msRenderCal(); msRenderMyBookings();
+  if (_msSelectedDate) msShowSlots(_msSelectedDate);
 };
 
 // ── 申請取消（超過限額或已過截止時間，需管理員審核） ──
@@ -12348,13 +12386,33 @@ window.msCheckInFromQR = async function(token) {
 // ── 我的預約 ──
 function msRenderMyBookings() {
   var myBookings = (_msData && _msData.myBookings) || [];
+  var myWaitlist = (_msData && _msData.myWaitlist) || [];
   var now = new Date(); now.setHours(0,0,0,0);
   var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; }).sort(function(a,b){return a.date.localeCompare(b.date);});
   var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; }).sort(function(a,b){return b.date.localeCompare(a.date);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
-  if (upEmpty) upEmpty.style.display = upcoming.length ? 'none' : ''; if (upEl) upEl.innerHTML = upcoming.map(function(b){return msBookingCard(b,true);}).join('');
+  var upcomingHtml = myWaitlist.map(function(w){return msWaitlistCard(w);}).join('') + upcoming.map(function(b){return msBookingCard(b,true);}).join('');
+  if (upEmpty) upEmpty.style.display = (upcoming.length || myWaitlist.length) ? 'none' : ''; if (upEl) upEl.innerHTML = upcomingHtml;
   var hiEl = document.getElementById('ms-my-history'); var hiEmpty = document.getElementById('ms-my-history-empty');
   if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : ''; if (hiEl) hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
+}
+
+function msWaitlistCard(w) {
+  var parts = (w.date||'').split('-');
+  var month = parseInt(parts[1]||0), day = parseInt(parts[2]||0);
+  var weekDays = ['日','一','二','三','四','五','六'];
+  var weekday = parts.length===3 ? weekDays[new Date(w.date).getDay()] : '';
+  return '<div style="background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid #6366f1;display:flex;align-items:center;gap:14px">'
+    + '<div style="text-align:center;flex-shrink:0;min-width:48px">'
+    +   '<div style="font-size:22px;font-weight:900;color:#0f172a;line-height:1">' + day + '</div>'
+    +   '<div style="font-size:11px;color:#94a3b8">' + month + '月（' + weekday + '）</div>'
+    + '</div>'
+    + '<div style="flex:1;min-width:0">'
+    +   '<div style="font-size:13px;font-weight:700;color:#0f172a">' + htEsc(w.timeSlot||'') + ' 候補中</div>'
+    +   '<div style="font-size:12px;color:#6366f1;margin-top:2px">目前第 ' + w.position + ' 位，有人取消會自動遞補給你</div>'
+    + '</div>'
+    + '<button onclick="msLeaveWaitlist(\'' + w.waitlistId + '\')" style="background:#fff;color:#94a3b8;border:1.5px solid #e2e8f0;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">取消候補</button>'
+    + '</div>';
 }
 
 // 即將到來 / 歷史紀錄 分段切換
