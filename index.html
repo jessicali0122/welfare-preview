@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702140312';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702141429';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2530,9 +2530,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
         </button>
         <button class="ht-tab-btn" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')">
           🗺️ 探店靈感
-        </button>
-        <button class="ht-tab-btn" id="ht-tab-ai" data-cap="hightea.manage" onclick="htSwitchListTab('ai')">
-          ✨ AI 助手
         </button>
       </div>
       <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap">
@@ -9793,12 +9790,10 @@ function htRenderList() {
   if (_htListTab === 'events') { _htMergeLayout(); htRenderYearTimeline(); htRenderCalendar(); htRenderEvents(); }
   else if (_htListTab === 'analytics') htRenderAnalytics();
   else if (_htListTab === 'discover') htRenderDiscover();
-  else if (_htListTab === 'ai' && typeof teaAIBoot === 'function') teaAIBoot();
 }
 
 window.htSwitchListTab = function(tab) {
   if (tab === 'discover' && typeof can === 'function' && !can('hightea.discover')) tab = 'events';
-  if (tab === 'ai') { htAssistOpen(); return; }
   _htListTab = tab;
   document.querySelectorAll('.ht-tab-btn').forEach(function(b) {
     var active = b.id === 'ht-tab-' + tab;
@@ -10321,56 +10316,6 @@ function _htRenderModalCopyHint() {
   if (hidId) hidId.value = last.eventId || '';
 }
 var _htModalRecResult = null;
-window.htModalRunAI = async function() {
-  var btn = document.getElementById('ht-modal-ai-btn');
-  var resEl = document.getElementById('ht-modal-ai-result');
-  if (!btn || !resEl) return;
-  btn.disabled = true; btn.textContent = '🤖 分析中…';
-  resEl.innerHTML = '<div style="color:#94a3b8;font-size:14px;padding:8px 0">正在智慧規劃中，請稍候…</div>';
-  resEl.style.display = '';
-  _htModalRecResult = null;
-  var r = null;
-  try {
-    var hc = Number(document.getElementById('ht-new-headcount').value) || 10;
-    var bp = Number(document.getElementById('ht-new-budget').value) || 200;
-    var preset = _htCategoryPresets[_htActiveRatioPreset] || _htCategoryPresets.balanced;
-    var ym = '';
-    if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
-      var fd = _htMonthFp.selectedDates[0];
-      ym = fd.getFullYear() + '-' + String(fd.getMonth() + 1).padStart(2, '0');
-    }
-    var sh = _htSeasonHoliday(ym);
-    var excludeItems = await _htLoadExcludeItems();
-    r = await htApi('htRecommendAI', {
-      headcount: hc, budgetPerPerson: bp,
-      categoryRatios: preset.ratios,
-      seasonHint: sh.label,
-      festivalHint: sh.holiday,
-      seasonalIngredients: sh.seasonal,
-      excludeItems: excludeItems
-    });
-    var items = (r && (r.topItems || r.items)) || [];
-    if (!items.length) throw new Error('無推薦結果');
-    _htModalRecResult = items;
-    var html = '<div style="margin-top:8px"><div style="font-size:12px;font-weight:700;color:#e16b8c;margin-bottom:6px">✨ 推薦品項（建立後自動套用）</div><div style="display:flex;flex-wrap:wrap;gap:6px">';
-    items.slice(0, 12).forEach(function(it) {
-      html += '<span style="padding:3px 10px;background:#fff0f5;border:1px solid #f5b8cb;border-radius:12px;font-size:12px;color:#c94e72">' + htEsc(it.name || it) + (it.vendor ? ' <span style="opacity:.6">@' + htEsc(it.vendor) + '</span>' : '') + '</span>';
-    });
-    html += '</div>';
-    if (r.optimize && r.optimize.breakdown) {
-      html += '<div style="margin-top:6px;font-size:12px;color:#94a3b8">';
-      Object.keys(r.optimize.breakdown).forEach(function(k) { html += k + ': $' + r.optimize.breakdown[k] + ' '; });
-      html += '</div>';
-    }
-    html += '</div>';
-    resEl.innerHTML = html;
-  } catch(e) {
-    var errRaw = (r && r.error) || (e && e.message && e.message !== '無推薦結果' ? e.message : '') || '';
-    var errDetail = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
-    resEl.innerHTML = '<div style="color:#e16b8c;font-size:13px;padding:8px 0">推薦失敗：' + htEsc(errDetail) + '</div>';
-  }
-  btn.disabled = false; btn.textContent = '✨ AI 幫我規劃品項';
-};
 function _htBudgetForMonth(ym) {
   var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
   return m === 7 ? 400 : 200;
@@ -10389,32 +10334,45 @@ window.htOpenCreate = function() {
   var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
   if (o1) o1.innerHTML = orgOpts;
   if (o2) o2.innerHTML = orgOpts;
+  // ── 福寶 AI 規劃區塊重置（合併自原本獨立的 AI 助手）──
   var sh = _htSeasonHoliday(ym);
-  var shEl = document.getElementById('ht-modal-season-hint');
-  if (shEl) shEl.textContent = '🗓 ' + sh.label;
-  var ingEl = document.getElementById('ht-modal-seasonal-ing');
+  var sc = document.getElementById('ht-assist-season-chip');
+  if (sc) sc.textContent = '🗓 ' + sh.label;
+  var ingEl = document.getElementById('ht-assist-seasonal-ing');
   if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
-  _htActiveRatioPreset = 'balanced';
-  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
-    var isActive = b.dataset.preset === 'balanced';
-    b.style.background = isActive ? '#fff0f5' : '#f8fafc';
-    b.style.borderColor = isActive ? '#e16b8c' : '#e2e8f0';
-    b.style.color = isActive ? '#c94e72' : '#475569';
+  _htAssistRatioPreset = 'balanced';
+  document.querySelectorAll('.ht-assist-ratio-chip').forEach(function(b) {
+    var on = b.dataset.preset === 'balanced';
+    b.style.background = on ? '#fff0f5' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#c94e72' : '#475569';
   });
-  var det = document.getElementById('ht-modal-ratio-detail');
+  var det = document.getElementById('ht-assist-ratio-detail');
   if (det) det.textContent = _htCategoryPresets.balanced.desc;
+  _htAssistMode = 'plan';
+  document.querySelectorAll('.ht-assist-tab').forEach(function(b) {
+    var on = b.dataset.mode === 'plan';
+    b.style.background = on ? '#e16b8c' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#fff' : '#64748b';
+  });
+  var planOpts = document.getElementById('ht-assist-plan-opts'); if (planOpts) planOpts.style.display = '';
+  var trendOpts = document.getElementById('ht-assist-trend-opts'); if (trendOpts) trendOpts.style.display = 'none';
+  var corpOpts = document.getElementById('ht-assist-corp-opts'); if (corpOpts) corpOpts.style.display = 'none';
+  var modeDesc = document.getElementById('ht-assist-mode-desc');
+  if (modeDesc) modeDesc.textContent = '根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。';
+  var res = document.getElementById('ht-assist-result');
+  if (res) { res.innerHTML = ''; res.style.display = 'none'; }
+  var goBtn = document.getElementById('ht-assist-go-btn');
+  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
   _htModalRecResult = null;
-  var aiRes = document.getElementById('ht-modal-ai-result');
-  if (aiRes) aiRes.style.display = 'none';
-  var aiBtn = document.getElementById('ht-modal-ai-btn');
-  if (aiBtn) { aiBtn.disabled = false; aiBtn.textContent = '✨ AI 幫我規劃品項'; }
+  _fukuboStartIdle();
   _htRenderModalCopyHint();
   var cb = document.getElementById('ht-modal-copy-cb');
   if (cb) cb.checked = false;
   _htRenderModalStoreHints();
   m.style.display = 'flex';
 };
-window.htCloseCreate = function() { document.getElementById('ht-create-modal').style.display = 'none'; };
+window.htCloseCreate = function() {
+  document.getElementById('ht-create-modal').style.display = 'none';
+  _fukuboStopIdle();
+};
 window.htSubmitCreate = async function() {
   var month;
   if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
@@ -11730,51 +11688,9 @@ window.htDeleteEvent = async function() {
   htBackToList();
 };
 
-// ── AI 小助手 (獨立浮動面板) ──
+// ── 福寶 AI 規劃（合併進「新增活動」表單，狀態重置邏輯已搬到 htOpenCreate）──
 var _htAssistMode = 'plan';
 var _htAssistRatioPreset = 'balanced';
-window.htAssistOpen = function() {
-  var panel = document.getElementById('ht-assist-panel');
-  if (!panel) return;
-  var hcEl = document.getElementById('ht-assist-hc');
-  var bpEl = document.getElementById('ht-assist-bp');
-  if (hcEl) hcEl.value = (LOCAL_USER_LIST && LOCAL_USER_LIST.length) || 30;
-  if (bpEl) bpEl.value = 200;
-  var now = new Date();
-  var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
-  var sh = _htSeasonHoliday(ym);
-  var sc = document.getElementById('ht-assist-season-chip');
-  if (sc) sc.textContent = '🗓 ' + sh.label;
-  var ingEl = document.getElementById('ht-assist-seasonal-ing');
-  if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
-  _htAssistRatioPreset = 'balanced';
-  document.querySelectorAll('.ht-assist-ratio-chip').forEach(function(b) {
-    var on = b.dataset.preset === 'balanced';
-    b.style.background = on ? '#fff0f5' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#c94e72' : '#475569';
-  });
-  var det = document.getElementById('ht-assist-ratio-detail');
-  if (det) det.textContent = _htCategoryPresets.balanced.desc;
-  _htAssistMode = 'plan';
-  document.querySelectorAll('.ht-assist-tab').forEach(function(b) {
-    var on = b.dataset.mode === 'plan';
-    b.style.background = on ? '#e16b8c' : '#f8fafc'; b.style.borderColor = on ? '#e16b8c' : '#e2e8f0'; b.style.color = on ? '#fff' : '#64748b';
-  });
-  document.getElementById('ht-assist-plan-opts').style.display = '';
-  document.getElementById('ht-assist-trend-opts').style.display = 'none';
-  document.getElementById('ht-assist-corp-opts').style.display = 'none';
-  document.getElementById('ht-assist-mode-desc').textContent = '根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。';
-  var res = document.getElementById('ht-assist-result');
-  if (res) { res.innerHTML = ''; res.style.display = 'none'; }
-  var goBtn = document.getElementById('ht-assist-go-btn');
-  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
-  panel.style.display = 'block';
-  _fukuboStartIdle();
-};
-window.htAssistClose = function() {
-  var p = document.getElementById('ht-assist-panel');
-  if (p) p.style.display = 'none';
-  _fukuboStopIdle();
-};
 
 // ── 福寶頭像：面板開啟期間循環切換表情圖，模擬活潑的動畫感 ──
 var FUKUBO_FRAMES_ = ['fukubo-cheer.png','fukubo-wink.png','fukubo-heart.png','fukubo-think.png','fukubo-announce.png'];
@@ -11833,8 +11749,8 @@ window.htAssistRun = async function() {
   goBtn.disabled = true; goBtn.textContent = '🤖 分析中…';
   resEl.innerHTML = '<div style="text-align:center;padding:28px 0;color:#94a3b8"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-size:14px">正在為你智慧規劃，請稍候…</div></div>';
   resEl.style.display = '';
-  var hc = Number(document.getElementById('ht-assist-hc').value) || 30;
-  var bp = Number(document.getElementById('ht-assist-bp').value) || 200;
+  var hc = Number(document.getElementById('ht-new-headcount').value) || 30;
+  var bp = Number(document.getElementById('ht-new-budget').value) || 200;
   var now = new Date();
   var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   var sh = _htSeasonHoliday(ym);
@@ -11861,10 +11777,11 @@ window.htAssistRun = async function() {
     r = await htApi('htRecommendAI', payload);
     var items = (r && (r.topItems || r.items)) || [];
     if (!items.length) throw new Error((r && r.error) || '無推薦結果');
+    _htModalRecResult = items;
     var modeLabel = { plan:'本月規劃', trend:'社群熱品', corp:'企業團餐' }[_htAssistMode] || '';
     var catColors = { '甜點':'#e16b8c', '飲品':'#3b82f6', '水果':'#22c55e', '鹹食':'#f59e0b', '主食':'#f59e0b' };
     var html = '<div style="border-top:1.5px solid #f1f5f9;padding-top:16px;margin-top:4px">';
-    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">🤖 AI ' + modeLabel + ' 推薦清單</div>';
+    html += '<div style="font-size:14px;font-weight:700;color:#0f172a;margin-bottom:12px">🤖 AI ' + modeLabel + ' 推薦清單（建立活動時會自動套用）</div>';
     if (r.summary) html += '<div style="font-size:13px;color:#64748b;background:#f8fafc;border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.6">'+htEsc(r.summary)+'</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px">';
     items.slice(0, 15).forEach(function(it) {
@@ -13028,87 +12945,7 @@ window.showApp = function() {
 if (document.getElementById('bulletin-list')) bulletinRender();
 </script>
 
-<!-- ht-fab-wrap 已移除，小Bee 整合至 tab bar -->
-
-<!-- ── AI 午茶日小助手 Panel (Bottom Sheet) ── -->
-<div id="ht-assist-panel" style="display:none;position:fixed;inset:0;z-index:450;background:rgba(0,0,0,.45);backdrop-filter:blur(3px)" onclick="if(event.target===this)htAssistClose()">
-  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+20px);max-height:88vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)">
-    <div style="width:36px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 16px"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div id="fukubo-avatar-wrap" style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#fde4ef,#e0e7ff);flex-shrink:0;box-shadow:0 3px 10px rgba(99,102,241,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
-          <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;transition:opacity .35s ease" alt="福寶">
-        </div>
-        <div>
-          <div style="font-size:18px;font-weight:700;color:#0f172a">福寶</div>
-          <div style="font-size:12px;color:#94a3b8;margin-top:3px">你的午茶日智慧規劃夥伴</div>
-        </div>
-      </div>
-      <button onclick="htAssistClose()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">✕</button>
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
-      <button class="ht-assist-tab" data-mode="plan" onclick="htAssistSetMode(this,'plan')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">📅 本月規劃</button>
-      <button class="ht-assist-tab" data-mode="trend" onclick="htAssistSetMode(this,'trend')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🔥 社群熱品</button>
-      <button class="ht-assist-tab" data-mode="corp" onclick="htAssistSetMode(this,'corp')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🏢 企業團餐</button>
-    </div>
-    <div id="ht-assist-mode-desc" style="font-size:12px;color:#64748b;padding:8px 12px;background:#f8fafc;border-radius:10px;margin-bottom:14px">根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-      <div>
-        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">人數</label>
-        <input id="ht-assist-hc" type="number" min="1" placeholder="例：30" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
-      </div>
-      <div>
-        <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">每人預算（元）</label>
-        <input id="ht-assist-bp" type="number" min="0" placeholder="例：200" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
-      </div>
-    </div>
-    <div id="ht-assist-plan-opts">
-      <div style="margin-bottom:10px">
-        <span id="ht-assist-season-chip" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
-        <div id="ht-assist-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
-      </div>
-      <div style="margin-bottom:14px">
-        <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="ht-assist-ratio-chip" data-preset="balanced" onclick="htAssistSelectRatio(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
-          <button class="ht-assist-ratio-chip" data-preset="sweet" onclick="htAssistSelectRatio(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
-          <button class="ht-assist-ratio-chip" data-preset="light" onclick="htAssistSelectRatio(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
-          <button class="ht-assist-ratio-chip" data-preset="savory" onclick="htAssistSelectRatio(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
-        </div>
-        <div id="ht-assist-ratio-detail" style="font-size:12px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
-      </div>
-    </div>
-    <div id="ht-assist-trend-opts" style="display:none;margin-bottom:14px">
-      <div style="padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px">
-        <div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:4px">🔥 AI 社群熱品偵測</div>
-        <div style="font-size:12px;color:#92400e;line-height:1.6">AI 將根據目前的月份季節，推薦 IG、Facebook、Dcard、YouTube 上正在熱議的下午茶新品、網紅推薦品類，以及最夯的甜點飲品潮流。</div>
-      </div>
-    </div>
-    <div id="ht-assist-corp-opts" style="display:none;margin-bottom:14px">
-      <div style="font-size:14px;font-weight:600;color:#374151;margin-bottom:8px">企業團餐重點考量</div>
-      <div style="display:grid;gap:6px">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
-          <input type="checkbox" id="ht-corp-diverse" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
-          <div><div style="font-size:14px;font-weight:600;color:#374151">口味多元、適合大眾</div><div style="font-size:12px;color:#94a3b8">甜鹹平衡，確保每個人都有喜歡的選項</div></div>
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
-          <input type="checkbox" id="ht-corp-delivery" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
-          <div><div style="font-size:14px;font-weight:600;color:#374151">容易點餐、有外送合作</div><div style="font-size:12px;color:#94a3b8">優先推薦量大好操作、有企業外送服務的店家類型</div></div>
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
-          <input type="checkbox" id="ht-corp-hygienic" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
-          <div><div style="font-size:14px;font-weight:600;color:#374151">衛生包裝、個人份量</div><div style="font-size:12px;color:#94a3b8">強調獨立包裝、不需公筷共盤，乾淨方便取用</div></div>
-        </label>
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#f8fafc;border-radius:10px;border:1.5px solid #e2e8f0">
-          <input type="checkbox" id="ht-corp-value" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
-          <div><div style="font-size:14px;font-weight:600;color:#374151">預算效益最大化</div><div style="font-size:12px;color:#94a3b8">同預算下份量最多、CP 值最高的組合方案</div></div>
-        </label>
-      </div>
-    </div>
-    <button id="ht-assist-go-btn" onclick="htAssistRun()" style="width:100%;padding:12px;border:none;background:#e16b8c;color:#fff;font-size:16px;font-weight:700;border-radius:12px;cursor:pointer;font-family:inherit;transition:opacity .2s;margin-bottom:12px" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🤖 開始規劃</button>
-    <div id="ht-assist-result" style="display:none"></div>
-  </div>
-</div>
+<!-- ht-fab-wrap 已移除，福寶已整合至「新增活動」表單內 -->
 
 <!-- RECEIPT CONFIRM MODAL -->
 <div id="receipt-confirm" onclick="if(event.target===this)this.classList.remove('open')">
@@ -13194,6 +13031,71 @@ if (document.getElementById('bulletin-list')) bulletinRender();
           <input id="ht-new-budget" type="number" min="0" placeholder="例：200" style="width:100%;border:1.5px solid #e2e8f0;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#0f172a;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#e16b8c'" onblur="this.style.borderColor='#e2e8f0'">
         </div>
       </div>
+
+      <!-- 福寶 AI 規劃（合併自原本獨立的 AI 助手，規劃完成會自動套用到這張活動） -->
+      <div style="background:#fdf8fb;border:1.5px solid #f5e1e8;border-radius:14px;padding:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div id="fukubo-avatar-wrap" style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#fde4ef,#e0e7ff);flex-shrink:0;box-shadow:0 3px 8px rgba(99,102,241,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
+            <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;transition:opacity .35s ease" alt="福寶">
+          </div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a">福寶幫你規劃</div>
+            <div style="font-size:11px;color:#94a3b8">規劃完成後會自動套用到這張活動的品項</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="ht-assist-tab" data-mode="plan" onclick="htAssistSetMode(this,'plan')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e16b8c;background:#e16b8c;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">📅 本月規劃</button>
+          <button class="ht-assist-tab" data-mode="trend" onclick="htAssistSetMode(this,'trend')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🔥 社群熱品</button>
+          <button class="ht-assist-tab" data-mode="corp" onclick="htAssistSetMode(this,'corp')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#64748b;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">🏢 企業團餐</button>
+        </div>
+        <div id="ht-assist-mode-desc" style="font-size:12px;color:#64748b;padding:8px 12px;background:#fff;border-radius:10px;margin-bottom:12px">根據本月份、季節、節慶，以及你設定的食物比例，智慧規劃最適合的午茶品項組合。</div>
+        <div id="ht-assist-plan-opts">
+          <div style="margin-bottom:10px">
+            <span id="ht-assist-season-chip" style="display:inline-flex;align-items:center;padding:3px 12px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:20px;font-size:12px;color:#c2410c;font-weight:600"></span>
+            <div id="ht-assist-seasonal-ing" style="font-size:12px;color:#64748b;margin-top:5px"></div>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:6px">食物比例</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button class="ht-assist-ratio-chip" data-preset="balanced" onclick="htAssistSelectRatio(this,'balanced')" style="padding:5px 12px;border:1.5px solid #e16b8c;background:#fff0f5;color:#c94e72;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🌈 均衡</button>
+              <button class="ht-assist-ratio-chip" data-preset="sweet" onclick="htAssistSelectRatio(this,'sweet')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🍰 甜點系</button>
+              <button class="ht-assist-ratio-chip" data-preset="light" onclick="htAssistSelectRatio(this,'light')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥗 輕食系</button>
+              <button class="ht-assist-ratio-chip" data-preset="savory" onclick="htAssistSelectRatio(this,'savory')" style="padding:5px 12px;border:1.5px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;border-radius:20px;cursor:pointer;font-family:inherit;transition:all .15s">🥨 鹹點系</button>
+            </div>
+            <div id="ht-assist-ratio-detail" style="font-size:12px;color:#94a3b8;margin-top:5px">鹹食 35%・甜點 30%・水果 15%・飲品 20%</div>
+          </div>
+        </div>
+        <div id="ht-assist-trend-opts" style="display:none;margin-bottom:6px">
+          <div style="padding:12px 14px;background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px">
+            <div style="font-size:13px;font-weight:700;color:#c2410c;margin-bottom:4px">🔥 AI 社群熱品偵測</div>
+            <div style="font-size:12px;color:#92400e;line-height:1.6">AI 將根據目前的月份季節，推薦 IG、Facebook、Dcard、YouTube 上正在熱議的下午茶新品、網紅推薦品類，以及最夯的甜點飲品潮流。</div>
+          </div>
+        </div>
+        <div id="ht-assist-corp-opts" style="display:none;margin-bottom:6px">
+          <div style="font-size:13px;font-weight:600;color:#374151;margin-bottom:8px">企業團餐重點考量</div>
+          <div style="display:grid;gap:6px">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#fff;border-radius:10px;border:1.5px solid #e2e8f0">
+              <input type="checkbox" id="ht-corp-diverse" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+              <div><div style="font-size:13px;font-weight:600;color:#374151">口味多元、適合大眾</div><div style="font-size:11px;color:#94a3b8">甜鹹平衡，確保每個人都有喜歡的選項</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#fff;border-radius:10px;border:1.5px solid #e2e8f0">
+              <input type="checkbox" id="ht-corp-delivery" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+              <div><div style="font-size:13px;font-weight:600;color:#374151">容易點餐、有外送合作</div><div style="font-size:11px;color:#94a3b8">優先推薦量大好操作、有企業外送服務的店家類型</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#fff;border-radius:10px;border:1.5px solid #e2e8f0">
+              <input type="checkbox" id="ht-corp-hygienic" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+              <div><div style="font-size:13px;font-weight:600;color:#374151">衛生包裝、個人份量</div><div style="font-size:11px;color:#94a3b8">強調獨立包裝、不需公筷共盤，乾淨方便取用</div></div>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 12px;background:#fff;border-radius:10px;border:1.5px solid #e2e8f0">
+              <input type="checkbox" id="ht-corp-value" checked style="width:15px;height:15px;accent-color:#e16b8c;cursor:pointer;flex-shrink:0">
+              <div><div style="font-size:13px;font-weight:600;color:#374151">預算效益最大化</div><div style="font-size:11px;color:#94a3b8">同預算下份量最多、CP 值最高的組合方案</div></div>
+            </label>
+          </div>
+        </div>
+        <button id="ht-assist-go-btn" onclick="htAssistRun()" style="width:100%;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🤖 開始規劃</button>
+        <div id="ht-assist-result" style="display:none;margin-top:12px"></div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
           <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:5px">主辦人 1</label>
