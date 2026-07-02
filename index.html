@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702140009';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702140312';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1584,14 +1584,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
   <!-- TOPBAR -->
   <header style="height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
-    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="height:36px;padding:0 10px 0 6px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;gap:6px;justify-content:center;flex-shrink:0;position:relative;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
-      <svg width="24" height="24" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><defs><linearGradient id="leaf-grad-topbar" x1="21" y1="2" x2="6" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3dba84"/><stop offset="100%" stop-color="#157a50"/></linearGradient></defs><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="url(#leaf-grad-topbar)" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="url(#leaf-grad-topbar)"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="url(#leaf-grad-topbar)"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="url(#leaf-grad-topbar)"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="url(#leaf-grad-topbar)"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="url(#leaf-grad-topbar)"/></svg>
-      <span id="home-logo-label" style="display:none;align-items:center;gap:3px;font-size:13px;font-weight:700;color:#64748b">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>總覽
-      </span>
+    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
     </button>
-    <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
+    <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
+    <div style="flex:1"></div>
     <!-- 右上角使用者按鈕 -->
     <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:flex;align-items:center;cursor:pointer;padding:4px;border-radius:50%;transition:background .15s;flex-shrink:0" onmouseenter="this.style.background='#f1f5f9'" onmouseleave="this.style.background=''">
       <div class="user-avatar-wrap" style="width:36px;height:36px;border-radius:50%;background:#e16b8c;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
@@ -6087,8 +6085,6 @@ function sw(name,elOrName,_fromPop){
   const v=document.getElementById('view-'+name);
   if(v)v.classList.add('active');
   document.getElementById('ptitle').textContent=titles[name]||name;
-  var _homeLabel = document.getElementById('home-logo-label');
-  if (_homeLabel) _homeLabel.style.display = (name === 'dashboard') ? 'none' : 'inline-flex';
   // determine which nav entry to highlight
   let target=navMap[name]||name;
   if(typeof elOrName==='string')target=elOrName;
