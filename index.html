@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702143431';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702151431';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -430,7 +430,6 @@ input[type=checkbox]{accent-color:#e16b8c}
   /* 手機版隱藏側邊欄與 hamburger，改用底部導覽列 */
   #sidebar-wrapper{display:none!important}
   #mobile-overlay{display:none!important}
-  #hamburger-btn{display:none!important}
   #main-wrapper{margin-left:0!important}
   #dashboard-top-grid{grid-template-columns:1fr 1fr!important}
   #dashboard-top-grid>:first-child{grid-column:1/-1!important;padding:12px 16px!important}
@@ -3449,7 +3448,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <span id="src-status-icon">⏳</span><span id="src-status-text">上傳附件中...</span>
     </div>
     <div style="margin-top:8px;display:flex;gap:8px">
-      <button id="src-view-btn" class="btn btn-p" style="flex:1;justify-content:center;font-size:14px;padding:7px 0" onclick="if(window._lastSubmittedCaseId){loadCaseDetail(window._lastSubmittedCaseId)}else{switchView('view-tracker')}">查看案件</button>
+      <button id="src-view-btn" class="btn btn-p" style="flex:1;justify-content:center;font-size:14px;padding:7px 0" onclick="if(window._lastSubmittedCaseId){loadDetail(window._lastSubmittedCaseId)}else{sw('applications')}">查看案件</button>
       <button class="btn btn-o" style="font-size:14px;padding:7px 12px" onclick="document.getElementById('submit-result-card').style.display='none'">關閉</button>
     </div>
   </div>
@@ -8292,7 +8291,6 @@ window.sw = function(view, ...args) {
     setTimeout(syncApplicantFilter, 50);
   }
   if (typeof updateVH === 'function') setTimeout(updateVH, 50);
-  if (view !== 'hightea') { var p = document.getElementById('ht-assist-panel'); if (p) p.style.display = 'none'; }
   if (view === 'massage') { if (typeof window.msStartPolling === 'function') window.msStartPolling(); }
   else if (typeof window.msStopPolling === 'function') window.msStopPolling();
 };
@@ -10272,16 +10270,6 @@ var _htCategoryPresets = {
   light:    { label:'🥗 輕食系', desc:'鹹食 25%・甜點 20%・水果 35%・飲品 20%', ratios:{ savory:25, sweet:20, fruit:35, drink:20 } },
   savory:   { label:'🥨 鹹點系', desc:'鹹食 50%・甜點 20%・水果 10%・飲品 20%', ratios:{ savory:50, sweet:20, fruit:10, drink:20 } }
 };
-var _htActiveRatioPreset = 'balanced';
-window.htSelectRatioPreset = function(btn, preset) {
-  _htActiveRatioPreset = preset;
-  document.querySelectorAll('.ht-ratio-chip').forEach(function(b) {
-    b.style.background = '#f8fafc'; b.style.borderColor = '#e2e8f0'; b.style.color = '#475569';
-  });
-  if (btn) { btn.style.background = '#fff0f5'; btn.style.borderColor = '#e16b8c'; btn.style.color = '#c94e72'; }
-  var det = document.getElementById('ht-modal-ratio-detail');
-  if (det && _htCategoryPresets[preset]) det.textContent = _htCategoryPresets[preset].desc;
-};
 async function _htLoadExcludeItems() {
   if (!_htEvents || !_htEvents.length) return [];
   var pastIds = _htEvents.slice(0, 2).map(function(e) { return e.eventId; });
@@ -11932,34 +11920,11 @@ async function msFetchData() {
   } catch(e) { /* 用 mock 資料 */ }
 }
 
-// ── Hero stats ──
+// ── 帳號暫停預約提示 ──
 function msRenderQuota() {
   if (!_msData) return;
-  var now = new Date();
-  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-  var myBookings = _msData.myBookings || [];
-  var thisMonth = myBookings.filter(function(b){ return b.status === 'booked' && new Date(b.date) >= monthStart; }).length;
-  var limit = (_msData.settings || {}).monthlyLimit || 2;
-  var hm = document.getElementById('ms-hero-month');
-  if (hm) hm.textContent = thisMonth + ' / ' + limit;
   var sw2 = document.getElementById('ms-suspend-warn');
   if (sw2) sw2.style.display = _msData.suspended ? '' : 'none';
-  var upcoming = myBookings.filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
-    .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  var nw = document.getElementById('ms-hero-next-wrap');
-  var nt = document.getElementById('ms-hero-next');
-  if (nw && nt) {
-    if (upcoming.length) {
-      nw.style.display = '';
-      var nd = (upcoming[0].date || '');
-      var parts = nd.split('-');
-      var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
-      nt.textContent = parseInt(parts[1]) + '/' + parseInt(parts[2]) + '(' + wd + ') ' + (upcoming[0].timeSlot || '') + ' ›';
-      nw.style.cursor = 'pointer';
-      nw.title = '點擊跳到該日期查看 / 取消這筆預約';
-      nw.onclick = function(){ if (typeof msFocusDate === 'function') msFocusDate(nd); };
-    } else { nw.style.display = 'none'; nw.onclick = null; }
-  }
 }
 
 // ── 給總覽入口卡片用：回傳「下次預約」提示文字，尚無資料則回傳 null（不會另外打 API）──
