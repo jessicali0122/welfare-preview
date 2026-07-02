@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702094011';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702095038';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -9828,6 +9828,7 @@ function htRenderEvents() {
     evs.forEach(function(ev) {
       var dispStatus = _htDisplayStatus(ev);
       var sc = statusColor(dispStatus);
+      var stubColor = dispStatus === '已完成' ? '#16a34a' : dispStatus === '進行中' ? '#2563eb' : dispStatus === '待結算' ? '#64748b' : '#d97706';
       var ym = _evMonth(ev);
       var mNum = parseInt(ym.slice(5,7),10) || 0;
       var dNum = ev.date ? parseInt(ev.date.slice(-2),10) : 0;
@@ -9835,18 +9836,23 @@ function htRenderEvents() {
       var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join(' & ');
       var expHas = ev.actualExpense > 0;
       var expVal = expHas ? fmtMoney(ev.actualExpense) : '—';
-      html += '<div onclick="htOpenDetail(\''+ ev.eventId +'\')" style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #f0f0f0;border-radius:14px;padding:14px 16px;cursor:pointer;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'#f9a8d4\';this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.12)\'" onmouseout="this.style.borderColor=\'#f0f0f0\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
-        + '<div style="background:linear-gradient(150deg,#fdeef5,#fad8ea);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#c8587a;flex-shrink:0">'
-        +   '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
-        +   '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
+      html += '<div onclick="htOpenDetail(\''+ ev.eventId +'\')" style="display:flex;cursor:pointer;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
+        + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
+        +   '<div style="background:linear-gradient(150deg,#fdeef5,#fad8ea);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#c8587a;flex-shrink:0">'
+        +     '<div style="font-size:11px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
+        +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
+        +   '</div>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="font-size:15px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) +'</div>'
+        +     '<div style="font-size:13px;color:#aaa;margin-top:3px">'+ (ev.headcount ? '👥 '+ev.headcount+' 人' : '') + (ev.itemCount ? '　'+ev.itemCount+' 品項' : '') +'</div>'
+        +   '</div>'
+        +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#f1f5f9 4px,#f1f5f9 9px)"></div>'
         + '</div>'
-        + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-size:15px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) +'</div>'
-        +   '<div style="font-size:13px;color:#aaa;margin-top:3px">'+ (ev.headcount ? '👥 '+ev.headcount+' 人' : '') + (ev.itemCount ? '　'+ev.itemCount+' 品項' : '') +'</div>'
-        + '</div>'
-        + '<div style="text-align:right;flex-shrink:0">'
-        +   '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:'+ sc.bg +';color:'+ sc.color +'">'+ dispStatus +'</span>'
-        +   '<div style="font-size:15px;font-weight:800;color:'+ (expHas?'#be185d':'#d1d5db') +';margin-top:5px;white-space:nowrap">'+ expVal +'</div>'
+        + '<div style="width:68px;flex-shrink:0;background:'+ stubColor +';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;position:relative;padding:10px 4px">'
+        +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fafafa"></div>'
+        +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fafafa"></div>'
+        +   '<div style="font-size:11px;font-weight:800;color:#fff;writing-mode:vertical-rl;letter-spacing:1px;white-space:nowrap">'+ dispStatus +'</div>'
+        +   '<div style="font-size:11px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap">'+ expVal +'</div>'
         + '</div>'
         + '</div>';
     });
