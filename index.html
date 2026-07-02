@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702100323';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702101311';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1360,6 +1360,8 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
+/* 總覽改版：拿掉側邊選單與手機底部導覽列，改用總覽入口卡片＋頂部 Logo 返回總覽 */
+#sidebar-wrapper,#bottom-nav{display:none!important}
 </style>
 </head>
 <body>
@@ -1570,8 +1572,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
   <!-- TOPBAR -->
   <header style="height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:#ffffff;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,.06);display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:12px;flex-shrink:0;box-shadow:0 1px 8px rgba(0,0,0,.05);z-index:10;position:relative">
-    <button id="hamburger-btn" onclick="toggleSidebar()" style="display:none;width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;align-items:center;justify-content:center;color:#64748b;flex-shrink:0;position:relative">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:36px;height:36px;border-radius:9px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:background .15s" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background=''">
+      <svg width="24" height="24" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="leaf-grad-topbar" x1="21" y1="2" x2="6" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3dba84"/><stop offset="100%" stop-color="#157a50"/></linearGradient></defs><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="url(#leaf-grad-topbar)" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="url(#leaf-grad-topbar)"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="url(#leaf-grad-topbar)"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="url(#leaf-grad-topbar)"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="url(#leaf-grad-topbar)"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="url(#leaf-grad-topbar)"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#e16b8c" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#e16b8c"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#e16b8c"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#e16b8c"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#e16b8c"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#e16b8c"/></svg></span>
     </button>
     <span id="ptitle" style="font-size:16px;font-weight:700;color:#0f172a;flex:1">總覽</span>
@@ -1607,11 +1609,27 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       <div>
         <div id="dashboard-greeting" style="font-size:22px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:8px;letter-spacing:-.3px">Hi，你好 <svg width="22" height="22" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#1e9d6b" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#1e9d6b"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#1e9d6b"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#1e9d6b"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#1e9d6b"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#1e9d6b"/></svg></div>
         <div id="tw-datetime" style="font-size:14px;color:#94a3b8;margin-top:3px;font-weight:500">載入中...</div>
+        <div id="dash-birthday-chip" style="display:none;align-items:center;gap:6px;margin-top:10px;background:linear-gradient(135deg,#fde4ef,#fff0f5);border:1px solid #f9c2d8;border-radius:20px;padding:5px 14px;width:fit-content">
+          <span style="font-size:14px">🎂</span>
+          <span style="font-size:13px;font-weight:700;color:#c8587a">生日快樂！祝你今天特別幸福 🎉</span>
+        </div>
       </div>
       <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:9px 16px;font-size:14px;flex-shrink:0;display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
+
+    <div id="bulletin-section" style="margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📢 公佈欄</div>
+        <div style="flex:1;height:1px;background:#f1f5f9"></div>
+        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #1e9d6b;background:#fff;color:#1e9d6b;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='#1e9d6b';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#1e9d6b'">＋ 新增公告</button>
+      </div>
+      <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
+        <div style="text-align:center;padding:20px;color:#94a3b8;font-size:14px">載入中...</div>
+      </div>
+    </div>
+
     <!-- 入口式導覽：四大模組入口卡片（依角色顯示，點擊直接進入） -->
     <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
       <div class="dash-hub-card" data-cap="reimbursement.view" onclick="sw('applications')" style="cursor:pointer;background:#fff;border-radius:18px;padding:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:14px;transition:box-shadow .15s,transform .15s" onmouseover="this.style.boxShadow='0 6px 20px rgba(0,0,0,.1)';this.style.transform='translateY(-1px)'" onmouseout="this.style.boxShadow='0 2px 10px rgba(0,0,0,.06)';this.style.transform=''">
@@ -1645,17 +1663,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
           <div id="dash-hub-admin-sub" style="font-size:12px;color:#94a3b8;margin-top:2px">使用者、角色與系統設定</div>
         </div>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="2.5" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>
-
-    <div id="bulletin-section" style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-        <div style="font-size:16px;font-weight:800;color:#0f172a;white-space:nowrap">📢 公佈欄</div>
-        <div style="flex:1;height:1px;background:#f1f5f9"></div>
-        <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;font-size:12px;padding:5px 12px;border-radius:20px;border:1.5px solid #1e9d6b;background:#fff;color:#1e9d6b;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background='#1e9d6b';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#1e9d6b'">＋ 新增公告</button>
-      </div>
-      <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
-        <div style="text-align:center;padding:20px;color:#94a3b8;font-size:14px">載入中...</div>
       </div>
     </div>
 
@@ -4446,6 +4453,19 @@ function applyDashboardBlocks() {
   // 隱藏無權限的 tab
   var mineTab = document.getElementById('apps-tab-mine');
   if (mineTab) mineTab.style.display = (typeof can==='function' && can('reimbursement.approve')) ? '' : 'none';
+
+  // 生日祝福：比對 window._BF_USER_BDAYS（登入後由 _syncMembersFromServer 建立，所有人都有）
+  var bdayChip = document.getElementById('dash-birthday-chip');
+  if (bdayChip) {
+    var isBday = false;
+    var myName = (currentUser && (LOCAL_EMAIL_TO_NAME[currentUser.email] || currentUser.name)) || '';
+    if (myName && Array.isArray(window._BF_USER_BDAYS)) {
+      var now = new Date();
+      var todayM = now.getMonth() + 1, todayD = now.getDate();
+      isBday = window._BF_USER_BDAYS.some(function(b){ return b.name === myName && b.m === todayM && b.d === todayD; });
+    }
+    bdayChip.style.display = isBday ? 'flex' : 'none';
+  }
 }
 window.applyDashboardBlocks = applyDashboardBlocks;
 
@@ -6213,6 +6233,7 @@ async function _syncMembersFromServer() {
       return p ? { name: u.name, m: p.m, d: p.d } : null;
     }).filter(Boolean);
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
+    if (typeof applyDashboardBlocks === 'function') applyDashboardBlocks();
     // 把角色快取進 localStorage，下次頁面載入可立即套用
     try {
       var _cu = currentUser || window.currentUser;
