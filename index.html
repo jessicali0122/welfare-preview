@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702090949';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260702094011';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -161,6 +161,7 @@ aside .sl-text{display:none}
 /* Badge 有內容時呼吸動畫 */
 .sl-badge.has-badge{animation:badge-pulse 2.2s ease-in-out infinite}
 @keyframes badge-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(1.25)}}
+@keyframes fukuboBreathe{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-3px) scale(1.04)}}
 
 /* always-visible label below icon */
 .sl::after{content:attr(data-label);position:static;transform:none;font-size:14px;font-weight:500;white-space:nowrap;opacity:1;pointer-events:none;font-family:'Noto Sans TC',sans-serif;color:inherit;line-height:1;letter-spacing:.02em}
@@ -11709,11 +11710,34 @@ window.htAssistOpen = function() {
   var goBtn = document.getElementById('ht-assist-go-btn');
   if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
   panel.style.display = 'block';
+  _fukuboStartIdle();
 };
 window.htAssistClose = function() {
   var p = document.getElementById('ht-assist-panel');
   if (p) p.style.display = 'none';
+  _fukuboStopIdle();
 };
+
+// ── 福寶頭像：面板開啟期間循環切換表情圖，模擬活潑的動畫感 ──
+var FUKUBO_FRAMES_ = ['fukubo-cheer.png','fukubo-wink.png','fukubo-heart.png','fukubo-think.png','fukubo-announce.png'];
+var _fukuboTimer_ = null, _fukuboIdx_ = 0;
+function _fukuboStartIdle() {
+  if (_fukuboTimer_) return;
+  _fukuboIdx_ = 0;
+  _fukuboTimer_ = setInterval(function() {
+    _fukuboIdx_ = (_fukuboIdx_ + 1) % FUKUBO_FRAMES_.length;
+    var img = document.getElementById('fukubo-avatar-img');
+    if (!img) return;
+    img.style.opacity = '0';
+    setTimeout(function() {
+      img.src = 'assets/fukubo/' + FUKUBO_FRAMES_[_fukuboIdx_];
+      img.style.opacity = '1';
+    }, 250);
+  }, 2800);
+}
+function _fukuboStopIdle() {
+  if (_fukuboTimer_) { clearInterval(_fukuboTimer_); _fukuboTimer_ = null; }
+}
 window.htAssistSetMode = function(btn, mode) {
   _htAssistMode = mode;
   document.querySelectorAll('.ht-assist-tab').forEach(function(b) {
@@ -12953,9 +12977,14 @@ if (document.getElementById('bulletin-list')) bulletinRender();
   <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;padding:20px 20px calc(env(safe-area-inset-bottom,0px)+20px);max-height:88vh;overflow-y:auto;box-shadow:0 -8px 40px rgba(0,0,0,.15)">
     <div style="width:36px;height:4px;background:#e2e8f0;border-radius:2px;margin:0 auto 16px"></div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px">
-      <div>
-        <div style="font-size:18px;font-weight:700;color:#0f172a">🌱 福寶</div>
-        <div style="font-size:12px;color:#94a3b8;margin-top:3px">你的午茶日智慧規劃夥伴</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div id="fukubo-avatar-wrap" style="width:52px;height:52px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#fde4ef,#e0e7ff);flex-shrink:0;box-shadow:0 3px 10px rgba(99,102,241,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
+          <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;transition:opacity .35s ease" alt="福寶">
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:700;color:#0f172a">福寶</div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:3px">你的午茶日智慧規劃夥伴</div>
+        </div>
       </div>
       <button onclick="htAssistClose()" style="width:30px;height:30px;border-radius:50%;border:none;background:#f1f5f9;color:#64748b;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit">✕</button>
     </div>
