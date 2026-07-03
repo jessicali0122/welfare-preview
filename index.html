@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703090622';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703092026';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4430,6 +4430,12 @@ function reLogin() {
 //  總覽載入
 // ══════════════════════════════════════════
 // ── 日期格式化：支援 ISO 格式（自動轉 UTC+8 台灣時間）──
+// 姓名只取中文部分（「李潔慧Jessica」→「李潔慧」）；若沒有中文則原樣回傳
+function zhName(n) {
+  n = String(n || '');
+  var zh = n.replace(/[A-Za-z0-9.\-_\s]+/g, '');
+  return zh || n;
+}
 function fmtDate(s) {
   if (!s) return '—';
   var str = String(s);
@@ -6230,6 +6236,25 @@ const LOCAL_USER_LIST = [];
 const LOCAL_EMAIL_TO_NAME = {};
 LOCAL_USER_LIST.forEach(function(u){ LOCAL_EMAIL_TO_NAME[u.email] = u.name; });
 
+// ── 部門下拉選單：依現有人員資料動態產生（總經理室等新部門自動出現）──
+function _refreshDeptOptions(users) {
+  var depts = [];
+  var add = function(d){ d = (d||'').trim(); if (d && depts.indexOf(d) < 0) depts.push(d); };
+  (LOCAL_USER_LIST || []).forEach(function(u){ add(u.dept); });
+  (users || []).forEach(function(u){ add(u.department || u.dept); });
+  if (!depts.length) return;
+  depts.sort(function(a,b){ return a.localeCompare(b,'zh-Hant'); });
+  ['app-filter-dept','admin-filter-dept','add-dept','edit-dept'].forEach(function(id){
+    var sel = document.getElementById(id); if (!sel) return;
+    var cur = sel.value;
+    var first = sel.options[0] ? sel.options[0].outerHTML : '';
+    sel.innerHTML = first + depts.map(function(d){
+      return '<option>' + d.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</option>';
+    }).join('');
+    sel.value = cur;
+  });
+}
+
 // ── 登入後從 GAS 動態同步成員清單（更新姓名對照表 + 管理員清單）──
 async function _syncMembersFromServer() {
   try {
@@ -6268,6 +6293,7 @@ async function _syncMembersFromServer() {
     }).filter(Boolean);
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
     if (typeof applyDashboardBlocks === 'function') applyDashboardBlocks();
+    _refreshDeptOptions(res.members);
     // 把角色快取進 localStorage，下次頁面載入可立即套用
     try {
       var _cu = currentUser || window.currentUser;
@@ -7486,7 +7512,7 @@ function buildAdminUserRow(u) {
     <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6B6058;font-family:monospace;letter-spacing:.05em;white-space:nowrap">${u.employeeId||'—'}</td>
     <td style="padding:12px 16px;font-size:14px;color:#5A5048;white-space:nowrap">${u.department||'—'}</td>
     <td style="padding:12px 16px;color:#8C8074;white-space:nowrap">${u.email||'—'}</td>
-    <td style="padding:10px 12px;white-space:nowrap"><div style="display:flex;gap:4px;flex-wrap:nowrap">${roleBadges}</div></td>
+    <td style="padding:10px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap;min-width:60px">${roleBadges}</div></td>
     <td style="padding:12px 16px;color:#A89C90;white-space:nowrap">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
     <td style="padding:12px 16px;color:#6B6058;white-space:nowrap;text-align:center">${_bdayShow || '—'}</td>
     <td style="padding:10px 12px;white-space:nowrap"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
@@ -7512,6 +7538,7 @@ async function loadAdminUsers() {
     return;
   }
   const users = res.users || [];
+  if (typeof _refreshDeptOptions === 'function') _refreshDeptOptions(users);
   // 建立全域生日表，供午茶日壽星自動帶入（單一來源：使用者管理）
   window._BF_USER_BDAYS = users.map(function(u){
     var p = _bdayParse(u.birthday || u.birthDay || '');
@@ -12389,9 +12416,17 @@ window.msCheckInFromQR = async function(token) {
 function msRenderMyBookings() {
   var myBookings = (_msData && _msData.myBookings) || [];
   var myWaitlist = (_msData && _msData.myWaitlist) || [];
-  var now = new Date(); now.setHours(0,0,0,0);
-  var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && new Date(b.date) >= now; }).sort(function(a,b){return a.date.localeCompare(b.date);});
-  var history = myBookings.filter(function(b){ return b.status === 'cancelled' || new Date(b.date) < now; }).sort(function(a,b){return b.date.localeCompare(a.date);});
+  // 過了預約「時段」就移到歷史紀錄（不只比日期，也比時間）
+  var nowFull = new Date();
+  var _bkEnd = function(b){
+    var t = /^\d{1,2}:\d{2}$/.test(b.timeSlot||'') ? b.timeSlot : '23:59';
+    var d = new Date(String(b.date||'').replace(/\//g,'-') + 'T' + t.padStart(5,'0') + ':00');
+    if (isNaN(d.getTime())) { d = new Date(b.date); d.setHours(23,59,0,0); }
+    d.setMinutes(d.getMinutes() + 30); // 時段結束緩衝 30 分鐘
+    return d;
+  };
+  var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && _bkEnd(b) >= nowFull; }).sort(function(a,b){return a.date.localeCompare(b.date);});
+  var history = myBookings.filter(function(b){ return b.status === 'cancelled' || _bkEnd(b) < nowFull; }).sort(function(a,b){return b.date.localeCompare(a.date);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
   var upcomingHtml = myWaitlist.map(function(w){return msWaitlistCard(w);}).join('') + upcoming.map(function(b){return msBookingCard(b,true);}).join('');
   if (upEmpty) upEmpty.style.display = (upcoming.length || myWaitlist.length) ? 'none' : ''; if (upEl) upEl.innerHTML = upcomingHtml;
@@ -12448,14 +12483,14 @@ function msBookingCard(b, isUpcoming) {
   var month = parseInt(parts[1]||0), day = parseInt(parts[2]||0);
   var weekDays = ['日','一','二','三','四','五','六'];
   var weekday = parts.length===3 ? weekDays[new Date(b.date).getDay()] : '';
-  var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
-  var userName = b.userName || (_msData && _msData.userName) || '';
+  var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
+  var userName = zhName(b.userName || (_msData && _msData.userName) || '');
 
   // 狀態設定
   var headerGrad, statusLabel, statusColor;
   if (b.deleteRequested)       { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='🗑 申請刪除中'; statusColor='#fef2f2'; }
   else if (b.cancelRequested)  { headerGrad='linear-gradient(135deg,#C9A87C,#B08968)'; statusLabel='⏳ 申請取消中'; statusColor='#FAF6EC'; }
-  else if (s==='booked')       { headerGrad='linear-gradient(135deg,#8A7355,#a78bfa)'; statusLabel='💆 已預約'; statusColor='rgba(255,255,255,.22)'; }
+  else if (s==='booked')       { headerGrad='linear-gradient(135deg,#B08968,#8A7355)'; statusLabel='💆 已預約'; statusColor='rgba(255,255,255,.22)'; }
   else if (s==='attended')     { headerGrad='linear-gradient(135deg,#22c55e,#16a34a)'; statusLabel='✓ 已報到'; statusColor='rgba(255,255,255,.22)'; }
   else if (s==='cancelled')    { headerGrad='linear-gradient(135deg,#A89C90,#D8D2C8)'; statusLabel='✕ 已取消'; statusColor='rgba(255,255,255,.22)'; }
   else                         { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='⚠ 缺席';   statusColor='rgba(255,255,255,.22)'; }
@@ -12528,19 +12563,19 @@ function msRenderLog() {
       massageAdminDelete: '管理員刪除'
     };
     tbody.innerHTML = logs.map(function(l) {
-      var ts = l.timestamp ? new Date(l.timestamp).toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }) : '';
+      var ts = l.timestamp ? new Date(l.timestamp).toLocaleString('zh-TW', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false }) : '';
       var action = ACTION_LABEL[l.action] || l.action;
       // 操作者 vs 對象：管理員代操作時才顯示「A → B」，否則只顯示操作者
       var isSelf = !l.targetEmail || l.targetEmail === l.actorEmail;
       var person = isSelf
-        ? htEsc(l.actorName || l.actorEmail)
-        : htEsc(l.actorName || l.actorEmail) + ' → ' + htEsc(l.targetEmail);
+        ? htEsc(zhName(l.actorName) || l.actorEmail)
+        : htEsc(zhName(l.actorName) || l.actorEmail) + ' → ' + htEsc(l.targetEmail);
       // 備註：與動作文字相同時不重複顯示
       var detail = (l.detail && l.detail !== action) ? htEsc(l.detail) : '';
       return '<tr style="border-bottom:1px solid #F0EBE2">'
         + '<td style="padding:8px 10px;color:#8C8074;white-space:nowrap">' + ts + '</td>'
         + '<td style="padding:8px 10px;font-weight:600;color:#4A4038;white-space:nowrap">' + action + '</td>'
-        + '<td style="padding:8px 10px;color:#5A5048">' + person + '</td>'
+        + '<td style="padding:8px 10px;color:#5A5048;white-space:nowrap">' + person + '</td>'
         + '<td style="padding:8px 10px;color:#5A5048;white-space:nowrap">' + htEsc(l.date || '') + (l.timeSlot ? ' ' + htEsc(l.timeSlot) : '') + '</td>'
         + '<td style="padding:8px 10px;color:#8C8074">' + detail + '</td>'
         + '</tr>';
@@ -12809,10 +12844,10 @@ function msRenderAdminRows(rows) {
   tbody.innerHTML = rows.map(function(b){
     var st = b.status||'booked'; var cfg = sc[st]||sc.booked;
     return '<tr style="border-bottom:1px solid #FAF8F4" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:10px;font-weight:600;color:#4A4038">' + (b.userName||b.userEmail||'—') + '</td>'
-      + '<td style="padding:10px;color:#5A5048">' + (b.date||'') + '</td>'
-      + '<td style="padding:10px;font-weight:700;color:#5A5048">' + (b.timeSlot||'') + '</td>'
-      + '<td style="padding:10px"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">' + cfg.label + '</span></td>'
+      + '<td style="padding:10px;font-weight:600;color:#4A4038;white-space:nowrap">' + (zhName(b.userName)||b.userEmail||'—') + '</td>'
+      + '<td style="padding:10px;color:#5A5048;white-space:nowrap">' + (b.date||'') + '</td>'
+      + '<td style="padding:10px;font-weight:700;color:#5A5048;white-space:nowrap">' + (b.timeSlot||'') + '</td>'
+      + '<td style="padding:10px;white-space:nowrap"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;white-space:nowrap;display:inline-block">' + cfg.label + '</span></td>'
       + '<td style="padding:10px;white-space:nowrap">'
       + (st==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消</button> ':'')
       + (st==='booked'?'<button onclick="msAdminCheckIn(\'' + b.bookingId + '\')" style="background:#dcfce7;color:#16a34a;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✓ 報到</button>':'')
