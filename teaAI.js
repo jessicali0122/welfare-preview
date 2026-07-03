@@ -53,7 +53,7 @@
       +   _fieldHtml('人數', '<input id="teaai-people" type="number" min="1" class="teaai-input" placeholder="例：20">')
       +   _fieldHtml('預算（元）', '<input id="teaai-budget" type="number" min="0" class="teaai-input" placeholder="例：5000">')
       +   _checksHtml()
-      +   _fieldHtml('特殊需求 <span style="font-weight:400;color:#94a3b8">（選填）</span>',
+      +   _fieldHtml('特殊需求 <span style="font-weight:400;color:#A89C90">（選填）</span>',
             '<textarea id="teaai-special" class="teaai-textarea" rows="3" placeholder="例：不要炸物、素食優先、不要最近吃過的…"></textarea>')
       +   '<button id="teaai-run-btn" class="teaai-run-btn" onclick="teaAIPlan()">✨ AI 幫我規劃</button>'
       + '</div>'
@@ -183,7 +183,7 @@
     var sourceLabel = source === 'gemini'
       ? '<span class="teaai-result-tag" style="background:#F5F0E8;color:#7f6b50">✨ Gemini</span>'
       : source === 'mock'
-        ? '<span class="teaai-result-tag" style="background:#f1f5f9;color:#64748b">本地預覽</span>'
+        ? '<span class="teaai-result-tag" style="background:#F0EBE2;color:#8C8074">本地預覽</span>'
         : '';
 
     var html = '<div class="teaai-result-wrap">'
@@ -217,7 +217,7 @@
         +   '</div>'
         + (plan.reason ? '<div class="teaai-plan-row" style="align-items:flex-start">'
         +   '<span class="teaai-plan-row-label">理由</span>'
-        +   '<span style="font-size:12px;color:#64748b;line-height:1.6">' + htEsc(plan.reason) + '</span>'
+        +   '<span style="font-size:12px;color:#8C8074;line-height:1.6">' + htEsc(plan.reason) + '</span>'
         + '</div>' : '')
         + '</div>'
         + '</div>';
