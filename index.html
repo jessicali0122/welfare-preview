@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703085831';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703090622';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -735,7 +735,7 @@ input[type=checkbox]{accent-color:#e16b8c}
   #ht-detail-grid{grid-template-columns:1fr!important}
   /* 午茶日新增 Modal：手機版改底部抽屜（fix iOS overflow-y:auto 無法滑動） */
   #ht-create-modal{align-items:flex-end!important;padding:0!important;backdrop-filter:none!important;background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important}
-  #ht-create-modal>div{max-height:88vh!important;overflow:hidden auto!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
+  #ht-create-modal>div{max-height:88vh!important;max-height:85dvh!important;overflow:hidden auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
   #ht-create-modal>div::before{content:'';display:block;flex-shrink:0;width:36px;height:4px;background:#D8D2C8;border-radius:2px;margin:0 auto 12px}
   /* toast 上移避免被底部 bar 遮住，尺寸縮小，並限制防止過長訊息擋住畫面 */
   #toast{bottom:88px!important;padding:9px 14px!important;max-width:min(300px,calc(100vw - 48px))!important;white-space:normal!important;overflow:visible!important;text-overflow:unset!important;text-align:center!important;line-height:1.4!important}
@@ -1086,8 +1086,9 @@ input[type=checkbox]{accent-color:#e16b8c}
 /* 星期列 */
 .flatpickr-weekdays{background:#fff!important;padding:10px 8px 4px!important;border-bottom:1px solid #F0EBE2!important}
 span.flatpickr-weekday{color:#A89C90!important;font-weight:700!important;font-size:12px!important;letter-spacing:.06em!important}
-.flatpickr-days{border:none!important;background:#fff!important}
-.dayContainer{padding:6px 8px 8px!important}
+.flatpickr-days{border:none!important;background:#fff!important;width:100%!important}
+/* 用 grid 鎖定一列 7 格，避免自訂格寬造成一列擠進 8 天、星期對不上 */
+.dayContainer{padding:6px 8px 8px!important;display:grid!important;grid-template-columns:repeat(7,1fr)!important;width:100%!important;min-width:0!important;max-width:none!important;justify-items:center}
 /* 日期格：圓形 */
 .flatpickr-day{
   border-radius:8px!important;
@@ -1100,7 +1101,7 @@ span.flatpickr-weekday{color:#A89C90!important;font-weight:700!important;font-si
   font-weight:500!important;
   transition:all .14s cubic-bezier(.32,.72,0,1)!important;
   position:relative!important;
-  margin:2px auto!important;
+  margin:2px 0!important;
 }
 .flatpickr-day:hover{background:#fdf2f8!important;color:#e16b8c!important;transform:scale(1.12)!important}
 /* 今日：底部彩點 */
@@ -10226,7 +10227,23 @@ function _htInitCreatePickers(presetYm) {
     } else { mopts.dateFormat = 'Y-m'; }
     _htMonthFp = flatpickr(mEl, mopts);
   }
-  if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl);
+  if (dEl && !dEl._flatpickr) _htDateFp = initFlatpickr(dEl, {
+    onChange: function(dates) {
+      if (!dates.length) return;
+      var d = dates[0];
+      var selYm = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+      // 月份隱藏欄位由日期自動帶出
+      if (_htMonthFp) _htMonthFp.setDate(new Date(d.getFullYear(), d.getMonth(), 1), false);
+      var budEl = document.getElementById('ht-new-budget');
+      if (budEl) budEl.value = _htBudgetForMonth(selYm);
+      // 福寶季節資訊同步
+      var sh = _htSeasonHoliday(selYm);
+      var sc = document.getElementById('ht-assist-season-chip');
+      if (sc) sc.textContent = '🗓 ' + sh.label;
+      var ingEl = document.getElementById('ht-assist-seasonal-ing');
+      if (ingEl) ingEl.textContent = sh.seasonal.length ? '🌿 當季食材：' + sh.seasonal.join('、') : '';
+    }
+  });
   // monthSelectPlugin 的 dateFormat 為 'Y 年 n 月'，無法解析 'YYYY-MM' 字串（會落回 1 月），
   // 故改傳 Date 物件確保預設月份正確。
   if (_htMonthFp && presetYm) {
@@ -10322,12 +10339,19 @@ window.htOpenCreate = function() {
   document.getElementById('ht-new-headcount').value = LOCAL_USER_LIST.length || '';
   document.getElementById('ht-new-budget').value = _htBudgetForMonth(ym);
   document.getElementById('ht-new-notes').value = '';
-  var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
-    return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
-  }).join('');
-  var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
-  if (o1) o1.innerHTML = orgOpts;
-  if (o2) o2.innerHTML = orgOpts;
+  var _fillOrgSelects = function(){
+    var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
+      return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
+    }).join('');
+    var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
+    if (o1) o1.innerHTML = orgOpts;
+    if (o2) o2.innerHTML = orgOpts;
+  };
+  _fillOrgSelects();
+  // 成員清單尚未同步完成（開太快/同步失敗）→ 補抓一次再重填
+  if (!LOCAL_USER_LIST.length && typeof _syncMembersFromServer === 'function') {
+    _syncMembersFromServer().then(_fillOrgSelects).catch(function(){});
+  }
   // ── 福寶 AI 規劃區塊重置（合併自原本獨立的 AI 助手）──
   var sh = _htSeasonHoliday(ym);
   var sc = document.getElementById('ht-assist-season-chip');
@@ -10368,6 +10392,7 @@ window.htCloseCreate = function() {
   _fukuboStopIdle();
 };
 window.htSubmitCreate = async function() {
+  if (!document.getElementById('ht-new-date').value) { toast('請選擇活動日期'); return; }
   var month;
   if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
     var _fd = _htMonthFp.selectedDates[0];
@@ -11799,7 +11824,14 @@ window.htAssistRun = async function() {
     resEl.innerHTML = html;
   } catch(e) {
     var errRaw = (e && e.message && e.message !== '無推薦結果') ? e.message : '';
-    var errMsg = (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) ? 'AI 服務暫時無法使用，請稍後再試' : (errRaw || '請稍後再試');
+    var errMsg;
+    if (errRaw && /quota|rate.?limit|RESOURCE_EXHAUSTED|exceeded/i.test(errRaw)) {
+      errMsg = 'AI 額度已用完，請通知管理員更新 Gemini API 金鑰或方案';
+    } else if (errRaw && /is not defined|TypeError|ReferenceError|undefined is not|null/.test(errRaw)) {
+      errMsg = 'AI 服務暫時無法使用，請稍後再試';
+    } else {
+      errMsg = errRaw ? (errRaw.length > 80 ? errRaw.slice(0, 80) + '…' : errRaw) : '請稍後再試';
+    }
     resEl.innerHTML = '<div style="text-align:center;padding:20px;color:#e16b8c;font-size:14px">推薦失敗：' + htEsc(errMsg) + '</div>';
   }
   goBtn.disabled = false; goBtn.textContent = '🔄 重新規劃';
@@ -12834,6 +12866,10 @@ window.msStopPolling = function() {
         <input id="bulletin-title-inp" type="text" placeholder="公告標題" style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none" onfocus="this.style.borderColor='#8A7355'" onblur="this.style.borderColor='#E8E2D8'">
       </div>
       <div>
+        <div style="font-size:12px;font-weight:600;color:#8C8074;margin-bottom:4px">發布部門</div>
+        <select id="bulletin-dept-inp" style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;color:#4A4038;box-sizing:border-box;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#8A7355'" onblur="this.style.borderColor='#E8E2D8'"></select>
+      </div>
+      <div>
         <div style="font-size:12px;font-weight:600;color:#8C8074;margin-bottom:4px">內容</div>
         <textarea id="bulletin-body-inp" rows="5" placeholder="公告內容..." style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:10px 12px;font-size:14px;font-family:inherit;box-sizing:border-box;outline:none;resize:vertical" onfocus="this.style.borderColor='#8A7355'" onblur="this.style.borderColor='#E8E2D8'"></textarea>
       </div>
@@ -12844,7 +12880,7 @@ window.msStopPolling = function() {
     </div>
     <div style="display:flex;gap:10px;margin-top:20px">
       <button onclick="bulletinCloseModal()" style="flex:1;padding:11px;border-radius:12px;border:1.5px solid #E8E2D8;background:#fff;color:#8C8074;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600">取消</button>
-      <button onclick="bulletinSubmit()" style="flex:1;padding:11px;border-radius:12px;border:none;background:linear-gradient(135deg,#8A7355,#a78bfa);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">發布</button>
+      <button onclick="bulletinSubmit()" style="flex:1;padding:11px;border-radius:12px;border:none;background:#8A7355;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700" onmouseover="this.style.background='#6B5842'" onmouseout="this.style.background='#8A7355'">發布</button>
     </div>
   </div>
 </div>
@@ -12865,10 +12901,11 @@ function bulletinRender() {
   list.innerHTML = sorted.map(function(p) {
     var dt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'}) : '';
     return '<div style="background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 6px rgba(0,0,0,.06);position:relative;overflow:hidden">'
-      + (p.pinned ? '<div style="position:absolute;top:0;left:0;width:4px;height:100%;background:linear-gradient(#8A7355,#a78bfa)"></div><div style="padding-left:10px">' : '<div>')
+      + (p.pinned ? '<div style="position:absolute;top:0;left:0;width:4px;height:100%;background:#B08968"></div><div style="padding-left:10px">' : '<div>')
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap">'
       + '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0">'
       + (p.pinned ? '<span style="font-size:11px;background:#F5F0E8;color:#8A7355;border-radius:20px;padding:2px 8px;font-weight:700;white-space:nowrap;flex-shrink:0">📌 置頂</span>' : '')
+      + (p.dept ? '<span style="font-size:11px;background:#fff;border:1px solid #D8B4C0;color:#e16b8c;border-radius:20px;padding:2px 8px;font-weight:600;white-space:nowrap;flex-shrink:0">' + htEsc(p.dept) + '</span>' : '')
       + '<span style="font-size:14px;font-weight:700;color:#4A4038">' + htEsc(p.title) + '</span>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
@@ -12885,6 +12922,19 @@ window.bulletinOpenNew = function() {
   document.getElementById('bulletin-title-inp').value = '';
   document.getElementById('bulletin-body-inp').value = '';
   document.getElementById('bulletin-pin-inp').checked = false;
+  // 部門下拉：從系統使用者資料抓取不重複部門，預設帶入發布者自己的部門
+  var deptSel = document.getElementById('bulletin-dept-inp');
+  if (deptSel) {
+    var depts = [];
+    (LOCAL_USER_LIST || []).forEach(function(u){ if (u.dept && depts.indexOf(u.dept) < 0) depts.push(u.dept); });
+    depts.sort();
+    deptSel.innerHTML = '<option value="">（不指定部門）</option>' + depts.map(function(d){
+      return '<option value="' + htEsc(d) + '">' + htEsc(d) + '</option>';
+    }).join('');
+    var me = (currentUser || window.currentUser) || {};
+    var mine = (LOCAL_USER_LIST || []).filter(function(u){ return u.email === me.email; })[0];
+    deptSel.value = (mine && mine.dept) || '';
+  }
   document.getElementById('bulletin-modal').style.display = 'flex';
 };
 window.bulletinCloseModal = function() { document.getElementById('bulletin-modal').style.display = 'none'; };
@@ -12892,8 +12942,9 @@ window.bulletinSubmit = function() {
   var title = document.getElementById('bulletin-title-inp').value.trim();
   var body = document.getElementById('bulletin-body-inp').value.trim();
   var pinned = document.getElementById('bulletin-pin-inp').checked;
+  var dept = (document.getElementById('bulletin-dept-inp') || {}).value || '';
   if (!title) { document.getElementById('bulletin-title-inp').focus(); return; }
-  var post = { id:'B'+Date.now(), pinned, title, content:body, author:((currentUser||window.currentUser)&&(currentUser||window.currentUser).name)||'管理員', createdAt:new Date().toISOString() };
+  var post = { id:'B'+Date.now(), pinned, title, dept, content:body, author:((currentUser||window.currentUser)&&(currentUser||window.currentUser).name)||'管理員', createdAt:new Date().toISOString() };
   _bulletinPosts.unshift(post);
   bulletinCloseModal(); bulletinRender();
   if (window.toast) toast('✅ 公告已發布');
@@ -12982,15 +13033,11 @@ if (document.getElementById('bulletin-list')) bulletinRender();
   <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(520px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#4A4038;margin-bottom:20px">新增午茶日活動</div>
     <div style="display:grid;gap:12px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div>
-          <label style="font-size:14px;font-weight:600;color:#5A5048;display:block;margin-bottom:5px">月份 <span style="color:#e16b8c">*</span></label>
-          <input id="ht-new-month" type="text" readonly placeholder="選擇月份" style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#4A4038;box-sizing:border-box;outline:none;cursor:pointer;background:#fff">
-        </div>
-        <div>
-          <label style="font-size:14px;font-weight:600;color:#5A5048;display:block;margin-bottom:5px">活動日期</label>
-          <input id="ht-new-date" type="text" readonly placeholder="選擇日期" style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#4A4038;box-sizing:border-box;outline:none;cursor:pointer;background:#fff">
-        </div>
+      <!-- 月份欄位隱藏：由活動日期自動帶出（保留 input 供既有邏輯使用） -->
+      <div style="display:none"><input id="ht-new-month" type="text" readonly></div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#5A5048;display:block;margin-bottom:5px">活動日期 <span style="color:#e16b8c">*</span></label>
+        <input id="ht-new-date" type="text" readonly placeholder="選擇日期" style="width:100%;border:1.5px solid #E8E2D8;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;color:#4A4038;box-sizing:border-box;outline:none;cursor:pointer;background:#fff">
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div>
