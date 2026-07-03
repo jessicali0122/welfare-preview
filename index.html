@@ -3955,7 +3955,7 @@ function showApp() {
     }).catch(function(){});  // 同步失敗不影響登入
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+displayName+' <img src="assets/icons/pill.png" alt="" style="width:24px;height:24px;vertical-align:-2px">';}
+    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+givenName(displayName)+' <img src="assets/icons/pill.png" alt="" style="width:24px;height:24px;vertical-align:-2px">';}
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     // 同步用戶資訊到手機側欄
@@ -4428,6 +4428,16 @@ function zhName(n) {
   var zh = n.replace(/[A-Za-z0-9.\-_\s]+/g, '');
   return zh || n;
 }
+// 只取中文「名」（去姓氏）：李潔慧Jessica → 潔慧；黃岩 → 黃岩（兩字名保留）；歐陽明華 → 明華
+function givenName(n) {
+  var zh = zhName(n);
+  if (!/^[\u4e00-\u9fff]+$/.test(zh)) return zh;
+  var compound = ['歐陽','司馬','司徒','諸葛','張簡','范姜','周黃','江謝','上官','夏侯'];
+  if (zh.length >= 4) return compound.indexOf(zh.slice(0,2)) !== -1 ? zh.slice(2) : zh;
+  if (zh.length === 3) return zh.slice(1);
+  return zh;
+}
+window.givenName = givenName;
 function fmtDate(s) {
   if (!s) return '—';
   var str = String(s);
