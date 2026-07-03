@@ -1420,6 +1420,8 @@ header{background:#FAF8F4!important;border-bottom:none!important;box-shadow:none
 .wf-eye{transform-box:fill-box;transform-origin:center;animation:wfBlink 4.4s infinite}
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
 /* 生日祝賀：彈跳出場＋蛋糕搖擺 */
+.ms-paw{position:relative;width:78%;height:64%;display:flex;align-items:center;justify-content:center;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;background:var(--paw);font-size:13px;margin-bottom:5%}
+.ms-paw::before{content:'';position:absolute;top:-34%;left:2%;right:2%;height:40%;background:radial-gradient(ellipse 14% 46% at 16% 66%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 50% 32%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 84% 66%,var(--paw) 96%,transparent 100%)}
 .wf-bday{animation:wfBdayJelly 1s ease both}
 @keyframes wfBdayJelly{0%{opacity:0;transform:scale(.5)}40%{opacity:1;transform:scale(1.15,.9)}55%{transform:scale(.92,1.08)}70%{transform:scale(1.06,.96)}85%{transform:scale(.98,1.02)}100%{transform:scale(1)}}
 .wf-bday-cake{display:inline-block;animation:wfWiggle 2.4s ease-in-out infinite}
@@ -2900,13 +2902,10 @@ thead th{color:#8C8074!important}
   <!-- Tab 列（僅管理者看到管理頁籤；分段控制器，與案件追蹤一致） -->
   <div id="ms-tab-bar" class="seg-track" style="display:none;max-width:360px;margin-bottom:20px">
     <button class="massage-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')">
-      📅 預約 &amp; 我的記錄
+      📅 預約
     </button>
     <button class="massage-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')">
-      ⚙️ 管理
-    </button>
-    <button class="massage-tab" id="ms-tab-log" onclick="msSwitchTab('log')">
-      📋 操作紀錄
+      ⚙️ 管理後台
     </button>
   </div>
 
@@ -2967,8 +2966,8 @@ thead th{color:#8C8074!important}
           <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:#fff;border-radius:12px;border:1px solid #E8E2D8">
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f9a8c4"></div><span style="font-size:12px;color:#8C8074">有空位</span></div>
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#8C8074">已預約</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#FBDCE6;border:1px solid #F4C0CE"></div><span style="font-size:12px;color:#8C8074">有空位</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#be185d"></div><span style="font-size:12px;color:#8C8074">已預約</span></div>
           <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#E8E2D8"></div><span style="font-size:12px;color:#8C8074">額滿/不開放</span></div>
         </div>
       </div>
@@ -3108,10 +3107,7 @@ thead th{color:#8C8074!important}
         </table>
       </div>
     </div>
-  </div>
-
-  <!-- 📋 操作紀錄 panel (admin only) -->
-  <div id="ms-panel-log" style="display:none">
+    <div id="ms-panel-log" style="margin-bottom:14px">
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.06)">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#aa967e,#7f6b50);display:flex;align-items:center;justify-content:center;font-size:14px">📋</div>
@@ -3134,6 +3130,8 @@ thead th{color:#8C8074!important}
       </div>
     </div>
   </div>
+  </div>
+
 
   <!-- 📋 注意事項（可收合，預設收起） -->
   <div style="background:#fff;border-radius:14px;border:1px solid #E8E2D8;margin-top:24px;box-shadow:0 2px 12px rgba(138,115,85,.05);overflow:hidden">
@@ -12107,16 +12105,13 @@ window.msSwitchTab = function(tab) {
   document.querySelectorAll('.massage-tab').forEach(function(b){
     b.classList.toggle('active', b.id === 'ms-tab-' + tab);
   });
+  if (tab === 'log') tab = 'admin';
   var isAdmin = tab === 'admin';
-  var isLog = tab === 'log';
-  var isCalendar = !isAdmin && !isLog;
+  var isCalendar = !isAdmin;
   document.getElementById('ms-panel-calendar').style.display = isCalendar ? '' : 'none';
   document.getElementById('ms-panel-my').style.display = isCalendar ? '' : 'none';
   document.getElementById('ms-panel-admin').style.display = isAdmin ? '' : 'none';
-  var logPanel = document.getElementById('ms-panel-log');
-  if (logPanel) logPanel.style.display = isLog ? '' : 'none';
-  if (isAdmin) msRenderAdmin();
-  else if (isLog) msRenderLog();
+  if (isAdmin) { msRenderAdmin(); msRenderLog(); }
   else msRenderMyBookings();
 };
 
@@ -12155,19 +12150,22 @@ function msRenderCal() {
     var clickable = !isPast && hasSlots;
     var isSelected = _msSelectedDate === dateStr;
     var bg, color, shadow = '', fw = isToday ? '800' : '600';
-    if (isSelected)      { bg = 'linear-gradient(135deg,#e16b8c,#f43f5e)'; color = '#fff'; shadow = '0 4px 12px rgba(225,107,140,.4)'; }
-    else if (myBook)     { bg = 'linear-gradient(135deg,#be185d,#e16b8c)'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
-    else if (hasAvail)   { bg = 'rgba(225,107,140,.1)'; color = '#e16b8c'; }
+    if (isSelected)      { bg = '#e16b8c'; color = '#fff'; shadow = '0 4px 12px rgba(225,107,140,.4)'; }
+    else if (myBook)     { bg = '#be185d'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
+    else if (hasAvail)   { bg = '#FBDCE6'; color = '#c8587a'; }
     else if (isToday)    { bg = '#4A4038'; color = '#fff'; }
-    else                 { bg = 'transparent'; color = (isPast || !hasSlots) ? '#D8D2C8' : '#5A5048'; }
-    html += '<div'
-      + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
-      + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:50%;background:' + bg + ';color:' + color + ';font-size:14px;font-weight:' + fw
-      + ';cursor:' + (clickable ? 'pointer' : 'default') + ';transition:all .18s;position:relative' + (shadow ? ';box-shadow:' + shadow : '') + '"'
-      + (clickable && !isSelected && !myBook ? ' onmouseover="this.style.background=\'rgba(225,107,140,.18)\'" onmouseout="this.style.background=\'' + bg + '\'"' : '')
-      + '>' + d
-      + (myBook && !isSelected ? '<span style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
-      + '</div>';
+    else                 { bg = ''; color = (isPast || !hasSlots) ? '#D8D2C8' : '#5A5048'; }
+    if (!bg) {
+      html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:' + color + ';font-size:14px;font-weight:' + fw + '">' + d + '</div>';
+    } else {
+      html += '<div'
+        + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
+        + ' style="aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center;cursor:' + (clickable ? 'pointer' : 'default') + ';transition:transform .18s"'
+        + (clickable ? ' onmouseover="this.style.transform=\'scale(1.12)\'" onmouseout="this.style.transform=\'\'"' : '')
+        + '><div class="ms-paw" style="--paw:' + bg + ';color:' + color + ';font-weight:' + fw + (shadow ? ';box-shadow:' + shadow : '') + '">' + d
+        + (myBook && !isSelected ? '<span style="position:absolute;bottom:8%;right:10%;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
+        + '</div></div>';
+    }
   }
   grid.innerHTML = html;
   msRenderUpcoming();
