@@ -181,7 +181,7 @@
     if (!resultArea) return;
 
     var sourceLabel = source === 'gemini'
-      ? '<span class="teaai-result-tag" style="background:#ede9fe;color:#7c3aed">✨ Gemini</span>'
+      ? '<span class="teaai-result-tag" style="background:#F5F0E8;color:#7f6b50">✨ Gemini</span>'
       : source === 'mock'
         ? '<span class="teaai-result-tag" style="background:#f1f5f9;color:#64748b">本地預覽</span>'
         : '';
