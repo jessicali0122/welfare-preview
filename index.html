@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703093453';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703140058';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2848,16 +2848,15 @@ thead th{color:#8C8074!important}
     <div style="font-size:13px;font-weight:700;color:#ef4444">⚠️ 帳號暫停預約</div>
   </div>
 
-  <!-- 注意事項（折疊卡片） -->
+  <!-- 注意事項（常駐顯示） -->
   <div style="background:#fff;border-radius:16px;margin-bottom:20px;box-shadow:0 1px 8px rgba(0,0,0,.06);overflow:hidden">
-    <button onclick="msToggleNotice()" style="width:100%;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;background:none;border:none;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#fdf8fb'" onmouseout="this.style.background=''">
+    <div style="width:100%;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box">
       <div style="display:flex;align-items:center;gap:10px">
         <div style="width:32px;height:32px;border-radius:9px;background:#fde4ef;display:flex;align-items:center;justify-content:center;font-size:15px">📋</div>
         <span style="font-size:14px;font-weight:700;color:#4A4038">按摩注意事項</span>
       </div>
-      <span id="ms-notice-arrow" style="font-size:11px;color:#A89C90;transition:transform .2s">▼</span>
-    </button>
-    <div id="ms-notice-body" style="display:none;padding:0 18px 18px">
+    </div>
+    <div id="ms-notice-body" style="padding:0 18px 18px">
       <div style="background:#fafafa;border-radius:12px;padding:16px 18px;border-left:3px solid #e16b8c;font-size:13px;color:#5A5048;line-height:1.9">
         <p style="margin:0 0 10px">1. 為讓每個夥伴都有機會參與，<strong>每月請儘量控制最多預約二次為主</strong>。連續二週為一排程區間，線上填寫限填一次，如當日仍有空檔可於紙本補位。</p>
         <p style="margin:0 0 10px">2. 完成預約後，務必留意預約時間並設小鬧鐘準時參與；按摩完畢後請協助「呼喚下一位夥伴」；若臨時無法參與，<strong>請記得找夥伴遞補</strong>哦～</p>
@@ -3517,6 +3516,8 @@ window.hubNav = function(el, view) {
   if (!el || el.classList.contains('tearing')) return;
   el.classList.add('tearing');
   setTimeout(function(){ sw(view); }, 220);
+  // 動畫結束後復原卡片狀態，回到總覽時才能再次點擊、箭頭也不會消失
+  setTimeout(function(){ el.classList.remove('tearing'); }, 700);
 };
 
 // 判斷目前登入者是否為某案件當關的簽核人
@@ -5860,7 +5861,13 @@ function confirmDeleteDraftById(caseId) {
         var _ddb = document.getElementById('delete-draft-btn');
         if (_ddb) _ddb.style.display = 'none';
         toast('🗑️ 草稿已刪除');
-        sw('applications');
+        // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
+        var _curV = (document.querySelector('.view.active') || {}).id || '';
+        if (_curV === 'view-new-form') {
+          sw(window._newFormReturnView || 'applications');
+        } else {
+          sw(_curV ? _curV.replace('view-', '') : 'applications');
+        }
       } else {
         toast('❌ 刪除失敗：' + (res.error || ''));
       }
@@ -5873,6 +5880,12 @@ async function saveDraftForm(silent = false) {
   _saveDraftLock = true;
 
   const subjectEl    = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  // 空白表單不可存草稿：至少要填主旨
+  if (!subjectEl || !subjectEl.value.trim()) {
+    _saveDraftLock = false;
+    if (!silent) { toast('請先填寫「主旨」再儲存草稿'); if (subjectEl) subjectEl.focus(); }
+    return;
+  }
   const reasonEl     = document.querySelector('#view-new-form textarea');
   const applicantEl2 = document.getElementById('applicant-select');
   const payeeEl2     = document.getElementById('payee-select');
