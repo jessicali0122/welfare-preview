@@ -3446,6 +3446,8 @@ thead th{color:#8C8074!important}
 
 <script>
 window.onerror = function(msg, src, line) {
+  // 只在 ?debug=1 時顯示紅色橫幅；一般使用者不顯示（跨網域腳本的 Script error 會嚇到人）
+  if (!/[?&]debug=1/.test(location.search)) { try { console.error('[JS Error]', msg, src, line); } catch(e){} return false; }
   var bar = document.getElementById('__bf_err');
   if (!bar) {
     bar = document.createElement('div');
