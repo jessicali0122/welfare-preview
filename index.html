@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703141334';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703141912';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1571,7 +1571,7 @@ thead th{color:#8C8074!important}
   <main id="main-content" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;background:#fafafa;overscroll-behavior-y:contain">
 
   <!-- ===== DASHBOARD ===== -->
-  <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100vh - 152px);background:#FAF8F4;border-radius:24px;padding:28px;box-sizing:border-box;overflow:hidden">
+  <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100vh - 152px);background:#FAF8F4;border-radius:24px;padding:0 28px 28px;box-sizing:border-box;overflow:hidden">
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div style="position:absolute;inset:0;pointer-events:none;z-index:0">
       <svg style="position:absolute;top:4%;left:3%;width:140px;height:140px;transform:rotate(-18deg)" viewBox="0 0 24 24" fill="#8A7355" opacity=".05"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>
@@ -10342,7 +10342,12 @@ window.htOpenCreate = function() {
   document.getElementById('ht-new-budget').value = _htBudgetForMonth(ym);
   document.getElementById('ht-new-notes').value = '';
   var _fillOrgSelects = function(){
-    var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
+    // 主辦人只列出標籤含「福委」的成員
+    var _pool = LOCAL_USER_LIST.filter(function(u){
+      return (USER_ROLES[u.email] || []).indexOf('welfare') >= 0;
+    });
+    if (!_pool.length) _pool = LOCAL_USER_LIST; // 角色資料未同步時退回全員
+    var orgOpts = '<option value="">— 請選擇 —</option>' + _pool.map(function(u){
       return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
     }).join('');
     var o1 = document.getElementById('ht-new-org1'); var o2 = document.getElementById('ht-new-org2');
@@ -11077,8 +11082,12 @@ function htRenderDetailHeader() {
   if (_monthEl) _monthEl.textContent = fmtMonth(ev.month);
   var _bdEl = document.getElementById('ht-event-bday-disp');
   if (_bdEl) _bdEl.textContent = (ev.birthdays || []).length;
-  // 填入主辦人下拉
-  var orgOpts = '<option value="">— 請選擇 —</option>' + LOCAL_USER_LIST.map(function(u){
+  // 填入主辦人下拉（只列福委）
+  var _orgPool = LOCAL_USER_LIST.filter(function(u){
+    return (USER_ROLES[u.email] || []).indexOf('welfare') >= 0;
+  });
+  if (!_orgPool.length) _orgPool = LOCAL_USER_LIST;
+  var orgOpts = '<option value="">— 請選擇 —</option>' + _orgPool.map(function(u){
     return '<option value="' + htEsc(u.name) + '">' + htEsc(u.name) + '</option>';
   }).join('');
   ['ht-event-org1','ht-event-org2'].forEach(function(id, i) {
