@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260702180259';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703085831';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1462,7 +1462,26 @@ header{background:#FAF8F4!important;border-bottom:none!important;box-shadow:none
 .wf-pet-dog{animation:wfBob 3.6s ease-in-out 1.8s infinite}
 .wf-eye{transform-box:fill-box;transform-origin:center;animation:wfBlink 4.4s infinite}
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
-@media(prefers-reduced-motion:reduce){.wf-pet-cat,.wf-pet-dog,.wf-eye{animation:none}}
+/* 生日祝賀：彈跳出場＋蛋糕搖擺 */
+.wf-bday{animation:wfBdayPop .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wfBdayPop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.wf-bday-cake{display:inline-block;animation:wfWiggle 2.4s ease-in-out infinite}
+.wf-bday-party{display:inline-block;animation:wfWiggle 2.4s ease-in-out 1.2s infinite}
+@keyframes wfWiggle{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
+/* 全站微互動 */
+.view.active{animation:wfViewIn .35s ease both}
+@keyframes wfViewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.btn{transition:transform .15s,box-shadow .15s!important}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:scale(.97)}
+.stat{transition:box-shadow .2s,transform .2s}
+.stat:hover{box-shadow:0 6px 20px rgba(138,115,85,.12)!important;transform:translateY(-2px)}
+.dash-hub-card .hub-perf{transition:transform .2s}
+.dash-hub-card:hover .hub-perf{transform:translateX(4px)}
+.dash-hub-card .hub-icon-glow{transition:transform .25s}
+.dash-hub-card:hover .hub-icon-glow{transform:scale(1.1) rotate(-6deg)}
+.inp:focus{border-color:#B08968!important;box-shadow:0 0 0 3px rgba(176,137,104,.15)!important;outline:none!important}
+@media(prefers-reduced-motion:reduce){.wf-pet-cat,.wf-pet-dog,.wf-eye,.wf-bday,.wf-bday-cake,.wf-bday-party,.view.active{animation:none}.stat:hover,.btn:hover{transform:none}}
 header::after{display:none!important}
 #home-logo-btn svg{stroke:#8A7355!important}
 #sidebar-wrapper{background:#FAF8F4!important;box-shadow:1px 0 0 #E8E2D8!important}
@@ -1587,13 +1606,14 @@ thead th{color:#8C8074!important}
     <div style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- Hero 歡迎區（文青置中版）-->
     <div style="position:relative;padding:4px 20px 8px;margin-bottom:24px;text-align:center">
-      <div style="font-size:12px;font-weight:500;color:#B08968;letter-spacing:6px;margin-bottom:16px">騰勢福委會</div>
+      <div style="font-size:18px;font-weight:600;color:#B08968;letter-spacing:8px;margin-bottom:16px">騰勢福委會</div>
       <div id="dashboard-greeting" style="font-size:32px;font-weight:600;color:#4A4038;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:2px">你好</div>
       <div id="tw-datetime" style="font-size:14px;color:#8C8074;margin-top:10px;font-weight:500;letter-spacing:2px">載入中...</div>
       <div style="font-size:14px;color:#8C8074;margin-top:20px;letter-spacing:2px;line-height:2">照顧好每一位夥伴，也照顧好每一位毛孩。</div>
-      <div id="dash-birthday-chip" style="display:none;align-items:center;gap:6px;margin-top:14px;background:#fff;border:1px solid #E8E2D8;border-radius:20px;padding:6px 14px;width:fit-content;margin-left:auto;margin-right:auto">
-        <span style="font-size:14px">🎂</span>
-        <span style="font-size:14px;font-weight:700;color:#B08968">生日快樂！祝你今天特別幸福 🎉</span>
+      <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#fff;border:1px solid #F4C0CE;border-radius:24px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.12)">
+        <span class="wf-bday-cake" style="font-size:18px">🎂</span>
+        <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:2px">生日快樂！祝你今天特別幸福</span>
+        <span class="wf-bday-party" style="font-size:16px">🎉</span>
       </div>
       <!-- 趴趴探頭貓狗 -->
       <div style="display:flex;justify-content:center;margin-top:24px">
