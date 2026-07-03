@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703092026';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703093335';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -25,53 +25,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>福委會請款簽核系統</title>
-<link rel="icon" id="main-favicon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><path d='M13 29 C13 25 14 19 15 13 C16 8 18 4 20 1' stroke='%231e9d6b' stroke-width='2' stroke-linecap='round'/><path d='M15 25 C12 22 6 23 5 27 C9 29 14 27 15 25Z' fill='%231e9d6b'/><path d='M15 19 C18 16 24 17 24 21 C20 22 16 20 15 19Z' fill='%231e9d6b'/><path d='M16 13 C13 9 8 10 8 14 C12 15 15 13 16 13Z' fill='%231e9d6b'/><path d='M18 8 C21 5 26 6 25 10 C21 11 18 9 18 8Z' fill='%231e9d6b'/><path d='M20 3 C18 0 14 1 15 4 C17 5 19 4 20 3Z' fill='%231e9d6b'/></svg>">
+<link rel="icon" id="main-favicon" type="image/png" href="assets/icons/app-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app-icon-180.png">
+<link rel="apple-touch-icon" sizes="512x512" href="assets/icons/app-icon-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="BeneFlow">
-<meta name="theme-color" content="#1e9d6b">
+<meta name="theme-color" content="#FAF8F4">
 <link rel="stylesheet" href="teaAI.css">
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script>
-(function(){
-  try{
-    var s=180;
-    var cv=document.createElement('canvas');cv.width=cv.height=s;
-    var x=cv.getContext('2d');
-    /* 白底（apple-touch-icon 需不透明背景）*/
-    x.fillStyle='#ffffff';
-    x.fillRect(0,0,s,s);
-    /* 綠葉，置中縮放 */
-    var sc=s/48*0.72,ox=(s-48*sc)/2,oy=(s-48*sc)/2;
-    x.save();x.translate(ox,oy);x.scale(sc,sc);
-    x.fillStyle='#1e9d6b';
-    x.strokeStyle='#1e9d6b';
-    x.lineWidth=2.5;x.lineCap='round';
-    /* stem */
-    x.beginPath();x.moveTo(18,44);x.bezierCurveTo(18,44,19,35,20,26);x.bezierCurveTo(21,18,24,10,27,4);x.stroke();
-    /* leaves */
-    [[20,37,16,33,9,34,8,39,13,41,18,39],
-     [21,28,25,24,32,25,32,30,27,32,22,30],
-     [21,21,17,16,10,17,10,22,15,24,20,22],
-     [23,14,27,10,34,11,33,16,28,17,24,15],
-     [25,7,23,3,17,4,18,8,21,10,24,8],
-     [27,4,29,1,34,2,33,6,30,7,27,5]
-    ].forEach(function(p){
-      x.beginPath();x.moveTo(p[0],p[1]);
-      x.bezierCurveTo(p[2],p[3],p[4],p[5],p[6],p[7]);
-      x.bezierCurveTo(p[8],p[9],p[10],p[11],p[0],p[1]);
-      x.closePath();x.fill();
-    });
-    x.restore();
-    var d=cv.toDataURL('image/png');
-    /* apple-touch-icon */
-    var l=document.createElement('link');l.rel='apple-touch-icon';l.sizes='180x180';l.href=d;
-    document.head.insertBefore(l,document.head.firstChild);
-    /* favicon */
-    var f=document.getElementById('main-favicon');if(f)f.href=d;
-  }catch(e){}
-})();
-</script>
 <!-- 字型與 flatpickr CSS 在 window.onload 後動態注入，完全不阻塞頁面 -->
 <!-- flatpickr 改為按需載入，避免 CDN 超時卡住整個頁面 -->
 <script>
@@ -1413,7 +1375,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #login-screen .lg-hello{font-weight:600;font-size:40px;letter-spacing:2px;color:#4A4038;line-height:1.1;margin-bottom:8px;text-align:center}
 #login-screen .lg-sub{font-weight:400;font-size:14px;letter-spacing:2px;color:#8C8074;margin-bottom:60px;display:flex;align-items:center;justify-content:center;gap:8px}
 #login-screen .lg-box{position:relative;background:#fff;border:1px solid #E8E2D8;border-radius:4px;padding:32px 28px 24px;box-shadow:0 2px 12px rgba(138,115,85,.06)}
-#login-screen .lg-peek{position:absolute;top:-46px;left:50%;transform:translateX(-50%);pointer-events:none}
+#login-screen .lg-peek{position:absolute;top:-72px;left:50%;transform:translateX(-50%);pointer-events:none}
 #login-screen #google-login-btn{width:100%;height:52px;border-radius:2px;background:#fff;border:1px solid #E8E2D8;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;letter-spacing:2px;color:#4A4038;font-weight:500;cursor:pointer;transition:transform .15s,box-shadow .2s,border-color .2s;font-family:'Noto Sans TC',sans-serif}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);border-color:#8A7355;box-shadow:0 4px 12px rgba(138,115,85,.12)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
@@ -1428,14 +1390,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     <div class="lg-sub">Create a better life</div>
     <div class="lg-box">
     <div class="lg-peek">
-      <svg width="120" height="58" viewBox="0 0 120 58" style="stroke:#8A7355;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round">
-        <path d="M38 22 L34 4 L50 12" fill="#fff"/><path d="M78 22 L82 4 L66 12" fill="#fff"/>
-        <path d="M34 26 Q30 56 58 56 Q86 56 82 26 Q74 12 58 12 Q42 12 34 26 Z" fill="#fff"/>
-        <circle cx="48" cy="34" r="4" fill="#8A7355" stroke="none"/><circle cx="70" cy="34" r="4" fill="#8A7355" stroke="none"/>
-        <path d="M55 42 Q59 46 63 42" stroke-width="2"/>
-        <circle cx="41" cy="41" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="77" cy="41" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
-        <path d="M44 58 Q44 48 50 48 Q56 48 56 58 M62 58 Q62 48 68 48 Q74 48 74 58" fill="#fff"/>
-      </svg>
+      <img src="assets/icons/login-peek.png" alt="" style="width:110px;height:auto">
     </div>
     <!-- 公司帳號登入：OAuth implicit flow 全頁轉址，不依賴第三方 Cookie / 擴充功能 / FedCM，任何瀏覽器環境都能成功登入 -->
     <button id="google-login-btn" onclick="doGoogleLogin()" type="button">
@@ -1616,27 +1571,9 @@ thead th{color:#8C8074!important}
         <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:2px">生日快樂！祝你今天特別幸福</span>
         <span class="wf-bday-party" style="font-size:16px">🎉</span>
       </div>
-      <!-- 趴趴探頭貓狗 -->
+      <!-- 3D 貓狗（輕輕浮動）-->
       <div style="display:flex;justify-content:center;margin-top:24px">
-        <svg width="220" height="110" viewBox="0 0 220 110" style="stroke:#8A7355;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;overflow:visible">
-          <path d="M10 84 L210 84" stroke-width="2"/>
-          <g class="wf-pet-cat">
-            <path d="M34 40 L30 20 L48 30" fill="#FAF8F4"/><path d="M78 40 L82 20 L64 30" fill="#FAF8F4"/>
-            <path d="M30 44 Q26 78 56 78 Q86 78 82 44 Q74 28 56 28 Q38 28 30 44 Z" fill="#FAF8F4"/>
-            <circle class="wf-eye" cx="44" cy="56" r="4" fill="#8A7355" stroke="none"/><circle class="wf-eye" cx="68" cy="56" r="4" fill="#8A7355" stroke="none"/>
-            <path d="M52 64 Q56 68 60 64" stroke-width="2"/>
-            <circle cx="37" cy="63" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="75" cy="63" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
-            <path d="M42 84 Q42 74 48 74 Q54 74 54 84 M58 84 Q58 74 64 74 Q70 74 70 84" fill="#FAF8F4"/>
-          </g>
-          <g class="wf-pet-dog">
-            <path d="M138 32 Q124 34 126 52 Q127 62 134 64" fill="#FAF8F4"/><path d="M182 32 Q196 34 194 52 Q193 62 186 64" fill="#FAF8F4"/>
-            <path d="M134 44 Q130 78 160 78 Q190 78 186 44 Q178 26 160 26 Q142 26 134 44 Z" fill="#FAF8F4"/>
-            <circle class="wf-eye" cx="148" cy="54" r="4" fill="#8A7355" stroke="none"/><circle class="wf-eye" cx="172" cy="54" r="4" fill="#8A7355" stroke="none"/>
-            <ellipse cx="160" cy="63" rx="4" ry="3" fill="#8A7355" stroke="none"/>
-            <circle cx="141" cy="62" r="5" fill="#e16b8c" opacity=".5" stroke="none"/><circle cx="179" cy="62" r="5" fill="#e16b8c" opacity=".5" stroke="none"/>
-            <path d="M146 84 Q146 74 152 74 Q158 74 158 84 M162 84 Q162 74 168 74 Q174 74 174 84" fill="#FAF8F4"/>
-          </g>
-        </svg>
+        <img src="assets/icons/hero-pets.png" alt="" class="wf-pet-cat" style="width:200px;height:auto">
       </div>
       <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:10px 16px;font-size:14px;flex-shrink:0;display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
@@ -13089,7 +13026,7 @@ if (document.getElementById('bulletin-list')) bulletinRender();
       <div style="background:#fdf8fb;border:1.5px solid #f5e1e8;border-radius:14px;padding:14px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
           <div id="fukubo-avatar-wrap" style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#fde4ef,#F0E8DC);flex-shrink:0;box-shadow:0 3px 8px rgba(138,115,85,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
-            <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;transition:opacity .35s ease" alt="福寶">
+            <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:contain;object-position:center;transition:opacity .35s ease" alt="福寶">
           </div>
           <div>
             <div style="font-size:14px;font-weight:700;color:#4A4038">福寶幫你規劃</div>
