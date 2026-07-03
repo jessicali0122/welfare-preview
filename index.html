@@ -10478,7 +10478,7 @@ window.htOpenCreate = function() {
   var res = document.getElementById('ht-assist-result');
   if (res) { res.innerHTML = ''; res.style.display = 'none'; }
   var goBtn = document.getElementById('ht-assist-go-btn');
-  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
+  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '✨ 開始規劃'; }
   _htModalRecResult = null;
   _fukuboStartIdle();
   _htRenderModalCopyHint();
@@ -11568,7 +11568,7 @@ window.htRunOptimize = async function() {
   });
   var cats = Object.keys(catMap);
   resultEl.innerHTML =
-    '<div style="font-size:14px;font-weight:700;color:#4A4038;margin-bottom:10px">🤖 AI 建議配置（總預算 '+fmtMoney(totalBudget)+'）</div>'
+    '<div style="font-size:14px;font-weight:700;color:#4A4038;margin-bottom:10px">✨ AI 建議配置（總預算 '+fmtMoney(totalBudget)+'）</div>'
     + (r.summary ? '<div style="font-size:14px;color:#8C8074;margin-bottom:10px">'+htEsc(r.summary)+'</div>' : '')
     + (cats.length ? '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">'
     + cats.map(function(c){
@@ -11832,9 +11832,10 @@ var _htAssistMode = 'plan';
 var _htAssistRatioPreset = 'balanced';
 
 // ── 福寶頭像：面板開啟期間循環切換表情圖，模擬活潑的動畫感 ──
-var FUKUBO_FRAMES_ = ['fukubo-cheer.png','fukubo-wink.png','fukubo-heart.png','fukubo-think.png','fukubo-announce.png'];
+var FUKUBO_FRAMES_ = [];
 var _fukuboTimer_ = null, _fukuboIdx_ = 0;
 function _fukuboStartIdle() {
+  if (!FUKUBO_FRAMES_.length) return; // 頭像改為固定圖，不輪播
   if (_fukuboTimer_) return;
   _fukuboIdx_ = 0;
   _fukuboTimer_ = setInterval(function() {
@@ -11870,7 +11871,7 @@ window.htAssistSetMode = function(btn, mode) {
   var res = document.getElementById('ht-assist-result');
   if (res) { res.innerHTML = ''; res.style.display = 'none'; }
   var goBtn = document.getElementById('ht-assist-go-btn');
-  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '🤖 開始規劃'; }
+  if (goBtn) { goBtn.disabled = false; goBtn.textContent = '✨ 開始規劃'; }
 };
 window.htAssistSelectRatio = function(btn, preset) {
   _htAssistRatioPreset = preset;
@@ -11885,7 +11886,7 @@ window.htAssistRun = async function() {
   var goBtn = document.getElementById('ht-assist-go-btn');
   var resEl = document.getElementById('ht-assist-result');
   if (!goBtn || !resEl) return;
-  goBtn.disabled = true; goBtn.textContent = '🤖 分析中…';
+  goBtn.disabled = true; goBtn.textContent = '✨ 分析中…';
   resEl.innerHTML = '<div style="text-align:center;padding:28px 0;color:#A89C90"><div style="font-size:28px;margin-bottom:8px">✨</div><div style="font-size:14px">正在為你智慧規劃，請稍候…</div></div>';
   resEl.style.display = '';
   var hc = Number(document.getElementById('ht-new-headcount').value) || 30;
@@ -11927,7 +11928,7 @@ window.htAssistRun = async function() {
     var modeLabel = { plan:'本月規劃', trend:'社群熱品', corp:'企業團餐' }[_htAssistMode] || '';
     var catColors = { '甜點':'#e16b8c', '飲品':'#3b82f6', '水果':'#22c55e', '鹹食':'#B08968', '主食':'#B08968' };
     var html = '<div style="border-top:1.5px solid #F0EBE2;padding-top:16px;margin-top:4px">';
-    html += '<div style="font-size:14px;font-weight:700;color:#4A4038;margin-bottom:12px">🤖 AI ' + modeLabel + ' 推薦清單（建立活動時會自動套用）</div>';
+    html += '<div style="font-size:14px;font-weight:700;color:#4A4038;margin-bottom:12px">✨ AI ' + modeLabel + ' 推薦清單（建立活動時會自動套用）</div>';
     if (r.summary) html += '<div style="font-size:14px;color:#8C8074;background:#FAF8F4;border-radius:10px;padding:10px 12px;margin-bottom:12px;line-height:1.6">'+htEsc(r.summary)+'</div>';
     html += '<div style="display:flex;flex-direction:column;gap:8px">';
     items.slice(0, 15).forEach(function(it) {
@@ -13032,8 +13033,8 @@ window.msStopPolling = function() {
 </script>
 
 <!-- ── 公佈欄新增公告 Modal ── -->
-<div id="bulletin-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px)" onclick="if(event.target===this)bulletinCloseModal()">
-  <div onclick="event.stopPropagation()" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:20px;padding:24px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">
+<div id="bulletin-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="if(event.target===this)bulletinCloseModal()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:24px;width:90%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto">
     <div style="font-size:18px;font-weight:800;color:#4A4038;margin-bottom:16px">📢 新增公告</div>
     <div style="display:flex;flex-direction:column;gap:12px">
       <div>
@@ -13231,10 +13232,10 @@ if (document.getElementById('bulletin-list')) bulletinRender();
       <div style="background:#fdf8fb;border:1.5px solid #f5e1e8;border-radius:14px;padding:14px">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
           <div id="fukubo-avatar-wrap" style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#fde4ef,#F0E8DC);flex-shrink:0;box-shadow:0 3px 8px rgba(138,115,85,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
-            <img id="fukubo-avatar-img" src="assets/fukubo/fukubo-cheer.png" style="width:100%;height:100%;object-fit:contain;object-position:center;transition:opacity .35s ease" alt="福寶">
+            <img id="fukubo-avatar-img" src="assets/icons/hero-pets.png?v=2" style="width:100%;height:100%;object-fit:contain;object-position:center;transition:opacity .35s ease" alt="AI 規劃">
           </div>
           <div>
-            <div style="font-size:14px;font-weight:700;color:#4A4038">福寶幫你規劃</div>
+            <div style="font-size:14px;font-weight:700;color:#4A4038">幫我規劃</div>
             <div style="font-size:12px;color:#A89C90">規劃完成後會自動套用到這張活動的品項</div>
           </div>
         </div>
@@ -13287,7 +13288,7 @@ if (document.getElementById('bulletin-list')) bulletinRender();
             </label>
           </div>
         </div>
-        <button id="ht-assist-go-btn" onclick="htAssistRun()" style="width:100%;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">🤖 開始規劃</button>
+        <button id="ht-assist-go-btn" onclick="htAssistRun()" style="width:100%;padding:11px;border:none;background:#e16b8c;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">✨ 開始規劃</button>
         <div id="ht-assist-result" style="display:none;margin-top:12px"></div>
       </div>
 
