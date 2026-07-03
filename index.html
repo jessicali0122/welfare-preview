@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260703161618';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260703162133';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1414,6 +1414,8 @@ header{background:#FAF8F4!important;border-bottom:none!important;box-shadow:none
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
 .wf-pet-cat{animation:wfBob 3.6s ease-in-out infinite}
+@media(max-width:480px){#dashboard-greeting{font-size:24px}#dashboard-greeting img{width:20px!important;height:20px!important}#bulletin-section{padding:20px 16px!important}#bulletin-en{display:none}#dash-birthday-chip{padding:8px 14px!important;gap:6px!important}}
+@media(min-width:1200px){#dash-wrap{max-width:1200px!important}#dash-hub{grid-template-columns:1fr 1fr 1fr!important}}
 .wf-pet-dog{animation:wfBob 3.6s ease-in-out 1.8s infinite}
 .wf-eye{transform-box:fill-box;transform-origin:center;animation:wfBlink 4.4s infinite}
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
@@ -1583,15 +1585,15 @@ thead th{color:#8C8074!important}
       <svg style="position:absolute;top:44%;left:1%;width:60px;height:60px;transform:rotate(-4deg)" viewBox="0 0 24 24" fill="#8A7355" opacity=".04"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>
       <svg style="position:absolute;top:52%;right:2%;width:90px;height:90px;transform:rotate(14deg)" viewBox="0 0 24 24" fill="#8A7355" opacity=".04"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg>
     </div>
-    <div style="max-width:960px;margin:0 auto;position:relative;z-index:1">
+    <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- Hero 歡迎區（文青置中版）-->
     <div style="position:relative;padding:4px 20px 8px;margin-bottom:24px;text-align:center">
-      <div id="dashboard-greeting" style="font-size:32px;font-weight:600;color:#4A4038;display:flex;align-items:center;justify-content:center;gap:8px;letter-spacing:2px">你好</div>
+      <div id="dashboard-greeting" style="font-size:32px;font-weight:600;color:#4A4038;text-align:center;letter-spacing:2px">你好</div>
       <div id="tw-datetime" style="font-size:14px;color:#8C8074;margin-top:10px;font-weight:500;letter-spacing:2px">載入中...</div>
       <div style="font-size:14px;color:#8C8074;margin-top:20px;letter-spacing:2px;line-height:2">照顧好每一位夥伴，也照顧好每一位毛孩。</div>
       <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#fff;border:1px solid #F4C0CE;border-radius:24px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.12)">
         <span class="wf-bday-cake" style="font-size:18px">🎂</span>
-        <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:2px">生日快樂！祝你今天特別幸福</span>
+        <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:2px;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
         <span class="wf-bday-party" style="font-size:16px">🎉</span>
       </div>
       <!-- 3D 貓狗（輕輕浮動）-->
@@ -1606,7 +1608,7 @@ thead th{color:#8C8074!important}
     <div id="bulletin-section" style="margin-bottom:24px;background:#fff;border-radius:14px;border:1px solid #E8E2D8;box-shadow:0 2px 12px rgba(138,115,85,.05);padding:24px 28px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:16px;border-bottom:1px solid #E8E2D8;padding-bottom:14px">
         <div style="font-size:18px;font-weight:600;color:#4A4038;white-space:nowrap;letter-spacing:4px">公 佈 欄</div>
-        <div style="font-size:12px;letter-spacing:4px;color:#B08968">NOTICE</div>
+        <div id="bulletin-en" style="font-size:12px;letter-spacing:4px;color:#B08968">NOTICE</div>
         <div style="flex:1"></div>
         <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;white-space:nowrap;font-size:14px;padding:6px 16px;border-radius:10px;border:1px solid #8A7355;background:#fff;color:#8A7355;cursor:pointer;font-family:inherit;font-weight:500;letter-spacing:2px;transition:all .15s" onmouseover="this.style.background='#8A7355';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#8A7355'">＋ 新增公告</button>
       </div>
@@ -3926,7 +3928,7 @@ function showApp() {
     }).catch(function(){});  // 同步失敗不影響登入
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'，'+displayName+' <img src="assets/icons/pill.png" alt="" style="width:24px;height:24px;flex-shrink:0">';}
+    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+displayName+' <img src="assets/icons/pill.png" alt="" style="width:24px;height:24px;vertical-align:-2px">';}
     const menuInfo=document.getElementById('user-menu-info');
     if(menuInfo)menuInfo.textContent=currentUser.email;
     // 同步用戶資訊到手機側欄
