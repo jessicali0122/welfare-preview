@@ -1420,8 +1420,8 @@ header{background:#FAF8F4!important;border-bottom:none!important;box-shadow:none
 .wf-eye{transform-box:fill-box;transform-origin:center;animation:wfBlink 4.4s infinite}
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
 /* 生日祝賀：彈跳出場＋蛋糕搖擺 */
-.wf-bday{animation:wfBdayPop .5s cubic-bezier(.2,.8,.2,1) both}
-@keyframes wfBdayPop{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+.wf-bday{animation:wfBdayJelly 1s ease both}
+@keyframes wfBdayJelly{0%{opacity:0;transform:scale(.5)}40%{opacity:1;transform:scale(1.15,.9)}55%{transform:scale(.92,1.08)}70%{transform:scale(1.06,.96)}85%{transform:scale(.98,1.02)}100%{transform:scale(1)}}
 .wf-bday-cake{display:inline-block;animation:wfWiggle 2.4s ease-in-out infinite}
 .wf-bday-party{display:inline-block;animation:wfWiggle 2.4s ease-in-out 1.2s infinite}
 @keyframes wfWiggle{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg)}}
@@ -4469,6 +4469,10 @@ function applyDashboardBlocks() {
       isBday = window._BF_USER_BDAYS.some(function(b){ return b.name === myName && b.m === todayM && b.d === todayD; });
     }
     bdayChip.style.display = isBday ? 'flex' : 'none';
+    if (isBday && !window._bdayConfettiShown) {
+      window._bdayConfettiShown = true;
+      setTimeout(function(){ _bdayConfettiRain(bdayChip); }, 350);
+    }
   }
 }
 window.applyDashboardBlocks = applyDashboardBlocks;
@@ -6898,6 +6902,28 @@ function _launchConfetti(container){
     setTimeout(()=>c.remove(), 1400);
   }
 }
+
+// ── 生日 bar 彩帶灑落：在 bar 周圍蓋一層暫時的固定定位範圍，彩帶從上方飄下 ──
+function _bdayConfettiRain(chip){
+  if(!chip) return;
+  var r = chip.getBoundingClientRect();
+  var zone = document.createElement('div');
+  zone.style.cssText = 'position:fixed;pointer-events:none;z-index:9999;overflow:hidden;'
+    + 'left:'+(r.left-60)+'px;top:'+(r.top-30)+'px;width:'+(r.width+120)+'px;height:'+(r.height+160)+'px';
+  document.body.appendChild(zone);
+  var colors = ['#F4C0CE','#e16b8c','#F5D48A','#9FD8CB','#A9C4EC','#F0997B'];
+  for(var i=0; i<26; i++){
+    var c = document.createElement('div');
+    c.style.cssText = 'position:absolute;top:0;width:8px;height:8px;'
+      + 'left:'+(8+Math.random()*84)+'%;'
+      + 'border-radius:'+(Math.random()>.5?'50%':'2px')+';'
+      + 'background:'+colors[i%colors.length]+';'
+      + 'animation:confettiFall '+(1.1+Math.random()*1.3)+'s linear '+(Math.random()*.6)+'s forwards';
+    zone.appendChild(c);
+  }
+  setTimeout(function(){ zone.remove(); }, 3400);
+}
+window._bdayConfettiRain = _bdayConfettiRain;
 
 // ── NOTIFICATIONS ──
 function toggleNotif(e){e.stopPropagation();document.getElementById('notif-panel').classList.toggle('open');}
