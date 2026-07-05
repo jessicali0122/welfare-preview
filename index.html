@@ -1375,9 +1375,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 @keyframes lgDrift{0%,100%{translate:0 0}50%{translate:0 -10px}}
 #login-screen .lg-card{position:relative;width:100%;max-width:400px;z-index:115;padding:0 24px;box-sizing:border-box;animation:lgRise .6s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes lgRise{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
-#login-screen .lg-mark{width:64px;height:64px;border-radius:50%;background:linear-gradient(145deg,#B99B78,#8A7355);margin:0 auto 20px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(138,115,85,.3),inset 0 1px 0 rgba(255,255,255,.25)}
-#login-screen .lg-mark svg{width:32px;height:32px;fill:#FBF7F0}
-#login-screen .lg-eyebrow{font-weight:500;font-size:11px;letter-spacing:5px;text-indent:5px;color:#B08968;margin-bottom:10px;text-align:center;text-transform:uppercase}
 #login-screen .lg-hello{font-weight:700;font-size:28px;letter-spacing:8px;text-indent:8px;color:#4A4038;line-height:1.2;margin-bottom:10px;text-align:center}
 #login-screen .lg-sub{font-weight:400;font-size:13px;letter-spacing:2px;color:#8C8074;margin-bottom:32px;text-align:center}
 #login-screen .lg-box{position:relative;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid #E8E2D8;border-radius:20px;padding:28px 26px 24px;box-shadow:0 1px 2px rgba(74,64,56,.05),0 18px 44px rgba(138,115,85,.16)}
@@ -1387,7 +1384,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #login-screen #google-login-btn:active{transform:scale(.98)}
 #login-screen .lg-note{font-size:12px;letter-spacing:1px;color:#B8AFA2;font-weight:400;margin-top:14px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
 #login-screen .lg-note::before,#login-screen .lg-note::after{content:'';width:20px;height:1px;background:#E3DACB}
-#login-screen .lg-foot{margin-top:28px;text-align:center;font-size:11px;letter-spacing:3px;text-indent:3px;color:#C4B9A8}
 </style>
 <div id="login-screen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;height:100dvh;position:fixed;inset:0;z-index:100;overflow:hidden;background:#F4EFE6">
   <div class="lg-bg">
@@ -1401,8 +1397,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     </div>
   </div>
   <div class="lg-card">
-    <div class="lg-mark"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="16" rx="6" ry="5"/><ellipse cx="5" cy="8" rx="2.2" ry="3"/><ellipse cx="10" cy="4.5" rx="2" ry="2.8"/><ellipse cx="15" cy="4.5" rx="2" ry="2.8"/><ellipse cx="19" cy="8" rx="2.2" ry="3"/></svg></div>
-    <div class="lg-eyebrow">TSA Welfare Committee</div>
     <div class="lg-hello">騰勢福委會</div>
     <div class="lg-sub">員工福利．一站搞定</div>
     <div class="lg-box">
@@ -1414,7 +1408,6 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
     <div id="login-error" style="display:none;color:#dc2626;font-size:14px;margin-top:12px;padding:10px 14px;background:rgba(254,242,242,.92);border-radius:8px;border:1px solid #fecaca"></div>
     <div class="lg-note">僅限 @tsagroup.com.tw 帳號</div>
     </div>
-    <div class="lg-foot">BENEFLOW · TSA GROUP</div>
   </div>
 </div>
 <script>
@@ -1456,8 +1449,34 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 
 <!-- ===== 文青大地色全域主題覆寫 ===== -->
 <style id="wf-theme">
-/* 內容區底色統一米白 */
-#main-content{background:#FAF8F4!important}
+/* ── 空間層次系統（2026-07 去平面化改造）──
+   底層 html/body 奶油色（下拉回彈不再露白線）→ 內容米白 → 卡片暖白，
+   三層由深到淺，加上暖色點綴與微漸層，建立縱深。 */
+html,body{background:#F4EFE6}
+/* 內容區：頂部一抹暖色漸層營造氛圍，往下收回米白 */
+#main-content{background:linear-gradient(180deg,#F3ECDF 0%,#FAF8F4 360px)!important}
+#view-dashboard{background:transparent!important}
+/* 頂欄：與漸層同調，底部極淡髮絲線劃出結構 */
+header{box-shadow:0 1px 0 rgba(138,115,85,.10)!important}
+/* 卡片表面：純白改暖白微漸層，內緣頂部亮線，質感更立體 */
+#bulletin-section,.dash-hub-card{background:linear-gradient(180deg,#FFFFFF,#FDFAF5)!important}
+/* 公佈欄：頂部金棕漸層飾線 */
+#bulletin-section{position:relative;overflow:hidden}
+#bulletin-section::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,#C9A87C 30%,#E16B8C 50%,#C9A87C 70%,transparent);opacity:.55}
+/* 服務入口卡：左側彩色識別條＋各自的暖色 icon 底，一眼分辨、畫面不再單調 */
+.dash-hub-card{position:relative}
+.dash-hub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;opacity:.85}
+.dash-hub-card[onclick*="applications"]::before{background:linear-gradient(180deg,#A3B98A,#7E9663)}
+.dash-hub-card[onclick*="hightea"]::before{background:linear-gradient(180deg,#F09CB4,#E16B8C)}
+.dash-hub-card[onclick*="massage"]::before{background:linear-gradient(180deg,#F0C084,#E0A155)}
+.dash-hub-card[onclick*="admin"]::before{background:linear-gradient(180deg,#A9A2C9,#847BA8)}
+.dash-hub-card[onclick*="applications"] .hub-icon-glow{background:#EEF2E6!important}
+.dash-hub-card[onclick*="hightea"] .hub-icon-glow{background:#FBE9EE!important}
+.dash-hub-card[onclick*="massage"] .hub-icon-glow{background:#FCF0DF!important}
+.dash-hub-card[onclick*="admin"] .hub-icon-glow{background:#ECEAF4!important}
+.dash-hub-card .hub-icon-glow{box-shadow:inset 0 0 0 1px rgba(138,115,85,.08)}
+/* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
+@media(max-width:640px){.ht-src-tag .t{display:none}}
 /* 卡片：細米棕邊線＋柔和棕影 */
 .card{border:1px solid #E8E2D8!important;box-shadow:0 1px 2px rgba(74,64,56,.05),0 10px 28px rgba(138,115,85,.12)!important}
 /* 頂欄與側欄融入米白：與內容同色、無陰影、細米棕分隔線 */
@@ -1627,7 +1646,7 @@ thead th{color:#8C8074!important}
   </div>
 
   <!-- CONTENT -->
-  <main id="main-content" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;background:#fafafa;overscroll-behavior-y:contain">
+  <main id="main-content" style="flex:1;overflow-y:auto;overflow-x:hidden;padding:24px;background:#FAF8F4;overscroll-behavior-y:contain">
 
   <!-- ===== DASHBOARD ===== -->
   <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100vh - 152px);background:#FAF8F4;border-radius:20px;padding:0 28px 28px;box-sizing:border-box;overflow:hidden">
@@ -3977,8 +3996,8 @@ function parseJwt(token) {
 function showApp() {
   window._appShown = true;
   _hideLoggingIn();  // 移除「登入中…」過場
-  document.documentElement.style.background = '#fafafa';
-  document.body.style.background = '#fafafa';
+  document.documentElement.style.background = '#F4EFE6';
+  document.body.style.background = '#F4EFE6';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
@@ -9738,6 +9757,7 @@ function starStr(avg, cnt) {
 window.htLoadList = async function() {
   document.getElementById('ht-list-panel').style.display = '';
   document.getElementById('ht-detail-panel').style.display = 'none';
+  _htLoadSheetHistory(); // 舊試算表歷史場次（唯讀，非阻塞，載回後自動補進歷史回顧）
   var r = await htApi('htList');
   if (!r.ok) { toast('載入失敗：' + r.error); return; }
   _htEvents = r.events || [];
@@ -9984,12 +10004,106 @@ function _htMiniStat(label, val) {
     + '<div style="font-size:18px;font-weight:800;color:#3B352C">' + val + '</div></div>';
 }
 
+// ══════════════════════════════════════════
+//  舊 Google 試算表歷史場次（唯讀串接）
+//  單向同步：試算表 → 平台。前端只呼叫後端 htSheetList 讀取，
+//  平台上的新增／刪除只作用於系統自己的資料，絕不寫回原試算表。
+// ══════════════════════════════════════════
+var _htSheetSessions = [];
+var _htSheetLoaded = false;
+async function _htLoadSheetHistory() {
+  if (_htSheetLoaded) return;
+  // demo 模式：給預覽用的示意資料，不打後端
+  if (currentUser && currentUser.token === 'demo') {
+    _htSheetSessions = [
+      { sheetName:'11506', ym:'2026-05', date:'2026/05/15', title:'2026/05 午茶日', subtotal:11185, headcount:56, budgetTotal:13440,
+        items:[ {name:'綜合小泡芙18入', vendor:'李亭香', price:347, qty:3, subtotal:1041},
+                {name:'巧克力可頌(小)', vendor:'Spotless Bakery', price:42, qty:39, subtotal:1638},
+                {name:'黑森林蛋糕', vendor:'紅葉', price:1325, qty:1, subtotal:1325},
+                {name:'香香炸雞(15入)', vendor:'宏匯-繼光香香雞', price:175, qty:10, subtotal:1750} ] },
+      { sheetName:'11504', ym:'2026-03', date:'2026/03/20', title:'2026/03 午茶日', subtotal:9800, headcount:54, budgetTotal:10800,
+        items:[ {name:'綜合握壽司(50顆)', vendor:'松村壽司', price:650, qty:2, subtotal:1300} ] },
+    ];
+    _htSheetLoaded = true;
+    if (_htListTab === 'events') htRenderEvents();
+    return;
+  }
+  try {
+    var r = await htApi('htSheetList');
+    if (r && r.ok && Array.isArray(r.sessions)) {
+      _htSheetSessions = r.sessions;
+      _htSheetLoaded = true;
+      if (_htListTab === 'events') htRenderEvents();
+    }
+    // 後端尚未部署 htSheetList 時安靜略過，不影響原功能
+  } catch (e) {}
+}
+// 轉成歷史回顧卡片可用的偽事件；同月若平台也有場次，兩筆並列、各帶來源標籤
+function _htSheetAsEvents() {
+  return _htSheetSessions.map(function (s) {
+    return { eventId: 'sheet:' + s.sheetName, month: s.ym, date: s.date || '',
+             headcount: s.headcount || 0, itemCount: (s.items || []).length,
+             actualExpense: s.subtotal || 0, organizer1: s.title || '', status: '已完成', _sheet: true };
+  });
+}
+// 唯讀詳情彈窗：品項明細＋金額，附原試算表連結
+window.htOpenSheetDetail = function (eventId) {
+  var name = String(eventId).replace(/^sheet:/, '');
+  var s = null;
+  _htSheetSessions.forEach(function (x) { if (x.sheetName === name) s = x; });
+  if (!s) return;
+  var old = document.getElementById('ht-sheet-modal');
+  if (old) old.remove();
+  var rows = (s.items || []).map(function (it) {
+    return '<tr style="border-bottom:1px solid #F0EBE2">'
+      + '<td style="padding:9px 10px;font-size:14px;color:#3B352C">' + it.name + (it.note ? '<div style="font-size:12px;color:#A89C90;margin-top:2px">' + it.note + '</div>' : '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;white-space:nowrap">' + (it.vendor || '—') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;text-align:right;white-space:nowrap">' + (it.price ? it.price.toLocaleString() : '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;text-align:right">' + (it.qty || '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;font-weight:600;color:#3B352C;text-align:right;white-space:nowrap">' + (it.subtotal ? it.subtotal.toLocaleString() : '') + '</td>'
+      + '</tr>';
+  }).join('');
+  var d = document.createElement('div');
+  d.id = 'ht-sheet-modal';
+  d.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(59,53,44,.4);display:flex;align-items:center;justify-content:center;padding:20px';
+  d.onclick = function (e) { if (e.target === d) d.remove(); };
+  d.innerHTML = '<div style="background:#fff;border-radius:20px;max-width:640px;width:100%;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(59,53,44,.3)">'
+    + '<div style="padding:20px 24px 16px;border-bottom:1px solid #F0EBE2;display:flex;align-items:center;gap:12px">'
+    +   '<div style="flex:1;min-width:0">'
+    +     '<div style="font-size:18px;font-weight:700;color:#3B352C;letter-spacing:2px">' + (s.title || s.sheetName) + '</div>'
+    +     '<div style="font-size:12px;color:#B08968;margin-top:4px;letter-spacing:1px">📋 資料來源：Google 試算表（唯讀）' + (s.date ? '・' + s.date : '') + '</div>'
+    +   '</div>'
+    +   '<button onclick="document.getElementById(\'ht-sheet-modal\').remove()" style="border:none;background:#F5F0E8;color:#8A7355;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>'
+    + '</div>'
+    + '<div style="overflow-y:auto;padding:8px 24px 4px">'
+    +   '<table style="width:100%;border-collapse:collapse">'
+    +     '<thead><tr style="border-bottom:1px solid #E8E2D8">'
+    +       '<th style="padding:8px 10px;font-size:12px;color:#8C8074;text-align:left;font-weight:600;letter-spacing:1px">品名</th>'
+    +       '<th style="padding:8px 10px;font-size:12px;color:#8C8074;text-align:left;font-weight:600;letter-spacing:1px">廠商</th>'
+    +       '<th style="padding:8px 10px;font-size:12px;color:#8C8074;text-align:right;font-weight:600;letter-spacing:1px">單價</th>'
+    +       '<th style="padding:8px 10px;font-size:12px;color:#8C8074;text-align:right;font-weight:600;letter-spacing:1px">數量</th>'
+    +       '<th style="padding:8px 10px;font-size:12px;color:#8C8074;text-align:right;font-weight:600;letter-spacing:1px">小計</th>'
+    +     '</tr></thead><tbody>' + (rows || '<tr><td colspan="5" style="padding:24px;text-align:center;color:#A89C90;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>'
+    + '</div>'
+    + '<div style="padding:14px 24px 18px;border-top:1px solid #F0EBE2;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
+    +   '<div style="font-size:14px;color:#8C8074">合計 <span style="font-weight:700;color:#3B352C">NT$ ' + (s.subtotal || 0).toLocaleString() + '</span>'
+    +     (s.budgetTotal ? '　預算 <span style="font-weight:600;color:#8A7355">NT$ ' + s.budgetTotal.toLocaleString() + '</span>' : '')
+    +     (s.headcount ? '　👥 ' + s.headcount + ' 人' : '') + '</div>'
+    +   '<div style="flex:1"></div>'
+    +   '<a href="https://docs.google.com/spreadsheets/d/104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo/edit" target="_blank" rel="noopener" style="font-size:12px;color:#B08968;text-decoration:none;letter-spacing:1px">在 Google 試算表開啟 ↗</a>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(d);
+};
+
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
   // 排除「本月」活動：本月活動已顯示在上方「本月行程」，歷史回顧只放過去月份，避免重複
   var _now = new Date();
   var _curYM = _now.getFullYear() + '-' + (_now.getMonth()+1 < 10 ? '0' : '') + (_now.getMonth()+1);
-  var history = _htEvents.filter(function(e){ return _evMonth(e) !== _curYM; });
+  // 平台場次＋舊試算表場次（唯讀）合併顯示，各帶來源標籤
+  var history = _htEvents.filter(function(e){ return _evMonth(e) !== _curYM; })
+    .concat(_htSheetAsEvents().filter(function(e){ return _evMonth(e) !== _curYM; }));
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
   var isMobile = window.innerWidth <= 640;
   var chip = document.getElementById('ht-current-month-chip');
@@ -10033,21 +10147,25 @@ function htRenderEvents() {
       var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join(' & ');
       var expHas = ev.actualExpense > 0;
       var expVal = expHas ? fmtMoney(ev.actualExpense) : '—';
-      html += '<div onclick="htOpenDetail(\''+ ev.eventId +'\')" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
+      var isSheet = !!ev._sheet;
+      if (isSheet) stubColor = '#8A7355';
+      var clickFn = isSheet ? 'htOpenSheetDetail(\''+ ev.eventId +'\')' : 'htOpenDetail(\''+ ev.eventId +'\')';
+      var srcTag = isSheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#8A7355;background:#F5F0E8;border:1px solid #E8E2D8;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:1px">📋<span class="t"> 試算表</span></span>' : '';
+      html += '<div onclick="'+ clickFn +'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(225,107,140,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
         + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
         +   '<div style="background:linear-gradient(150deg,#fdeef5,#fad8ea);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#c8587a;flex-shrink:0">'
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
         +   '</div>'
         +   '<div style="flex:1;min-width:0">'
-        +     '<div style="font-size:16px;font-weight:700;color:#3B352C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) +'</div>'
+        +     '<div style="font-size:16px;font-weight:700;color:#3B352C;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) + srcTag +'</div>'
         +     '<div style="font-size:14px;color:#aaa;margin-top:3px">'+ (ev.headcount ? '👥 '+ev.headcount+' 人' : '') + (ev.itemCount ? '　'+ev.itemCount+' 品項' : '') +'</div>'
         +   '</div>'
         +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#F0EBE2 4px,#F0EBE2 9px)"></div>'
         + '</div>'
         + '<div style="width:78px;flex-shrink:0;background:'+ stubColor +';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;padding:10px 6px">'
-        +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fafafa"></div>'
-        +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fafafa"></div>'
+        +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#FAF8F4"></div>'
+        +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#FAF8F4"></div>'
         +   '<div style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;text-align:center">'+ dispStatus +'</div>'
         +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;text-align:center">'+ expVal +'</div>'
         + '</div>'
