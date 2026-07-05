@@ -20,7 +20,7 @@ var HT_SHEET_ID = '104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo';
  */
 function htSheetList() {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('htSheetList_v1');
+  var hit = cache.get('htSheetList_v4');
   if (hit) return JSON.parse(hit);
 
   var ss = SpreadsheetApp.openById(HT_SHEET_ID);
@@ -42,7 +42,7 @@ function htSheetList() {
   sessions.sort(function (a, b) { return (b.ym || '').localeCompare(a.ym || ''); });
 
   var out = { ok: true, sessions: sessions };
-  try { cache.put('htSheetList_v1', JSON.stringify(out), 300); } catch (e) {} // 超過 100KB 就不快取
+  try { cache.put('htSheetList_v4', JSON.stringify(out), 300); } catch (e) {} // 超過 100KB 就不快取
   return out;
 }
 
@@ -63,23 +63,59 @@ function _htParseSheet(sh, name, year, month) {
   // 表頭列：找到含「品名」的列，動態對應各欄（不同年份欄位位置略有差異也能解析）
   var headRow = -1, col = {};
   for (var r2 = 0; r2 < Math.min(6, vals.length); r2++) {
-    var idx = vals[r2].indexOf('品名');
+    var idx = -1;
+    for (var ci = 0; ci < vals[r2].length; ci++) {
+      if (String(vals[r2][ci]).replace(/\s/g, '').indexOf('品名') > -1) { idx = ci; break; }
+    }
     if (idx > -1) {
       headRow = r2;
+      // 模糊比對：各年份分頁表頭寫法略有差異（「負責人員」「訂購」「備註/說明」等）也能對上
       vals[r2].forEach(function (h, c) {
-        h = String(h).trim();
-        if (h === '品名') col.item = c;
-        else if (h === '廠商') col.vendor = c;
-        else if (h === '單價') col.price = c;
-        else if (h === '數量') col.qty = c;
-        else if (h === '小計') col.sub = c;
-        else if (h === '負責人') col.owner = c;
-        else if (h === '是否訂購') col.ordered = c;
-        else if (h === '備註') col.note = c;
+        h = String(h).replace(/\s/g, '');
+        if (!h) return;
+        if (h.indexOf('品名') > -1 && col.item == null) col.item = c;
+        else if (h.indexOf('廠商') > -1 && col.vendor == null) col.vendor = c;
+        else if (h.indexOf('單價') > -1 && col.price == null) col.price = c;
+        else if (h.indexOf('數量') > -1 && col.qty == null) col.qty = c;
+        else if (h.indexOf('小計') > -1 && col.sub == null) col.sub = c;
+        else if (h.indexOf('負責') > -1 && col.owner == null) col.owner = c;
+        else if (h.indexOf('訂購') > -1 && col.ordered == null) col.ordered = c;
+        else if ((h.indexOf('備註') > -1 || h.indexOf('說明') > -1) && col.note == null) col.note = c;
       });
       break;
     }
   }
+
+  // 合併儲存格會讓表頭與資料錯位一至三欄：依實際資料密度自動校正每個欄位
+  function _adjCol(c, numeric) {
+    if (c == null) return c;
+    function score(cc) {
+      if (cc == null || cc < 0) return -1;
+      var s = 0;
+      for (var rr = headRow + 1; rr < Math.min(headRow + 16, vals.length); rr++) {
+        var v = String((vals[rr] || [])[cc] == null ? '' : (vals[rr] || [])[cc]).trim();
+        if (!v) continue;
+        if (numeric) { if (_htNum(v) > 0) s++; }
+        else if (!/^\d+(\.\d+)?$/.test(v)) s++;
+      }
+      return s;
+    }
+    var best = c, bs = score(c);
+    [c + 1, c + 2, c + 3, c - 1].forEach(function (cand) {
+      for (var k in col) { if (col[k] === cand) return; }
+      var sc = score(cand);
+      if (sc > bs) { bs = sc; best = cand; }
+    });
+    return best;
+  }
+  col.item = _adjCol(col.item, false);
+  col.vendor = _adjCol(col.vendor, false);
+  col.price = _adjCol(col.price, true);
+  col.qty = _adjCol(col.qty, true);
+  col.sub = _adjCol(col.sub, true);
+  col.owner = _adjCol(col.owner, false);
+  col.ordered = _adjCol(col.ordered, false);
+  col.note = _adjCol(col.note, false);
 
   var items = [], subtotal = 0;
   if (headRow > -1 && col.item != null) {
@@ -89,6 +125,7 @@ function _htParseSheet(sh, name, year, month) {
       // 到達預算區或小計列就停止
       if (itemName === '預算名稱' || row.indexOf('預算名稱') > -1) break;
       if (!itemName) continue;
+      if (/^\d+(\.\d+)?$/.test(itemName) || itemName === '餐點') continue; // 跳過編號欄與列標籤
       var sub = _htNum(col.sub != null ? row[col.sub] : '');
       subtotal += sub;
       items.push({

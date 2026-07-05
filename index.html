@@ -1322,7 +1322,7 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析左右並排 → 上下 */
   #ht-panel-analytics>[style*="display:grid"]{grid-template-columns:1fr!important}
   /* 活動日曆：雙欄 → 單欄 */
-  #ht-panel-calendar>[style*="grid-template-columns:1fr 320px"]{grid-template-columns:1fr!important}
+  #ht-panel-calendar>[style*="grid-template-columns:minmax"]{grid-template-columns:1fr!important}
   /* 活動日曆：右側行程列表取消 sticky */
   #ht-panel-calendar [style*="position:sticky"]{position:static!important}
   /* 活動日曆月份節日文字縮小 */
@@ -2618,7 +2618,6 @@ thead th{color:#767B75!important}
 
     <!-- 倒數提醒 Banner -->
     <div id="ht-countdown-banner" style="display:none;border-radius:16px;background:linear-gradient(135deg,#F3F7F2,#eaf1e9);border:1.5px solid #c9dac6;padding:14px 18px;margin-bottom:14px;align-items:center;gap:12px">
-      <span style="font-size:24px;flex-shrink:0">🍰</span>
       <div style="flex:1">
         <div id="ht-countdown-text" style="font-size:16px;font-weight:700;color:#3E5A3B"></div>
         <div id="ht-countdown-sub" style="font-size:12px;color:#6E8F6A;margin-top:2px"></div>
@@ -2653,7 +2652,7 @@ thead th{color:#767B75!important}
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
-      <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start">
+      <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:16px;align-items:start">
         <!-- 左側：日曆 -->
         <div style="background:#fff;border:1px solid #E1E4DF;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);overflow:hidden">
           <!-- 標題列 -->
@@ -2889,30 +2888,31 @@ thead th{color:#767B75!important}
         </div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
+            <!-- 欄位與原 Google 試算表一致：品名/廠商/單價/數量/小計/負責人/是否訂購/備註（類別改由品名自動判斷，不佔欄位） -->
             <colgroup>
-              <col style="width:22%"><col style="width:17%"><col style="width:11%">
-              <col style="width:10%"><col style="width:8%"><col style="width:11%">
-              <col style="width:14%"><col style="width:4%"><col style="width:3%">
+              <col style="width:20%"><col style="width:14%"><col style="width:10%">
+              <col style="width:8%"><col style="width:11%"><col style="width:13%">
+              <col style="width:8%"><col style="width:13%"><col style="width:3%">
             </colgroup>
             <thead>
               <tr style="background:#F7F8F6">
                 <th style="padding:12px 10px;text-align:left;color:#767B75;font-weight:700;font-size:14px">品名</th>
                 <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">廠商</th>
-                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">類別</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">單價</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">數量</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">小計</th>
                 <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">負責人</th>
-                <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px">已訂</th>
+                <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px">是否訂購</th>
+                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">備註</th>
                 <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px"></th>
               </tr>
             </thead>
             <tbody id="ht-items-tbody"></tbody>
             <tfoot>
               <tr style="background:#fafafa;border-top:2px solid #ECEEEA">
-                <td colspan="5" style="padding:14px 12px;font-size:16px;font-weight:600;color:#4A4F49">合計</td>
+                <td colspan="4" style="padding:14px 12px;font-size:16px;font-weight:600;color:#4A4F49">合計</td>
                 <td style="padding:14px 8px;text-align:right;font-size:16px;font-weight:800;color:#3E5A3B" id="ht-total-cell">NT$0</td>
-                <td colspan="3"></td>
+                <td colspan="4"></td>
               </tr>
             </tfoot>
           </table>
@@ -10177,19 +10177,23 @@ window.htOpenSheetDetail = function (eventId) {
         + (meta ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">' + meta + '</div>' : '')
         + '</div>';
     }
+    // 桌面版：欄位與原試算表完全一致（品名/廠商/單價/數量/小計/負責人/是否訂購/備註）
     return '<tr style="border-bottom:1px solid #ECEEEA">'
-      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D">' + it.name + (meta ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">' + meta + '</div>' : '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D;min-width:110px">' + it.name + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;white-space:nowrap">' + (it.vendor || '—') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right;white-space:nowrap">' + (it.price ? it.price.toLocaleString() : '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right">' + (it.qty || '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;font-weight:600;color:#2E332D;text-align:right;white-space:nowrap">' + (it.subtotal ? it.subtotal.toLocaleString() : '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;white-space:nowrap">' + (it.owner || '—') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:center;white-space:nowrap">' + (it.ordered || '—') + '</td>'
+      + '<td style="padding:9px 10px;font-size:12px;color:#9AA098;min-width:90px">' + (it.note || '') + '</td>'
       + '</tr>';
   }).join('');
   var d = document.createElement('div');
   d.id = 'ht-sheet-modal';
   d.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(59,53,44,.4);display:flex;align-items:center;justify-content:center;padding:20px';
   d.onclick = function (e) { if (e.target === d) d.remove(); };
-  d.innerHTML = '<div style="background:#fff;border-radius:20px;max-width:640px;width:100%;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(59,53,44,.3)">'
+  d.innerHTML = '<div style="background:#fff;border-radius:20px;max-width:' + (isMobile ? '640px' : '920px') + ';width:100%;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(59,53,44,.3)">'
     + '<div style="padding:20px 24px 16px;border-bottom:1px solid #ECEEEA;display:flex;align-items:center;gap:12px">'
     +   '<div style="flex:1;min-width:0">'
     +     '<div style="font-size:18px;font-weight:700;color:#2E332D;letter-spacing:2px">' + (s.title || s.sheetName) + '</div>'
@@ -10197,17 +10201,20 @@ window.htOpenSheetDetail = function (eventId) {
     +   '</div>'
     +   '<button onclick="document.getElementById(\'ht-sheet-modal\').remove()" style="border:none;background:#EDF1EC;color:#577B53;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>'
     + '</div>'
-    + '<div style="overflow-y:auto;padding:8px ' + (isMobile ? '18px' : '24px') + ' 4px">'
+    + '<div style="overflow-y:auto;overflow-x:auto;padding:8px ' + (isMobile ? '18px' : '24px') + ' 4px">'
     +   (isMobile
         ? (rows || '<div style="padding:24px;text-align:center;color:#9AA098;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</div>')
-        : '<table style="width:100%;border-collapse:collapse">'
+        : '<table style="width:100%;border-collapse:collapse;min-width:760px">'
         +   '<thead><tr style="border-bottom:1px solid #E1E4DF">'
         +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:1px">品名</th>'
         +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:1px">廠商</th>'
         +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:1px">單價</th>'
         +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:1px">數量</th>'
         +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:1px">小計</th>'
-        +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="5" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>')
+        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:1px">負責人</th>'
+        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:center;font-weight:600;letter-spacing:1px">是否訂購</th>'
+        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:1px">備註</th>'
+        +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>')
     + '</div>'
     + '<div style="padding:14px 24px 18px;border-top:1px solid #ECEEEA;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
     +   '<div style="font-size:14px;color:#767B75">合計 <span style="font-weight:700;color:#2E332D">NT$ ' + (s.subtotal || 0).toLocaleString() + '</span>'
@@ -11017,16 +11024,16 @@ function htRenderYearTimeline() {
   }
   var pct = 3 + ((curMonth - 0.5) / 12) * 94;
   el.innerHTML = '<div style="background:#fff;border:1px solid #E1E4DF;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);padding:18px 16px 16px">'
-    + '<div style="display:flex;align-items:baseline;gap:10px;margin:0 4px 10px"><span style="font-size:16px;font-weight:800;color:#2E332D">' + curYear + ' 午茶日航線圖</span>'
-    + '<span style="font-size:14px;color:#9AA098">已飛抵 ' + curMonth + ' 月 ✈️</span>'
-    + '<span style="flex:1"></span><span style="font-size:12px;color:#C2C7C1;letter-spacing:.14em;font-weight:700">TEA DAY AIRLINE</span></div>'
+    + '<div style="display:flex;align-items:baseline;gap:10px;margin:0 4px 10px"><span style="font-size:16px;font-weight:800;color:#2E332D">' + curYear + ' 午茶日年曆</span>'
+    + '<span style="font-size:14px;color:#9AA098">目前來到 ' + curMonth + ' 月</span>'
+    + '<span style="flex:1"></span><span style="font-size:12px;color:#C2C7C1;letter-spacing:.14em;font-weight:700">TEA DAY</span></div>'
     + '<div style="position:relative;height:98px;margin:0 6px">'
     // 虛線航道（尚未飛過的航段）
     +   '<div style="position:absolute;left:3%;right:3%;top:60px;height:0;border-top:2px dashed #CDD8CB"></div>'
     // 已飛航段（實線）
     +   '<div id="ht-yt-progress" style="position:absolute;left:3%;width:0;top:59px;height:3px;background:linear-gradient(90deg,#8FAE8B,#577B53);border-radius:10px;transition:width 1.5s cubic-bezier(.34,1.2,.4,1)"></div>'
-    // 小飛機飛到目前月份
-    +   '<div id="ht-yt-marker" style="position:absolute;left:3%;top:8px;transform:translateX(-50%);transition:left 1.5s cubic-bezier(.34,1.2,.4,1);z-index:3;font-size:26px;line-height:1;filter:drop-shadow(0 3px 4px rgba(87,123,83,.3))">✈️</div>'
+    // 甜點小蛋糕走到目前月份（旅遊感保留虛線路徑，圖案改甜點）
+    +   '<div id="ht-yt-marker" style="position:absolute;left:3%;top:8px;transform:translateX(-50%);transition:left 1.5s cubic-bezier(.34,1.2,.4,1);z-index:3;font-size:26px;line-height:1;filter:drop-shadow(0 3px 4px rgba(87,123,83,.3))">🍰</div>'
     +   '<div style="position:absolute;left:3%;right:3%;top:52px;display:flex;justify-content:space-between">' + months + '</div>'
     + '</div></div>';
   setTimeout(function(){
@@ -11719,12 +11726,12 @@ function htRenderItems() {
     return '<tr style="border-bottom:1px solid #f5f5f5" id="ht-row-'+idx+'">'
       + '<td data-label="品名" '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="類別" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#363B35;background:#fff;cursor:pointer">'+catOpts+'</select></td>'
       + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="小計" style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#3E5A3B;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
       + '<td data-label="負責人" '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
-      + '<td data-label="已訂" style="padding:8px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
+      + '<td data-label="是否訂購" style="padding:8px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
+      + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td class="ht-it-del" style="padding:8px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#D2D6D0;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#D2D6D0\'" title="刪除">×</button></td>'
       + '</tr>';
   }).join('');
@@ -13626,14 +13633,9 @@ if (document.getElementById('bulletin-list')) bulletinRender();
 
       <!-- 福寶 AI 規劃（合併自原本獨立的 AI 助手，規劃完成會自動套用到這張活動） -->
       <div style="background:#f6f9f5;border:1.5px solid #e6ece4;border-radius:16px;padding:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-          <div id="fukubo-avatar-wrap" style="width:38px;height:38px;border-radius:50%;overflow:hidden;background:linear-gradient(135deg,#E3EDE1,#EAF0E8);flex-shrink:0;box-shadow:0 3px 8px rgba(87,123,83,.2);animation:fukuboBreathe 2.4s ease-in-out infinite">
-            <img id="fukubo-avatar-img" src="assets/icons/ai-avatar.png" style="width:82%;height:82%;object-fit:contain;object-position:center;margin:9%;transition:opacity .35s ease" alt="AI 規劃">
-          </div>
-          <div>
-            <div style="font-size:14px;font-weight:700;color:#2E332D">幫我規劃</div>
-            <div style="font-size:12px;color:#9AA098">規劃完成後會自動套用到這張活動的品項</div>
-          </div>
+        <div style="margin-bottom:12px">
+          <div style="font-size:14px;font-weight:700;color:#2E332D">幫我規劃</div>
+          <div style="font-size:12px;color:#9AA098;margin-top:2px">規劃完成後會自動套用到這張活動的品項</div>
         </div>
         <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
           <button class="ht-assist-tab" data-mode="plan" onclick="htAssistSetMode(this,'plan')" style="padding:6px 14px;border-radius:20px;border:1.5px solid #577B53;background:#577B53;color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s">📅 本月規劃</button>
