@@ -1477,6 +1477,14 @@ header{box-shadow:0 1px 0 rgba(138,115,85,.10)!important}
 .dash-hub-card .hub-icon-glow{box-shadow:inset 0 0 0 1px rgba(138,115,85,.08)}
 /* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
 @media(max-width:640px){.ht-src-tag .t{display:none}}
+/* ── 各分頁卡片沿用首頁的彩色識別條（與服務入口卡同色系）── */
+.view .card,.view .stat{position:relative;overflow:hidden}
+.view .card::before,.view .stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;opacity:.85;border-radius:4px 0 0 4px}
+#view-applications .card::before,#view-approvals .card::before,#view-detail .card::before,#view-new-form .card::before,
+#view-applications .stat::before,#view-approvals .stat::before,#view-detail .stat::before,#view-new-form .stat::before{background:linear-gradient(180deg,#A3B98A,#7E9663)}
+#view-hightea .card::before,#view-hightea .stat::before{background:linear-gradient(180deg,#F09CB4,#E16B8C)}
+#view-massage .card::before,#view-massage .stat::before{background:linear-gradient(180deg,#F0C084,#E0A155)}
+#view-admin .card::before,#view-admin .stat::before{background:linear-gradient(180deg,#A9A2C9,#847BA8)}
 /* 卡片：細米棕邊線＋柔和棕影 */
 .card{border:1px solid #E8E2D8!important;box-shadow:0 1px 2px rgba(74,64,56,.05),0 10px 28px rgba(138,115,85,.12)!important}
 /* 頂欄與側欄融入米白：與內容同色、無陰影、細米棕分隔線 */
@@ -2651,7 +2659,7 @@ thead th{color:#8C8074!important}
           <div id="ht-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
           <!-- 圖例 -->
           <div style="display:flex;align-items:center;gap:16px;padding:14px 22px;border-top:1px solid #f5f5f5;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#e16b8c"></div><span style="font-size:12px;color:#999">午茶日</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;line-height:1">🧋</span><span style="font-size:12px;color:#999">午茶日</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#999">國定假日</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#B08968"></div><span style="font-size:12px;color:#999">節慶</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#fde4ef"></div><span style="font-size:12px;color:#999">今天</span></div>
@@ -10139,7 +10147,7 @@ function htRenderEvents() {
     evs.forEach(function(ev) {
       var dispStatus = _htDisplayStatus(ev);
       var sc = statusColor(dispStatus);
-      var stubColor = dispStatus === '已完成' ? '#16a34a' : dispStatus === '進行中' ? '#2563eb' : dispStatus === '待結算' ? '#8C8074' : '#8A7355';
+      var stubColor = dispStatus === '已完成' ? '#7E9663' : dispStatus === '進行中' ? '#7A93B5' : dispStatus === '待結算' ? '#A89C90' : '#8A7355';
       var ym = _evMonth(ev);
       var mNum = parseInt(ym.slice(5,7),10) || 0;
       var dNum = ev.date ? parseInt(ev.date.slice(-2),10) : 0;
@@ -10819,7 +10827,6 @@ var _twHolidays = {
   '05-01': { name:'勞動節',    type:'national' },
   '05-12': { name:'母親節',    type:'festival' },
   // 端午節為農曆，已在 _twLunarMap 按年設定，此處不重複
-  '07-04': { name:'父親節(7/4)',type:'festival' },
   '08-08': { name:'父親節',    type:'festival' },
   '09-03': { name:'軍人節',    type:'national' },
   '09-28': { name:'教師節',    type:'festival' },
@@ -10983,7 +10990,7 @@ function htRenderCalendar() {
     } else if (isToday) {
       numCircle = '<div style="width:26px;height:26px;border-radius:50%;background:#e16b8c;color:#fff;font-size:14px;font-weight:800;line-height:26px;text-align:center;margin:0 auto">' + d + '</div>';
     } else if (hasEvent) {
-      numCircle = '<div style="width:26px;height:26px;border-radius:50%;background:#fde8f0;border:1.5px solid #f9a8d4;color:#e16b8c;font-size:14px;font-weight:700;line-height:23px;text-align:center;margin:0 auto">' + d + '</div>';
+      numCircle = '<div style="font-size:14px;font-weight:800;color:#e16b8c;line-height:26px;width:26px;margin:0 auto">' + d + '</div>';
     } else {
       numCircle = '<div style="font-size:14px;font-weight:'+(isToday?'800':'400')+';color:'+numColor+';line-height:26px;width:26px;margin:0 auto">' + d + '</div>';
     }
@@ -10992,7 +10999,7 @@ function htRenderCalendar() {
     if (hol) {
       bottomLabel = '<div style="font-size:12px;color:'+(hol.type==='national'?'#f43f5e':'#B08968')+';overflow:hidden;text-overflow:ellipsis;padding:0 2px;margin-top:3px;font-weight:600;white-space:nowrap">' + hol.name + '</div>';
     } else if (hasEvent) {
-      bottomLabel = '<div style="font-size:12px;color:#e16b8c;margin-top:3px;font-weight:600">午茶日</div>';
+      bottomLabel = '<div style="font-size:12px;color:#e16b8c;margin-top:3px;font-weight:600">🧋 午茶日</div>';
     } else {
       bottomLabel = '<div style="height:16px"></div>';
     }
