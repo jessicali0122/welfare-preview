@@ -2886,6 +2886,8 @@ thead th{color:#767B75!important}
           <span style="font-size:14px;color:#767B75">已用 <strong id="ht-bal-used" style="color:#577B53">NT$0</strong></span>
           <span style="font-size:14px;font-weight:700;color:#4A4F49">餘額 <strong id="ht-bal-remain" style="color:#1e9d6b">NT$0</strong></span>
         </div>
+        <div id="ht-bal-formula" style="font-size:12px;color:#9AA098;margin:2px 0 8px"></div>
+        <div id="ht-smart-check"></div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位與原 Google 試算表一致：品名/廠商/單價/數量/小計/負責人/是否訂購/備註（類別改由品名自動判斷，不佔欄位） -->
@@ -4671,9 +4673,20 @@ function _dashLoadWeather() {
     }).catch(function(){ /* 靜默失敗，不影響首頁 */ });
   };
   var fallback = function(){ render(25.036, 121.45, '新莊'); };
+  // 座標快取 7 天：期間內不再呼叫定位（部分瀏覽器設「每次詢問」會反覆跳授權視窗）
+  var cached = null;
+  try { cached = JSON.parse(localStorage.getItem('bf_geo') || 'null'); } catch(e){}
+  if (cached && cached.t && Date.now() - cached.t < 7 * 24 * 60 * 60 * 1000) {
+    render(cached.lat, cached.lon, '');
+    return;
+  }
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      function(pos){ render(pos.coords.latitude.toFixed(3), pos.coords.longitude.toFixed(3), ''); },
+      function(pos){
+        var lat = pos.coords.latitude.toFixed(3), lon = pos.coords.longitude.toFixed(3);
+        try { localStorage.setItem('bf_geo', JSON.stringify({ lat: lat, lon: lon, t: Date.now() })); } catch(e){}
+        render(lat, lon, '');
+      },
       fallback, { timeout: 5000, maximumAge: 1800000 });
   } else fallback();
 }
@@ -9854,10 +9867,20 @@ function starStr(avg, cnt) {
 window.htLoadList = async function() {
   document.getElementById('ht-list-panel').style.display = '';
   document.getElementById('ht-detail-panel').style.display = 'none';
+  // ⚡ 先用上次的快取立即渲染（秒開），背景再抓最新資料刷新
+  try {
+    var _hc = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null');
+    if (_hc && !_htEvents.length) {
+      _htEvents = _hc.events || [];
+      if (_hc.sheets && _hc.sheets.length && !_htSheetSessions.length) _htSheetSessions = _hc.sheets;
+      htRenderList(); _htUpdateCountdown();
+    }
+  } catch(e){}
   _htLoadSheetHistory(); // 舊試算表歷史場次（唯讀，非阻塞，載回後自動補進歷史回顧）
   var r = await htApi('htList');
   if (!r.ok) { toast('載入失敗：' + r.error); return; }
   _htEvents = r.events || [];
+  try { var _hc2 = JSON.parse(localStorage.getItem('bf_ht_cache')||'{}'); _hc2.events = _htEvents; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc2)); } catch(e){}
   // 從後端同步公告（非阻塞）
   _bulletinSync();
   htRenderList();
@@ -10139,7 +10162,8 @@ async function _htLoadSheetHistory() {
     if (r && r.ok && Array.isArray(r.sessions)) {
       _htSheetSessions = r.sessions;
       _htSheetLoaded = true;
-      if (_htListTab === 'events') { htRenderEvents(); htRenderYearTimeline(); }
+      try { var _hc = JSON.parse(localStorage.getItem('bf_ht_cache')||'{}'); _hc.sheets = r.sessions; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc)); } catch(e){}
+      if (_htListTab === 'events') { htRenderEvents(); htRenderYearTimeline(); htRenderCalendar(); _htUpdateCountdown(); }
     }
     // 後端尚未部署 htSheetList 時安靜略過，不影響原功能
   } catch (e) {}
@@ -10153,6 +10177,16 @@ function _htSheetAsEvents() {
              actualExpense: s.subtotal || 0, organizer1: '午茶日', status: '已完成', _sheet: true };
   });
 }
+// 依年月列出當月壽星名單（資料來自 _syncMembersFromServer 建立的 _BF_USER_BDAYS）
+function _htBdayLineForYm(ym) {
+  var m = parseInt(String(ym || '').slice(5, 7), 10);
+  if (!m || !Array.isArray(window._BF_USER_BDAYS)) return '';
+  var names = window._BF_USER_BDAYS.filter(function (b) { return b.m === m; }).map(function (b) { return b.name; });
+  if (!names.length) return '';
+  return '<div style="font-size:12px;color:#9AA098;margin-top:4px;letter-spacing:1px">🎂 本月壽星：<span style="color:#577B53;font-weight:600">' + names.join('、') + '</span></div>';
+}
+window._htBdayLineForYm = _htBdayLineForYm;
+
 // 唯讀詳情彈窗：品項明細＋金額，附原試算表連結
 window.htOpenSheetDetail = function (eventId) {
   var name = String(eventId).replace(/^sheet:/, '');
@@ -10196,8 +10230,10 @@ window.htOpenSheetDetail = function (eventId) {
   d.innerHTML = '<div style="background:#fff;border-radius:20px;max-width:' + (isMobile ? '640px' : '920px') + ';width:100%;max-height:84vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(59,53,44,.3)">'
     + '<div style="padding:20px 24px 16px;border-bottom:1px solid #ECEEEA;display:flex;align-items:center;gap:12px">'
     +   '<div style="flex:1;min-width:0">'
-    +     '<div style="font-size:18px;font-weight:700;color:#2E332D;letter-spacing:2px">' + (s.title || s.sheetName) + '</div>'
-    +     '<div style="font-size:12px;color:#577B53;margin-top:4px;letter-spacing:1px">📋 資料來源：Google 試算表（唯讀）' + (s.date ? '・' + s.date : '') + '</div>'
+    // 標題直接用完整活動日期（抓不到日期的舊分頁退回年月）
+    +     '<div style="font-size:18px;font-weight:700;color:#2E332D;letter-spacing:2px">' + (s.date ? s.date.replace(/\//g, ' / ') : (s.title || s.sheetName).replace(' 午茶日','')) + ' 午茶日</div>'
+    +     '<div style="font-size:12px;color:#577B53;margin-top:4px;letter-spacing:1px">📋 資料來源：Google 試算表（唯讀）</div>'
+    +     _htBdayLineForYm(s.ym)
     +   '</div>'
     +   '<button onclick="document.getElementById(\'ht-sheet-modal\').remove()" style="border:none;background:#EDF1EC;color:#577B53;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px;flex-shrink:0">✕</button>'
     + '</div>'
@@ -10218,8 +10254,13 @@ window.htOpenSheetDetail = function (eventId) {
     + '</div>'
     + '<div style="padding:14px 24px 18px;border-top:1px solid #ECEEEA;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
     +   '<div style="font-size:14px;color:#767B75">合計 <span style="font-weight:700;color:#2E332D">NT$ ' + (s.subtotal || 0).toLocaleString() + '</span>'
-    +     (s.budgetTotal ? '　預算 <span style="font-weight:600;color:#577B53">NT$ ' + s.budgetTotal.toLocaleString() + '</span>' : '')
-    +     (s.headcount ? '　👥 ' + s.headcount + ' 人' : '') + '</div>'
+    +     (s.budgetTotal ? '　總預算 <span style="font-weight:600;color:#577B53">NT$ ' + s.budgetTotal.toLocaleString() + '</span>' : '')
+    +     (s.headcount ? '　👥 ' + s.headcount + ' 人' : '')
+    // 預算組成公式（後端解析到「每人預算／壽星預算」列時顯示：人數×每人＋壽星×每人＝總預算）
+    +     (s.budget && s.budget.per ? '<div style="font-size:12px;color:#9AA098;margin-top:4px">總預算組成：' + (s.budget.count||s.headcount) + ' 人 × ' + s.budget.per
+            + (s.budget.bdayPer ? ' ＋ ' + (s.budget.bdayCount||0) + ' 位壽星 × ' + s.budget.bdayPer : '')
+            + ' ＝ NT$ ' + (s.budgetTotal||0).toLocaleString() + '</div>' : '')
+    +   '</div>'
     +   '<div style="flex:1"></div>'
     +   '<a href="https://docs.google.com/spreadsheets/d/104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo/edit" target="_blank" rel="noopener" style="font-size:12px;color:#577B53;text-decoration:none;letter-spacing:1px">在 Google 試算表開啟 ↗</a>'
     + '</div>'
@@ -11062,9 +11103,10 @@ function htRenderCalendar() {
 
   titleEl.textContent = y + ' 年 ' + monthNames[m-1];
 
-  // 當月活動（比對 _htEvents 的 month 欄）
+  // 當月活動：平台場次＋舊試算表場次（唯讀）都納入，避免試算表已建的月份（如 11507）看不到
   var ym = y + '-' + (m < 10 ? '0' : '') + m;
-  var monthEvents = _htEvents.filter(function(e){ return _evMonth(e) === ym; });
+  var _allEv = _htEvents.concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+  var monthEvents = _allEv.filter(function(e){ return _evMonth(e) === ym; });
   // 建立 date→event 的快速查找（e.date 格式 yyyy/MM/dd 或 yyyy-MM-dd）
   var eventDays = {};
   monthEvents.forEach(function(e) {
@@ -11134,7 +11176,8 @@ function htRenderCalendar() {
     }
 
     if (hasEvent) {
-      cells += '<div onclick="htOpenDetail(\''+ev.eventId+'\')" style="padding:8px 4px 6px;text-align:center;position:relative;cursor:pointer;background:#F6F9F5;'+(colD<6?borderR:'')+(rowD<totalRows-1?borderB:'')+'" onmouseover="this.style.background=\'#F3F7F2\'" onmouseout="this.style.background=\'#F6F9F5\'">'
+      var cellClick = ev._sheet ? 'htOpenSheetDetail(\''+ev.eventId+'\')' : 'htOpenDetail(\''+ev.eventId+'\')';
+      cells += '<div onclick="'+cellClick+'" style="padding:8px 4px 6px;text-align:center;position:relative;cursor:pointer;background:#F6F9F5;'+(colD<6?borderR:'')+(rowD<totalRows-1?borderB:'')+'" onmouseover="this.style.background=\'#F3F7F2\'" onmouseout="this.style.background=\'#F6F9F5\'">'
         + numCircle + bottomLabel + '</div>';
     } else {
       cells += '<div style="padding:8px 4px 6px;text-align:center;position:relative;'+(colD<6?borderR:'')+(rowD<totalRows-1?borderB:'')+'">'
@@ -11174,13 +11217,14 @@ function htRenderCalendar() {
       var mNum = d ? parseInt(d.slice(5,7),10) : '';
       var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
       var mAbbr = mNum ? mNames[mNum-1] : '';
-      return '<div onclick="htOpenDetail(\''+e.eventId+'\')" style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;margin-bottom:10px;cursor:pointer;background:#fff;border:1px solid #f0f0f0;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'#A9C4A5\';this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.12)\'" onmouseout="this.style.borderColor=\'#f0f0f0\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
+      var listClick = e._sheet ? 'htOpenSheetDetail(\''+e.eventId+'\')' : 'htOpenDetail(\''+e.eventId+'\')';
+      return '<div onclick="'+listClick+'" style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;margin-bottom:10px;cursor:pointer;background:#fff;border:1px solid #f0f0f0;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'#A9C4A5\';this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.12)\'" onmouseout="this.style.borderColor=\'#f0f0f0\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
         + '<div style="width:48px;flex-shrink:0;background:linear-gradient(150deg,#eef4ec,#dde8da);border-radius:12px;padding:8px 0;text-align:center;color:#577B53">'
         +   '<div style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.7">'+mAbbr+'</div>'
         +   '<div style="font-size:22px;font-weight:800;line-height:1.1">'+dayNum+'</div>'
         + '</div>'
         + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-size:16px;font-weight:800;color:#2E332D">'+fmtMonth(e.month)+' 午茶日</div>'
+        +   '<div style="font-size:16px;font-weight:800;color:#2E332D">'+fmtMonth(e.month)+' 午茶日'+(e._sheet?' <span style="font-size:12px;font-weight:600;color:#577B53;background:#F3F7F2;border:1px solid #DDE8DA;border-radius:20px;padding:1px 8px;vertical-align:2px">📋</span>':'')+'</div>'
         +   (e.headcount ? '<div style="font-size:14px;color:#aaa;margin-top:4px">👥 '+e.headcount+' 人參與</div>' : '')
         + '</div>'
         + '<div style="text-align:right;flex-shrink:0">'
@@ -11687,6 +11731,40 @@ function _htUpdateBalance() {
   remEl.textContent   = fmtMoney(Math.abs(remain));
   remEl.style.color   = remain >= 0 ? '#1e9d6b' : '#ef4444';
   remEl.parentElement.childNodes[0].textContent = remain >= 0 ? '餘額 ' : '超支 ';
+  // 總預算組成公式明確顯示：人數 × 每人預算 ＋ 壽星 × 40
+  var fEl = document.getElementById('ht-bal-formula');
+  if (fEl) fEl.textContent = hc && bp
+    ? '總預算組成：' + hc + ' 人 × ' + bp + (bdayCount ? ' ＋ ' + bdayCount + ' 位壽星 × 40' : '') + ' ＝ ' + fmtMoney(totalBudget)
+    : '';
+  _htSmartCheck(hc);
+}
+
+// ── 智能檢查：份量是否足夠、類別缺什麼／哪類太多（純前端規則，即時更新）──
+function _htSmartCheck(hc) {
+  var el = document.getElementById('ht-smart-check');
+  if (!el) return;
+  var items = (_htItems || []).filter(function(it){ return (it.name||'').trim(); });
+  if (!items.length || !hc) { el.innerHTML = ''; return; }
+  var totalQty = 0, catQty = { 鹹食:0, 甜點:0, 水果:0, 飲品:0, 其他:0 };
+  items.forEach(function(it){
+    var q = Number(it.qty) || 0; totalQty += q;
+    var c = it.category || (typeof _htAutoCategory === 'function' ? _htAutoCategory(it.name) : '') || '其他';
+    if (catQty[c] == null) c = '其他';
+    catQty[c] += q;
+  });
+  var perHead = totalQty / hc;
+  var msgs = [];
+  if (perHead < 2)      msgs.push({ t:'⚠️ 份量偏少：目前約每人 ' + perHead.toFixed(1) + ' 份，建議至少 2～3 份', c:'#b45309', bg:'#FEF7EC' });
+  else if (perHead > 5) msgs.push({ t:'💡 份量偏多：每人約 ' + perHead.toFixed(1) + ' 份，可能吃不完', c:'#6E8F6A', bg:'#F3F7F2' });
+  else                  msgs.push({ t:'✅ 份量適中：每人約 ' + perHead.toFixed(1) + ' 份', c:'#3E5A3B', bg:'#F3F7F2' });
+  ['鹹食','甜點','水果','飲品'].forEach(function(c){
+    var pct = totalQty ? Math.round(catQty[c] / totalQty * 100) : 0;
+    if (!catQty[c]) msgs.push({ t:'📌 缺少「' + c + '」類品項', c:'#b45309', bg:'#FEF7EC' });
+    else if (pct >= 60) msgs.push({ t:'📊 「' + c + '」占 ' + pct + '%，比例偏高，建議搭配其他類別', c:'#b45309', bg:'#FEF7EC' });
+  });
+  el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' + msgs.map(function(m){
+    return '<span style="font-size:12px;font-weight:600;color:' + m.c + ';background:' + m.bg + ';border-radius:20px;padding:4px 12px">' + m.t + '</span>';
+  }).join('') + '</div>';
 }
 
 function _htCheckRepeatWarning() {
@@ -12209,6 +12287,14 @@ window.htAssistRun = async function() {
   if (_htAssistMode === 'plan') {
     var preset = _htCategoryPresets[_htAssistRatioPreset] || _htCategoryPresets.balanced;
     payload.categoryRatios = preset.ratios;
+    // 各風格給明確的差異化指令，避免四種 preset 產出雷同
+    var _styleHints = {
+      balanced: '風格：均衡宴。鹹甜比例平均、老少咸宜，主打大眾都能吃的組合，避免過度集中單一類別。',
+      sweet:    '風格：甜點主場。以話題甜點為主角（蛋糕、泡芙、可頌、瑪德蓮、甜甜圈等），甜點品項數必須明顯多於鹹食，可加入 1-2 個網紅甜點店品項。',
+      light:    '風格：輕食清爽。以水果盒、沙拉、三明治、優格、無糖或低糖飲品為主，整體熱量低、清爽不膩，甜點只放少量點綴。',
+      savory:   '風格：鹹食澎湃。以炸雞、披薩、壽司、鹹派、滷味等鹹食為主力，份量要有飽足感，甜點與水果只是配角。'
+    };
+    payload.styleHint = _styleHints[_htAssistRatioPreset] || _styleHints.balanced;
     payload.excludeItems = await _htLoadExcludeItems();
   } else if (_htAssistMode === 'trend') {
     payload.type = 'trending';
