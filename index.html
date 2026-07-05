@@ -2901,7 +2901,7 @@ thead th{color:#8C8074!important}
       <span id="ms-notice-arrow" style="color:#B08968;font-size:14px;transition:transform .2s;display:inline-block;transform:rotate(180deg)">▾</span>
     </button>
     <div id="ms-notice-body" style="padding:0 18px 18px">
-      <div style="background:#FAF8F4;border-radius:12px;padding:16px 18px;border-left:3px solid #e16b8c;font-size:14px;color:#5A5048;line-height:1.9;border-top-left-radius:0;border-bottom-left-radius:0">
+      <div style="background:#F7F3EC;border:1px solid #EDE6D9;border-left:3px solid #e16b8c;border-radius:12px;padding:16px 18px;font-size:14px;color:#5A5048;line-height:1.9;border-top-left-radius:0;border-bottom-left-radius:0">
         <p style="margin:0 0 10px">1. 為讓每個夥伴都有機會參與，<strong>每月請儘量控制最多預約二次為主</strong>。連續二週為一排程區間，線上填寫限填一次，如當日仍有空檔可於紙本補位。</p>
         <p style="margin:0 0 10px">2. 完成預約後，務必留意預約時間並設小鬧鐘準時參與；按摩完畢後請協助「呼喚下一位夥伴」；若臨時無法參與，<strong>請記得找夥伴遞補</strong>哦～</p>
         <p style="margin:0">3. 按摩過程請保持輕鬆愉悅的心情，完成充電後一起面對更多工作挑戰。Think Big! 👍 Start Small! 🫰 Act Quickly and Massage more! 💪</p>
@@ -3011,7 +3011,7 @@ thead th{color:#8C8074!important}
         <div style="font-size:14px;font-weight:700;color:#4A4038">開放日期管理</div>
       </div>
       <!-- 整合式：選日期 + 設定該日時段與名額，一次完成 -->
-      <div id="ms-open-editor" style="background:#FAF8F4;border:1px solid #F0EBE2;border-radius:12px;padding:14px;margin-bottom:16px">
+      <div id="ms-open-editor" style="background:#F7F3EC;border:1px solid #EDE6D9;border-radius:12px;padding:14px;margin-bottom:16px">
         <div id="ms-open-editor-title" style="font-size:14px;font-weight:700;color:#8A7355;margin-bottom:10px">新增開放日</div>
         <div style="font-size:12px;color:#8C8074;margin-bottom:5px">選擇日期</div>
         <input id="ms-open-date-inp" type="date" style="width:100%;min-width:0;max-width:100%;display:block;-webkit-appearance:none;appearance:none;box-sizing:border-box;border:1.5px solid #E8E2D8;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#4A4038;outline:none" onfocus="this.style.borderColor='#8A7355'" onblur="this.style.borderColor='#E8E2D8'">
@@ -12307,20 +12307,23 @@ function msShowSlots(dateStr) {
       var mine = b.userEmail && myEmail && b.userEmail === myEmail;
       var attended = b.status === 'attended';
       var initial = (nm || '?').trim().charAt(0);
-      var chipBg = mine ? 'linear-gradient(135deg,#fde4ef,#fff0f5)' : '#FAF8F4';
-      var chipBd = mine ? '#f9a8c4' : '#E8E2D8';
+      var chipBg = mine ? 'linear-gradient(135deg,#fde4ef,#fff0f5)' : '#fff';
+      var chipBd = mine ? '#f9a8c4' : '#E0D4C4';
       var dotBg = attended ? '#22c55e' : (mine ? '#e16b8c' : '#A89C90');
-      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:#4A4038">'
+      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:#4A4038;box-shadow:0 1px 3px rgba(74,64,56,.06)">'
         + '<span style="width:20px;height:20px;border-radius:50%;background:' + dotBg + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + htEsc(initial) + '</span>'
         + htEsc(nm) + (mine ? '（我）' : '') + (attended ? ' ✓' : '')
         + '</span>';
     });
     // 空位 placeholder
     for (var ei = 0; ei < s.remaining; ei++) {
-      nameChips.push('<span style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px dashed #D8D2C8;border-radius:20px;padding:3px 12px;font-size:12px;color:#A89C90">'
+      nameChips.push('<span style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px dashed #D5CBBB;border-radius:20px;padding:3px 12px;font-size:12px;color:#B8AFA2">'
         + '<span style="width:20px;height:20px;border-radius:50%;border:1.5px dashed #D8D2C8;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#D8D2C8;flex-shrink:0">＋</span>空位</span>');
     }
-    var attendeeRow = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">' + nameChips.join('') + '</div>';
+    var attendeeRow = '<div style="background:#F7F3EC;border:1px solid #EDE6D9;border-radius:12px;padding:10px 12px;margin-top:12px">'
+      + '<div style="font-size:12px;letter-spacing:2px;color:#B08968;margin:0 0 8px 2px">本時段名單</div>'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + nameChips.join('') + '</div>'
+      + '</div>';
 
     return '<div style="background:#fff;border-radius:16px;padding:14px 16px;box-shadow:0 2px 8px rgba(0,0,0,.06);border-left:4px solid ' + accentColor + '">'
       + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
