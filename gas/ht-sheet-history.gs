@@ -20,18 +20,26 @@ var HT_SHEET_ID = '104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo';
  */
 function htSheetList() {
   var cache = CacheService.getScriptCache();
-  var hit = cache.get('htSheetList_v4');
+  var hit = cache.get('htSheetList_v5');
   if (hit) return JSON.parse(hit);
 
   var ss = SpreadsheetApp.openById(HT_SHEET_ID);
   var sessions = [];
   ss.getSheets().forEach(function (sh) {
-    var name = sh.getName();
-    var m = /^(\d{3})(\d{2})/.exec(name);
-    if (!m) return; // 略過「廠商一覽表」等非月份分頁
-    var year = parseInt(m[1], 10) + 1911;
-    var month = parseInt(m[2], 10);
-    if (month < 1 || month > 12) return;
+    var name = (sh.getName() || '').trim();  // 容忍複製分頁常帶的前導/尾隨空白
+    var year = null, month = null;
+    // 1) 分頁名含民國年月 5 碼（不再限定開頭：容忍「11507的副本」「預算11507」等；限定民國 111–140 避免誤判電話等數字）
+    var m = /(\d{3})(\d{2})/.exec(name);
+    if (m) {
+      var yy = parseInt(m[1], 10), mm = parseInt(m[2], 10);
+      if (yy >= 111 && yy <= 140 && mm >= 1 && mm <= 12) { year = yy + 1911; month = mm; }
+    }
+    // 2) 後備：分頁名認不出時，用前幾列的西元日期辨識（「廠商一覽表」等無日期分頁 → 略過）
+    if (year == null) {
+      var probe = _htProbeSheetDate(sh);
+      if (!probe) return;
+      year = probe.year; month = probe.month;
+    }
     try {
       sessions.push(_htParseSheet(sh, name, year, month));
     } catch (e) {
@@ -42,8 +50,22 @@ function htSheetList() {
   sessions.sort(function (a, b) { return (b.ym || '').localeCompare(a.ym || ''); });
 
   var out = { ok: true, sessions: sessions };
-  try { cache.put('htSheetList_v4', JSON.stringify(out), 300); } catch (e) {} // 超過 100KB 就不快取
+  try { cache.put('htSheetList_v5', JSON.stringify(out), 300); } catch (e) {} // 超過 100KB 就不快取
   return out;
+}
+
+/** 後備日期偵測：讀分頁前幾列，找到西元日期(yyyy/mm/dd)就回傳 {year, month}，找不到回 null。 */
+function _htProbeSheetDate(sh) {
+  try {
+    var n = Math.min(sh.getLastRow(), 5), c = Math.min(sh.getLastColumn(), 14);
+    if (n < 1 || c < 1) return null;
+    var vals = sh.getRange(1, 1, n, c).getDisplayValues();
+    for (var r = 0; r < vals.length; r++) {
+      var dm = /(\d{4})\/(\d{1,2})\/(\d{1,2})/.exec(vals[r].join(' '));
+      if (dm) { var mo = parseInt(dm[2], 10); if (mo >= 1 && mo <= 12) return { year: parseInt(dm[1], 10), month: mo }; }
+    }
+  } catch (e) {}
+  return null;
 }
 
 /** 解析單一月份分頁：標題日期、品項明細、小計、預算。純讀取。 */
