@@ -25,9 +25,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
 <title>騰勢福委會</title>
-<link rel="icon" id="main-favicon" type="image/png" href="assets/icons/app-icon-32.png">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app-icon-180.png">
-<link rel="apple-touch-icon" sizes="512x512" href="assets/icons/app-icon-512.png">
+<link rel="icon" type="image/svg+xml" href="assets/icons/app-icon.svg?v=3">
+<link rel="icon" id="main-favicon" type="image/png" sizes="32x32" href="assets/icons/app-icon-32.png?v=3">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app-icon-180.png?v=3">
+<link rel="apple-touch-icon" sizes="512x512" href="assets/icons/app-icon-512.png?v=3">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="騰勢福委會">
@@ -3109,9 +3110,9 @@ thead th{color:#767B75!important}
           <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px"></div>
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:#fff;border-radius:12px;border:1px solid #E1E4DF">
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#E3EDE1;border:1px solid #C9DAC6"></div><span style="font-size:12px;color:#767B75">有空位</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#A9C4A5"></div><span style="font-size:12px;color:#767B75">有空位</span></div>
           <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#3E5A3B"></div><span style="font-size:12px;color:#767B75">已預約</span></div>
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#E1E4DF"></div><span style="font-size:12px;color:#767B75">額滿/不開放</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#D5D8D2"></div><span style="font-size:12px;color:#767B75">額滿/已結束</span></div>
         </div>
       </div>
 
@@ -12645,9 +12646,11 @@ function msRenderCal() {
     var bg, color, shadow = '', fw = isToday ? '800' : '600';
     if (isSelected)           { bg = '#577B53'; color = '#fff'; shadow = '0 4px 12px rgba(87,123,83,.4)'; }
     else if (myBook && isPast){ bg = '#ECEEEA'; color = '#A8ADA7'; } // 過去的預約：淡玫瑰，不再搶眼
-    else if (myBook)          { bg = '#3E5A3B'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
-    else if (hasAvail)        { bg = '#E3EDE1'; color = '#577B53'; }
-    else if (isToday)         { bg = '#EDF1EC'; color = '#577B53'; } // 今天（無活動）：柔和奶油底，不再深灰
+    else if (myBook)          { bg = '#3E5A3B'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; } // 已預約：主題綠
+    else if (hasAvail)        { bg = '#A9C4A5'; color = '#2E442B'; } // 有空位：明確主題淺綠（原 #E3EDE1 太淡與灰難分）
+    else if (hasSlots && isPast){ bg = '#EEEFEC'; color = '#C2C7C1'; } // 已結束（曾開放）：極淺灰
+    else if (hasSlots)        { bg = '#D5D8D2'; color = '#868C84'; } // 額滿/不開放：淺灰，與淺綠明顯區隔
+    else if (isToday)         { bg = '#EDF1EC'; color = '#577B53'; } // 今天（無活動）：柔和奶油底
     else                      { bg = ''; color = (isPast || !hasSlots) ? '#D2D6D0' : '#4A4F49'; }
     if (!bg) {
       html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:' + color + ';font-size:14px;font-weight:' + fw + '">' + d + '</div>';
