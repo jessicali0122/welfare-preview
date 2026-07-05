@@ -3580,7 +3580,7 @@ const CAPABILITY_MAP = {
   'hightea.manage':        ['welfare'],
   'hightea.discover':      ['welfare'],          // 移除 hr
   'massage.manage':        ['hr'],
-  'bulletin.post':         ['welfare', 'hr'],
+  'bulletin.post':         ['hr'],               // 公告由 HR 管理（manager 自動全開），福委不開放
   'admin.users':           []
 };
 
@@ -12381,11 +12381,12 @@ function msRenderCal() {
     var clickable = !isPast && hasSlots;
     var isSelected = _msSelectedDate === dateStr;
     var bg, color, shadow = '', fw = isToday ? '800' : '600';
-    if (isSelected)      { bg = '#e16b8c'; color = '#fff'; shadow = '0 4px 12px rgba(225,107,140,.4)'; }
-    else if (myBook)     { bg = '#be185d'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
-    else if (hasAvail)   { bg = '#FBDCE6'; color = '#c8587a'; }
-    else if (isToday)    { bg = '#4A4038'; color = '#fff'; }
-    else                 { bg = ''; color = (isPast || !hasSlots) ? '#D8D2C8' : '#5A5048'; }
+    if (isSelected)           { bg = '#e16b8c'; color = '#fff'; shadow = '0 4px 12px rgba(225,107,140,.4)'; }
+    else if (myBook && isPast){ bg = '#F0E2E8'; color = '#C39CAC'; } // 過去的預約：淡玫瑰，不再搶眼
+    else if (myBook)          { bg = '#be185d'; color = '#fff'; shadow = '0 3px 8px rgba(190,24,93,.35)'; }
+    else if (hasAvail)        { bg = '#FBDCE6'; color = '#c8587a'; }
+    else if (isToday)         { bg = '#F5F0E8'; color = '#8A7355'; } // 今天（無活動）：柔和奶油底，不再深灰
+    else                      { bg = ''; color = (isPast || !hasSlots) ? '#D8D2C8' : '#5A5048'; }
     if (!bg) {
       html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:' + color + ';font-size:14px;font-weight:' + fw + '">' + d + '</div>';
     } else {
