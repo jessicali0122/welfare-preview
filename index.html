@@ -758,11 +758,15 @@ input[type=checkbox]{accent-color:#577B53}
   #sidebar-wrapper,#main-wrapper>header,
   .btn,.no-print,#toast,#receipt-confirm,
   #user-menu,#notif-panel,
-  #resubmit-box,#approve-box,
+  #resubmit-box,#approve-box,#admin-delete-box,
   #audit-log-section,#resubmit-history-section,
   #bottom-nav,
   #mobile-overlay,#mobile-user-sheet,
   #submit-result-card{display:none!important}
+
+  /* ── 列印隱藏裝飾線：卡片左側識別條、區塊標題左邊的小綠線 ── */
+  .view .card::before,.view .stat::before,.dash-hub-card::before{display:none!important}
+  .section-title{border-left:none!important;padding-left:0!important}
 
   /* ── 頁面基礎 ── */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -849,10 +853,12 @@ input[type=checkbox]{accent-color:#577B53}
     align-items:center!important;
     text-align:center!important;
     position:relative!important;
-    padding:34px 6px 8px!important;
+    padding:22px 6px 8px!important; /* 葉子（底緣 16px）到文字約 6px，與下方行距一致 */
     border-top:2px dashed #D2D6D0!important;
     gap:0!important;
   }
+  /* 關卡名稱（總幹事等）清除 inline padding-top，行距與其下狀態/人名一致 */
+  #flow-timeline > div > div:last-child > div:first-child{padding-top:0!important}
   /* 左欄（icon 容器）絕對定位置頂部中央 */
   #flow-timeline > div > div:first-child{
     position:absolute!important;
@@ -1376,10 +1382,10 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #login-screen .lg-card{position:relative;width:100%;max-width:400px;z-index:115;padding:0 24px;box-sizing:border-box;animation:lgRise .6s cubic-bezier(.2,.8,.2,1) forwards}
 @keyframes lgRise{from{transform:translateY(28px);opacity:0}to{transform:translateY(0);opacity:1}}
 #login-screen .lg-hello{font-weight:700;font-size:28px;letter-spacing:8px;text-indent:8px;color:#363B35;line-height:1.2;margin-bottom:10px;text-align:center}
-#login-screen .lg-sub{font-weight:400;font-size:13px;letter-spacing:2px;color:#767B75;margin-bottom:32px;text-align:center}
+#login-screen .lg-sub{font-weight:400;font-size:14px;letter-spacing:2px;color:#767B75;margin-bottom:32px;text-align:center}
 #login-screen .lg-box{position:relative;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid #E1E4DF;border-radius:20px;padding:28px 26px 24px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 18px 44px rgba(87,123,83,.16)}
 #login-screen .lg-box::before{content:'';position:absolute;top:0;left:24px;right:24px;height:3px;border-radius:0 0 3px 3px;background:linear-gradient(90deg,transparent,#8FAE8B,transparent);opacity:.6}
-#login-screen #google-login-btn{width:100%;height:50px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);border:none;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;letter-spacing:2px;color:#fff;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s;font-family:'Noto Sans TC',sans-serif;box-shadow:0 3px 10px rgba(87,123,83,.25)}
+#login-screen #google-login-btn{width:100%;height:50px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);border:none;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;letter-spacing:2px;color:#fff;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s;font-family:'Noto Sans TC',sans-serif;box-shadow:0 3px 10px rgba(87,123,83,.25)}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 6px 16px rgba(87,123,83,.35)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
 #login-screen .lg-note{font-size:12px;letter-spacing:1px;color:#9AA098;font-weight:400;margin-top:14px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
@@ -1498,12 +1504,13 @@ header{background:#F7F8F6!important;border-bottom:none!important;box-shadow:none
 @media(max-width:480px){
   /* 手機 hero：問候語縮一級且不折行（避免孤字），垂直間距拉開呼吸感 */
   #dash-hero{padding:16px 12px 10px!important;margin-bottom:32px!important}
-  #dashboard-greeting{font-size:21px;letter-spacing:1px;white-space:nowrap}
+  #dashboard-greeting{font-size:22px;letter-spacing:1px;white-space:nowrap}
   #dashboard-greeting img{width:20px!important;height:20px!important}
   #dash-hero>div:nth-of-type(2){margin-top:14px!important}
   #dash-hero>div:nth-of-type(3){margin-top:26px!important}
   #bulletin-section{padding:20px 16px!important}#bulletin-en{display:none}#dash-birthday-chip{padding:8px 14px!important;gap:6px!important}}
-@media(min-width:1200px){#dash-wrap{max-width:1200px!important}#dash-hub{grid-template-columns:1fr 1fr 1fr!important}}
+/* 寬螢幕：auto-fit 讓 4 張入口卡一排排滿；卡片數變動（如 admin 顯示/隱藏）也不會出現 3+1 跑位 */
+@media(min-width:1200px){#dash-wrap{max-width:1200px!important}#dash-hub{grid-template-columns:repeat(auto-fit,minmax(272px,1fr))!important}#dash-hub .dash-hub-card>div>div>div[style*="letter-spacing:2px"]{white-space:nowrap}}
 .wf-pet-dog{animation:wfBob 3.6s ease-in-out 1.8s infinite}
 .wf-eye{transform-box:fill-box;transform-origin:center;animation:wfBlink 4.4s infinite}
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
@@ -4638,7 +4645,7 @@ function _renderFestivalMarquee() {
     else              msgs.push('再 ' + i + ' 天就是' + hol.name);
   }
   if (!msgs.length) { wrap.style.display = 'none'; return; }
-  var seg = '<span style="font-size:13px;color:#577B53;letter-spacing:3px;padding:0 36px;font-weight:500">✦ ' + msgs.join('　・　') + '</span>';
+  var seg = '<span style="font-size:14px;color:#577B53;letter-spacing:3px;padding:0 36px;font-weight:500">✦ ' + msgs.join('　・　') + '</span>';
   track.innerHTML = seg + seg; // 兩份內容無縫循環
   wrap.style.display = '';
 }
@@ -11012,7 +11019,7 @@ function htRenderYearTimeline() {
   el.innerHTML = '<div style="background:#fff;border:1px solid #E1E4DF;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);padding:18px 16px 16px">'
     + '<div style="display:flex;align-items:baseline;gap:10px;margin:0 4px 10px"><span style="font-size:16px;font-weight:800;color:#2E332D">' + curYear + ' 午茶日航線圖</span>'
     + '<span style="font-size:14px;color:#9AA098">已飛抵 ' + curMonth + ' 月 ✈️</span>'
-    + '<span style="flex:1"></span><span style="font-size:11px;color:#C2C7C1;letter-spacing:.14em;font-weight:700">TEA DAY AIRLINE</span></div>'
+    + '<span style="flex:1"></span><span style="font-size:12px;color:#C2C7C1;letter-spacing:.14em;font-weight:700">TEA DAY AIRLINE</span></div>'
     + '<div style="position:relative;height:98px;margin:0 6px">'
     // 虛線航道（尚未飛過的航段）
     +   '<div style="position:absolute;left:3%;right:3%;top:60px;height:0;border-top:2px dashed #CDD8CB"></div>'
@@ -12979,7 +12986,7 @@ function msBookingCard(b, isUpcoming) {
   var notch = function(pos){ return '<div style="position:absolute;'+pos+':-9px;left:-9px;width:18px;height:18px;border-radius:50%;background:#F7F8F6;border:1px solid #E1E4DF;box-sizing:border-box"></div>'; };
   // 已登機戳章（報到完成蓋在票面上）
   var stamp = s==='attended'
-    ? '<div style="position:absolute;right:8px;top:8px;transform:rotate(-10deg);border:2.5px solid #577B53;color:#577B53;border-radius:9px;padding:3px 10px;font-size:13px;font-weight:900;letter-spacing:2px;opacity:.65;pointer-events:none;background:rgba(255,255,255,.5);white-space:nowrap;z-index:2">已登機 ✓</div>'
+    ? '<div style="position:absolute;right:8px;top:8px;transform:rotate(-10deg);border:2.5px solid #577B53;color:#577B53;border-radius:9px;padding:3px 10px;font-size:14px;font-weight:900;letter-spacing:2px;opacity:.65;pointer-events:none;background:rgba(255,255,255,.5);white-space:nowrap;z-index:2">已登機 ✓</div>'
     : '';
   var bpNo = String(b.bookingId||'').replace(/[^A-Za-z0-9]/g,'').slice(-6).toUpperCase() || 'TSA000';
   // 手機窄版存根縮窄，避免擠壓主票面
@@ -12989,8 +12996,8 @@ function msBookingCard(b, isUpcoming) {
     // ── 票頭：BOARDING PASS ──
     + '<div style="background:'+headerGrad+';padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
     +   '<div style="display:flex;align-items:center;gap:10px;min-width:0">'
-    +     '<span style="font-size:17px">✈️</span>'
-    +     '<div style="min-width:0"><div style="color:#fff;font-size:13px;font-weight:900;letter-spacing:.16em;white-space:nowrap">BOARDING PASS</div>'
+    +     '<span style="font-size:18px">✈️</span>'
+    +     '<div style="min-width:0"><div style="color:#fff;font-size:14px;font-weight:900;letter-spacing:.16em;white-space:nowrap">BOARDING PASS</div>'
     +     '<div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:1px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">員工紓壓按摩・TSA WELLNESS</div></div>'
     +   '</div>'
     +   '<span style="background:'+statusColor+';color:#fff;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0">'+statusLabel+'</span>'
@@ -13001,21 +13008,21 @@ function msBookingCard(b, isUpcoming) {
     +     stamp
     // 大日期＋時段（像座位號）
     +     '<div style="flex-shrink:0;min-width:74px;text-align:center;display:flex;flex-direction:column;justify-content:center">'
-    +       '<div style="font-size:11px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">DATE</div>'
+    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">DATE</div>'
     +       '<div style="font-size:36px;font-weight:900;color:#363B35;line-height:1;margin-top:2px">'+day+'</div>'
     +       '<div style="font-size:12px;color:#9AA098;margin-top:2px">'+month+'月（'+weekday+'）</div>'
     +       '<div style="margin-top:7px;background:linear-gradient(135deg,#EDF1EC,#CDD8CB);border-radius:8px;padding:3px 8px;display:inline-block">'
     +         '<div style="font-size:10px;color:#577B53;font-weight:700;letter-spacing:.14em">TIME</div>'
-    +         '<div style="font-size:15px;font-weight:800;color:#577B53;white-space:nowrap">'+(b.timeSlot||'—')+'</div>'
+    +         '<div style="font-size:16px;font-weight:800;color:#577B53;white-space:nowrap">'+(b.timeSlot||'—')+'</div>'
     +       '</div>'
     +     '</div>'
     // 乘客＋航程
     +     '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px">'
-    +       '<div style="font-size:11px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">PASSENGER</div>'
+    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">PASSENGER</div>'
     +       '<div style="font-size:16px;font-weight:800;color:#2E332D">'+htEsc(userName)+'</div>'
-    +       '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:11px;font-weight:800;letter-spacing:.1em;color:#577B53">'
+    +       '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:12px;font-weight:800;letter-spacing:.1em;color:#577B53">'
     +         '<span>WORK</span>'
-    +         '<span style="flex:0 1 70px;min-width:30px;border-top:2px dashed #CBD4C9;position:relative"><span style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:11px">✈️</span></span>'
+    +         '<span style="flex:0 1 70px;min-width:30px;border-top:2px dashed #CBD4C9;position:relative"><span style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:12px">✈️</span></span>'
     +         '<span style="color:#577B53">RELAX</span>'
     +       '</div>'
     +       (ts ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">預約於 '+ts+'</div>' : '')
@@ -13025,7 +13032,7 @@ function msBookingCard(b, isUpcoming) {
     // 存根（撕票虛線＋QR 報到區）
     +   '<div style="flex-shrink:0;width:'+stubW+'px;border-left:2px dashed #CDD8CB;position:relative;background:#FDFCF9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 6px">'
     +     notch('top') + notch('bottom')
-    +     '<div style="font-size:9px;color:#9AA098;font-weight:700;letter-spacing:.1em;white-space:nowrap">CHECK-IN</div>'
+    +     '<div style="font-size:10px;color:#9AA098;font-weight:700;letter-spacing:.1em;white-space:nowrap">CHECK-IN</div>'
     +     ( s==='attended'
         ? '<div style="width:50px;height:50px;border-radius:10px;background:#EEF3ED;border:1.5px solid #577B53;display:flex;align-items:center;justify-content:center;font-size:24px;color:#577B53">✓</div>'
         : '<div style="width:50px;height:50px;border-radius:10px;background:#fff;border:1.5px solid #E1E4DF;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:2px;padding:6px;box-sizing:border-box">'
