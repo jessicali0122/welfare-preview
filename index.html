@@ -3084,8 +3084,8 @@ thead th{color:#8C8074!important}
   <div id="ms-panel-admin" style="display:none">
 
 
-    <!-- 待審核申請 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(74,64,56,.05),0 10px 28px rgba(138,115,85,.12);margin-bottom:14px">
+    <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
+    <div id="ms-approval-section" style="display:none;background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(74,64,56,.05),0 10px 28px rgba(138,115,85,.12);margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#B08968,#C9A87C);display:flex;align-items:center;justify-content:center;font-size:14px">📬</div>
         <div style="font-size:14px;font-weight:700;color:#3B352C">待審核申請</div>
@@ -9953,7 +9953,10 @@ function htRenderBulletinMini() {
       + (p.pinned ? '<span style="font-size:12px;background:#fde4ef;color:#e16b8c;border-radius:20px;padding:2px 8px;font-weight:700;white-space:nowrap;flex-shrink:0">📌 置頂</span>' : '')
       + '<span style="font-size:14px;font-weight:700;color:#3B352C">' + htEsc(p.title) + '</span>'
       + '</div>'
-      + '<span style="font-size:12px;color:#A89C90;flex-shrink:0">' + dt + '</span>'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'
+      + '<span style="font-size:12px;color:#A89C90">' + dt + '</span>'
+      + (isAdmin ? '<button onclick="bulletinDelete(\'' + htEsc(String(p.id).replace(/[\\\x27]/g,'')) + '\')" style="background:none;color:#D8D2C8;border:none;cursor:pointer;font-size:14px;padding:0 2px;line-height:1" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#D8D2C8\'">✕</button>' : '')
+      + '</div>'
       + '</div>'
       + '<div style="font-size:14px;color:#5A5048;line-height:1.7;white-space:pre-line">' + htEsc(p.content) + '</div>'
       + '<div style="font-size:12px;color:#A89C90;margin-top:5px">— ' + (p.author||'') + '</div>'
@@ -10040,7 +10043,7 @@ async function _htLoadSheetHistory() {
     if (r && r.ok && Array.isArray(r.sessions)) {
       _htSheetSessions = r.sessions;
       _htSheetLoaded = true;
-      if (_htListTab === 'events') htRenderEvents();
+      if (_htListTab === 'events') { htRenderEvents(); htRenderYearTimeline(); }
     }
     // 後端尚未部署 htSheetList 時安靜略過，不影響原功能
   } catch (e) {}
@@ -10048,9 +10051,10 @@ async function _htLoadSheetHistory() {
 // 轉成歷史回顧卡片可用的偽事件；同月若平台也有場次，兩筆並列、各帶來源標籤
 function _htSheetAsEvents() {
   return _htSheetSessions.map(function (s) {
+    // 卡片標題只顯示「午茶日」：年月已在左側日期方塊呈現，不重複
     return { eventId: 'sheet:' + s.sheetName, month: s.ym, date: s.date || '',
              headcount: s.headcount || 0, itemCount: (s.items || []).length,
-             actualExpense: s.subtotal || 0, organizer1: s.title || '', status: '已完成', _sheet: true };
+             actualExpense: s.subtotal || 0, organizer1: '午茶日', status: '已完成', _sheet: true };
   });
 }
 // 唯讀詳情彈窗：品項明細＋金額，附原試算表連結
@@ -10062,8 +10066,10 @@ window.htOpenSheetDetail = function (eventId) {
   var old = document.getElementById('ht-sheet-modal');
   if (old) old.remove();
   var rows = (s.items || []).map(function (it) {
+    // 次行完整呈現原表單的負責人／訂購狀態／備註
+    var meta = [it.owner ? '負責人 ' + it.owner : '', it.ordered ? '訂購 ' + it.ordered : '', it.note || ''].filter(Boolean).join('　');
     return '<tr style="border-bottom:1px solid #F0EBE2">'
-      + '<td style="padding:9px 10px;font-size:14px;color:#3B352C">' + it.name + (it.note ? '<div style="font-size:12px;color:#A89C90;margin-top:2px">' + it.note + '</div>' : '') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#3B352C">' + it.name + (meta ? '<div style="font-size:12px;color:#A89C90;margin-top:2px">' + meta + '</div>' : '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;white-space:nowrap">' + (it.vendor || '—') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;text-align:right;white-space:nowrap">' + (it.price ? it.price.toLocaleString() : '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#8C8074;text-align:right">' + (it.qty || '') + '</td>'
@@ -10875,9 +10881,10 @@ function htRenderYearTimeline() {
   var now = new Date();
   var curMonth = now.getMonth() + 1;
   var curYear  = now.getFullYear();
-  // 本年度有活動的月份
+  // 本年度有活動的月份（平台場次＋舊試算表場次一起計入）
   var eventMonths = {};
-  (_htEvents || []).forEach(function(e){
+  var _allEvts = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+  _allEvts.forEach(function(e){
     var mm = _evMonth(e) || '';
     if (mm.indexOf(curYear + '-') === 0) eventMonths[parseInt(mm.slice(5,7),10)] = true;
   });
@@ -10915,7 +10922,8 @@ function htRenderYearTimeline() {
   }, 300);
   var heroChip = document.getElementById('ht-hero-chip');
   if (heroChip) {
-    var yrCount = Object.keys(eventMonths).length;
+    // 「已辦」只算到本月為止的月份，未來已排定的場次不計
+    var yrCount = Object.keys(eventMonths).filter(function(m){ return parseInt(m,10) <= curMonth; }).length;
     heroChip.textContent = curYear + ' 年已辦 ' + yrCount + ' 場';
     heroChip.style.display = '';
   }
