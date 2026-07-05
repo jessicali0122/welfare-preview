@@ -1739,7 +1739,7 @@ thead th{color:#767B75!important}
       <div class="dash-hub-card" onclick="hubNav(this,'hightea')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);border:1px solid #E1E4DF;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <img src="assets/icons/bubbletea.png?v=2" alt="" style="width:32px;height:32px">
+            <span style="font-size:30px;line-height:1" role="img" aria-label="午茶日">🍰</span>
           </div>
           <div style="flex:1;min-width:0">
             <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#577B53">TEA DAY</span></div>
@@ -2597,7 +2597,7 @@ thead th{color:#767B75!important}
     <!-- 頁首：3D icon + 標題 + 年度場次 -->
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;background:#fff;border:1px solid #E1E4DF;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
       <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <img src="assets/icons/bubbletea.png?v=2" alt="" style="width:38px;height:38px">
+        <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍰</span>
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:3px;color:#577B53">TEA DAY</span></div>
@@ -11782,7 +11782,9 @@ function _htSmartCheck(hc) {
   if (!el) return;
   var items = (_htItems || []).filter(function(it){ return (it.name||'').trim(); });
   if (!items.length || !hc) { el.innerHTML = ''; return; }
-  var totalQty = 0, catQty = { 鹹食:0, 甜點:0, 水果:0, 飲品:0, 其他:0 };
+  // 類別桶與下拉選單 _htCats、_htAutoCategory 一致（甜點/主食/飲料/水果），避免自動分類的品項被誤丟「其他」
+  var CATS = ['甜點','主食','飲料','水果'];
+  var totalQty = 0, catQty = { 甜點:0, 主食:0, 飲料:0, 水果:0, 其他:0 };
   items.forEach(function(it){
     var q = Number(it.qty) || 0; totalQty += q;
     var c = it.category || (typeof _htAutoCategory === 'function' ? _htAutoCategory(it.name) : '') || '其他';
@@ -11794,11 +11796,18 @@ function _htSmartCheck(hc) {
   if (perHead < 2)      msgs.push({ t:'⚠️ 份量偏少：目前約每人 ' + perHead.toFixed(1) + ' 份，建議至少 2～3 份', c:'#b45309', bg:'#FEF7EC' });
   else if (perHead > 5) msgs.push({ t:'💡 份量偏多：每人約 ' + perHead.toFixed(1) + ' 份，可能吃不完', c:'#6E8F6A', bg:'#F3F7F2' });
   else                  msgs.push({ t:'✅ 份量適中：每人約 ' + perHead.toFixed(1) + ' 份', c:'#3E5A3B', bg:'#F3F7F2' });
-  ['鹹食','甜點','水果','飲品'].forEach(function(c){
+  // 智能推薦品類：缺哪類 → 建議補什麼；哪類比例過高 → 提醒搭配
+  var REC = { 甜點:'蛋糕、泡芙、馬卡龍', 主食:'三明治、披薩、飯糰', 飲料:'手搖、咖啡、氣泡飲', 水果:'當季水果切盤' };
+  var missing = [];
+  CATS.forEach(function(c){
     var pct = totalQty ? Math.round(catQty[c] / totalQty * 100) : 0;
-    if (!catQty[c]) msgs.push({ t:'📌 缺少「' + c + '」類品項', c:'#b45309', bg:'#FEF7EC' });
+    if (!catQty[c]) missing.push(c);
     else if (pct >= 60) msgs.push({ t:'📊 「' + c + '」占 ' + pct + '%，比例偏高，建議搭配其他類別', c:'#b45309', bg:'#FEF7EC' });
   });
+  missing.forEach(function(c){
+    msgs.push({ t:'📌 建議補「' + c + '」：' + REC[c], c:'#b45309', bg:'#FEF7EC' });
+  });
+  if (!missing.length) msgs.push({ t:'🎯 甜點／主食／飲料／水果都有，搭配均衡', c:'#3E5A3B', bg:'#F3F7F2' });
   el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' + msgs.map(function(m){
     return '<span style="font-size:12px;font-weight:600;color:' + m.c + ';background:' + m.bg + ';border-radius:20px;padding:4px 12px">' + m.t + '</span>';
   }).join('') + '</div>';
