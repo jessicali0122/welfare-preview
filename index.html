@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706111052';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706111651';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1527,8 +1527,8 @@ header{background:#F7F8F6!important;border-bottom:none!important;box-shadow:none
 /* 節慶跑馬燈：文字緩緩滑過 */
 @keyframes wf-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 /* 生日祝賀：彈跳出場＋蛋糕搖擺 */
-.ms-paw{position:relative;width:78%;height:64%;display:flex;align-items:center;justify-content:center;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;background:var(--paw);font-size:14px;margin-bottom:5%}
-.ms-paw::before{content:'';position:absolute;top:-34%;left:2%;right:2%;height:40%;background:radial-gradient(ellipse 14% 46% at 16% 66%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 50% 32%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 84% 66%,var(--paw) 96%,transparent 100%)}
+.ms-paw{position:relative;width:70%;height:54%;display:flex;align-items:center;justify-content:center;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;background:var(--paw);font-size:14px}
+.ms-paw::before{content:'';position:absolute;top:-28%;left:2%;right:2%;height:34%;background:radial-gradient(ellipse 14% 46% at 16% 66%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 50% 32%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 84% 66%,var(--paw) 96%,transparent 100%)}
 .dash-hub-card{transition:transform .18s ease,box-shadow .18s ease}
 .dash-hub-card:hover{transform:translateY(-3px);box-shadow:0 2px 4px rgba(46,51,45,.06),0 16px 36px rgba(87,123,83,.18)!important}
 body{font-variant-numeric:tabular-nums}
@@ -3092,8 +3092,8 @@ thead th{color:#767B75!important}
     <!-- 左右並排：左日曆、右時段名單 -->
     <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
 
-      <!-- 左：日曆（放大，與右側均分） -->
-      <div style="flex:1 1 0;min-width:300px">
+      <!-- 左：日曆（限制最大寬度，避免格子過大、腳掌肉墊被裁切） -->
+      <div style="flex:1 1 0;min-width:300px;max-width:440px">
         <div style="background:#fff;border-radius:16px;padding:16px;border:1px solid #E1E4DF;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #ECEEEA;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#4A4F49" onmouseover="this.style.background='#f4f8f3'" onmouseout="this.style.background='#fff'">‹</button>
@@ -3114,7 +3114,7 @@ thead th{color:#767B75!important}
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding:10px 14px;background:#fff;border-radius:12px;border:1px solid #E1E4DF">
           <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#A9C4A5"></div><span style="font-size:12px;color:#767B75">有空位</span></div>
           <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#3E5A3B"></div><span style="font-size:12px;color:#767B75">已預約</span></div>
-          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#D5D8D2"></div><span style="font-size:12px;color:#767B75">額滿/已結束</span></div>
+          <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#D5D8D2"></div><span style="font-size:12px;color:#767B75">已結束</span></div>
         </div>
       </div>
 
@@ -12681,7 +12681,7 @@ function msRenderCal() {
     } else {
       html += '<div'
         + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
-        + ' style="aspect-ratio:1;display:flex;align-items:flex-end;justify-content:center;cursor:' + (clickable ? 'pointer' : 'default') + ';transition:transform .18s"'
+        + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;cursor:' + (clickable ? 'pointer' : 'default') + ';transition:transform .18s"'
         + (clickable ? ' onmouseover="this.style.transform=\'scale(1.12)\'" onmouseout="this.style.transform=\'\'"' : '')
         + '><div class="ms-paw" style="--paw:' + bg + ';color:' + color + ';font-weight:' + fw + (shadow ? ';box-shadow:' + shadow : '') + '">' + d
         + (myBook && !isSelected ? '<span style="position:absolute;bottom:8%;right:10%;width:5px;height:5px;border-radius:50%;background:#fff;opacity:.9"></span>' : '')
