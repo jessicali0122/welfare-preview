@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706135913';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706142335';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1785,6 +1785,18 @@ thead th{color:#767B75!important}
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
+      <div class="dash-hub-card" onclick="hubNav(this,'minutes')" style="cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);border:1px solid #E1E4DF;display:flex">
+        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
+          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <span style="font-size:30px;line-height:1" role="img" aria-label="會議紀錄">📋</span>
+          </div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:2px;display:flex;align-items:baseline;gap:8px">會議紀錄<span style="font-size:12px;font-weight:400;letter-spacing:2px;color:#577B53">MINUTES</span></div>
+            <div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:1px">福委會會議紀錄（唯讀檢視）</div>
+          </div>
+          <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
+        </div>
+      </div>
     </div>
     <!-- 品牌語 -->
     <div style="text-align:center;padding:24px 0 8px">
@@ -1855,6 +1867,21 @@ thead th{color:#767B75!important}
     if(document.getElementById('sub-m-result')) subsidyInit();
   })();
   </script>
+
+  <!-- ===== 會議紀錄（嵌入 Google Doc，唯讀檢視）===== -->
+  <div class="view" id="view-minutes" style="position:relative;min-height:calc(100vh - 152px)">
+    <div style="max-width:1000px;margin:0 auto">
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;background:#fff;border:1px solid #E1E4DF;border-radius:16px;padding:14px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
+        <div style="width:52px;height:52px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:28px" role="img" aria-label="會議紀錄">📋</span></div>
+        <div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:3px;display:flex;align-items:baseline;gap:8px">會議紀錄<span style="font-size:12px;font-weight:400;letter-spacing:3px;color:#577B53">MINUTES</span></div><div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:1px">福委會會議紀錄・唯讀檢視</div></div>
+        <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="flex-shrink:0;font-size:13px;font-weight:600;color:#577B53;border:1.5px solid #C9DAC6;background:#fff;border-radius:20px;padding:7px 14px;text-decoration:none;white-space:nowrap">在 Google Docs 開啟 ↗</a>
+      </div>
+      <div style="background:#fff;border:1px solid #E1E4DF;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
+        <iframe src="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/preview" title="福委會會議紀錄" style="width:100%;height:calc(100vh - 240px);min-height:520px;border:0;display:block"></iframe>
+      </div>
+      <div style="font-size:12px;color:#9AA098;margin-top:10px;text-align:center;line-height:1.7">若這裡顯示「需要權限」，請將該文件的共用設定改為「知道連結的人－檢視者」（僅組織內或所有人），即可在系統內閱讀。</div>
+    </div>
+  </div>
 
   <!-- view-analytics 已併入 view-dashboard -->
   <div class="view" id="view-analytics" style="display:none!important">
@@ -6366,7 +6393,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助',minutes:'會議紀錄'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -6404,7 +6431,7 @@ function sw(name,elOrName,_fromPop){
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   if (!_fromPop && window._appReady) {
-    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy'];
+    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','minutes'];
     if (mainViews.includes(name)) {
       history.pushState({ view: name }, '', '#' + name);
     }
