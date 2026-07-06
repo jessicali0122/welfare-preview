@@ -1860,7 +1860,13 @@ thead th{color:#767B75!important}
     var F={ trial:{'本人':[5100,3100],'父母配偶子女':[3100,2100],'岳父母公婆':[2100,1700],'祖父母兄弟姊妹':[1700,1700]},
             pass:{'本人':[11000,7100],'父母配偶子女':[5100,3100],'岳父母公婆':[3100,2100],'祖父母兄弟姊妹':[2100,1700]} };
     function money(n){ return 'NT$'+Number(n).toLocaleString(); }
-    function box(amount){ return '<div style="background:#FFF6EA;border:1px solid #FBE6C8;border-radius:12px;padding:14px 18px;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap"><span style="font-size:13px;color:#9A6A16;font-weight:600">可申請補助金額</span><span style="font-size:28px;font-weight:800;color:#E0820A;letter-spacing:.02em">'+money(amount)+'</span></div>'; }
+    function box(amount){ return '<div style="background:linear-gradient(135deg,#FFF9F0 0%,#FFF1DD 100%);border:1px solid #F6DFBC;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 1px 2px rgba(224,130,10,.06),0 8px 22px rgba(224,130,10,.10)">'
+      + '<div style="width:44px;height:44px;border-radius:50%;background:#FCEBCF;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:22px;line-height:1" role="img" aria-label="補助">💰</span></div>'
+      + '<div style="flex:1;min-width:0">'
+        + '<div style="font-size:12px;color:#B0803A;font-weight:600;letter-spacing:2px;margin-bottom:3px">可申請補助金額</div>'
+        + '<div style="display:flex;align-items:baseline;gap:4px"><span style="font-size:15px;font-weight:700;color:#E0820A">NT$</span><span style="font-size:32px;font-weight:800;color:#E0820A;letter-spacing:.01em;line-height:1.05">'+Number(amount).toLocaleString()+'</span></div>'
+      + '</div>'
+    + '</div>'; }
     window.subsidyCalcM=function(){ var t=+(document.getElementById('sub-m-tenure')||{}).value||0; var ty=((document.getElementById('sub-m-type')||{}).value==='part')?1:0; var el=document.getElementById('sub-m-result'); if(el) el.innerHTML=box(M[t][ty]); };
     window.subsidyCalcF=function(){ var st=(document.getElementById('sub-f-stage')||{}).value||'pass'; var rel=(document.getElementById('sub-f-rel')||{}).value||'本人'; var ty=((document.getElementById('sub-f-type')||{}).value==='part')?1:0; var el=document.getElementById('sub-f-result'); if(el && F[st] && F[st][rel]) el.innerHTML=box(F[st][rel][ty]); };
     window.subsidyInit=function(){ try{ subsidyCalcM(); subsidyCalcF(); }catch(e){} };
@@ -3162,7 +3168,7 @@ thead th{color:#767B75!important}
     <div id="ms-my-upcoming-wrap">
       <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
       <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:24px;color:#9AA098;font-size:14px;background:#fff;border-radius:16px;border:1px solid #E1E4DF;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
-        <div style="font-size:30px;margin-bottom:6px">🧳</div>尚無即將啟程的班次，從下方挑個好日子出發吧 ✈️
+        <div style="font-size:30px;margin-bottom:6px">💆</div>目前沒有即將到來的預約，從下方挑個好日子來放鬆一下吧 🌿
       </div>
     </div>
     <div id="ms-my-history-wrap" style="display:none">
@@ -10300,7 +10306,10 @@ async function _htLoadSheetHistory() {
 }
 // 轉成歷史回顧卡片可用的偽事件；同月若平台也有場次，兩筆並列、各帶來源標籤
 function _htSheetAsEvents() {
-  return _htSheetSessions.map(function (s) {
+  // 同月若已有系統活動（含由試算表匯入的可編輯副本），隱藏唯讀試算表版，避免重複
+  var platMonths = {};
+  (_htEvents || []).forEach(function (e) { var m = _evMonth(e); if (m) platMonths[m] = 1; });
+  return _htSheetSessions.filter(function (s) { return !platMonths[s.ym]; }).map(function (s) {
     // 卡片標題只顯示「午茶日」：年月已在左側日期方塊呈現，不重複
     return { eventId: 'sheet:' + s.sheetName, month: s.ym, date: s.date || '',
              headcount: s.headcount || 0, itemCount: (s.items || []).length,
@@ -10396,10 +10405,54 @@ window.htOpenSheetDetail = function (eventId) {
             + ' ＝ NT$ ' + (s.budgetTotal||0).toLocaleString() + '</div>' : '')
     +   '</div>'
     +   '<div style="flex:1"></div>'
+    +   (can('hightea.manage') ? '<button onclick="htImportSheetEvent(\'' + htEsc(name) + '\')" style="font-size:13px;font-weight:600;color:#fff;background:#577B53;border:none;border-radius:20px;padding:8px 16px;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background=\'#46633F\'" onmouseout="this.style.background=\'#577B53\'">✏️ 轉為可編輯副本</button>' : '')
     +   '<a href="https://docs.google.com/spreadsheets/d/104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo/edit" target="_blank" rel="noopener" style="font-size:12px;color:#577B53;text-decoration:none;letter-spacing:1px">在 Google 試算表開啟 ↗</a>'
     + '</div>'
     + '</div>';
   document.body.appendChild(d);
+};
+
+// 把「唯讀試算表月份」複製成一筆可編輯的系統活動（存系統庫，原始試算表不動）
+window.htImportSheetEvent = async function (sheetName) {
+  if (!can('hightea.manage')) return;
+  if (window._htImportLock) return;
+  var s = null;
+  _htSheetSessions.forEach(function (x) { if (x.sheetName === sheetName) s = x; });
+  if (!s) { toast('找不到該筆試算表資料', 'error'); return; }
+  // 同月若已有系統活動，避免重複匯入
+  var dup = (_htEvents || []).some(function (e) { return _evMonth(e) === s.ym; });
+  if (dup && !confirm(s.ym + ' 已經有系統活動，仍要再建立一筆副本嗎？')) return;
+  window._htImportLock = true;
+  try {
+    var hc = s.headcount || 0;
+    var totalBudget = s.budgetTotal || s.subtotal || 0;
+    var perPerson = (s.budget && s.budget.per) ? s.budget.per : (hc ? Math.round(totalBudget / hc) : 0);
+    var r = await htApi('htCreate', {
+      month: s.ym,
+      date: s.date || '',
+      headcount: hc,
+      budgetPerPerson: perPerson,
+      totalBudget: totalBudget,
+      organizer1: '',
+      organizer2: '',
+      notes: '（由試算表「' + sheetName + '」匯入）',
+    });
+    if (!r || !r.ok || !r.eventId) { toast('建立副本失敗：' + ((r && r.error) || '未知錯誤'), 'error'); return; }
+    var items = (s.items || []).map(function (it, i) {
+      var up = it.price || 0, qty = it.qty || 0;
+      return {
+        name: it.name || '', vendor: it.vendor || '', category: '',
+        unitPrice: up, qty: qty, subtotal: it.subtotal || (up * qty),
+        assignee: it.owner || '', ordered: !!it.ordered, notes: it.note || '',
+        sort: i, eventId: r.eventId,
+      };
+    });
+    if (items.length) { try { await htApi('htSaveItems', { eventId: r.eventId, items: items }); } catch (e) {} }
+    var m = document.getElementById('ht-sheet-modal'); if (m) m.remove();
+    toast('✅ 已建立可編輯副本');
+    await htLoadList();
+    htOpenDetail(r.eventId);
+  } finally { window._htImportLock = false; }
 };
 
 function htRenderEvents() {
@@ -13291,18 +13344,18 @@ function msBookingCard(b, isUpcoming) {
   var notch = function(pos){ return '<div style="position:absolute;'+pos+':-9px;left:-9px;width:18px;height:18px;border-radius:50%;background:#F7F8F6;border:1px solid #E1E4DF;box-sizing:border-box"></div>'; };
   // 已登機戳章（報到完成蓋在票面上）
   var stamp = s==='attended'
-    ? '<div style="position:absolute;right:8px;top:8px;transform:rotate(-10deg);border:2.5px solid #577B53;color:#577B53;border-radius:9px;padding:3px 10px;font-size:14px;font-weight:900;letter-spacing:2px;opacity:.65;pointer-events:none;background:rgba(255,255,255,.5);white-space:nowrap;z-index:2">已登機 ✓</div>'
+    ? '<div style="position:absolute;right:8px;top:8px;transform:rotate(-10deg);border:2.5px solid #577B53;color:#577B53;border-radius:9px;padding:3px 10px;font-size:14px;font-weight:900;letter-spacing:2px;opacity:.65;pointer-events:none;background:rgba(255,255,255,.5);white-space:nowrap;z-index:2">已報到 ✓</div>'
     : '';
   var bpNo = String(b.bookingId||'').replace(/[^A-Za-z0-9]/g,'').slice(-6).toUpperCase() || 'TSA000';
   // 手機窄版存根縮窄，避免擠壓主票面
   var stubW = (window.matchMedia && window.matchMedia('(max-width:480px)').matches) ? 72 : 92;
 
   return '<div style="background:#fff;border-radius:20px;box-shadow:0 4px 20px rgba(87,123,83,.10);overflow:hidden">'
-    // ── 票頭：BOARDING PASS ──
+    // ── 票頭：RELAX PASS ──
     + '<div style="background:'+headerGrad+';padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
     +   '<div style="display:flex;align-items:center;gap:10px;min-width:0">'
-    +     '<span style="font-size:18px">✈️</span>'
-    +     '<div style="min-width:0"><div style="color:#fff;font-size:14px;font-weight:900;letter-spacing:.16em;white-space:nowrap">BOARDING PASS</div>'
+    +     '<span style="font-size:18px">💆</span>'
+    +     '<div style="min-width:0"><div style="color:#fff;font-size:14px;font-weight:900;letter-spacing:.16em;white-space:nowrap">RELAX PASS</div>'
     +     '<div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:1px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">員工紓壓按摩・TSA WELLNESS</div></div>'
     +   '</div>'
     +   '<span style="background:'+statusColor+';color:#fff;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0">'+statusLabel+'</span>'
@@ -13323,11 +13376,11 @@ function msBookingCard(b, isUpcoming) {
     +     '</div>'
     // 乘客＋航程
     +     '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px">'
-    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">PASSENGER</div>'
+    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">GUEST</div>'
     +       '<div style="font-size:16px;font-weight:800;color:#2E332D">'+htEsc(userName)+'</div>'
     +       '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:12px;font-weight:800;letter-spacing:.1em;color:#577B53">'
     +         '<span>WORK</span>'
-    +         '<span style="flex:0 1 70px;min-width:30px;border-top:2px dashed #CBD4C9;position:relative"><span style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:12px">✈️</span></span>'
+    +         '<span style="flex:0 1 70px;min-width:30px;border-top:2px dashed #CBD4C9;position:relative"><span style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:12px">💆</span></span>'
     +         '<span style="color:#577B53">RELAX</span>'
     +       '</div>'
     +       (ts ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">預約於 '+ts+'</div>' : '')
