@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706105259';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706105548';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10803,15 +10803,29 @@ function _htRenderModalCopyHint() {
 }
 var _htModalRecResult = null;
 function _htBudgetForMonth(ym) {
-  var m = parseInt((ym || '').split('-')[1]) || (new Date().getMonth() + 1);
-  return m === 7 ? 400 : 200;
+  // 每人預算一律預設 200，有需要的人自行修改
+  return 200;
+}
+// 新增活動時的人數預設：抓「前一個月」的參與人數；查無則退回最近一場有人數的歷史場次，再退回全體成員數
+function _htPrevMonthHeadcount(ym) {
+  var parts = (ym || '').split('-');
+  var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
+  if (!y || !m) return LOCAL_USER_LIST.length || '';
+  var pm = m - 1, py = y; if (pm < 1) { pm = 12; py = y - 1; }
+  var prevYm = py + '-' + String(pm).padStart(2, '0');
+  var all = _htEvents.concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+  var prev = all.filter(function(e){ return _evMonth(e) === prevYm && e.headcount > 0; })[0];
+  if (prev) return prev.headcount;
+  var past = all.filter(function(e){ return e.headcount > 0 && _evMonth(e) < ym; })
+    .sort(function(a,b){ return _evMonth(b).localeCompare(_evMonth(a)); })[0];
+  return past ? past.headcount : (LOCAL_USER_LIST.length || '');
 }
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
   var now = new Date();
   var ym = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0');
   _htInitCreatePickers(ym);
-  document.getElementById('ht-new-headcount').value = LOCAL_USER_LIST.length || '';
+  document.getElementById('ht-new-headcount').value = _htPrevMonthHeadcount(ym);
   document.getElementById('ht-new-budget').value = _htBudgetForMonth(ym);
   document.getElementById('ht-new-notes').value = '';
   var _fillOrgSelects = function(){
