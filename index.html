@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706104620';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706105259';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11258,18 +11258,27 @@ function htRenderCalendar() {
       var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
       var mAbbr = mNum ? mNames[mNum-1] : '';
       var listClick = e._sheet ? 'htOpenSheetDetail(\''+e.eventId+'\')' : 'htOpenDetail(\''+e.eventId+'\')';
-      return '<div onclick="'+listClick+'" style="display:flex;align-items:center;gap:14px;padding:14px;border-radius:16px;margin-bottom:10px;cursor:pointer;background:#fff;border:1px solid #f0f0f0;transition:all .18s;box-shadow:0 1px 4px rgba(0,0,0,.04)" onmouseover="this.style.borderColor=\'#A9C4A5\';this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.12)\'" onmouseout="this.style.borderColor=\'#f0f0f0\';this.style.boxShadow=\'0 1px 4px rgba(0,0,0,.04)\'">'
-        + '<div style="width:48px;flex-shrink:0;background:linear-gradient(150deg,#eef4ec,#dde8da);border-radius:12px;padding:8px 0;text-align:center;color:#577B53">'
-        +   '<div style="font-size:12px;font-weight:700;letter-spacing:.06em;opacity:.7">'+mAbbr+'</div>'
-        +   '<div style="font-size:22px;font-weight:800;line-height:1.1">'+dayNum+'</div>'
+      var stubColor = dispStatus === '已完成' ? '#7E9663' : dispStatus === '進行中' ? '#7A93B5' : dispStatus === '待結算' ? '#9AA098' : '#577B53';
+      if (e._sheet) stubColor = '#577B53';
+      var expVal = e.actualExpense > 0 ? fmtMoney(e.actualExpense) : '—';
+      var srcTag = e._sheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#577B53;background:#EDF1EC;border:1px solid #E1E4DF;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:1px">📋<span class="t"> 試算表</span></span>' : '';
+      return '<div onclick="'+listClick+'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 6px rgba(0,0,0,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
+        + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
+        +   '<div style="background:linear-gradient(150deg,#eef4ec,#dde8da);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#577B53;flex-shrink:0">'
+        +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
+        +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+dayNum+'</div>'
+        +   '</div>'
+        +   '<div style="flex:1;min-width:0">'
+        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+fmtMonth(e.month)+' 午茶日'+srcTag+'</div>'
+        +     '<div style="font-size:14px;color:#aaa;margin-top:3px">'+(e.headcount ? '👥 '+e.headcount+' 人參與' : '')+(e.itemCount ? '　'+e.itemCount+' 品項' : '')+'</div>'
+        +   '</div>'
+        +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
         + '</div>'
-        + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-size:16px;font-weight:800;color:#2E332D">'+fmtMonth(e.month)+' 午茶日'+(e._sheet?' <span style="font-size:12px;font-weight:600;color:#577B53;background:#F3F7F2;border:1px solid #DDE8DA;border-radius:20px;padding:1px 8px;vertical-align:2px">📋</span>':'')+'</div>'
-        +   (e.headcount ? '<div style="font-size:14px;color:#aaa;margin-top:4px">👥 '+e.headcount+' 人參與</div>' : '')
-        + '</div>'
-        + '<div style="text-align:right;flex-shrink:0">'
-        +   '<span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;background:'+sc.bg+';color:'+sc.color+'">'+dispStatus+'</span>'
-        +   (e.actualExpense ? '<div style="font-size:14px;font-weight:700;color:#3E5A3B;margin-top:6px">'+fmtMoney(e.actualExpense)+'</div>' : '')
+        + '<div style="width:78px;flex-shrink:0;background:'+stubColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;padding:10px 6px">'
+        +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fff"></div>'
+        +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#fff"></div>'
+        +   '<div style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;text-align:center">'+dispStatus+'</div>'
+        +   '<div style="font-size:12px;font-weight:700;color:rgba(255,255,255,.85);white-space:nowrap;text-align:center">'+expVal+'</div>'
         + '</div>'
         + '</div>';
     }).join('');
