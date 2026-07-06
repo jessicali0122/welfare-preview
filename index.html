@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706131344';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706132558';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2631,9 +2631,6 @@ thead th{color:#767B75!important}
         <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')">
           🗓️ 活動指南
         </button>
-        <button class="ht-tab-btn" id="ht-tab-discover" data-cap="hightea.discover" onclick="htSwitchListTab('discover')">
-          🗺️ 探店靈感
-        </button>
       </div>
       <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap">
         ✨ 新增活動
@@ -2898,6 +2895,7 @@ thead th{color:#767B75!important}
             <div id="ht-qty-hint" style="font-size:12px;color:#767B75;margin-top:2px"></div>
           </div>
           <div style="display:flex;gap:8px">
+            <button onclick="htOpenStorePicker()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px solid #577B53;background:#577B53;color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">🗺️ 從探店靈感挑店家</button>
             <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               新增品項
@@ -11927,6 +11925,47 @@ window.htAddItemRow = function() {
   htRenderItems();
 };
 
+// ── 從探店靈感挑店家 → 帶入品項廠商（原「探店靈感」分頁已移除，功能併入此處）──
+function _htStorePickerList() {
+  var seen = {}, out = [];
+  (_htVendors || []).forEach(function(v){ if (v && v.name && !seen[v.name]) { seen[v.name] = 1; out.push({ name:v.name, sub:(v.totalOrders?('訂過 '+v.totalOrders+' 次'):'')+(v.category?('　'+v.category):'') }); } });
+  try { if (typeof htGetSpots === 'function') (htGetSpots()||[]).forEach(function(s){ if (s && s.name && !seen[s.name]) { seen[s.name] = 1; out.push({ name:s.name, sub:(s.category||'')+(s.address?('　'+s.address):'') }); } }); } catch(e){}
+  return out;
+}
+window.htRenderStorePicker = function(kw) {
+  var el = document.getElementById('ht-sp-list'); if (!el) return;
+  var list = _htStorePickerList();
+  kw = (kw || '').trim(); var low = kw.toLowerCase();
+  if (low) list = list.filter(function(x){ return (x.name + ' ' + (x.sub||'')).toLowerCase().indexOf(low) >= 0; });
+  var manual = kw ? '<div onclick="htPickStore(' + JSON.stringify(kw) + ')" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;border:1.5px dashed #577B53;background:#F6F9F5;margin-bottom:6px"><span style="font-size:14px;font-weight:700;color:#577B53">＋ 直接使用「' + htEsc(kw) + '」</span></div>' : '';
+  if (!list.length && !kw) { el.innerHTML = '<div style="text-align:center;padding:24px;color:#9AA098;font-size:14px">尚無店家資料，可在上方輸入店名直接使用</div>'; return; }
+  el.innerHTML = manual + list.map(function(x){
+    return '<div onclick="htPickStore(' + JSON.stringify(x.name) + ')" style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;border:1px solid #F0EBE2;margin-bottom:6px" onmouseover="this.style.background=\'#F6F9F5\'" onmouseout="this.style.background=\'\'">'
+      + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#2E332D">' + htEsc(x.name) + '</div>' + (x.sub?'<div style="font-size:12px;color:#9AA098;margin-top:1px">'+htEsc(x.sub)+'</div>':'') + '</div>'
+      + '<span style="font-size:12px;color:#577B53;font-weight:700;flex-shrink:0">選用 →</span></div>';
+  }).join('');
+};
+window.htOpenStorePicker = function() {
+  var m = document.getElementById('ht-store-picker'); if (!m) return;
+  var q = document.getElementById('ht-sp-search'); if (q) q.value = '';
+  htRenderStorePicker('');
+  m.style.display = 'flex';
+  if (q) setTimeout(function(){ try { q.focus(); } catch(e){} }, 50);
+  if ((!_htVendors || !_htVendors.length) && typeof htApi === 'function') {
+    htApi('htVendors').then(function(rv){
+      if (rv && rv.ok) { _htVendors = (typeof _htNormalizeVendors === 'function' ? _htNormalizeVendors(rv.vendors||[]) : (rv.vendors||[])); var s = document.getElementById('ht-sp-search'); htRenderStorePicker(s ? s.value : ''); }
+    }).catch(function(){});
+  }
+};
+window.htCloseStorePicker = function() { var m = document.getElementById('ht-store-picker'); if (m) m.style.display = 'none'; };
+window.htPickStore = function(name) {
+  if (!name) return;
+  htAddItemRow();
+  if (_htItems && _htItems.length) { _htItems[_htItems.length - 1].vendor = name; htRenderItems(); }
+  htCloseStorePicker();
+  if (window.toast) toast('✅ 已帶入店家：' + name + '（品名請自行填寫）');
+};
+
 window.htDeleteItem = function(idx) {
   _htItems.splice(idx, 1);
   htRenderItems();
@@ -13771,6 +13810,20 @@ if (document.getElementById('bulletin-list')) bulletinRender();
 </div>
 
 <!-- 新增/編輯活動 Modal -->
+<!-- ── 探店靈感挑店家 Picker（併入品項表；原探店分頁已移除）── -->
+<div id="ht-store-picker" style="display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="if(event.target===this)htCloseStorePicker()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:18px;width:92%;max-width:440px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25)">
+    <div style="padding:18px 20px 12px">
+      <div style="font-size:16px;font-weight:800;color:#2E332D;margin-bottom:2px">🗺️ 從探店靈感挑店家</div>
+      <div style="font-size:12px;color:#9AA098">選一間店會自動新增一列品項並填好「廠商」，品名再自行填寫</div>
+      <input id="ht-sp-search" type="text" placeholder="搜尋店名／分類…" onkeyup="htRenderStorePicker(this.value)" style="width:100%;box-sizing:border-box;margin-top:10px;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;outline:none" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+    </div>
+    <div id="ht-sp-list" style="flex:1;overflow-y:auto;padding:0 14px 8px"></div>
+    <div style="padding:12px 20px;border-top:1px solid #F0EBE2;text-align:right">
+      <button onclick="htCloseStorePicker()" style="padding:9px 18px;border-radius:10px;border:1.5px solid #E1E4DF;background:#fff;color:#767B75;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">關閉</button>
+    </div>
+  </div>
+</div>
 <div id="ht-create-modal" style="display:none;position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.45);backdrop-filter:blur(3px);align-items:center;justify-content:center" onclick="htCloseCreate()">
   <div onclick="event.stopPropagation()" style="background:#fff;border-radius:20px;padding:28px;width:min(520px,92vw);max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)">
     <div style="font-size:18px;font-weight:700;color:#2E332D;margin-bottom:20px">新增午茶日活動</div>
