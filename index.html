@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706130456';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706131236';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1385,16 +1385,14 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #login-screen .lg-hello{font-weight:700;font-size:28px;letter-spacing:8px;text-indent:8px;color:#363B35;line-height:1.2;margin-bottom:10px;text-align:center}
 #login-screen .lg-sub{font-weight:400;font-size:14px;letter-spacing:2px;color:#767B75;margin-bottom:32px;text-align:center}
 #login-screen .lg-box{position:relative;background:rgba(255,255,255,.85);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid #E1E4DF;border-radius:20px;padding:28px 26px 24px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 18px 44px rgba(87,123,83,.16)}
-#login-screen .lg-box::before{content:'';position:absolute;top:0;left:24px;right:24px;height:3px;border-radius:0 0 3px 3px;opacity:.7;
-  background:
-    linear-gradient(90deg,transparent,rgba(143,174,139,.35),transparent),  /* 常駐底線 */
-    linear-gradient(90deg,transparent 0%,#8FAE8B 45%,#B7CCB4 55%,transparent 100%);  /* 流動高光 */
-  background-repeat:no-repeat,no-repeat;
-  background-size:100% 100%,45% 100%;
-  background-position:0 0,-45% 0;
-  animation:lgLineFlow 2.8s ease-in-out infinite}
-@keyframes lgLineFlow{0%{background-position:0 0,-45% 0}100%{background-position:0 0,145% 0}}
-@media (prefers-reduced-motion:reduce){#login-screen .lg-box::before{animation:none;background:linear-gradient(90deg,transparent,#8FAE8B,transparent)}}
+@property --lg-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+#login-screen .lg-box::before{content:'';position:absolute;inset:0;border-radius:20px;padding:2px;pointer-events:none;
+  background:conic-gradient(from var(--lg-angle),transparent 0deg,transparent 225deg,rgba(143,174,139,.45) 285deg,#8FAE8B 320deg,#B7CCB4 342deg,transparent 360deg);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+  animation:lgBorderSpin 3.6s linear infinite}
+@keyframes lgBorderSpin{to{--lg-angle:360deg}}
+@media (prefers-reduced-motion:reduce){#login-screen .lg-box::before{animation:none;background:conic-gradient(transparent 0deg,transparent 300deg,#8FAE8B 340deg,transparent 360deg)}}
 #login-screen #google-login-btn{width:100%;height:50px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);border:none;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;letter-spacing:2px;color:#fff;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s;font-family:'Noto Sans TC',sans-serif;box-shadow:0 3px 10px rgba(87,123,83,.25)}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 6px 16px rgba(87,123,83,.35)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
