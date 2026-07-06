@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260706105915';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260706111052';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2597,16 +2597,19 @@ thead th{color:#767B75!important}
   <!-- ── 列表頁 ── -->
   <div id="ht-list-panel">
 
-    <!-- 頁首：3D icon + 標題 + 年度場次 -->
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;background:#fff;border:1px solid #E1E4DF;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
-      <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-        <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍰</span>
+    <!-- 頁首：3D icon + 標題 + 年度場次 ＋ 年曆進度條（融入同一張卡） -->
+    <div style="margin-bottom:18px;background:#fff;border:1px solid #E1E4DF;border-radius:16px;padding:16px 20px 14px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12)">
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍰</span>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:3px;color:#577B53">TEA DAY</span></div>
+          <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:1px">每月一場，充電的下午茶時光</div>
+        </div>
+        <div id="ht-hero-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:1px;white-space:nowrap"></div>
       </div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:3px;color:#577B53">TEA DAY</span></div>
-        <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:1px">每月一場，充電的下午茶時光</div>
-      </div>
-      <div id="ht-hero-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:1px;white-space:nowrap"></div>
+      <div id="ht-year-timeline" style="margin-top:8px"></div>
     </div>
 
     <!-- 公告欄 -->
@@ -2623,9 +2626,6 @@ thead th{color:#767B75!important}
         <div style="text-align:center;padding:16px;color:#9AA098;font-size:14px">載入中…</div>
       </div>
     </div>
-
-    <!-- 年度進度條 -->
-    <div id="ht-year-timeline" style="margin-bottom:14px"></div>
 
     <!-- Tab 列（分段控制器，與案件追蹤一致） -->
     <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
@@ -2705,7 +2705,7 @@ thead th{color:#767B75!important}
           <div id="ht-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
           <!-- 圖例 -->
           <div style="display:flex;align-items:center;gap:16px;padding:14px 22px;border-top:1px solid #f5f5f5;flex-wrap:wrap">
-            <div style="display:flex;align-items:center;gap:6px"><span style="font-size:14px;line-height:1">🧋</span><span style="font-size:12px;color:#999">午茶日</span></div>
+            <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;background:#F2A03D;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M6.5 8h11l-1.2 11.4a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="#fff"/><rect x="5.4" y="6.4" width="13.2" height="2.2" rx="1.1" fill="#fff"/><rect x="13.2" y="1.8" width="1.8" height="7" rx=".9" transform="rotate(14 14 5)" fill="#fff"/></svg></span><span style="font-size:12px;color:#999">午茶日</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#999">國定假日</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:8px;height:8px;border-radius:50%;background:#577B53"></div><span style="font-size:12px;color:#999">節慶</span></div>
             <div style="display:flex;align-items:center;gap:6px"><div style="width:10px;height:10px;border-radius:50%;background:#e9f1e7"></div><span style="font-size:12px;color:#999">今天</span></div>
@@ -11118,11 +11118,7 @@ function htRenderYearTimeline() {
       + '</div>';
   }
   var pct = 3 + ((curMonth - 0.5) / 12) * 94;
-  el.innerHTML = '<div style="background:#fff;border:1px solid #E1E4DF;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 10px 28px rgba(87,123,83,.12);padding:18px 16px 16px">'
-    + '<div style="display:flex;align-items:baseline;gap:10px;margin:0 4px 10px"><span style="font-size:16px;font-weight:800;color:#2E332D">' + curYear + ' 午茶日年曆</span>'
-    + '<span style="font-size:14px;color:#9AA098">目前來到 ' + curMonth + ' 月</span>'
-    + '<span style="flex:1"></span><span style="font-size:12px;color:#C2C7C1;letter-spacing:.14em;font-weight:700">TEA DAY</span></div>'
-    + '<div style="position:relative;height:98px;margin:0 6px">'
+  el.innerHTML = '<div style="position:relative;height:98px;margin:2px 6px 0">'
     // 虛線航道（尚未飛過的航段）
     +   '<div style="position:absolute;left:3%;right:3%;top:60px;height:0;border-top:2px dashed #CDD8CB"></div>'
     // 已飛航段（實線）
@@ -11130,7 +11126,7 @@ function htRenderYearTimeline() {
     // 甜點小蛋糕走到目前月份（旅遊感保留虛線路徑，圖案改甜點）
     +   '<div id="ht-yt-marker" style="position:absolute;left:3%;top:8px;transform:translateX(-50%) translateZ(0);will-change:left;backface-visibility:hidden;transition:left 1.5s cubic-bezier(.34,1.2,.4,1);z-index:3;font-size:26px;line-height:1;text-shadow:0 3px 4px rgba(87,123,83,.3)">🍰</div>'
     +   '<div style="position:absolute;left:3%;right:3%;top:52px;display:flex;justify-content:space-between">' + months + '</div>'
-    + '</div></div>';
+    + '</div>';
   setTimeout(function(){
     var mk = document.getElementById('ht-yt-marker');
     var pg = document.getElementById('ht-yt-progress');
@@ -11224,7 +11220,11 @@ function htRenderCalendar() {
     if (hol) {
       bottomLabel = '<div style="font-size:12px;color:'+(hol.type==='national'?'#f43f5e':'#577B53')+';overflow:hidden;text-overflow:ellipsis;padding:0 2px;margin-top:3px;font-weight:600;white-space:nowrap">' + hol.name + '</div>';
     } else if (hasEvent) {
-      bottomLabel = '<div style="font-size:12px;color:#577B53;margin-top:3px;font-weight:600">🧋 午茶日</div>';
+      bottomLabel = '<div style="margin-top:4px;display:flex;flex-direction:column;align-items:center;gap:2px">'
+        + '<div style="width:24px;height:24px;background:#F2A03D;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:flex;align-items:center;justify-content:center">'
+        +   '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6.5 8h11l-1.2 11.4a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="#fff"/><rect x="5.4" y="6.4" width="13.2" height="2.2" rx="1.1" fill="#fff"/><rect x="13.2" y="1.8" width="1.8" height="7" rx=".9" transform="rotate(14 14 5)" fill="#fff"/></svg>'
+        + '</div>'
+        + '<div style="font-size:12px;color:#E0820A;font-weight:600;line-height:1">午茶日</div></div>';
     } else {
       bottomLabel = '<div style="height:16px"></div>';
     }
