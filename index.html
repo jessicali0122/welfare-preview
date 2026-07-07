@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260707111959';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260707112550';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1485,10 +1485,14 @@ header{box-shadow:0 1px 0 rgba(87,123,83,.10)!important}
 .dash-hub-card[onclick*="hightea"]::before{background:linear-gradient(180deg,#93B08F,#577B53)}
 .dash-hub-card[onclick*="massage"]::before{background:linear-gradient(180deg,#C9D6B8,#9DB287)}
 .dash-hub-card[onclick*="admin"]::before{background:linear-gradient(180deg,#C2C7CE,#8F96A3)}
+.dash-hub-card[onclick*="subsidy"]::before{background:linear-gradient(180deg,#E3CFA3,#C9A96A)}
+.dash-hub-card[onclick*="minutes"]::before{background:linear-gradient(180deg,#B8CBD6,#89A5B5)}
 .dash-hub-card[onclick*="applications"] .hub-icon-glow{background:#EEF2E6!important}
 .dash-hub-card[onclick*="hightea"] .hub-icon-glow{background:#EAF1E9!important}
 .dash-hub-card[onclick*="massage"] .hub-icon-glow{background:#EFF3EA!important}
 .dash-hub-card[onclick*="admin"] .hub-icon-glow{background:#ECEAF4!important}
+.dash-hub-card[onclick*="subsidy"] .hub-icon-glow{background:#F5F0E4!important}
+.dash-hub-card[onclick*="minutes"] .hub-icon-glow{background:#EAF0F3!important}
 .dash-hub-card .hub-icon-glow{box-shadow:inset 0 0 0 1px rgba(87,123,83,.08)}
 /* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
 @media(max-width:640px){.ht-src-tag .t{display:none}}
@@ -2709,7 +2713,10 @@ thead th{color:#767B75!important}
           <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:3px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:3px;color:#577B53">TEA DAY</span></div>
           <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:1px">每月一場，充電的下午茶時光</div>
         </div>
+        <div id="ht-hero-next-wrap" style="display:none;flex-shrink:0;background:#FFF9F0;border:1px solid #F2A03D;color:#E0820A;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:1px;white-space:nowrap">📅 下次午茶日 <span id="ht-hero-next"></span></div>
+        <div id="ht-weather-tip" style="display:none;text-align:center;flex-shrink:0"></div>
         <div id="ht-hero-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:1px;white-space:nowrap"></div>
+        <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap;flex-shrink:0">✨ 新增活動</button>
       </div>
       <div id="ht-year-timeline" style="margin-top:8px"></div>
     </div>
@@ -2729,27 +2736,7 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
-    <!-- Tab 列（分段控制器，與案件追蹤一致） -->
-    <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center">
-      <div class="seg-track" style="flex:1;min-width:200px">
-        <button class="ht-tab-btn active" id="ht-tab-events" onclick="htSwitchListTab('events')">
-          🗓️ 活動指南
-        </button>
-      </div>
-      <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap">
-        ✨ 新增活動
-      </button>
-    </div>
     <div id="ht-current-month-chip" style="display:none"></div>
-
-    <!-- 倒數提醒 Banner -->
-    <div id="ht-countdown-banner" style="display:none;border-radius:16px;background:linear-gradient(135deg,#F3F7F2,#eaf1e9);border:1.5px solid #c9dac6;padding:14px 18px;margin-bottom:14px;align-items:center;gap:12px">
-      <div style="flex:1">
-        <div id="ht-countdown-text" style="font-size:16px;font-weight:700;color:#3E5A3B"></div>
-        <div id="ht-countdown-sub" style="font-size:12px;color:#6E8F6A;margin-top:2px"></div>
-      </div>
-      <div id="ht-weather-tip" style="display:none;text-align:right;flex-shrink:0;padding-left:12px;border-left:1px solid #c9dac6"></div>
-    </div>
 
     <!-- 活動指南 Tab（統計摘要 + 年曆 + 日曆 + 活動卡片） -->
     <div id="ht-panel-events">
@@ -7854,15 +7841,15 @@ function buildAdminUserRow(u) {
     ? `<span style="font-size:12px;font-weight:700;color:#f97316;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap">已停用</span>`
     : '';
   return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-name="${u.name||''}" data-empid="${u.employeeId||''}" data-joinedat="${u.joinedAt||''}" data-roles="${roles.join(',')}" data-birthday="${_bday}" data-status="${isDisabled?'disabled':''}" style="border-bottom:1px solid #F7F8F6;${rowOpacity}">
-    <td style="padding:10px 12px;white-space:nowrap"><input type="checkbox" class="user-cb"></td>
-    <td style="padding:10px 12px;white-space:nowrap"><div style="display:flex;align-items:center">${nameChip(u.name||'—', 28, u.email)}${statusBadge}</div></td>
-    <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6e736d;font-family:'Noto Sans TC',sans-serif;letter-spacing:.05em;white-space:nowrap">${u.employeeId||'—'}</td>
-    <td style="padding:12px 16px;font-size:14px;color:#4A4F49;white-space:nowrap">${u.department||'—'}</td>
-    <td style="padding:12px 16px;color:#767B75;white-space:nowrap">${u.email||'—'}</td>
-    <td style="padding:10px 12px"><div style="display:flex;gap:4px;flex-wrap:wrap;min-width:60px">${roleBadges}</div></td>
-    <td style="padding:12px 16px;color:#9AA098;white-space:nowrap">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
+    <td style="padding:10px 12px;white-space:nowrap;text-align:center"><input type="checkbox" class="user-cb"></td>
+    <td style="padding:10px 12px;white-space:nowrap;text-align:center"><div style="display:flex;align-items:center;justify-content:center">${nameChip(u.name||'—', 28, u.email)}${statusBadge}</div></td>
+    <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6e736d;font-family:'Noto Sans TC',sans-serif;letter-spacing:.05em;white-space:nowrap;text-align:center">${u.employeeId||'—'}</td>
+    <td style="padding:12px 16px;font-size:14px;color:#4A4F49;white-space:nowrap;text-align:center">${u.department||'—'}</td>
+    <td style="padding:12px 16px;color:#767B75;white-space:nowrap;text-align:center">${u.email||'—'}</td>
+    <td style="padding:10px 12px;text-align:center"><div style="display:flex;gap:4px;flex-wrap:wrap;min-width:60px;justify-content:center">${roleBadges}</div></td>
+    <td style="padding:12px 16px;color:#9AA098;white-space:nowrap;text-align:center">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
     <td style="padding:12px 16px;color:#6e736d;white-space:nowrap;text-align:center">${_bdayShow || '—'}</td>
-    <td style="padding:10px 12px;white-space:nowrap"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap">
+    <td style="padding:10px 12px;white-space:nowrap;text-align:center"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:center">
       <button class="btn btn-o" style="padding:5px 10px;font-size:14px" onclick="showEditUserModal(this)">編輯</button>
       ${disableBtn}
       <button style="padding:5px 10px;font-size:14px;border:1px solid #fecaca;background:#fef2f2;color:#ef4444;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:500" onclick="confirmDeleteUser(this)">刪除</button>
@@ -10007,8 +9994,6 @@ window.htLoadList = async function() {
 }
 
 function _htUpdateCountdown() {
-  var banner = document.getElementById('ht-countdown-banner');
-  if (!banner) return;
   var now = new Date(); now.setHours(0,0,0,0);
   var upcoming = _htEvents.map(function(e) {
     var ds = String(e.date||'').replace(/\//g,'-');
@@ -10033,17 +10018,9 @@ function _htUpdateCountdown() {
       heroWrap.style.display = '';
     }
   }
-  if (!upcoming.length) { banner.style.display = 'none'; if (wtip) wtip.style.display = 'none'; return; }
-  var next = upcoming[0];
-  var diffDays = Math.round((next.d - now) / 86400000);
-  var txt = diffDays === 0 ? '今天就是午茶日！準備好了嗎？🎉'
-           : diffDays === 1 ? '明天就是午茶日！'
-           : '距離下次午茶日還有 ' + diffDays + ' 天';
-  document.getElementById('ht-countdown-text').textContent = txt;
-  document.getElementById('ht-countdown-sub').textContent = (next.ev.title || next.ev.eventId || '') + '　' + String(next.ev.date||'').replace(/-/g,'/');
-  banner.style.display = 'flex';
-  // 天氣提示（open-meteo 免費 API，僅在預報範圍內顯示）
-  _htLoadWeather(String(next.ev.date || '').replace(/\//g, '-'));
+  if (!upcoming.length) { if (wtip) wtip.style.display = 'none'; return; }
+  // 倒數重點已融入頁首 Hero（ht-hero-next-wrap），僅保留天氣提示
+  _htLoadWeather(String(upcoming[0].ev.date || '').replace(/\//g, '-'));
 };
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
