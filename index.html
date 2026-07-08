@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260708101924';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260708103135';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -237,8 +237,8 @@ input[type=radio]{accent-color:#577B53}
 .admin-tab.active{color:#577B53;border-bottom-color:#577B53}
 /* ── 分段控制器 tabs：午茶日 & 按摩預約（與案件追蹤一致） ── */
 .seg-track{display:flex;background:#ECEEEA;border-radius:12px;padding:3px;gap:2px}
-.ht-tab-btn,.massage-tab,.ms-myseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
-.ht-tab-btn.active,.massage-tab.active,.ms-myseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
+.ht-tab-btn,.massage-tab,.ms-myseg,.ms-admseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
+.ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #ECEEEA;padding-left:9px;border-left:3px solid #577B53}
 input[type=checkbox]{accent-color:#577B53}
 
@@ -3225,6 +3225,15 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
+    <!-- 管理後台子分頁：把分散的功能歸成三組 -->
+    <div class="seg-track" style="max-width:440px;margin-bottom:16px">
+      <button class="ms-admseg active" id="ms-admseg-schedule" onclick="msAdminTab('schedule')">📅 排程設定</button>
+      <button class="ms-admseg" id="ms-admseg-checkin" onclick="msAdminTab('checkin')">🔲 當日報到</button>
+      <button class="ms-admseg" id="ms-admseg-records" onclick="msAdminTab('records')">📊 預約紀錄</button>
+    </div>
+
+    <!-- ── 分頁：排程設定（開放日期＋限制設定＋常用時段）── -->
+    <div id="ms-adm-schedule">
     <!-- 開放日期管理 -->
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
@@ -3255,7 +3264,7 @@ thead th{color:#767B75!important}
     <div id="ms-admin-settings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:10px">
@@ -3276,7 +3285,7 @@ thead th{color:#767B75!important}
       </div>
       <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16)">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#577B53,#f43f5e);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">常用時段樣板</div>
         </div>
         <div style="font-size:12px;color:#9AA098;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
@@ -3284,11 +3293,14 @@ thead th{color:#767B75!important}
         <div style="display:flex;gap:6px">
           <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none;cursor:pointer"></select>
           <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 6px;font-size:14px;font-family:inherit;background:#fff;text-align:center">
-          <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#577B53,#f43f5e);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+          <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
         </div>
       </div>
     </div>
+    </div><!-- end ms-adm-schedule -->
 
+    <!-- ── 分頁：當日報到（QR）── -->
+    <div id="ms-adm-checkin" style="display:none">
     <!-- 今日 QR Code -->
     <div id="ms-qr-section" style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);margin-bottom:14px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -3304,11 +3316,15 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
+    </div><!-- end ms-adm-checkin -->
+
+    <!-- ── 分頁：預約紀錄 ── -->
+    <div id="ms-adm-records" style="display:none">
     <!-- 所有預約紀錄 -->
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#22c55e,#16a34a);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
+          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">所有預約紀錄</div>
         </div>
         <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #E1E4DF;border-radius:20px;padding:6px 14px;font-size:14px;font-family:inherit;background:#F7F8F6;width:150px;outline:none" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
@@ -3328,6 +3344,7 @@ thead th{color:#767B75!important}
         </table>
       </div>
     </div>
+    </div><!-- end ms-adm-records -->
   </div>
 
 
@@ -13390,6 +13407,15 @@ function msBookingCard(b, isUpcoming) {
 
 // ── 管理（admin only） ──
 
+// 管理後台子分頁切換：排程設定／當日報到／預約紀錄
+window.msAdminTab = function(tab) {
+  ['schedule','checkin','records'].forEach(function(t){
+    var panel = document.getElementById('ms-adm-' + t);
+    if (panel) panel.style.display = (t === tab) ? '' : 'none';
+    var btn = document.getElementById('ms-admseg-' + t);
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+};
 
 function msRenderAdmin() {
   if (!_msData) return;
