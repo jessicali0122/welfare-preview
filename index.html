@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260707164745';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260708091720';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13773,11 +13773,24 @@ window.bulletinSubmit = function() {
   if (!title) { document.getElementById('bulletin-title-inp').focus(); return; }
   var post = { id:'B'+Date.now()+Math.random().toString(36).slice(2,6), pinned, title, content:body, scope:_bulletinScope, author:((currentUser||window.currentUser)&&(currentUser||window.currentUser).name)||'管理員', createdAt:new Date().toISOString() };
   _bulletinPosts.unshift(post);
-  bulletinCloseModal(); bulletinRender();
-  if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
-  if (typeof msRenderBulletin === 'function') msRenderBulletin();
+  var _rerender = function(){
+    bulletinRender();
+    if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
+    if (typeof msRenderBulletin === 'function') msRenderBulletin();
+  };
+  bulletinCloseModal(); _rerender();
   if (window.toast) toast('✅ 公告已發布');
-  htApi && htApi('bulletinPost', post).catch(function(){
+  if (!window.htApi) return;
+  // 檢查後端是否真的存檔；成功→以伺服器對帳（避免發完又被同步蓋掉消失）；失敗→移除並提示
+  htApi('bulletinPost', post).then(function(r){
+    if (r && r.ok) {
+      if (window._bulletinSync) _bulletinSync();
+    } else {
+      _bulletinPosts = _bulletinPosts.filter(function(p){ return p.id !== post.id; });
+      _rerender();
+      if (window.toast) toast('⚠️ 發布失敗：' + ((r && r.error) || '請稍後再試'));
+    }
+  }).catch(function(){
     if (window.toast) toast('⚠️ 公告尚未同步到伺服器，請檢查網路後重新發布');
   });
 };
