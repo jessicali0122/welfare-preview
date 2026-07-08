@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260708094750';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260708100353';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3175,24 +3175,21 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- 即將開放：獨立一區 -->
-  <div id="ms-panel-open" style="margin-bottom:24px">
-    <div style="background:#fff;border-radius:16px;border:1px solid #E1E4DF;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);padding:16px 18px">
-      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
-        <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:4px;white-space:nowrap">即 將 開 放</div>
-        <div style="font-size:12px;letter-spacing:3px;color:#738e41">OPEN DATES</div>
-      </div>
-      <div id="ms-upcoming" style="display:flex;gap:10px;overflow-x:auto;padding:2px 0 6px"></div>
-    </div>
-  </div>
-
-  <!-- 📅 預約日曆 panel -->
+  <!-- 📅 預約日曆 panel（即將開放併入左欄上方，省版面、消除空白帶）-->
   <div id="ms-panel-calendar">
-    <!-- 左右並排：左日曆、右時段名單 -->
+    <!-- 左右並排：左（即將開放＋日曆）、右時段名單 -->
     <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
 
-      <!-- 左：日曆（限制最大寬度，避免格子過大、腳掌肉墊被裁切） -->
+      <!-- 左：即將開放快速跳日 + 日曆（限制最大寬度，避免格子過大、腳掌肉墊被裁切） -->
       <div style="flex:1 1 0;min-width:300px;max-width:440px">
+        <!-- 即將開放：快速跳日 -->
+        <div style="background:#fff;border-radius:16px;border:1px solid #E1E4DF;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);padding:14px 16px;margin-bottom:16px">
+          <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:600;color:#2E332D;letter-spacing:2px;white-space:nowrap">即將開放</div>
+            <div style="font-size:12px;letter-spacing:2px;color:#738e41">OPEN DATES</div>
+          </div>
+          <div id="ms-upcoming" style="display:flex;gap:10px;overflow-x:auto;padding:2px 0 4px"></div>
+        </div>
         <div style="background:#fff;border-radius:16px;padding:16px;border:1px solid #E1E4DF;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16)">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
             <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #ECEEEA;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#4A4F49" onmouseover="this.style.background='#f4f8f3'" onmouseout="this.style.background='#fff'">‹</button>
@@ -12777,7 +12774,6 @@ window.msSwitchTab = function(tab) {
   var isCalendar = !isAdmin;
   document.getElementById('ms-panel-calendar').style.display = isCalendar ? '' : 'none';
   document.getElementById('ms-panel-my').style.display = isCalendar ? '' : 'none';
-  document.getElementById('ms-panel-open').style.display = isCalendar ? '' : 'none';
   document.getElementById('ms-panel-admin').style.display = isAdmin ? '' : 'none';
   if (isAdmin) { msRenderAdmin(); }
   else msRenderMyBookings();
@@ -13244,9 +13240,9 @@ function msBookingCardCompact(b) {
   var weekday = parts.length===3 ? weekDays[new Date(b.date + 'T00:00:00').getDay()] : '';
   // 狀態 → 票頭配色
   var headerGrad, statusLabel;
-  if (s==='attended')       { headerGrad='linear-gradient(135deg,#6E8F4E,#9DB15F)'; statusLabel='✓ 已完成'; }
+  if (s==='attended')       { headerGrad='linear-gradient(135deg,#6E8F4E,#9DB15F)'; statusLabel='✓ 已報到'; }
   else if (s==='cancelled') { headerGrad='linear-gradient(135deg,#9AA098,#D2D6D0)'; statusLabel='✕ 已取消'; }
-  else if (s==='noshow')    { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='⚠ 缺席'; }
+  else if (s==='noshow')    { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='⚠ 未報到'; }
   else                      { headerGrad='linear-gradient(135deg,#9AA098,#C2C7C1)'; statusLabel='已結束'; }
   var bpNo = String(b.bookingId||'').replace(/[^A-Za-z0-9]/g,'').slice(-6).toUpperCase() || 'TSA000';
   var seed = b.bookingId ? b.bookingId.charCodeAt(b.bookingId.length-1) : 7;
