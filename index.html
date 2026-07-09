@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260709144542';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260709145410';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -426,17 +426,22 @@ input[type=checkbox]{accent-color:#577B53}
   #toast{bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
 }
 
-/* 午茶日品項表格：手機版轉成卡片式（10 欄表格在手機橫向捲動難用，改為每個品項一張卡、欄位垂直排列）*/
+/* 午茶日品項表格：手機版轉成卡片式（10 欄表格在手機橫向捲動難用，改為每個品項一張卡、欄位垂直排列）
+   注意：table/tbody/tfoot 必須一起 display:block，否則 tr 會被殘留的表格排版壓成細條（曾造成大跑版） */
 @media(max-width:768px){
+  #ht-dtab-plan table{display:block;width:100%!important;table-layout:auto!important}
+  #ht-dtab-plan colgroup{display:none}
   #ht-dtab-plan thead{display:none}
-  #ht-items-tbody tr{display:block;border:1.5px solid #ECEEEA;border-radius:12px;padding:4px 14px;margin:10px 8px;background:#fff}
-  #ht-items-tbody td{display:flex;align-items:center;gap:10px;padding:6px 0!important;text-align:left!important;border:none!important;white-space:normal!important}
+  #ht-items-tbody{display:block;width:100%}
+  #ht-items-tbody tr{display:block;width:auto;border:1.5px solid #ECEEEA;border-radius:12px;padding:4px 14px;margin:10px 2px;background:#fff}
+  #ht-items-tbody td{display:flex;align-items:center;gap:10px;width:auto;padding:6px 0!important;text-align:left!important;border:none!important;white-space:normal!important}
   #ht-items-tbody td::before{content:attr(data-label);font-size:12px;color:#9AA098;font-weight:600;min-width:46px;flex-shrink:0}
   #ht-items-tbody td.ht-it-del{justify-content:flex-end}
   #ht-items-tbody td.ht-it-del::before{display:none}
   #ht-items-tbody td .ht-it-inp{width:100%!important;box-sizing:border-box}
+  #ht-dtab-plan tfoot{display:block;width:100%}
   #ht-dtab-plan tfoot tr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
-  #ht-dtab-plan tfoot td{padding:0!important}
+  #ht-dtab-plan tfoot td{padding:0!important;width:auto}
   #ht-dtab-plan tfoot td[colspan="4"]{display:none}
 }
 
@@ -1495,14 +1500,11 @@ html,body{background:#F7F8F6}
 .dash-hub-card[onclick*="massage"]::before{background:linear-gradient(180deg,#C9D6B8,#9DB287)}
 .dash-hub-card[onclick*="admin"]::before{background:linear-gradient(180deg,#C2C7CE,#8F96A3)}
 .dash-hub-card[onclick*="subsidy"]::before{background:linear-gradient(180deg,#E3CFA3,#C9A96A)}
-.dash-hub-card[onclick*="minutes"]::before{background:linear-gradient(180deg,#B8CBD6,#89A5B5)}
 .dash-hub-card[onclick*="applications"] .hub-icon-glow{background:#EEF2E6!important}
 .dash-hub-card[onclick*="hightea"] .hub-icon-glow{background:#EAF1E9!important}
 .dash-hub-card[onclick*="massage"] .hub-icon-glow{background:#EFF3EA!important}
 .dash-hub-card[onclick*="admin"] .hub-icon-glow{background:#ECEAF4!important}
 .dash-hub-card[onclick*="subsidy"] .hub-icon-glow{background:#F5F0E4!important}
-.dash-hub-card[onclick*="minutes"] .hub-icon-glow{background:#EAF0F3!important}
-@media(max-width:768px){.minutes-mobile-open{display:flex!important}}
 .dash-hub-card .hub-icon-glow{box-shadow:inset 0 0 0 1px rgba(87,123,83,.08)}
 /* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
 @media(max-width:640px){.ht-src-tag .t{display:none}}
@@ -1797,18 +1799,20 @@ thead th{color:#767B75!important}
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'minutes')" style="order:5;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05);border:1px solid #D5DAD2;display:flex">
-        <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
-          <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <span style="font-size:30px;line-height:1" role="img" aria-label="會議紀錄">📋</span>
-          </div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">會議紀錄<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">MINUTES</span></div>
-            <div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">福委會會議紀錄（唯讀檢視）</div>
-          </div>
-          <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
-        </div>
-      </div>
+    </div>
+    <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
+    <div style="font-size:12px;letter-spacing:.2em;color:#738e41;text-align:center;margin:24px 0 14px">LINKS・常用連結</div>
+    <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">
+      <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.05);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
+        <span style="font-size:20px;line-height:1">📋</span>
+        <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
+        <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
+      </a>
+      <a href="https://drive.google.com/drive/folders/1vIiK9QQl5W70c3Wbo3DUiAbEHaqf1qOc" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.05);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
+        <span style="font-size:20px;line-height:1">📄</span>
+        <span style="font-size:14px;font-weight:600;color:#2E332D">津貼補助申請單</span>
+        <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
+      </a>
     </div>
     <!-- 品牌語 -->
     <div style="text-align:center;padding:24px 0 8px">
@@ -1896,22 +1900,6 @@ thead th{color:#767B75!important}
   })();
   </script>
 
-  <!-- ===== 會議紀錄（嵌入 Google Doc，唯讀檢視）===== -->
-  <div class="view" id="view-minutes" style="position:relative;min-height:calc(100vh - 152px)">
-    <div style="max-width:1000px;margin:0 auto">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:14px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <div style="width:52px;height:52px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:28px" role="img" aria-label="會議紀錄">📋</span></div>
-        <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">會議紀錄<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">MINUTES</span></div><div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">福委會會議紀錄・唯讀檢視</div></div>
-        <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="flex-shrink:0;font-size:14px;font-weight:600;color:#577B53;border:1.5px solid #C9DAC6;background:#fff;border-radius:20px;padding:7px 14px;text-decoration:none;white-space:nowrap">在 Google Docs 開啟 ↗</a>
-      </div>
-      <!-- 手機常因瀏覽器未登入 Google 而無法載入內嵌，提供明顯的開啟按鈕 -->
-      <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="display:none;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border-radius:14px;padding:14px;font-size:16px;font-weight:600;text-decoration:none;margin-bottom:12px" class="minutes-mobile-open">📄 用 Google Docs 開啟會議紀錄 ↗</a>
-      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <iframe src="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/preview" title="福委會會議紀錄" style="width:100%;height:calc(100vh - 240px);min-height:520px;border:0;display:block"></iframe>
-      </div>
-      <div style="font-size:12px;color:#9AA098;margin-top:10px;text-align:center;line-height:1.7">手機若這裡空白或顯示「需要權限」，是因為手機瀏覽器未登入 Google 帳號；請點上方按鈕用 Google Docs 開啟，或將文件共用設定改為「知道連結的人－檢視者」即可在系統內直接閱讀。</div>
-    </div>
-  </div>
 
   <!-- view-analytics 已併入 view-dashboard -->
   <div class="view" id="view-analytics" style="display:none!important">
@@ -6370,7 +6358,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助',minutes:'會議紀錄'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -6408,7 +6396,7 @@ function sw(name,elOrName,_fromPop){
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   if (!_fromPop && window._appReady) {
-    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','minutes'];
+    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy'];
     if (mainViews.includes(name)) {
       history.pushState({ view: name }, '', '#' + name);
     }
