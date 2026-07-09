@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260709192131';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260709194251';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3170,13 +3170,51 @@ thead th{color:#767B75!important}
           </div>
         </div>
 
-        <!-- 右：時段 + 每時段預約名單 -->
+        <!-- 右：時段名單／管理者開放編輯器／今日 QR -->
         <div style="flex:1;min-width:280px">
           <div id="ms-slots-panel" style="display:none">
             <div id="ms-slots-date" style="font-size:16px;font-weight:800;color:#2E332D;margin-bottom:14px;display:flex;align-items:center;gap:8px">
               <div style="width:4px;height:18px;background:linear-gradient(#577B53,#A9C4A5);border-radius:10px"></div>
             </div>
             <div id="ms-slots-list" style="display:flex;flex-direction:column;gap:12px"></div>
+          </div>
+          <!-- 管理者：點日曆未開放日／「編輯此日開放」→ 直接在此設定，不需再選日期 -->
+          <div id="ms-open-editor-wrap" style="display:none">
+            <div id="ms-open-editor" style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px">
+              <div id="ms-open-editor-title" style="font-size:16px;font-weight:700;color:#577B53;margin-bottom:10px">設定開放</div>
+              <input id="ms-open-date-inp" type="hidden">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 7px">
+                <span style="font-size:12px;color:#767B75">開放時段與名額</span>
+                <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
+              </div>
+              <div id="ms-draft-slots"></div>
+              <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #CDD8CB;color:#577B53;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="flex:0 0 auto;background:#fff;border:1.5px solid #E1E4DF;color:#767B75;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
+                <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
+              </div>
+              <!-- 常用時段樣板（併入編輯器，不再獨立卡片） -->
+              <div style="margin-top:14px;border-top:1px dashed #D5DAD2;padding-top:10px">
+                <div style="font-size:12px;font-weight:700;color:#767B75;margin-bottom:7px">🕐 常用時段樣板（一鍵套用上方）</div>
+                <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
+                <div style="display:flex;gap:6px">
+                  <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none;cursor:pointer"></select>
+                  <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 6px;font-size:14px;font-family:inherit;background:#fff;text-align:center">
+                  <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- 今日報到 QR：管理者選到「今天」時自動顯示 -->
+          <div id="ms-qr-section" style="display:none;background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px;margin-top:12px">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:700;color:#2E332D">🔲 今日報到 QR Code</div>
+              <button onclick="msGenerateQR()" style="background:linear-gradient(135deg,#577B53,#8FAE8B);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">產生 QR Code</button>
+            </div>
+            <div id="ms-qr-display" style="display:none;text-align:center">
+              <div id="ms-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #E1E4DF;border-radius:16px;margin-bottom:10px"></div>
+              <div id="ms-qr-hint" style="font-size:12px;color:#767B75"></div>
+            </div>
           </div>
           <div id="ms-no-slots" style="text-align:center;padding:48px 20px;color:#9AA098;font-size:14px;background:#F7F8F6;border-radius:12px">
             <div style="font-size:40px;margin-bottom:10px">📅</div>
@@ -3191,7 +3229,7 @@ thead th{color:#767B75!important}
   <div id="ms-adv-wrap" style="display:none;margin-bottom:24px">
     <button id="ms-adv-toggle" onclick="msToggleAdv()" style="width:100%;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05);padding:14px 18px;cursor:pointer;font-family:inherit">
       <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⚙️</div>
-      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.04em">進階管理</div><div style="font-size:12px;color:#767B75;margin-top:2px">限制設定・常用時段模板・當日報到 QR・預約紀錄</div></div>
+      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.04em">進階管理</div><div style="font-size:12px;color:#767B75;margin-top:2px">限制設定・已開放日期・預約紀錄（開放/編輯請直接點日曆日期）</div></div>
       <svg id="ms-adv-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
     </button>
   <div id="ms-panel-admin" style="display:none;margin-top:12px">
@@ -3209,101 +3247,39 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
-    <!-- 管理後台子分頁：把分散的功能歸成三組 -->
-    <div class="seg-track" style="max-width:440px;margin-bottom:16px">
-      <button class="ms-admseg active" id="ms-admseg-schedule" onclick="msAdminTab('schedule')">📅 排程設定</button>
-      <button class="ms-admseg" id="ms-admseg-checkin" onclick="msAdminTab('checkin')">🔲 當日報到</button>
-      <button class="ms-admseg" id="ms-admseg-records" onclick="msAdminTab('records')">📊 預約紀錄</button>
-    </div>
-
-    <!-- ── 分頁：排程設定（開放日期＋限制設定＋常用時段）── -->
-    <div id="ms-adm-schedule">
-    <!-- 開放日期管理 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
-        <div style="font-size:14px;font-weight:700;color:#2E332D">開放日期管理</div>
-      </div>
-      <!-- 整合式：選日期 + 設定該日時段與名額，一次完成 -->
-      <div id="ms-open-editor" style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px;margin-bottom:16px">
-        <div id="ms-open-editor-title" style="font-size:14px;font-weight:700;color:#577B53;margin-bottom:10px">新增開放日</div>
-        <div style="font-size:12px;color:#767B75;margin-bottom:5px">選擇日期</div>
-        <input id="ms-open-date-inp" type="date" style="width:100%;min-width:0;max-width:100%;display:block;-webkit-appearance:none;appearance:none;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 7px">
-          <span style="font-size:12px;color:#767B75">開放時段與名額</span>
-          <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
-        </div>
-        <div id="ms-draft-slots"></div>
-        <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #CDD8CB;color:#577B53;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="display:none;flex:0 0 auto;background:#fff;border:1.5px solid #E1E4DF;color:#767B75;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
-          <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
-        </div>
-      </div>
-      <div style="font-size:12px;font-weight:700;color:#9AA098;margin-bottom:8px">已開放日期</div>
-      <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
-    </div>
-
-    <!-- 限制設定 + 時段樣板（2欄，手機 1欄） -->
-    <div id="ms-admin-settings-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+    <!-- 限制設定（一排） -->
+    <div style="background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
+      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;padding-bottom:7px">
           <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
-            <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-          </label>
-          <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
-            <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-          </label>
-          <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">取消期限（預約時間前幾小時）
-            <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-          </label>
-          <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">違規幾次停權
-            <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-          </label>
-          <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 0;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-top:2px">儲存設定</button>
-        </div>
-      </div>
-      <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">🕐</div>
-          <div style="font-size:14px;font-weight:700;color:#2E332D">常用時段樣板</div>
-        </div>
-        <div style="font-size:12px;color:#9AA098;margin-bottom:10px">設定常用時段後，開放日期時可一鍵「套用常用時段」</div>
-        <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
-        <div style="display:flex;gap:6px">
-          <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none;cursor:pointer"></select>
-          <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 6px;font-size:14px;font-family:inherit;background:#fff;text-align:center">
-          <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
-        </div>
-      </div>
-    </div>
-    </div><!-- end ms-adm-schedule -->
-
-    <!-- ── 分頁：當日報到（QR）── -->
-    <div id="ms-adm-checkin" style="display:none">
-    <!-- 今日 QR Code -->
-    <div id="ms-qr-section" style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
-        <div style="display:flex;align-items:center;gap:8px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#577B53,#8FAE8B);display:flex;align-items:center;justify-content:center;font-size:14px">🔲</div>
-          <div style="font-size:14px;font-weight:700;color:#2E332D">今日報到 QR Code</div>
-        </div>
-        <button onclick="msGenerateQR()" style="background:linear-gradient(135deg,#577B53,#8FAE8B);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">產生 QR Code</button>
-      </div>
-      <div id="ms-qr-display" style="display:none;text-align:center">
-        <div id="ms-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #E1E4DF;border-radius:16px;margin-bottom:10px"></div>
-        <div id="ms-qr-hint" style="font-size:12px;color:#767B75"></div>
+        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
+          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        </label>
+        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
+          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        </label>
+        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">取消期限（時段前幾小時）
+          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        </label>
+        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">違規幾次停權
+          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        </label>
+        <button onclick="msSaveSettings()" style="flex-shrink:0;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">儲存設定</button>
       </div>
     </div>
 
-    </div><!-- end ms-adm-checkin -->
+    <!-- 開放日期管理（設定/編輯改由「點日曆日期」直接操作，這裡只列清單） -->
+    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
+        <div style="font-size:14px;font-weight:700;color:#2E332D">已開放日期</div>
+      </div>
+      <div style="font-size:12px;color:#9AA098;margin-bottom:10px">要新增或編輯開放日，直接點上方日曆的日期即可（未開放的日子為虛線圓）。</div>
+      <div id="ms-open-dates-list" style="display:flex;flex-direction:column;gap:8px"></div>
+    </div>
 
-    <!-- ── 分頁：預約紀錄 ── -->
-    <div id="ms-adm-records" style="display:none">
     <!-- 所有預約紀錄 -->
     <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
@@ -3328,7 +3304,6 @@ thead th{color:#767B75!important}
         </table>
       </div>
     </div>
-    </div><!-- end ms-adm-records -->
   </div>
   </div><!-- end ms-adv-wrap -->
 
@@ -10347,7 +10322,7 @@ window.htOpenSheetDetail = function (eventId) {
     +   '</div>'
     +   '<div style="flex:1"></div>'
     +   (can('hightea.manage') ? '<button onclick="htImportSheetEvent(\'' + htEsc(name) + '\', this)" style="font-size:14px;font-weight:600;color:#fff;background:#577B53;border:none;border-radius:20px;padding:8px 16px;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background=\'#46633F\'" onmouseout="this.style.background=\'#577B53\'">✏️ 轉為可編輯副本</button>' : '')
-    +   '<a href="https://docs.google.com/spreadsheets/d/104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo/edit" target="_blank" rel="noopener" style="font-size:12px;color:#577B53;text-decoration:none;letter-spacing:.04em">在 Google 試算表開啟 ↗</a>'
+    +   '<a href="https://docs.google.com/spreadsheets/d/104i4tfBTYHer_VZF10AZTJN4XviT9BinAV-vOSx0ZQo/edit' + (s.gid != null ? '#gid=' + s.gid : '') + '" target="_blank" rel="noopener" style="font-size:12px;color:#577B53;text-decoration:none;letter-spacing:.04em">在 Google 試算表開啟 ↗</a>'
     + '</div>'
     + '</div>';
   document.body.appendChild(d);
@@ -10404,12 +10379,12 @@ window.htImportSheetEvent = async function (sheetName, btn) {
 
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
-  // 排除「本月」活動：本月活動已顯示在上方「本月行程」，歷史回顧只放過去月份，避免重複
+  // 歷史回顧只放「過去」月份：本月在「本月行程」、未來月份翻日曆可見，都不屬於歷史
   var _now = new Date();
   var _curYM = _now.getFullYear() + '-' + (_now.getMonth()+1 < 10 ? '0' : '') + (_now.getMonth()+1);
   // 平台場次＋舊試算表場次（唯讀）合併顯示，各帶來源標籤
-  var history = _htEvents.filter(function(e){ return _evMonth(e) !== _curYM; })
-    .concat(_htSheetAsEvents().filter(function(e){ return _evMonth(e) !== _curYM; }));
+  var history = _htEvents.filter(function(e){ return _evMonth(e) < _curYM; })
+    .concat(_htSheetAsEvents().filter(function(e){ return _evMonth(e) < _curYM; }));
   history.sort(function(a, b) { return _evMonth(b).localeCompare(_evMonth(a)); });
   var isMobile = window.innerWidth <= 640;
   var chip = document.getElementById('ht-current-month-chip');
@@ -11984,6 +11959,7 @@ window.htItemChange = function(el) {
     var t = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
     document.getElementById('ht-total-cell').textContent = fmtMoney(t);
     _htUpdateBalance();
+    htRenderBudget();   // 右欄金額/進度/類別明細即時連動
   } else if (f === 'name') {
     _htItems[idx][f] = val;
     var autocat = _htAutoCategory(val);
@@ -12055,6 +12031,7 @@ window.htPickStore = function(name) {
 window.htDeleteItem = function(idx) {
   _htItems.splice(idx, 1);
   htRenderItems();
+  htRenderBudget();   // 右欄金額/進度/類別明細同步連動
 };
 
 window.htSaveItems = async function() {
@@ -12835,7 +12812,12 @@ function msRenderCal() {
   grid.innerHTML = html;
   msRenderUpcoming();
   if (_msSelectedDate) msShowSlots(_msSelectedDate);
-  else { document.getElementById('ms-slots-panel').style.display = 'none'; document.getElementById('ms-no-slots').style.display = ''; }
+  else {
+    document.getElementById('ms-slots-panel').style.display = 'none';
+    // 管理者編輯器開啟中則不蓋回占位（避免輪詢重繪打斷編輯）
+    var _edw = document.getElementById('ms-open-editor-wrap');
+    if (!_edw || _edw.style.display === 'none') document.getElementById('ms-no-slots').style.display = '';
+  }
   _msSaveLocal(); // 每次日曆重繪時保存本地狀態（涵蓋預約/取消/報到/開放日期等變更）
 }
 
@@ -12892,6 +12874,10 @@ window.msFocusDate = function(d) {
 function msShowSlots(dateStr) {
   var panel = document.getElementById('ms-slots-panel');
   var noSlots = document.getElementById('ms-no-slots');
+  // 切到時段檢視：收起右欄的開放編輯器；管理者選到「今天」時自動顯示報到 QR
+  var _edWrap = document.getElementById('ms-open-editor-wrap'); if (_edWrap) _edWrap.style.display = 'none';
+  var _qrSec = document.getElementById('ms-qr-section');
+  if (_qrSec) _qrSec.style.display = ((_msData && (_msData.isAdmin || _msData.isHR)) && dateStr === fmtDateStr(new Date())) ? '' : 'none';
   var dateLabel = document.getElementById('ms-slots-date');
   var list = document.getElementById('ms-slots-list');
   var openDates = (_msData && _msData.openDates) || {};
@@ -13429,24 +13415,24 @@ window.msToggleAdv = function(forceOpen) {
   if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
 };
 
-// 從日曆點日期 → 展開進階管理的「排程設定」並帶入該日期，捲動到編輯器
+// 從日曆點日期（或「編輯此日開放」）→ 右欄直接開啟該日的開放編輯器，不需再選日期
 window.msAdminOpenDate = function(dateStr) {
-  msToggleAdv(true);
-  if (window.msAdminTab) msAdminTab('schedule');
+  var entry = (_msData && _msData.openDates || {})[dateStr];
   var inp = document.getElementById('ms-open-date-inp');
   if (inp) inp.value = dateStr;
-  var ed = document.getElementById('ms-open-editor');
-  if (ed) setTimeout(function(){ ed.scrollIntoView({ behavior:'smooth', block:'center' }); }, 160);
-};
-
-// 管理後台子分頁切換：排程設定／當日報到／預約紀錄
-window.msAdminTab = function(tab) {
-  ['schedule','checkin','records'].forEach(function(t){
-    var panel = document.getElementById('ms-adm-' + t);
-    if (panel) panel.style.display = (t === tab) ? '' : 'none';
-    var btn = document.getElementById('ms-admseg-' + t);
-    if (btn) btn.classList.toggle('active', t === tab);
-  });
+  _msDraftSlots = entry ? (entry.slots || []).map(function(s){ return { time:s.time, capacity:s.capacity }; }) : [];
+  var parts = dateStr.split('-');
+  var wd = ['日','一','二','三','四','五','六'][new Date(dateStr + 'T00:00:00').getDay()];
+  var title = document.getElementById('ms-open-editor-title');
+  if (title) title.textContent = (entry ? '✏️ 編輯開放：' : '📅 設定開放：') + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '（' + wd + '）';
+  msRenderDraftSlots();
+  msRenderSlotTemplates();
+  // 右欄切換：藏時段/占位/QR，秀編輯器
+  var sp = document.getElementById('ms-slots-panel'); if (sp) sp.style.display = 'none';
+  var ns = document.getElementById('ms-no-slots'); if (ns) ns.style.display = 'none';
+  var qr = document.getElementById('ms-qr-section'); if (qr) qr.style.display = 'none';
+  var wrap = document.getElementById('ms-open-editor-wrap'); if (wrap) wrap.style.display = '';
+  if (window.innerWidth < 760 && wrap) setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'start' }); }, 120);
 };
 
 function msRenderAdmin() {
@@ -13609,24 +13595,16 @@ window.msDraftApplyTemplate = function() {
   if (!_msDraftSlots.length) { toast('尚未設定常用時段'); return; }
   msRenderDraftSlots();
 };
-// 重置編輯器為「新增」狀態
+// 關閉編輯器並還原右欄（有選日期就回時段檢視，否則回占位）
 window.msResetOpenEditor = function() {
   _msDraftSlots = [];
   var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = '';
-  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '新增開放日';
-  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = 'none';
-  msRenderDraftSlots();
+  var wrap = document.getElementById('ms-open-editor-wrap'); if (wrap) wrap.style.display = 'none';
+  if (_msSelectedDate) { msShowSlots(_msSelectedDate); }
+  else { var ns = document.getElementById('ms-no-slots'); if (ns) ns.style.display = ''; }
 };
-// 載入某日到編輯器修改
-window.msEditDay = function(ds) {
-  var entry = (_msData && _msData.openDates || {})[ds]; if (!entry) return;
-  var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = ds;
-  _msDraftSlots = (entry.slots || []).map(function(s){ return { time:s.time, capacity:s.capacity }; });
-  var title = document.getElementById('ms-open-editor-title'); if (title) title.textContent = '編輯 ' + ds + ' 的開放時段';
-  var cancel = document.getElementById('ms-open-cancel-btn'); if (cancel) cancel.style.display = '';
-  msRenderDraftSlots();
-  var ed = document.getElementById('ms-open-editor'); if (ed) ed.scrollIntoView({ behavior:'smooth', block:'center' });
-};
+// 載入某日到編輯器修改（右欄直開）
+window.msEditDay = function(ds) { msAdminOpenDate(ds); };
 // 確認開放（新增或覆蓋既有日期）
 window.msConfirmOpenDate = async function() {
   if (!_msData) return;
@@ -13643,9 +13621,12 @@ window.msConfirmOpenDate = async function() {
   if (!r || !r.ok) { toast('❌ 儲存失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
   if (!_msData.openDates) _msData.openDates = {};
   _msData.openDates[dateVal] = { slots: slots };
-  msRenderOpenDates(); msRenderCal();
   toast(existed ? ('✅ 已更新 ' + dateVal + ' 的時段') : ('✅ ' + dateVal + ' 已開放'));
-  msResetOpenEditor();
+  // 收起編輯器、直接切到該日的時段檢視
+  _msDraftSlots = [];
+  var wrap = document.getElementById('ms-open-editor-wrap'); if (wrap) wrap.style.display = 'none';
+  _msSelectedDate = dateVal;
+  msRenderOpenDates(); msRenderCal();
 };
 
 window.msCloseDate = function(ds) {
@@ -13691,7 +13672,8 @@ window.msSaveSettings = async function() {
 // ── 所有預約紀錄（admin） ──
 function msRenderAdminTable() {
   var tbody = document.getElementById('ms-admin-tbody'); if (!tbody) return;
-  var all = ((_msData && _msData.allBookings) || []).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+  // 優先用管理員完整清單（含 bookingId／已取消／缺席）；舊後端回退公開名單
+  var all = ((_msData && (_msData.adminBookings || _msData.allBookings)) || []).slice().sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   _allBookings = all; msRenderAdminRows(all);
 }
 
@@ -13744,6 +13726,9 @@ window.msStartPolling = function() {
   _msPollTimer = setInterval(function() {
     if (document.hidden) return;
     msFetchData().then(function() {
+      // 管理者正在右欄編輯開放時段時，暫停重繪（避免輪詢關掉編輯器/蓋掉草稿）
+      var _edw2 = document.getElementById('ms-open-editor-wrap');
+      if (_edw2 && _edw2.style.display !== 'none') return;
       msRenderCal(); msRenderQuota(); msRenderMyBookings();
       if (_msSelectedDate) msShowSlots(_msSelectedDate);
       // 進階管理展開時，同步刷新開放日期清單與待審清單
