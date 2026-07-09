@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260708155316';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260709090607';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3098,16 +3098,6 @@ thead th{color:#767B75!important}
     <div id="ms-quota-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
   </div>
 
-  <!-- Tab 列（僅管理者看到管理頁籤；分段控制器，與案件追蹤一致） -->
-  <div id="ms-tab-bar" class="seg-track" style="display:none;max-width:360px;margin-bottom:20px">
-    <button class="massage-tab active" id="ms-tab-calendar" onclick="msSwitchTab('calendar')">
-      📅 預約
-    </button>
-    <button class="massage-tab" id="ms-tab-admin" onclick="msSwitchTab('admin')">
-      ⚙️ 管理後台
-    </button>
-  </div>
-
   <!-- 按摩注意事項（固定說明卡，不含公告欄功能） -->
   <div id="ms-bulletin-section" style="margin-bottom:20px">
     <div style="background:#fff;border-radius:16px;padding:16px 18px;border:1px solid #E1E4DF;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);position:relative;overflow:hidden">
@@ -3209,8 +3199,14 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- ⚙️ 管理 panel (admin only) -->
-  <div id="ms-panel-admin" style="display:none">
+  <!-- ⚙️ 進階管理（管理者／HR 專用，折疊；開放日期管理可直接從日曆點選）-->
+  <div id="ms-adv-wrap" style="display:none;margin-bottom:24px">
+    <button id="ms-adv-toggle" onclick="msToggleAdv()" style="width:100%;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #E1E4DF;border-radius:16px;box-shadow:0 1px 3px rgba(46,51,45,.09),0 12px 30px rgba(60,70,58,.16);padding:14px 18px;cursor:pointer;font-family:inherit">
+      <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⚙️</div>
+      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.04em">進階管理</div><div style="font-size:12px;color:#767B75;margin-top:2px">限制設定・常用時段模板・當日報到 QR・預約紀錄</div></div>
+      <svg id="ms-adv-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+  <div id="ms-panel-admin" style="display:none;margin-top:12px">
 
 
     <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
@@ -3346,6 +3342,7 @@ thead th{color:#767B75!important}
     </div>
     </div><!-- end ms-adm-records -->
   </div>
+  </div><!-- end ms-adv-wrap -->
 
 
 
@@ -12579,7 +12576,6 @@ window.htAssistRun = async function() {
 var _msYear, _msMonth, _msSelectedDate = null;
 var _msData = null;
 var _msSlotTemplates = [];
-var _msTab = 'calendar';
 var _msPendingRequests = [];
 
 // ── 本地持久化（後端尚未實作 massage 端點，回「未知動作」，故以 localStorage 保存）──
@@ -12644,10 +12640,13 @@ window.massageLoad = async function() {
     _msPendingRequests = _msData.pendingRequests;
   }
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
-  var tabBar = document.getElementById('ms-tab-bar');
-  if (tabBar) tabBar.style.display = (_msData && (_msData.isAdmin || _msData.isHR)) ? 'flex' : 'none';
   msFetchData().then(function(){
     msRenderCal(); msRenderQuota(); msRenderMyBookings();
+    // 管理者／HR：顯示折疊「進階管理」並預先渲染內容（開放日期管理可直接從日曆點選）
+    var advWrap = document.getElementById('ms-adv-wrap');
+    var isAdm = _msData && (_msData.isAdmin || _msData.isHR);
+    if (advWrap) advWrap.style.display = isAdm ? '' : 'none';
+    if (isAdm && window.msRenderAdmin) msRenderAdmin();
     // QR token 報到偵測
     var urlParams = new URLSearchParams(window.location.search);
     var msToken = urlParams.get('ms_token');
@@ -12666,8 +12665,9 @@ async function msFetchData() {
       _msData.isHR = (typeof can === 'function' ? can('admin.users') : false);
       _msSlotTemplates = (r.settings && r.settings.slotTemplates) || [];
       _msPendingRequests = r.pendingRequests || [];
-      var tabBar = document.getElementById('ms-tab-bar');
-      if (tabBar) tabBar.style.display = (_msData.isAdmin || _msData.isHR) ? 'flex' : 'none';
+      // 管理者／HR：顯示折疊「進階管理」入口（開放日期管理可直接從日曆點選）
+      var advWrap = document.getElementById('ms-adv-wrap');
+      if (advWrap) advWrap.style.display = (_msData.isAdmin || _msData.isHR) ? '' : 'none';
       msRenderQuota();
       _msSaveLocal();
     }
@@ -12759,22 +12759,6 @@ window.msToggleNotice = function() {
   } catch(e) {}
 })();
 
-// ── Tab 切換（現在只有 calendar / admin 兩頁） ──
-window.msSwitchTab = function(tab) {
-  _msTab = tab;
-  document.querySelectorAll('.massage-tab').forEach(function(b){
-    b.classList.toggle('active', b.id === 'ms-tab-' + tab);
-  });
-  if (tab === 'log') tab = 'admin';
-  var isAdmin = tab === 'admin';
-  var isCalendar = !isAdmin;
-  document.getElementById('ms-panel-calendar').style.display = isCalendar ? '' : 'none';
-  document.getElementById('ms-panel-my').style.display = isCalendar ? '' : 'none';
-  document.getElementById('ms-panel-admin').style.display = isAdmin ? '' : 'none';
-  if (isAdmin) { msRenderAdmin(); }
-  else msRenderMyBookings();
-};
-
 // ── 日曆導覽 ──
 window.msCalPrev = function() { _msMonth--; if (_msMonth < 0) { _msMonth = 11; _msYear--; } _msSelectedDate = null; msRenderCal(); };
 window.msCalNext = function() { _msMonth++; if (_msMonth > 11) { _msMonth = 0; _msYear++; } _msSelectedDate = null; msRenderCal(); };
@@ -12792,6 +12776,7 @@ function msRenderCal() {
   myBookings.forEach(function(b){ if (b.status === 'booked' || b.status === 'attended') myDates[b.date] = b; });
   var openDates = (_msData && _msData.openDates) || {};
   var allBk = (_msData && _msData.allBookings) || [];
+  var isMsAdmin = !!(_msData && (_msData.isAdmin || _msData.isHR));
   var html = '';
   for (var i = 0; i < first; i++) html += '<div></div>';
   for (var d = 1; d <= daysInMonth; d++) {
@@ -12819,7 +12804,12 @@ function msRenderCal() {
     else if (isToday)         { bg = '#EDF1EC'; color = '#577B53'; } // 今天（無活動）：柔和奶油底
     else                      { bg = ''; color = (isPast || !hasSlots) ? '#D2D6D0' : '#4A4F49'; }
     if (!bg) {
-      html += '<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:' + color + ';font-size:14px;font-weight:' + fw + '">' + d + '</div>';
+      // 管理者：未過期且尚未開放的日期 → 虛線可點，點了去設定開放
+      var adminOpenable = isMsAdmin && !isPast && !hasSlots;
+      html += '<div'
+        + (adminOpenable ? ' onclick="msAdminOpenDate(\'' + dateStr + '\')" title="點此設定開放此日"' : '')
+        + ' style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;color:' + color + ';font-size:14px;font-weight:' + fw
+        + (adminOpenable ? ';cursor:pointer;border:1.5px dashed #C9DAC6;border-radius:12px' : '') + '">' + d + '</div>';
     } else {
       html += '<div'
         + (clickable ? ' onclick="msSelectDate(\'' + dateStr + '\')"' : '')
@@ -12901,9 +12891,19 @@ function msShowSlots(dateStr) {
   var parts = dateStr.split('-');
   var days = ['日','一','二','三','四','五','六'];
   var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+  var _isMsAdmin = !!(_msData && (_msData.isAdmin || _msData.isHR));
+  var _isFutureDay = new Date(dateStr + 'T23:59:00') >= new Date();
+  var _admEditBtn = (_isMsAdmin && _isFutureDay) ? '<button onclick="msAdminOpenDate(\'' + dateStr + '\')" style="margin-left:auto;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⚙ 編輯此日開放</button>' : '';
+  dateLabel.style.width = '100%';
   dateLabel.innerHTML = '<div style="width:4px;height:18px;background:linear-gradient(#6B8F67,#46633F);border-radius:10px;flex-shrink:0"></div>'
-    + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt2.getDay()] + '）';
-  if (!slots.length) { panel.style.display = 'none'; noSlots.style.display = ''; noSlots.innerHTML = '<div style="font-size:36px;margin-bottom:8px">🚫</div>此日無開放時段'; return; }
+    + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt2.getDay()] + '）' + _admEditBtn;
+  if (!slots.length) {
+    panel.style.display = 'none'; noSlots.style.display = '';
+    noSlots.innerHTML = (_isMsAdmin && _isFutureDay)
+      ? '<div style="font-size:36px;margin-bottom:8px">📅</div>此日尚未開放<br><button onclick="msAdminOpenDate(\'' + dateStr + '\')" style="margin-top:12px;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:20px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">＋ 設定開放時段</button>'
+      : '<div style="font-size:36px;margin-bottom:8px">🚫</div>此日無開放時段';
+    return;
+  }
   panel.style.display = ''; noSlots.style.display = 'none';
   var settings = (_msData && _msData.settings) || {};
   var suspended = _msData && _msData.suspended;
@@ -13407,6 +13407,26 @@ function msBookingCard(b, isUpcoming) {
 
 // ── 管理（admin only） ──
 
+// 進階管理折疊切換
+window.msToggleAdv = function(forceOpen) {
+  var panel = document.getElementById('ms-panel-admin');
+  var chev = document.getElementById('ms-adv-chevron');
+  if (!panel) return;
+  var open = forceOpen === true ? true : (panel.style.display === 'none');
+  panel.style.display = open ? '' : 'none';
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
+};
+
+// 從日曆點日期 → 展開進階管理的「排程設定」並帶入該日期，捲動到編輯器
+window.msAdminOpenDate = function(dateStr) {
+  msToggleAdv(true);
+  if (window.msAdminTab) msAdminTab('schedule');
+  var inp = document.getElementById('ms-open-date-inp');
+  if (inp) inp.value = dateStr;
+  var ed = document.getElementById('ms-open-editor');
+  if (ed) setTimeout(function(){ ed.scrollIntoView({ behavior:'smooth', block:'center' }); }, 160);
+};
+
 // 管理後台子分頁切換：排程設定／當日報到／預約紀錄
 window.msAdminTab = function(tab) {
   ['schedule','checkin','records'].forEach(function(t){
@@ -13714,7 +13734,9 @@ window.msStartPolling = function() {
     msFetchData().then(function() {
       msRenderCal(); msRenderQuota(); msRenderMyBookings();
       if (_msSelectedDate) msShowSlots(_msSelectedDate);
-      if (_msTab === 'admin') { msRenderPendingRequests(); msRenderOpenDates(); }
+      // 進階管理展開時，同步刷新開放日期清單與待審清單
+      var advPanel = document.getElementById('ms-panel-admin');
+      if (advPanel && advPanel.style.display !== 'none') { msRenderPendingRequests(); msRenderOpenDates(); }
     }).catch(function(){});
   }, 20000);
 };
