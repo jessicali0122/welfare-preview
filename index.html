@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710105251';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710153154';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1495,12 +1495,15 @@ html,body{background:#F1F3EE}
 #view-dashboard.active #dashboard-greeting{color:#F7F8F6!important}
 #view-dashboard.active #tw-datetime,#view-dashboard.active #dash-weather{color:rgba(247,248,246,.78)!important}
 #view-dashboard.active #dash-hero>div:nth-child(3){color:rgba(247,248,246,.72)!important}
-/* 首頁：問候區釘在頂端，公佈欄以下才捲動；捲動內容從問候區後方通過，文字不會滑進頂欄被吃掉 */
-#view-dashboard{overflow:clip!important}
-/* top:0 = 釘在原位完全不位移（捲動時問候區不會先跟著滑一段才卡住，也不會被推出畫面頂端） */
-#view-dashboard.active #dash-hero{position:sticky!important;top:0;z-index:30;background:#46633F;padding-top:8px!important;padding-bottom:16px!important}
-/* 上緣以同色背景向上延伸，蓋住頂欄 padding 區，捲動內容不會從問候區上方的縫隙露出 */
-#view-dashboard.active #dash-hero::after{content:'';position:absolute;left:-28px;right:-28px;bottom:100%;height:100px;background:#46633F}
+/* 首頁採一般捲動（不再釘住問候區）；頂欄鈕已有毛玻璃底，內容從底下滑過不突兀 */
+/* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
+#view-dashboard.active::before,#view-dashboard.active::after{content:'';position:absolute;border-radius:50%;pointer-events:none;z-index:0;filter:blur(6px)}
+#view-dashboard.active::before{width:90%;height:64%;left:-24%;top:-16%;background:radial-gradient(circle at 42% 42%,rgba(28,46,24,.6) 0%,rgba(28,46,24,.24) 46%,transparent 70%);animation:wfBlotA 30s ease-in-out infinite}
+#view-dashboard.active::after{width:104%;height:78%;right:-30%;bottom:-24%;background:radial-gradient(circle at 55% 55%,rgba(126,158,94,.5) 0%,rgba(126,158,94,.18) 48%,transparent 72%);animation:wfBlotB 38s ease-in-out infinite}
+#view-dashboard.active #dash-wrap{position:relative;z-index:1}
+@keyframes wfBlotA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(9%,7%) scale(1.16)}}
+@keyframes wfBlotB{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-8%) scale(1.22)}}
+@media(prefers-reduced-motion:reduce){#view-dashboard.active::before,#view-dashboard.active::after{animation:none!important}}
 #view-dashboard.active #dash-services-label,#view-dashboard.active #dash-links-label{color:#C2D19A!important}
 #view-dashboard.active #dash-brand>div:nth-child(1){background:rgba(247,248,246,.3)!important}
 #view-dashboard.active #dash-brand>div:nth-child(2){color:rgba(247,248,246,.82)!important}
@@ -1541,6 +1544,8 @@ html,body{background:#F1F3EE}
 /* 頂欄：透明浮層（無 bar），內容從房子/頭像底下滑過；內容區補頂部留白 */
 header{background:transparent!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 #main-content{padding-top:calc(60px + env(safe-area-inset-top,0px))!important}
+/* 首頁問候區與頂欄距離拉近一點（大標置中，不會撞到兩側房子/頭像） */
+#main-content:has(#view-dashboard.active){padding-top:calc(26px + env(safe-area-inset-top,0px))!important}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -1613,6 +1618,8 @@ tbody tr{transition:background .15s}
 :focus-visible{outline:2px solid #6B8F67!important;outline-offset:2px}
 header::after{display:none!important}
 #home-logo-btn svg{stroke:#577B53!important}
+/* 常用連結：左側活潑輔助綠色條，白底不再單調（靜態＋動態掛入的連結都套用） */
+#dash-links>a{border-left:4px solid #738e41!important}
 /* 內頁捲動時內容會從房子/頭像底下滑過：加毛玻璃圓底，重疊時不突兀 */
 #home-logo-btn{background:rgba(247,248,246,.72)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%!important}
 #header-user-btn{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -1859,9 +1866,13 @@ thead th{color:#767B75!important}
           <div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
         </div>
         <div style="border-top:1px solid #ECEEEA;margin:16px 0 14px"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap">
           <span style="width:4px;height:16px;background:linear-gradient(#E38845,#A73B4E);border-radius:4px"></span>
           <span style="font-size:16px;font-weight:700;color:#2E332D">申請說明</span>
+          <div style="flex:1"></div>
+          <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" title="填寫後連同應附文件，於每月 20 日前送交福委會" style="flex-shrink:0;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;text-decoration:none;box-shadow:0 2px 8px rgba(70,99,63,.24);transition:filter .15s" onmouseover="this.style.filter='brightness(1.08)'" onmouseout="this.style.filter='none'">
+            <span style="font-size:16px;line-height:1">📄</span>下載申請單 ↗
+          </a>
         </div>
         <ol style="margin:0;padding-left:20px;font-size:14px;color:#5A5F58;line-height:2">
           <li>請領條件：事件發生為在職期間，且於發生日六個月內提出申請。</li>
@@ -1869,14 +1880,6 @@ thead th{color:#767B75!important}
           <li>前述「在職年資」以事件發生日為計算基準。</li>
           <li>各項津貼補助將依所得稅法及相關規定辦理所得申報。</li>
         </ol>
-        <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;background:#F6F9F5;border:1.5px solid #CBDCC6;border-radius:12px;padding:14px 18px;margin-top:16px;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#EDF1EC'" onmouseout="this.style.background='#F6F9F5'">
-          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:20px;line-height:1">📄</span></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:700;color:#2E332D">下載津貼補助申請單</div>
-            <div style="font-size:12px;color:#767B75;margin-top:2px">填寫後連同應附文件，於每月 20 日前送交福委會</div>
-          </div>
-          <span style="flex-shrink:0;font-size:14px;font-weight:600;color:#577B53;white-space:nowrap">前往下載 ↗</span>
-        </a>
       </div>
 
       <!-- 補助試算：單一篩選區（項目 → 身分 → 條件），結婚/喪葬共用 -->
@@ -1961,11 +1964,20 @@ thead th{color:#767B75!important}
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
       </button>
     </div>
+    <!-- 送件須知（提醒固定送件日與憑證規則） -->
+    <div style="background:#F6F9F5;border:1px solid #CBDCC6;border-radius:14px;padding:14px 18px;margin-bottom:20px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
+      <div style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#46633F;margin-bottom:8px">📌 送件須知</div>
+      <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:#5A5F58;line-height:1.6">
+        <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>固定送件日：每月 <strong>10、20、30 日</strong>（如遇例假日則順延辦理）</span></li>
+        <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>單張請款金額達 <strong>$3,000（含）以上</strong>，經核准後可不受送件日限制，隨時提出申請</span></li>
+        <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>請款時須檢附憑證正本、影本各 1 份（憑證類型：發票／收據・統編：61409721）</span></li>
+      </ul>
+    </div>
     <!-- 3-tab pill bar -->
     <div id="apps-tab-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
       <div style="display:flex;flex:1;min-width:220px;background:#ECEEEA;border-radius:12px;padding:3px;gap:2px">
         <button id="apps-tab-all" onclick="appsSetTab('all')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#577B53;box-shadow:0 1px 4px rgba(0,0,0,.1);white-space:nowrap">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件<span id="apps-tab-all-badge" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px">0</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件清單<span id="apps-tab-all-badge" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px">0</span>
         </button>
         <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s;background:transparent;color:#767B75;white-space:nowrap">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>費用分析
@@ -2130,9 +2142,9 @@ thead th{color:#767B75!important}
 
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #E1E4DF;margin-bottom:16px">
-      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 申請案件 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
-      <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿 <span id="tab-drafts-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
-      <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待審核案件 <span id="tab-pending-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 全部案件 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
     </div>
     <!-- 草稿列表 -->
     <div id="app-tab-drafts" style="display:none">
@@ -2951,10 +2963,9 @@ thead th{color:#767B75!important}
       <div id="ht-event-info-bar" style="background:#fff;border:1.5px solid #CBDCC6;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border-radius:12px;padding:16px 18px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:700;color:#577B53;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
-          <!-- 月份（建立時設定，唯讀） -->
-          <div>
-            <div style="font-size:12px;color:#767B75;margin-bottom:5px">月份</div>
-            <div id="ht-event-month-display" style="font-size:14px;font-weight:600;color:#2E332D;padding:7px 0">—</div>
+          <!-- 月份欄位隱藏：以活動日期為準，月份由日期自動帶出（element 保留供 JS 使用，不刪除） -->
+          <div style="display:none">
+            <div id="ht-event-month-display">—</div>
           </div>
           <!-- 活動日期 -->
           <div>
@@ -12023,6 +12034,7 @@ window.htItemChange = function(el) {
       if (row) { var cs = row.querySelector('[data-f="category"]'); if (cs) cs.value = autocat; }
     }
     _htCheckRepeatWarning();
+    htRenderBudget();   // 重新分類後類別明細即時更新
   } else if (f === 'vendor') {
     _htItems[idx][f] = val;
     _htCheckRepeatWarning();
@@ -12109,7 +12121,9 @@ function htRenderBudget() {
   var baseBudget= hc * bp;
   var bdayBudget= bdayCount * 40;
   var total     = baseBudget + bdayBudget;
-  var actual    = ev.actualExpense || _htItems.reduce(function(s,it){ return s+it.subtotal; },0);
+  // 一律用當前品項即時加總（與左側「已用／餘額」同源），編輯品項時右側卡片才會即時連動；
+  // 存檔後 ev.actualExpense 也會被重算，兩者一致。
+  var actual    = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
   var surplus   = total - actual;
   var pct       = total > 0 ? Math.min(Math.round(actual/total*100),100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
@@ -13860,27 +13874,42 @@ window._bulletinSync = function() {
   }).catch(function(){});
 };
 // ── 私密常用連結（如員購賣場）：連結存 GAS 後端，登入後才取得，不進公開 repo ──
+// 依連結資料建立一顆按鈕（供快取與線上結果共用，樣式一致）
+function _dashLinkEl(l) {
+  var a = document.createElement('a');
+  a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.dyn = '1';
+  a.style.cssText = 'display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s';
+  a.onmouseover = function(){ this.style.background = '#F6F9F5'; };
+  a.onmouseout = function(){ this.style.background = '#fff'; };
+  var icon = document.createElement('span'); icon.style.cssText = 'font-size:20px;line-height:1'; icon.textContent = l.icon || '🔗';
+  var label = document.createElement('span'); label.style.cssText = 'font-size:14px;font-weight:600;color:#2E332D'; label.textContent = l.label || '連結';
+  var arrow = document.createElement('span'); arrow.style.cssText = 'font-size:12px;color:#738e41;font-weight:600'; arrow.textContent = '↗';
+  a.appendChild(icon); a.appendChild(label); a.appendChild(arrow);
+  return a;
+}
+function _dashLinksRender(links) {
+  var box = document.getElementById('dash-links');
+  if (!box) return;
+  // 移除先前動態掛入的連結（保留 HTML 內的靜態連結，如會議紀錄），避免重複
+  box.querySelectorAll('a[data-dyn="1"]').forEach(function(n){ n.remove(); });
+  (links || []).forEach(function(l){ if (l && l.url) box.appendChild(_dashLinkEl(l)); });
+}
+// ★ 修復「要過一下才跳出來」：先用 localStorage 快取即時渲染，再向後端拉最新覆蓋
 window._dashLinksLoaded = false;
 window._dashLinksSync = function() {
-  if (window._dashLinksLoaded || !window.htApi) return;
+  if (!window.htApi) return;
+  // 1) 立即渲染快取（下次進首頁就不會有延遲）
+  try {
+    var cached = JSON.parse(localStorage.getItem('bf_dash_links') || 'null');
+    if (Array.isArray(cached) && cached.length) _dashLinksRender(cached);
+  } catch(e) {}
+  if (window._dashLinksLoaded) return;
+  // 2) 拉最新，成功才覆蓋並更新快取
   htApi('getLinks', {}).then(function(r) {
-    if (!r || !r.ok || !Array.isArray(r.links) || !r.links.length) return;
-    var box = document.getElementById('dash-links');
-    if (!box || window._dashLinksLoaded) return;
+    if (!r || !r.ok || !Array.isArray(r.links)) return;
     window._dashLinksLoaded = true;
-    r.links.forEach(function(l) {
-      if (!l || !l.url) return;
-      var a = document.createElement('a');
-      a.href = l.url; a.target = '_blank'; a.rel = 'noopener';
-      a.style.cssText = 'display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s';
-      a.onmouseover = function(){ this.style.background = '#F6F9F5'; };
-      a.onmouseout = function(){ this.style.background = '#fff'; };
-      var icon = document.createElement('span'); icon.style.cssText = 'font-size:20px;line-height:1'; icon.textContent = l.icon || '🔗';
-      var label = document.createElement('span'); label.style.cssText = 'font-size:14px;font-weight:600;color:#2E332D'; label.textContent = l.label || '連結';
-      var arrow = document.createElement('span'); arrow.style.cssText = 'font-size:12px;color:#738e41;font-weight:600'; arrow.textContent = '↗';
-      a.appendChild(icon); a.appendChild(label); a.appendChild(arrow);
-      box.appendChild(a);
-    });
+    _dashLinksRender(r.links);
+    try { localStorage.setItem('bf_dash_links', JSON.stringify(r.links)); } catch(e) {}
   }).catch(function(){});
 };
 
@@ -13955,8 +13984,8 @@ window.showApp = function() {
   setTimeout(function(){ bulletinRender(); }, 100);
   // 登入後直接同步公告，首頁公告欄不必等使用者先逛過午茶日頁
   setTimeout(function(){ if (window._bulletinSync) _bulletinSync(); }, 1200);
-  // 私密常用連結（存後端）
-  setTimeout(function(){ if (window._dashLinksSync) _dashLinksSync(); }, 1500);
+  // 私密常用連結（存後端）：快取即時渲染，故延遲可縮短
+  setTimeout(function(){ if (window._dashLinksSync) _dashLinksSync(); }, 200);
 };
 // 如果已登入，立即 render
 if (document.getElementById('bulletin-list')) bulletinRender();
