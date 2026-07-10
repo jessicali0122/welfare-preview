@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710200722';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710201648';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1635,12 +1635,11 @@ header::after{display:none!important}
 #analytics-grid .stat:nth-child(2)::before{background:linear-gradient(180deg,#7CC9CB,#38A3A5,#7CC9CB)!important}
 #analytics-grid .stat:nth-child(3)::before{background:linear-gradient(180deg,#F6CC62,#E0820A,#F6CC62)!important}
 #analytics-grid .stat:nth-child(4)::before{background:linear-gradient(180deg,#E38845,#A73B4E,#E38845)!important}
-/* 內頁捲動時內容會從房子/頭像底下滑過：加毛玻璃圓底，重疊時不突兀 */
-#home-logo-btn{background:rgba(247,248,246,.72)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%!important}
-#header-user-btn{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
-/* 首頁深綠底：改用深色半透明毛玻璃 */
-#main-wrapper:has(#view-dashboard.active) #home-logo-btn{background:rgba(255,255,255,.14)!important}
-#main-wrapper:has(#view-dashboard.active) #header-user-btn{background:rgba(255,255,255,.14)}
+/* 右上玻璃膠囊（房子＋頭像合體）：內頁淺色毛玻璃，捲動重疊時柔和不突兀 */
+#topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12)}
+/* 首頁深綠底：膠囊改深色半透明、分隔線翻淺 */
+#main-wrapper:has(#view-dashboard.active) #topbar-capsule{background:rgba(255,255,255,.14);box-shadow:none}
+#main-wrapper:has(#view-dashboard.active) #topbar-capsule-sep{background:rgba(247,248,246,.3)}
 /* 首頁深墨綠底：房屋線條翻淺色才看得見 */
 #main-wrapper:has(#view-dashboard.active) #home-logo-btn svg{stroke:#F7F8F6!important}
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #E1E4DF!important}
@@ -1715,18 +1714,21 @@ thead th{color:#767B75!important}
 <!-- MAIN -->
 <div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
 
-  <!-- TOPBAR：透明浮層（無 bar），只有房子與頭像懸浮，內容從底下滑過 -->
+  <!-- TOPBAR：透明浮層（無 bar），房子＋頭像合併為右上玻璃膠囊，內容從底下滑過 -->
   <header style="position:absolute;top:0;left:0;right:0;height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:transparent;border-bottom:none;display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:10px;z-index:60;pointer-events:none">
-    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="pointer-events:auto;width:36px;height:36px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
-      <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
-    </button>
     <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;flex:1">總覽</span>
     <div style="flex:1"></div>
-    <!-- 右上角使用者按鈕 -->
-    <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="pointer-events:auto;display:flex;align-items:center;cursor:pointer;padding:4px;border-radius:50%;transition:opacity .15s;flex-shrink:0" onmouseenter="this.style.opacity='.8'" onmouseleave="this.style.opacity='1'">
-      <div class="user-avatar-wrap" style="width:36px;height:36px;border-radius:50%;background:#577B53;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
-        <span class="user-avatar-initial">潔</span>
+    <!-- 右上玻璃膠囊：房子＋分隔線＋頭像 -->
+    <div id="topbar-capsule" style="pointer-events:auto;display:flex;align-items:center;gap:4px;border-radius:24px;padding:4px 6px;flex-shrink:0">
+      <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:32px;height:32px;border:none;background:none!important;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s;border-radius:50%" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
+        <span class="approval-badge" style="position:absolute;top:0;right:0;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
+      </button>
+      <span id="topbar-capsule-sep" style="width:1px;height:18px;background:rgba(46,51,45,.16);flex-shrink:0"></span>
+      <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:flex;align-items:center;cursor:pointer;border-radius:50%;transition:opacity .15s;flex-shrink:0" onmouseenter="this.style.opacity='.8'" onmouseleave="this.style.opacity='1'">
+        <div class="user-avatar-wrap" style="width:32px;height:32px;border-radius:50%;background:#577B53;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
+          <span class="user-avatar-initial">潔</span>
+        </div>
       </div>
     </div>
   </header>
