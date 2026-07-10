@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710101355';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710102703';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1495,6 +1495,9 @@ html,body{background:#F1F3EE}
 #view-dashboard.active #dashboard-greeting{color:#F7F8F6!important}
 #view-dashboard.active #tw-datetime,#view-dashboard.active #dash-weather{color:rgba(247,248,246,.78)!important}
 #view-dashboard.active #dash-hero>div:nth-child(3){color:rgba(247,248,246,.72)!important}
+/* 首頁：問候區釘在頂端，公佈欄以下才捲動；捲動內容從問候區後方通過，文字不會滑進頂欄被吃掉 */
+#view-dashboard{overflow:clip!important}
+#view-dashboard.active #dash-hero{position:sticky!important;top:calc(-60px - env(safe-area-inset-top,0px));z-index:30;background:#46633F;padding-top:8px!important;padding-bottom:16px!important}
 #view-dashboard.active #dash-services-label,#view-dashboard.active #dash-links-label{color:#C2D19A!important}
 #view-dashboard.active #dash-brand>div:nth-child(1){background:rgba(247,248,246,.3)!important}
 #view-dashboard.active #dash-brand>div:nth-child(2){color:rgba(247,248,246,.82)!important}
@@ -3253,8 +3256,9 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- ⚙️ 進階管理（管理者／HR 專用，常駐；開放/編輯日期直接點日曆）-->
+  <!-- ⚙️ 進階管理（管理者／HR 專用，常駐；開放/編輯日期直接點日曆）：單一大卡包住，樣式比照「我的預約／即將開放」 -->
   <div id="ms-adv-wrap" style="display:none;margin-bottom:24px">
+    <div style="background:#fff;border-radius:16px;border:1px solid #D5DAD2;box-shadow:0 1px 2px rgba(46,51,45,.05);padding:16px 18px">
     <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
       <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">進 階 管 理</div>
       <div style="font-size:12px;letter-spacing:.16em;color:#738e41">ADMIN</div>
@@ -3264,7 +3268,7 @@ thead th{color:#767B75!important}
 
 
     <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
-    <div id="ms-approval-section" style="display:none;background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
+    <div id="ms-approval-section" style="display:none;background:#F7F8F6;border-radius:12px;padding:18px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#577B53,#8FAE8B);display:flex;align-items:center;justify-content:center;font-size:14px">📬</div>
         <div style="font-size:14px;font-weight:700;color:#2E332D">待審核申請</div>
@@ -3276,30 +3280,30 @@ thead th{color:#767B75!important}
     </div>
 
     <!-- 限制設定（一排） -->
-    <div style="background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
+    <div style="background:#F7F8F6;border-radius:12px;padding:16px 18px;margin-bottom:14px">
       <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;padding-bottom:7px">
           <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
         </div>
         <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
-          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
         <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
-          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
         <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">取消期限（時段前幾小時）
-          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
         <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">違規幾次停權
-          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#F7F8F6" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
         <button onclick="msSaveSettings()" style="flex-shrink:0;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">儲存設定</button>
       </div>
     </div>
 
     <!-- 開放日期管理（設定/編輯改由「點日曆日期」直接操作，這裡只列清單） -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05);margin-bottom:14px">
+    <div style="background:#F7F8F6;border-radius:12px;padding:18px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">📅</div>
         <div style="font-size:14px;font-weight:700;color:#2E332D">已開放日期</div>
@@ -3309,13 +3313,13 @@ thead th{color:#767B75!important}
     </div>
 
     <!-- 所有預約紀錄 -->
-    <div style="background:#fff;border-radius:16px;padding:18px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
+    <div style="background:#F7F8F6;border-radius:12px;padding:18px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
         <div style="display:flex;align-items:center;gap:8px">
           <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">📊</div>
           <div style="font-size:14px;font-weight:700;color:#2E332D">所有預約紀錄</div>
         </div>
-        <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #E1E4DF;border-radius:20px;padding:6px 14px;font-size:14px;font-family:inherit;background:#F7F8F6;width:150px;outline:none" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        <input id="ms-admin-search" type="text" placeholder="搜尋…" oninput="msAdminFilter()" style="border:1.5px solid #E1E4DF;border-radius:20px;padding:6px 14px;font-size:14px;font-family:inherit;background:#fff;width:150px;outline:none" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
       </div>
       <div id="ms-admin-table-wrap" style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:14px">
@@ -3333,6 +3337,7 @@ thead th{color:#767B75!important}
       </div>
     </div>
   </div>
+    </div><!-- end 進階管理大卡 -->
   </div><!-- end ms-adv-wrap -->
 
 
