@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260709194251';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710091349';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -69,7 +69,7 @@ function _loadFlatpickr(cb) {
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
-html,body{margin:0;background:#F7F8F6;overflow-x:hidden;width:100%}
+html,body{margin:0;background:#F1F3EE;overflow-x:hidden;width:100%}
 :root{--brand:#577B53;--brand-dark:#46633F;--brand-light:#EDF1EC;--brand-mid:#577B53;--amber:#577B53;--amber-dark:#577B53;--amber-light:#E7EEE5;--amber-mid:#8FAE8B;--green:#577B53;--green-dark:#46633F;--green-light:#EEF3ED}
 .view{display:none}.view.active{display:block}
 
@@ -1472,8 +1472,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       '</div>' +
       '<div style="color:#767B75;font-size:14px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.2em">登入中</div>';
     document.body.appendChild(d);
-    document.documentElement.style.background = '#F7F8F6';
-    document.body.style.background = '#F7F8F6';
+    document.documentElement.style.background = '#F1F3EE';
+    document.body.style.background = '#F1F3EE';
   }catch(e){}
 })();
 </script>
@@ -1483,10 +1483,21 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 /* ── 空間層次系統（2026-07 去平面化改造）──
    底層 html/body 奶油色（下拉回彈不再露白線）→ 內容米白 → 卡片暖白，
    三層由深到淺，加上暖色點綴與微漸層，建立縱深。 */
-html,body{background:#F7F8F6}
+html,body{background:#F1F3EE}
 /* 內容區：全站統一近白 #F7F8F6（純白卡片浮於其上；與頂欄同色、零接縫） */
-#main-content{background:#F7F8F6!important}
+#main-content{background:#F1F3EE!important}
 #view-dashboard{background:transparent!important}
+/* ── 首頁深墨綠畫布（含頂欄）：白卡浮起、畫布文字翻淺 ── */
+#main-wrapper:has(#view-dashboard.active) header{background:#46633F!important}
+#main-content:has(#view-dashboard.active){background:#46633F!important}
+#view-dashboard.active #dashboard-greeting{color:#F7F8F6!important}
+#view-dashboard.active #tw-datetime,#view-dashboard.active #dash-weather{color:rgba(247,248,246,.78)!important}
+#view-dashboard.active #dash-hero>div:nth-child(3){color:rgba(247,248,246,.72)!important}
+#view-dashboard.active #dash-services-label,#view-dashboard.active #dash-links-label{color:#C2D19A!important}
+#view-dashboard.active #dash-brand>div:nth-child(1){background:rgba(247,248,246,.3)!important}
+#view-dashboard.active #dash-brand>div:nth-child(2){color:rgba(247,248,246,.82)!important}
+#view-dashboard.active #dash-brand>div:nth-child(3){color:#C2D19A!important}
+#view-dashboard.active #dash-brand>div:nth-child(4){color:rgba(247,248,246,.5)!important}
 /* 卡片表面：純白改暖白微漸層，內緣頂部亮線，質感更立體 */
 #bulletin-section,.dash-hub-card{background:#FFFFFF!important}
 /* 公佈欄：頂部金棕漸層飾線 */
@@ -1520,7 +1531,7 @@ html,body{background:#F7F8F6}
 /* 卡片：細米棕邊線＋柔和棕影 */
 .card{border:1px solid #D5DAD2!important;box-shadow:0 1px 2px rgba(46,51,45,.05)!important}
 /* 頂欄：與頁面同色、無邊線無陰影，融入畫面（使用者要求不切塊） */
-header{background:#F7F8F6!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+header{background:#F1F3EE!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -1737,7 +1748,7 @@ thead th{color:#767B75!important}
     </div>
 
     <!-- 入口式導覽：四大模組入口卡片（依角色顯示，點擊直接進入） -->
-    <div style="font-size:12px;letter-spacing:.2em;color:#738e41;text-align:center;margin-bottom:18px">SERVICES・服務項目</div>
+    <div id="dash-services-label" style="font-size:12px;letter-spacing:.2em;color:#738e41;text-align:center;margin-bottom:18px">SERVICES・服務項目</div>
     <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
       <div class="dash-hub-card" data-cap="reimbursement.view" onclick="hubNav(this,'applications')" style="order:3;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.05);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
@@ -1801,7 +1812,7 @@ thead th{color:#767B75!important}
       </div>
     </div>
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
-    <div style="font-size:12px;letter-spacing:.2em;color:#738e41;text-align:center;margin:24px 0 14px">LINKS・常用連結</div>
+    <div id="dash-links-label" style="font-size:12px;letter-spacing:.2em;color:#738e41;text-align:center;margin:24px 0 14px">LINKS・常用連結</div>
     <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">
       <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.05);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
         <span style="font-size:20px;line-height:1">📋</span>
@@ -1811,7 +1822,7 @@ thead th{color:#767B75!important}
     </div>
     <!-- 私密連結（如員購賣場）存於 GAS 後端，登入後由 _dashLinksSync 動態掛入上方 dash-links，不進公開 repo -->
     <!-- 品牌語 -->
-    <div style="text-align:center;padding:24px 0 8px">
+    <div id="dash-brand" style="text-align:center;padding:24px 0 8px">
       <div style="width:2px;height:28px;background:#E1E4DF;margin:0 auto 16px"></div>
       <div style="font-size:14px;color:#767B75;letter-spacing:.2em;line-height:2">健康，是我們給人與毛孩最好的禮物</div>
       <div style="font-size:12px;letter-spacing:.2em;color:#738e41;margin-top:8px">FOR PEOPLE &amp; THEIR FURRY FAMILY</div>
@@ -1829,30 +1840,26 @@ thead th{color:#767B75!important}
         <div style="flex:1;min-width:0"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
       </div>
 
+      <!-- 補助試算：單一篩選區（項目 → 身分 → 條件），結婚/喪葬共用 -->
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <div style="font-size:16px;font-weight:700;color:#2E332D;margin-bottom:14px">💍 結婚補助</div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-          <div style="flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職年資</div>
-            <select id="sub-m-tenure" onchange="subsidyCalcM()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="0">未滿 1 年</option><option value="1">1~2 年</option><option value="2">2~3 年</option><option value="3">3 年以上</option></select></div>
-          <div style="flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">身分</div>
-            <select id="sub-m-type" onchange="subsidyCalcM()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="full">正職</option><option value="part">工讀生</option></select></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+          <span style="width:4px;height:16px;background:linear-gradient(#E38845,#A73B4E);border-radius:4px"></span>
+          <span style="font-size:16px;font-weight:700;color:#2E332D">補助試算</span>
         </div>
-        <div id="sub-m-result"></div>
-        <div style="font-size:12px;color:#9AA098;margin-top:10px;line-height:1.7">應附文件（擇一）：結婚登記證明／戶口名簿影本／戶口謄本<br>本人在職限申請一次；結婚雙方皆為員工時得各別申請</div>
-      </div>
-
-      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:20px 22px;margin-bottom:16px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
-        <div style="font-size:16px;font-weight:700;color:#2E332D;margin-bottom:14px">🕯️ 喪葬補助</div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
-          <div style="flex:1;min-width:140px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職狀態</div>
-            <select id="sub-f-stage" onchange="subsidyCalcF()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="pass">已通過試用期考核</option><option value="trial">試用期間</option></select></div>
-          <div style="flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">親屬關係</div>
-            <select id="sub-f-rel" onchange="subsidyCalcF()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="本人">員工本人</option><option value="父母配偶子女">父母／配偶／子女</option><option value="岳父母公婆">岳父母／公婆</option><option value="祖父母兄弟姊妹">祖父母／兄弟姊妹</option></select></div>
-          <div style="flex:1;min-width:120px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">身分</div>
-            <select id="sub-f-type" onchange="subsidyCalcF()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="full">正職</option><option value="part">工讀生</option></select></div>
+          <div style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">補助項目</div>
+            <select id="sub-kind" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="m">💍 結婚補助</option><option value="f">🕯️ 喪葬補助</option></select></div>
+          <div style="flex:1;min-width:110px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">身分</div>
+            <select id="sub-type" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="full">正職</option><option value="part">工讀生</option></select></div>
+          <div id="sub-wrap-tenure" style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職年資</div>
+            <select id="sub-m-tenure" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="0">未滿 1 年</option><option value="1">1~2 年</option><option value="2">2~3 年</option><option value="3">3 年以上</option></select></div>
+          <div id="sub-wrap-stage" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職狀態</div>
+            <select id="sub-f-stage" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="pass">已通過試用期考核</option><option value="trial">試用期間</option></select></div>
+          <div id="sub-wrap-rel" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">親屬關係</div>
+            <select id="sub-f-rel" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="本人">員工本人</option><option value="父母配偶子女">父母／配偶／子女</option><option value="岳父母公婆">岳父母／公婆</option><option value="祖父母兄弟姊妹">祖父母／兄弟姊妹</option></select></div>
         </div>
-        <div id="sub-f-result"></div>
-        <div style="font-size:12px;color:#9AA098;margin-top:10px;line-height:1.7">應附文件：死亡證明書（須另檢附親屬關係之證明文件）／訃聞</div>
+        <div id="sub-result"></div>
+        <div id="sub-note" style="margin-top:12px;background:#F7F8F6;border-radius:12px;padding:10px 14px;font-size:12px;color:#767B75;line-height:1.7"></div>
       </div>
 
       <!-- 申請單下載（Google Drive） -->
@@ -1889,10 +1896,22 @@ thead th{color:#767B75!important}
         + '<div style="display:flex;align-items:baseline;gap:4px"><span style="font-size:16px;font-weight:700;color:#E0820A">NT$</span><span style="font-size:32px;font-weight:800;color:#E0820A;letter-spacing:.01em;line-height:1.05">'+Number(amount).toLocaleString()+'</span></div>'
       + '</div>'
     + '</div>'; }
-    window.subsidyCalcM=function(){ var t=+(document.getElementById('sub-m-tenure')||{}).value||0; var ty=((document.getElementById('sub-m-type')||{}).value==='part')?1:0; var el=document.getElementById('sub-m-result'); if(el) el.innerHTML=box(M[t][ty]); };
-    window.subsidyCalcF=function(){ var st=(document.getElementById('sub-f-stage')||{}).value||'pass'; var rel=(document.getElementById('sub-f-rel')||{}).value||'本人'; var ty=((document.getElementById('sub-f-type')||{}).value==='part')?1:0; var el=document.getElementById('sub-f-result'); if(el && F[st] && F[st][rel]) el.innerHTML=box(F[st][rel][ty]); };
-    window.subsidyInit=function(){ try{ subsidyCalcM(); subsidyCalcF(); }catch(e){} };
-    if(document.getElementById('sub-m-result')) subsidyInit();
+    var NOTE_M = '📎 <strong>應附文件（擇一）</strong>：結婚登記證明／戶口名簿影本／戶口謄本<br>💡 本人在職期間限申請一次；結婚雙方皆為本公司員工時，得各自提出申請。';
+    var NOTE_F = '📎 <strong>應附文件</strong>：死亡證明書（須另附與員工之親屬關係證明）或訃聞<br>💡 補助金額依「在職狀態」與「親屬關係」對照發放。';
+    window.subsidyCalc=function(){
+      var kind=(document.getElementById('sub-kind')||{}).value||'m';
+      var isM = kind==='m';
+      var w=function(id,show){ var el=document.getElementById(id); if(el) el.style.display=show?'':'none'; };
+      w('sub-wrap-tenure',isM); w('sub-wrap-stage',!isM); w('sub-wrap-rel',!isM);
+      var ty=((document.getElementById('sub-type')||{}).value==='part')?1:0;
+      var amount;
+      if(isM){ var t=+(document.getElementById('sub-m-tenure')||{}).value||0; amount=M[t][ty]; }
+      else { var st=(document.getElementById('sub-f-stage')||{}).value||'pass'; var rel=(document.getElementById('sub-f-rel')||{}).value||'本人'; amount=(F[st]&&F[st][rel])?F[st][rel][ty]:0; }
+      var el=document.getElementById('sub-result'); if(el) el.innerHTML=box(amount);
+      var note=document.getElementById('sub-note'); if(note) note.innerHTML = isM ? NOTE_M : NOTE_F;
+    };
+    window.subsidyInit=function(){ try{ subsidyCalc(); }catch(e){} };
+    if(document.getElementById('sub-result')) subsidyInit();
   })();
   </script>
 
@@ -3225,14 +3244,14 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- ⚙️ 進階管理（管理者／HR 專用，折疊；開放日期管理可直接從日曆點選）-->
+  <!-- ⚙️ 進階管理（管理者／HR 專用，常駐；開放/編輯日期直接點日曆）-->
   <div id="ms-adv-wrap" style="display:none;margin-bottom:24px">
-    <button id="ms-adv-toggle" onclick="msToggleAdv()" style="width:100%;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.05);padding:14px 18px;cursor:pointer;font-family:inherit">
-      <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">⚙️</div>
-      <div style="flex:1;text-align:left"><div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.04em">進階管理</div><div style="font-size:12px;color:#767B75;margin-top:2px">限制設定・已開放日期・預約紀錄（開放/編輯請直接點日曆日期）</div></div>
-      <svg id="ms-adv-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2.5" style="transition:transform .2s;flex-shrink:0"><polyline points="6 9 12 15 18 9"/></svg>
-    </button>
-  <div id="ms-panel-admin" style="display:none;margin-top:12px">
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">進 階 管 理</div>
+      <div style="font-size:12px;letter-spacing:.16em;color:#738e41">ADMIN</div>
+      <div style="font-size:12px;color:#9AA098">開放/編輯日期請直接點上方日曆</div>
+    </div>
+  <div id="ms-panel-admin">
 
 
     <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
@@ -3861,8 +3880,8 @@ function _showLoggingIn() {
     '</div>' +
     '<div style="color:#767B75;font-size:14px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.2em">登入中</div>';
   document.body.appendChild(d);
-  document.documentElement.style.background = '#F7F8F6';
-  document.body.style.background = '#F7F8F6';
+  document.documentElement.style.background = '#F1F3EE';
+  document.body.style.background = '#F1F3EE';
 }
 function _hideLoggingIn() {
   var d = document.getElementById('bf-logging-in');
@@ -4100,8 +4119,8 @@ function parseJwt(token) {
 function showApp() {
   window._appShown = true;
   _hideLoggingIn();  // 移除「登入中…」過場
-  document.documentElement.style.background = '#F7F8F6';
-  document.body.style.background = '#F7F8F6';
+  document.documentElement.style.background = '#F1F3EE';
+  document.body.style.background = '#F1F3EE';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
@@ -13404,16 +13423,6 @@ function msBookingCard(b, isUpcoming) {
 }
 
 // ── 管理（admin only） ──
-
-// 進階管理折疊切換
-window.msToggleAdv = function(forceOpen) {
-  var panel = document.getElementById('ms-panel-admin');
-  var chev = document.getElementById('ms-adv-chevron');
-  if (!panel) return;
-  var open = forceOpen === true ? true : (panel.style.display === 'none');
-  panel.style.display = open ? '' : 'none';
-  if (chev) chev.style.transform = open ? 'rotate(180deg)' : '';
-};
 
 // 從日曆點日期（或「編輯此日開放」）→ 右欄直接開啟該日的開放編輯器，不需再選日期
 window.msAdminOpenDate = function(dateStr) {
