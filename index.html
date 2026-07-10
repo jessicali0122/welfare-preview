@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710155302';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710200722';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1545,8 +1545,11 @@ html,body{background:#F1F3EE}
 /* 頂欄：透明浮層（無 bar），內容從房子/頭像底下滑過；內容區補頂部留白 */
 header{background:transparent!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 #main-content{padding-top:calc(60px + env(safe-area-inset-top,0px))!important}
-/* 首頁問候區與頂欄距離拉近一點（大標置中，不會撞到兩側房子/頭像） */
-#main-content:has(#view-dashboard.active){padding-top:calc(26px + env(safe-area-inset-top,0px))!important}
+/* 首頁滿版：main-content 不留 padding，改由 view 自己補內距——
+   否則暈染在 view 圓角邊界被裁切，與外圍純色留白形成一圈可見的色差外框 */
+#main-content:has(#view-dashboard.active){padding:0!important}
+#view-dashboard.active{border-radius:0!important;padding:calc(26px + env(safe-area-inset-top,0px)) 28px 40px!important;min-height:100vh!important}
+@media(max-width:768px){#view-dashboard.active{padding:calc(14px + env(safe-area-inset-top,0px)) 10px calc(80px + env(safe-area-inset-bottom,0px))!important}}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -12122,7 +12125,7 @@ window.htSaveItems = async function() {
   toast('✅ 品項已儲存');
   // reload items
   var r2 = await htApi('htGetItems', { eventId: _htEvent.eventId });
-  if (r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); }
+  if (r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); htRenderBudget(); }
 };
 
 // ── 預算結算 ──
