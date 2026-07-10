@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710201648';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710202253';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1989,16 +1989,14 @@ thead th{color:#767B75!important}
         </ul>
       </div>
     </div>
-    <!-- 3-tab pill bar -->
-    <div id="apps-tab-bar" style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
-      <div style="display:flex;flex:1;min-width:220px;background:#ECEEEA;border-radius:12px;padding:3px;gap:2px">
-        <button id="apps-tab-all" onclick="appsSetTab('all')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#577B53;box-shadow:0 1px 4px rgba(0,0,0,.1);white-space:nowrap">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件清單<span id="apps-tab-all-badge" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 6px;border-radius:20px;margin-left:3px">0</span>
-        </button>
-        <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .18s;background:transparent;color:#767B75;white-space:nowrap">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="10"/><line x1="3" y1="20" x2="21" y2="20"/></svg>費用分析
-        </button>
-      </div>
+    <!-- 切換列：緊湊膠囊（靠左、不佔整行；選中變品牌綠） -->
+    <div id="apps-tab-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+      <button id="apps-tab-all" onclick="appsSetTab('all')" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#577B53;color:#fff;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>案件清單<span id="apps-tab-all-badge" style="background:rgba(255,255,255,.25);color:#fff;font-size:12px;font-weight:700;padding:1px 8px;border-radius:20px">0</span>
+      </button>
+      <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#767B75;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="10"/><line x1="3" y1="20" x2="21" y2="20"/></svg>費用分析
+      </button>
     </div>
     <div id="app-count-label" style="font-size:14px;color:#9AA098;margin-bottom:12px;display:none">共 0 件</div>
     <!-- ── 費用分析（自總覽搬入請款模組）── -->
@@ -5277,19 +5275,22 @@ function appsSetTab(tab) {
     analytics: { el: document.getElementById('apps-tab-analytics'), active: tab==='analytics' },
     all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' }
   };
-  var activeStyle   = { bg:'#fff', color:'#577B53', shadow:'0 1px 4px rgba(0,0,0,.1)', weight:'700' };
-  var inactiveStyle = { bg:'transparent', color:'#767B75', shadow:'none',               weight:'500' };
+  // 緊湊膠囊樣式：選中＝品牌綠實心，未選＝白底灰框
+  var activeStyle   = { bg:'#577B53', border:'#577B53', color:'#fff' };
+  var inactiveStyle = { bg:'#fff',    border:'#D5DAD2', color:'#767B75' };
   Object.keys(tabs).forEach(function(k) {
     var t = tabs[k]; if (!t.el) return;
     var s = t.active ? activeStyle : inactiveStyle;
-    t.el.style.background  = s.bg;
-    t.el.style.color       = s.color;
-    t.el.style.boxShadow   = s.shadow;
-    t.el.style.fontWeight  = s.weight;
+    t.el.style.background   = s.bg;
+    t.el.style.borderColor  = s.border;
+    t.el.style.color        = s.color;
   });
-  // badge 顏色跟著 active 狀態更新
+  // badge 顏色跟著 active 狀態更新（選中＝半透明白、未選＝灰底白字）
   var allBadge  = document.getElementById('apps-tab-all-badge');
-  if (allBadge)  allBadge.style.background  = (tab==='all')     ? '#577B53' : '#9AA098';
+  if (allBadge) {
+    allBadge.style.background = (tab==='all') ? 'rgba(255,255,255,.25)' : '#9AA098';
+    allBadge.style.color = '#fff';
+  }
 
   // 區塊顯示控制
   var analyticsEl  = document.getElementById('apps-analytics-block');
