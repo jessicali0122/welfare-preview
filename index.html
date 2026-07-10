@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710153154';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710153909';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2145,6 +2145,19 @@ thead th{color:#767B75!important}
       <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 全部案件 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#9AA098;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-flow" onclick="switchAppTab('flow')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">⚙️ 簽核流程</div>
+    </div>
+    <!-- 簽核流程設定（自系統管理移入；元件 ID 保留，renderFlowList/loadAdminFlow 不需改） -->
+    <div id="app-tab-flow" style="display:none">
+      <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
+        ⚠️ <b>注意：</b>流程設定為<b>唯讀顯示</b>，僅管理員可修改。
+      </div>
+      <div class="card" style="padding:22px">
+        <div id="flow-list-title" class="section-title">目前簽核流程</div>
+        <div id="flow-list" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;padding:30px;color:#9AA098">載入中...</div>
+        </div>
+      </div>
     </div>
     <!-- 草稿列表 -->
     <div id="app-tab-drafts" style="display:none">
@@ -2623,7 +2636,7 @@ thead th{color:#767B75!important}
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">ADMIN</span></div>
-        <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者、角色與簽核流程設定</div>
+        <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者與角色管理（簽核流程請至「案件追蹤」）</div>
       </div>
       <button id="add-user-btn" class="btn btn-p" style="flex-shrink:0" onclick="showAddUserModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增人員
@@ -2631,7 +2644,6 @@ thead th{color:#767B75!important}
     </div>
     <div style="display:flex;gap:0;border-bottom:1px solid #E1E4DF;margin-bottom:20px">
       <div class="admin-tab active" id="tab-users" onclick="switchAdminTab('users')">👥 使用者管理</div>
-      <div class="admin-tab" id="tab-flow" onclick="switchAdminTab('flow')">⚙️ 流程設定</div>
       <div class="admin-tab" id="tab-log" onclick="switchAdminTab('log')">📋 系統紀錄</div>
     </div>
     <div id="admin-panel-users">
@@ -2688,21 +2700,7 @@ thead th{color:#767B75!important}
         </div>
       </div>
     </div>
-    <div id="admin-panel-flow" style="display:none">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div><div style="font-size:16px;font-weight:700;color:#2E332D">簽核流程設定</div></div>
-      </div>
-      <!-- 唯讀提示：非管理員才顯示 -->
-      <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
-        ⚠️ <b>注意：</b>流程設定為<b>唯讀顯示</b>，僅管理員可修改。
-      </div>
-      <div class="card" style="padding:22px">
-        <div id="flow-list-title" class="section-title">目前簽核流程</div>
-        <div id="flow-list" style="display:flex;flex-direction:column;gap:10px">
-          <div style="text-align:center;padding:30px;color:#9AA098">載入中...</div>
-        </div>
-      </div>
-    </div>
+    <!-- 簽核流程設定已移至「案件追蹤 → 簽核流程」分頁（#app-tab-flow） -->
     <!-- 系統紀錄 panel -->
     <div id="admin-panel-log" style="display:none">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
@@ -5139,18 +5137,25 @@ function switchAppTab(tab) {
   _currentAppTab = tab;
   // 「待審核案件」沿用申請案件的列表容器，只是換資料篩選（見 renderApplications）
   document.getElementById('app-tab-drafts').style.display = tab === 'drafts' ? '' : 'none';
-  document.getElementById('app-tab-cases').style.display  = tab !== 'drafts' ? '' : 'none';
+  document.getElementById('app-tab-cases').style.display  = (tab !== 'drafts' && tab !== 'flow') ? '' : 'none';
+  var flowPanel = document.getElementById('app-tab-flow');
+  if (flowPanel) flowPanel.style.display = tab === 'flow' ? '' : 'none';
   var btnCases   = document.getElementById('tab-btn-cases');
   var btnDrafts  = document.getElementById('tab-btn-drafts');
   var btnPending = document.getElementById('tab-btn-pending');
-  [btnCases, btnDrafts, btnPending].forEach(function(b){
+  var btnFlow    = document.getElementById('tab-btn-flow');
+  [btnCases, btnDrafts, btnPending, btnFlow].forEach(function(b){
     if (!b) return;
     b.style.color = ''; b.style.borderBottomColor = '';
     b.classList.remove('active');
   });
-  var activeBtn = tab === 'drafts' ? btnDrafts : tab === 'pending' ? btnPending : btnCases;
+  var activeBtn = tab === 'drafts' ? btnDrafts : tab === 'pending' ? btnPending : tab === 'flow' ? btnFlow : btnCases;
   if (activeBtn) activeBtn.classList.add('active');
-  if (tab === 'drafts') renderDraftsTab();
+  // 「共 N 件」計數與簽核流程分頁無關，切到流程時隱藏
+  var countLabel = document.getElementById('app-count-label');
+  if (countLabel && tab === 'flow') countLabel.style.display = 'none';
+  if (tab === 'flow') { if (typeof loadAdminFlow === 'function') loadAdminFlow(); }
+  else if (tab === 'drafts') renderDraftsTab();
   else renderApplications();
 }
 
@@ -7786,12 +7791,9 @@ async function doSaveFlowStep() {
 // ── ADMIN TABS ──
 function switchAdminTab(tab){
   document.getElementById('admin-panel-users').style.display=tab==='users'?'block':'none';
-  document.getElementById('admin-panel-flow').style.display=tab==='flow'?'block':'none';
   document.getElementById('admin-panel-log').style.display=tab==='log'?'block':'none';
   document.getElementById('tab-users').classList.toggle('active',tab==='users');
-  document.getElementById('tab-flow').classList.toggle('active',tab==='flow');
   document.getElementById('tab-log').classList.toggle('active',tab==='log');
-  if(tab==='flow') loadAdminFlow();
   if(tab==='log') loadAuditLogDashboard();
   setTimeout(applyRolePermissions, 50);
 }
