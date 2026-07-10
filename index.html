@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710104520';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710105251';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1497,9 +1497,10 @@ html,body{background:#F1F3EE}
 #view-dashboard.active #dash-hero>div:nth-child(3){color:rgba(247,248,246,.72)!important}
 /* 首頁：問候區釘在頂端，公佈欄以下才捲動；捲動內容從問候區後方通過，文字不會滑進頂欄被吃掉 */
 #view-dashboard{overflow:clip!important}
-#view-dashboard.active #dash-hero{position:sticky!important;top:calc(-60px - env(safe-area-inset-top,0px));z-index:30;background:#46633F;padding-top:8px!important;padding-bottom:16px!important}
-/* 釘住時上緣以同色背景向上延伸，蓋住各斷點 padding 差異造成的細縫，內容不會從縫隙露出 */
-#view-dashboard.active #dash-hero::after{content:'';position:absolute;left:-28px;right:-28px;bottom:100%;height:80px;background:#46633F}
+/* top:0 = 釘在原位完全不位移（捲動時問候區不會先跟著滑一段才卡住，也不會被推出畫面頂端） */
+#view-dashboard.active #dash-hero{position:sticky!important;top:0;z-index:30;background:#46633F;padding-top:8px!important;padding-bottom:16px!important}
+/* 上緣以同色背景向上延伸，蓋住頂欄 padding 區，捲動內容不會從問候區上方的縫隙露出 */
+#view-dashboard.active #dash-hero::after{content:'';position:absolute;left:-28px;right:-28px;bottom:100%;height:100px;background:#46633F}
 #view-dashboard.active #dash-services-label,#view-dashboard.active #dash-links-label{color:#C2D19A!important}
 #view-dashboard.active #dash-brand>div:nth-child(1){background:rgba(247,248,246,.3)!important}
 #view-dashboard.active #dash-brand>div:nth-child(2){color:rgba(247,248,246,.82)!important}
@@ -1612,6 +1613,12 @@ tbody tr{transition:background .15s}
 :focus-visible{outline:2px solid #6B8F67!important;outline-offset:2px}
 header::after{display:none!important}
 #home-logo-btn svg{stroke:#577B53!important}
+/* 內頁捲動時內容會從房子/頭像底下滑過：加毛玻璃圓底，重疊時不突兀 */
+#home-logo-btn{background:rgba(247,248,246,.72)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border-radius:50%!important}
+#header-user-btn{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+/* 首頁深綠底：改用深色半透明毛玻璃 */
+#main-wrapper:has(#view-dashboard.active) #home-logo-btn{background:rgba(255,255,255,.14)!important}
+#main-wrapper:has(#view-dashboard.active) #header-user-btn{background:rgba(255,255,255,.14)}
 /* 首頁深墨綠底：房屋線條翻淺色才看得見 */
 #main-wrapper:has(#view-dashboard.active) #home-logo-btn svg{stroke:#F7F8F6!important}
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #E1E4DF!important}
@@ -10006,7 +10013,9 @@ window.htLoadList = async function() {
 
 function _htUpdateCountdown() {
   var now = new Date(); now.setHours(0,0,0,0);
-  var upcoming = _htEvents.map(function(e) {
+  // 系統活動＋唯讀試算表場次一起算：否則試算表上的近期場次（如 7/20）會被更晚建立的系統活動（如 8 月）蓋掉
+  var _cdSrc = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+  var upcoming = _cdSrc.map(function(e) {
     var ds = String(e.date||'').replace(/\//g,'-');
     if (!ds) return null;
     var d = new Date(ds); d.setHours(0,0,0,0);
@@ -10038,7 +10047,9 @@ function _htUpdateCountdown() {
 window.htGetNextEventHint = function() {
   if (!_htEvents.length && !(typeof _htSheetAsEvents === 'function' && _htSheetAsEvents().length)) return null;
   var now = new Date(); now.setHours(0,0,0,0);
-  var upcoming = _htEvents.map(function(e) {
+  // 與 _htUpdateCountdown 一致：系統活動＋唯讀試算表場次一起找最近的一場
+  var _hintSrc = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+  var upcoming = _hintSrc.map(function(e) {
     var ds = String(e.date||'').replace(/\//g,'-');
     if (!ds) return null;
     var d = new Date(ds); d.setHours(0,0,0,0);
@@ -10296,23 +10307,23 @@ window.htOpenSheetDetail = function (eventId) {
   var isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   var rows = (s.items || []).map(function (it) {
     // 次行完整呈現原表單的負責人／訂購狀態／備註
-    var meta = [it.owner ? '負責人 ' + it.owner : '', it.ordered ? '訂購 ' + it.ordered : '', it.note || ''].filter(Boolean).join('　');
+    var meta = [it.owner ? '負責人 ' + htEsc(it.owner) : '', it.ordered ? '訂購 ' + htEsc(it.ordered) : '', htEsc(it.note || '')].filter(Boolean).join('　');
     if (isMobile) {
       // 手機版：堆疊列（表格 5 欄在小螢幕會擠爆）
       return '<div style="border-bottom:1px solid #ECEEEA;padding:11px 2px">'
         + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">'
-        +   '<div style="font-size:14px;color:#2E332D;font-weight:600;min-width:0">' + it.name + '</div>'
+        +   '<div style="font-size:14px;color:#2E332D;font-weight:600;min-width:0">' + htEsc(it.name) + '</div>'
         +   '<div style="font-size:14px;font-weight:700;color:#2E332D;white-space:nowrap;flex-shrink:0">' + (it.subtotal ? 'NT$ ' + it.subtotal.toLocaleString() : '') + '</div>'
         + '</div>'
-        + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (it.vendor || '—')
+        + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + htEsc(it.vendor || '—')
         +   ((it.price || it.qty) ? '　' + (it.price ? it.price.toLocaleString() : '—') + ' × ' + (it.qty || '—') : '') + '</div>'
         + (meta ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">' + meta + '</div>' : '')
         + '</div>';
     }
     // 桌面版：欄位與原試算表完全一致（品名/廠商/單價/數量/小計/負責人/是否訂購/備註）
     return '<tr style="border-bottom:1px solid #ECEEEA">'
-      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D;word-break:break-word;overflow-wrap:anywhere">' + it.name + '</td>'
-      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;word-break:break-word;overflow-wrap:anywhere">' + (it.vendor || '—') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D;word-break:break-word;overflow-wrap:anywhere">' + htEsc(it.name) + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;word-break:break-word;overflow-wrap:anywhere">' + htEsc(it.vendor || '—') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right;white-space:nowrap">' + (it.price ? it.price.toLocaleString() : '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right">' + (it.qty || '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;font-weight:600;color:#2E332D;text-align:right;white-space:nowrap">' + (it.subtotal ? it.subtotal.toLocaleString() : '') + '</td>'
