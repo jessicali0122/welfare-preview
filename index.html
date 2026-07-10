@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710094351';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710101355';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -239,7 +239,7 @@ input[type=radio]{accent-color:#577B53}
 .seg-track{display:flex;background:#ECEEEA;border-radius:12px;padding:3px;gap:2px}
 .ht-tab-btn,.massage-tab,.ms-myseg,.ms-admseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
-.section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #ECEEEA;padding-left:9px;border-left:3px solid #577B53}
+.section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #ECEEEA}
 input[type=checkbox]{accent-color:#577B53}
 
 /* ── FORM INNER GRIDS MOBILE ── */
@@ -428,6 +428,10 @@ input[type=checkbox]{accent-color:#577B53}
 
 /* 午茶日品項表格：手機版轉成卡片式（10 欄表格在手機橫向捲動難用，改為每個品項一張卡、欄位垂直排列）
    注意：table/tbody/tfoot 必須一起 display:block，否則 tr 會被殘留的表格排版壓成細條（曾造成大跑版） */
+/* 桌面版：品項表格設最小寬度，欄位不足時改為橫向捲動，避免輸入框被壓扁跑版 */
+@media(min-width:769px){
+  #ht-dtab-plan table{min-width:880px}
+}
 @media(max-width:768px){
   #ht-dtab-plan table{display:block;width:100%!important;table-layout:auto!important}
   #ht-dtab-plan colgroup{display:none}
@@ -770,9 +774,8 @@ input[type=checkbox]{accent-color:#577B53}
   #mobile-overlay,#mobile-user-sheet,
   #submit-result-card{display:none!important}
 
-  /* ── 列印隱藏裝飾線：卡片左側識別條、區塊標題左邊的小綠線 ── */
+  /* ── 列印隱藏裝飾線：卡片左側識別條 ── */
   .view .card::before,.view .stat::before,.dash-hub-card::before{display:none!important}
-  .section-title{border-left:none!important;padding-left:0!important}
 
   /* ── 頁面基礎 ── */
   *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
@@ -1487,8 +1490,7 @@ html,body{background:#F1F3EE}
 /* 內容區：全站統一近白 #F7F8F6（純白卡片浮於其上；與頂欄同色、零接縫） */
 #main-content{background:#F1F3EE!important}
 #view-dashboard{background:transparent!important}
-/* ── 首頁深墨綠畫布（含頂欄）：白卡浮起、畫布文字翻淺 ── */
-#main-wrapper:has(#view-dashboard.active) header{background:#46633F!important}
+/* ── 首頁深墨綠畫布：白卡浮起、畫布文字翻淺（頂欄為透明浮層，自然融入） ── */
 #main-content:has(#view-dashboard.active){background:#46633F!important}
 #view-dashboard.active #dashboard-greeting{color:#F7F8F6!important}
 #view-dashboard.active #tw-datetime,#view-dashboard.active #dash-weather{color:rgba(247,248,246,.78)!important}
@@ -1530,8 +1532,9 @@ html,body{background:#F1F3EE}
 #view-admin .card::before,#view-admin .stat::before{background:linear-gradient(180deg,#6882A6,#54719A)}
 /* 卡片：細米棕邊線＋柔和棕影 */
 .card{border:1px solid #D5DAD2!important;box-shadow:0 1px 2px rgba(46,51,45,.05)!important}
-/* 頂欄：與頁面同色、無邊線無陰影，融入畫面（使用者要求不切塊） */
-header{background:#F1F3EE!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+/* 頂欄：透明浮層（無 bar），內容從房子/頭像底下滑過；內容區補頂部留白 */
+header{background:transparent!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+#main-content{padding-top:calc(60px + env(safe-area-inset-top,0px))!important}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -1676,18 +1679,18 @@ thead th{color:#767B75!important}
 </div>
 
 <!-- MAIN -->
-<div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+<div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
 
-  <!-- TOPBAR：與頁面同色、無線條，融入畫面不切塊 -->
-  <header style="height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:#F7F8F6;border-bottom:none;display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:10px;flex-shrink:0;z-index:10;position:relative">
-    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:36px;height:36px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
+  <!-- TOPBAR：透明浮層（無 bar），只有房子與頭像懸浮，內容從底下滑過 -->
+  <header style="position:absolute;top:0;left:0;right:0;height:calc(56px + env(safe-area-inset-top,0px));padding-top:env(safe-area-inset-top,0px);background:transparent;border-bottom:none;display:flex;align-items:center;padding-left:20px;padding-right:20px;gap:10px;z-index:60;pointer-events:none">
+    <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="pointer-events:auto;width:36px;height:36px;border:none;background:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
       <span class="approval-badge" style="position:absolute;top:2px;right:2px;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
     </button>
     <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;flex:1">總覽</span>
     <div style="flex:1"></div>
     <!-- 右上角使用者按鈕 -->
-    <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:flex;align-items:center;cursor:pointer;padding:4px;border-radius:50%;transition:background .15s;flex-shrink:0" onmouseenter="this.style.background='#ECEEEA'" onmouseleave="this.style.background=''">
+    <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="pointer-events:auto;display:flex;align-items:center;cursor:pointer;padding:4px;border-radius:50%;transition:opacity .15s;flex-shrink:0" onmouseenter="this.style.opacity='.8'" onmouseleave="this.style.opacity='1'">
       <div class="user-avatar-wrap" style="width:36px;height:36px;border-radius:50%;background:#577B53;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
         <span class="user-avatar-initial">潔</span>
       </div>
@@ -1850,30 +1853,21 @@ thead th{color:#767B75!important}
         </div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px">
           <div style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">補助項目</div>
-            <select id="sub-kind" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="m">💍 結婚補助</option><option value="f">🕯️ 喪葬補助</option></select></div>
+            <select id="sub-kind" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="m">💍 結婚補助</option><option value="f">🕯️ 喪葬補助</option></select></div>
           <div style="flex:1;min-width:110px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">身分</div>
-            <select id="sub-type" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="full">正職</option><option value="part">工讀生</option></select></div>
+            <select id="sub-type" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="full">正職</option><option value="part">工讀生</option></select></div>
           <div id="sub-wrap-tenure" style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職年資</div>
-            <select id="sub-m-tenure" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="0">未滿 1 年</option><option value="1">1~2 年</option><option value="2">2~3 年</option><option value="3">3 年以上</option></select></div>
+            <select id="sub-m-tenure" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="0">未滿 1 年</option><option value="1">1~2 年</option><option value="2">2~3 年</option><option value="3">3 年以上</option></select></div>
           <div id="sub-wrap-stage" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職狀態</div>
-            <select id="sub-f-stage" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="pass">已通過試用期考核</option><option value="trial">試用期間</option></select></div>
+            <select id="sub-f-stage" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="pass">已通過試用期考核</option><option value="trial">試用期間</option></select></div>
           <div id="sub-wrap-rel" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">親屬關係</div>
-            <select id="sub-f-rel" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="本人">員工本人</option><option value="父母配偶子女">父母／配偶／子女</option><option value="岳父母公婆">岳父母／公婆</option><option value="祖父母兄弟姊妹">祖父母／兄弟姊妹</option></select></div>
+            <select id="sub-f-rel" onchange="subsidyCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:9px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="本人">員工本人</option><option value="父母配偶子女">父母／配偶／子女</option><option value="岳父母公婆">岳父母／公婆</option><option value="祖父母兄弟姊妹">祖父母／兄弟姊妹</option></select></div>
         </div>
         <div id="sub-result"></div>
         <div id="sub-note" style="margin-top:12px;background:#F7F8F6;border-radius:12px;padding:10px 14px;font-size:12px;color:#767B75;line-height:1.7"></div>
       </div>
 
-      <!-- 申請單下載（Google Drive） -->
-      <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:16px;box-shadow:0 1px 2px rgba(46,51,45,.05);text-decoration:none;transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
-        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:20px;line-height:1">📄</span></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:16px;font-weight:700;color:#2E332D">下載津貼補助申請單</div>
-          <div style="font-size:12px;color:#767B75;margin-top:2px">填寫後連同應附文件，於每月 20 日前送交福委會</div>
-        </div>
-        <span style="flex-shrink:0;font-size:14px;font-weight:600;color:#577B53;white-space:nowrap">前往下載 ↗</span>
-      </a>
-
+      <!-- 申請說明 + 申請單下載（同一張卡：先讀說明，最後一步就是下載） -->
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:18px 22px;margin-bottom:24px;box-shadow:0 1px 2px rgba(46,51,45,.05)">
         <div style="font-size:14px;font-weight:700;color:#46633F;margin-bottom:10px">📋 申請說明</div>
         <ol style="margin:0;padding-left:20px;font-size:14px;color:#5A5F58;line-height:2">
@@ -1882,6 +1876,14 @@ thead th{color:#767B75!important}
           <li>前述「在職年資」以事件發生日為計算基準。</li>
           <li>各項津貼補助將依所得稅法及相關規定辦理所得申報。</li>
         </ol>
+        <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:14px;background:#F6F9F5;border:1.5px solid #CBDCC6;border-radius:12px;padding:14px 18px;margin-top:16px;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#EDF1EC'" onmouseout="this.style.background='#F6F9F5'">
+          <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:20px;line-height:1">📄</span></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;font-weight:700;color:#2E332D">下載津貼補助申請單</div>
+            <div style="font-size:12px;color:#767B75;margin-top:2px">填寫後連同應附文件，於每月 20 日前送交福委會</div>
+          </div>
+          <span style="flex-shrink:0;font-size:14px;font-weight:600;color:#577B53;white-space:nowrap">前往下載 ↗</span>
+        </a>
       </div>
     </div>
   </div>
@@ -1900,17 +1902,22 @@ thead th{color:#767B75!important}
     + '</div>'; }
     var NOTE_M = '📎 <strong>應附文件（擇一）</strong>：結婚登記證明／戶口名簿影本／戶口謄本<br>💡 本人在職期間限申請一次；結婚雙方皆為本公司員工時，得各自提出申請。';
     var NOTE_F = '📎 <strong>應附文件</strong>：死亡證明書（須另附與員工之親屬關係證明）或訃聞<br>💡 補助金額依「在職狀態」與「親屬關係」對照發放。';
+    // 尚未選齊條件時的提示框（不預先顯示金額）
+    function hintBox(){ return '<div style="border:1.5px dashed #D5DAD2;border-radius:16px;padding:16px 20px;display:flex;align-items:center;gap:12px;color:#9AA098;font-size:14px"><span style="font-size:20px;line-height:1">👆</span>選擇上方條件後，這裡會顯示可申請的補助金額</div>'; }
     window.subsidyCalc=function(){
-      var kind=(document.getElementById('sub-kind')||{}).value||'m';
+      var kind=(document.getElementById('sub-kind')||{}).value||'';
       var isM = kind==='m';
       var w=function(id,show){ var el=document.getElementById(id); if(el) el.style.display=show?'':'none'; };
-      w('sub-wrap-tenure',isM); w('sub-wrap-stage',!isM); w('sub-wrap-rel',!isM);
-      var ty=((document.getElementById('sub-type')||{}).value==='part')?1:0;
-      var amount;
-      if(isM){ var t=+(document.getElementById('sub-m-tenure')||{}).value||0; amount=M[t][ty]; }
-      else { var st=(document.getElementById('sub-f-stage')||{}).value||'pass'; var rel=(document.getElementById('sub-f-rel')||{}).value||'本人'; amount=(F[st]&&F[st][rel])?F[st][rel][ty]:0; }
-      var el=document.getElementById('sub-result'); if(el) el.innerHTML=box(amount);
-      var note=document.getElementById('sub-note'); if(note) note.innerHTML = isM ? NOTE_M : NOTE_F;
+      w('sub-wrap-tenure',kind==='m'); w('sub-wrap-stage',kind==='f'); w('sub-wrap-rel',kind==='f');
+      var tyV=(document.getElementById('sub-type')||{}).value||'';
+      var amount=null;
+      if(kind && tyV){
+        var ty = tyV==='part'?1:0;
+        if(isM){ var t=(document.getElementById('sub-m-tenure')||{}).value; if(t!=='') amount=M[+t][ty]; }
+        else { var st=(document.getElementById('sub-f-stage')||{}).value||''; var rel=(document.getElementById('sub-f-rel')||{}).value||''; if(st&&rel) amount=(F[st]&&F[st][rel])?F[st][rel][ty]:0; }
+      }
+      var el=document.getElementById('sub-result'); if(el) el.innerHTML = (amount==null) ? hintBox() : box(amount);
+      var note=document.getElementById('sub-note'); if(note){ note.style.display = kind ? '' : 'none'; if(kind) note.innerHTML = isM ? NOTE_M : NOTE_F; }
     };
     window.subsidyInit=function(){ try{ subsidyCalc(); }catch(e){} };
     if(document.getElementById('sub-result')) subsidyInit();
@@ -2925,7 +2932,7 @@ thead th{color:#767B75!important}
     <!-- Tab: 品項規劃 -->
     <div id="ht-dtab-plan">
       <!-- 快速設定列 -->
-      <div id="ht-event-info-bar" style="background:#F6F9F5;border:1.5px solid #CBDcC6;box-shadow:0 1px 3px rgba(46,51,45,.06);border-radius:12px;padding:16px 18px;margin-bottom:16px">
+      <div id="ht-event-info-bar" style="background:#fff;border:1.5px solid #CBDCC6;box-shadow:0 1px 3px rgba(46,51,45,.07);border-radius:12px;padding:16px 18px;margin-bottom:16px">
         <div style="font-size:14px;font-weight:700;color:#577B53;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
           <!-- 月份（建立時設定，唯讀） -->
@@ -10321,15 +10328,15 @@ window.htOpenSheetDetail = function (eventId) {
         +     '<col style="width:24%"><col style="width:15%"><col style="width:9%"><col style="width:7%">'
         +     '<col style="width:11%"><col style="width:12%"><col style="width:10%"><col style="width:12%">'
         +   '</colgroup>'
-        +   '<thead><tr style="border-bottom:1px solid #E1E4DF">'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:.04em">品名</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:.04em">廠商</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:.04em">單價</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:.04em">數量</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:right;font-weight:600;letter-spacing:.04em">小計</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:.04em">負責人</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:center;font-weight:600;letter-spacing:.04em">是否訂購</th>'
-        +     '<th style="padding:8px 10px;font-size:12px;color:#767B75;text-align:left;font-weight:600;letter-spacing:.04em">備註</th>'
+        +   '<thead><tr style="background:#F1F4EF;border-bottom:1.5px solid #CBDCC6">'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:left;font-weight:700;letter-spacing:.04em">品名</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:left;font-weight:700;letter-spacing:.04em">廠商</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:right;font-weight:700;letter-spacing:.04em">單價</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:right;font-weight:700;letter-spacing:.04em">數量</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:right;font-weight:700;letter-spacing:.04em">小計</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:left;font-weight:700;letter-spacing:.04em">負責人</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:center;font-weight:700;letter-spacing:.04em">是否訂購</th>'
+        +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:left;font-weight:700;letter-spacing:.04em">備註</th>'
         +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>')
     + '</div>'
     + '<div style="padding:14px 24px 18px;border-top:1px solid #ECEEEA;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
