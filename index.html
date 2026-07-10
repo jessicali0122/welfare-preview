@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260710202253';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260710203935';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1719,7 +1719,7 @@ thead th{color:#767B75!important}
     <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;flex:1">總覽</span>
     <div style="flex:1"></div>
     <!-- 右上玻璃膠囊：房子＋分隔線＋頭像 -->
-    <div id="topbar-capsule" style="pointer-events:auto;display:flex;align-items:center;gap:4px;border-radius:24px;padding:4px 6px;flex-shrink:0">
+    <div id="topbar-capsule" style="pointer-events:auto;display:flex;align-items:center;gap:9px;border-radius:24px;padding:4px 8px;flex-shrink:0">
       <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:32px;height:32px;border:none;background:none!important;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s;border-radius:50%" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
         <span class="approval-badge" style="position:absolute;top:0;right:0;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
@@ -3185,7 +3185,7 @@ thead th{color:#767B75!important}
       <div id="ms-my-upcoming-wrap">
         <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
         <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:14px;color:#9AA098;font-size:14px;background:#F7F8F6;border-radius:12px">
-          💆 目前沒有即將到來的預約，從下方挑個好日子來放鬆一下吧 🌿
+          💆 目前沒有即將到來的預約，挑個好日子來放鬆一下吧 🌿
         </div>
       </div>
       <div id="ms-my-history-wrap" style="display:none">
@@ -3250,9 +3250,8 @@ thead th{color:#767B75!important}
             <div id="ms-open-editor" style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px">
               <div id="ms-open-editor-title" style="font-size:16px;font-weight:700;color:#577B53;margin-bottom:10px">設定開放</div>
               <input id="ms-open-date-inp" type="hidden">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 7px">
+              <div style="margin:0 0 7px">
                 <span style="font-size:12px;color:#767B75">開放時段與名額</span>
-                <button onclick="msDraftApplyTemplate()" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">套用常用時段</button>
               </div>
               <div id="ms-draft-slots"></div>
               <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #CDD8CB;color:#577B53;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
@@ -3260,16 +3259,8 @@ thead th{color:#767B75!important}
                 <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="flex:0 0 auto;background:#fff;border:1.5px solid #E1E4DF;color:#767B75;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
                 <button onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">確認開放此日</button>
               </div>
-              <!-- 常用時段樣板（併入編輯器，不再獨立卡片） -->
-              <div style="margin-top:14px;border-top:1px dashed #D5DAD2;padding-top:10px">
-                <div style="font-size:12px;font-weight:700;color:#767B75;margin-bottom:7px">🕐 常用時段樣板（一鍵套用上方）</div>
-                <div id="ms-slot-template-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:10px"></div>
-                <div style="display:flex;gap:6px">
-                  <select id="ms-new-slot-time" style="flex:1;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none;cursor:pointer"></select>
-                  <input id="ms-new-slot-cap" type="number" min="1" max="10" value="1" placeholder="名額" style="width:58px;border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 6px;font-size:14px;font-family:inherit;background:#fff;text-align:center">
-                  <button onclick="msAddSlotTemplate()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">＋</button>
-                </div>
-              </div>
+              <!-- 常用時段樣板已移除（改為每次直接新增時段） -->
+              <select id="ms-new-slot-time" style="display:none"></select>
             </div>
           </div>
           <!-- 今日報到 QR：管理者選到「今天」時自動顯示 -->
@@ -3315,26 +3306,28 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
-    <!-- 限制設定（一排） -->
+    <!-- 限制設定：標題一列、四個欄位整齊格狀、儲存鈕獨立一列 -->
     <div style="background:#F7F8F6;border-radius:12px;padding:16px 18px;margin-bottom:14px">
-      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
-        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;padding-bottom:7px">
-          <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
-          <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
-        </div>
-        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月預約上限（次）
-          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
+        <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px">
+        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月預約上限（次）
+          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">每月免審核取消次數
-          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月免審核取消次數
+          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">取消期限（時段前幾小時）
-          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">取消期限（時段前幾小時）
+          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="flex:1;min-width:120px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">違規幾次停權
-          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">違規幾次停權
+          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <button onclick="msSaveSettings()" style="flex-shrink:0;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">儲存設定</button>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">儲存設定</button>
       </div>
     </div>
 
@@ -13482,7 +13475,9 @@ function msBookingCard(b, isUpcoming) {
         : '<div style="width:50px;height:50px;border-radius:10px;background:#fff;border:1.5px solid #E1E4DF;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:2px;padding:6px;box-sizing:border-box">'
           + (function(){ var q=''; for (var k=0;k<25;k++){ q += '<div style="background:'+(((seed*(k+3)+k*k)%3)?'#363B35':'transparent')+';border-radius:1px"></div>'; } return q; })()
           + '</div>' )
-    +     '<div style="font-size:12px;color:#C2C7C1;letter-spacing:.06em;font-family:\'Noto Sans TC\',sans-serif">'+bpNo+'</div>'
+    +     ( s==='attended' && b.updatedAt
+        ? '<div style="font-size:12px;color:#577B53;font-weight:700;letter-spacing:.04em;white-space:nowrap">報到 '+_msFmtCheckinTime(b.updatedAt)+'</div>'
+        : '<div style="font-size:12px;color:#C2C7C1;letter-spacing:.06em;font-family:\'Noto Sans TC\',sans-serif">'+bpNo+'</div>' )
     +   '</div>'
     + '</div>'
     // ── 條碼區 ──
@@ -13791,6 +13786,11 @@ window.msAdminCheckIn = function(bookingId) {
   htApi('massageForceCheckIn',{bookingId}).catch(function(){ toast('⚠️ 伺服器同步失敗'); }); toast('✅ 已強制報到');
 };
 
+// 報到時間顯示：把後端 updatedAt（ISO 或 Date 字串）格式化成 HH:mm，解析失敗則原樣顯示尾段
+function _msFmtCheckinTime(ts){
+  try { var d = new Date(ts); if (!isNaN(d.getTime())) return pad2(d.getHours())+':'+pad2(d.getMinutes()); } catch(e){}
+  var m = String(ts||'').match(/(\d{1,2}):(\d{2})/); return m ? m[0] : '';
+}
 function pad2(n){ return n<10?'0'+n:''+n; }
 function fmtDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 var _allBookings = [];
