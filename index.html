@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260711103405';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260711104122';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1361,8 +1361,9 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
-/* 總覽改版：拿掉側邊選單與手機底部導覽列，改用總覽入口卡片＋頂部 Logo 返回總覽 */
-#sidebar-wrapper,#bottom-nav{display:none!important}
+/* 總覽改版：拿掉側邊選單（桌面用入口卡片＋頂部膠囊）；手機恢復底部導覽列，跳頁少一步 */
+#sidebar-wrapper{display:none!important}
+@media(min-width:769px){#bottom-nav{display:none!important}}
 </style>
 </head>
 <body>
@@ -4573,6 +4574,8 @@ async function callAPI(action, data = {}, opts = {}) {
   }
   const json = await _fetchAPI(action, data);
   if (json && json.ok && _CACHEABLE.has(action)) _cacheSet(cacheKey, json);
+  // 案件有異動（新增/審核/退件/刪除/重送）→ 費用分析 5 分鐘快取立即失效，下次切換抓最新
+  if (json && json.ok && /^(submit|approve|reject|resubmit|deleteCase|deleteDraft|saveDraft)$/.test(action) && window._analyticsCacheClear) _analyticsCacheClear();
   return json;
 }
 
@@ -5801,6 +5804,10 @@ async function openDraft(caseId) {
 //  案件詳情載入
 // ══════════════════════════════════════════
 async function loadDetail(caseId, _fromPop) {
+  // 防護：caseId 只允許安全字元（英數/連字號/底線）——所有列表用字串拼進 onclick，
+  // 在入口白名單化可一次涵蓋現有與未來的拼接點，杜絕屬性注入
+  caseId = String(caseId || '').replace(/[^A-Za-z0-9_-]/g, '');
+  if (!caseId) return;
   // Race condition 保護：若上一個請求還沒完成，忽略舊結果
   const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
@@ -9219,15 +9226,22 @@ function getDateRange(type){
   else start=new Date(now.getFullYear(),0,1);
   return{start:start,end:end};
 }
+// 費用分析資料快取：5 分鐘內重複切換不重抓（新增/審核案件後會想看最新 → 由 _analyticsCacheClear 失效）
+var _analyticsCache = null, _analyticsCacheAt = 0;
+window._analyticsCacheClear = function(){ _analyticsCache = null; _analyticsCacheAt = 0; };
 async function loadAnalytics(){
   _analyticsAllCases=null;
+  var _useCache = _analyticsCache && (Date.now() - _analyticsCacheAt < 5 * 60 * 1000);
   var ids=['chart-category','chart-department','chart-monthly'];
-  ids.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div style="color:#9AA098;font-size:14px;text-align:center;padding:20px 0;width:100%">載入中...</div>';});
-  ['analytics-count','analytics-approved','analytics-avg-amount','analytics-reject-rate'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
-  var ab=document.getElementById('analytics-approved-tbody');if(ab)ab.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#9AA098">載入中...</td></tr>';
-  var lc=document.getElementById('analytics-list-count');if(lc)lc.textContent='共 0 件';
-  var lbl=document.getElementById('analytics-range-label');if(lbl)lbl.textContent='資料載入中...';
-  var res=await callAPI('list');
+  if (!_useCache) {
+    ids.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div style="color:#9AA098;font-size:14px;text-align:center;padding:20px 0;width:100%">載入中...</div>';});
+    ['analytics-count','analytics-approved','analytics-avg-amount','analytics-reject-rate'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
+    var ab=document.getElementById('analytics-approved-tbody');if(ab)ab.innerHTML='<tr><td colspan="7" style="text-align:center;padding:30px;color:#9AA098">載入中...</td></tr>';
+    var lc=document.getElementById('analytics-list-count');if(lc)lc.textContent='共 0 件';
+    var lbl=document.getElementById('analytics-range-label');if(lbl)lbl.textContent='資料載入中...';
+  }
+  var res = _useCache ? _analyticsCache : await callAPI('list');
+  if (!_useCache && res && res.ok) { _analyticsCache = res; _analyticsCacheAt = Date.now(); }
   if(!res.ok){
     ids.forEach(function(id){var el=document.getElementById(id);if(el)el.innerHTML='<div style="color:#ef4444;font-size:14px;text-align:center;padding:20px 0;width:100%">載入失敗，請確認網路連線後重試</div>';});
     if(lbl)lbl.textContent='載入失敗';
@@ -12679,15 +12693,8 @@ window.massageLoad = async function() {
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: []
     };
-    // 套用本地保存的資料（開放日期、預約、設定）
-    var _saved = _msLoadLocal();
-    if (_saved) {
-      if (_saved.openDates) _msData.openDates = _saved.openDates;
-      if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
-      if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
-      if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
-      if (_saved.settings) _msData.settings = _saved.settings;
-    }
+    // 本地快取不再於初始就套用（會先閃過時的預約/開放日造成誤會）；
+    // 改為只在後端連不上時 fallback（見 msFetchData 的 catch）
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
   }
@@ -12699,10 +12706,15 @@ window.massageLoad = async function() {
     var isAdm = _msData && (_msData.isAdmin || _msData.isHR);
     if (advWrap) advWrap.style.display = isAdm ? '' : 'none';
     if (isAdm && window.msRenderAdmin) msRenderAdmin();
-    // QR token 報到偵測
+    // QR token 報到偵測：讀到當下立即從網址移除（不等 API 回應），避免留在瀏覽器歷史/分享連結
     var urlParams = new URLSearchParams(window.location.search);
     var msToken = urlParams.get('ms_token');
-    if (msToken) msCheckInFromQR(msToken);
+    if (msToken) {
+      var _cleanUrl = new URL(window.location.href);
+      _cleanUrl.searchParams.delete('ms_token');
+      window.history.replaceState({}, '', _cleanUrl.toString());
+      msCheckInFromQR(msToken);
+    }
   }).catch(function(){});
 };
 
@@ -12722,8 +12734,23 @@ async function msFetchData() {
       if (advWrap) advWrap.style.display = (_msData.isAdmin || _msData.isHR) ? '' : 'none';
       msRenderQuota();
       _msSaveLocal();
+      return;
     }
-  } catch(e) { /* 用 mock 資料 */ }
+    _msApplyLocalFallback();
+  } catch(e) { _msApplyLocalFallback(); }
+}
+
+// 後端連不上時才套用本地快取（離線備援），並提示資料可能非最新
+function _msApplyLocalFallback() {
+  var _saved = _msLoadLocal();
+  if (!_saved || !_msData) return;
+  if (_saved.openDates) _msData.openDates = _saved.openDates;
+  if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
+  if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
+  if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
+  if (_saved.settings) { _msData.settings = _saved.settings; _msSlotTemplates = _saved.settings.slotTemplates || []; }
+  _msPendingRequests = _msData.pendingRequests || [];
+  if (window.toast) toast('⚠️ 暫時連不上伺服器，顯示上次的按摩資料（可能非最新）');
 }
 
 // ── 帳號暫停預約提示 ──
