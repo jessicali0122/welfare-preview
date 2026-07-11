@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260711213927';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260711214733';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1568,7 +1568,7 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
 .wf-pet-cat{animation:wfBob 3.6s ease-in-out infinite}
 @media(max-width:480px){
   /* 手機 hero：問候語縮一級且不折行（避免孤字），垂直間距拉開呼吸感 */
-  #dash-hero{padding:16px 12px 10px!important;margin-bottom:32px!important}
+  #dash-hero{padding:16px 12px 10px!important;margin-bottom:16px!important}
   #dashboard-greeting{font-size:22px;letter-spacing:.04em;white-space:nowrap}
   #dashboard-greeting img{width:20px!important;height:20px!important}
   #dash-hero>div:nth-of-type(2){margin-top:14px!important}
@@ -1767,7 +1767,7 @@ thead th{color:#767B75!important}
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- Hero 歡迎區（文青置中版）-->
-    <div id="dash-hero" style="position:relative;padding:4px 20px 8px;margin-bottom:24px;text-align:center">
+    <div id="dash-hero" style="position:relative;padding:4px 20px 8px;margin-bottom:14px;text-align:center">
       <div id="dashboard-greeting" style="font-size:32px;font-weight:600;color:#2E332D;text-align:center;letter-spacing:.08em">你好</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.08em">載入中...</div>
@@ -3271,11 +3271,13 @@ thead th{color:#767B75!important}
               </div>
               <div id="ms-draft-slots"></div>
               <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #CDD8CB;color:#577B53;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
-              <!-- 批次開放：同一組時段一次套用到多個日期 -->
+              <!-- 批次開放：同一組時段一次套用到多個日期（籤條式，直覺可增刪） -->
               <div style="margin-top:12px;border-top:1px dashed #D5DAD2;padding-top:10px">
-                <div style="font-size:12px;font-weight:700;color:#767B75;margin-bottom:5px">📅 同步開放其他日期（可多選）</div>
-                <input id="ms-open-extra-dates" type="text" readonly placeholder="點此加選日期，套用相同時段" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;cursor:pointer;outline:none">
+                <div style="font-size:12px;font-weight:700;color:#767B75;margin-bottom:7px">📅 這次要開放的日期（同一組時段）</div>
+                <div id="ms-open-date-chips" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center"></div>
               </div>
+              <!-- 隱藏的 flatpickr 觸發器，由「＋ 加選日期」開啟 -->
+              <input id="ms-open-extra-dates" type="text" readonly style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px">
               <div style="display:flex;gap:8px;margin-top:12px">
                 <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="flex:0 0 auto;background:#fff;border:1.5px solid #E1E4DF;color:#767B75;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
                 <button id="ms-open-confirm-btn" onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">確認開放</button>
@@ -13418,9 +13420,9 @@ function msBookingCardCompact(b) {
         ? '<div style="font-size:12px;color:#577B53;font-weight:700;letter-spacing:.08em;white-space:nowrap">報到時間</div>'
           + '<div style="font-size:14px;color:#577B53;font-weight:800;letter-spacing:.04em">'+_msCheckinTime(b)+'</div>'
       : s==='noshow'
-        ? '<div style="font-size:12px;color:#dc2626;font-weight:800;letter-spacing:.08em;white-space:nowrap">NO SHOW</div>'
+        ? '<div style="font-size:12px;color:#dc2626;font-weight:800;letter-spacing:.06em;text-align:center;line-height:1.2">NO<br>SHOW</div>'
       : s==='cancelled'
-        ? '<div style="font-size:12px;color:#9AA098;font-weight:800;letter-spacing:.06em;white-space:nowrap">CANCELLED</div>'
+        ? '<div style="font-size:14px;color:#9AA098;font-weight:800;letter-spacing:.1em;text-align:center">VOID</div>'
         : '<div style="font-size:12px;color:#9AA098;font-weight:700;letter-spacing:.08em">PASS</div>'
           + '<div style="font-size:12px;color:#C2C7C1;letter-spacing:.04em;font-family:\'Noto Sans TC\',sans-serif">'+bpNo+'</div>')
     +   '</div>'
@@ -13568,6 +13570,45 @@ function msBookingCard(b, isUpcoming) {
 // ── 管理（admin only） ──
 
 // 從日曆點日期（或「編輯此日開放」）→ 右欄直接開啟該日的開放編輯器，不需再選日期
+// 批次開放狀態：主日期 + 加選日期（籤條式 UI）
+var _msOpenPrimary = '';
+var _msExtraDates = [];
+function _msFmtChipLabel(ds) {
+  var p = ds.split('-'); var wd = ['日','一','二','三','四','五','六'][new Date(ds + 'T00:00:00').getDay()];
+  return parseInt(p[1]) + '/' + parseInt(p[2]) + '（' + wd + '）';
+}
+// 畫「這次要開放的日期」籤條：主日期固定＋加選日期可刪＋「＋加選日期」鈕
+function msRenderOpenDateChips() {
+  var box = document.getElementById('ms-open-date-chips'); if (!box) return;
+  var chips = '';
+  if (_msOpenPrimary) {
+    chips += '<span style="display:inline-flex;align-items:center;gap:5px;background:#577B53;color:#fff;border-radius:20px;padding:5px 12px;font-size:14px;font-weight:700">'
+      + _msFmtChipLabel(_msOpenPrimary) + '<span style="font-size:12px;background:rgba(255,255,255,.25);border-radius:10px;padding:0 6px">主</span></span>';
+  }
+  _msExtraDates.slice().sort().forEach(function(ds){
+    chips += '<span style="display:inline-flex;align-items:center;gap:6px;background:#EDF1EC;color:#46633F;border:1.5px solid #CBDCC6;border-radius:20px;padding:5px 10px 5px 12px;font-size:14px;font-weight:600">'
+      + _msFmtChipLabel(ds)
+      + '<button onclick="msRemoveExtraDate(\'' + ds + '\')" title="移除" style="background:none;border:none;color:#9AA098;cursor:pointer;font-size:14px;line-height:1;padding:0 2px;font-family:inherit">✕</button></span>';
+  });
+  chips += '<button onclick="msOpenExtraDatePicker()" style="display:inline-flex;align-items:center;gap:4px;background:#fff;border:1.5px dashed #577B53;color:#577B53;border-radius:20px;padding:5px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 加選日期</button>';
+  box.innerHTML = chips;
+}
+// 「＋ 加選日期」→ 開啟隱藏的 flatpickr 多選日曆
+window.msOpenExtraDatePicker = function() {
+  var exEl = document.getElementById('ms-open-extra-dates');
+  if (exEl && exEl._flatpickr) exEl._flatpickr.open();
+};
+// 移除一個加選日期（同步 flatpickr 選取狀態）
+window.msRemoveExtraDate = function(ds) {
+  _msExtraDates = _msExtraDates.filter(function(x){ return x !== ds; });
+  var exEl = document.getElementById('ms-open-extra-dates');
+  if (exEl && exEl._flatpickr) {
+    var keep = exEl._flatpickr.selectedDates.filter(function(d){ return fmtDateStr(d) !== ds; });
+    exEl._flatpickr.setDate(keep, false);
+  }
+  msRenderOpenDateChips();
+};
+
 window.msAdminOpenDate = function(dateStr) {
   var entry = (_msData && _msData.openDates || {})[dateStr];
   var inp = document.getElementById('ms-open-date-inp');
@@ -13579,12 +13620,21 @@ window.msAdminOpenDate = function(dateStr) {
   if (title) title.textContent = (entry ? '✏️ 編輯開放：' : '📅 設定開放：') + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '（' + wd + '）';
   msRenderDraftSlots();
   msRenderSlotTemplates();
-  // 批次開放：初始化/清空「同步開放其他日期」多選（排除主日期，只能選今天以後）
+  // 批次開放：主日期記到 _msOpenPrimary，加選日期存 _msExtraDates（籤條呈現）
+  _msOpenPrimary = dateStr;
+  _msExtraDates = [];
   var exEl = document.getElementById('ms-open-extra-dates');
   if (exEl) {
-    var fp = exEl._flatpickr || initFlatpickr(exEl, { mode: 'multiple', minDate: 'today', conjunction: '、' });
+    var fp = exEl._flatpickr || initFlatpickr(exEl, { mode: 'multiple', minDate: 'today', conjunction: '、',
+      onChange: function(dates){
+        // 選了日期就同步到 _msExtraDates（排除主日期），並重畫籤條
+        _msExtraDates = dates.map(function(d){ return fmtDateStr(d); }).filter(function(ds){ return ds !== _msOpenPrimary; });
+        msRenderOpenDateChips();
+      }
+    });
     if (fp) { fp.set('disable', [dateStr]); fp.clear(); }
   }
+  msRenderOpenDateChips();
   // 右欄切換：藏時段/占位/QR，秀編輯器
   var sp = document.getElementById('ms-slots-panel'); if (sp) sp.style.display = 'none';
   var ns = document.getElementById('ms-no-slots'); if (ns) ns.style.display = 'none';
@@ -13757,6 +13807,8 @@ window.msDraftApplyTemplate = function() {
 // 關閉編輯器並還原右欄（有選日期就回時段檢視，否則回占位）
 window.msResetOpenEditor = function() {
   _msDraftSlots = [];
+  _msExtraDates = [];
+  var _ex = document.getElementById('ms-open-extra-dates'); if (_ex && _ex._flatpickr) _ex._flatpickr.clear();
   var inp = document.getElementById('ms-open-date-inp'); if (inp) inp.value = '';
   var wrap = document.getElementById('ms-open-editor-wrap'); if (wrap) wrap.style.display = 'none';
   if (_msSelectedDate) { msShowSlots(_msSelectedDate); }
@@ -13774,15 +13826,9 @@ window.msConfirmOpenDate = async function() {
   var byTime = {};
   _msDraftSlots.forEach(function(s){ byTime[s.time] = { time:s.time, capacity:Math.max(1, s.capacity||1) }; });
   var slots = Object.keys(byTime).sort().map(function(k){ return byTime[k]; });
-  // 批次開放：主日期＋「同步開放其他日期」多選，一次套用同一組時段
+  // 批次開放：主日期＋加選日期（籤條），一次套用同一組時段
   var dates = [dateVal];
-  var exEl = document.getElementById('ms-open-extra-dates');
-  if (exEl && exEl._flatpickr) {
-    exEl._flatpickr.selectedDates.forEach(function(d){
-      var ds = fmtDateStr(d);
-      if (dates.indexOf(ds) === -1) dates.push(ds);
-    });
-  }
+  (_msExtraDates || []).forEach(function(ds){ if (dates.indexOf(ds) === -1) dates.push(ds); });
   var confirmBtn = document.getElementById('ms-open-confirm-btn');
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '儲存中…'; }
   if (!_msData.openDates) _msData.openDates = {};
@@ -13802,7 +13848,9 @@ window.msConfirmOpenDate = async function() {
   else toast(okDates.length > 1 ? ('✅ 已開放 ' + okDates.length + ' 天：' + okDates.join('、')) : ('✅ ' + okDates[0] + ' 已開放/更新'));
   // 收起編輯器、直接切到主日期的時段檢視
   _msDraftSlots = [];
-  if (exEl && exEl._flatpickr) exEl._flatpickr.clear();
+  _msExtraDates = [];
+  var exEl2 = document.getElementById('ms-open-extra-dates');
+  if (exEl2 && exEl2._flatpickr) exEl2._flatpickr.clear();
   var wrap = document.getElementById('ms-open-editor-wrap'); if (wrap) wrap.style.display = 'none';
   _msSelectedDate = dateVal;
   msRenderOpenDates(); msRenderCal();
