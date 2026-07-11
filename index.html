@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260711103005';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260711103405';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1552,7 +1552,8 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
    否則暈染在 view 圓角邊界被裁切，與外圍純色留白形成一圈可見的色差外框 */
 #main-content:has(#view-dashboard.active){padding:0!important}
 #view-dashboard.active{border-radius:0!important;padding:calc(26px + env(safe-area-inset-top,0px)) 28px 40px!important;min-height:100vh!important}
-@media(max-width:768px){#view-dashboard.active{padding:calc(14px + env(safe-area-inset-top,0px)) 10px calc(80px + env(safe-area-inset-bottom,0px))!important}}
+/* 手機：頂部留出膠囊高度，問候文字不會貼著膠囊 */
+@media(max-width:768px){#view-dashboard.active{padding:calc(48px + env(safe-area-inset-top,0px)) 10px calc(80px + env(safe-area-inset-bottom,0px))!important}}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -1722,7 +1723,7 @@ thead th{color:#767B75!important}
     <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;flex:1">總覽</span>
     <div style="flex:1"></div>
     <!-- 右上玻璃膠囊：房子＋分隔線＋頭像 -->
-    <div id="topbar-capsule" style="pointer-events:auto;display:flex;align-items:center;gap:10px;border-radius:24px;padding:4px 8px;flex-shrink:0">
+    <div id="topbar-capsule" style="pointer-events:auto;display:flex;align-items:center;gap:8px;border-radius:24px;padding:4px 8px;flex-shrink:0">
       <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:32px;height:32px;border:none;background:none!important;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s;border-radius:50%" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
         <span class="approval-badge" style="position:absolute;top:0;right:0;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
@@ -13469,7 +13470,7 @@ function msBookingCard(b, isUpcoming) {
     +       '<div style="font-size:12px;color:#9AA098;margin-top:2px">'+month+'月（'+weekday+'）</div>'
     +       '<div style="margin-top:7px;background:'+(isTodayOrange?'linear-gradient(135deg,#FDEBD3,#F9D9A8)':'linear-gradient(135deg,#EDF1EC,#CDD8CB)')+';border-radius:8px;padding:3px 8px;display:inline-block">'
     +         '<div style="font-size:12px;color:'+(isTodayOrange?'#E0820A':'#577B53')+';font-weight:700;letter-spacing:.14em">TIME</div>'
-    +         '<div style="font-size:16px;font-weight:800;color:'+(isTodayOrange?'#E0820A':'#577B53')+';white-space:nowrap">'+(b.timeSlot||'—')+'</div>'
+    +         '<div style="font-size:16px;font-weight:800;color:'+(isTodayOrange?'#E0820A':'#577B53')+';white-space:nowrap">'+htEsc(b.timeSlot||'—')+'</div>'
     +       '</div>'
     +     '</div>'
     // 乘客＋航程
@@ -13562,11 +13563,11 @@ function msRenderPendingRequests() {
       + '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:4px">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
       + '<span style="background:' + typeBg + ';color:' + typeColor + ';border-radius:20px;padding:2px 10px;font-size:12px;font-weight:700">' + typeLabel + '</span>'
-      + '<span style="font-size:14px;font-weight:700;color:#2E332D">' + (req.userName || req.userEmail || '—') + '</span>'
+      + '<span style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(req.userName || req.userEmail || '—') + '</span>'
       + '</div>'
-      + '<span style="font-size:12px;color:#9AA098">' + (req.date||'') + '</span>'
+      + '<span style="font-size:12px;color:#9AA098">' + htEsc(req.date||'') + '</span>'
       + '</div>'
-      + (req.reason ? '<div style="font-size:12px;color:#767B75;margin-bottom:8px">原因：' + req.reason + '</div>' : '')
+      + (req.reason ? '<div style="font-size:12px;color:#767B75;margin-bottom:8px">原因：' + htEsc(req.reason) + '</div>' : '')
       + '<div style="display:flex;gap:8px">'
       + '<button onclick="msApproveRequest(\'' + req.reqId + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:700">✓ 批准</button>'
       + '<button onclick="msRejectRequest(\'' + req.reqId + '\')" style="background:#fef2f2;color:#dc2626;border:1.5px solid #fecaca;border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">✕ 拒絕</button>'
@@ -13815,9 +13816,9 @@ function msRenderAdminRows(rows) {
   tbody.innerHTML = rows.map(function(b){
     var st = b.status||'booked'; var cfg = sc[st]||sc.booked;
     return '<tr style="border-bottom:1px solid #F7F8F6" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:10px;font-weight:600;color:#2E332D;white-space:nowrap">' + (zhName(b.userName)||b.userEmail||'—') + '</td>'
-      + '<td style="padding:10px;color:#4A4F49;white-space:nowrap">' + (b.date||'') + '</td>'
-      + '<td style="padding:10px;font-weight:700;color:#4A4F49;white-space:nowrap">' + (b.timeSlot||'') + '</td>'
+      + '<td style="padding:10px;font-weight:600;color:#2E332D;white-space:nowrap">' + htEsc(zhName(b.userName)||b.userEmail||'—') + '</td>'
+      + '<td style="padding:10px;color:#4A4F49;white-space:nowrap">' + htEsc(b.date||'') + '</td>'
+      + '<td style="padding:10px;font-weight:700;color:#4A4F49;white-space:nowrap">' + htEsc(b.timeSlot||'') + '</td>'
       + '<td style="padding:10px;white-space:nowrap"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;display:inline-block">' + cfg.label + '</span></td>'
       + '<td style="padding:10px;white-space:nowrap">'
       + (st==='booked'?'<button onclick="msAdminCancel(\'' + b.bookingId + '\')" style="background:#fef2f2;color:#dc2626;border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600">取消</button> ':'')
