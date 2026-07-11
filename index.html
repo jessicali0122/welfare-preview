@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260711104122';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260711155833';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13384,11 +13384,15 @@ function msBookingCardCompact(b) {
     +       '<div style="font-size:16px;font-weight:800;color:#577B53">'+htEsc(b.timeSlot||'—')+'</div>'
     +     '</div>'
     +   '</div>'
-    // 存根：已報到顯示實際報到時間（取自後端 updatedAt），其他狀態維持 PASS 號
+    // 存根：已報到→實際報到時間；未報到→NO SHOW；已取消→CANCELLED；已結束（未使用）→PASS 號
     +   '<div style="flex-shrink:0;width:'+stubW+'px;border-left:2px dashed #CDD8CB;background:#FDFCF9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px">'
     +   ((s==='attended' && _msCheckinTime(b))
         ? '<div style="font-size:12px;color:#577B53;font-weight:700;letter-spacing:.08em;white-space:nowrap">報到時間</div>'
           + '<div style="font-size:14px;color:#577B53;font-weight:800;letter-spacing:.04em">'+_msCheckinTime(b)+'</div>'
+      : s==='noshow'
+        ? '<div style="font-size:12px;color:#dc2626;font-weight:800;letter-spacing:.08em;white-space:nowrap">NO SHOW</div>'
+      : s==='cancelled'
+        ? '<div style="font-size:12px;color:#9AA098;font-weight:800;letter-spacing:.06em;white-space:nowrap">CANCELLED</div>'
         : '<div style="font-size:12px;color:#9AA098;font-weight:700;letter-spacing:.08em">PASS</div>'
           + '<div style="font-size:12px;color:#C2C7C1;letter-spacing:.04em;font-family:\'Noto Sans TC\',sans-serif">'+bpNo+'</div>')
     +   '</div>'
@@ -13839,7 +13843,14 @@ window.msAdminFilter = function() {
 function msRenderAdminRows(rows) {
   var tbody = document.getElementById('ms-admin-tbody'); if (!tbody) return;
   var sc = { booked:{label:'已預約',bg:'#EDF1EC',color:'#577B53'}, cancelled:{label:'已取消',bg:'#ECEEEA',color:'#9AA098'}, attended:{label:'已報到',bg:'#dcfce7',color:'#16a34a'}, noshow:{label:'缺席',bg:'#fef2f2',color:'#dc2626'} };
-  if (!rows.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:#9AA098;font-size:14px">📭 無紀錄</td></tr>'; return; }
+  if (!rows.length) {
+    // 診斷資訊：顯示各資料層的筆數，方便判斷是後端沒回、還是渲染流程漏了
+    var _d = _msData || {};
+    var _diag = '管理清單 ' + (Array.isArray(_d.adminBookings) ? _d.adminBookings.length : '無')
+      + '｜公開 ' + ((_d.allBookings||[]).length) + '｜我的 ' + ((_d.myBookings||[]).length);
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:#9AA098;font-size:14px">📭 無紀錄<div style="font-size:12px;color:#C2C7C1;margin-top:6px">' + _diag + '</div></td></tr>';
+    return;
+  }
   tbody.innerHTML = rows.map(function(b){
     var st = b.status||'booked'; var cfg = sc[st]||sc.booked;
     return '<tr style="border-bottom:1px solid #F7F8F6" onmouseover="this.style.background=\'#fafafa\'" onmouseout="this.style.background=\'\'">'
