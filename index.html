@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260711155833';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260711161621';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2573,6 +2573,8 @@ thead th{color:#767B75!important}
         <div id="approve-box" class="card" style="padding:20px;border:2px solid #A9C4A5">
           <div style="font-size:14px;font-weight:700;color:#577B53;margin-bottom:3px">⏳ 需要您審核</div>
           <div class="approve-step-label" style="font-size:12px;color:#9AA098;margin-bottom:12px">您是本關簽核人</div>
+          <!-- 異常偵測警示（後端比對歷史平均與近期申請，僅供審核參考） -->
+          <div id="anomaly-warnings" style="display:none;flex-direction:column;gap:6px;margin-bottom:12px"></div>
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">簽核意見</label>
           <textarea id="approve-box-comment" autocomplete="off" class="inp" rows="3" placeholder="填寫意見（退件時必填）..." style="border-color:#A9C4A5"></textarea>
           <div style="display:flex;gap:8px;margin-top:10px">
@@ -5904,6 +5906,25 @@ async function loadDetail(caseId, _fromPop) {
         stepLabel.textContent = '管理員代理第 ' + (c.step||1) + ' 關簽核';
       } else {
         stepLabel.textContent = '您是本關簽核人：第 ' + (c.step||1) + ' 關';
+      }
+    }
+    // 異常偵測警示：非同步比對歷史（金額超過平均 2 倍／同人 30 天內重複申請），有異常才顯示
+    const anomEl = document.getElementById('anomaly-warnings');
+    if (anomEl) {
+      anomEl.style.display = 'none'; anomEl.innerHTML = '';
+      if (canApprove) {
+        const _anomCaseId = c.caseId;
+        callAPI('htCheckAnomaly', { amount: Number(c.total || c.amount) || 0, applicantEmail: c.email || '', caseId: c.caseId }).then(function(r) {
+          // 案件已切換就不渲染（避免舊結果貼到新案件上）
+          if (approveBox.getAttribute('data-caseid') !== _anomCaseId) return;
+          if (!r || !r.ok || !Array.isArray(r.warnings) || !r.warnings.length) return;
+          anomEl.innerHTML = r.warnings.map(function(w) {
+            var isWarn = w.level === 'warn';
+            return '<div style="display:flex;align-items:flex-start;gap:8px;background:' + (isWarn ? '#FEF7EC' : '#F3F7F2') + ';border:1px solid ' + (isWarn ? '#F6DFBC' : '#C3D4C0') + ';border-radius:10px;padding:8px 12px;font-size:12px;color:' + (isWarn ? '#B45309' : '#46633F') + ';line-height:1.6">'
+              + '<span style="flex-shrink:0">' + (isWarn ? '⚠️' : 'ℹ️') + '</span><span>' + htEsc(w.msg || '') + '</span></div>';
+          }).join('');
+          anomEl.style.display = 'flex';
+        }).catch(function(){});
       }
     }
   }
@@ -13351,6 +13372,9 @@ function _msCheckinTime(b) {
 window.msBookingCardCompact = msBookingCardCompact; // 供本地預覽驗證卡片樣式
 function msBookingCardCompact(b) {
   var s = b.status || 'booked';
+  // 歷史卡只會拿到已過期的預約：仍是 booked 代表當天沒報到 → 一律以「未報到」呈現
+  // （僅顯示層轉換，不寫回後端、不計違規；違規仍由管理員「標記缺席」決定）
+  if (s === 'booked') s = 'noshow';
   var parts = (b.date||'').split('-');
   var month = parseInt(parts[1]||0), day = parseInt(parts[2]||0);
   var weekDays = ['日','一','二','三','四','五','六'];
