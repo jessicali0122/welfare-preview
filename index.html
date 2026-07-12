@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260712172413';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260712172641';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10177,10 +10177,12 @@ async function _htLoadWeather(dateStr) {
       var tmax = Math.round(dd.temperature_2m_max[0]);
       var tmin = Math.round(dd.temperature_2m_min[0]);
       var suggest = tmax >= 28 ? '🧊 建議冷飲/冰品' : (tmax <= 18 ? '☕ 建議熱飲' : '🥤 冷熱皆宜');
-      tip.innerHTML = '<div style="font-size:20px;line-height:1">' + w.e + '</div>'
-        + '<div style="font-size:12px;font-weight:700;color:#3E5A3B;margin-top:2px">' + tmin + '~' + tmax + '°C ' + w.t + '</div>'
-        + '<div style="font-size:12px;color:#6E8F6A">' + suggest + '</div>';
-      tip.style.display = '';
+      // 單行膠囊：與同排「下次午茶日／年度場次」籤條一致高度，不再三行直式而高低不齊
+      tip.innerHTML = '<span style="font-size:15px;line-height:1">' + w.e + '</span>'
+        + '<span style="font-weight:700;color:#3E5A3B">' + tmin + '~' + tmax + '°C ' + w.t + '</span>'
+        + '<span style="color:#8A9E86">·</span>'
+        + '<span style="color:#6E8F6A">' + suggest + '</span>';
+      tip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;background:#F2F5F1;border:1px solid #D5DFD2;border-radius:20px;padding:6px 14px;font-size:12px;white-space:nowrap';
       return;
     }
   } catch (e) { /* 落到下方歷年同期 */ }
@@ -10217,10 +10219,11 @@ async function _htLoadSeasonalWeather(dateStr) {
     var tmax = Math.round(avg(maxs));
     var tmin = Math.round(avg(mins));
     var suggest = tmax >= 28 ? '🧊 通常偏熱' : (tmax <= 18 ? '☕ 通常偏涼' : '🥤 冷熱皆宜');
-    tip.innerHTML = '<div style="font-size:12px;color:#6E8F6A;font-weight:700">📅 季節參考</div>'
-      + '<div style="font-size:12px;font-weight:700;color:#3E5A3B;margin-top:1px">往年約 ' + tmin + '~' + tmax + '°C</div>'
-      + '<div style="font-size:12px;color:#6E8F6A">' + suggest + '</div>';
-    tip.style.display = '';
+    tip.innerHTML = '<span style="color:#6E8F6A;font-weight:700">📅 季節參考</span>'
+      + '<span style="font-weight:700;color:#3E5A3B">往年約 ' + tmin + '~' + tmax + '°C</span>'
+      + '<span style="color:#8A9E86">·</span>'
+      + '<span style="color:#6E8F6A">' + suggest + '</span>';
+    tip.style.cssText = 'display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;background:#F2F5F1;border:1px solid #D5DFD2;border-radius:20px;padding:6px 14px;font-size:12px;white-space:nowrap';
   } catch (e) { tip.style.display = 'none'; }
 }
 
