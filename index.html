@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714154141';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714155436';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10041,26 +10041,32 @@ function fmtMonth(ym) {
   if (!isNaN(d.getTime())) return d.getFullYear() + '/' + ('0'+(d.getMonth()+1)).slice(-2);
   return s;
 }
+// 徽章底/字色
 function statusColor(s) {
-  if (s === '已完成') return { bg:'#dcfce7', color:'#16a34a' };
-  if (s === '進行中') return { bg:'#E7EEE5', color:'#577B53' };
-  if (s === '待結算') return { bg:'#ECEEEA', color:'#767B75' };
+  if (s === '已完成') return { bg:'#E4EFE1', color:'#3E5A3B' };   // 綠
+  if (s === '進行中') return { bg:'#FBE7CC', color:'#B4700A' };   // 橘（凸顯）
+  if (s === '規劃中') return { bg:'#ECEEEA', color:'#767B75' };   // 灰
   return { bg:'#E7EEE5', color:'#577B53' };
 }
-// 顯示用狀態：以活動日期校正儲存狀態
-//   ・活動日還沒到 → 一律「規劃中」（試算表匯入預設已完成，不可能還沒辦就完成）
-//   ・活動日已過但仍是規劃中 → 「待結算」（避免「已過卻顯示規劃中」）
+// 籤條底色（與徽章同一套語意）
+function _htStubColor(s) {
+  if (s === '已完成') return '#577B53';   // 綠（主色）
+  if (s === '進行中') return '#E0820A';   // 橘（凸顯）
+  if (s === '規劃中') return '#9AA098';   // 灰
+  return '#577B53';
+}
+// 顯示用狀態：以「活動月份」對比本月，得到三段式狀態（與逐日無關）
+//   ・活動月份 < 本月 → 已完成（下個月 1 號起自動歸為完成，並落入歷史回顧）
+//   ・活動月份 = 本月 → 進行中（整個當月都是此狀態）
+//   ・活動月份 > 本月 → 規劃中（未來月份的案件）
 function _htDisplayStatus(ev) {
-  var s = ev.status || '';
-  if (ev.date) {
-    var d = new Date(String(ev.date).replace(/\//g,'-')); d.setHours(0,0,0,0);
-    var t = new Date(); t.setHours(0,0,0,0);
-    if (!isNaN(d.getTime())) {
-      if (d > t) return '規劃中';
-      if (s === '規劃中' && d < t) return '待結算';
-    }
-  }
-  return s;
+  var ym = _evMonth(ev);
+  if (!ym) return ev.status || '規劃中';
+  var now = new Date();
+  var curYM = now.getFullYear() + '-' + (now.getMonth()+1 < 10 ? '0' : '') + (now.getMonth()+1);
+  if (ym < curYM) return '已完成';
+  if (ym > curYM) return '規劃中';
+  return '進行中';
 }
 function starStr(avg, cnt) {
   if (!cnt) return '<span style="color:#D2D6D0;font-size:12px">未評分</span>';
@@ -10580,7 +10586,7 @@ function htRenderEvents() {
     evs.forEach(function(ev) {
       var dispStatus = _htDisplayStatus(ev);
       var sc = statusColor(dispStatus);
-      var stubColor = dispStatus === '已完成' ? '#7E9663' : dispStatus === '進行中' ? '#7A93B5' : dispStatus === '待結算' ? '#9AA098' : '#577B53';
+      var stubColor = _htStubColor(dispStatus);
       var ym = _evMonth(ev);
       var mNum = parseInt(ym.slice(5,7),10) || 0;
       var dNum = ev.date ? parseInt(ev.date.slice(-2),10) : 0;
@@ -10589,7 +10595,6 @@ function htRenderEvents() {
       var expHas = ev.actualExpense > 0;
       var expVal = expHas ? fmtMoney(ev.actualExpense) : '—';
       var isSheet = !!ev._sheet;
-      if (isSheet) stubColor = '#577B53';
       var clickFn = isSheet ? 'htOpenSheetDetail(\''+ ev.eventId +'\')' : 'htOpenDetail(\''+ ev.eventId +'\')';
       var srcTag = isSheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#577B53;background:#EDF1EC;border:1px solid #D5DAD2;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       html += '<div onclick="'+ clickFn +'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
@@ -11507,8 +11512,7 @@ function htRenderCalendar() {
       var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
       var mAbbr = mNum ? mNames[mNum-1] : '';
       var listClick = e._sheet ? 'htOpenSheetDetail(\''+e.eventId+'\')' : 'htOpenDetail(\''+e.eventId+'\')';
-      // 已完成=綠（主色）、待結算=灰、規劃中/進行中=橘（凸顯尚待處理）
-      var stubColor = dispStatus === '已完成' ? '#577B53' : dispStatus === '待結算' ? '#9AA098' : '#E0820A';
+      var stubColor = _htStubColor(dispStatus);   // 已完成=綠、進行中=橘、規劃中=灰
       var expVal = e.actualExpense > 0 ? fmtMoney(e.actualExpense) : '—';
       var srcTag = e._sheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#C9760A;background:#FFF1DB;border:1px solid #FBE6C8;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       return '<div onclick="'+listClick+'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(224,130,10,.18)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
@@ -11822,13 +11826,14 @@ function htRenderDetailHeader() {
   document.getElementById('ht-detail-title').textContent = fmtMonth(ev.month) + ' 午茶日';
   var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join('・');
   document.getElementById('ht-detail-subtitle').textContent = (ev.date||'日期待定') + ' · ' + ev.headcount + ' 人' + (orgLine ? ' · 主辦：' + orgLine : '');
-  var sc = statusColor(ev.status);
+  var _dispStatus = _htDisplayStatus(ev);
+  var sc = statusColor(_dispStatus);
   var badge = document.getElementById('ht-detail-status-badge');
-  badge.textContent = ev.status;
+  badge.textContent = _dispStatus;
   badge.style.background = sc.bg;
   badge.style.color = sc.color;
   var infoBar = document.getElementById('ht-event-info-bar');
-  if (infoBar) infoBar.style.display = ev.status === '已完成' ? 'none' : '';
+  if (infoBar) infoBar.style.display = _dispStatus === '已完成' ? 'none' : '';
   var _edEl = document.getElementById('ht-event-date');
   if (_edEl && !_edEl._flatpickr) initFlatpickr(_edEl);
   if (_edEl && _edEl._flatpickr) _edEl._flatpickr.setDate(ev.date || '', false); else _edEl.value = ev.date || '';
