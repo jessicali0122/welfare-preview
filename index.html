@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714212151';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714214027';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1896,7 +1896,7 @@ thead th{color:#767B75!important}
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
     <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 16px">LINKS・常用連結</div>
     <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">
-      <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
+      <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
         <span style="font-size:20px;line-height:1">📋</span>
         <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
         <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
@@ -3773,6 +3773,7 @@ const CAPABILITY_MAP = {
   'reimbursement.approve': ['welfare'],          // 案件簽核：管理者＋福委
   'analytics.view':        ['welfare'],
   'hightea.view':          ['welfare'],          // 午茶日「點開」：管理者＋福委
+  'meeting.view':          ['welfare', 'hr'],     // 福委會會議紀錄：管理者＋福委＋HR
   'hightea.manage':        ['welfare'],
   'hightea.discover':      ['welfare'],
   'massage.manage':        ['hr'],               // 按摩「進階管理區」可見＋產生報到 QR：HR＋管理者
@@ -3842,6 +3843,16 @@ function applyNavVisibility() {
   });
 }
 window.applyNavVisibility = applyNavVisibility;
+
+// 福委會會議紀錄連結：僅管理者／福委／HR 可開，其餘點了顯示「沒有權限」提示
+window.openMeetingNotes = function(e) {
+  if (typeof can === 'function' && !can('meeting.view')) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof toast === 'function') toast('🔒 你沒有查看福委會會議紀錄的權限');
+    return false;
+  }
+  return true; // 有權限 → 讓 <a> 正常開新分頁
+};
 
 // 總覽入口卡片：點擊時先播放「虛線撕開」動畫，再切換頁面
 window.hubNav = function(el, view) {
