@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714214655';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714215851';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3163,9 +3163,9 @@ thead th{color:#767B75!important}
             </button>
           </div>
           <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
-          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #ECEEEA;display:flex;justify-content:space-between;align-items:center">
-            <span style="font-size:14px;color:#767B75">慶生費用合計</span>
-            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53">NT$0</span>
+          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #ECEEEA;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 10px">
+            <span style="font-size:14px;color:#767B75;white-space:nowrap">慶生費用合計</span>
+            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53;white-space:nowrap;margin-left:auto">NT$0</span>
           </div>
         </div>
       </div>
@@ -3349,6 +3349,20 @@ thead th{color:#767B75!important}
     </div>
   <div id="ms-panel-admin">
 
+    <!-- 今日報到 QR Code（HR／管理者：常駐在進階管理，不必再從日曆點今天） -->
+    <div style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:16px 18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">🔲 今日報到 QR Code</span></div>
+          <div style="font-size:12px;color:#9AA098;margin-top:2px">產生後給員工掃碼即可完成今日報到（限當天有效）</div>
+        </div>
+        <button onclick="msGenerateQR()" style="background:linear-gradient(135deg,#577B53,#8FAE8B);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">產生 QR Code</button>
+      </div>
+      <div id="ms-adv-qr-display" style="display:none;text-align:center;margin-top:12px">
+        <div id="ms-adv-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #E1E4DF;border-radius:16px;margin-bottom:10px"></div>
+        <div id="ms-adv-qr-hint" style="font-size:12px;color:#767B75"></div>
+      </div>
+    </div>
 
     <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
     <div id="ms-approval-section" style="display:none;background:#F7F8F6;border-radius:12px;padding:18px;margin-bottom:14px">
@@ -12874,6 +12888,14 @@ window.massageLoad = async function() {
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
   }
+  // 每次進頁都依當前角色重算管理旗標（避免沿用舊值、或後端連不上時未更新）
+  if (_msData) {
+    _msData.isAdmin = (typeof can === 'function' ? can('massage.manage') : false); // HR＋管理者
+    _msData.isMgr   = _msData.isAdmin;
+    _msData.isHR    = _msData.isAdmin;
+    var _adv0 = document.getElementById('ms-adv-wrap');
+    if (_adv0) _adv0.style.display = _msData.isAdmin ? '' : 'none';
+  }
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
   msFetchData().then(function(){
     if (_msData) _msData._loading = false;
@@ -13526,16 +13548,21 @@ window.msGenerateQR = async function() {
   try { r = await htApi('massageGenerateQRToken', { date: today }); } catch(e) {}
   if (!r || !r.ok) { toast('❌ 產生失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
   var url = window.location.origin + window.location.pathname + '?ms_token=' + r.token;
-  var wrap = document.getElementById('ms-qr-canvas-wrap');
-  var display = document.getElementById('ms-qr-display');
-  var hint = document.getElementById('ms-qr-hint');
-  if (wrap) {
-    wrap.innerHTML = '';
-    if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
-    else wrap.textContent = url;
-  }
-  if (hint) hint.textContent = '限今天（' + today + '）使用，一次性掃描即完成報到';
-  if (display) display.style.display = '';
+  // 同時渲染到「進階管理」常駐區與日曆右欄（哪個存在就畫哪個）
+  var _hintText = '限今天（' + today + '）使用，一次性掃描即完成報到';
+  [['ms-adv-qr-canvas-wrap','ms-adv-qr-display','ms-adv-qr-hint'],
+   ['ms-qr-canvas-wrap','ms-qr-display','ms-qr-hint']].forEach(function(ids){
+    var wrap = document.getElementById(ids[0]);
+    var display = document.getElementById(ids[1]);
+    var hint = document.getElementById(ids[2]);
+    if (wrap) {
+      wrap.innerHTML = '';
+      if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
+      else wrap.textContent = url;
+    }
+    if (hint) hint.textContent = _hintText;
+    if (display) display.style.display = '';
+  });
   toast('✅ QR Code 已產生');
 };
 window.msCheckInFromQR = async function(token) {
