@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714205538';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714210347';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13605,86 +13605,48 @@ function msBookingCard(b, isUpcoming) {
   var ts = b.createdAt ? new Date(b.createdAt).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}) : '';
   var userName = givenName(b.userName || (_msData && _msData.userName) || '');
 
-  // 狀態設定（按摩當天改用橘色凸顯配色）
+  // 狀態：存根底色 + 圖示 + 標籤（按摩當天橘色凸顯，比照午茶日票根風）
   var isTodayOrange = isTodayDate && s==='booked' && !b.deleteRequested && !b.cancelRequested;
-  var headerGrad, statusLabel, statusColor;
-  if (b.deleteRequested)       { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='🗑 申請刪除中'; statusColor='#fef2f2'; }
-  else if (b.cancelRequested)  { headerGrad='linear-gradient(135deg,#8FAE8B,#577B53)'; statusLabel='⏳ 申請取消中'; statusColor='#F2F5F1'; }
-  else if (isTodayOrange)      { headerGrad='linear-gradient(135deg,#E0820A,#F2A03D)'; statusLabel='🔔 今天按摩'; statusColor='rgba(255,255,255,.22)'; }
-  else if (s==='booked')       { headerGrad='linear-gradient(135deg,#577B53,#A9C4A5)'; statusLabel='💆 已預約'; statusColor='rgba(255,255,255,.22)'; }
-  else if (s==='attended')     { headerGrad='linear-gradient(135deg,#22c55e,#16a34a)'; statusLabel='✓ 已報到'; statusColor='rgba(255,255,255,.22)'; }
-  else if (s==='cancelled')    { headerGrad='linear-gradient(135deg,#9AA098,#D2D6D0)'; statusLabel='✕ 已取消'; statusColor='rgba(255,255,255,.22)'; }
-  else                         { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='⚠ 缺席';   statusColor='rgba(255,255,255,.22)'; }
+  var stubColor, statusIcon, statusText;
+  if (b.deleteRequested)       { stubColor='#dc2626'; statusIcon='🗑'; statusText='申請刪除'; }
+  else if (b.cancelRequested)  { stubColor='#8FAE8B'; statusIcon='⏳'; statusText='申請取消'; }
+  else if (isTodayOrange)      { stubColor='#E0820A'; statusIcon='🔔'; statusText='今天按摩'; }
+  else if (s==='booked')       { stubColor='#577B53'; statusIcon='💆'; statusText='已預約'; }
+  else if (s==='attended')     { stubColor='#16a34a'; statusIcon='✓'; statusText='已報到'; }
+  else if (s==='cancelled')    { stubColor='#9AA098'; statusIcon='✕'; statusText='已取消'; }
+  else                         { stubColor='#dc2626'; statusIcon='⚠'; statusText='缺席'; }
 
-  // 條碼裝飾（隨 bookingId 產生變化寬度）
-  var barcode = '';
-  var seed = b.bookingId ? b.bookingId.charCodeAt(b.bookingId.length-1) : 7;
-  for (var i=0; i<28; i++) { var w = ((seed*i*3+7)%5)+1; barcode += '<div style="width:'+w+'px;height:100%;background:#1e1b4b;opacity:'+(0.06+((i%3)*0.04)).toFixed(2)+';flex-shrink:0"></div><div style="width:'+((i%2)+1)+'px;height:100%;flex-shrink:0"></div>'; }
+  var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  var mAbbr = (month>=1 && month<=12) ? mNames[month-1] : '';
 
-  // 撕票孔位（票面與存根之間的上下半圓缺口）
-  var notch = function(pos){ return '<div style="position:absolute;'+pos+':-9px;left:-9px;width:18px;height:18px;border-radius:50%;background:#F7F8F6;border:1px solid #D5DAD2;box-sizing:border-box"></div>'; };
-  // 已登機戳章（報到完成蓋在票面上）
-  var stamp = s==='attended'
-    ? '<div style="position:absolute;right:8px;top:8px;transform:rotate(-10deg);border:2.5px solid #577B53;color:#577B53;border-radius:9px;padding:3px 10px;font-size:14px;font-weight:900;letter-spacing:.08em;opacity:.65;pointer-events:none;background:rgba(255,255,255,.5);white-space:nowrap;z-index:2">已報到 ✓</div>'
-    : '';
-  var bpNo = String(b.bookingId||'').replace(/[^A-Za-z0-9]/g,'').slice(-6).toUpperCase() || 'TSA000';
-  // 手機窄版存根縮窄，避免擠壓主票面
-  var stubW = (window.matchMedia && window.matchMedia('(max-width:480px)').matches) ? 72 : 92;
-
-  return '<div style="background:#fff;border-radius:20px;box-shadow:0 2px 8px rgba(46,51,45,.08);overflow:hidden">'
-    // ── 票頭：RELAX PASS ──
-    + '<div style="background:'+headerGrad+';padding:11px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px">'
-    +   '<div style="display:flex;align-items:center;gap:10px;min-width:0">'
-    +     '<span style="font-size:18px">💆</span>'
-    +     '<div style="min-width:0"><div style="color:#fff;font-size:14px;font-weight:900;letter-spacing:.16em;white-space:nowrap">RELAX PASS</div>'
-    +     '<div style="color:rgba(255,255,255,.75);font-size:12px;margin-top:1px;letter-spacing:.05em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">員工紓壓按摩・TSA WELLNESS</div></div>'
+  // ── 橫式票根（比照午茶日：左日期徽章＋主票面，中間撕票孔，右存根依狀態上色）──
+  return '<div style="display:flex;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff">'
+    // 主票面
+    + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
+    //   日期徽章
+    +   '<div style="background:'+(isTodayOrange?'linear-gradient(150deg,#FDEBD3,#F7D6A6)':'linear-gradient(150deg,#eef4ec,#dde8da)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#E0820A':'#577B53')+';flex-shrink:0">'
+    +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
+    +     '<div style="font-size:26px;font-weight:900;line-height:1.05">'+day+'</div>'
+    +     '<div style="font-size:12px;opacity:.7;margin-top:1px">週'+weekday+'</div>'
     +   '</div>'
-    +   '<span style="background:'+statusColor+';color:#fff;border-radius:20px;padding:3px 12px;font-size:12px;font-weight:700;border:1px solid rgba(255,255,255,.3);white-space:nowrap;flex-shrink:0">'+statusLabel+'</span>'
+    //   內容
+    +   '<div style="flex:1;min-width:0">'
+    +     '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
+    +     '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+' <span style="font-size:14px;font-weight:600;color:#9AA098">'+htEsc(userName)+'</span></div>'
+    +     '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change 會議室'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
+    +     (actions ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+actions+'</div>' : '')
+    +   '</div>'
+    //   撕票孔虛線
+    +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
     + '</div>'
-    // ── 票身：主票面 ＋ 撕票虛線 ＋ 存根（QR 報到區）──
-    + '<div style="display:flex;align-items:stretch">'
-    +   '<div style="flex:1;min-width:0;position:relative;padding:14px 14px 14px 16px;display:flex;gap:14px;align-items:stretch">'
-    +     stamp
-    // 大日期＋時段（像座位號）
-    +     '<div style="flex-shrink:0;min-width:74px;text-align:center;display:flex;flex-direction:column;justify-content:center">'
-    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">DATE</div>'
-    +       '<div style="font-size:36px;font-weight:900;color:#363B35;line-height:1;margin-top:2px">'+day+'</div>'
-    +       '<div style="font-size:12px;color:#9AA098;margin-top:2px">'+month+'月（'+weekday+'）</div>'
-    +       '<div style="margin-top:7px;background:'+(isTodayOrange?'linear-gradient(135deg,#FDEBD3,#F9D9A8)':'linear-gradient(135deg,#EDF1EC,#CDD8CB)')+';border-radius:8px;padding:3px 8px;display:inline-block">'
-    +         '<div style="font-size:12px;color:'+(isTodayOrange?'#E0820A':'#577B53')+';font-weight:700;letter-spacing:.14em">TIME</div>'
-    +         '<div style="font-size:16px;font-weight:800;color:'+(isTodayOrange?'#E0820A':'#577B53')+';white-space:nowrap">'+htEsc(b.timeSlot||'—')+'</div>'
-    +       '</div>'
-    +     '</div>'
-    // 乘客＋航程
-    +     '<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px">'
-    +       '<div style="font-size:12px;color:#C2C7C1;font-weight:700;letter-spacing:.16em">GUEST</div>'
-    +       '<div style="font-size:16px;font-weight:800;color:#2E332D">'+htEsc(userName)+'</div>'
-    +       '<div style="display:flex;align-items:center;gap:8px;margin-top:3px;font-size:12px;font-weight:800;letter-spacing:.1em;color:#577B53">'
-    +         '<span>WORK</span>'
-    +         '<span style="flex:0 1 70px;min-width:30px;border-top:2px dashed #CBD4C9;position:relative"><span style="position:absolute;left:50%;top:-8px;transform:translateX(-50%);font-size:12px">💆</span></span>'
-    +         '<span style="color:#577B53">RELAX</span>'
-    +       '</div>'
-    +       '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:2px">📍 Change 會議室</div>'
-    +       (ts ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">預約於 '+ts+'</div>' : '')
-    +       (actions ? '<div style="display:flex;gap:8px;margin-top:9px;flex-wrap:wrap">'+actions+'</div>' : '')
-    +     '</div>'
-    +   '</div>'
-    // 存根（撕票虛線＋QR 報到區）
-    +   '<div style="flex-shrink:0;width:'+stubW+'px;border-left:2px dashed #CDD8CB;position:relative;background:#FDFCF9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:12px 6px">'
-    +     notch('top') + notch('bottom')
-    +     '<div style="font-size:12px;color:#9AA098;font-weight:700;letter-spacing:.1em;white-space:nowrap">CHECK-IN</div>'
-    +     ( s==='attended'
-        ? '<div style="width:50px;height:50px;border-radius:10px;background:#EEF3ED;border:1.5px solid #577B53;display:flex;align-items:center;justify-content:center;font-size:24px;color:#577B53">✓</div>'
-        : '<div style="width:50px;height:50px;border-radius:10px;background:#fff;border:1.5px solid #E1E4DF;display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:repeat(5,1fr);gap:2px;padding:6px;box-sizing:border-box">'
-          + (function(){ var q=''; for (var k=0;k<25;k++){ q += '<div style="background:'+(((seed*(k+3)+k*k)%3)?'#363B35':'transparent')+';border-radius:1px"></div>'; } return q; })()
-          + '</div>' )
-    +     ( s==='attended' && b.updatedAt
-        ? '<div style="font-size:12px;color:#577B53;font-weight:700;letter-spacing:.04em;white-space:nowrap">報到 '+_msFmtCheckinTime(b.updatedAt)+'</div>'
-        : '<div style="font-size:12px;color:#C2C7C1;letter-spacing:.06em;font-family:\'Noto Sans TC\',sans-serif">'+bpNo+'</div>' )
-    +   '</div>'
+    // 存根（依狀態上色）
+    + '<div style="width:92px;flex-shrink:0;background:'+stubColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;padding:12px 6px">'
+    +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
+    +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
+    +   '<div style="font-size:22px;line-height:1">'+statusIcon+'</div>'
+    +   '<div style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;text-align:center">'+statusText+'</div>'
+    +   ( s==='attended' && b.updatedAt ? '<div style="font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:center">'+_msFmtCheckinTime(b.updatedAt)+'</div>' : '' )
     + '</div>'
-    // ── 條碼區 ──
-    + '<div style="border-top:2px dashed #E1E4DF;padding:8px 18px;display:flex;gap:0;height:28px;align-items:stretch;overflow:hidden">'+barcode+'</div>'
     + '</div>';
 }
 
