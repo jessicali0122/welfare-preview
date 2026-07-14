@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714155633';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714202500';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1394,9 +1394,23 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
   console.log('[BeneFlow] build:', window.BF_BUILD);
   // 版本升 7：登入改為後端簽發 session token，舊的 Google id_token session 一律失效 → 強制重新登入
   if (localStorage.getItem('_bfv') !== '7') {
+    // 版本清除前，先保留使用者的角色快取，避免升版後每個人第一次載入
+    // 都要等 getMembers 回來、入口卡才慢慢冒出來
+    var _keepRoles = null;
+    try {
+      var _u = JSON.parse(localStorage.getItem('bf_user') || 'null');
+      if (_u && _u.email && Array.isArray(_u.cachedRoles)) {
+        _keepRoles = { email: _u.email, cachedRoles: _u.cachedRoles };
+      }
+    } catch(e) {}
     localStorage.clear();
     sessionStorage.clear();
     localStorage.setItem('_bfv', '7');
+    // 存到獨立 key（bf_user 會在無 token 時被 _bfBoot 清掉，故不能放那裡）；
+    // 重新登入時 handleGoogleLogin 會讀回，讓入口卡立即依角色顯示
+    if (_keepRoles) {
+      try { localStorage.setItem('bf_role_hint', JSON.stringify(_keepRoles)); } catch(e) {}
+    }
   }
   /* 防呆：清除任何殘留的 Service Worker 與 Cache Storage（避免瀏覽器永遠載入舊版） */
   try {
@@ -4138,6 +4152,13 @@ async function handleGoogleLogin(response) {
     if (_prevSaved.email === (ex.email || payload.email) && Array.isArray(_prevSaved.cachedRoles)) {
       _prevCachedRoles = _prevSaved.cachedRoles;
     }
+    // 版本升級清除後 bf_user 會被清掉，改從 bf_role_hint 讀回角色快取
+    if (!_prevCachedRoles) {
+      const _hint = JSON.parse(localStorage.getItem('bf_role_hint') || '{}');
+      if (_hint.email === (ex.email || payload.email) && Array.isArray(_hint.cachedRoles)) {
+        _prevCachedRoles = _hint.cachedRoles;
+      }
+    }
   } catch(e) {}
   currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry };
   if (_prevCachedRoles) {
@@ -4253,7 +4274,9 @@ function showApp() {
     setTimeout(function(){ _preloadFlowInfo(); }, 800);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
-    setTimeout(function(){ _syncMembersFromServer(); }, 2500);
+    // 角色權威資料來自 getMembers；提早觸發（150ms，僅讓主資料 list 稍先出手），
+    // 讓「案件追蹤／系統管理」等入口卡最快 ~1s 到位，不必等 2.5 秒才冒出來
+    setTimeout(function(){ _syncMembersFromServer(); }, 150);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
