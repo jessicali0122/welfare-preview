@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714214027';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714214655';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13562,13 +13562,20 @@ function msRenderMyBookings() {
     d.setMinutes(d.getMinutes() + 30); // 時段結束緩衝 30 分鐘
     return d;
   };
+  // 即將到來：只留「尚未結束」且未取消的預約（含當天當下）
   var upcoming = myBookings.filter(function(b){ return b.status !== 'cancelled' && _bkEnd(b) >= nowFull; }).sort(function(a,b){return a.date.localeCompare(b.date);});
-  var history = myBookings.filter(function(b){ return b.status === 'cancelled' || _bkEnd(b) < nowFull; }).sort(function(a,b){return b.date.localeCompare(a.date);});
+  // 歷史紀錄：只留「已報到」與「No Show（未出席）」；已取消不保留
+  var history = myBookings.filter(function(b){
+    if (b.status === 'attended' || b.status === 'noshow') return true;
+    if (b.status === 'booked' && _bkEnd(b) < nowFull) return true; // 過期未報到 = No Show
+    return false; // cancelled / 未來的預約都不進歷史
+  }).sort(function(a,b){return b.date.localeCompare(a.date);});
   var upEl = document.getElementById('ms-my-upcoming'); var upEmpty = document.getElementById('ms-my-upcoming-empty');
   var upcomingHtml = myWaitlist.map(function(w){return msWaitlistCard(w);}).join('') + upcoming.map(function(b){return msBookingCard(b,true);}).join('');
   if (upEmpty) upEmpty.style.display = (upcoming.length || myWaitlist.length) ? 'none' : ''; if (upEl) upEl.innerHTML = upcomingHtml;
   var hiEl = document.getElementById('ms-my-history'); var hiEmpty = document.getElementById('ms-my-history-empty');
-  if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : ''; if (hiEl) hiEl.innerHTML = history.map(function(b){return msBookingCardCompact(b);}).join('');
+  // 歷史紀錄也用登機證票根樣式（isUpcoming=false → 不顯示操作列）
+  if (hiEmpty) hiEmpty.style.display = history.length ? 'none' : ''; if (hiEl) hiEl.innerHTML = history.map(function(b){return msBookingCard(b,false);}).join('');
 }
 
 // 從 updatedAt 取出實際報到時間（HH:mm）；後端報到時會把 updatedAt 寫成報到當下時間
@@ -13673,11 +13680,12 @@ function msBookingCard(b, isUpcoming) {
   var isTodayDate = b.date === fmtDateStr(new Date());
   var canCheckIn = isUpcoming && s==='booked' && isTodayDate && !b.deleteRequested;
   var actions = '';
-  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700">✓ 報到</button>';
+  var _btnBase = 'flex:1;min-width:88px;justify-content:center;border-radius:20px;padding:9px 12px;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:4px';
+  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:700">✓ 報到</button>';
   if (isUpcoming && s==='booked' && !b.deleteRequested && !b.cancelRequested) {
-    actions += '<button onclick="msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot||'') + '\')" style="background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">✏ 修改</button>';
-    if (canCancelNormal) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit">取消</button>';
-    else actions += '<button onclick="msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="background:#F2F5F1;color:#577B53;border:1.5px solid #C3D4C0;border-radius:20px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600">申請取消</button>';
+    actions += '<button onclick="msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot||'') + '\')" style="'+_btnBase+';background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;font-weight:600">✏ 修改</button>';
+    if (canCancelNormal) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:#fff;color:#9AA098;border:1.5px solid #E1E4DF">取消</button>';
+    else actions += '<button onclick="msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:#F2F5F1;color:#577B53;border:1.5px solid #C3D4C0;font-weight:600">申請取消</button>';
   }
 
   var parts = (b.date||'').split('-');
@@ -13701,34 +13709,38 @@ function msBookingCard(b, isUpcoming) {
   var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   var mAbbr = (month>=1 && month<=12) ? mNames[month-1] : '';
 
-  // ── 橫式票根（比照午茶日：左日期徽章＋主票面，中間撕票孔，右存根依狀態上色）──
-  return '<div style="display:flex;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff">'
-    // 主票面
-    + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
-    //   日期徽章
-    +   '<div style="background:'+(isTodayOrange?'linear-gradient(150deg,#FDEBD3,#F7D6A6)':'linear-gradient(150deg,#eef4ec,#dde8da)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#E0820A':'#577B53')+';flex-shrink:0">'
-    +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
-    +     '<div style="font-size:26px;font-weight:900;line-height:1.05">'+day+'</div>'
-    +     '<div style="font-size:12px;opacity:.7;margin-top:1px">週'+weekday+'</div>'
+  // ── 橫式票根（比照午茶日：左日期徽章＋主票面，中間撕票孔，右存根依狀態上色；操作獨立成底部一整排）──
+  return '<div style="border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff">'
+    // 票根本體
+    + '<div style="display:flex">'
+    //   主票面
+    +   '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
+    //     日期徽章
+    +     '<div style="background:'+(isTodayOrange?'linear-gradient(150deg,#FDEBD3,#F7D6A6)':'linear-gradient(150deg,#eef4ec,#dde8da)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#E0820A':'#577B53')+';flex-shrink:0">'
+    +       '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
+    +       '<div style="font-size:26px;font-weight:900;line-height:1.05">'+day+'</div>'
+    +       '<div style="font-size:12px;opacity:.7;margin-top:1px">週'+weekday+'</div>'
+    +     '</div>'
+    //     內容
+    +     '<div style="flex:1;min-width:0">'
+    +       '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
+    +       '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+' <span style="font-size:14px;font-weight:600;color:#9AA098">'+htEsc(userName)+'</span></div>'
+    +       '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
+    +     '</div>'
+    //     撕票孔虛線
+    +     '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
     +   '</div>'
-    //   內容
-    +   '<div style="flex:1;min-width:0">'
-    +     '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
-    +     '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+' <span style="font-size:14px;font-weight:600;color:#9AA098">'+htEsc(userName)+'</span></div>'
-    +     '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change 會議室'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
-    +     (actions ? '<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">'+actions+'</div>' : '')
+    //   存根（依狀態上色）
+    +   '<div style="width:92px;flex-shrink:0;background:'+stubColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;padding:12px 6px">'
+    +     '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
+    +     '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
+    +     '<div style="font-size:22px;line-height:1">'+statusIcon+'</div>'
+    +     '<div style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;text-align:center">'+statusText+'</div>'
+    +     ( s==='attended' && b.updatedAt ? '<div style="font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:center">'+_msFmtCheckinTime(b.updatedAt)+'</div>' : '' )
     +   '</div>'
-    //   撕票孔虛線
-    +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
     + '</div>'
-    // 存根（依狀態上色）
-    + '<div style="width:92px;flex-shrink:0;background:'+stubColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;position:relative;padding:12px 6px">'
-    +   '<div style="position:absolute;top:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
-    +   '<div style="position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:16px;height:16px;border-radius:50%;background:#F7F8F6"></div>'
-    +   '<div style="font-size:22px;line-height:1">'+statusIcon+'</div>'
-    +   '<div style="font-size:12px;font-weight:800;color:#fff;white-space:nowrap;text-align:center">'+statusText+'</div>'
-    +   ( s==='attended' && b.updatedAt ? '<div style="font-size:11px;color:rgba(255,255,255,.85);white-space:nowrap;text-align:center">'+_msFmtCheckinTime(b.updatedAt)+'</div>' : '' )
-    + '</div>'
+    // 操作列：整排撐滿寬度，按鈕之間平均分佈，不再擠在角落
+    + (actions ? '<div style="display:flex;gap:10px;padding:11px 16px;border-top:1px dashed #E6E9E3;flex-wrap:wrap">'+actions+'</div>' : '')
     + '</div>';
 }
 
@@ -14085,6 +14097,8 @@ function msRenderAdminTable() {
     var k = (b.bookingId||'') + '|' + (b.date||'') + '|' + (b.timeSlot||'');
     if (!seen[k] && b.status !== 'deleted') { seen[k] = 1; all.push(b); }
   });
+  // 已取消的預約不列入「所有預約紀錄」
+  all = all.filter(function(b){ return (b.status||'') !== 'cancelled'; });
   all.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   _allBookings = all; msRenderAdminRows(all);
 }
