@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260712173144';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260714154141';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10047,13 +10047,18 @@ function statusColor(s) {
   if (s === '待結算') return { bg:'#ECEEEA', color:'#767B75' };
   return { bg:'#E7EEE5', color:'#577B53' };
 }
-// 顯示用狀態：規劃中但活動日期已過 → 待結算（避免「已過卻顯示規劃中」）
+// 顯示用狀態：以活動日期校正儲存狀態
+//   ・活動日還沒到 → 一律「規劃中」（試算表匯入預設已完成，不可能還沒辦就完成）
+//   ・活動日已過但仍是規劃中 → 「待結算」（避免「已過卻顯示規劃中」）
 function _htDisplayStatus(ev) {
   var s = ev.status || '';
-  if (s === '規劃中' && ev.date) {
+  if (ev.date) {
     var d = new Date(String(ev.date).replace(/\//g,'-')); d.setHours(0,0,0,0);
     var t = new Date(); t.setHours(0,0,0,0);
-    if (!isNaN(d.getTime()) && d < t) return '待結算';
+    if (!isNaN(d.getTime())) {
+      if (d > t) return '規劃中';
+      if (s === '規劃中' && d < t) return '待結算';
+    }
   }
   return s;
 }
@@ -11502,7 +11507,8 @@ function htRenderCalendar() {
       var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
       var mAbbr = mNum ? mNames[mNum-1] : '';
       var listClick = e._sheet ? 'htOpenSheetDetail(\''+e.eventId+'\')' : 'htOpenDetail(\''+e.eventId+'\')';
-      var stubColor = '#E0820A';   // 當月卡片以橘色凸顯（主色系仍為綠 #577B53）
+      // 已完成=綠（主色）、待結算=灰、規劃中/進行中=橘（凸顯尚待處理）
+      var stubColor = dispStatus === '已完成' ? '#577B53' : dispStatus === '待結算' ? '#9AA098' : '#E0820A';
       var expVal = e.actualExpense > 0 ? fmtMoney(e.actualExpense) : '—';
       var srcTag = e._sheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#C9760A;background:#FFF1DB;border:1px solid #FBE6C8;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       return '<div onclick="'+listClick+'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(224,130,10,.18)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
