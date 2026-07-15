@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715115624';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715120049';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12105,11 +12105,21 @@ var _htPastItemsCache = null;
 
 function _htAutoCategory(name) {
   var n = (name || '').toLowerCase();
-  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋/.test(n)) return '甜點';
+  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋|仙草|愛玉|豆花|布丁|銅鑼燒|大福|芋圓|甜點|達克瓦茲/.test(n)) return '甜點';
   if (/拿鐵|奶茶|珍珠|飲料|茶|咖啡|果汁|氣泡|飲品|礦泉水|手搖|可樂|紅茶|綠茶|冰沙|豆漿|燕麥奶|抹茶/.test(n)) return '飲料';
-  if (/三明治|便當|壽司|沙拉|輕食|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅/.test(n)) return '主食';
+  if (/三明治|便當|壽司|沙拉|輕食|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅|地瓜球|鹽酥雞|雞排|甜不辣|關東煮|蔥油餅|蘿蔔糕|水煎包|刈包|捲餅|飯捲/.test(n)) return '主食';
   if (/水果|草莓|芒果|西瓜|葡萄|蘋果|梨|桃|荔枝|龍眼|鳳梨|藍莓|奇異果|香蕉|橘子|柳橙|百香果|哈密瓜/.test(n)) return '水果';
   return null;
+}
+
+// 舊資料／匯入資料常帶有非下拉選單既定值的類別文字（如「輕食」「台式小吃」），
+// 統計時統一先嘗試同義詞對應、再用品名智能判斷，最後才落到「其他」，避免類別零散導致統計失真
+var _htCatSynonyms = { '輕食':'主食', '台式小吃':'主食', '小吃':'主食', '正餐':'主食', '鹹食':'主食', '飲品':'飲料', '甜食':'甜點', '甜品':'甜點', '水果類':'水果' };
+function _htNormalizeCategory(it) {
+  var c = it.category || '';
+  if (_htCats.indexOf(c) >= 0) return c;
+  if (_htCatSynonyms[c]) return _htCatSynonyms[c];
+  return _htAutoCategory(it.name) || '其他';
 }
 
 function _htUpdateBalance() {
@@ -12142,7 +12152,7 @@ function _htSmartCheck(hc) {
   var totalQty = 0, catQty = { 甜點:0, 主食:0, 飲料:0, 水果:0, 其他:0 };
   items.forEach(function(it){
     var q = Number(it.qty) || 0; totalQty += q;
-    var c = it.category || (typeof _htAutoCategory === 'function' ? _htAutoCategory(it.name) : '') || '其他';
+    var c = _htNormalizeCategory(it);
     if (catQty[c] == null) c = '其他';
     catQty[c] += q;
   });
@@ -12357,15 +12367,14 @@ function htRenderBudget() {
     + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#9AA098;margin-top:4px"><span>支出 '+fmtMoney(actual)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
     + '</div>';
 
-  // 類別明細：固定色盤依序指定，讓每個類別（含品項自動判斷出的「輕食」「台式小吃」等非下拉選單類別）都有不同顏色
+  // 類別明細：舊資料的非既定類別文字（輕食/台式小吃等）先智能歸類到 5 個既定類別再統計，避免類別零散、統計失真
   var catTotals = {};
   _htCats.forEach(function(c){ catTotals[c] = 0; });
-  _htItems.forEach(function(it){ catTotals[it.category||'其他'] = (catTotals[it.category||'其他']||0) + (it.subtotal||0); });
-  var catPalette = ['#577B53','#E0820A','#06b6d4','#A73B4E','#8B5CF6','#1e9d6b','#C9760A','#3B82F6'];
-  var catColorMap = {};
-  var catHtml = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; }).sort().map(function(c, i) {
+  _htItems.forEach(function(it){ var cc = _htNormalizeCategory(it); catTotals[cc] = (catTotals[cc]||0) + (it.subtotal||0); });
+  var catColors = { '甜點':'#E38845', '主食':'#577B53', '飲料':'#06b6d4', '水果':'#1e9d6b', '其他':'#9AA098' };
+  var catHtml = _htCats.filter(function(c){ return catTotals[c]>0; }).map(function(c) {
     var cpct = actual > 0 ? Math.round(catTotals[c]/actual*100) : 0;
-    var col = catColorMap[c] = catPalette[i % catPalette.length];
+    var col = catColors[c] || '#9AA098';
     return '<div style="margin-bottom:12px">'
       + '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="font-weight:600;color:#4A4F49">'+c+'</span><span style="color:#767B75">'+fmtMoney(catTotals[c])+' ('+cpct+'%)</span></div>'
       + '<div style="height:8px;background:#ECEEEA;border-radius:16px;overflow:hidden"><div style="height:100%;width:'+cpct+'%;background:'+col+';border-radius:16px"></div></div>'
@@ -13746,7 +13755,7 @@ function msBookingCard(b, isUpcoming) {
     //     內容
     +     '<div style="flex:1;min-width:0">'
     +       '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
-    +       '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+' <span style="font-size:14px;font-weight:600;color:#9AA098">'+htEsc(userName)+'</span></div>'
+    +       '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+'</div>'
     +       '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
     +     '</div>'
     //     撕票孔虛線
