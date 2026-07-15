@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715120049';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715120311';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -255,6 +255,12 @@ input[type=checkbox]{accent-color:#577B53}
   #view-new-form .card [style*="grid-template-columns:1fr 1fr;gap:12px;margin-top"]{grid-template-columns:1fr!important}
   .item-card-body [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr 1fr!important}
   #view-new-form [style*="grid-template-columns:1fr 1fr 1fr"][style*="border:1px solid"]{grid-template-columns:repeat(3,1fr)!important}
+}
+
+/* ── 午茶日頁首：資訊籤條（下次午茶日／天氣）手機強制換到獨立一排，避免跟標題/按鈕擠成一團 ── */
+@media(max-width:768px){
+  .ht-hero-info-row{flex-basis:100%;order:3;margin-top:10px}
+  .ht-hero-top .btn{order:2}
 }
 
 /* ── FLOW ROW MOBILE ── */
@@ -2822,8 +2828,8 @@ thead th{color:#767B75!important}
 
     <!-- 頁首：3D icon + 標題 + 年度場次 ＋ 年曆進度條（融入同一張卡） -->
     <div style="margin-bottom:18px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px 14px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
-      <!-- 標題列：icon＋標題＋新增活動（右） -->
-      <div style="display:flex;align-items:center;gap:12px">
+      <!-- 標題列：icon＋標題＋資訊籤條＋新增活動（右）；桌面同排顯示，手機（≤768px）籤條改自動換到獨立一排，避免擠爆版面 -->
+      <div class="ht-hero-top" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0">
           <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍿</span>
         </div>
@@ -2831,13 +2837,13 @@ thead th{color:#767B75!important}
           <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">TEA DAY</span></div>
           <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">每月一場，充電的下午茶時光</div>
         </div>
+        <!-- 資訊籤條列：下次午茶日／天氣，桌面併入標題列同排；手機用 media query 強制換行成獨立一排 -->
+        <div id="ht-hero-info-row" class="ht-hero-info-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <div id="ht-hero-next-wrap" style="display:none;background:#FFF9F0;border:1px solid #F2A03D;color:#E0820A;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap">📅 下次午茶日 <span id="ht-hero-next"></span></div>
+          <div id="ht-weather-tip" style="display:none;text-align:center"></div>
+          <div id="ht-hero-chip" style="display:none;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
+        </div>
         <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap;flex-shrink:0">✨ 新增活動</button>
-      </div>
-      <!-- 資訊籤條列：下次午茶日／天氣／年度場次，獨立一排、整齊不擠 -->
-      <div id="ht-hero-info-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px">
-        <div id="ht-hero-next-wrap" style="display:none;background:#FFF9F0;border:1px solid #F2A03D;color:#E0820A;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap">📅 下次午茶日 <span id="ht-hero-next"></span></div>
-        <div id="ht-weather-tip" style="display:none;text-align:center"></div>
-        <div id="ht-hero-chip" style="display:none;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
       </div>
       <div id="ht-year-timeline" style="margin-top:14px"></div>
     </div>
@@ -3278,7 +3284,7 @@ thead th{color:#767B75!important}
             </div>
             <div id="ms-cal-grid" style="display:grid;grid-template-columns:repeat(7,1fr)"></div>
             <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:10px;border-top:1px solid #ECEEEA">
-              <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#A9C4A5"></div><span style="font-size:12px;color:#767B75">可預約</span></div>
+              <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#F2A03D"></div><span style="font-size:12px;color:#767B75">可預約</span></div>
               <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#3E5A3B"></div><span style="font-size:12px;color:#767B75">已預約</span></div>
               <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#D5D8D2"></div><span style="font-size:12px;color:#767B75">已額滿</span></div>
               <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#EEEFEC;border:1px solid #E1E4DF"></div><span style="font-size:12px;color:#767B75">已結束</span></div>
@@ -13116,7 +13122,7 @@ function msRenderCal() {
     var bottomLabel;
     if (myBook && !isPast)        bottomLabel = pawStamp('#3E5A3B', '已預約', '#3E5A3B');
     else if (myBook && isPast)    bottomLabel = pawStamp('#C9CFC6', '已預約', '#A8ADA7');
-    else if (hasAvail)            bottomLabel = pawStamp('#7FA37B', '可預約', '#577B53');
+    else if (hasAvail)            bottomLabel = pawStamp('#F2A03D', '可預約', '#C9760A');
     else if (hasSlots && !isPast) bottomLabel = pawStamp('#C2C7C1', '已額滿', '#9AA098');
     else if (hasSlots && isPast)  bottomLabel = pawStamp('#E3E6E0', '已結束', '#C9CEC6');
     else                          bottomLabel = '<div style="height:16px"></div>';
