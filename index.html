@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715121006';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715121517';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1900,13 +1900,24 @@ thead th{color:#767B75!important}
       </div>
     </div>
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
+    <!-- 分兩區塊：左「福委專用」（會議紀錄，僅福委/HR/管理者可開）、右「大家可用」（員購連結，全員可用） -->
     <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 16px">LINKS・常用連結</div>
-    <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px">
-      <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
-        <span style="font-size:20px;line-height:1">📋</span>
-        <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
-        <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
-      </a>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-bottom:8px">
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:11px;letter-spacing:.14em;color:#9AA098;font-weight:600">福委專用</div>
+        <div id="dash-links-committee" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
+            <span style="font-size:20px;line-height:1">📋</span>
+            <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
+            <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
+          </a>
+        </div>
+      </div>
+      <div style="width:1px;align-self:stretch;background:#E1E4DF;margin-top:22px"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:center">
+        <div style="font-size:11px;letter-spacing:.14em;color:#9AA098;font-weight:600">大家可用</div>
+        <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
+      </div>
     </div>
     <!-- 私密連結（如員購賣場）存於 GAS 後端，登入後由 _dashLinksSync 動態掛入上方 dash-links，不進公開 repo -->
     <!-- 品牌語 -->
@@ -12064,7 +12075,7 @@ window.htSaveEventInfo = async function() {
 };
 
 // ── 品項規劃 ──
-var _htCats = ['甜點','主食','鹹食小吃','飲料','水果','其他'];
+var _htCats = ['甜點','主食','鹹食','飲料','水果','其他'];
 
 async function _htShowRepeatWarning() {
   var warning = document.getElementById('ht-repeat-warning');
@@ -12122,15 +12133,15 @@ function _htAutoCategory(name) {
   if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋|仙草|愛玉|豆花|布丁|銅鑼燒|大福|芋圓|甜點|達克瓦茲/.test(n)) return '甜點';
   if (/拿鐵|奶茶|珍珠|飲料|茶|咖啡|果汁|氣泡|飲品|礦泉水|手搖|可樂|紅茶|綠茶|冰沙|豆漿|燕麥奶|抹茶/.test(n)) return '飲料';
   if (/三明治|便當|壽司|沙拉|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅|捲餅|飯捲/.test(n)) return '主食';
-  if (/地瓜球|鹽酥雞|雞排|甜不辣|關東煮|蔥油餅|蘿蔔糕|水煎包|刈包|滷味|臭豆腐|蚵仔煎|碳酸炸物|炸物|輕食/.test(n)) return '鹹食小吃';
+  if (/地瓜球|鹽酥雞|雞排|甜不辣|關東煮|蔥油餅|蘿蔔糕|水煎包|刈包|滷味|臭豆腐|蚵仔煎|碳酸炸物|炸物|輕食/.test(n)) return '鹹食';
   if (/水果|草莓|芒果|西瓜|葡萄|蘋果|梨|桃|荔枝|龍眼|鳳梨|藍莓|奇異果|香蕉|橘子|柳橙|百香果|哈密瓜/.test(n)) return '水果';
   return null;
 }
 
 // 舊資料／匯入資料常帶有非下拉選單既定值的類別文字（如「輕食」「台式小吃」），
 // 統計時統一先嘗試同義詞對應、再用品名智能判斷，最後才落到「其他」，避免類別零散導致統計失真
-// 「鹹食小吃」獨立於「主食」：地瓜球/鹽酥雞這類點心不是正餐主食，分開才好辨認
-var _htCatSynonyms = { '輕食':'鹹食小吃', '台式小吃':'鹹食小吃', '小吃':'鹹食小吃', '鹹食':'鹹食小吃', '正餐':'主食', '飲品':'飲料', '甜食':'甜點', '甜品':'甜點', '水果類':'水果' };
+// 「鹹食」獨立於「主食」：地瓜球/鹽酥雞這類點心不是正餐主食，分開才好辨認
+var _htCatSynonyms = { '輕食':'鹹食', '台式小吃':'鹹食', '小吃':'鹹食', '正餐':'主食', '飲品':'飲料', '甜食':'甜點', '甜品':'甜點', '水果類':'水果' };
 function _htNormalizeCategory(it) {
   var c = it.category || '';
   if (_htCats.indexOf(c) >= 0) return c;
@@ -12163,9 +12174,9 @@ function _htSmartCheck(hc) {
   if (!el) return;
   var items = (_htItems || []).filter(function(it){ return (it.name||'').trim(); });
   if (!items.length || !hc) { el.innerHTML = ''; return; }
-  // 類別桶與下拉選單 _htCats、_htAutoCategory 一致（甜點/主食/鹹食小吃/飲料/水果），避免自動分類的品項被誤丟「其他」
-  var CATS = ['甜點','主食','鹹食小吃','飲料','水果'];
-  var totalQty = 0, catQty = { 甜點:0, 主食:0, 鹹食小吃:0, 飲料:0, 水果:0, 其他:0 };
+  // 類別桶與下拉選單 _htCats、_htAutoCategory 一致（甜點/主食/鹹食/飲料/水果），避免自動分類的品項被誤丟「其他」
+  var CATS = ['甜點','主食','鹹食','飲料','水果'];
+  var totalQty = 0, catQty = { 甜點:0, 主食:0, 鹹食:0, 飲料:0, 水果:0, 其他:0 };
   items.forEach(function(it){
     var q = Number(it.qty) || 0; totalQty += q;
     var c = _htNormalizeCategory(it);
@@ -12387,7 +12398,7 @@ function htRenderBudget() {
   var catTotals = {};
   _htCats.forEach(function(c){ catTotals[c] = 0; });
   _htItems.forEach(function(it){ var cc = _htNormalizeCategory(it); catTotals[cc] = (catTotals[cc]||0) + (it.subtotal||0); });
-  var catColors = { '甜點':'#E38845', '主食':'#577B53', '鹹食小吃':'#A0522D', '飲料':'#06b6d4', '水果':'#1e9d6b', '其他':'#9AA098' };
+  var catColors = { '甜點':'#E38845', '主食':'#577B53', '鹹食':'#A0522D', '飲料':'#06b6d4', '水果':'#1e9d6b', '其他':'#9AA098' };
   var catHtml = _htCats.filter(function(c){ return catTotals[c]>0; }).map(function(c) {
     var cpct = actual > 0 ? Math.round(catTotals[c]/actual*100) : 0;
     var col = catColors[c] || '#9AA098';
