@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715123353';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715123640';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1956,37 +1956,33 @@ thead th{color:#767B75!important}
       <!-- 福利卡片格 -->
       <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div>
 
-      <!-- 圖例＋免責說明 -->
-      <div style="margin-top:16px;background:#F7F8F6;border-radius:12px;padding:12px 16px;font-size:12px;color:#767B75;line-height:1.8">
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:4px">
-          <span><span style="display:inline-block;width:10px;height:10px;background:#EAF1E9;border:1px solid #577B53;border-radius:4px;vertical-align:-2px"></span> 已享有</span>
-          <span><span style="display:inline-block;width:10px;height:10px;background:#F3F5F2;border:1px solid #D5DAD2;border-radius:4px;vertical-align:-2px"></span> 🔒 尚未符合資格</span>
-          <span><span style="display:inline-block;width:10px;height:10px;background:#fff;border:1.5px dashed #E0820A;border-radius:4px;vertical-align:-2px"></span> 點卡片進入試算</span>
-        </div>
-        💡 員工福利每年會根據公司營運狀況調整變動，實際內容以 HR 公告為準。資料版本：2026/05 新人訓。
-      </div>
+      <!-- 免責說明（單行、低調） -->
+      <div style="margin-top:20px;text-align:center;font-size:12px;color:#9AA098;letter-spacing:.04em">福利內容每年依公司營運狀況調整，實際以 HR 公告為準（資料版本 2026/05）</div>
     </div>
   </div>
   <style>
   .bnf-id-btn{border:1.5px solid #E1E4DF;background:#fff;color:#767B75;font-family:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:20px;cursor:pointer;transition:all .15s}
   .bnf-id-btn.active{background:#577B53;border-color:#577B53;color:#fff}
   .bnf-id-btn:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  .bnf-tile{border-radius:12px;padding:14px 16px;border:1px solid #E6E9E4;background:#F3F5F2;position:relative;transition:all .2s}
-  .bnf-tile.on{background:linear-gradient(135deg,#EAF1E9,#fff 70%);border-color:#8FAE8B}
-  .bnf-tile.portal{background:#fff;border:1.5px dashed #E0820A;cursor:pointer}
-  .bnf-tile.portal:hover{box-shadow:0 4px 14px rgba(224,130,10,.16);transform:translateY(-2px)}
+  /* 卡片：一律白底，狀態只靠右上角小籤條表達（避免整片綠、視覺過重） */
+  .bnf-tile{border-radius:12px;padding:14px 16px;border:1px solid #E6E9E4;background:#fff;position:relative;transition:all .2s;box-shadow:0 1px 2px rgba(46,51,45,.04)}
+  .bnf-tile.off{background:#FAFBF9;box-shadow:none}
+  .bnf-tile.portal{border:1.5px dashed #E8B27A;cursor:pointer}
+  .bnf-tile.portal:hover{box-shadow:0 4px 14px rgba(224,130,10,.14);transform:translateY(-2px)}
   .bnf-tile.portal:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
-  .bnf-tile .bnf-icon{font-size:18px;line-height:1;filter:grayscale(1);opacity:.4}
-  .bnf-tile.on .bnf-icon,.bnf-tile.portal .bnf-icon{filter:none;opacity:1}
-  .bnf-tile .bnf-name{font-size:14px;font-weight:700;color:#9AA098}
-  .bnf-tile.on .bnf-name,.bnf-tile.portal .bnf-name{color:#2E332D}
-  .bnf-tile .bnf-state{font-size:12px;color:#9AA098;line-height:1.6}
-  .bnf-tile.on .bnf-state{color:#46633F;font-weight:600}
-  .bnf-tile.portal .bnf-state{color:#C9760A;font-weight:700}
-  .bnf-tile .bnf-note{font-size:12px;color:#9AA098;margin-top:4px;line-height:1.6}
-  .bnf-tile .bnf-corner{position:absolute;top:12px;right:14px;font-size:12px;color:#9AA098}
-  .bnf-tile.portal .bnf-corner{color:#E0820A;font-size:14px;font-weight:700}
+  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-right:56px}
+  .bnf-tile .bnf-icon{font-size:18px;line-height:1}
+  .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
+  .bnf-tile .bnf-name{font-size:14px;font-weight:700;color:#2E332D}
+  .bnf-tile.off .bnf-name{color:#9AA098}
+  .bnf-tile .bnf-state{font-size:14px;color:#4A4F49;line-height:1.6}
+  .bnf-tile.off .bnf-state{font-size:12px;color:#9AA098}
+  .bnf-tile.portal .bnf-state{color:#C9760A;font-weight:600}
+  .bnf-tile .bnf-note{font-size:12px;color:#B0B6AD;margin-top:2px;line-height:1.6}
+  .bnf-badge{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;line-height:1.6}
+  .bnf-badge.ok{background:#EAF1E9;color:#577B53}
+  .bnf-badge.lock{background:#F0F1EF;color:#9AA098}
+  .bnf-badge.go{background:#FFF4E4;color:#E0820A}
   @media(prefers-reduced-motion:reduce){.bnf-tile.portal:hover{transform:none}}
   </style>
   <script>
@@ -1996,61 +1992,61 @@ thead th{color:#767B75!important}
     var FULL_ONLY = { unlocked:false, state:'僅正職享有' };
     var BNF_LIST = [
       { icon:'🎉', name:'季員工活動', rule:function(c){
-          if (c.id==='part3') return { unlocked:true, state:'每人補助 $500（半額）', note:'年資滿 3 個月後補助全額 $1,000' };
-          return { unlocked:true, state:'每人補助預算 $1,000' };
-        }, note:'Q1 春酒、Q2 季活動、Q3 共識營、Q4 萬聖/聖誕' },
-      { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號 High Tea Day' }; }, note:'遇假日擇期辦理' },
-      { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'每月 2～4 次，可線上預約' }; }, note:'從本系統「按摩預約」預約時段' },
-      { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職時部門迎新，每人 $150' }; }, note:'由部門統一申請' },
-      { icon:'🏷️', name:'員購價', rule:function(){ return { unlocked:true, state:'到職次月起享官網員購價' }; }, note:'用公司信箱登入官網員購專區' },
+          if (c.id==='part3') return { unlocked:true, state:'每人補助 $500（半額）' };
+          return { unlocked:true, state:'每人補助 $1,000' };
+        } },
+      { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號' }; } },
+      { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'每月 2～4 次，線上預約' }; } },
+      { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職迎新，每人 $150' }; } },
+      { icon:'🏷️', name:'員購價', rule:function(){ return { unlocked:true, state:'到職次月起，官網員購價' }; } },
       { icon:'🍽️', name:'部門季聚餐', rule:function(c){
           if (c.id==='part3') return { unlocked:false, state:'年資滿 3 個月後可參加' };
-          return { unlocked:true, state:'每季每人預算 $600' };
-        }, note:'由主管安排，每季不累計' },
+          return { unlocked:true, state:'每季每人 $600' };
+        } },
       { icon:'💐', name:'津貼補助（結婚／喪葬）', portal:true, rule:function(c){
           if (c.id==='part3') return { unlocked:false, state:'年資滿 3 個月後可申請' };
           if (c.id==='full' && c.m<3) return { unlocked:false, state:'到職滿 3 個月後可申請' };
-          return { unlocked:true, portal:true, state:'點我試算補助金額 →' };
-        }, note:'事件發生 6 個月內提出申請' },
+          return { unlocked:true, portal:true, state:'點卡片試算補助金額' };
+        } },
       { icon:'🛍️', name:'員購福利金', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
           if (c.m<3) return { unlocked:false, state:'試用期通過的次月起享有' };
           return { unlocked:true, state:'價值 $5,000 員購商品／月' };
-        }, note:'依員購折扣實發福利金，列入個人所得稅' },
+        } },
       { icon:'📚', name:'課程基金', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
           if (c.m<3) return { unlocked:false, state:'通過試用期後享有' };
-          if (c.m>=24) return { unlocked:true, state:'每年額度 $10,000' };
-          if (c.m>=12) return { unlocked:true, state:'每年額度 $8,000' };
-          return { unlocked:true, state:'每年額度 $3,000' };
-        }, note:'補助上限為課程費用一半，需事前申請' },
+          if (c.m>=24) return { unlocked:true, state:'每年額度 $10,000', note:'補助上限為課程費用一半' };
+          if (c.m>=12) return { unlocked:true, state:'每年額度 $8,000', note:'補助上限為課程費用一半' };
+          return { unlocked:true, state:'每年額度 $3,000', note:'補助上限為課程費用一半' };
+        } },
       { icon:'📖', name:'購書基金', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
           if (c.m<3) return { unlocked:false, state:'通過試用期後享有' };
           return { unlocked:true, state:'每季 $500' };
-        }, note:'每季第一個月第二週開放登記，當季未用不累計' },
+        } },
       { icon:'✈️', name:'員工旅遊', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
           if (c.m>=24) return { unlocked:true, state:'補助全額' };
           if (c.m>=12) return { unlocked:true, state:'補助 2/3' };
           if (c.m>=6)  return { unlocked:true, state:'補助 1/3' };
-          return { unlocked:false, state:'滿半年起依年資比例補助', note:'未滿者可自主報名優惠方案' };
-        }, note:'年資以旅遊出發前一年度在職比例計（2026 年起）' },
+          return { unlocked:false, state:'滿半年起依年資比例補助' };
+        } },
       { icon:'🩺', name:'健檢補助', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
-          if (c.m>=24) return { unlocked:true, state:'補助 $12,000（兩年一次）' };
-          if (c.m>=12) return { unlocked:true, state:'補助 $6,000（2026 年起）' };
+          if (c.m>=24) return { unlocked:true, state:'補助 $12,000（兩年一次）', note:'含福利假 4 小時' };
+          if (c.m>=12) return { unlocked:true, state:'補助 $6,000（2026 起）', note:'含福利假 4 小時' };
           return { unlocked:false, state:'年資滿 1 年起享有' };
-        }, note:'獲補助參與健檢者，可使用福利假 4 小時' },
+        } },
       { icon:'🧠', name:'心理諮商補助', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
           if (c.m<3) return { unlocked:false, state:'到職滿 3 個月後享有' };
-          return { unlocked:true, state:'30 歲以上：全年限額 $4,500' };
-        }, note:'30 歲以下配合衛福部心理健康支持方案；需至衛福部公告機構' },
+          return { unlocked:true, state:'全年限額 $4,500', note:'30 歲以下走衛福部方案' };
+        } },
       { icon:'🤝', name:'推薦獎金', rule:function(c){
           if (c.id!=='full') return FULL_ONLY;
-          return { unlocked:true, state:'每名 $15,000' };
-        }, note:'部分關鍵職缺提高至 $30,000（依 HR 每季公告）；發放時雙方須在職' },
+          return { unlocked:true, state:'每名 $15,000', note:'關鍵職缺提高至 $30,000' };
+        } },
     ];
 
     var _bnfId = 'full';
@@ -2077,19 +2073,21 @@ thead th{color:#767B75!important}
       if (valEl) valEl.textContent = bnfTenureLabel(m);
       var ctx = { id:_bnfId, m:m };
       var unlockedCount = 0;
-      grid.innerHTML = BNF_LIST.map(function(b){
-        var r = b.rule(ctx);
-        if (r.unlocked) unlockedCount++;
+      // 先算好每張卡的狀態，已享有排前面、未解鎖沉到底，掃一眼就知道自己有什麼
+      var cards = BNF_LIST.map(function(b){ var r = b.rule(ctx); if (r.unlocked) unlockedCount++; return { b:b, r:r }; });
+      cards.sort(function(a, b){ return (b.r.unlocked ? 1 : 0) - (a.r.unlocked ? 1 : 0); });
+      grid.innerHTML = cards.map(function(c){
+        var b = c.b, r = c.r;
         var isPortal = !!r.portal;
-        var cls = 'bnf-tile' + (isPortal ? ' portal' : (r.unlocked ? ' on' : ''));
+        var cls = 'bnf-tile' + (isPortal ? ' portal' : (r.unlocked ? '' : ' off'));
         var attrs = isPortal ? ' role="button" tabindex="0" onclick="sw(\'subsidy\')" onkeydown="if(event.key===\'Enter\')sw(\'subsidy\')"' : '';
-        var corner = isPortal ? '↗' : (r.unlocked ? '' : '🔒');
-        var note = r.note || b.note || '';
+        var badge = isPortal ? '<span class="bnf-badge go">試算 ↗</span>'
+          : (r.unlocked ? '<span class="bnf-badge ok">✓ 已享有</span>' : '<span class="bnf-badge lock">🔒 未解鎖</span>');
         return '<div class="' + cls + '"' + attrs + '>'
           + '<div class="bnf-head"><span class="bnf-icon">' + b.icon + '</span><span class="bnf-name">' + b.name + '</span></div>'
           + '<div class="bnf-state">' + r.state + '</div>'
-          + (note ? '<div class="bnf-note">' + note + '</div>' : '')
-          + (corner ? '<span class="bnf-corner">' + corner + '</span>' : '')
+          + (r.note ? '<div class="bnf-note">' + r.note + '</div>' : '')
+          + badge
           + '</div>';
       }).join('');
       var sum = document.getElementById('bnf-summary');
