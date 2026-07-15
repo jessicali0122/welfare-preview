@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715164142';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715170046';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3411,7 +3411,22 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- 我的預約＋即將開放：合併為單一卡片，底部以虛線分隔帶出開放日期籤條 -->
+  <!-- 我的預約（左）＋即將開放（右）：桌面左右並列（狀態欄／操作欄），窄螢幕自動退回上下堆疊 -->
+  <style>
+  #ms-two-col{display:flex;gap:20px;align-items:flex-start}
+  #ms-two-col #ms-panel-my{flex:1 1 0;min-width:300px}
+  #ms-two-col #ms-panel-calendar{flex:1.2 1 0;min-width:340px}
+  /* 右欄變窄：日曆與時段名單改上下堆疊（名單開在日曆下方），日曆不再被壓成小格 */
+  #ms-two-col #ms-cal-layout{flex-direction:column;align-items:stretch}
+  #ms-two-col #ms-cal-layout>div:first-child{flex:none;width:100%;max-width:none}
+  #ms-two-col #ms-cal-layout>div:last-child{flex:none;width:100%;min-width:0}
+  /* 歷史紀錄可能很長：限高＋內部捲動，避免左欄拉太長 */
+  #ms-my-history{max-height:560px;overflow-y:auto;padding-right:4px}
+  @media(max-width:960px){
+    #ms-two-col{display:block}
+  }
+  </style>
+  <div id="ms-two-col">
   <div id="ms-panel-my" style="margin-bottom:24px">
     <div style="background:#fff;border-radius:16px;border:1px solid #D5DAD2;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px 18px">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px">
@@ -3427,7 +3442,7 @@ thead th{color:#767B75!important}
       <div id="ms-my-upcoming-wrap">
         <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
         <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:14px;color:#9AA098;font-size:14px;background:#F7F8F6;border-radius:12px">
-          💆 目前沒有即將到來的預約，挑個好日子來放鬆一下吧 🌿
+          💆 目前沒有即將到來的預約，從「即將開放」的日曆挑個好日子吧 🌿
         </div>
       </div>
       <div id="ms-my-history-wrap" style="display:none">
@@ -3531,6 +3546,7 @@ thead th{color:#767B75!important}
       </div>
     </div>
   </div>
+  </div><!-- end #ms-two-col -->
 
   <!-- ⚙️ 進階管理（管理者／HR 專用，常駐；開放/編輯日期直接點日曆）：單一大卡包住，樣式比照「我的預約／即將開放」 -->
   <div id="ms-adv-wrap" style="display:none;margin-bottom:24px">
