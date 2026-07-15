@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715170851';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715171409';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -155,7 +155,12 @@ button{touch-action:manipulation}
 .btn-r{background:#dc2626;color:#fff}.btn-r:hover{background:#b91c1c}
 .inp{width:100%;border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 12px;font-size:14px;color:#111827;outline:none;transition:border .15s;font-family:inherit;background:#fff}
 .inp:focus{border-color:#577B53;box-shadow:0 0 0 3px rgba(87,123,83,.15)}
-.card{background:#fff;border-radius:16px;border:none;box-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04)}
+/* 全站立體感：卡片用三層陰影（貼地細影＋中距柔影＋遠距環境影），滑過微升起 */
+.card{background:#fff;border-radius:16px;border:1px solid rgba(213,218,210,.6);box-shadow:0 1px 2px rgba(46,51,45,.05),0 4px 10px rgba(46,51,45,.05),0 12px 28px rgba(46,51,45,.07);transition:box-shadow .2s ease}
+.card:hover{box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 14px rgba(46,51,45,.07),0 18px 36px rgba(46,51,45,.1)}
+/* 主要按鈕：帶品牌色投影＋按下回饋，增加可按的立體感 */
+.btn-p{box-shadow:0 2px 8px rgba(87,123,83,.28)}
+.btn:active{transform:scale(.97)}
 select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;appearance:none}
 /* ── 表格現代化 ── */
 .tr{transition:background .1s}
@@ -2011,6 +2016,9 @@ thead th{color:#767B75!important}
           if (c.id==='part' && c.m<3) return { unlocked:false, state:'年資滿 3 個月後可參加' };
           return { unlocked:true, state:'每季每人 $600' };
         } },
+      { icon:'🏸', name:'社團補助', rule:function(){
+          return { unlocked:true, state:'每人每月上限 $200', note:'每人限參加一社；活動費用實報實銷' };
+        } },
       { icon:'💐', name:'津貼補助（結婚／喪葬）', portal:true, rule:function(c){
           if (c.m<3) return { unlocked:false, state:'到職滿 3 個月後可申請' };
           return { unlocked:true, portal:true, state:'點卡片試算補助金額' };
@@ -2681,23 +2689,22 @@ thead th{color:#767B75!important}
         <div class="card" style="padding:20px">
           <div class="section-title">附件上傳（Google Drive）</div>
           <input type="file" id="file-upload-input" multiple accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="handleFileUpload(this.files)">
-          <div id="upload-drop-zone" style="border:2px dashed #D2D6D0;border-radius:10px;padding:24px;text-align:center;cursor:pointer;background:#F7F8F6" onclick="document.getElementById('file-upload-input').click()" ondragover="event.preventDefault();this.style.background='#ECEEEA';this.style.borderColor='#9AA098'" ondragleave="this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0'" ondrop="event.preventDefault();this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0';handleFileUpload(event.dataTransfer.files)">
+          <!-- 上傳＋掃描收據合併為同一虛線區塊：整塊點擊/拖放＝上傳，底部按鈕＝OCR 掃描（stopPropagation 避免觸發上傳） -->
+          <div id="upload-drop-zone" style="border:2px dashed #D2D6D0;border-radius:10px;padding:24px 24px 14px;text-align:center;cursor:pointer;background:#F7F8F6" onclick="document.getElementById('file-upload-input').click()" ondragover="event.preventDefault();this.style.background='#ECEEEA';this.style.borderColor='#9AA098'" ondragleave="this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0'" ondrop="event.preventDefault();this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0';handleFileUpload(event.dataTransfer.files)">
             <div style="width:40px;height:40px;background:#E1E4DF;border-radius:10px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             </div>
             <div style="font-size:14px;font-weight:600;color:#4A4F49">點擊或拖放上傳</div>
             <div style="font-size:12px;color:#9AA098;margin-top:4px">PDF、JPG、PNG、Excel · 單檔最大 10MB</div>
-          </div>
-          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px" id="file-list">
-          </div>
-          <!-- OCR 掃描收據 -->
-          <div style="margin-top:10px">
-            <input type="file" id="ocr-file-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="htOcrScan(this)">
-            <button type="button" onclick="document.getElementById('ocr-file-input').click()" style="width:100%;padding:9px;border:1.5px dashed #577B53;border-radius:10px;background:#F3F7F2;color:#577B53;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px;margin:12px 0 8px"><span style="flex:1;height:1px;background:#E1E4DF"></span><span style="font-size:12px;color:#B0B6AD">或</span><span style="flex:1;height:1px;background:#E1E4DF"></span></div>
+            <button type="button" onclick="event.stopPropagation();document.getElementById('ocr-file-input').click()" style="width:100%;padding:9px;border:1.5px dashed #577B53;border-radius:10px;background:#F3F7F2;color:#577B53;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F3F7F2'">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               📷 拍照掃描收據自動填入金額
             </button>
-            <div id="ocr-result" style="display:none;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-size:14px;color:#16a34a"></div>
+          </div>
+          <input type="file" id="ocr-file-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="htOcrScan(this)">
+          <div id="ocr-result" style="display:none;margin-top:6px;padding:8px 12px;background:#f0fdf4;border-radius:8px;font-size:14px;color:#16a34a"></div>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px" id="file-list">
           </div>
         </div>
         <div class="card" style="padding:20px">
