@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715123640';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715164142';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1902,18 +1902,23 @@ thead th{color:#767B75!important}
       </div>
     </div>
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
-    <!-- 分兩區塊（不加文字標籤，僅用中間直線分隔）：左＝福委會議紀錄（僅福委/HR/管理者可開）、右＝員購連結（全員可用） -->
-    <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 16px">LINKS・常用連結</div>
-    <div style="display:flex;gap:20px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:8px">
-      <div id="dash-links-committee" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-        <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
-          <span style="font-size:20px;line-height:1">📋</span>
-          <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
-          <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
-        </a>
+    <!-- 常用連結分兩區：員購專區（動態員購連結，全員可用）＋福委專區（會議紀錄，僅福委/HR/管理者可開） -->
+    <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 18px">LINKS・常用連結</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:stretch;margin-bottom:8px">
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:14px 18px 16px">
+        <div style="font-size:12px;letter-spacing:.16em;color:rgba(255,255,255,.75);text-align:center;margin-bottom:10px">🛒 員購專區</div>
+        <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
       </div>
-      <div style="width:1px;height:28px;background:rgba(255,255,255,.35)"></div>
-      <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
+      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:14px 18px 16px">
+        <div style="font-size:12px;letter-spacing:.16em;color:rgba(255,255,255,.75);text-align:center;margin-bottom:10px">📂 福委專區</div>
+        <div id="dash-links-committee" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
+          <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
+            <span style="font-size:20px;line-height:1">📋</span>
+            <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
+            <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
+          </a>
+        </div>
+      </div>
     </div>
     <!-- 私密連結（如員購賣場）存於 GAS 後端，登入後由 _dashLinksSync 動態掛入上方 dash-links，不進公開 repo -->
     <!-- 品牌語 -->
@@ -4194,6 +4199,9 @@ function _safeSsSet(k, v) { try { sessionStorage.setItem(k, v); } catch(e) { try
 function doGoogleLogin() {
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
   _safeSsSet('bf_oauth_nonce', nonce);
+  // 記住登入前所在頁面：OAuth 轉址回來 hash 會被 id_token 蓋掉，登入完成後由 showApp 還原
+  var _curHash = (location.hash || '').slice(1);
+  if (_curHash && !_curHash.includes('id_token=')) _safeSsSet('bf_return_hash', _curHash);
   var params = new URLSearchParams({
     client_id    : GOOGLE_CLIENT_ID,
     redirect_uri : location.origin + location.pathname,
@@ -4409,7 +4417,13 @@ function startTokenRefreshTimer() {
   // DOMContentLoaded 可能已觸發，改用 setTimeout 確保 DOM 就緒
   setTimeout(function(){
     if(typeof showApp==='function') showApp();
-    setTimeout(function(){ if(typeof sw==='function') sw(demo === '1' ? 'dashboard' : demo); }, 300);
+    // demo=1 時若網址帶 hash（如 #massage），優先還原該頁，與正式環境的重整行為一致
+    setTimeout(function(){
+      if (typeof sw !== 'function') return;
+      var _h = (location.hash || '').slice(1);
+      var _target = (demo === '1') ? ((_h && document.getElementById('view-' + _h)) ? _h : 'dashboard') : demo;
+      sw(_target);
+    }, 300);
   }, 50);
 })();
 
@@ -4462,7 +4476,14 @@ function showApp() {
     const sheetEmail=document.getElementById('mobile-sheet-email');
     if(sheetEmail)sheetEmail.textContent=currentUser.email;
     // ── 路由還原：重新整理時停留在原本的頁面（在哪重整就顯示哪頁）；案件詳情深連結另外保留 ──
-    const _initHash = location.hash ? location.hash.slice(1) : '';
+    // hash 來源優先序：網址 hash → OAuth 轉址前暫存的 bf_return_hash（登入轉址會把 hash 蓋成 id_token）
+    let _initHash = location.hash ? location.hash.slice(1) : '';
+    if (!_initHash) {
+      try {
+        const _ret = sessionStorage.getItem('bf_return_hash');
+        if (_ret) { _initHash = _ret; sessionStorage.removeItem('bf_return_hash'); }
+      } catch(e) {}
+    }
     if (_initHash.startsWith('detail/')) {
       const _detailId = _initHash.slice(7);
       loadDashboard();
