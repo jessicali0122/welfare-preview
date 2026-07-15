@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260714215851';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715115135';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3349,19 +3349,10 @@ thead th{color:#767B75!important}
     </div>
   <div id="ms-panel-admin">
 
-    <!-- 今日報到 QR Code（HR／管理者：常駐在進階管理，不必再從日曆點今天） -->
-    <div style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:16px 18px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-        <div>
-          <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">🔲 今日報到 QR Code</span></div>
-          <div style="font-size:12px;color:#9AA098;margin-top:2px">產生後給員工掃碼即可完成今日報到（限當天有效）</div>
-        </div>
-        <button onclick="msGenerateQR()" style="background:linear-gradient(135deg,#577B53,#8FAE8B);color:#fff;border:none;border-radius:10px;padding:9px 18px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">產生 QR Code</button>
-      </div>
-      <div id="ms-adv-qr-display" style="display:none;text-align:center;margin-top:12px">
-        <div id="ms-adv-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #E1E4DF;border-radius:16px;margin-bottom:10px"></div>
-        <div id="ms-adv-qr-hint" style="font-size:12px;color:#767B75"></div>
-      </div>
+    <!-- 今日報到 QR Code：入口在上方日曆，點選「今天」自動顯示（避免重複入口），此處僅保留渲染容器供 msGenerateQR 相容寫入 -->
+    <div id="ms-adv-qr-display" style="display:none">
+      <div id="ms-adv-qr-canvas-wrap"></div>
+      <div id="ms-adv-qr-hint"></div>
     </div>
 
     <!-- 待審核申請（2026-07 暫時隱藏：目前規則單月每人最多兩次，不需審核流程；要恢復把 display:none 拿掉即可） -->
@@ -13202,13 +13193,14 @@ function msShowSlots(dateStr) {
   var noSlots = document.getElementById('ms-no-slots');
   // 切到時段檢視：收起右欄的開放編輯器；管理者選到「今天」時自動顯示報到 QR
   var _edWrap = document.getElementById('ms-open-editor-wrap'); if (_edWrap) _edWrap.style.display = 'none';
-  var _qrSec = document.getElementById('ms-qr-section');
-  if (_qrSec) _qrSec.style.display = ((_msData && (_msData.isAdmin || _msData.isHR)) && dateStr === fmtDateStr(new Date())) ? '' : 'none';
   var dateLabel = document.getElementById('ms-slots-date');
   var list = document.getElementById('ms-slots-list');
   var openDates = (_msData && _msData.openDates) || {};
   var openEntry = openDates[dateStr];
   var slots = openEntry ? msSlotsForDate(dateStr, openEntry.slots) : [];
+  // 管理者選到「今天」且當天有開放按摩時，才自動顯示報到 QR
+  var _qrSec = document.getElementById('ms-qr-section');
+  if (_qrSec) _qrSec.style.display = ((_msData && (_msData.isAdmin || _msData.isHR)) && dateStr === fmtDateStr(new Date()) && slots.length > 0) ? '' : 'none';
   var allBk = (_msData && _msData.allBookings) || [];
   var myBookings = (_msData && _msData.myBookings) || [];
   var myBook = myBookings.find(function(b){ return b.date === dateStr && (b.status==='booked'||b.status==='attended'); });
@@ -13707,7 +13699,7 @@ function msBookingCard(b, isUpcoming) {
   var isTodayDate = b.date === fmtDateStr(new Date());
   var canCheckIn = isUpcoming && s==='booked' && isTodayDate && !b.deleteRequested;
   var actions = '';
-  var _btnBase = 'flex:1;min-width:88px;justify-content:center;border-radius:20px;padding:9px 12px;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:4px';
+  var _btnBase = 'flex:0 0 auto;justify-content:center;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:4px';
   if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:700">✓ 報到</button>';
   if (isUpcoming && s==='booked' && !b.deleteRequested && !b.cancelRequested) {
     actions += '<button onclick="msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot||'') + '\')" style="'+_btnBase+';background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;font-weight:600">✏ 修改</button>';
@@ -13728,6 +13720,7 @@ function msBookingCard(b, isUpcoming) {
   if (b.deleteRequested)       { stubColor='#dc2626'; statusIcon='🗑'; statusText='申請刪除'; }
   else if (b.cancelRequested)  { stubColor='#8FAE8B'; statusIcon='⏳'; statusText='申請取消'; }
   else if (isTodayOrange)      { stubColor='#E0820A'; statusIcon='🔔'; statusText='今天按摩'; }
+  else if (s==='booked' && !isUpcoming) { stubColor='#B0B6AD'; statusIcon='—'; statusText='未報到'; }
   else if (s==='booked')       { stubColor='#577B53'; statusIcon='💆'; statusText='已預約'; }
   else if (s==='attended')     { stubColor='#16a34a'; statusIcon='✓'; statusText='已報到'; }
   else if (s==='cancelled')    { stubColor='#9AA098'; statusIcon='✕'; statusText='已取消'; }
@@ -13767,7 +13760,7 @@ function msBookingCard(b, isUpcoming) {
     +   '</div>'
     + '</div>'
     // 操作列：整排撐滿寬度，按鈕之間平均分佈，不再擠在角落
-    + (actions ? '<div style="display:flex;gap:10px;padding:11px 16px;border-top:1px dashed #E6E9E3;flex-wrap:wrap">'+actions+'</div>' : '')
+    + (actions ? '<div style="display:flex;gap:8px;padding:10px 16px;border-top:1px dashed #E6E9E3;flex-wrap:wrap;justify-content:flex-end">'+actions+'</div>' : '')
     + '</div>';
 }
 
