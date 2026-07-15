@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715170046';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715170851';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1904,16 +1904,17 @@ thead th{color:#767B75!important}
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
     <!-- 常用連結分兩區：員購專區（動態員購連結，全員可用）＋福委專區（會議紀錄，僅福委/HR/管理者可開） -->
     <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 18px">LINKS・常用連結</div>
-    <div style="display:flex;gap:24px;flex-wrap:wrap;justify-content:center;align-items:stretch;margin-bottom:8px">
-      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:14px 18px 16px">
-        <div style="font-size:12px;letter-spacing:.16em;color:rgba(255,255,255,.75);text-align:center;margin-bottom:10px">🛒 員購專區</div>
-        <div id="dash-links" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center"></div>
+    <!-- 兩張白卡並排（比照服務項目卡的白底＋陰影），卡內小標分「員購專區／福委專區」，連結為淡綠膠囊 -->
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:stretch;margin-bottom:8px">
+      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-size:14px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">員 購 專 區</span><span style="font-size:12px;letter-spacing:.16em;color:#738e41">SHOP</span></div>
+        <div id="dash-links" style="display:flex;gap:10px;flex-wrap:wrap"></div>
       </div>
-      <div style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:16px;padding:14px 18px 16px">
-        <div style="font-size:12px;letter-spacing:.16em;color:rgba(255,255,255,.75);text-align:center;margin-bottom:10px">📂 福委專區</div>
-        <div id="dash-links-committee" style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center">
-          <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟" style="display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s" onmouseover="this.style.background='#F6F9F5'" onmouseout="this.style.background='#fff'">
-            <span style="font-size:20px;line-height:1">📋</span>
+      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
+        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-size:14px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">福 委 專 區</span><span style="font-size:12px;letter-spacing:.16em;color:#738e41">COMMITTEE</span></div>
+        <div id="dash-links-committee" style="display:flex;gap:10px;flex-wrap:wrap">
+          <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟" style="display:flex;align-items:center;gap:8px;background:#F6F9F5;border:1.5px solid #D5DAD2;border-radius:20px;padding:8px 16px;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#EDF1EC'" onmouseout="this.style.background='#F6F9F5'">
+            <span style="font-size:16px;line-height:1">📋</span>
             <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
             <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
           </a>
@@ -1947,19 +1948,18 @@ thead th{color:#767B75!important}
           <span style="font-size:12px;color:#767B75;flex-shrink:0">身分</span>
           <div id="bnf-identity" style="display:flex;gap:8px;flex-wrap:wrap">
             <button data-id="full" class="bnf-id-btn" onclick="bnfSetIdentity('full')">正職</button>
-            <button data-id="part" class="bnf-id-btn" onclick="bnfSetIdentity('part')">工讀／實習（滿 3 個月）</button>
-            <button data-id="part3" class="bnf-id-btn" onclick="bnfSetIdentity('part3')">工讀／實習（未滿 3 個月）</button>
+            <button data-id="part" class="bnf-id-btn" onclick="bnfSetIdentity('part')">工讀／實習</button>
           </div>
         </div>
         <div id="bnf-tenure-row" style="display:flex;align-items:center;gap:12px;margin-top:14px">
           <span style="font-size:12px;color:#767B75;flex-shrink:0">年資</span>
-          <input id="bnf-tenure" type="range" min="0" max="36" value="14" oninput="bnfRender()" aria-label="在職月數" style="flex:1;accent-color:#577B53;min-width:120px">
+          <input id="bnf-tenure" type="range" min="0" max="36" value="0" oninput="bnfRender()" aria-label="在職月數" style="flex:1;accent-color:#577B53;min-width:120px">
           <span id="bnf-tenure-val" style="font-size:14px;font-weight:700;color:#577B53;white-space:nowrap;min-width:76px;text-align:right"></span>
         </div>
       </div>
 
       <!-- 福利卡片格 -->
-      <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px"></div>
+      <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
 
       <!-- 免責說明（單行、低調） -->
       <div style="margin-top:20px;text-align:center;font-size:12px;color:#9AA098;letter-spacing:.04em">福利內容每年依公司營運狀況調整，實際以 HR 公告為準（資料版本 2026/05）</div>
@@ -1969,22 +1969,25 @@ thead th{color:#767B75!important}
   .bnf-id-btn{border:1.5px solid #E1E4DF;background:#fff;color:#767B75;font-family:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:20px;cursor:pointer;transition:all .15s}
   .bnf-id-btn.active{background:#577B53;border-color:#577B53;color:#fff}
   .bnf-id-btn:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  /* 卡片：一律白底，狀態只靠右上角小籤條表達（避免整片綠、視覺過重） */
-  .bnf-tile{border-radius:12px;padding:14px 16px;border:1px solid #E6E9E4;background:#fff;position:relative;transition:all .2s;box-shadow:0 1px 2px rgba(46,51,45,.04)}
+  /* 卡片：一律白底，狀態只靠右上角小籤條表達（避免整片綠、視覺過重）；
+     字級層次：名稱小標（12px 疏排）→ 內容主角（16px 粗體）→ 補充備註（12px 淡灰） */
+  .bnf-tile{border-radius:14px;padding:16px 18px;border:1px solid #E6E9E4;background:#fff;position:relative;transition:box-shadow .2s,transform .2s;box-shadow:0 1px 2px rgba(46,51,45,.04)}
+  .bnf-tile:hover{box-shadow:0 4px 14px rgba(46,51,45,.08)}
   .bnf-tile.off{background:#FAFBF9;box-shadow:none}
+  .bnf-tile.off:hover{box-shadow:none}
   .bnf-tile.portal{border:1.5px dashed #E8B27A;cursor:pointer}
   .bnf-tile.portal:hover{box-shadow:0 4px 14px rgba(224,130,10,.14);transform:translateY(-2px)}
   .bnf-tile.portal:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;padding-right:56px}
-  .bnf-tile .bnf-icon{font-size:18px;line-height:1}
+  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:72px}
+  .bnf-tile .bnf-icon{font-size:16px;line-height:1}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
-  .bnf-tile .bnf-name{font-size:14px;font-weight:700;color:#2E332D}
-  .bnf-tile.off .bnf-name{color:#9AA098}
-  .bnf-tile .bnf-state{font-size:14px;color:#4A4F49;line-height:1.6}
-  .bnf-tile.off .bnf-state{font-size:12px;color:#9AA098}
-  .bnf-tile.portal .bnf-state{color:#C9760A;font-weight:600}
-  .bnf-tile .bnf-note{font-size:12px;color:#B0B6AD;margin-top:2px;line-height:1.6}
-  .bnf-badge{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;line-height:1.6}
+  .bnf-tile .bnf-name{font-size:12px;font-weight:700;color:#767B75;letter-spacing:.08em}
+  .bnf-tile.off .bnf-name{color:#B0B6AD}
+  .bnf-tile .bnf-state{font-size:16px;font-weight:700;color:#2E332D;line-height:1.5}
+  .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
+  .bnf-tile.portal .bnf-state{color:#C9760A}
+  .bnf-tile .bnf-note{font-size:12px;color:#B0B6AD;margin-top:4px;line-height:1.6}
+  .bnf-badge{position:absolute;top:14px;right:14px;font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;line-height:1.6}
   .bnf-badge.ok{background:#EAF1E9;color:#577B53}
   .bnf-badge.lock{background:#F0F1EF;color:#9AA098}
   .bnf-badge.go{background:#FFF4E4;color:#E0820A}
@@ -1997,7 +2000,7 @@ thead th{color:#767B75!important}
     var FULL_ONLY = { unlocked:false, state:'僅正職享有' };
     var BNF_LIST = [
       { icon:'🎉', name:'季員工活動', rule:function(c){
-          if (c.id==='part3') return { unlocked:true, state:'每人補助 $500（半額）' };
+          if (c.id==='part' && c.m<3) return { unlocked:true, state:'每人補助 $500（半額）' };
           return { unlocked:true, state:'每人補助 $1,000' };
         } },
       { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號' }; } },
@@ -2005,12 +2008,11 @@ thead th{color:#767B75!important}
       { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職迎新，每人 $150' }; } },
       { icon:'🏷️', name:'員購價', rule:function(){ return { unlocked:true, state:'到職次月起，官網員購價' }; } },
       { icon:'🍽️', name:'部門季聚餐', rule:function(c){
-          if (c.id==='part3') return { unlocked:false, state:'年資滿 3 個月後可參加' };
+          if (c.id==='part' && c.m<3) return { unlocked:false, state:'年資滿 3 個月後可參加' };
           return { unlocked:true, state:'每季每人 $600' };
         } },
       { icon:'💐', name:'津貼補助（結婚／喪葬）', portal:true, rule:function(c){
-          if (c.id==='part3') return { unlocked:false, state:'年資滿 3 個月後可申請' };
-          if (c.id==='full' && c.m<3) return { unlocked:false, state:'到職滿 3 個月後可申請' };
+          if (c.m<3) return { unlocked:false, state:'到職滿 3 個月後可申請' };
           return { unlocked:true, portal:true, state:'點卡片試算補助金額' };
         } },
       { icon:'🛍️', name:'員購福利金', rule:function(c){
@@ -2065,9 +2067,7 @@ thead th{color:#767B75!important}
     window.bnfSetIdentity = function(id){
       _bnfId = id;
       document.querySelectorAll('.bnf-id-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-id') === id); });
-      // 年資滑桿只對正職有意義（工讀身分已內含年資條件）
-      var row = document.getElementById('bnf-tenure-row');
-      if (row) row.style.display = id === 'full' ? 'flex' : 'none';
+      // 年資滑桿兩種身分都適用（工讀用年資判斷是否滿 3 個月）
       bnfRender();
     };
 
@@ -2099,7 +2099,7 @@ thead th{color:#767B75!important}
       if (sum) sum.textContent = '✓ 已享有 ' + unlockedCount + ' 項／共 ' + BNF_LIST.length + ' 項';
     };
 
-    // 初始化：預設正職、年資 14 個月
+    // 初始化：預設正職、年資 0（新人視角，拉滑桿看逐步解鎖）
     bnfSetIdentity('full');
   })();
   </script>
@@ -8221,7 +8221,7 @@ function nameChip(name, size, email) {
 }
 // 角色徽章樣式（依角色配色）
 const ROLE_BADGE_STYLE = {
-  manager:  'background:#f3f7f2;color:#577B53',
+  manager:  'background:#E9EEF5;color:#54719A',
   welfare:  'background:#EDF1EC;color:#577B53',
   hr:       'background:#e0f2fe;color:#0ea5e9',
   employee: 'background:#ECEEEA;color:#767B75'
@@ -8256,6 +8256,11 @@ function buildAdminUserRow(u) {
   }).join(' ');
   var _bday = u.birthday || u.birthDay || '';
   var _bdayShow = _bdayDisplay(_bday);
+  // 當月壽星：加 🎂 標記＋橘色粗體，管理名單一眼看出這個月誰生日
+  var _bdayP = _bdayParse(_bday);
+  if (_bdayP && _bdayP.m === (new Date().getMonth() + 1)) {
+    _bdayShow = '<span style="color:#E0820A;font-weight:700">🎂 ' + _bdayShow + '</span>';
+  }
   const isDisabled = (u.status === 'disabled' || u.status === '停用');
   const rowOpacity = isDisabled ? 'opacity:0.55;' : '';
   const disableBtn = isDisabled
@@ -13525,12 +13530,19 @@ function msShowSlots(dateStr) {
       var mine = b.userEmail && myEmail && b.userEmail === myEmail;
       var attended = b.status === 'attended';
       var initial = (nm || '?').trim().charAt(0);
-      var chipBg = mine ? 'linear-gradient(135deg,#e9f1e7,#F3F7F2)' : '#fff';
-      var chipBd = mine ? '#A9C4A5' : '#CDD8CB';
-      var dotBg = attended ? '#22c55e' : (mine ? '#577B53' : '#9AA098');
-      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:#363B35;box-shadow:0 1px 3px rgba(46,51,45,.06)">'
-        + '<span style="width:20px;height:20px;border-radius:50%;background:' + dotBg + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + htEsc(initial) + '</span>'
-        + htEsc(nm) + (mine ? '（我）' : '') + (attended ? ' ✓' : '')
+      // 頭貼：優先用成員同步下來的大頭貼（bf_avatar_<email>），沒有才退回色圈縮寫
+      var _avUrl = b.userEmail ? localStorage.getItem('bf_avatar_' + b.userEmail) : null;
+      var dotBg = attended ? '#22c55e' : (mine ? '#577B53' : '#8A93A6');
+      var avHtml = _avUrl
+        ? '<img src="' + _avUrl + '" alt="" style="width:22px;height:22px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0;border:1.5px solid ' + (mine ? '#577B53' : '#C8CDD6') + '">'
+        : '<span style="width:22px;height:22px;border-radius:50%;background:' + dotBg + ';color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0">' + htEsc(initial) + '</span>';
+      // 顏色區分：自己＝綠底綠框；其他同事＝灰藍底框，一眼分得出誰是誰
+      var chipBg = mine ? 'linear-gradient(135deg,#e9f1e7,#F3F7F2)' : '#F5F6F8';
+      var chipBd = mine ? '#8FAE8B' : '#D8DCE3';
+      var nmColor = mine ? '#2E332D' : '#5A6172';
+      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1.5px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:' + nmColor + ';font-weight:' + (mine ? '700' : '500') + ';box-shadow:0 1px 3px rgba(46,51,45,.06)">'
+        + avHtml
+        + htEsc(nm) + (mine ? '（我）' : '') + (attended ? ' <span style="color:#16a34a">✓</span>' : '')
         + '</span>';
     });
     // 空位 placeholder
@@ -14547,10 +14559,10 @@ window._bulletinSync = function() {
 function _dashLinkEl(l) {
   var a = document.createElement('a');
   a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.dyn = '1';
-  a.style.cssText = 'display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:12px 18px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:background .15s';
-  a.onmouseover = function(){ this.style.background = '#F6F9F5'; };
-  a.onmouseout = function(){ this.style.background = '#fff'; };
-  var icon = document.createElement('span'); icon.style.cssText = 'font-size:20px;line-height:1'; icon.textContent = l.icon || '🔗';
+  a.style.cssText = 'display:flex;align-items:center;gap:8px;background:#F6F9F5;border:1.5px solid #D5DAD2;border-radius:20px;padding:8px 16px;text-decoration:none;transition:background .15s';
+  a.onmouseover = function(){ this.style.background = '#EDF1EC'; };
+  a.onmouseout = function(){ this.style.background = '#F6F9F5'; };
+  var icon = document.createElement('span'); icon.style.cssText = 'font-size:16px;line-height:1'; icon.textContent = l.icon || '🔗';
   var label = document.createElement('span'); label.style.cssText = 'font-size:14px;font-weight:600;color:#2E332D'; label.textContent = l.label || '連結';
   var arrow = document.createElement('span'); arrow.style.cssText = 'font-size:12px;color:#738e41;font-weight:600'; arrow.textContent = '↗';
   a.appendChild(icon); a.appendChild(label); a.appendChild(arrow);
