@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715115403';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715115624';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3153,12 +3153,12 @@ thead th{color:#767B75!important}
       <!-- 本月壽星（自動帶入＋可加減，連動試算公式） -->
       <div id="ht-dtab-birthday">
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-            <div>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px">
+            <div style="min-width:0">
               <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">🎂 本月壽星</span></div>
               <div style="font-size:12px;color:#9AA098;margin-top:2px">每位壽星 NT$40，加減會自動更新總預算</div>
             </div>
-            <button onclick="htAddBirthday()" style="display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #577B53;background:#F2F5F1;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F2F5F1'">
+            <button onclick="htAddBirthday()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #577B53;background:#F2F5F1;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F2F5F1'">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增
             </button>
           </div>
@@ -12348,7 +12348,8 @@ function htRenderBudget() {
       + '</div>';
   }).join('');
 
-  var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#577B53' : '#1e9d6b';
+  // 支出進度：用橘色系（超支才轉紅），與下方「類別明細」的綠色系區隔，避免兩處進度條看起來一樣
+  var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#E0820A' : '#F2A03D';
   document.getElementById('ht-budget-progress-bars').innerHTML =
     '<div style="margin-bottom:16px">'
     + '<div style="display:flex;justify-content:space-between;font-size:14px;color:#767B75;margin-bottom:6px"><span>支出合計</span><span style="font-weight:700;color:#2E332D">'+pct+'%</span></div>'
@@ -12356,14 +12357,15 @@ function htRenderBudget() {
     + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#9AA098;margin-top:4px"><span>支出 '+fmtMoney(actual)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
     + '</div>';
 
-  // 類別明細
+  // 類別明細：固定色盤依序指定，讓每個類別（含品項自動判斷出的「輕食」「台式小吃」等非下拉選單類別）都有不同顏色
   var catTotals = {};
   _htCats.forEach(function(c){ catTotals[c] = 0; });
   _htItems.forEach(function(it){ catTotals[it.category||'其他'] = (catTotals[it.category||'其他']||0) + (it.subtotal||0); });
-  var catHtml = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; }).map(function(c) {
+  var catPalette = ['#577B53','#E0820A','#06b6d4','#A73B4E','#8B5CF6','#1e9d6b','#C9760A','#3B82F6'];
+  var catColorMap = {};
+  var catHtml = Object.keys(catTotals).filter(function(c){ return catTotals[c]>0; }).sort().map(function(c, i) {
     var cpct = actual > 0 ? Math.round(catTotals[c]/actual*100) : 0;
-    var catColors = { '甜點':'#577B53','主食':'#577B53','飲料':'#06b6d4','水果':'#1e9d6b','其他':'#9AA098' };
-    var col = catColors[c] || '#9AA098';
+    var col = catColorMap[c] = catPalette[i % catPalette.length];
     return '<div style="margin-bottom:12px">'
       + '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="font-weight:600;color:#4A4F49">'+c+'</span><span style="color:#767B75">'+fmtMoney(catTotals[c])+' ('+cpct+'%)</span></div>'
       + '<div style="height:8px;background:#ECEEEA;border-radius:16px;overflow:hidden"><div style="height:100%;width:'+cpct+'%;background:'+col+';border-radius:16px"></div></div>'
@@ -12576,7 +12578,7 @@ function htRenderBirthday() {
         + '</div>'
         + (inList
             ? '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
-            + '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="margin-left:6px;background:#577B53;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+            + '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
             : '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="background:#577B53;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
           )
         + '</div></div>';
