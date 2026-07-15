@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715115135';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260715115403';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3062,13 +3062,6 @@ thead th{color:#767B75!important}
             <select id="ht-event-org2" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #d8e4d5;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#d8e4d5'"></select>
           </div>
         </div>
-        <!-- 試算公式（唯一一處） -->
-        <div style="margin-top:14px;padding-top:12px;border-top:1px solid #e9f1e7;font-size:14px;color:#4A4F49;line-height:1.7">
-          <span style="font-size:12px;font-weight:700;color:#577B53">📐 試算　</span>
-          <span id="ht-budget-formula" style="color:#767B75"></span>
-          <span style="color:#9AA098">　＝　總預算 </span>
-          <span id="ht-calc-budget" style="font-weight:800;color:#577B53;font-size:18px">NT$0</span>
-        </div>
       </div>
 
       <!-- 防重複提示 -->
@@ -3093,11 +3086,9 @@ thead th{color:#767B75!important}
             <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#577B53;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
           </div>
         </div>
-        <!-- 預算餘額列 -->
-        <div id="ht-balance-bar" style="padding:10px 20px;background:#F7F8F6;border-bottom:1px solid #ECEEEA;display:flex;gap:20px;flex-wrap:wrap;align-items:center">
-          <span style="font-size:14px;color:#767B75">總預算 <strong id="ht-bal-total" style="color:#4A4F49">NT$0</strong></span>
-          <span style="font-size:14px;color:#767B75">已用 <strong id="ht-bal-used" style="color:#577B53">NT$0</strong></span>
-          <span style="font-size:14px;font-weight:700;color:#4A4F49">餘額 <strong id="ht-bal-remain" style="color:#1e9d6b">NT$0</strong></span>
+        <!-- 總預算/已用/餘額已併入右側「預算結算」卡片，此處僅保留隱藏容器供既有邏輯寫入 -->
+        <div id="ht-balance-bar" style="display:none">
+          <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
         <div style="overflow-x:auto">
@@ -3109,8 +3100,8 @@ thead th{color:#767B75!important}
               <col style="width:8%"><col style="width:13%"><col style="width:3%">
             </colgroup>
             <thead>
-              <tr style="background:#FCF6E3;border-bottom:2px solid #F6CC62">
-                <th style="padding:12px 10px;text-align:left;color:#6B5A20;font-weight:700;font-size:14px">品名</th>
+              <tr style="background:#EDF1EC;border-bottom:2px solid #A9C4A5">
+                <th style="padding:12px 10px;text-align:left;color:#3E5A3B;font-weight:700;font-size:14px">品名</th>
                 <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">廠商</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">單價</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">數量</th>
@@ -3123,7 +3114,7 @@ thead th{color:#767B75!important}
             </thead>
             <tbody id="ht-items-tbody"></tbody>
             <tfoot>
-              <tr style="background:#FCF6E3;border-top:2px solid #F6CC62">
+              <tr style="background:#EDF1EC;border-top:2px solid #A9C4A5">
                 <td colspan="4" style="padding:14px 12px;font-size:16px;font-weight:600;color:#4A4F49">合計</td>
                 <td style="padding:14px 8px;text-align:right;font-size:16px;font-weight:800;color:#3E5A3B" id="ht-total-cell">NT$0</td>
                 <td colspan="4"></td>
@@ -3137,9 +3128,18 @@ thead th{color:#767B75!important}
 
     <!-- ── 右欄 ── -->
     <div style="display:flex;flex-direction:column;gap:14px">
-      <!-- 預算結算 -->
+      <!-- 預算結算：試算公式＋結算卡片合併同一區塊，避免與左側重複 -->
       <div id="ht-dtab-budget">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px" id="ht-budget-cards"></div>
+        <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-bottom:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">預算結算</span></div>
+          <div style="font-size:13px;color:#767B75;line-height:1.7;margin-bottom:14px">
+            <span style="font-size:12px;font-weight:700;color:#577B53">📐 </span>
+            <span id="ht-budget-formula"></span>
+            <span style="color:#9AA098">　＝　</span>
+            <span id="ht-calc-budget" style="font-weight:800;color:#577B53;font-size:15px">NT$0</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
+        </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">支出進度</span></div>
           <div id="ht-budget-progress-bars"></div>
@@ -12333,7 +12333,7 @@ function htRenderBudget() {
   var pct       = total > 0 ? Math.min(Math.round(actual/total*100),100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
-  // 預算計算式已移至左側「活動設定」面板（避免重複），此處僅保留結算卡片
+  // 試算公式＋結算卡片已併入右側「預算結算」單一區塊（避免與左側重複）
   var cards = [
     { label:'總預算', val: fmtMoney(total), icon:'💰', color:'#577B53' },
     { label:'午茶支出', val: fmtMoney(actual), icon:'☕', color:'#577B53' },
@@ -12341,10 +12341,10 @@ function htRenderBudget() {
     { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️', color: surplusColor },
   ];
   document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
-    return '<div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:18px">'
-      + '<div style="font-size:22px;margin-bottom:8px">'+c.icon+'</div>'
-      + '<div style="font-size:20px;font-weight:800;color:'+c.color+'">'+c.val+'</div>'
-      + '<div style="font-size:12px;color:#9AA098;margin-top:2px">'+c.label+'</div>'
+    return '<div style="background:#F7F8F6;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px">'
+      + '<div style="font-size:20px;flex-shrink:0">'+c.icon+'</div>'
+      + '<div style="min-width:0"><div style="font-size:16px;font-weight:800;color:'+c.color+';line-height:1.2">'+c.val+'</div>'
+      + '<div style="font-size:12px;color:#9AA098">'+c.label+'</div></div>'
       + '</div>';
   }).join('');
 
