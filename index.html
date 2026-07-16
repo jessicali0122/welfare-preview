@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716123908';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716124019';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13344,11 +13344,13 @@ function msRenderQuota() {
 
 // ── 給總覽入口卡片用：回傳「下次預約」提示文字，尚無資料則回傳 null（不會另外打 API）──
 window.msGetNextBookingHint = function() {
-  if (!_msData) return null;
+  // 首頁尚未載入按摩模組時，改讀本地快取（上次同步的預約），讓卡片顯示真實下次預約而非靜態文字
+  var data = _msData || (typeof _msLoadLocal === 'function' ? _msLoadLocal() : null);
+  if (!data) return null;
   var now = new Date();
-  var upcoming = (_msData.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
+  var upcoming = (data.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
     .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  if (!upcoming.length) return '本月已預約 ' + ((_msData.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date)>=new Date(now.getFullYear(),now.getMonth(),1);}).length) + ' / ' + ((_msData.settings||{}).monthlyLimit||2) + ' 次';
+  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date)>=new Date(now.getFullYear(),now.getMonth(),1);}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
   var nd = upcoming[0].date || '';
   var parts = nd.split('-');
   var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
