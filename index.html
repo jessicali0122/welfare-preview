@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716085630';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716090623';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -455,13 +455,14 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-dtab-plan colgroup{display:none}
   #ht-dtab-plan thead{display:none}
   #ht-items-tbody{display:block;width:100%}
-  /* 精簡卡片：2 欄網格，品名/廠商/負責人/備註滿寬，單價×數量並排，刪除鈕收右上角 */
-  #ht-items-tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:9px 12px;width:auto;border:1.5px solid #ECEEEA;border-radius:14px;padding:16px 14px 14px;margin:10px 2px;background:#fff;position:relative}
-  #ht-items-tbody td{display:flex;align-items:center;gap:8px;width:auto;padding:0!important;text-align:left!important;border:none!important;white-space:normal!important}
+  /* 精簡卡片：2 欄網格，只有品名/廠商滿寬；單價×數量、小計×負責人、是否訂購×備註兩兩並排，卡片高度大幅縮短 */
+  #ht-items-tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;width:auto;border:1.5px solid #ECEEEA;border-radius:14px;padding:12px 12px 10px;margin:8px 2px;background:#fff;position:relative}
+  #ht-items-tbody td{display:flex;align-items:center;gap:6px;width:auto;padding:0!important;text-align:left!important;border:none!important;white-space:normal!important;min-width:0}
   #ht-items-tbody td::before{content:attr(data-label);font-size:12px;color:#9AA098;font-weight:600;min-width:44px;flex-shrink:0}
   #ht-items-tbody td .ht-it-inp{width:100%!important;box-sizing:border-box}
-  /* 滿寬欄位 */
-  #ht-items-tbody td[data-label="品名"],#ht-items-tbody td[data-label="廠商"],#ht-items-tbody td[data-label="負責人"],#ht-items-tbody td[data-label="備註"]{grid-column:1/-1}
+  /* 滿寬欄位（只留品名/廠商） */
+  #ht-items-tbody td[data-label="品名"],#ht-items-tbody td[data-label="廠商"]{grid-column:1/-1}
+  #ht-items-tbody td[data-label="負責人"]::before,#ht-items-tbody td[data-label="備註"]::before{min-width:0}
   #ht-items-tbody td[data-label="品名"]{padding-right:26px!important}
   /* 單價／數量：並排、標籤在上、輸入框在下 */
   #ht-items-tbody td[data-label="單價"],#ht-items-tbody td[data-label="數量"]{flex-direction:column;align-items:stretch;gap:3px}
@@ -3268,9 +3269,10 @@ thead th{color:#767B75!important}
         <div id="ht-detail-title" style="font-size:18px;font-weight:700;color:#2E332D"></div>
         <div id="ht-detail-subtitle" style="font-size:14px;color:#9AA098;margin-top:2px"></div>
       </div>
-      <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-        <span id="ht-detail-status-badge" style="padding:7px 16px;border-radius:20px;font-size:14px;font-weight:700"></span>
-        <button id="ht-delete-btn" onclick="htDeleteEvent()" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #fecdd3;background:#fff1f2;color:#dc2626;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s" onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='#fff1f2'">
+      <!-- 狀態籤＋刪除鈕：桌面同排；手機改上下排列（.ht-detail-head-acts media query），文字不換行避免被壓成直書 -->
+      <div class="ht-detail-head-acts" style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <span id="ht-detail-status-badge" style="padding:7px 16px;border-radius:20px;font-size:14px;font-weight:700;white-space:nowrap"></span>
+        <button id="ht-delete-btn" onclick="htDeleteEvent()" style="display:flex;align-items:center;gap:6px;padding:7px 16px;border-radius:20px;border:1.5px solid #fecdd3;background:#fff1f2;color:#dc2626;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap" onmouseover="this.style.background='#ffe4e6'" onmouseout="this.style.background='#fff1f2'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
           刪除活動
         </button>
@@ -3494,6 +3496,13 @@ thead th{color:#767B75!important}
   #ms-my-history{max-height:560px;overflow-y:auto;padding-right:4px}
   @media(max-width:960px){
     #ms-two-col{display:block}
+  }
+  /* 手機：票卡主票面允許換行，操作按鈕獨立成第二排（貼右），內容不再被擠成直排 */
+  @media(max-width:640px){
+    .ms-t-main{flex-wrap:wrap}
+    .ms-t-acts{flex-basis:100%;justify-content:flex-end;align-self:auto;margin-top:4px;padding-right:12px}
+    /* 午茶日詳情頁：狀態籤與刪除鈕改上下排列，不跟標題擠同一排 */
+    .ht-detail-head-acts{flex-direction:column;align-items:flex-end;gap:6px}
   }
   </style>
   <div id="ms-two-col">
@@ -5676,11 +5685,13 @@ function appsSetTab(tab) {
     if (filterNotice) filterNotice.style.display  = 'none';
     if (countLabel)   countLabel.style.display    = 'none';
     if (addBtn)       addBtn.style.display        = '';
-    // 隱藏案件列表
+    // 隱藏案件列表（含簽核流程分頁：之前漏掉，導致費用分析下方殘留簽核流程區塊）
     var tabCases  = document.getElementById('app-tab-cases');
     var tabDrafts = document.getElementById('app-tab-drafts');
+    var tabFlow   = document.getElementById('app-tab-flow');
     if (tabCases)  tabCases.style.display  = 'none';
     if (tabDrafts) tabDrafts.style.display = 'none';
+    if (tabFlow)   tabFlow.style.display   = 'none';
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
@@ -14059,8 +14070,8 @@ function msBookingCard(b, isUpcoming) {
   return '<div style="border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff">'
     // 票根本體
     + '<div style="display:flex">'
-    //   主票面
-    +   '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
+    //   主票面（手機 .ms-t-main 允許換行，操作鈕掉到第二排全寬，避免內容被擠成直排）
+    +   '<div class="ms-t-main" style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
     //     日期徽章
     +     '<div style="background:'+(isTodayOrange?'linear-gradient(150deg,#FDEBD3,#F7D6A6)':'linear-gradient(150deg,#eef4ec,#dde8da)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#E0820A':'#577B53')+';flex-shrink:0">'
     +       '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
@@ -14073,8 +14084,8 @@ function msBookingCard(b, isUpcoming) {
     +       '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+'</div>'
     +       '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
     +     '</div>'
-    //     操作按鈕：融入同一排，靠右對齊、不再獨立多一排
-    +     (actions ? '<div style="flex-shrink:0;display:flex;gap:6px;align-self:center;flex-wrap:wrap;justify-content:flex-end">'+actions+'</div>' : '')
+    //     操作按鈕：桌面融入同一排靠右；手機由 .ms-t-acts media query 掉到第二排全寬
+    +     (actions ? '<div class="ms-t-acts" style="flex-shrink:0;display:flex;gap:6px;align-self:center;flex-wrap:wrap;justify-content:flex-end">'+actions+'</div>' : '')
     //     撕票孔虛線
     +     '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
     +   '</div>'
