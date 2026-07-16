@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716103403';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716104318';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -252,6 +252,9 @@ input[type=radio]{accent-color:#577B53}
 .ht-tab-btn,.massage-tab,.ms-myseg,.ms-admseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #ECEEEA}
+/* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分，這裡固定每列高度並裁切溢出） */
+#ht-cal-grid,#ms-cal-grid{grid-auto-rows:82px}
+#ht-cal-grid>div,#ms-cal-grid>div{overflow:hidden}
 input[type=checkbox]{accent-color:#577B53}
 
 /* ── FORM INNER GRIDS MOBILE ── */
@@ -13571,7 +13574,7 @@ function msShowSlots(dateStr) {
   var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
   var _isMsAdmin = !!(_msData && _msData.isMgr); // HR＋管理者可編輯開放日/時段
   var _isFutureDay = new Date(dateStr + 'T23:59:00') >= new Date();
-  var _admEditBtn = (_isMsAdmin && _isFutureDay) ? '<button onclick="msAdminOpenDate(\'' + dateStr + '\')" style="margin-left:auto;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⚙ 編輯此日開放</button>' : '';
+  var _admEditBtn = (_isMsAdmin && _isFutureDay) ? '<button onclick="msAdminOpenDate(\'' + dateStr + '\')" style="margin-left:auto;background:#FFF4E4;color:#E0820A;border:1.5px solid #F0C48A;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⚙ 編輯此日開放</button>' : '';
   dateLabel.style.width = '100%';
   dateLabel.innerHTML = '<div style="width:4px;height:18px;background:linear-gradient(#6B8F67,#46633F);border-radius:10px;flex-shrink:0"></div>'
     + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt2.getDay()] + '）' + _admEditBtn;
