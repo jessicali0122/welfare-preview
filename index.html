@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260715171409';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716085630';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1966,6 +1966,35 @@ thead th{color:#767B75!important}
       <!-- 福利卡片格 -->
       <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px"></div>
 
+      <!-- 津貼補助 inline 試算：點上方「津貼補助」卡展開，不切頁；規則與津貼頁共用 window.subsidyAmount -->
+      <div id="bnf-subsidy-panel" style="display:none;margin-top:12px;border:1.5px dashed #E8B27A;border-radius:14px;padding:16px 18px;background:#FFFDF8">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <span style="width:4px;height:16px;background:linear-gradient(#E38845,#A73B4E);border-radius:4px"></span>
+          <span style="font-size:14px;font-weight:700;color:#2E332D">津貼補助試算（結婚／喪葬）</span>
+          <div style="flex:1"></div>
+          <button onclick="bnfToggleSubsidy()" style="background:none;border:none;color:#9AA098;font-size:14px;cursor:pointer;font-family:inherit;padding:2px 6px">✕ 收合</button>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">補助項目</div>
+            <select id="bnfsub-kind" onchange="bnfSubCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="m">💍 結婚補助</option><option value="f">🕯️ 喪葬補助</option></select></div>
+          <div style="flex:1;min-width:110px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">身分</div>
+            <select id="bnfsub-type" onchange="bnfSubCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="full">正職</option><option value="part">工讀生</option></select></div>
+          <div id="bnfsub-wrap-tenure" style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職年資</div>
+            <select id="bnfsub-tenure" onchange="bnfSubCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="0">未滿 1 年</option><option value="1">1~2 年</option><option value="2">2~3 年</option><option value="3">3 年以上</option></select></div>
+          <div id="bnfsub-wrap-stage" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">在職狀態</div>
+            <select id="bnfsub-stage" onchange="bnfSubCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="pass">已通過試用期考核</option><option value="trial">試用期間</option></select></div>
+          <div id="bnfsub-wrap-rel" style="display:none;flex:1;min-width:150px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">親屬關係</div>
+            <select id="bnfsub-rel" onchange="bnfSubCalc()" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:10px;padding:8px 12px;font-size:14px;font-family:inherit;color:#2E332D;background:#fff;cursor:pointer;outline:none"><option value="" selected>請選擇</option><option value="本人">員工本人</option><option value="父母配偶子女">父母／配偶／子女</option><option value="岳父母公婆">岳父母／公婆</option><option value="祖父母兄弟姊妹">祖父母／兄弟姊妹</option></select></div>
+        </div>
+        <div id="bnfsub-result"><div style="border:1.5px dashed #D5DAD2;border-radius:12px;padding:12px 16px;color:#9AA098;font-size:14px">👆 選擇條件後顯示可申請金額</div></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;border-top:1px solid #F0E7D8;padding-top:10px">
+          <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#577B53;color:#fff;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;text-decoration:none">📄 下載申請單 ↗</a>
+          <span style="font-size:12px;color:#9AA098">事件發生 6 個月內提出，每月 20 日前送交福委會</span>
+          <div style="flex:1"></div>
+          <button onclick="sw('subsidy')" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">完整申請說明 →</button>
+        </div>
+      </div>
+
       <!-- 免責說明（單行、低調） -->
       <div style="margin-top:20px;text-align:center;font-size:12px;color:#9AA098;letter-spacing:.04em">福利內容每年依公司營運狀況調整，實際以 HR 公告為準（資料版本 2026/05）</div>
     </div>
@@ -2093,8 +2122,8 @@ thead th{color:#767B75!important}
         var b = c.b, r = c.r;
         var isPortal = !!r.portal;
         var cls = 'bnf-tile' + (isPortal ? ' portal' : (r.unlocked ? '' : ' off'));
-        var attrs = isPortal ? ' role="button" tabindex="0" onclick="sw(\'subsidy\')" onkeydown="if(event.key===\'Enter\')sw(\'subsidy\')"' : '';
-        var badge = isPortal ? '<span class="bnf-badge go">試算 ↗</span>'
+        var attrs = isPortal ? ' role="button" tabindex="0" onclick="bnfToggleSubsidy()" onkeydown="if(event.key===\'Enter\')bnfToggleSubsidy()"' : '';
+        var badge = isPortal ? '<span class="bnf-badge go">試算 ▾</span>'
           : (r.unlocked ? '<span class="bnf-badge ok">✓ 已享有</span>' : '<span class="bnf-badge lock">🔒 未解鎖</span>');
         return '<div class="' + cls + '"' + attrs + '>'
           + '<div class="bnf-head"><span class="bnf-icon">' + b.icon + '</span><span class="bnf-name">' + b.name + '</span></div>'
@@ -2105,6 +2134,32 @@ thead th{color:#767B75!important}
       }).join('');
       var sum = document.getElementById('bnf-summary');
       if (sum) sum.textContent = '✓ 已享有 ' + unlockedCount + ' 項／共 ' + BNF_LIST.length + ' 項';
+    };
+
+    // ── 津貼補助 inline 試算：展開/收合＋計算（規則共用 window.subsidyAmount，金額只維護津貼頁那一份）──
+    window.bnfToggleSubsidy = function(){
+      var p = document.getElementById('bnf-subsidy-panel'); if (!p) return;
+      var open = p.style.display !== 'none';
+      p.style.display = open ? 'none' : '';
+      // 手機上卡片直排，展開後自動捲到面板，避免「點了沒反應」的錯覺
+      if (!open) setTimeout(function(){ p.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 60);
+    };
+    window.bnfSubCalc = function(){
+      var kind = (document.getElementById('bnfsub-kind')||{}).value || '';
+      var w = function(id, show){ var el = document.getElementById(id); if (el) el.style.display = show ? '' : 'none'; };
+      w('bnfsub-wrap-tenure', kind === 'm'); w('bnfsub-wrap-stage', kind === 'f'); w('bnfsub-wrap-rel', kind === 'f');
+      var ty = (document.getElementById('bnfsub-type')||{}).value || '';
+      var amount = null;
+      if (kind && ty && typeof window.subsidyAmount === 'function') {
+        amount = window.subsidyAmount(kind, ty,
+          (document.getElementById('bnfsub-tenure')||{}).value,
+          (document.getElementById('bnfsub-stage')||{}).value,
+          (document.getElementById('bnfsub-rel')||{}).value);
+      }
+      var el = document.getElementById('bnfsub-result'); if (!el) return;
+      el.innerHTML = (amount == null)
+        ? '<div style="border:1.5px dashed #D5DAD2;border-radius:12px;padding:12px 16px;color:#9AA098;font-size:14px">👆 選擇條件後顯示可申請金額</div>'
+        : '<div style="background:linear-gradient(135deg,#FFF9F0,#FFF1DD);border:1px solid #F6DFBC;border-radius:12px;padding:12px 18px;display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;color:#B0803A;font-weight:600">可申請補助金額</span><span style="font-size:24px;font-weight:800;color:#E0820A">NT$' + Number(amount).toLocaleString() + '</span></div>';
     };
 
     // 初始化：預設正職、年資 0（新人視角，拉滑桿看逐步解鎖）
@@ -2197,6 +2252,14 @@ thead th{color:#767B75!important}
     };
     window.subsidyInit=function(){ try{ subsidyCalc(); }catch(e){} };
     if(document.getElementById('sub-result')) subsidyInit();
+    // 共用純計算：給「福利總覽」的 inline 試算面板複用同一張規則表，金額只維護這一份
+    // kind: 'm'結婚/'f'喪葬；ty: 'full'/'part'；tenureIdx: 結婚用 0~3；stage/rel: 喪葬用
+    window.subsidyAmount=function(kind,ty,tenureIdx,stage,rel){
+      var col = ty==='part' ? 1 : 0;
+      if (kind==='m') { if(tenureIdx===''||tenureIdx==null) return null; return M[+tenureIdx] ? M[+tenureIdx][col] : null; }
+      if (kind==='f') { if(!stage||!rel) return null; return (F[stage]&&F[stage][rel]) ? F[stage][rel][col] : null; }
+      return null;
+    };
   })();
   </script>
 
