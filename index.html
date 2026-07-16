@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716101227';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716102047';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2024,28 +2024,25 @@ thead th{color:#767B75!important}
   .bnf-id-btn{border:1.5px solid #E1E4DF;background:#fff;color:#767B75;font-family:inherit;font-size:14px;font-weight:600;padding:8px 16px;border-radius:20px;cursor:pointer;transition:all .15s}
   .bnf-id-btn.active{background:#577B53;border-color:#577B53;color:#fff}
   .bnf-id-btn:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  /* 卡片：一律白底，狀態只靠右上角小籤條表達（避免整片綠、視覺過重）；
-     字級層次：名稱小標（12px 疏排）→ 內容主角（16px 粗體）→ 補充備註（12px 淡灰） */
-  .bnf-tile{border-radius:14px;padding:16px 18px;border:1px solid #E6E9E4;background:#fff;position:relative;transition:box-shadow .2s,transform .2s;box-shadow:0 1px 2px rgba(46,51,45,.04)}
-  .bnf-tile:hover{box-shadow:0 4px 14px rgba(46,51,45,.08)}
-  .bnf-tile.off{background:#FAFBF9;box-shadow:none}
-  .bnf-tile.off:hover{box-shadow:none}
-  .bnf-tile.portal{border:1.5px dashed #E8B27A;cursor:pointer}
+  /* 卡片：狀態直接靠底色表達——已享有＝填滿綠底，未解鎖＝淡灰底，不再用右上角籤條（減少雜訊）；
+     字級層次：名稱標題（16px 粗體）→ 內容（14px）→ 補充備註（12px 淡） */
+  .bnf-tile{border-radius:14px;padding:16px 18px;border:1px solid #C9DAC6;background:#ECF3EA;position:relative;transition:box-shadow .2s,transform .2s;box-shadow:0 1px 2px rgba(46,51,45,.04)}
+  .bnf-tile:hover{box-shadow:0 4px 14px rgba(87,123,83,.14);transform:translateY(-1px)}
+  .bnf-tile.off{background:#FAFBF9;border-color:#E9EBE7;box-shadow:none}
+  .bnf-tile.off:hover{box-shadow:none;transform:none}
+  .bnf-tile.portal{border:1.5px dashed #E8B27A;background:#FFFBF4;cursor:pointer}
   .bnf-tile.portal:hover{box-shadow:0 4px 14px rgba(224,130,10,.14);transform:translateY(-2px)}
   .bnf-tile.portal:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
-  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:72px}
+  .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
   .bnf-tile .bnf-icon{font-size:16px;line-height:1}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
   .bnf-tile .bnf-name{font-size:16px;font-weight:700;color:#2E332D;letter-spacing:.02em}
   .bnf-tile.off .bnf-name{color:#9AA098}
-  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#577B53;line-height:1.5}
+  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#3E5A3B;line-height:1.5}
   .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
   .bnf-tile.portal .bnf-state{color:#C9760A}
-  .bnf-tile .bnf-note{font-size:12px;color:#B0B6AD;margin-top:4px;line-height:1.6}
-  .bnf-badge{position:absolute;top:14px;right:14px;font-size:12px;font-weight:700;border-radius:20px;padding:2px 10px;line-height:1.6}
-  .bnf-badge.ok{background:#EAF1E9;color:#577B53}
-  .bnf-badge.lock{background:#F0F1EF;color:#9AA098}
-  .bnf-badge.go{background:#FFF4E4;color:#E0820A}
+  .bnf-tile .bnf-note{font-size:12px;color:#7E9179;margin-top:4px;line-height:1.6}
+  .bnf-tile.off .bnf-note{color:#B0B6AD}
   .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#E0820A;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(224,130,10,.22)}
   .bnf-tile.portal:hover .bnf-cta{background:#C9760A}
   @media(prefers-reduced-motion:reduce){.bnf-tile.portal:hover{transform:none}}
@@ -2146,13 +2143,11 @@ thead th{color:#767B75!important}
         var isPortal = !!r.portal;
         var cls = 'bnf-tile' + (isPortal ? ' portal' : (r.unlocked ? '' : ' off'));
         var attrs = isPortal ? ' role="button" tabindex="0" onclick="bnfToggleSubsidy()" onkeydown="if(event.key===\'Enter\')bnfToggleSubsidy()"' : '';
-        var badge = isPortal ? '<span class="bnf-badge go">試算 ▾</span>'
-          : (r.unlocked ? '<span class="bnf-badge ok">✓ 已享有</span>' : '<span class="bnf-badge lock">🔒 未解鎖</span>');
+        // 狀態改由卡片底色表達（享有＝綠底／未解鎖＝灰底），不再放右上角籤條
         return '<div class="' + cls + '"' + attrs + '>'
           + '<div class="bnf-head"><span class="bnf-icon">' + b.icon + '</span><span class="bnf-name">' + b.name + '</span></div>'
-          + (isPortal ? '<div class="bnf-cta">🖩 點此試算補助金額 →</div>' : '<div class="bnf-state">' + r.state + '</div>')
+          + (isPortal ? '<div class="bnf-cta">💰 點此試算補助金額 →</div>' : '<div class="bnf-state">' + r.state + '</div>')
           + (r.note ? '<div class="bnf-note">' + r.note + '</div>' : '')
-          + badge
           + '</div>';
       }).join('');
       var sum = document.getElementById('bnf-summary');
