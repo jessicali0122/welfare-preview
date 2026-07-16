@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716140248';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716140411';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13948,10 +13948,13 @@ function msRenderUpcoming() {
     var stateTxt = myBooked ? '✓ 已預約' : (avail>0 ? '剩 '+avail+' 位' : '已額滿');
     var stateColor = myBooked ? '#577B53' : (avail>0 ? '#738e41' : '#9AA098');
     var isToday = dateObj.getTime() === now.getTime();
-    var cardBorder = isToday ? '#F2A03D' : (myBooked?'#CDD8CB':(avail>0?'#C2D19A':'#E1E4DF'));
-    var cardBg = isToday ? '#FFF9F0' : '#fff';
+    // 當月＝白底；隔月（含之後）＝淡綠底＋綠字，一眼區分月份；今天維持橘色最醒目
+    var isCurMonth = dateObj.getFullYear() === now.getFullYear() && dateObj.getMonth() === now.getMonth();
+    var cardBorder = isToday ? '#F2A03D' : (!isCurMonth ? '#AECBA9' : (myBooked?'#CDD8CB':(avail>0?'#C2D19A':'#E1E4DF')));
+    var cardBg = isToday ? '#FFF9F0' : (isCurMonth ? '#fff' : '#EDF4EB');
+    var dateColor = isToday ? '#E0820A' : (isCurMonth ? '#2E332D' : '#3E5A3B');
     return '<div onclick="msFocusDate(\''+d+'\')" style="flex-shrink:0;padding:8px 14px;background:'+cardBg+';border:1.5px solid '+cardBorder+';border-radius:12px;cursor:pointer;min-width:88px;text-align:center">'
-      +'<div style="font-size:16px;font-weight:700;color:'+(isToday?'#E0820A':'#2E332D')+';line-height:1.2">'+(isToday?'今天 ':'')+(dateObj.getMonth()+1)+'/'+dateObj.getDate()+'<span style="font-size:12px;font-weight:400;color:#9AA098"> 週'+wd+'</span></div>'
+      +'<div style="font-size:16px;font-weight:700;color:'+dateColor+';line-height:1.2">'+(isToday?'今天 ':'')+(dateObj.getMonth()+1)+'/'+dateObj.getDate()+'<span style="font-size:12px;font-weight:400;color:#9AA098"> 週'+wd+'</span></div>'
       +'<div style="height:4px;background:#EDF1EC;border-radius:4px;margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+(isToday?'#F2A03D':(avail>0?'#9DB15F':'#D2D6D0'))+';border-radius:4px"></div></div>'
       +'<div style="font-size:12px;font-weight:600;color:'+stateColor+'">'+stateTxt+'</div>'
       +'</div>';
