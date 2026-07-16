@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716104318';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716104615';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -255,6 +255,11 @@ input[type=radio]{accent-color:#577B53}
 /* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分，這裡固定每列高度並裁切溢出） */
 #ht-cal-grid,#ms-cal-grid{grid-auto-rows:82px}
 #ht-cal-grid>div,#ms-cal-grid>div{overflow:hidden}
+/* 午茶日右側卡主分頁：膠囊按鈕（自動寬度、不滿版） */
+#ht-side-tabs{display:flex;gap:8px;padding:12px 14px}
+.ht-side-tab{padding:8px 16px;border:1.5px solid #E1E4DF;background:#fff;border-radius:20px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;color:#9AA098;transition:.15s;white-space:nowrap}
+.ht-side-tab:hover{border-color:#B7CCB4;color:#577B53}
+.ht-side-tab.active{border-color:#577B53;background:#577B53;color:#fff}
 input[type=checkbox]{accent-color:#577B53}
 
 /* ── FORM INNER GRIDS MOBILE ── */
@@ -3190,9 +3195,9 @@ thead th{color:#767B75!important}
         <!-- 右側：本月行程／歷史回顧（同一張卡分頁切換，卡內捲動、不隨頁面滾動亂跑，也不佔額外高度） -->
         <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column">
           <!-- 分頁頭 -->
-          <div id="ht-side-tabs" class="seg-track" style="margin:12px 14px">
-            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-tab-btn active">📅 本月行程</button>
-            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-tab-btn">🕘 歷史回顧</button>
+          <div id="ht-side-tabs">
+            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-side-tab active">📅 本月行程</button>
+            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-side-tab">🕘 歷史回顧</button>
           </div>
           <!-- 本月行程 -->
           <div id="ht-side-month">
@@ -11036,7 +11041,7 @@ function htRenderEvents() {
   // 年份切換（底線切換式；場數用圓標）
   html += '<div style="display:flex;gap:2px;border-bottom:1.5px solid #ECEEEA;margin-bottom:16px">' + years.map(function(y){
     var active = y === _htHistoryYear;
-    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:8px 14px 10px;margin-bottom:-1.5px;font-size:14px;font-weight:700;color:'+(active?'#2E332D':'#9AA098')+';cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:'+(active?'inset 0 -2px 0 #577B53':'none')+'">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'#577B53':'#EAF1E9')+';color:'+(active?'#fff':'#577B53')+'">'+byYear[y].length+'</span></button>';
+    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:8px 14px 10px;margin-bottom:-1.5px;font-size:14px;font-weight:700;color:'+(active?'#C9760A':'#9AA098')+';cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:'+(active?'inset 0 -2px 0 #E0820A':'none')+'">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'#E0820A':'#FFF4E4')+';color:'+(active?'#fff':'#E0820A')+'">'+byYear[y].length+'</span></button>';
   }).join('') + '</div>';
 
   years.filter(function(y){ return y === _htHistoryYear; }).forEach(function(y) {
