@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716095914';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716100604';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2002,7 +2002,17 @@ thead th{color:#767B75!important}
           <a href="https://drive.google.com/file/d/1cyirSsCgHryikDziI6R0TlXTgYFo3Bck/view?usp=drive_link" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;background:#577B53;color:#fff;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;text-decoration:none">📄 下載申請單 ↗</a>
           <span style="font-size:12px;color:#9AA098">事件發生 6 個月內提出，每月 20 日前送交福委會</span>
           <div style="flex:1"></div>
-          <button onclick="sw('subsidy')" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">完整申請說明 →</button>
+          <button id="bnf-help-toggle" onclick="bnfToggleSubsidyHelp()" style="background:none;border:none;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;text-decoration:underline">完整申請說明 ▾</button>
+        </div>
+        <!-- 完整申請說明：就地展開，不切頁 -->
+        <div id="bnf-subsidy-help" style="display:none;margin-top:10px;background:#F7F8F6;border-radius:12px;padding:12px 16px">
+          <div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:6px">申請說明</div>
+          <ol style="margin:0;padding-left:18px;font-size:14px;color:#5A5F58;line-height:1.9">
+            <li>請領條件：事件發生為在職期間，且於發生日六個月內提出申請。</li>
+            <li>每月 20 日（含）前提交申請並送交福委會，經審核通過後，於次一付款日合併核發。</li>
+            <li>前述「在職年資」以事件發生日為計算基準。</li>
+            <li>各項津貼補助將依所得稅法及相關規定辦理所得申報。</li>
+          </ol>
         </div>
       </div>
 
@@ -2026,9 +2036,9 @@ thead th{color:#767B75!important}
   .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-right:72px}
   .bnf-tile .bnf-icon{font-size:16px;line-height:1}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
-  .bnf-tile .bnf-name{font-size:12px;font-weight:700;color:#767B75;letter-spacing:.08em}
-  .bnf-tile.off .bnf-name{color:#B0B6AD}
-  .bnf-tile .bnf-state{font-size:16px;font-weight:700;color:#2E332D;line-height:1.5}
+  .bnf-tile .bnf-name{font-size:16px;font-weight:700;color:#2E332D;letter-spacing:.02em}
+  .bnf-tile.off .bnf-name{color:#9AA098}
+  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#577B53;line-height:1.5}
   .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
   .bnf-tile.portal .bnf-state{color:#C9760A}
   .bnf-tile .bnf-note{font-size:12px;color:#B0B6AD;margin-top:4px;line-height:1.6}
@@ -2036,6 +2046,8 @@ thead th{color:#767B75!important}
   .bnf-badge.ok{background:#EAF1E9;color:#577B53}
   .bnf-badge.lock{background:#F0F1EF;color:#9AA098}
   .bnf-badge.go{background:#FFF4E4;color:#E0820A}
+  .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#E0820A;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(224,130,10,.22)}
+  .bnf-tile.portal:hover .bnf-cta{background:#C9760A}
   @media(prefers-reduced-motion:reduce){.bnf-tile.portal:hover{transform:none}}
   </style>
   <script>
@@ -2138,7 +2150,7 @@ thead th{color:#767B75!important}
           : (r.unlocked ? '<span class="bnf-badge ok">✓ 已享有</span>' : '<span class="bnf-badge lock">🔒 未解鎖</span>');
         return '<div class="' + cls + '"' + attrs + '>'
           + '<div class="bnf-head"><span class="bnf-icon">' + b.icon + '</span><span class="bnf-name">' + b.name + '</span></div>'
-          + '<div class="bnf-state">' + r.state + '</div>'
+          + (isPortal ? '<div class="bnf-cta">🖩 點此試算補助金額 →</div>' : '<div class="bnf-state">' + r.state + '</div>')
           + (r.note ? '<div class="bnf-note">' + r.note + '</div>' : '')
           + badge
           + '</div>';
@@ -2154,6 +2166,14 @@ thead th{color:#767B75!important}
       p.style.display = open ? 'none' : '';
       // 手機上卡片直排，展開後自動捲到面板，避免「點了沒反應」的錯覺
       if (!open) setTimeout(function(){ p.scrollIntoView({ behavior:'smooth', block:'nearest' }); }, 60);
+    };
+    // 完整申請說明：就地展開／收合，不切換頁面
+    window.bnfToggleSubsidyHelp = function(){
+      var h = document.getElementById('bnf-subsidy-help'); if (!h) return;
+      var open = h.style.display !== 'none';
+      h.style.display = open ? 'none' : '';
+      var t = document.getElementById('bnf-help-toggle');
+      if (t) t.textContent = open ? '完整申請說明 ▾' : '收合申請說明 ▴';
     };
     window.bnfSubCalc = function(){
       var kind = (document.getElementById('bnfsub-kind')||{}).value || '';
@@ -3498,20 +3518,10 @@ thead th{color:#767B75!important}
     </div>
   </div>
 
-  <!-- 我的預約（左）＋即將開放（右）：桌面左右並列（狀態欄／操作欄），窄螢幕自動退回上下堆疊 -->
+  <!-- 我的預約（上）＋即將開放（下）：上下排列；即將開放卡內維持左日曆＋右時段名單 -->
   <style>
-  #ms-two-col{display:flex;gap:20px;align-items:flex-start}
-  #ms-two-col #ms-panel-my{flex:1 1 0;min-width:300px}
-  #ms-two-col #ms-panel-calendar{flex:1.2 1 0;min-width:340px}
-  /* 右欄變窄：日曆與時段名單改上下堆疊（名單開在日曆下方），日曆不再被壓成小格 */
-  #ms-two-col #ms-cal-layout{flex-direction:column;align-items:stretch}
-  #ms-two-col #ms-cal-layout>div:first-child{flex:none;width:100%;max-width:none}
-  #ms-two-col #ms-cal-layout>div:last-child{flex:none;width:100%;min-width:0}
-  /* 歷史紀錄可能很長：限高＋內部捲動，避免左欄拉太長 */
+  /* 歷史紀錄可能很長：限高＋內部捲動 */
   #ms-my-history{max-height:560px;overflow-y:auto;padding-right:4px}
-  @media(max-width:960px){
-    #ms-two-col{display:block}
-  }
   /* 手機：票卡主票面允許換行，操作按鈕獨立成第二排（貼右），內容不再被擠成直排 */
   @media(max-width:640px){
     .ms-t-main{flex-wrap:wrap}
