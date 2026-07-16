@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716105335';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716123908';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3684,22 +3684,21 @@ thead th{color:#767B75!important}
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
         <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px 14px">
-        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月預約上限（次）
+      <!-- 4 個欄位 ＋ 儲存設定：桌面併排同一列；窄螢幕自動換行 -->
+      <div style="display:flex;gap:12px 14px;align-items:flex-end;flex-wrap:wrap">
+        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月預約上限（次）
           <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月免審核取消次數
+        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月免審核取消次數
           <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">取消期限（時段前幾小時）
+        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">取消期限（時段前幾小時）
           <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">違規幾次停權
+        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">違規幾次停權
           <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-      </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:14px">
-        <button onclick="msSaveSettings()" style="background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">儲存設定</button>
+        <button onclick="msSaveSettings()" style="flex-shrink:0;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;height:38px">儲存設定</button>
       </div>
     </div>
 
@@ -5203,7 +5202,7 @@ function _dashLoadWeather() {
       var range = (dd && dd.temperature_2m_min && dd.temperature_2m_min[0] != null)
         ? '　' + Math.round(dd.temperature_2m_min[0]) + '~' + Math.round(dd.temperature_2m_max[0]) + '°C' : '';
       el.innerHTML = '<span>' + w.e + '</span> <span>' + Math.round(cur.temperature_2m) + '°C</span>'
-        + '<span style="color:#9AA098;font-size:12px">' + range + (placeLabel ? '（' + placeLabel + '）' : '') + '</span>';
+        + '<span style="color:#9AA098;font-size:12px">' + range + '　目前・' + (placeLabel || '你的位置') + '</span>';
       el.style.display = '';
     }).catch(function(){ /* 靜默失敗，不影響首頁 */ });
   };
@@ -10639,8 +10638,12 @@ async function _htLoadWeather(dateStr) {
       var tmax = Math.round(dd.temperature_2m_max[0]);
       var tmin = Math.round(dd.temperature_2m_min[0]);
       var suggest = tmax >= 28 ? '🧊 建議冷飲/冰品' : (tmax <= 18 ? '☕ 建議熱飲' : '🥤 冷熱皆宜');
+      var _dp = String(dateStr).split('-');
+      var _dlabel = _dp.length === 3 ? (parseInt(_dp[1],10) + '/' + parseInt(_dp[2],10) + ' 新莊預報') : '新莊預報';
       // 單行膠囊：與同排「下次午茶日／年度場次」籤條一致高度，不再三行直式而高低不齊
-      tip.innerHTML = '<span style="font-size:15px;line-height:1">' + w.e + '</span>'
+      tip.innerHTML = '<span style="color:#8A9E86;font-weight:600">' + _dlabel + '</span>'
+        + '<span style="color:#C6D2C3">·</span>'
+        + '<span style="font-size:15px;line-height:1">' + w.e + '</span>'
         + '<span style="font-weight:700;color:#3E5A3B">' + tmin + '~' + tmax + '°C ' + w.t + '</span>'
         + '<span style="color:#8A9E86">·</span>'
         + '<span style="color:#6E8F6A">' + suggest + '</span>';
