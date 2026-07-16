@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716090623';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716091020';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1910,21 +1910,26 @@ thead th{color:#767B75!important}
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
     <!-- 常用連結分兩區：員購專區（動態員購連結，全員可用）＋福委專區（會議紀錄，僅福委/HR/管理者可開） -->
     <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 18px">LINKS・常用連結</div>
-    <!-- 兩張白卡並排（比照服務項目卡的白底＋陰影），卡內小標分「員購專區／福委專區」，連結為淡綠膠囊 -->
-    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;align-items:stretch;margin-bottom:8px">
-      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-size:14px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">員 購 專 區</span><span style="font-size:12px;letter-spacing:.16em;color:#738e41">SHOP</span></div>
-        <div id="dash-links" style="display:flex;gap:10px;flex-wrap:wrap"></div>
-      </div>
-      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
-        <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:12px"><span style="font-size:14px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">福 委 專 區</span><span style="font-size:12px;letter-spacing:.16em;color:#738e41">COMMITTEE</span></div>
-        <div id="dash-links-committee" style="display:flex;gap:10px;flex-wrap:wrap">
-          <a href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟" style="display:flex;align-items:center;gap:8px;background:#F6F9F5;border:1.5px solid #D5DAD2;border-radius:20px;padding:8px 16px;text-decoration:none;transition:background .15s" onmouseover="this.style.background='#EDF1EC'" onmouseout="this.style.background='#F6F9F5'">
-            <span style="font-size:16px;line-height:1">📋</span>
-            <span style="font-size:14px;font-weight:600;color:#2E332D">福委會會議紀錄</span>
-            <span style="font-size:12px;color:#738e41;font-weight:600">↗</span>
-          </a>
-        </div>
+    <!-- 連結＝迷你服務磚（圓形 icon 底＋名稱＋↗），一排置中，與上方服務項目同一套視覺語言；不另外包框 -->
+    <style>
+    .dash-link-tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:10px 18px 10px 12px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden}
+    .dash-link-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:linear-gradient(180deg,#F6CC62,#E38845);opacity:.85}
+    .dash-link-tile.committee::before{background:linear-gradient(180deg,#8FAE8B,#577B53)}
+    .dash-link-tile:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(46,51,45,.06),0 14px 30px rgba(87,123,83,.16)}
+    .dash-link-tile .dl-ic{width:38px;height:38px;border-radius:50%;background:#FCF1BE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    .dash-link-tile.committee .dl-ic{background:#EDF1EC}
+    .dash-link-tile .dl-name{font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap}
+    .dash-link-tile .dl-arrow{font-size:12px;color:#738e41;font-weight:600}
+    @media(prefers-reduced-motion:reduce){.dash-link-tile:hover{transform:none}}
+    </style>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:center;margin-bottom:8px">
+      <div id="dash-links" style="display:contents"></div>
+      <div id="dash-links-committee" style="display:contents">
+        <a class="dash-link-tile committee" href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟">
+          <span class="dl-ic">📋</span>
+          <span class="dl-name">福委會會議紀錄</span>
+          <span class="dl-arrow">↗</span>
+        </a>
       </div>
     </div>
     <!-- 私密連結（如員購賣場）存於 GAS 後端，登入後由 _dashLinksSync 動態掛入上方 dash-links，不進公開 repo -->
@@ -14640,12 +14645,10 @@ window._bulletinSync = function() {
 function _dashLinkEl(l) {
   var a = document.createElement('a');
   a.href = l.url; a.target = '_blank'; a.rel = 'noopener'; a.dataset.dyn = '1';
-  a.style.cssText = 'display:flex;align-items:center;gap:8px;background:#F6F9F5;border:1.5px solid #D5DAD2;border-radius:20px;padding:8px 16px;text-decoration:none;transition:background .15s';
-  a.onmouseover = function(){ this.style.background = '#EDF1EC'; };
-  a.onmouseout = function(){ this.style.background = '#F6F9F5'; };
-  var icon = document.createElement('span'); icon.style.cssText = 'font-size:16px;line-height:1'; icon.textContent = l.icon || '🔗';
-  var label = document.createElement('span'); label.style.cssText = 'font-size:14px;font-weight:600;color:#2E332D'; label.textContent = l.label || '連結';
-  var arrow = document.createElement('span'); arrow.style.cssText = 'font-size:12px;color:#738e41;font-weight:600'; arrow.textContent = '↗';
+  a.className = 'dash-link-tile'; // 樣式與靜態「福委會會議紀錄」磚共用（迷你服務磚），員購磚左側為金橘色條
+  var icon = document.createElement('span'); icon.className = 'dl-ic'; icon.textContent = l.icon || '🔗';
+  var label = document.createElement('span'); label.className = 'dl-name'; label.textContent = l.label || '連結';
+  var arrow = document.createElement('span'); arrow.className = 'dl-arrow'; arrow.textContent = '↗';
   a.appendChild(icon); a.appendChild(label); a.appendChild(arrow);
   return a;
 }
