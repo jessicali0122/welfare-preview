@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716124723';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716130007';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3478,8 +3478,141 @@ thead th{color:#767B75!important}
       </button>
     </div><!-- end 右欄 -->
     </div><!-- end 2-col grid -->
+
+    <!-- ── 滿意度回饋：活動當天開放匿名投票；結果永久留存於本場活動 ── -->
+    <div id="ht-vote-wrap" style="display:none;margin-top:18px;max-width:720px;margin-left:auto;margin-right:auto">
+
+      <!-- 投票卡（Freud 範例風：奶油底＋大表情＋扇形儀表） -->
+      <div id="ht-vote-form" style="display:none;position:relative">
+        <div class="htv-card">
+          <div class="htv-steps"><span class="htv-dot on" id="htv-dot1"></span><span class="htv-bar"></span><span class="htv-dot" id="htv-dot2"></span></div>
+          <!-- 步驟1：滿意度 -->
+          <div id="htv-s1">
+            <div class="htv-q">這次午茶，你滿意嗎？<span class="en">SATISFACTION・匿名</span></div>
+            <div class="htv-lab" id="htv-lab">點下方色塊選擇</div>
+            <div class="htv-bigface" id="htv-face"></div>
+            <div class="htv-fan"><svg viewBox="0 0 320 175" id="htv-fansvg"></svg></div>
+            <button class="htv-go" id="htv-next" onclick="htVoteGoStep(2)" disabled>繼續 →</button>
+          </div>
+          <!-- 步驟2：最愛品項＋一句話 -->
+          <div id="htv-s2" style="display:none">
+            <div class="htv-q">選出你的心頭好<span class="en">FAVORITES</span></div>
+            <div class="htv-hint">最多 3 樣 · <b id="htv-cnt">0/3</b></div>
+            <div class="htv-items" id="htv-items"></div>
+            <div class="htv-cbox">
+              <div class="htv-cbox-h">想說一句話嗎？<span class="opt">選填 · 匿名</span></div>
+              <textarea id="htv-comment" maxlength="40" rows="2" placeholder="例：珍奶續杯超佛心，千層入口即化…" oninput="document.getElementById('htv-cc').textContent=this.value.length"></textarea>
+              <div class="htv-cbox-n"><span id="htv-cc">0</span>/40</div>
+            </div>
+            <div class="htv-row2">
+              <button class="htv-ghost" onclick="htVoteGoStep(1)">←</button>
+              <button class="htv-go" id="htv-submit" onclick="htVoteSubmitNow(this)" disabled>送出回饋 🎉</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 結果卡（綠色滿版分數＋人氣方塊圖＋一句話輪播） -->
+      <div id="ht-vote-results" style="display:none;margin-top:14px">
+        <div class="htv-rescard">
+          <div class="htv-hero">
+            <div class="htv-score" id="htv-score">0</div>
+            <div class="htv-score-t" id="htv-badge">大家都很滿意！</div>
+            <div class="htv-score-s"><b id="htv-nvotes">0</b> 人投票 · 匿名 · 滿意度回饋</div>
+          </div>
+          <div class="htv-resbody">
+            <div class="htv-res-h">人氣品項<span class="en">FAVORITES</span></div>
+            <div class="htv-res-sub">方塊越大＝越多人選為最愛 · 顏色越綠＝越滿意</div>
+            <div class="htv-map" id="htv-map"></div>
+            <div class="htv-legend">
+              <span><i style="background:#5E9E52"></i>滿意</span>
+              <span><i style="background:#9CC15F"></i>不錯</span>
+              <span><i style="background:#E7C24B"></i>普通</span>
+              <span><i style="background:#EE9A55"></i>待加強</span>
+              <span class="you"><i></i>你的選擇</span>
+            </div>
+            <div id="htv-cmts-wrap" style="display:none;margin-top:16px">
+              <div class="htv-res-h">大家的一句話<span class="en">VOICES</span></div>
+              <div class="htv-cmt" id="htv-cmt"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<style>
+/* ── 午茶日滿意度投票（Freud 範例風融合系統色）── */
+#ht-vote-wrap{--htvcream:#F6F1EA;--htvbrown:#4A3B30}
+.htv-card{background:var(--htvcream);border-radius:28px;padding:24px 22px;box-shadow:0 2px 4px rgba(80,60,40,.05),0 14px 34px rgba(80,60,40,.12);animation:htvpop .35s ease}
+@keyframes htvpop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.htv-steps{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px}
+.htv-dot{width:10px;height:10px;border-radius:50%;background:#E2D9CC;transition:.3s}
+.htv-dot.on{background:#577B53;transform:scale(1.2)}
+.htv-bar{width:26px;height:4px;border-radius:4px;background:#E2D9CC}
+.htv-q{font-size:22px;font-weight:800;text-align:center;color:var(--htvbrown);line-height:1.3;display:flex;flex-direction:column;align-items:center;gap:4px}
+.htv-q .en{font-size:12px;font-weight:400;letter-spacing:.18em;color:#738e41}
+.htv-lab{text-align:center;font-size:14px;font-weight:700;color:#8A7A6A;margin-top:6px;min-height:20px}
+.htv-bigface{display:flex;justify-content:center;margin:14px 0 4px;line-height:0;min-height:132px}
+.htv-bigface svg{filter:drop-shadow(0 10px 18px rgba(80,60,40,.22));transition:transform .4s cubic-bezier(.3,1.6,.5,1)}
+.htv-fan{margin:2px auto 0;width:min(300px,100%)}
+.htv-fan svg{width:100%;display:block;overflow:visible}
+.htv-fan .wedge{cursor:pointer;transition:transform .25s cubic-bezier(.34,1.5,.6,1),filter .25s;transform-origin:160px 172px}
+.htv-fan .wedge:hover{filter:brightness(1.06)}
+.htv-fan .wedge.on{transform:scale(1.08)}
+#htv-needle{transition:transform .55s cubic-bezier(.34,1.56,.64,1);transform-origin:160px 172px}
+.htv-go{display:block;width:100%;margin-top:18px;padding:14px;border:none;border-radius:28px;background:#577B53;color:#fff;font-family:inherit;font-size:16px;font-weight:800;letter-spacing:.06em;cursor:pointer;transition:.18s;box-shadow:0 6px 16px rgba(87,123,83,.3)}
+.htv-go:disabled{background:#C9BDB0;box-shadow:none;cursor:not-allowed}
+.htv-go:not(:disabled):hover{background:#4A6A47}
+.htv-go:not(:disabled):active{transform:scale(.98)}
+.htv-hint{text-align:center;font-size:14px;color:#8A7A6A;margin-top:4px}
+.htv-hint b{color:#E0820A}
+.htv-items{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:14px}
+.htv-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:#fff;cursor:pointer;transition:.15s;position:relative;box-shadow:0 2px 6px rgba(80,60,40,.08)}
+.htv-item:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(80,60,40,.14)}
+.htv-item .em{font-size:22px;flex-shrink:0}
+.htv-item .nm{font-size:14px;font-weight:700;color:var(--htvbrown);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htv-item.on{background:#FFF1DD;box-shadow:0 0 0 2px #E0820A,0 6px 14px rgba(224,130,10,.18);animation:htvwig .3s}
+@keyframes htvwig{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+.htv-item.on::after{content:'✓';position:absolute;right:10px;top:50%;transform:translateY(-50%);width:20px;height:20px;border-radius:50%;background:#E0820A;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.htv-item.dim{opacity:.4;pointer-events:none}
+.htv-cbox{margin-top:16px}
+.htv-cbox-h{font-size:14px;font-weight:700;color:var(--htvbrown);margin-bottom:6px}
+.htv-cbox-h .opt{font-size:12px;font-weight:500;color:#A8988A;margin-left:6px}
+#htv-comment{width:100%;box-sizing:border-box;border:none;border-radius:16px;padding:12px 14px;font-family:inherit;font-size:14px;color:var(--htvbrown);resize:none;outline:none;background:#fff;box-shadow:0 2px 6px rgba(80,60,40,.08)}
+#htv-comment:focus{box-shadow:0 0 0 2px #577B53,0 2px 6px rgba(80,60,40,.08)}
+.htv-cbox-n{text-align:right;font-size:12px;color:#A8988A;margin-top:4px}
+.htv-row2{display:flex;gap:10px;margin-top:18px}
+.htv-ghost{padding:13px 20px;border:none;background:#fff;border-radius:28px;font-family:inherit;font-size:15px;font-weight:700;color:#8A7A6A;cursor:pointer;box-shadow:0 2px 6px rgba(80,60,40,.1)}
+.htv-ghost:hover{background:#FBF8F4}
+.htv-row2 .htv-go{margin-top:0;flex:1}
+.htv-rescard{border-radius:28px;overflow:hidden;box-shadow:0 2px 4px rgba(80,60,40,.05),0 14px 34px rgba(80,60,40,.12);animation:htvpop .35s ease}
+.htv-hero{background:linear-gradient(170deg,#7C9B72 0%,#577B53 100%);padding:30px 22px 20px;text-align:center;color:#fff}
+.htv-score{font-size:64px;font-weight:900;line-height:1;text-shadow:0 4px 14px rgba(0,0,0,.14)}
+.htv-score-t{font-size:16px;font-weight:700;margin-top:8px}
+.htv-score-s{font-size:12px;opacity:.85;margin-top:4px}
+.htv-resbody{background:var(--htvcream);border-radius:28px 28px 0 0;margin-top:-14px;position:relative;padding:20px 20px 22px}
+.htv-res-h{font-size:14px;font-weight:800;letter-spacing:.1em;color:var(--htvbrown);display:flex;align-items:baseline;gap:8px}
+.htv-res-h .en{font-size:12px;font-weight:400;letter-spacing:.18em;color:#8FA886}
+.htv-res-sub{font-size:12px;color:#8A7A6A;margin:4px 0 12px}
+.htv-map{position:relative;width:100%;height:280px;border-radius:18px;overflow:hidden;background:#EDE5D8}
+.htv-blk{position:absolute;border:2px solid var(--htvcream);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:8px 10px;color:#fff;cursor:default;transform:scale(.4);opacity:0;transition:transform .5s cubic-bezier(.34,1.4,.5,1),opacity .4s}
+.htv-blk.in{transform:scale(1);opacity:1}
+.htv-blk .n{font-size:14px;font-weight:800;line-height:1.15;text-shadow:0 1px 2px rgba(0,0,0,.3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htv-blk .c{font-size:12px;font-weight:600;opacity:.96;text-shadow:0 1px 2px rgba(0,0,0,.3)}
+.htv-blk.you{outline:3px solid #E0820A;outline-offset:-3px}
+.htv-blk .star{position:absolute;top:6px;right:8px;font-size:12px;color:#fff}
+.htv-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:#8A7A6A}
+.htv-legend span{display:inline-flex;align-items:center;gap:5px}
+.htv-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.htv-legend .you i{background:#fff;border:2px solid #E0820A}
+.htv-cmt{position:relative;background:#fff;border-radius:16px;padding:12px 14px 12px 36px;min-height:44px;font-size:14px;color:var(--htvbrown);line-height:1.6;margin-top:8px;transition:opacity .4s;box-shadow:0 2px 6px rgba(80,60,40,.07)}
+.htv-cmt::before{content:'\201C';position:absolute;left:12px;top:6px;font-size:28px;color:#C9BDA8;font-weight:800}
+.htv-confetti{position:absolute;font-size:22px;pointer-events:none;animation:htvfly 1s ease-out forwards;z-index:5}
+@keyframes htvfly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot))}}
+@media(max-width:640px){.htv-items{grid-template-columns:1fr}}
+</style>
 
 <!-- ══ 按摩預約 View ══ -->
 <div class="view" id="view-massage">
@@ -12282,7 +12415,266 @@ window.htOpenDetail = async function(eventId) {
     }).catch(function(){});
   }
   _htUpdateQtyHint();
+  // 滿意度投票／結果（非阻塞：活動當天顯示投票卡、有票數顯示結果卡）
+  try { htVoteInit(); } catch(e) {}
 };
+
+// ══ 午茶日滿意度投票（匿名；僅活動當天；結果永久留存於該場活動）══
+var _htvSat = 0, _htvPicks = [], _htvVotes = null, _htvCmtTimer = null;
+var _HTV_LV = [
+  { s:1, t:'待加強', c:'#E8865E', l:'#F4B394' },
+  { s:2, t:'普普',   c:'#F0A868', l:'#F8CDA2' },
+  { s:3, t:'普通',   c:'#F2CC5B', l:'#F8E29B' },
+  { s:4, t:'不錯吃', c:'#A9C178', l:'#CBDCA8' },
+  { s:5, t:'超讚',   c:'#7FA36B', l:'#A9C495' }
+];
+// 表情五官（低分垂眉哭臉 → 高分彎眼笑臉）
+function _htvFaceParts(lv, stroke) {
+  var eyes = lv <= 2
+    ? '<rect x="-11" y="-4" width="7" height="3.4" rx="1.7" fill="'+stroke+'" transform="rotate(14 -7.5 -2.3)"/><rect x="4" y="-4" width="7" height="3.4" rx="1.7" fill="'+stroke+'" transform="rotate(-14 7.5 -2.3)"/>'
+    : lv === 3
+    ? '<rect x="-11" y="-3.4" width="7" height="3.4" rx="1.7" fill="'+stroke+'"/><rect x="4" y="-3.4" width="7" height="3.4" rx="1.7" fill="'+stroke+'"/>'
+    : '<path d="M-10.5 -1.5 Q-7.5 -5 -4.5 -1.5" stroke="'+stroke+'" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M4.5 -1.5 Q7.5 -5 10.5 -1.5" stroke="'+stroke+'" stroke-width="3.2" fill="none" stroke-linecap="round"/>';
+  var mouth = {
+    1:'<path d="M-7 10 Q0 3 7 10" stroke="'+stroke+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
+    2:'<path d="M-6.5 9 Q0 6 6.5 9" stroke="'+stroke+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
+    3:'<rect x="-6.5" y="7" width="13" height="3.4" rx="1.7" fill="'+stroke+'"/>',
+    4:'<path d="M-6.5 6.5 Q0 12 6.5 6.5" stroke="'+stroke+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>',
+    5:'<path d="M-8 5.5 Q0 15 8 5.5" stroke="'+stroke+'" stroke-width="3.4" fill="none" stroke-linecap="round"/>'
+  }[lv];
+  return eyes + mouth;
+}
+var _htvGid = 0;
+function _htvBigFace(lv, size) {
+  var o = _HTV_LV[lv-1], id = 'htvg' + (_htvGid++);
+  return '<svg viewBox="-30 -30 60 60" width="'+size+'" height="'+size+'">'
+    + '<defs><radialGradient id="'+id+'" cx="36%" cy="30%" r="78%"><stop offset="0%" stop-color="'+o.l+'"/><stop offset="100%" stop-color="'+o.c+'"/></radialGradient></defs>'
+    + '<circle r="27" fill="url(#'+id+')"/>'
+    + '<ellipse cx="-8" cy="-11" rx="8" ry="5" fill="#fff" opacity=".3"/>'
+    + '<g transform="translate(0,-2)">'+_htvFaceParts(lv,'#4A3B30')+'</g></svg>';
+}
+// 品名關鍵字 → emoji（找不到就用通用餐盤）
+function _htvEmoji(name) {
+  var n = String(name||'');
+  var M = [['奶茶','🧋'],['珍珠','🧋'],['手搖','🧋'],['茶','🍵'],['咖啡','☕'],['蛋糕','🍰'],['千層','🍰'],['可頌','🥐'],['麵包','🍞'],['吐司','🍞'],['貝果','🥯'],['布丁','🍮'],['餅乾','🍪'],['甜甜圈','🍩'],['派','🥧'],['塔','🥧'],['冰','🍦'],['果汁','🧃'],['水果','🍓'],['壽司','🍣'],['便當','🍱'],['披薩','🍕'],['漢堡','🍔'],['雞','🍗'],['湯','🥣'],['沙拉','🥗'],['泡芙','🧁'],['麻糬','🍡'],['蛋撻','🥧'],['鬆餅','🧇']];
+  for (var i = 0; i < M.length; i++) if (n.indexOf(M[i][0]) >= 0) return M[i][1];
+  return '🍽️';
+}
+function _htvToday() {
+  var d = new Date();
+  return d.getFullYear() + '-' + _pad2(d.getMonth()+1) + '-' + _pad2(d.getDate());
+}
+window.htVoteInit = async function() {
+  var wrap = document.getElementById('ht-vote-wrap');
+  if (!wrap || !_htEvent) return;
+  wrap.style.display = 'none';
+  document.getElementById('ht-vote-form').style.display = 'none';
+  document.getElementById('ht-vote-results').style.display = 'none';
+  if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
+  _htvSat = 0; _htvPicks = []; _htvVotes = null;
+  var evId = _htEvent.eventId;
+  var r = null;
+  try { r = await htApi('htVoteGet', { eventId: evId }); } catch(e) {}
+  if (!r || !r.ok) return;                          // 後端尚未部署投票 API → 安靜隱藏
+  if (!_htEvent || _htEvent.eventId !== evId) return; // 使用者已切到別場
+  _htvVotes = r.votes || [];
+  var isToday = String(_htEvent.date||'').replace(/\//g,'-') === _htvToday();
+  var votedLocal = false; try { votedLocal = !!localStorage.getItem('bf_ht_voted_' + evId); } catch(e) {}
+  var voted = r.voted || votedLocal;
+  var showForm = isToday && !voted;
+  var showRes  = _htvVotes.length > 0;
+  if (!showForm && !showRes) return;
+  wrap.style.display = '';
+  if (showForm) { _htvBuildForm(); document.getElementById('ht-vote-form').style.display = ''; }
+  if (showRes) htVoteRenderResults();
+};
+function _htvBuildForm() {
+  _htvSat = 0; _htvPicks = [];
+  htVoteGoStep(1);
+  document.getElementById('htv-next').disabled = true;
+  document.getElementById('htv-submit').disabled = true;
+  document.getElementById('htv-lab').textContent = '點下方色塊選擇';
+  document.getElementById('htv-comment').value = '';
+  document.getElementById('htv-cc').textContent = '0';
+  // 中央大表情：先放半透明中性臉
+  var f = document.getElementById('htv-face');
+  f.innerHTML = _htvBigFace(3, 128); f.style.opacity = '.45';
+  // 底部扇形儀表
+  var svg = document.getElementById('htv-fansvg'), cx = 160, cy = 172, R = 150, r0 = 52, s = '';
+  var pol = function(r, deg){ var a = deg*Math.PI/180; return [cx + r*Math.cos(a), cy - r*Math.sin(a)]; };
+  for (var i = 0; i < 5; i++) {
+    var a1 = 180 - 36*i, a2 = 180 - 36*(i+1);
+    var p1 = pol(R,a1), p2 = pol(R,a2), p3 = pol(r0,a2), p4 = pol(r0,a1);
+    var mid = (a1+a2)/2, fc = pol((R+r0)/2 + 6, mid);
+    s += '<g class="wedge" data-i="'+i+'" onclick="_htvPick('+(i+1)+')">'
+      + '<path d="M'+p1[0].toFixed(1)+' '+p1[1].toFixed(1)+' A'+R+' '+R+' 0 0 1 '+p2[0].toFixed(1)+' '+p2[1].toFixed(1)
+      + ' L'+p3[0].toFixed(1)+' '+p3[1].toFixed(1)+' A'+r0+' '+r0+' 0 0 0 '+p4[0].toFixed(1)+' '+p4[1].toFixed(1)+' Z" fill="'+_HTV_LV[i].c+'" stroke="#F6F1EA" stroke-width="3"/>'
+      + '<g transform="translate('+fc[0].toFixed(1)+','+fc[1].toFixed(1)+') scale(.62)">'+_htvFaceParts(i+1,'#FFFFFF')+'</g>'
+      + '</g>';
+  }
+  s += '<g id="htv-needle" style="opacity:0"><path d="M160 132 C154 148 154 158 160 166 C166 158 166 148 160 132 Z" fill="#4A3B30"/><circle cx="160" cy="168" r="7" fill="#4A3B30"/><circle cx="160" cy="168" r="3" fill="#F6F1EA"/></g>';
+  svg.innerHTML = s;
+  // 品項籤（去重品名）
+  var seen = {}, box = document.getElementById('htv-items');
+  box.innerHTML = '';
+  (_htItems || []).forEach(function(it) {
+    var nm = String(it.name||'').trim();
+    if (!nm || seen[nm]) return; seen[nm] = 1;
+    var d = document.createElement('div');
+    d.className = 'htv-item';
+    d.innerHTML = '<span class="em">'+_htvEmoji(nm)+'</span><span class="nm">'+htEsc(nm)+'</span>';
+    d.onclick = function() {
+      var i = _htvPicks.indexOf(nm);
+      if (i >= 0) _htvPicks.splice(i,1); else { if (_htvPicks.length >= 3) return; _htvPicks.push(nm); }
+      box.querySelectorAll('.htv-item').forEach(function(x, xi) {
+        var xnm = x.querySelector('.nm').textContent;
+        var on = _htvPicks.indexOf(xnm) >= 0;
+        x.classList.toggle('on', on);
+        x.classList.toggle('dim', !on && _htvPicks.length >= 3);
+      });
+      document.getElementById('htv-cnt').textContent = _htvPicks.length + '/3';
+      document.getElementById('htv-submit').disabled = _htvPicks.length < 1;
+    };
+    box.appendChild(d);
+  });
+  if (!Object.keys(seen).length) box.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#A8988A;font-size:14px;padding:12px">本場尚未建立品項</div>';
+}
+window._htvPick = function(lv) {
+  _htvSat = lv;
+  var l = _HTV_LV[lv-1];
+  document.querySelectorAll('#htv-fansvg .wedge').forEach(function(w){ w.classList.toggle('on', (+w.getAttribute('data-i')) === (lv-1)); });
+  var n = document.getElementById('htv-needle');
+  n.style.opacity = '1';
+  n.style.transform = 'rotate(' + ((lv-3)*36) + 'deg)';
+  var f = document.getElementById('htv-face');
+  f.style.opacity = '1';
+  f.innerHTML = _htvBigFace(lv, 128);
+  var sv = f.querySelector('svg');
+  sv.style.transform = 'scale(1.14)'; setTimeout(function(){ sv.style.transform = 'scale(1)'; }, 240);
+  document.getElementById('htv-lab').textContent = '你覺得：' + l.t;
+  document.getElementById('htv-next').disabled = false;
+};
+window.htVoteGoStep = function(n) {
+  document.getElementById('htv-s1').style.display = n === 1 ? '' : 'none';
+  document.getElementById('htv-s2').style.display = n === 2 ? '' : 'none';
+  document.getElementById('htv-dot1').classList.toggle('on', true);
+  document.getElementById('htv-dot2').classList.toggle('on', n === 2);
+};
+// 送出 → 撒花動畫 → 隱藏投票卡、渲染結果卡
+window.htVoteSubmitNow = async function(btn) {
+  if (!_htEvent || !_htvSat || !_htvPicks.length) return;
+  btn.disabled = true; btn.textContent = '送出中…';
+  var evId = _htEvent.eventId;
+  var comment = (document.getElementById('htv-comment').value || '').trim().slice(0, 40);
+  var r = null;
+  try { r = await htApi('htVoteSubmit', { eventId: evId, sat: _htvSat, favs: _htvPicks, comment: comment }); } catch(e) {}
+  if (!r || !r.ok) {
+    var msg = (r && r.error) || '網路連線失敗';
+    toast('😥 ' + msg);
+    if (r && /已投過/.test(String(r.error||''))) {
+      try { localStorage.setItem('bf_ht_voted_' + evId, '1'); } catch(e) {}
+      document.getElementById('ht-vote-form').style.display = 'none';
+    } else { btn.disabled = false; btn.textContent = '送出回饋 🎉'; }
+    return;
+  }
+  try { localStorage.setItem('bf_ht_voted_' + evId, '1'); } catch(e) {}
+  // 🎊 撒花動畫
+  var form = document.getElementById('ht-vote-form');
+  var EMO = ['🎉','🍰','🧋','⭐','🥳','🍪'];
+  for (var i = 0; i < 14; i++) {
+    var sp = document.createElement('span');
+    sp.className = 'htv-confetti'; sp.textContent = EMO[i % EMO.length];
+    sp.style.left = (20 + Math.random()*60) + '%'; sp.style.top = '55%';
+    sp.style.setProperty('--dx', (Math.random()*220 - 110) + 'px');
+    sp.style.setProperty('--dy', (-(90 + Math.random()*160)) + 'px');
+    sp.style.setProperty('--rot', (Math.random()*360 - 180) + 'deg');
+    form.appendChild(sp);
+    setTimeout(function(el){ return function(){ el.remove(); }; }(sp), 1100);
+  }
+  toast('🎉 感謝你的回饋！');
+  // 本地即時併入結果（不再等後端重抓）
+  _htvVotes = (_htvVotes || []).concat([{ sat: _htvSat, favs: _htvPicks.slice(), comment: comment }]);
+  setTimeout(function() {
+    form.style.display = 'none';
+    document.getElementById('ht-vote-wrap').style.display = '';
+    htVoteRenderResults();
+  }, 900);
+};
+// 結果渲染：分數跳動＋人氣方塊圖（大小=人氣、顏色=滿意度）＋一句話輪播
+function htVoteRenderResults(votesArg) {
+  var votes = votesArg || _htvVotes || [];
+  if (!votes.length) return;
+  document.getElementById('ht-vote-results').style.display = '';
+  var avg = votes.reduce(function(s,v){ return s + (v.sat||0); }, 0) / votes.length;
+  var score = Math.round(avg / 5 * 100);
+  var num = document.getElementById('htv-score'), t0 = Date.now();
+  (function tick(){ var p = Math.min(1, (Date.now()-t0)/1000); num.textContent = Math.round(score*(1-Math.pow(1-p,3))); if (p < 1) requestAnimationFrame(tick); })();
+  document.getElementById('htv-nvotes').textContent = votes.length;
+  document.getElementById('htv-badge').textContent = avg >= 4 ? '恭喜！大家都超滿意 🎉' : avg >= 3 ? '整體評價不錯！' : '謝謝回饋，下次更好！';
+  // 品項統計：fav 次數＝人氣（面積）、選它的人的平均滿意度＝顏色
+  var stat = {};
+  votes.forEach(function(v) {
+    (v.favs || []).forEach(function(nm) {
+      if (!stat[nm]) stat[nm] = { fav: 0, satSum: 0 };
+      stat[nm].fav++; stat[nm].satSum += (v.sat || 0);
+    });
+  });
+  var items = Object.keys(stat).map(function(nm){ return { k: nm, fav: stat[nm].fav, sat: stat[nm].satSum / stat[nm].fav }; })
+    .sort(function(a,b){ return b.fav - a.fav; }).slice(0, 12);
+  var satColor = function(s){ return s>=4.3?'#3E5A3B':s>=3.7?'#5E9E52':s>=3.1?'#9CC15F':s>=2.5?'#E7C24B':s>=2.0?'#EE9A55':'#E0694A'; };
+  var map = document.getElementById('htv-map');
+  map.innerHTML = '';
+  if (items.length) {
+    var W = map.clientWidth || 640, H = map.clientHeight || 280;
+    var rects = _htvSquarify(items.map(function(it){ return it.fav; }), W, H);
+    items.forEach(function(it, i) {
+      var r = rects[i]; if (!r) return;
+      var mine = _htvPicks.indexOf(it.k) >= 0, big = r.w > 84 && r.h > 56;
+      var d = document.createElement('div');
+      d.className = 'htv-blk' + (mine ? ' you' : '');
+      d.style.cssText += 'left:'+r.x+'px;top:'+r.y+'px;width:'+r.w+'px;height:'+r.h+'px;background:'+satColor(it.sat);
+      d.innerHTML = (mine ? '<span class="star">★</span>' : '')
+        + '<div class="n">'+_htvEmoji(it.k)+(big ? ' '+htEsc(it.k) : '')+'</div>'
+        + (big ? '<div class="c">'+it.fav+' 票 · 滿意 '+it.sat.toFixed(1)+'</div>' : '');
+      d.title = it.k + '：' + it.fav + ' 票，平均滿意 ' + it.sat.toFixed(1);
+      map.appendChild(d);
+      setTimeout(function(){ d.classList.add('in'); }, 80 + i*70);
+    });
+  } else {
+    map.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#A8988A;font-size:14px">尚無品項回饋</div>';
+  }
+  // 一句話輪播（每 3 秒淡入淡出）
+  var cmts = votes.map(function(v){ return (v.comment||'').trim(); }).filter(Boolean);
+  var cw = document.getElementById('htv-cmts-wrap');
+  if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
+  if (cmts.length) {
+    cw.style.display = '';
+    var view = document.getElementById('htv-cmt'), ci = 0;
+    var shw = function(){ view.style.opacity = '0'; setTimeout(function(){ view.textContent = cmts[ci % cmts.length]; view.style.opacity = '1'; ci++; }, 380); };
+    shw();
+    if (cmts.length > 1) _htvCmtTimer = setInterval(shw, 3000);
+  } else cw.style.display = 'none';
+}
+// squarified treemap（面積比例排版）
+function _htvSquarify(vals, W, H) {
+  var total = vals.reduce(function(a,b){ return a+b; }, 0), area = W*H;
+  var nodes = vals.map(function(v,i){ return { a: v/total*area, i: i }; });
+  nodes.sort(function(p,q){ return q.a - p.a; });
+  var rects = [], x = 0, y = 0, w = W, h = H, row = [];
+  function worst(r, len){ var s=0,mx=0,mn=1e9; r.forEach(function(n){ s+=n.a; mx=Math.max(mx,n.a); mn=Math.min(mn,n.a); }); var l2=len*len,s2=s*s; return Math.max(l2*mx/s2, s2/(l2*mn)); }
+  function lay(r){ var s=0; r.forEach(function(n){ s+=n.a; }); if (w>=h){ var dw=s/h,yy=y; r.forEach(function(n){ var hh=n.a/dw; rects[n.i]={x:x,y:yy,w:dw,h:hh}; yy+=hh; }); x+=dw; w-=dw; } else { var dh=s/w,xx=x; r.forEach(function(n){ var ww=n.a/dh; rects[n.i]={x:xx,y:y,w:ww,h:dh}; xx+=ww; }); y+=dh; h-=dh; } }
+  var i = 0;
+  while (i < nodes.length) {
+    var n = nodes[i], len = Math.min(w,h);
+    if (!row.length) { row.push(n); i++; continue; }
+    if (worst(row.concat([n]), len) <= worst(row, len)) { row.push(n); i++; } else { lay(row); row = []; }
+  }
+  if (row.length) lay(row);
+  return rects;
+}
+// 供除錯／測試用（正式流程走 htVoteInit）
+window._htvBuildForm = _htvBuildForm;
+window.htVoteRenderResults = htVoteRenderResults;
 
 function _htUpdateQtyHint() {
   var qtyHint = document.getElementById('ht-qty-hint');
