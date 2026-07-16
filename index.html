@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716173715';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716174523';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3138,10 +3138,10 @@ thead th{color:#767B75!important}
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <span style="font-size:32px;line-height:1;animation:htvbounce 1.6s ease-in-out infinite">🗳️</span>
         <div style="flex:1;min-width:180px">
-          <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.04em">今天是午茶日！吃飽喝足了嗎？</div>
-          <div style="font-size:13px;color:rgba(255,255,255,.85);margin-top:3px">花 30 秒匿名評分，選出你的心頭好 🍀</div>
+          <div data-vb="title" style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.04em">今天是午茶日！吃飽喝足了嗎？</div>
+          <div data-vb="sub" style="font-size:13px;color:rgba(255,255,255,.85);margin-top:3px">花 30 秒匿名評分，選出你的心頭好 🍀</div>
         </div>
-        <span style="flex-shrink:0;background:#fff;color:#577B53;border-radius:22px;padding:10px 22px;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.14);white-space:nowrap">開始投票 →</span>
+        <span data-vb="btn" style="flex-shrink:0;background:#fff;color:#577B53;border-radius:22px;padding:10px 22px;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.14);white-space:nowrap">開始投票 →</span>
       </div>
     </div>
     <style>@keyframes htvbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>
@@ -10733,24 +10733,41 @@ function _htUpdateCountdown() {
       heroWrap.style.display = '';
     }
   }
-  // ── 🗳️ 活動當天：顯示投票入口橫幅（僅系統場次；試算表唯讀場次無法投票）──
+  // ── 🗳️ 活動當天：顯示投票入口橫幅（系統場次→全員投票入口；試算表唯讀場次→福委看到「先轉為系統活動」提醒）──
   var _vBanner = document.getElementById('ht-today-vote-banner');
   if (_vBanner) {
-    var _todayEv = null;
+    var _todayEv = null, _todaySheetEv = null;
     for (var _vi = 0; _vi < upcoming.length; _vi++) {
-      if (Math.round((upcoming[_vi].d - now) / 86400000) === 0 && !upcoming[_vi].ev._sheet) { _todayEv = upcoming[_vi].ev; break; }
+      if (Math.round((upcoming[_vi].d - now) / 86400000) !== 0) continue;
+      if (!upcoming[_vi].ev._sheet) { _todayEv = upcoming[_vi].ev; break; }
+      if (!_todaySheetEv) _todaySheetEv = upcoming[_vi].ev;
     }
-    if (_todayEv) { _vBanner.style.display = ''; _vBanner.setAttribute('data-eid', _todayEv.eventId); }
-    else _vBanner.style.display = 'none';
+    var _bnrTitle = _vBanner.querySelector('[data-vb="title"]');
+    var _bnrSub = _vBanner.querySelector('[data-vb="sub"]');
+    var _bnrBtn = _vBanner.querySelector('[data-vb="btn"]');
+    if (_todayEv) {
+      _vBanner.style.display = ''; _vBanner.setAttribute('data-eid', _todayEv.eventId); _vBanner.removeAttribute('data-sheet-eid');
+      if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日！吃飽喝足了嗎？';
+      if (_bnrSub) _bnrSub.textContent = '花 30 秒匿名評分，選出你的心頭好 🍀';
+      if (_bnrBtn) _bnrBtn.textContent = '開始投票 →';
+    } else if (_todaySheetEv && typeof can === 'function' && can('hightea.manage')) {
+      // 今天的場次還是試算表唯讀版 → 提醒福委先轉為系統活動，投票才能開放
+      _vBanner.style.display = ''; _vBanner.removeAttribute('data-eid'); _vBanner.setAttribute('data-sheet-eid', _todaySheetEv.eventId);
+      if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日，但場次還是試算表版';
+      if (_bnrSub) _bnrSub.textContent = '轉為系統活動後，大家才能投票評分（品項會自動帶入）';
+      if (_bnrBtn) _bnrBtn.textContent = '去轉換 →';
+    } else _vBanner.style.display = 'none';
   }
   if (!upcoming.length) { if (wtip) wtip.style.display = 'none'; return; }
   // 倒數重點已融入頁首 Hero（ht-hero-next-wrap），僅保留天氣提示
   _htLoadWeather(String(upcoming[0].ev.date || '').replace(/\//g, '-'));
 };
 
-// 橫幅點擊：開啟當天活動詳情並自動捲到投票卡
+// 橫幅點擊：開啟當天活動詳情並自動捲到投票卡；試算表場次則開詳情彈窗（內有「轉為可編輯副本」）
 window.htGoVote = function() {
   var b = document.getElementById('ht-today-vote-banner');
+  var sheetEid = b && b.getAttribute('data-sheet-eid');
+  if (sheetEid) { htOpenSheetDetail(sheetEid); return; }
   var eid = b && b.getAttribute('data-eid');
   if (!eid) return;
   htOpenDetail(eid).then(function() {
