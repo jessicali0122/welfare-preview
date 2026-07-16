@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716091020';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716095914';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1394,6 +1394,11 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
+/* 午茶日右側卡：本月行程／歷史回顧 分頁切換 */
+.ht-side-tab{flex:1;padding:14px 12px;border:none;background:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.1em;color:#9AA098;position:relative;transition:color .18s}
+.ht-side-tab.active{color:#2E332D}
+.ht-side-tab.active::after{content:'';position:absolute;left:22%;right:22%;bottom:-1px;height:2px;background:#577B53;border-radius:2px}
+.ht-side-tab:hover{color:#577B53}
 /* 總覽改版：拿掉側邊選單與底部導覽列，改用總覽入口卡片＋頂部膠囊返回總覽 */
 #sidebar-wrapper,#bottom-nav{display:none!important}
 </style>
@@ -3113,10 +3118,7 @@ thead th{color:#767B75!important}
 
     <!-- 活動指南 Tab（統計摘要 + 年曆 + 日曆 + 活動卡片） -->
     <div id="ht-panel-events">
-      <!-- #ht-panel-calendar 會於載入時由 JS 移入此處 -->
-      <div id="ht-events-grid">
-        <div style="color:#9AA098;font-size:14px;text-align:center;padding:40px">載入中…</div>
-      </div>
+      <!-- #ht-panel-calendar 會於載入時由 JS 移入此處；歷史回顧(ht-events-grid)已移入右側「本月行程／歷史回顧」分頁卡 -->
       <!-- 統計摘要 -->
       <div id="ht-analytics-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 16px"></div>
       <!-- 最常採購店家（收在底部） -->
@@ -3173,13 +3175,21 @@ thead th{color:#767B75!important}
           </div>
         </div>
 
-        <!-- 右側：行程列表 -->
-        <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;position:sticky;top:16px">
-          <div style="padding:18px 20px;border-bottom:1px solid #f5f5f5;display:flex;align-items:center;gap:10px">
-            <span style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.2em">本 月 行 程</span>
-            <span style="font-size:12px;letter-spacing:.16em;color:#738e41">THIS MONTH</span>
+        <!-- 右側：本月行程／歷史回顧（同一張卡分頁切換，卡內捲動、不隨頁面滾動亂跑，也不佔額外高度） -->
+        <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column">
+          <!-- 分頁頭 -->
+          <div id="ht-side-tabs" style="display:flex;border-bottom:1px solid #f0f2ef">
+            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-side-tab active">本月行程</button>
+            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-side-tab">歷史回顧</button>
           </div>
-          <div id="ht-cal-events" style="padding:16px 20px;max-height:480px;overflow-y:auto"></div>
+          <!-- 本月行程 -->
+          <div id="ht-side-month">
+            <div id="ht-cal-events" style="padding:16px 20px;max-height:520px;overflow-y:auto"></div>
+          </div>
+          <!-- 歷史回顧（ht-events-grid 由 JS 渲染於此，卡內捲動） -->
+          <div id="ht-side-history" style="display:none;padding:14px 16px 6px;max-height:560px;overflow-y:auto">
+            <div id="ht-events-grid"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -6960,6 +6970,11 @@ function sw(name,elOrName,_fromPop){
   if(name==='admin') loadAdminUsers();
   if(name==='hightea'){ htLoadList(); try{ if(window.htRenderYearTimeline) htRenderYearTimeline(); }catch(e){} }
   if(name==='massage') massageLoad();
+  if(name==='overview'){
+    // 每次進入福利總覽都回到新人視角：年資滑桿歸 0
+    var _tn = document.getElementById('bnf-tenure');
+    if (_tn) { _tn.value = 0; if (typeof bnfRender === 'function') bnfRender(); }
+  }
   // 手機版底部操作列：只在 new-form 頁顯示（用 class 控制，避免 !important 衝突）
   var _mfa = document.getElementById('mobile-form-actions');
   if (_mfa) { if (name === 'new-form') _mfa.classList.add('show'); else _mfa.classList.remove('show'); }
@@ -10671,11 +10686,12 @@ function _htMergeLayout() {
   if (_htLayoutMerged) return;
   var ev = document.getElementById('ht-panel-events');
   var cal = document.getElementById('ht-panel-calendar');
-  var grid = document.getElementById('ht-events-grid');
-  if (!ev || !cal || !grid) return;
+  var stats = document.getElementById('ht-analytics-stats');
+  if (!ev || !cal) return;
   cal.style.display = '';
   cal.style.marginBottom = '18px';
-  ev.insertBefore(cal, grid);   // 順序：年曆 → 日曆 → 活動卡片
+  // 順序：日曆卡（含本月行程／歷史回顧分頁）置於統計摘要之前
+  if (stats) ev.insertBefore(cal, stats); else ev.appendChild(cal);
   _htLayoutMerged = true;
 }
 
@@ -10970,6 +10986,19 @@ window.htImportSheetEvent = async function (sheetName, btn) {
 var _htHistoryYear = null; // 歷史回顧目前選取的年份（切換膠囊），null＝尚未選過，預設抓最新一年
 window.htSwitchHistoryYear = function(y) { _htHistoryYear = y; htRenderEvents(); };
 
+// 右側卡分頁：本月行程 / 歷史回顧（同一張卡切換，卡內捲動）
+window.htSwitchSideTab = function(tab) {
+  var isHist = tab === 'history';
+  var m = document.getElementById('ht-side-month');
+  var h = document.getElementById('ht-side-history');
+  if (m) m.style.display = isHist ? 'none' : '';
+  if (h) h.style.display = isHist ? '' : 'none';
+  var tm = document.getElementById('ht-side-tab-month');
+  var th = document.getElementById('ht-side-tab-history');
+  if (tm) tm.classList.toggle('active', !isHist);
+  if (th) th.classList.toggle('active', isHist);
+};
+
 function htRenderEvents() {
   var grid = document.getElementById('ht-events-grid');
   // 歷史回顧只放「過去」月份：本月在「本月行程」、未來月份翻日曆可見，都不屬於歷史
@@ -10996,17 +11025,16 @@ function htRenderEvents() {
   // 年份切換：預設選最新一年，避免一次把所有年份的場次都攤開顯示
   if (!_htHistoryYear || years.indexOf(_htHistoryYear) < 0) _htHistoryYear = years[0];
 
-  var html = '<div style="display:flex;align-items:baseline;gap:12px;margin:20px 0 16px;flex-wrap:wrap">'
-    + '<span style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.2em;white-space:nowrap">歷 史 回 顧</span>'
-    + '<span style="font-size:12px;letter-spacing:.16em;color:#738e41">HISTORY</span>'
+  // 標題已由右側卡分頁「歷史回顧」呈現，此處僅保留場數統計（靠右）
+  var html = '<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px;flex-wrap:wrap">'
     + '<div style="flex:1"></div>'
-    + '<span style="font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 14px;border-radius:20px">'+ history.length +' 場</span>'
+    + '<span style="font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 14px;border-radius:20px">共 '+ history.length +' 場</span>'
     + '</div>';
 
-  // 年份切換膠囊列
-  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">' + years.map(function(y){
+  // 年份切換膠囊列（場數改用圓標）
+  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + years.map(function(y){
     var active = y === _htHistoryYear;
-    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="border:1.5px solid '+(active?'#577B53':'#E1E4DF')+';background:'+(active?'#577B53':'#fff')+';color:'+(active?'#fff':'#767B75')+';border-radius:20px;padding:6px 16px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'+y+' <span style="font-weight:400;opacity:.85">（'+byYear[y].length+'）</span></button>';
+    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:1.5px solid '+(active?'#577B53':'#E1E4DF')+';background:'+(active?'#577B53':'#fff')+';color:'+(active?'#fff':'#767B75')+';border-radius:20px;padding:6px 12px 6px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'rgba(255,255,255,.24)':'#EAF1E9')+';color:'+(active?'#fff':'#577B53')+'">'+byYear[y].length+'</span></button>';
   }).join('') + '</div>';
 
   years.filter(function(y){ return y === _htHistoryYear; }).forEach(function(y) {
