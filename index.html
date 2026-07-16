@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716100604';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716101227';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1394,11 +1394,11 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
-/* 午茶日右側卡：本月行程／歷史回顧 分頁切換 */
-.ht-side-tab{flex:1;padding:14px 12px;border:none;background:#fff;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.1em;color:#9AA098;position:relative;transition:color .18s}
-.ht-side-tab.active{color:#2E332D}
-.ht-side-tab.active::after{content:'';position:absolute;left:22%;right:22%;bottom:-1px;height:2px;background:#577B53;border-radius:2px}
-.ht-side-tab:hover{color:#577B53}
+/* 午茶日右側卡：本月行程／歷史回顧 主分頁（膠囊按鈕式） */
+#ht-side-tabs{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid #f0f2ef}
+.ht-side-tab{flex:1;padding:10px 12px;border:1.5px solid #E1E4DF;background:#fff;border-radius:20px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.04em;color:#9AA098;transition:.15s}
+.ht-side-tab:hover{border-color:#B7CCB4;color:#577B53}
+.ht-side-tab.active{border-color:#577B53;background:#577B53;color:#fff}
 /* 總覽改版：拿掉側邊選單與底部導覽列，改用總覽入口卡片＋頂部膠囊返回總覽 */
 #sidebar-wrapper,#bottom-nav{display:none!important}
 </style>
@@ -3160,7 +3160,7 @@ thead th{color:#767B75!important}
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
-      <div style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(320px,.9fr);gap:16px;align-items:start">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
         <!-- 左側：日曆（外層卡片＋內層灰底日曆本體，樣式與按摩日曆統一，只有印章圖案不同） -->
         <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px 18px">
           <div style="background:#F7F8F6;border-radius:12px;padding:14px">
@@ -3198,9 +3198,9 @@ thead th{color:#767B75!important}
         <!-- 右側：本月行程／歷史回顧（同一張卡分頁切換，卡內捲動、不隨頁面滾動亂跑，也不佔額外高度） -->
         <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column">
           <!-- 分頁頭 -->
-          <div id="ht-side-tabs" style="display:flex;border-bottom:1px solid #f0f2ef">
-            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-side-tab active">本月行程</button>
-            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-side-tab">歷史回顧</button>
+          <div id="ht-side-tabs">
+            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-side-tab active">📅 本月行程</button>
+            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-side-tab">🕘 歷史回顧</button>
           </div>
           <!-- 本月行程 -->
           <div id="ht-side-month">
@@ -11041,10 +11041,10 @@ function htRenderEvents() {
     + '<span style="font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 14px;border-radius:20px">共 '+ history.length +' 場</span>'
     + '</div>';
 
-  // 年份切換膠囊列（場數改用圓標）
-  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">' + years.map(function(y){
+  // 年份切換（底線切換式；場數用圓標）
+  html += '<div style="display:flex;gap:2px;border-bottom:1.5px solid #ECEEEA;margin-bottom:16px">' + years.map(function(y){
     var active = y === _htHistoryYear;
-    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:1.5px solid '+(active?'#577B53':'#E1E4DF')+';background:'+(active?'#577B53':'#fff')+';color:'+(active?'#fff':'#767B75')+';border-radius:20px;padding:6px 12px 6px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'rgba(255,255,255,.24)':'#EAF1E9')+';color:'+(active?'#fff':'#577B53')+'">'+byYear[y].length+'</span></button>';
+    return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:8px 14px 10px;margin-bottom:-1.5px;font-size:14px;font-weight:700;color:'+(active?'#2E332D':'#9AA098')+';cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:'+(active?'inset 0 -2px 0 #577B53':'none')+'">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'#577B53':'#EAF1E9')+';color:'+(active?'#fff':'#577B53')+'">'+byYear[y].length+'</span></button>';
   }).join('') + '</div>';
 
   years.filter(function(y){ return y === _htHistoryYear; }).forEach(function(y) {
