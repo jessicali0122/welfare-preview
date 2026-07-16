@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716104615';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716105010';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11959,7 +11959,8 @@ function htRenderCalendar() {
   for (var dd2 = 1; dd2 <= daysInMonth; dd2++) {
     if (_htHolidayForDate(y, m, dd2)) holCount++;
   }
-  subEl.textContent = (monthEvents.length ? '本月 ' + monthEvents.length + ' 場午茶日' : '本月尚無活動') + (holCount ? '　' + holCount + ' 個節假日' : '');
+  // 已移除「本月 X 場午茶日」小字（依需求）
+  if (subEl) subEl.style.display = 'none';
 
   // 當月活動行程列表
   if (!monthEvents.length) {
