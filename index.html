@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716102047';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716103156';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1394,11 +1394,6 @@ tbody td{font-size:var(--fs-base)!important}
   /* 品項分析兩欄並排卡片 → 單欄 */
   #ht-panel-analytics [style*="grid-template-columns:1fr 1fr"]{grid-template-columns:1fr!important}
 }
-/* 午茶日右側卡：本月行程／歷史回顧 主分頁（膠囊按鈕式） */
-#ht-side-tabs{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid #f0f2ef}
-.ht-side-tab{flex:1;padding:10px 12px;border:1.5px solid #E1E4DF;background:#fff;border-radius:20px;cursor:pointer;font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.04em;color:#9AA098;transition:.15s}
-.ht-side-tab:hover{border-color:#B7CCB4;color:#577B53}
-.ht-side-tab.active{border-color:#577B53;background:#577B53;color:#fff}
 /* 總覽改版：拿掉側邊選單與底部導覽列，改用總覽入口卡片＋頂部膠囊返回總覽 */
 #sidebar-wrapper,#bottom-nav{display:none!important}
 </style>
@@ -2787,7 +2782,6 @@ thead th{color:#767B75!important}
             <div style="font-size:12px;color:#9AA098;margin-top:4px">PDF、JPG、PNG、Excel · 單檔最大 10MB</div>
             <div style="display:flex;align-items:center;gap:10px;margin:12px 0 8px"><span style="flex:1;height:1px;background:#E1E4DF"></span><span style="font-size:12px;color:#B0B6AD">或</span><span style="flex:1;height:1px;background:#E1E4DF"></span></div>
             <button type="button" onclick="event.stopPropagation();document.getElementById('ocr-file-input').click()" style="width:100%;padding:9px;border:1.5px dashed #577B53;border-radius:10px;background:#F3F7F2;color:#577B53;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F3F7F2'">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
               📷 拍照掃描收據自動填入金額
             </button>
           </div>
@@ -3193,9 +3187,9 @@ thead th{color:#767B75!important}
         <!-- 右側：本月行程／歷史回顧（同一張卡分頁切換，卡內捲動、不隨頁面滾動亂跑，也不佔額外高度） -->
         <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column">
           <!-- 分頁頭 -->
-          <div id="ht-side-tabs">
-            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-side-tab active">📅 本月行程</button>
-            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-side-tab">🕘 歷史回顧</button>
+          <div id="ht-side-tabs" class="seg-track" style="margin:12px 14px">
+            <button id="ht-side-tab-month" type="button" onclick="htSwitchSideTab('month')" class="ht-tab-btn active">📅 本月行程</button>
+            <button id="ht-side-tab-history" type="button" onclick="htSwitchSideTab('history')" class="ht-tab-btn">🕘 歷史回顧</button>
           </div>
           <!-- 本月行程 -->
           <div id="ht-side-month">
@@ -3566,8 +3560,8 @@ thead th{color:#767B75!important}
       <!-- 左右並排：左日曆、右時段名單（同卡片內） -->
       <div id="ms-cal-layout" style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap">
 
-        <!-- 左：日曆（限制最大寬度，避免格子過大） -->
-        <div style="flex:1 1 0;min-width:300px;max-width:440px">
+        <!-- 左：日曆（與右側時段名單平均分配欄寬） -->
+        <div style="flex:1 1 0;min-width:280px">
           <div style="background:#F7F8F6;border-radius:12px;padding:14px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
               <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #E1E4DF;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#4A4F49" onmouseover="this.style.background='#f4f8f3'" onmouseout="this.style.background='#fff'">‹</button>
@@ -3594,7 +3588,7 @@ thead th{color:#767B75!important}
         </div>
 
         <!-- 右：時段名單／管理者開放編輯器／今日 QR -->
-        <div style="flex:1;min-width:280px">
+        <div style="flex:1 1 0;min-width:280px">
           <div id="ms-slots-panel" style="display:none">
             <div id="ms-slots-date" style="font-size:16px;font-weight:800;color:#2E332D;margin-bottom:14px;display:flex;align-items:center;gap:8px">
               <div style="width:4px;height:18px;background:linear-gradient(#577B53,#A9C4A5);border-radius:10px"></div>
