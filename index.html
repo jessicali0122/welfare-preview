@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716140633';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716173715';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3132,6 +3132,20 @@ thead th{color:#767B75!important}
       <div id="ht-year-timeline" style="margin-top:14px"></div>
     </div>
 
+    <!-- 🗳️ 活動當天限定：投票入口橫幅（有當天系統場次才顯示，點了直接進投票） -->
+    <div id="ht-today-vote-banner" style="display:none;margin-bottom:18px;background:linear-gradient(120deg,#577B53,#7C9B72);border-radius:16px;padding:16px 20px;box-shadow:0 2px 4px rgba(46,51,45,.08),0 10px 26px rgba(87,123,83,.28);cursor:pointer;position:relative;overflow:hidden" onclick="htGoVote()">
+      <div style="position:absolute;right:-10px;top:-14px;font-size:76px;opacity:.16;transform:rotate(12deg)">🍰</div>
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <span style="font-size:32px;line-height:1;animation:htvbounce 1.6s ease-in-out infinite">🗳️</span>
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:16px;font-weight:800;color:#fff;letter-spacing:.04em">今天是午茶日！吃飽喝足了嗎？</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.85);margin-top:3px">花 30 秒匿名評分，選出你的心頭好 🍀</div>
+        </div>
+        <span style="flex-shrink:0;background:#fff;color:#577B53;border-radius:22px;padding:10px 22px;font-size:15px;font-weight:800;box-shadow:0 4px 12px rgba(0,0,0,.14);white-space:nowrap">開始投票 →</span>
+      </div>
+    </div>
+    <style>@keyframes htvbounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}</style>
+
     <div id="ht-current-month-chip" style="display:none"></div>
 
     <!-- 活動指南 Tab（統計摘要 + 年曆 + 日曆 + 活動卡片） -->
@@ -4481,6 +4495,9 @@ async function _bfBoot() {
     document.head.appendChild(lp);
   })();
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
+  // 🔲 QR 報到 token：進站第一時間暫存——OAuth 登入整頁轉址與各處 replaceState 都會把
+  //    ?ms_token= 從網址洗掉，先存起來，登入完成後由 showApp 導向按摩頁自動完成報到
+  try { var _mst0 = new URLSearchParams(location.search).get('ms_token'); if (_mst0) _safeSsSet('bf_ms_token', _mst0); } catch(e) {}
   // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
   if (location.hash && location.hash.includes('id_token=')) {
     var _hashParams = new URLSearchParams(location.hash.slice(1));
@@ -4744,6 +4761,8 @@ function showApp() {
       let _restore = _mainViews.indexOf(_initHash) > -1 ? _initHash : 'dashboard';
       // 無權限的頁面（或未知 hash）→ 退回總覽，避免停在看不到的頁
       if (VIEW_CAP[_restore] && typeof can === 'function' && !can(VIEW_CAP[_restore])) _restore = 'dashboard';
+      // 🔲 掃 QR 報到進站：不論原本要去哪，直接導向按摩頁（massageLoad 會讀暫存 token 自動報到）
+      try { if (sessionStorage.getItem('bf_ms_token') || localStorage.getItem('bf_ms_token')) _restore = 'massage'; } catch(e) {}
       sw(_restore);
       history.replaceState({ view: _restore }, '', _restore === 'dashboard' ? (location.pathname + location.search) : ('#' + _restore));
     }
@@ -5261,6 +5280,8 @@ function applyDashboardBlocks() {
   if (msSub) {
     var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
     msSub.textContent = msHint || '每月可預約 2 次，點此查看時段';
+    // 沒快取（首次用這台裝置）→ 背景抓一次按摩資料，抓到後自動刷新此提示
+    if (!msHint && typeof window.msPrefetchHubData === 'function') window.msPrefetchHubData();
   }
   // 入口卡片：午茶日提示
   var htSub = document.getElementById('dash-hub-hightea-sub');
@@ -10712,9 +10733,34 @@ function _htUpdateCountdown() {
       heroWrap.style.display = '';
     }
   }
+  // ── 🗳️ 活動當天：顯示投票入口橫幅（僅系統場次；試算表唯讀場次無法投票）──
+  var _vBanner = document.getElementById('ht-today-vote-banner');
+  if (_vBanner) {
+    var _todayEv = null;
+    for (var _vi = 0; _vi < upcoming.length; _vi++) {
+      if (Math.round((upcoming[_vi].d - now) / 86400000) === 0 && !upcoming[_vi].ev._sheet) { _todayEv = upcoming[_vi].ev; break; }
+    }
+    if (_todayEv) { _vBanner.style.display = ''; _vBanner.setAttribute('data-eid', _todayEv.eventId); }
+    else _vBanner.style.display = 'none';
+  }
   if (!upcoming.length) { if (wtip) wtip.style.display = 'none'; return; }
   // 倒數重點已融入頁首 Hero（ht-hero-next-wrap），僅保留天氣提示
   _htLoadWeather(String(upcoming[0].ev.date || '').replace(/\//g, '-'));
+};
+
+// 橫幅點擊：開啟當天活動詳情並自動捲到投票卡
+window.htGoVote = function() {
+  var b = document.getElementById('ht-today-vote-banner');
+  var eid = b && b.getAttribute('data-eid');
+  if (!eid) return;
+  htOpenDetail(eid).then(function() {
+    // 等 htVoteInit 抓完投票狀態後捲過去（投票卡或結果卡）
+    setTimeout(function() {
+      var w = document.getElementById('ht-vote-wrap');
+      var t = (w && w.style.display !== 'none') ? w : document.getElementById('ht-detail-panel');
+      if (t) t.scrollIntoView({ behavior: 'smooth', block: w && w.style.display !== 'none' ? 'center' : 'end' });
+    }, 900);
+  }).catch(function(){});
 };
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
@@ -13679,7 +13725,10 @@ window.massageLoad = async function() {
     // QR token 報到偵測：讀到當下立即從網址移除（不等 API 回應），避免留在瀏覽器歷史/分享連結
     var urlParams = new URLSearchParams(window.location.search);
     var msToken = urlParams.get('ms_token');
+    // 網址參數被登入轉址洗掉時，改用進站時暫存的 token（_bfBoot 存入）
+    if (!msToken) { try { msToken = sessionStorage.getItem('bf_ms_token') || localStorage.getItem('bf_ms_token'); } catch(e) {} }
     if (msToken) {
+      try { sessionStorage.removeItem('bf_ms_token'); localStorage.removeItem('bf_ms_token'); } catch(e) {}
       var _cleanUrl = new URL(window.location.href);
       _cleanUrl.searchParams.delete('ms_token');
       window.history.replaceState({}, '', _cleanUrl.toString());
@@ -13758,6 +13807,26 @@ window.msGetNextBookingHint = function() {
   var parts = nd.split('-');
   var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
   return '下次預約 ' + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '(' + wd + ') ' + (upcoming[0].timeSlot || '');
+};
+
+// 首頁入口卡背景預抓：本裝置還沒有按摩快取時，背景抓一次資料寫入快取並刷新卡片提示，
+// 讓「本月已預約 X 次／下次預約」不必等使用者先進過按摩頁才顯示
+window.msPrefetchHubData = function() {
+  if (_msData || window._msHubPrefetching) return;
+  if (_msLoadLocal()) return; // 已有快取（msGetNextBookingHint 會直接用）
+  window._msHubPrefetching = true;
+  htApi('massageGetData', {}).then(function(r) {
+    if (!(r && r.ok)) return;
+    try {
+      localStorage.setItem(_msStoreKey(), JSON.stringify({
+        openDates: r.openDates || {}, myBookings: r.myBookings || [],
+        allBookings: r.allBookings || [], pendingRequests: r.pendingRequests || [],
+        settings: r.settings || null
+      }));
+    } catch(e) {}
+    var dv = document.getElementById('view-dashboard');
+    if (typeof applyDashboardBlocks === 'function' && dv && dv.classList.contains('active')) applyDashboardBlocks();
+  }).catch(function(){});
 };
 
 // ── 按摩預約專屬公告欄（scope='massage'，與首頁/午茶日獨立）──
@@ -14018,7 +14087,6 @@ function msShowSlots(dateStr) {
   }).length;
   var overMonthLimit = monthBookCnt >= (settings.monthlyLimit || 2);
   var cancelFreeLeft = (settings.cancelFreeLimit || 1) - (_msData.monthlyCancelCount || 0);
-  var slotDateLabel = parseInt(parts[1]) + '/' + parseInt(parts[2]) + '（' + days[dt2.getDay()] + '）';
   list.innerHTML = slots.map(function(s) {
     var isMySlot = myBook && myBook.timeSlot === s.time;
     var isTodayDate = dateStr === fmtDateStr(new Date());
@@ -14084,18 +14152,15 @@ function msShowSlots(dateStr) {
       nameChips.push('<span style="display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px dashed #D2D6D0;border-radius:20px;padding:3px 12px;font-size:12px;color:#9AA098">'
         + '<span style="width:20px;height:20px;border-radius:50%;border:1.5px dashed #D2D6D0;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#D2D6D0;flex-shrink:0">＋</span>空位</span>');
     }
-    var attendeeRow = '<div style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:10px 12px;margin-top:12px">'
-      + '<div style="font-size:12px;letter-spacing:.08em;color:#738e41;margin:0 0 8px 2px">本時段名單</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + nameChips.join('') + '</div>'
-      + '</div>';
-
-    return '<div style="background:#fff;border:1px solid #ECEEEA;border-left:4px solid ' + accentColor + ';border-radius:16px;padding:14px 16px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
-      + '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
-      + '<div style="display:flex;flex-direction:column;gap:2px;min-width:76px;line-height:1.2"><span style="font-size:12px;font-weight:700;color:#738e41">' + slotDateLabel + '</span><span style="font-size:18px;font-weight:800;color:#2E332D">🕐 ' + s.time + '</span></div>'
-      + '<div style="flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center">' + badge + remaining + '</div>'
-      + '<div style="display:flex;gap:6px;flex-wrap:wrap">' + actionBtn + '</div>'
+    // 單列緊湊排版：時間｜狀態籤＋剩位｜名單 chips（同排接在右邊）｜操作鈕
+    // 日期不再逐卡重複（面板標題已顯示「M 月 D 日（週）」）
+    return '<div style="background:#fff;border:1px solid #ECEEEA;border-left:4px solid ' + accentColor + ';border-radius:16px;padding:12px 16px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
+      + '<div class="ms-t-main" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+      + '<span style="font-size:18px;font-weight:800;color:#2E332D;white-space:nowrap">🕐 ' + s.time + '</span>'
+      + badge + remaining
+      + '<div style="flex:1;display:flex;gap:6px;flex-wrap:wrap;align-items:center;min-width:150px">' + nameChips.join('') + '</div>'
+      + '<div class="ms-t-acts" style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">' + actionBtn + '</div>'
       + '</div>'
-      + attendeeRow
       + '</div>';
   }).join('');
 }
