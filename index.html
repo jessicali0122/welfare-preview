@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260716124019';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260716124723';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2029,12 +2029,12 @@ thead th{color:#767B75!important}
   .bnf-id-btn:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
   /* 卡片：狀態直接靠底色表達——已享有＝填滿綠底，未解鎖＝淡灰底，不再用右上角籤條（減少雜訊）；
      字級層次：名稱標題（16px 粗體）→ 內容（14px）→ 補充備註（12px 淡） */
-  /* 已享有：白綠底＋左側綠色條，乾淨有層次；未享有：白底＋清楚邊框，看得見但低調 */
-  .bnf-tile{border-radius:14px;padding:15px 18px;border:1px solid #C6DCC1;background:#EEF5EB;position:relative;transition:box-shadow .2s,transform .2s;box-shadow:inset 4px 0 0 #6B9A63,0 1px 2px rgba(46,51,45,.05),0 6px 16px rgba(87,123,83,.13)}
-  .bnf-tile:hover{box-shadow:inset 4px 0 0 #6B9A63,0 2px 5px rgba(46,51,45,.08),0 12px 24px rgba(87,123,83,.2);transform:translateY(-2px)}
+  /* 已享有：暖橘黃底＋左側橘色條（凸顯色系）；未享有：白底＋清楚邊框，看得見但低調 */
+  .bnf-tile{border-radius:14px;padding:15px 18px;border:1px solid #F0D9B4;background:#FFF7EA;position:relative;transition:box-shadow .2s,transform .2s;box-shadow:inset 4px 0 0 #F2A03D,0 1px 2px rgba(46,51,45,.05),0 6px 16px rgba(224,130,10,.12)}
+  .bnf-tile:hover{box-shadow:inset 4px 0 0 #F2A03D,0 2px 5px rgba(46,51,45,.08),0 12px 24px rgba(224,130,10,.18);transform:translateY(-2px)}
   .bnf-tile.off{background:#fff;border-color:#DCE0D8;box-shadow:0 1px 3px rgba(46,51,45,.06)}
   .bnf-tile.off:hover{box-shadow:0 1px 3px rgba(46,51,45,.06);transform:none}
-  .bnf-tile.portal{border:1.5px dashed #E8B27A;background:#FFFBF4;cursor:pointer}
+  .bnf-tile.portal{border:1.5px dashed #A9C4A5;background:#F6F9F5;cursor:pointer}
   .bnf-tile.portal:hover{box-shadow:0 4px 14px rgba(224,130,10,.14);transform:translateY(-2px)}
   .bnf-tile.portal:focus-visible{outline:2px solid #E0820A;outline-offset:2px}
   .bnf-tile .bnf-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -2042,13 +2042,13 @@ thead th{color:#767B75!important}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
   .bnf-tile .bnf-name{font-size:16px;font-weight:700;color:#2E332D;letter-spacing:.02em}
   .bnf-tile.off .bnf-name{color:#6F756B}
-  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#3E5A3B;line-height:1.5}
+  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#B0803A;line-height:1.5}
   .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
-  .bnf-tile.portal .bnf-state{color:#C9760A}
-  .bnf-tile .bnf-note{font-size:12px;color:#7E9179;margin-top:4px;line-height:1.6}
+  .bnf-tile.portal .bnf-state{color:#577B53}
+  .bnf-tile .bnf-note{font-size:12px;color:#C9A876;margin-top:4px;line-height:1.6}
   .bnf-tile.off .bnf-note{color:#B0B6AD}
-  .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#E0820A;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(224,130,10,.22)}
-  .bnf-tile.portal:hover .bnf-cta{background:#C9760A}
+  .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#577B53;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(87,123,83,.22)}
+  .bnf-tile.portal:hover .bnf-cta{background:#4A6A47}
   @media(prefers-reduced-motion:reduce){.bnf-tile.portal:hover{transform:none}}
   </style>
   <script>
@@ -13247,12 +13247,23 @@ window.massageLoad = async function() {
       settings: { monthlyLimit: 2, cancelFreeLimit: 1, cancelDeadlineHours: 24, violationPenaltyCount: 3,
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: [],
-      _loading: !_isDemo   // 真實使用者：標記載入中，日曆顯示 loading 而非空白/假資料
+      _loading: !_isDemo   // 真實使用者：預設載入中；下方若有本地快取則立即秒開
     };
-    // 本地快取不再於初始就套用（會先閃過時的預約/開放日造成誤會）；
-    // 改為只在後端連不上時 fallback（見 msFetchData 的 catch）
     _msSlotTemplates = _msData.settings.slotTemplates;
     _msPendingRequests = _msData.pendingRequests;
+    // ⚡ 快取秒開：真實使用者先套上次同步的本地快取立即渲染（不再等後端），
+    //    背景 msFetchData() 抓到最新資料後無痕替換重繪
+    if (!_isDemo) {
+      var _saved0 = (typeof _msLoadLocal === 'function') ? _msLoadLocal() : null;
+      if (_saved0 && (_saved0.myBookings || _saved0.openDates)) {
+        if (_saved0.openDates) _msData.openDates = _saved0.openDates;
+        if (_saved0.myBookings) _msData.myBookings = _saved0.myBookings;
+        if (_saved0.allBookings) _msData.allBookings = _saved0.allBookings;
+        if (_saved0.pendingRequests) { _msData.pendingRequests = _saved0.pendingRequests; _msPendingRequests = _saved0.pendingRequests; }
+        if (_saved0.settings) { _msData.settings = _saved0.settings; _msSlotTemplates = _saved0.settings.slotTemplates || []; }
+        _msData._loading = false; // 有快取→直接畫，不顯示載入中
+      }
+    }
   }
   // 每次進頁都依當前角色重算管理旗標（避免沿用舊值、或後端連不上時未更新）
   if (_msData) {
