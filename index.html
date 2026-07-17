@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717085445';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717091413';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3906,6 +3906,17 @@ thead th{color:#767B75!important}
       <button class="btn btn-o" onclick="msCloseModify()">取消</button>
       <button class="btn btn-p" onclick="msConfirmModify()">確認修改</button>
     </div>
+  </div>
+</div>
+
+<!-- 預約詳情彈窗（方案C）：票卡與日曆時段名單共用的單一操作中心（報到／修改／取消） -->
+<div id="ms-detail-modal" class="modal-bg" onclick="if(event.target===this)msCloseBookingDetail()">
+  <div style="background:#fff;border-radius:20px;width:380px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="background:#577B53;padding:14px 20px;display:flex;align-items:center;justify-content:space-between">
+      <span style="color:#fff;font-size:14px;font-weight:700;letter-spacing:.1em">我的預約</span>
+      <button onclick="msCloseBookingDetail()" style="background:none;border:none;color:#fff;cursor:pointer;font-size:20px;line-height:1;padding:0">×</button>
+    </div>
+    <div id="ms-detail-body"></div>
   </div>
 </div>
 <!-- ══ end 按摩預約 View ══ -->
@@ -14179,10 +14190,9 @@ function msShowSlots(dateStr) {
     var isFuture = new Date(dateStr + 'T' + s.time + ':00') > new Date();
     var actionBtn = '';
     if (isMySlot && myBook && myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
-      if (canCheckIn) actionBtn += '<button onclick="msCheckIn(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">✓ 立即報到</button>';
-      actionBtn += '<button onclick="msOpenModify(\'' + myBook.bookingId + '\',\'' + dateStr + '\',\'' + s.time + '\')" style="background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">✏ 修改</button>';
-      if (canCancelNormal) actionBtn += '<button onclick="msCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap">取消</button>';
-      else actionBtn += '<button onclick="msRequestCancel(\'' + myBook.bookingId + '\',\'' + dateStr + '\')" style="background:#F2F5F1;color:#577B53;border:1.5px solid #C3D4C0;border-radius:20px;padding:7px 12px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;white-space:nowrap">申請取消</button>';
+      // 方案C：報到/修改/取消收斂到「預約詳情彈窗」，此處只留單一入口（名字籤也可點）
+      actionBtn = (canCheckIn ? '<button onclick="msOpenBookingDetail(\'' + myBook.bookingId + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">✓ 報到／管理</button>'
+        : '<button onclick="msOpenBookingDetail(\'' + myBook.bookingId + '\')" style="background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">⚙ 管理預約 ›</button>');
     } else if (!isMySlot && myWaitEntry) {
       badge = '<span style="background:#EDF1EC;color:#577B53;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">🕐 候補中（第 ' + myWaitEntry.position + ' 位）</span>';
       actionBtn = '<button onclick="msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')" style="background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap">取消候補</button>';
@@ -14211,9 +14221,12 @@ function msShowSlots(dateStr) {
       var chipBg = mine ? 'linear-gradient(135deg,#e9f1e7,#F3F7F2)' : '#F5F6F8';
       var chipBd = mine ? '#8FAE8B' : '#D8DCE3';
       var nmColor = mine ? '#2E332D' : '#5A6172';
-      return '<span style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1.5px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:' + nmColor + ';font-weight:' + (mine ? '700' : '500') + ';box-shadow:0 1px 3px rgba(46,51,45,.06)">'
+      // 自己的籤可點 → 預約詳情彈窗（方案C 入口之一）
+      var _chipClick = mine ? ' onclick="msOpenBookingDetail(\'' + b.bookingId + '\')"' : '';
+      return '<span' + _chipClick + ' style="display:inline-flex;align-items:center;gap:6px;background:' + chipBg + ';border:1.5px solid ' + chipBd + ';border-radius:20px;padding:3px 10px 3px 4px;font-size:12px;color:' + nmColor + ';font-weight:' + (mine ? '700' : '500') + ';box-shadow:0 1px 3px rgba(46,51,45,.06)' + (mine ? ';cursor:pointer' : '') + '">'
         + avHtml
         + htEsc(nm) + (mine ? '（我）' : '') + (attended ? ' <span style="color:#16a34a">✓</span>' : '')
+        + (mine && !attended ? ' <span style="color:#577B53;font-weight:800">›</span>' : '')
         + '</span>';
     });
     // 空位 placeholder
@@ -14393,6 +14406,80 @@ function _msUpdateBookingStatus(bookingId, status) {
     var b = arr.find(function(x){return x.bookingId===bookingId;}); if(b) b.status=status;
   });
 }
+
+// 供除錯／測試用：讀取按摩模組內部狀態（閉包變數無法從外部觸及）
+window._msDebugData = function(){ return _msData; };
+
+// ── 預約詳情彈窗（方案C）：票卡與時段名單的共同操作中心 ──
+window.msOpenBookingDetail = function(bookingId) {
+  var b = ((_msData && _msData.myBookings) || []).find(function(x){ return x.bookingId === bookingId; });
+  if (!b) { toast('找不到這筆預約'); return; }
+  var body = document.getElementById('ms-detail-body');
+  if (!body) return;
+  var s = b.status || 'booked';
+  var parts = (b.date || '').split('-');
+  var weekDays = ['日','一','二','三','四','五','六'];
+  var wd = parts.length === 3 ? weekDays[new Date(b.date + 'T00:00:00').getDay()] : '';
+  var isToday = b.date === fmtDateStr(new Date());
+  var now = new Date();
+  var settings = (_msData && _msData.settings) || {};
+  var appointmentTime = new Date(b.date + 'T' + (b.timeSlot || '00:00') + ':00');
+  var cancelFreeLeft = Math.max(0, (settings.cancelFreeLimit || 1) - (_msData.monthlyCancelCount || 0));
+  var canCancelNormal = s === 'booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime - now) > (settings.cancelDeadlineHours || 24) * 3600000 && cancelFreeLeft > 0;
+  var canCheckIn = s === 'booked' && isToday && !b.deleteRequested && !b.cancelRequested;
+  var canModify = s === 'booked' && !b.deleteRequested && !b.cancelRequested;
+  // 狀態籤
+  var chip;
+  if (b.deleteRequested)      chip = '<span style="background:#FDF2F2;color:#B94A48;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🗑 申請刪除中</span>';
+  else if (b.cancelRequested) chip = '<span style="background:#F2F5F1;color:#577B53;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">⏳ 申請取消中</span>';
+  else if (s === 'attended')  chip = '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">✓ 已報到</span>';
+  else if (isToday)           chip = '<span style="background:#FFF4E4;color:#E0820A;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🔔 今天按摩</span>';
+  else                        chip = '<span style="background:#E9F1E7;color:#3E5A3B;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">💆 已預約</span>';
+  // 同時段夥伴（排除自己）
+  var myEmail = (_msData && _msData.userEmail) || '';
+  var mates = ((_msData && _msData.allBookings) || []).filter(function(x){
+    return x.date === b.date && x.timeSlot === b.timeSlot && (x.status === 'booked' || x.status === 'attended') && x.userEmail !== myEmail;
+  }).map(function(x){ return givenName(x.userName) || (x.userEmail || '').split('@')[0]; });
+  // 本月已約次數
+  var monthCnt = ((_msData && _msData.myBookings) || []).filter(function(x){
+    if (x.status !== 'booked' && x.status !== 'attended') return false;
+    var xd = new Date(x.date + 'T00:00:00');
+    return xd.getFullYear() === now.getFullYear() && xd.getMonth() === now.getMonth();
+  }).length;
+  // 操作按鈕
+  var acts = '';
+  if (canCheckIn) acts += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\');msCloseBookingDetail()" style="width:100%;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">✓ 立即報到</button>';
+  if (canModify) {
+    acts += '<div style="display:flex;gap:8px">'
+      + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
+      + (canCancelNormal
+        ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消預約</button>'
+        : '<button onclick="msCloseBookingDetail();msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#FDF2F2;color:#B94A48;border:1.5px solid #F0C9C8;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">申請取消</button>')
+      + '</div>';
+  }
+  if (!acts) acts = '<div style="text-align:center;color:#9AA098;font-size:14px;padding:4px 0 2px">此預約目前沒有可執行的操作</div>';
+  body.innerHTML =
+      '<div style="padding:18px 20px 6px;text-align:center">'
+    +   '<div style="font-size:14px;color:#9AA098">' + parseInt(parts[1] || 0) + ' 月 ' + parseInt(parts[2] || 0) + ' 日（' + wd + '）</div>'
+    +   '<div style="font-size:32px;font-weight:800;color:#2E332D;line-height:1.3">' + htEsc(b.timeSlot || '—') + '</div>'
+    +   '<div style="margin-top:6px">' + chip + '</div>'
+    + '</div>'
+    + '<div style="padding:14px 20px 4px">'
+    +   '<div style="background:#F7F8F6;border-radius:12px;padding:10px 12px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">'
+    +     '<span>同時段夥伴：' + (mates.length ? htEsc(mates.join('、')) : '目前只有你') + '</span>'
+    +     '<span>本月已預約 ' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次 · 免審核取消剩 ' + cancelFreeLeft + ' 次</span>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
+    +   acts
+    +   '<div style="font-size:12px;color:#9AA098;text-align:center;margin-top:2px">取消期限：時段前 ' + (settings.cancelDeadlineHours || 24) + ' 小時（已過期限需申請）</div>'
+    + '</div>';
+  document.getElementById('ms-detail-modal').classList.add('open');
+};
+window.msCloseBookingDetail = function() {
+  var m = document.getElementById('ms-detail-modal');
+  if (m) m.classList.remove('open');
+};
 
 // ── 修改預約 ──
 var _msModifyBookingId = null, _msModifyOrigDate = null, _msModifyOrigTime = null;
@@ -14626,16 +14713,14 @@ function msBookingCard(b, isUpcoming) {
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot||'00:00') + ':00');
   var settings = (_msData && _msData.settings) || {};
   var cancelFreeLeft = (settings.cancelFreeLimit||1) - (_msData.monthlyCancelCount||0);
-  var canCancelNormal = isUpcoming && s==='booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime-now) > (settings.cancelDeadlineHours||24)*3600000 && cancelFreeLeft > 0;
   var isTodayDate = b.date === fmtDateStr(new Date());
   var canCheckIn = isUpcoming && s==='booked' && isTodayDate && !b.deleteRequested;
+  // 方案C：票卡不再放操作按鈕排，改為整張卡可點 → 開「預約詳情彈窗」集中操作（報到/修改/取消）
   var actions = '';
-  var _btnBase = 'flex:0 0 auto;justify-content:center;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:4px';
-  if (canCheckIn) actions += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;font-weight:700">✓ 報到</button>';
-  if (isUpcoming && s==='booked' && !b.deleteRequested && !b.cancelRequested) {
-    actions += '<button onclick="msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot||'') + '\')" style="'+_btnBase+';background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;font-weight:600">✏ 修改</button>';
-    if (canCancelNormal) actions += '<button onclick="msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:#fff;color:#9AA098;border:1.5px solid #E1E4DF">取消</button>';
-    else actions += '<button onclick="msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="'+_btnBase+';background:#FDF2F2;color:#B94A48;border:1.5px solid #F0C9C8;font-weight:600">申請取消</button>';
+  if (isUpcoming) {
+    actions = canCheckIn
+      ? '<span style="flex:0 0 auto;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;white-space:nowrap">✓ 點卡報到</span>'
+      : '<span style="flex:0 0 auto;color:#9AA098;font-size:12px;font-weight:600;white-space:nowrap">管理 ›</span>';
   }
 
   var parts = (b.date||'').split('-');
@@ -14660,8 +14745,9 @@ function msBookingCard(b, isUpcoming) {
   var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   var mAbbr = (month>=1 && month<=12) ? mNames[month-1] : '';
 
-  // ── 橫式票根（比照午茶日：左日期徽章＋主票面，中間撕票孔，右存根依狀態上色；操作獨立成底部一整排）──
-  return '<div style="border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff">'
+  // ── 橫式票根（比照午茶日票根風）；即將到來的票卡整張可點 → 預約詳情彈窗（方案C）──
+  var _cardClick = isUpcoming ? ' onclick="msOpenBookingDetail(\'' + b.bookingId + '\')" onmouseover="this.style.boxShadow=\'0 4px 14px rgba(87,123,83,.2)\'" onmouseout="this.style.boxShadow=\'0 1px 3px rgba(46,51,45,.08)\'"' : '';
+  return '<div' + _cardClick + ' style="border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.08);margin-bottom:12px;background:#fff;transition:box-shadow .18s' + (isUpcoming ? ';cursor:pointer' : '') + '">'
     // 票根本體
     + '<div style="display:flex">'
     //   主票面（手機 .ms-t-main 允許換行，操作鈕掉到第二排全寬，避免內容被擠成直排）
