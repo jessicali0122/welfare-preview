@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717140155';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717141543';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13824,6 +13824,7 @@ window.massageLoad = async function() {
       try { sessionStorage.removeItem('bf_ms_token'); localStorage.removeItem('bf_ms_token'); } catch(e) {}
       var _cleanUrl = new URL(window.location.href);
       _cleanUrl.searchParams.delete('ms_token');
+      _cleanUrl.searchParams.delete('openExternalBrowser');
       window.history.replaceState({}, '', _cleanUrl.toString());
       msCheckInFromQR(msToken);
     }
@@ -14576,7 +14577,9 @@ window.msGenerateQR = async function() {
     toast('❌ 產生失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error');
     return;
   }
-  var url = window.location.origin + window.location.pathname + '?ms_token=' + r.token;
+  // openExternalBrowser=1：LINE 官方參數——用 LINE 掃碼/開啟時自動跳轉到手機的 Safari/Chrome，
+  // 避免 Google 封鎖內建瀏覽器登入（iPhone 相機掃碼本來就開 Safari，不受影響）
+  var url = window.location.origin + window.location.pathname + '?openExternalBrowser=1&ms_token=' + r.token;
   // 只渲染到日曆右欄的「今日報到 QR」卡（進階管理不再重複顯示一份未包裝的 QR）
   var _hintText = '限今天（' + today + '）使用，一次性掃描即完成報到';
   var wrap = document.getElementById('ms-qr-canvas-wrap');
