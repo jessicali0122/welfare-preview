@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717091413';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717140155';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -2042,10 +2042,10 @@ thead th{color:#767B75!important}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
   .bnf-tile .bnf-name{font-size:16px;font-weight:700;color:#2E332D;letter-spacing:.02em}
   .bnf-tile.off .bnf-name{color:#6F756B}
-  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#B0803A;line-height:1.5}
+  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#8A5E14;line-height:1.5}
   .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
   .bnf-tile.portal .bnf-state{color:#577B53}
-  .bnf-tile .bnf-note{font-size:12px;color:#C9A876;margin-top:4px;line-height:1.6}
+  .bnf-tile .bnf-note{font-size:12px;color:#A07A38;margin-top:4px;line-height:1.6}
   .bnf-tile.off .bnf-note{color:#B0B6AD}
   .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#577B53;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(87,123,83,.22)}
   .bnf-tile.portal:hover .bnf-cta{background:#4A6A47}
@@ -4508,7 +4508,23 @@ async function _bfBoot() {
   console.log('[BeneFlow] 頁面載入，localStorage bf_user:', !!localStorage.getItem('bf_user'));
   // 🔲 QR 報到 token：進站第一時間暫存——OAuth 登入整頁轉址與各處 replaceState 都會把
   //    ?ms_token= 從網址洗掉，先存起來，登入完成後由 showApp 導向按摩頁自動完成報到
-  try { var _mst0 = new URLSearchParams(location.search).get('ms_token'); if (_mst0) _safeSsSet('bf_ms_token', _mst0); } catch(e) {}
+  try {
+    var _mst0 = new URLSearchParams(location.search).get('ms_token');
+    if (_mst0) {
+      _safeSsSet('bf_ms_token', _mst0);
+      // 掃碼進站的登入提示：App 內建瀏覽器（LINE／相機預覽）會被 Google 擋登入，引導改用系統瀏覽器
+      setTimeout(function() {
+        var ls = document.getElementById('login-screen');
+        if (ls && ls.style.display !== 'none' && !document.getElementById('ms-qr-login-hint')) {
+          var d = document.createElement('div');
+          d.id = 'ms-qr-login-hint';
+          d.style.cssText = 'margin:14px auto 0;max-width:320px;background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:10px 14px;font-size:13px;color:#B0701F;line-height:1.7;text-align:left';
+          d.innerHTML = '🔲 <b>掃碼報到</b>：登入後會自動完成報到。<br>⚠️ 若點登入後沒反應或出錯，代表目前在 App 內建瀏覽器（LINE 等），請點選單改用 <b>Safari／Chrome 開啟此頁</b>再登入。';
+          ls.appendChild(d);
+        }
+      }, 400);
+    }
+  } catch(e) {}
   // OAuth implicit flow 回傳：#id_token=...（GIS 完全失敗時的 fallback）
   if (location.hash && location.hash.includes('id_token=')) {
     var _hashParams = new URLSearchParams(location.hash.slice(1));
@@ -5089,7 +5105,10 @@ function logout() {
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token'); // 同時清除備援 token
   sessionStorage.removeItem('bf_token');
+  // 清除頁面記憶：登出後重新登入一律回到總覽首頁，不停留在登出前的頁面
+  try { sessionStorage.removeItem('bf_return_hash'); } catch(e) {}
   currentUser = null;
+  history.replaceState({}, '', location.pathname); // 去掉 #hash 與查詢參數
   location.reload();
 }
 
@@ -14548,8 +14567,8 @@ window.msGenerateQR = async function() {
   if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR 與管理者可以產生報到 QR Code'); return; }
   var today = fmtDateStr(new Date());
   // 即時回饋：先顯示產生中（自動產生與手動重整都適用）
-  ['ms-qr-display','ms-adv-qr-display'].forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = ''; });
-  ['ms-qr-hint','ms-adv-qr-hint'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = '⏳ QR Code 產生中…'; });
+  var _qd = document.getElementById('ms-qr-display'); if (_qd) _qd.style.display = '';
+  var _qh = document.getElementById('ms-qr-hint'); if (_qh) _qh.textContent = '⏳ QR Code 產生中…';
   var r;
   try { r = await htApi('massageGenerateQRToken', { date: today }); } catch(e) {}
   if (!r || !r.ok) {
@@ -14558,21 +14577,20 @@ window.msGenerateQR = async function() {
     return;
   }
   var url = window.location.origin + window.location.pathname + '?ms_token=' + r.token;
-  // 同時渲染到「進階管理」常駐區與日曆右欄（哪個存在就畫哪個）
+  // 只渲染到日曆右欄的「今日報到 QR」卡（進階管理不再重複顯示一份未包裝的 QR）
   var _hintText = '限今天（' + today + '）使用，一次性掃描即完成報到';
-  [['ms-adv-qr-canvas-wrap','ms-adv-qr-display','ms-adv-qr-hint'],
-   ['ms-qr-canvas-wrap','ms-qr-display','ms-qr-hint']].forEach(function(ids){
-    var wrap = document.getElementById(ids[0]);
-    var display = document.getElementById(ids[1]);
-    var hint = document.getElementById(ids[2]);
-    if (wrap) {
-      wrap.innerHTML = '';
-      if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
-      else wrap.textContent = url;
-    }
-    if (hint) hint.textContent = _hintText;
-    if (display) display.style.display = '';
-  });
+  var wrap = document.getElementById('ms-qr-canvas-wrap');
+  var display = document.getElementById('ms-qr-display');
+  var hint = document.getElementById('ms-qr-hint');
+  if (wrap) {
+    wrap.innerHTML = '';
+    if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
+    else wrap.textContent = url;
+  }
+  if (hint) hint.textContent = _hintText;
+  if (display) display.style.display = '';
+  // 進階管理裡的舊 QR 容器一律隱藏
+  var _adv = document.getElementById('ms-adv-qr-display'); if (_adv) _adv.style.display = 'none';
   toast('✅ QR Code 已產生');
 };
 window.msCheckInFromQR = async function(token) {
@@ -14719,8 +14737,8 @@ function msBookingCard(b, isUpcoming) {
   var actions = '';
   if (isUpcoming) {
     actions = canCheckIn
-      ? '<span style="flex:0 0 auto;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;white-space:nowrap">✓ 點卡報到</span>'
-      : '<span style="flex:0 0 auto;color:#9AA098;font-size:12px;font-weight:600;white-space:nowrap">管理 ›</span>';
+      ? '<span style="flex:0 0 auto;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(34,197,94,.3)">✓ 點卡報到</span>'
+      : '<span style="flex:0 0 auto;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap">⚙ 管理 ›</span>';
   }
 
   var parts = (b.date||'').split('-');
@@ -14761,8 +14779,10 @@ function msBookingCard(b, isUpcoming) {
     //     內容
     +     '<div style="flex:1;min-width:0">'
     +       '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
-    +       '<div style="font-size:20px;font-weight:900;color:#2E332D;line-height:1.15;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc(b.timeSlot||'—')+'</div>'
-    +       '<div style="font-size:12px;color:#577B53;font-weight:700;margin-top:3px">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</div>'
+    +       '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:1px">'
+    +         '<span style="font-size:26px;font-weight:900;color:#2E332D;line-height:1.1;white-space:nowrap">'+htEsc(b.timeSlot||'—')+'</span>'
+    +         '<span style="font-size:12px;color:#577B53;font-weight:700;white-space:nowrap">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</span>'
+    +       '</div>'
     +     '</div>'
     //     操作按鈕：桌面融入同一排靠右；手機由 .ms-t-acts media query 掉到第二排全寬
     +     (actions ? '<div class="ms-t-acts" style="flex-shrink:0;display:flex;gap:6px;align-self:center;flex-wrap:wrap;justify-content:flex-end">'+actions+'</div>' : '')
