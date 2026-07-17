@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717084837';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717085445';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3776,11 +3776,11 @@ thead th{color:#767B75!important}
               <select id="ms-new-slot-time" style="display:none"></select>
             </div>
           </div>
-          <!-- 今日報到 QR：管理者選到「今天」時自動顯示 -->
+          <!-- 今日報到 QR：管理者選到「今天」時自動顯示並自動產生；按鈕僅供 QR 有問題時重新產生 -->
           <div id="ms-qr-section" style="display:none;background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px;margin-top:12px">
             <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
               <div style="font-size:14px;font-weight:700;color:#2E332D">🔲 今日報到 QR Code</div>
-              <button onclick="msGenerateQR()" style="background:linear-gradient(135deg,#577B53,#8FAE8B);color:#fff;border:none;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">產生 QR Code</button>
+              <button onclick="msGenerateQR()" title="QR 無法掃描時，重新產生一組新的" style="background:#fff;color:#577B53;border:1.5px solid #CDD8CB;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#F3F7F2'" onmouseout="this.style.background='#fff'">🔄 重新產生</button>
             </div>
             <div id="ms-qr-display" style="display:none;text-align:center">
               <div id="ms-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #E1E4DF;border-radius:16px;margin-bottom:10px"></div>
@@ -4703,6 +4703,9 @@ function parseJwt(token) {
 
 function showApp() {
   window._appShown = true;
+  // let 宣告的 currentUser 不會自動掛上 window；統一補掛，
+  // 供跨 script 區塊（按摩快取 key、投票等）以 window.currentUser 讀取
+  window.currentUser = currentUser;
   _hideLoggingIn();  // 移除「登入中…」過場
   document.documentElement.style.background = '#F1F3EE';
   document.body.style.background = '#F1F3EE';
@@ -13691,7 +13694,10 @@ var _msPendingRequests = [];
 
 // ── 本地持久化（後端尚未實作 massage 端點，回「未知動作」，故以 localStorage 保存）──
 function _msStoreKey() {
-  return 'bf_ms_' + (((_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email)) || 'guest');
+  var em = (_msData && _msData.userEmail) || (window.currentUser && window.currentUser.email) || '';
+  // 保險：window.currentUser 未掛到時，改讀登入時存的 bf_user（否則 key 變 guest、快取永遠 miss）
+  if (!em) { try { em = (JSON.parse(localStorage.getItem('bf_user') || '{}').email) || ''; } catch(e) {} }
+  return 'bf_ms_' + (em || 'guest');
 }
 function _msSaveLocal() {
   if (!_msData) return;
@@ -14109,7 +14115,13 @@ function msShowSlots(dateStr) {
   var slots = openEntry ? msSlotsForDate(dateStr, openEntry.slots) : [];
   // 管理者選到「今天」且當天有開放按摩時，才自動顯示報到 QR
   var _qrSec = document.getElementById('ms-qr-section');
-  if (_qrSec) _qrSec.style.display = ((_msData && (_msData.isAdmin || _msData.isHR)) && dateStr === fmtDateStr(new Date()) && slots.length > 0) ? '' : 'none';
+  var _qrShow = !!((_msData && (_msData.isAdmin || _msData.isHR)) && dateStr === fmtDateStr(new Date()) && slots.length > 0);
+  if (_qrSec) _qrSec.style.display = _qrShow ? '' : 'none';
+  // 當天 QR 自動產生（每個日期每次進頁只自動產一次；輪詢重繪不會重覆打 API，也不會蓋掉現有 QR）
+  if (_qrShow && window._msQrAutoDate !== dateStr) {
+    window._msQrAutoDate = dateStr;
+    setTimeout(function(){ try { msGenerateQR(); } catch(e) {} }, 0);
+  }
   var allBk = (_msData && _msData.allBookings) || [];
   var myBookings = (_msData && _msData.myBookings) || [];
   var myBook = myBookings.find(function(b){ return b.date === dateStr && (b.status==='booked'||b.status==='attended'); });
@@ -14448,9 +14460,16 @@ window.msMarkNoshowDate = function(ds) {
 window.msGenerateQR = async function() {
   if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR 與管理者可以產生報到 QR Code'); return; }
   var today = fmtDateStr(new Date());
+  // 即時回饋：先顯示產生中（自動產生與手動重整都適用）
+  ['ms-qr-display','ms-adv-qr-display'].forEach(function(id){ var el = document.getElementById(id); if (el) el.style.display = ''; });
+  ['ms-qr-hint','ms-adv-qr-hint'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = '⏳ QR Code 產生中…'; });
   var r;
   try { r = await htApi('massageGenerateQRToken', { date: today }); } catch(e) {}
-  if (!r || !r.ok) { toast('❌ 產生失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
+  if (!r || !r.ok) {
+    ['ms-qr-hint','ms-adv-qr-hint'].forEach(function(id){ var el = document.getElementById(id); if (el) el.textContent = '❌ 產生失敗，請點「重新產生」再試'; });
+    toast('❌ 產生失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error');
+    return;
+  }
   var url = window.location.origin + window.location.pathname + '?ms_token=' + r.token;
   // 同時渲染到「進階管理」常駐區與日曆右欄（哪個存在就畫哪個）
   var _hintText = '限今天（' + today + '）使用，一次性掃描即完成報到';
