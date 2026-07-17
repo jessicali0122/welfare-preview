@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717143022';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717150713';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14451,7 +14451,9 @@ window.msOpenBookingDetail = function(bookingId) {
   var chip;
   if (b.deleteRequested)      chip = '<span style="background:#FDF2F2;color:#B94A48;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🗑 申請刪除中</span>';
   else if (b.cancelRequested) chip = '<span style="background:#F2F5F1;color:#577B53;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">⏳ 申請取消中</span>';
-  else if (s === 'attended')  chip = '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">✓ 已報到</span>';
+  else if (s === 'attended')  chip = /遲到/.test(String(b.cancelReason||''))
+    ? '<span style="background:#FFF4E4;color:#D9932C;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">⏰ 遲到報到</span>'
+    : '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">✓ 已報到</span>';
   else if (isToday)           chip = '<span style="background:#FFF4E4;color:#E0820A;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🔔 今天按摩</span>';
   else                        chip = '<span style="background:#E9F1E7;color:#3E5A3B;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">💆 已預約</span>';
   // 同時段夥伴（排除自己）
@@ -14467,7 +14469,7 @@ window.msOpenBookingDetail = function(bookingId) {
   }).length;
   // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
-  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室<br>掃描現場 QR Code 完成報到</div>';
+  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室掃描現場 QR Code<br><span style="font-size:12px;font-weight:600">時段前 5 分鐘開放・超過 5 分鐘算遲到・30 分鐘後需管理者補登</span></div>';
   if (canModify) {
     acts += '<div style="display:flex;gap:8px">'
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
@@ -14601,8 +14603,8 @@ window.msCheckInFromQR = async function(token) {
   var url = new URL(window.location.href);
   url.searchParams.delete('ms_token');
   window.history.replaceState({}, '', url.toString());
-  if (!r || !r.ok) { toast('❌ 報到失敗：' + (r && r.error ? r.error : 'QR Code 無效或已使用'), 'error'); return; }
-  toast('✅ 報到成功！');
+  if (!r || !r.ok) { toast('❌ 報到失敗：' + (r && r.error ? r.error : 'QR Code 無效或已過期'), 'error'); return; }
+  toast(r.late ? '✅ 報到成功（遲到 ' + (r.lateMin || '') + ' 分鐘，下次準時哦）' : '✅ 報到成功！');
   msRenderCal(); msRenderMyBookings();
 };
 
@@ -14654,7 +14656,9 @@ function msBookingCardCompact(b) {
   var weekday = parts.length===3 ? weekDays[new Date(b.date + 'T00:00:00').getDay()] : '';
   // 狀態 → 票頭配色
   var headerGrad, statusLabel;
-  if (s==='attended')       { headerGrad='linear-gradient(135deg,#6E8F4E,#9DB15F)'; statusLabel='✓ 已報到'; }
+  var _isLate = s==='attended' && /遲到/.test(String(b.cancelReason||''));
+  if (_isLate)              { headerGrad='linear-gradient(135deg,#D9932C,#E8B25A)'; statusLabel='⏰ 遲到報到'; }
+  else if (s==='attended')  { headerGrad='linear-gradient(135deg,#6E8F4E,#9DB15F)'; statusLabel='✓ 已報到'; }
   else if (s==='cancelled') { headerGrad='linear-gradient(135deg,#9AA098,#D2D6D0)'; statusLabel='✕ 已取消'; }
   else if (s==='noshow')    { headerGrad='linear-gradient(135deg,#f87171,#dc2626)'; statusLabel='⚠ 未報到'; }
   else                      { headerGrad='linear-gradient(135deg,#9AA098,#C2C7C1)'; statusLabel='已結束'; }
@@ -14759,6 +14763,7 @@ function msBookingCard(b, isUpcoming) {
   else if (isTodayOrange)      { stubColor='#E0820A'; statusIcon='🔔'; statusText='今天按摩'; statusEn='TODAY'; }
   else if (s==='booked' && !isUpcoming) { stubColor='#B0B6AD'; statusIcon='—'; statusText='未報到'; statusEn='NO CHECK-IN'; }
   else if (s==='booked')       { stubColor='#577B53'; statusIcon='💆'; statusText='已預約'; statusEn='BOOKED'; }
+  else if (s==='attended' && /遲到/.test(String(b.cancelReason||''))) { stubColor='#D9932C'; statusIcon='⏰'; statusText='遲到報到'; statusEn='LATE'; }
   else if (s==='attended')     { stubColor='#16a34a'; statusIcon='✓'; statusText='已報到'; statusEn='CHECKED IN'; }
   else if (s==='cancelled')    { stubColor='#9AA098'; statusIcon='✕'; statusText='已取消'; statusEn='CANCELLED'; }
   else                         { stubColor='#dc2626'; statusIcon='⚠'; statusText='缺席'; statusEn='NO SHOW'; }
