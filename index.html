@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717141543';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717143022';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14210,9 +14210,8 @@ function msShowSlots(dateStr) {
     var isFuture = new Date(dateStr + 'T' + s.time + ':00') > new Date();
     var actionBtn = '';
     if (isMySlot && myBook && myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
-      // 方案C：報到/修改/取消收斂到「預約詳情彈窗」，此處只留單一入口（名字籤也可點）
-      actionBtn = (canCheckIn ? '<button onclick="msOpenBookingDetail(\'' + myBook.bookingId + '\')" style="background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">✓ 報到／管理</button>'
-        : '<button onclick="msOpenBookingDetail(\'' + myBook.bookingId + '\')" style="background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">⚙ 管理預約 ›</button>');
+      // 方案C：修改/取消收斂到「預約詳情彈窗」；報到一律至現場掃 QR（防呆），此處只留管理入口
+      actionBtn = '<button onclick="msOpenBookingDetail(\'' + myBook.bookingId + '\')" style="background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:7px 16px;font-size:14px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">⚙ 管理預約 ›</button>';
     } else if (!isMySlot && myWaitEntry) {
       badge = '<span style="background:#EDF1EC;color:#577B53;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700">🕐 候補中（第 ' + myWaitEntry.position + ' 位）</span>';
       actionBtn = '<button onclick="msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')" style="background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:20px;padding:7px 14px;font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap">取消候補</button>';
@@ -14466,9 +14465,9 @@ window.msOpenBookingDetail = function(bookingId) {
     var xd = new Date(x.date + 'T00:00:00');
     return xd.getFullYear() === now.getFullYear() && xd.getMonth() === now.getMonth();
   }).length;
-  // 操作按鈕
+  // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
-  if (canCheckIn) acts += '<button onclick="msCheckIn(\'' + b.bookingId + '\',\'' + b.date + '\');msCloseBookingDetail()" style="width:100%;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border:none;border-radius:12px;padding:12px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit">✓ 立即報到</button>';
+  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室<br>掃描現場 QR Code 完成報到</div>';
   if (canModify) {
     acts += '<div style="display:flex;gap:8px">'
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
@@ -14739,8 +14738,9 @@ function msBookingCard(b, isUpcoming) {
   // 方案C：票卡不再放操作按鈕排，改為整張卡可點 → 開「預約詳情彈窗」集中操作（報到/修改/取消）
   var actions = '';
   if (isUpcoming) {
+    // 報到防呆：當天不提供自行報到，改提示至現場掃 QR（點卡仍可開彈窗看詳情/修改/取消）
     actions = canCheckIn
-      ? '<span style="flex:0 0 auto;background:linear-gradient(135deg,#22c55e,#16a34a);color:#fff;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(34,197,94,.3)">✓ 點卡報到</span>'
+      ? '<span style="flex:0 0 auto;background:#FFF4E4;color:#E0820A;border:1.5px solid #F0C48A;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap">🔲 現場掃碼報到</span>'
       : '<span style="flex:0 0 auto;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap">⚙ 管理 ›</span>';
   }
 
