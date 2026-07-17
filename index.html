@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717150713';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717215607';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14469,7 +14469,7 @@ window.msOpenBookingDetail = function(bookingId) {
   }).length;
   // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
-  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室掃描現場 QR Code<br><span style="font-size:12px;font-weight:600">時段前 5 分鐘開放・超過 5 分鐘算遲到・30 分鐘後需管理者補登</span></div>';
+  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室掃描現場 QR Code<br><span style="font-size:12px;font-weight:600">時段前 5 分鐘開放・超過 5 分鐘算遲到・時段結束（15 分鐘）後需管理者補登</span></div>';
   if (canModify) {
     acts += '<div style="display:flex;gap:8px">'
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
@@ -14618,7 +14618,7 @@ function msRenderMyBookings() {
     var t = /^\d{1,2}:\d{2}$/.test(b.timeSlot||'') ? b.timeSlot : '23:59';
     var d = new Date(String(b.date||'').replace(/\//g,'-') + 'T' + t.padStart(5,'0') + ':00');
     if (isNaN(d.getTime())) { d = new Date(b.date); d.setHours(23,59,0,0); }
-    d.setMinutes(d.getMinutes() + 30); // 時段結束緩衝 30 分鐘
+    d.setMinutes(d.getMinutes() + 20); // 時段結束緩衝：每節 15 分鐘＋5 分寬限
     return d;
   };
   // 即將到來：只留「尚未結束」且未取消的預約（含當天當下）
