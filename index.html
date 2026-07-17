@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717215607';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260717220312';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3758,6 +3758,11 @@ thead th{color:#767B75!important}
               <input id="ms-open-date-inp" type="hidden">
               <div style="margin:0 0 7px">
                 <span style="font-size:12px;color:#767B75">開放時段與名額</span>
+              </div>
+              <!-- 一鍵套用標準按摩日班表（每節15分鐘、每時段1人、自動跳過11:00/13:00師傅休息） -->
+              <div style="display:flex;gap:8px;margin-bottom:8px">
+                <button onclick="msDraftApplyMDay('half')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）" style="flex:1;background:#EDF1EC;border:1.5px solid #CDD8CB;color:#577B53;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 半天班表<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
+                <button onclick="msDraftApplyMDay('full')" title="09:00–15:15，每15分鐘一節、每節1人，跳過11:00與13:00師傅休息（共24節）" style="flex:1;background:#EDF1EC;border:1.5px solid #CDD8CB;color:#577B53;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天班表<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
               </div>
               <div id="ms-draft-slots"></div>
               <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #CDD8CB;color:#577B53;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
@@ -15013,9 +15018,10 @@ window.msInlineEditCapacity = async function(ds, idx, newVal) {
 // ── 開放日期：整合式草稿編輯器（日期＋時段＋名額一次完成、每天可單獨編輯） ──
 var _msDraftSlots = [];
 function _msTimeSelectHtml(selected) {
+  // 15 分鐘刻度（實際班表每節 15 分鐘）
   var opts = '';
   for (var h = 8; h <= 20; h++) {
-    for (var mn = 0; mn < 60; mn += 30) {
+    for (var mn = 0; mn < 60; mn += 15) {
       var t = pad2(h) + ':' + pad2(mn);
       opts += '<option value="' + t + '"' + (t === selected ? ' selected' : '') + '>' + t + '</option>';
     }
@@ -15039,7 +15045,33 @@ function msRenderDraftSlots() {
       + '</div>';
   }).join('');
 }
-window.msDraftAddSlot = function() { _msDraftSlots.push({ time:'10:00', capacity:2 }); msRenderDraftSlots(); };
+window.msDraftAddSlot = function() {
+  // 預設接在最後一個時段後 15 分鐘（符合每節 15 分鐘的實際班表）、每節 1 人
+  var t = '09:00';
+  if (_msDraftSlots.length) {
+    var last = _msDraftSlots[_msDraftSlots.length - 1].time || '09:00';
+    var hm = last.split(':');
+    var min = (parseInt(hm[0], 10) || 9) * 60 + (parseInt(hm[1], 10) || 0) + 15;
+    t = ('0' + Math.floor(min / 60)).slice(-2) + ':' + ('0' + (min % 60)).slice(-2);
+  }
+  _msDraftSlots.push({ time: t, capacity: 1 });
+  msRenderDraftSlots();
+};
+// 一鍵套用標準 M-Day 班表：每節 15 分鐘、每節 1 人；11:00 與 13:00 為師傅休息時間自動跳過
+// half＝09:00–12:45（15 節）；full＝09:00–15:15（24 節）
+window.msDraftApplyMDay = function(mode) {
+  var BREAKS = { '11:00': 1, '13:00': 1 };
+  var endMin = (mode === 'full') ? (15 * 60 + 15) : (12 * 60 + 45);
+  var slots = [];
+  for (var m = 9 * 60; m <= endMin; m += 15) {
+    var t = ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
+    if (BREAKS[t]) continue; // 師傅休息時間
+    slots.push({ time: t, capacity: 1 });
+  }
+  _msDraftSlots = slots;
+  msRenderDraftSlots();
+  toast('⚡ 已套用' + (mode === 'full' ? '全天' : '半天') + '班表：' + slots.length + ' 節（跳過師傅休息時間）');
+};
 window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
 window.msDraftSlotChange = function(i, f, v) {
   if (!_msDraftSlots[i]) return;
