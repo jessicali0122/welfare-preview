@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719210228';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719210448';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11115,7 +11115,7 @@ window.htOpenSheetDetail = function (eventId) {
   var isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
   var rows = (s.items || []).map(function (it) {
     // 次行完整呈現原表單的負責人／訂購狀態／備註
-    var meta = [it.owner ? '負責人 ' + htEsc(it.owner) : '', it.ordered ? '訂購 ' + htEsc(it.ordered) : '', htEsc(it.note || '')].filter(Boolean).join('　');
+    var meta = [it.owner ? '負責人 ' + _htPersonBadge(it.owner) : '', it.ordered ? '訂購 ' + htEsc(it.ordered) : '', htEsc(it.note || '')].filter(Boolean).join('　');
     if (isMobile) {
       // 手機版：堆疊列（表格 5 欄在小螢幕會擠爆）
       return '<div style="border-bottom:1px solid #ECEEEA;padding:11px 2px">'
@@ -12912,8 +12912,8 @@ function _htUpdateQtyHint() {
 function htRenderDetailHeader() {
   var ev = _htEvent;
   document.getElementById('ht-detail-title').textContent = fmtMonth(ev.month) + ' 午茶日';
-  var orgLine = [ev.organizer1, ev.organizer2].filter(Boolean).join('・');
-  document.getElementById('ht-detail-subtitle').textContent = (ev.date||'日期待定') + ' · ' + ev.headcount + ' 人' + (orgLine ? ' · 主辦：' + orgLine : '');
+  var orgBadges = [ev.organizer1, ev.organizer2].filter(Boolean).map(_htPersonBadge).join(' ');
+  document.getElementById('ht-detail-subtitle').innerHTML = htEsc(ev.date||'日期待定') + ' · ' + htEsc(String(ev.headcount)) + ' 人' + (orgBadges ? ' · 主辦：' + orgBadges : '');
   var _dispStatus = _htDisplayStatus(ev);
   var sc = statusColor(_dispStatus);
   var badge = document.getElementById('ht-detail-status-badge');
@@ -13069,16 +13069,28 @@ async function _htShowRepeatWarning() {
 }
 
 function _htUserSelectHtml(idx, cur) {
-  // 負責人選項＝系統管理裡的成員（LOCAL_USER_LIST）
+  // 負責人選項＝標籤含「福委」的成員（與主辦人選項一致；角色資料未同步時退回全員）
+  var pool = LOCAL_USER_LIST.filter(function(u){ return (USER_ROLES[u.email] || []).indexOf('welfare') >= 0; });
+  if (!pool.length) pool = LOCAL_USER_LIST;
   var o = '<option value="">—</option>';
-  LOCAL_USER_LIST.forEach(function(u) {
+  pool.forEach(function(u) {
     o += '<option value="' + htEsc(u.name) + '"' + (u.name === cur ? ' selected' : '') + '>' + htEsc(u.name) + '</option>';
   });
-  // 舊資料若負責人不在成員清單中，補一個選項避免被清空
-  if (cur && LOCAL_USER_LIST.every(function(u){ return u.name !== cur; })) {
+  // 舊資料若負責人不在選項中，補一個選項避免被清空
+  if (cur && pool.every(function(u){ return u.name !== cur; })) {
     o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
   }
   return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#363B35" onfocus="this.style.borderColor=\'#577B53\'" onblur="this.style.borderColor=\'#ECEEEA\'">' + o + '</select>';
+}
+
+// 統一的人名徽章：淺綠底綠字圓角；是登入者本人時改實心綠底白字凸顯
+function _htPersonBadge(name) {
+  if (!name) return '';
+  var mine = window.currentUser && givenName(currentUser.name) && (name === currentUser.name || givenName(name) === givenName(currentUser.name));
+  var st = mine
+    ? 'background:#577B53;color:#fff;border:1px solid #577B53'
+    : 'background:#EAF1E9;color:#3E5A3B;border:1px solid #C9DAC6';
+  return '<span style="display:inline-block;' + st + ';border-radius:20px;padding:1px 10px;font-size:12px;font-weight:600;line-height:1.7;white-space:nowrap;vertical-align:1px">' + htEsc(givenName(name) || name) + (mine ? '（我）' : '') + '</span>';
 }
 
 var _htPastItemsCache = null;
