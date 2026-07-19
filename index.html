@@ -1,11 +1,11 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719210037';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719210228';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3452,7 +3452,7 @@ thead th{color:#767B75!important}
             <span style="color:#9AA098">　＝　</span>
             <span id="ht-calc-budget" style="font-weight:800;color:#577B53;font-size:15px">NT$0</span>
           </div>
-          <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px" id="ht-budget-cards"></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px" id="ht-budget-cards"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">支出進度</span></div>
@@ -13140,7 +13140,7 @@ function _htSmartCheck(hc) {
   });
   var perHead = totalQty / hc;
   var msgs = [];
-  if (perHead < 2)      msgs.push({ t:'⚠️ 份量偏少：目前約每人 ' + perHead.toFixed(1) + ' 份，建議至少 2～3 份', c:'#b45309', bg:'#FEF7EC' });
+  if (perHead < 2)      msgs.push({ t:'⚠️ 份量偏少：目前約每人 ' + perHead.toFixed(1) + ' 份，建議至少 2～3 份', c:'#C2456B', bg:'#FBE9EE' });
   else if (perHead > 5) msgs.push({ t:'💡 份量偏多：每人約 ' + perHead.toFixed(1) + ' 份，可能吃不完', c:'#6E8F6A', bg:'#F3F7F2' });
   else                  msgs.push({ t:'✅ 份量適中：每人約 ' + perHead.toFixed(1) + ' 份', c:'#3E5A3B', bg:'#F3F7F2' });
   // 智能推薦品類：缺的類別合併成一則提示，避免一排 chips 造成版面雜亂
@@ -13148,9 +13148,9 @@ function _htSmartCheck(hc) {
   CATS.forEach(function(c){
     var pct = totalQty ? Math.round(catQty[c] / totalQty * 100) : 0;
     if (!catQty[c]) missing.push(c);
-    else if (pct >= 60) msgs.push({ t:'📊 「' + c + '」占 ' + pct + '%，比例偏高，建議搭配其他類別', c:'#b45309', bg:'#FEF7EC' });
+    else if (pct >= 60) msgs.push({ t:'📊 「' + c + '」占 ' + pct + '%，比例偏高，建議搭配其他類別', c:'#C2456B', bg:'#FBE9EE' });
   });
-  if (missing.length) msgs.push({ t:'📌 可再補：' + missing.join('、'), c:'#b45309', bg:'#FEF7EC' });
+  if (missing.length) msgs.push({ t:'📌 可再補：' + missing.join('、'), c:'#C2456B', bg:'#FBE9EE' });
   else msgs.push({ t:'🎯 五類都有，搭配均衡', c:'#3E5A3B', bg:'#F3F7F2' });
   el.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">' + msgs.map(function(m){
     return '<span style="font-size:12px;font-weight:600;color:' + m.c + ';background:' + m.bg + ';border-radius:20px;padding:4px 12px">' + m.t + '</span>';
@@ -13335,7 +13335,7 @@ function htRenderBudget() {
   document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
     return '<div style="background:#F7F8F6;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;min-width:0">'
       + '<div style="font-size:20px;flex-shrink:0">'+c.icon+'</div>'
-      + '<div style="min-width:0"><div style="font-size:16px;font-weight:800;color:'+c.color+';line-height:1.2;overflow-wrap:anywhere">'+c.val+'</div>'
+      + '<div style="min-width:0"><div style="font-size:16px;font-weight:800;color:'+c.color+';line-height:1.2;white-space:nowrap">'+c.val+'</div>'
       + '<div style="font-size:12px;color:#9AA098">'+c.label+'</div></div>'
       + '</div>';
   }).join('');
