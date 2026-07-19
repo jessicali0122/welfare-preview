@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719210602';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719210713';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12903,10 +12903,9 @@ window._htvBuildForm = _htvBuildForm;
 window.htVoteRenderResults = htVoteRenderResults;
 
 function _htUpdateQtyHint() {
+  // 建議份數已併入下方智能提示膠囊列（_htSmartCheck），標題下不再獨佔一行
   var qtyHint = document.getElementById('ht-qty-hint');
-  if (!qtyHint) return;
-  var hc = (_htEvent && _htEvent.headcount) || 0;
-  qtyHint.textContent = hc > 0 ? '建議每項訂 ' + Math.ceil(hc / 8) + ' 份（' + hc + ' 人 ÷ 8）' : '';
+  if (qtyHint) qtyHint.textContent = '';
 }
 
 function htRenderDetailHeader() {
@@ -13140,7 +13139,12 @@ function _htSmartCheck(hc) {
   var el = document.getElementById('ht-smart-check');
   if (!el) return;
   var items = (_htItems || []).filter(function(it){ return (it.name||'').trim(); });
-  if (!items.length || !hc) { el.innerHTML = ''; return; }
+  // 建議份數（自標題副標移入）：有設定人數就顯示，品項未填時也給採買參考
+  var qtyChip = hc > 0 ? { t:'💡 建議每項訂 ' + Math.ceil(hc / 8) + ' 份（' + hc + ' 人 ÷ 8）', c:'#3E5A3B', bg:'#F3F7F2' } : null;
+  if (!items.length || !hc) {
+    el.innerHTML = qtyChip ? '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"><span style="font-size:12px;font-weight:600;color:' + qtyChip.c + ';background:' + qtyChip.bg + ';border-radius:20px;padding:4px 12px">' + qtyChip.t + '</span></div>' : '';
+    return;
+  }
   // 類別桶與下拉選單 _htCats、_htAutoCategory 一致（甜點/主食/鹹食/飲料/水果），避免自動分類的品項被誤丟「其他」
   var CATS = ['甜點','主食','鹹食','飲料','水果'];
   var totalQty = 0, catQty = { 甜點:0, 主食:0, 鹹食:0, 飲料:0, 水果:0, 其他:0 };
@@ -13152,6 +13156,7 @@ function _htSmartCheck(hc) {
   });
   var perHead = totalQty / hc;
   var msgs = [];
+  if (qtyChip) msgs.push(qtyChip);
   if (perHead < 2)      msgs.push({ t:'⚠️ 份量偏少：目前約每人 ' + perHead.toFixed(1) + ' 份，建議至少 2～3 份', c:'#C2456B', bg:'#FBE9EE' });
   else if (perHead > 5) msgs.push({ t:'💡 份量偏多：每人約 ' + perHead.toFixed(1) + ' 份，可能吃不完', c:'#6E8F6A', bg:'#F3F7F2' });
   else                  msgs.push({ t:'✅ 份量適中：每人約 ' + perHead.toFixed(1) + ' 份', c:'#3E5A3B', bg:'#F3F7F2' });
