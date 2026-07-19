@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719204009';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719204250';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11296,17 +11296,13 @@ function htRenderEvents() {
   // 年份切換：預設選最新一年，避免一次把所有年份的場次都攤開顯示
   if (!_htHistoryYear || years.indexOf(_htHistoryYear) < 0) _htHistoryYear = years[0];
 
-  // 標題已由右側卡分頁「歷史回顧」呈現，此處僅保留場數統計（靠右）
-  var html = '<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px;flex-wrap:wrap">'
-    + '<div style="flex:1"></div>'
-    + '<span style="font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 14px;border-radius:20px">共 '+ history.length +' 場</span>'
-    + '</div>';
-
-  // 年份切換（底線切換式；場數用圓標）
-  html += '<div style="display:flex;gap:2px;border-bottom:1.5px solid #ECEEEA;margin-bottom:16px">' + years.map(function(y){
+  // 年份切換（底線切換式；場數用圓標）＋「共 X 場」統計併同一排靠右
+  var html = '<div style="display:flex;gap:2px;align-items:center;border-bottom:1.5px solid #ECEEEA;margin-bottom:16px">' + years.map(function(y){
     var active = y === _htHistoryYear;
     return '<button onclick="htSwitchHistoryYear(\''+y+'\')" style="display:inline-flex;align-items:center;gap:6px;border:none;background:none;padding:8px 14px 10px;margin-bottom:-1.5px;font-size:14px;font-weight:700;color:'+(active?'#C9760A':'#9AA098')+';cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:'+(active?'inset 0 -2px 0 #E0820A':'none')+'">'+y+'<span style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:20px;font-size:12px;font-weight:700;background:'+(active?'#E0820A':'#FFF4E4')+';color:'+(active?'#fff':'#E0820A')+'">'+byYear[y].length+'</span></button>';
-  }).join('') + '</div>';
+  }).join('')
+    + '<span style="margin-left:auto;flex-shrink:0;font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 14px;border-radius:20px;margin-bottom:6px">共 '+ history.length +' 場</span>'
+    + '</div>';
 
   years.filter(function(y){ return y === _htHistoryYear; }).forEach(function(y) {
     var evs = byYear[y];
