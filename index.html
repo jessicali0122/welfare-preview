@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719095927';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719145846';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10644,13 +10644,25 @@ window.htOcrScan = async function(input) {
       var b64 = e.target.result.split(',')[1];
       var r = await htApi('htOcrReceipt', { imageBase64: b64, mimeType: file.type });
       if (r && r.ok && r.suggestedAmount) {
-        // 填入含稅金額欄位
+        // 填入含稅金額欄位（最後一張品項卡）
         var amtInputs = document.querySelectorAll('.inp.withtax');
-        if (amtInputs.length > 0) {
-          amtInputs[amtInputs.length-1].value = r.suggestedAmount;
-          amtInputs[amtInputs.length-1].dispatchEvent(new Event('input'));
+        var lastAmt = amtInputs.length ? amtInputs[amtInputs.length-1] : null;
+        if (lastAmt) {
+          lastAmt.value = r.suggestedAmount;
+          lastAmt.dispatchEvent(new Event('input'));
         }
-        if (resEl) { resEl.textContent='✅ 偵測金額 NT$' + Number(r.suggestedAmount).toLocaleString() + (r.vendor ? '（' + r.vendor + '）' : '') + '，已自動填入'; resEl.style.color='#16a34a'; }
+        // 同卡的「憑證日期」也自動帶入（僅在尚未填寫時，不覆蓋手動輸入）
+        var filledDate = '';
+        if (r.invoiceDate && /^\d{4}-\d{2}-\d{2}$/.test(r.invoiceDate) && lastAmt) {
+          var card = lastAmt.closest('.item-card');
+          var dateEl = card ? card.querySelector('.date-inp') : null;
+          if (dateEl && !dateEl.value) {
+            if (dateEl._flatpickr) dateEl._flatpickr.setDate(r.invoiceDate, true);
+            else { dateEl.value = r.invoiceDate; dateEl.dispatchEvent(new Event('change')); }
+            filledDate = r.invoiceDate;
+          }
+        }
+        if (resEl) { resEl.textContent='✅ 偵測金額 NT$' + Number(r.suggestedAmount).toLocaleString() + (r.vendor ? '（' + r.vendor + '）' : '') + (filledDate ? '、日期 ' + filledDate : '') + '，已自動填入'; resEl.style.color='#16a34a'; }
       } else {
         if (resEl) { resEl.textContent='⚠️ 無法識別金額，請手動輸入。' + (r && r.text ? '（識別文字：' + r.text.slice(0,40) + '…）' : ''); resEl.style.color='#577B53'; }
       }
@@ -10785,14 +10797,10 @@ function _htUpdateCountdown() {
     var _bnrTitle = _vBanner.querySelector('[data-vb="title"]');
     var _bnrSub = _vBanner.querySelector('[data-vb="sub"]');
     var _bnrBtn = _vBanner.querySelector('[data-vb="btn"]');
-    if (_todayEv) {
-      _vBanner.style.display = ''; _vBanner.setAttribute('data-eid', _todayEv.eventId); _vBanner.removeAttribute('data-sheet-ym');
-      if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日！吃飽喝足了嗎？';
-      if (_bnrSub) _bnrSub.textContent = '花 30 秒匿名評分，選出你的心頭好 🍀';
-      if (_bnrBtn) _bnrBtn.textContent = '開始投票 →';
-    } else if (_todaySheetEv) {
-      // 今天的場次是試算表版：一樣全員可投（票存 HT-<ym>，之後轉為系統活動票自動銜接）
-      _vBanner.style.display = ''; _vBanner.removeAttribute('data-eid'); _vBanner.setAttribute('data-sheet-ym', _todaySheetEv.month);
+    var _voteEv = _todayEv || _todaySheetEv;
+    if (_voteEv) {
+      // 系統場次與試算表場次都一樣：點橫幅在本頁就地展開「獨立投票面板」（不進活動管理表單）
+      _vBanner.style.display = ''; _vBanner.setAttribute('data-vote-ym', _voteEv.month || _evMonth(_voteEv));
       if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日！吃飽喝足了嗎？';
       if (_bnrSub) _bnrSub.textContent = '花 30 秒匿名評分，選出你的心頭好 🍀';
       if (_bnrBtn) _bnrBtn.textContent = '開始投票 →';
@@ -10803,21 +10811,12 @@ function _htUpdateCountdown() {
   _htLoadWeather(String(upcoming[0].ev.date || '').replace(/\//g, '-'));
 };
 
-// 橫幅點擊：系統場次→開啟活動詳情並捲到投票卡；試算表場次→直接在清單頁展開投票（免轉換）
+// 橫幅點擊：一律在午茶日主頁就地展開「獨立投票面板」——投票是給全員的，
+// 不帶大家進活動管理表單（品項/預算等僅福委使用）
 window.htGoVote = function() {
   var b = document.getElementById('ht-today-vote-banner');
-  var sheetYm = b && b.getAttribute('data-sheet-ym');
-  if (sheetYm) { htVoteOpenInline(sheetYm); return; }
-  var eid = b && b.getAttribute('data-eid');
-  if (!eid) return;
-  htOpenDetail(eid).then(function() {
-    // 等 htVoteInit 抓完投票狀態後捲過去（投票卡或結果卡）
-    setTimeout(function() {
-      var w = document.getElementById('ht-vote-wrap');
-      var t = (w && w.style.display !== 'none') ? w : document.getElementById('ht-detail-panel');
-      if (t) t.scrollIntoView({ behavior: 'smooth', block: w && w.style.display !== 'none' ? 'center' : 'end' });
-    }, 900);
-  }).catch(function(){});
+  var ym = b && b.getAttribute('data-vote-ym');
+  if (ym) htVoteOpenInline(ym);
 };
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
@@ -11061,10 +11060,17 @@ async function _htLoadSheetHistory() {
 }
 // 轉成歷史回顧卡片可用的偽事件；同月若平台也有場次，兩筆並列、各帶來源標籤
 function _htSheetAsEvents() {
-  // 同月若已有系統活動（含由試算表匯入的可編輯副本），隱藏唯讀試算表版，避免重複
-  var platMonths = {};
-  (_htEvents || []).forEach(function (e) { var m = _evMonth(e); if (m) platMonths[m] = 1; });
-  return _htSheetSessions.filter(function (s) { return !platMonths[s.ym]; }).map(function (s) {
+  // 去重改依「活動日期」：只有當系統活動與試算表場次是同一天（= 匯入副本）才隱藏試算表版；
+  // 同月不同日（例如另外建了測試場）時兩者並存，不再整月吃掉試算表場次
+  var platDates = {};
+  (_htEvents || []).forEach(function (e) {
+    var d = String(e.date || '').replace(/\//g, '-').slice(0, 10);
+    if (d) platDates[d] = 1;
+  });
+  return _htSheetSessions.filter(function (s) {
+    var sd = String(s.date || '').replace(/\//g, '-').slice(0, 10);
+    return !(sd && platDates[sd]);
+  }).map(function (s) {
     // 卡片標題只顯示「午茶日」：年月已在左側日期方塊呈現，不重複
     return { eventId: 'sheet:' + s.sheetName, month: s.ym, date: s.date || '',
              headcount: s.headcount || 0, itemCount: (s.items || []).length,
@@ -11847,6 +11853,10 @@ window.htSubmitCreate = async function() {
   if (window._htCreateLock) return;   // 防連點：避免建立多筆重複活動
   if (!document.getElementById('ht-new-date').value) { toast('請選擇活動日期'); return; }
   window._htCreateLock = true;
+  // 建立中回饋：按鈕轉載入狀態，避免使用者以為沒反應而重按
+  var _cbtn = document.getElementById('ht-create-submit-btn');
+  var _cbtnHtml = _cbtn ? _cbtn.innerHTML : '';
+  if (_cbtn) { _cbtn.disabled = true; _cbtn.style.opacity = '.65'; _cbtn.style.cursor = 'wait'; _cbtn.innerHTML = '⏳ 建立中…'; }
   try {
   var month;
   if (_htMonthFp && _htMonthFp.selectedDates && _htMonthFp.selectedDates.length) {
@@ -11886,7 +11896,10 @@ window.htSubmitCreate = async function() {
   toast('✅ 活動已建立');
   await htLoadList();
   if (r && r.eventId) { htOpenDetail(r.eventId); } else { toast('建立失敗', 'error'); }
-  } finally { window._htCreateLock = false; }
+  } finally {
+    window._htCreateLock = false;
+    if (_cbtn) { _cbtn.disabled = false; _cbtn.style.opacity = '1'; _cbtn.style.cursor = 'pointer'; _cbtn.innerHTML = _cbtnHtml; }
+  }
 };
 
 // ── 探店靈感 ──
@@ -12616,11 +12629,20 @@ window.htVoteOpenInline = async function(ym) {
   var voted = !!r.voted;
   try { voted = voted || !!localStorage.getItem('bf_ht_voted_' + _htvEventId); } catch(e) {}
   if (!voted) {
-    // 該月試算表場次的品項名稱
+    // 品項名稱：系統場次抓 htGetItems；試算表場次讀已載入的 session 品項
     var names = [];
-    (_htSheetSessions || []).forEach(function(s) {
-      if (s.ym === ym && !names.length) names = (s.items || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
-    });
+    var platEv = (_htEvents || []).filter(function(e){ return _evMonth(e) === ym; })[0];
+    if (platEv) {
+      try {
+        var ir = await htApi('htGetItems', { eventId: platEv.eventId });
+        names = (((ir || {}).items) || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
+      } catch(e) {}
+    }
+    if (!names.length) {
+      (_htSheetSessions || []).forEach(function(s) {
+        if (s.ym === ym && !names.length) names = (s.items || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
+      });
+    }
     _htvBuildForm(names);
     document.getElementById('ht-vote-form').style.display = '';
   }
@@ -15677,7 +15699,7 @@ if (document.getElementById('bulletin-list')) bulletinRender();
     </div>
     <div style="display:flex;gap:10px;margin-top:22px">
       <button onclick="htCloseCreate()" style="padding:11px 20px;border:1.5px solid #E1E4DF;background:#fff;color:#767B75;font-size:14px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='#fff'">取消</button>
-      <button onclick="htSubmitCreate()" style="flex:1;padding:11px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
+      <button id="ht-create-submit-btn" onclick="htSubmitCreate()" style="flex:1;padding:11px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;border-radius:10px;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">建立活動</button>
     </div>
   </div>
 </div>
