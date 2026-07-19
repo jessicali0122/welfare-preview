@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719203133';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719203426';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3860,11 +3860,8 @@ thead th{color:#767B75!important}
         <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月預約上限（次）
           <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
-        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月免審核取消次數
-          <input id="ms-cfg-cancel-free" type="number" min="0" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-        </label>
         <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">取消期限（時段前幾小時）
-          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="24" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
+          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
         </label>
         <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">違規幾次停權
           <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
@@ -13869,7 +13866,7 @@ window.massageLoad = async function() {
       isAdmin: (typeof can === 'function' ? can('massage.manage') : false),
       isMgr: (typeof can === 'function' ? can('massage.manage') : false),
       isHR: (typeof can === 'function' ? can('massage.manage') : false), suspended: false, violationCount: 0, monthlyCancelCount: 0,
-      settings: { monthlyLimit: 2, cancelFreeLimit: 1, cancelDeadlineHours: 24, violationPenaltyCount: 3,
+      settings: { monthlyLimit: 2, cancelDeadlineHours: 1, violationPenaltyCount: 3,
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: [],
       _loading: !_isDemo   // 真實使用者：預設載入中；下方若有本地快取則立即秒開
@@ -14375,7 +14372,7 @@ window.msBookConfirm = function(date, timeSlot) {
   var _label = isNaN(_dt) ? date : (date + '（週' + _wd[_dt.getDay()] + '）');
   _showConfirmModal(
     '確定要預約嗎？',
-    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>臨時無法前來可隨時取消；未取消且缺席會計入違規次數。',
+    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>時段前 1 小時皆可自行取消（免審核）；未取消且缺席會計入違規次數。',
     '確定預約', '#577B53',
     function() { return msBook(date, timeSlot); }
   );
@@ -14535,7 +14532,8 @@ window.msOpenBookingDetail = function(bookingId) {
   var now = new Date();
   var settings = (_msData && _msData.settings) || {};
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot || '00:00') + ':00');
-  var canCancelNormal = s === 'booked' && !b.cancelRequested && !b.deleteRequested;
+  var _cancelHrs = settings.cancelDeadlineHours || 1;
+  var canCancelNormal = s === 'booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime - now) > _cancelHrs * 3600000;
   var canCheckIn = s === 'booked' && isToday && !b.deleteRequested && !b.cancelRequested;
   var canModify = s === 'booked' && !b.deleteRequested && !b.cancelRequested;
   // 狀態籤
@@ -14566,7 +14564,7 @@ window.msOpenBookingDetail = function(bookingId) {
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#EDF1EC;color:#577B53;border:1.5px solid #CDD8CB;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
       + (canCancelNormal
         ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#fff;color:#9AA098;border:1.5px solid #E1E4DF;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消預約</button>'
-        : '<button onclick="msCloseBookingDetail();msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#FDF2F2;color:#B94A48;border:1.5px solid #F0C9C8;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">申請取消</button>')
+        : '<span style="flex:1;background:#F7F8F6;color:#B0B6AD;border:1.5px solid #E1E4DF;border-radius:12px;padding:11px;font-size:14px;font-weight:600;text-align:center;box-sizing:border-box">已過取消期限</span>')
       + '</div>';
   }
   if (!acts) acts = '<div style="text-align:center;color:#9AA098;font-size:14px;padding:4px 0 2px">此預約目前沒有可執行的操作</div>';
@@ -14584,7 +14582,7 @@ window.msOpenBookingDetail = function(bookingId) {
     + '</div>'
     + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
     +   acts
-    +   '<div style="font-size:12px;color:#9AA098;text-align:center;margin-top:2px">臨時無法前來請記得取消，把名額讓給其他同事</div>'
+    +   '<div style="font-size:12px;color:#9AA098;text-align:center;margin-top:2px">取消免審核，期限：時段前 ' + _cancelHrs + ' 小時</div>'
     + '</div>';
   document.getElementById('ms-detail-modal').classList.add('open');
 };
@@ -14983,7 +14981,7 @@ function msRenderAdmin() {
   msRenderPendingRequests();
   msRenderOpenDates();
   var s = _msData.settings || {};
-  var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-free': s.cancelFreeLimit||1, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||24, 'ms-cfg-violation': s.violationPenaltyCount||3 };
+  var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||1, 'ms-cfg-violation': s.violationPenaltyCount||3 };
   Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if(el) el.value = fields[id]; });
   msRenderSlotTemplates();
   msRenderDraftSlots();
@@ -15259,7 +15257,7 @@ window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTe
 
 window.msSaveSettings = async function() {
   if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以修改預約規則設定'); return; }
-  var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelFreeLimit: parseInt(document.getElementById('ms-cfg-cancel-free').value)||1, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||24, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
+  var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||1, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
   if (_msData) _msData.settings = s;
   _msSaveLocal();
   toast('✅ 設定已儲存');
