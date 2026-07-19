@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719205250';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719205353';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14548,11 +14548,12 @@ window.msOpenBookingDetail = function(bookingId) {
   var mates = ((_msData && _msData.allBookings) || []).filter(function(x){
     return x.date === b.date && x.timeSlot === b.timeSlot && (x.status === 'booked' || x.status === 'attended') && x.userEmail !== myEmail;
   }).map(function(x){ return givenName(x.userName) || (x.userEmail || '').split('@')[0]; });
-  // 本月已約次數
+  // 該預約「所屬月份」的已約次數（不是當下月份：七月看八月的預約，要算八月的額度）
+  var bMonthDate = new Date(b.date + 'T00:00:00');
   var monthCnt = ((_msData && _msData.myBookings) || []).filter(function(x){
     if (x.status !== 'booked' && x.status !== 'attended') return false;
     var xd = new Date(x.date + 'T00:00:00');
-    return xd.getFullYear() === now.getFullYear() && xd.getMonth() === now.getMonth();
+    return xd.getFullYear() === bMonthDate.getFullYear() && xd.getMonth() === bMonthDate.getMonth();
   }).length;
   // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
@@ -14575,7 +14576,7 @@ window.msOpenBookingDetail = function(bookingId) {
     + '<div style="padding:14px 20px 4px">'
     +   '<div style="background:#F7F8F6;border-radius:12px;padding:10px 12px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">'
     +     '<span>同時段夥伴：' + (mates.length ? htEsc(mates.join('、')) : '目前只有你') + '</span>'
-    +     '<span>本月已預約 ' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次</span>'
+    +     '<span>' + (bMonthDate.getMonth() + 1) + ' 月已預約 ' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次</span>'
     +   '</div>'
     + '</div>'
     + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
