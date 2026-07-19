@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719203802';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719204009';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3854,20 +3854,23 @@ thead th{color:#767B75!important}
     <div id="ms-settings-section" style="background:#F7F8F6;border-radius:12px;padding:16px 18px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
         <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
-        <div style="font-size:14px;font-weight:700;color:#2E332D">限制設定</div>
+        <div style="font-size:14px;font-weight:700;color:#2E332D">預約規則</div>
+        <span style="font-size:12px;color:#9AA098">固定規則，如需調整請找開發窗口</span>
       </div>
-      <!-- 4 個欄位 ＋ 儲存設定：桌面併排同一列；窄螢幕自動換行 -->
-      <div style="display:flex;gap:12px 14px;align-items:flex-end;flex-wrap:wrap">
-        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">每月預約上限（次）
-          <input id="ms-cfg-monthly" type="number" min="1" value="2" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-        </label>
-        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">取消期限（時段前幾小時）
-          <input id="ms-cfg-cancel-hrs" type="number" min="1" value="1" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-        </label>
-        <label style="flex:1;min-width:130px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:5px">違規幾次停權
-          <input id="ms-cfg-violation" type="number" min="1" value="3" style="border:1.5px solid #E1E4DF;border-radius:8px;padding:8px 10px;font-size:14px;font-family:inherit;background:#fff;box-sizing:border-box" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#E1E4DF'">
-        </label>
-        <button onclick="msSaveSettings()" style="flex-shrink:0;background:linear-gradient(135deg,#6B8F67,#46633F);color:#fff;border:none;border-radius:10px;padding:9px 22px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;height:38px">儲存設定</button>
+      <!-- 規則已定案並寫死在前後端，這裡只做唯讀展示 -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
+          <div style="font-size:12px;color:#767B75;margin-bottom:4px">📅 每月預約上限</div>
+          <div style="font-size:16px;font-weight:700;color:#2E332D">2 次<span style="font-size:12px;font-weight:500;color:#9AA098">／人</span></div>
+        </div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
+          <div style="font-size:12px;color:#767B75;margin-bottom:4px">↩️ 取消規則</div>
+          <div style="font-size:16px;font-weight:700;color:#2E332D">時段前 1 小時<span style="font-size:12px;font-weight:500;color:#9AA098">，免審核</span></div>
+        </div>
+        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
+          <div style="font-size:12px;color:#767B75;margin-bottom:4px">⚠️ 違規停權</div>
+          <div style="font-size:16px;font-weight:700;color:#2E332D">缺席 3 次<span style="font-size:12px;font-weight:500;color:#9AA098">（僅缺席計違規）</span></div>
+        </div>
       </div>
     </div>
 
@@ -14983,9 +14986,6 @@ function msRenderAdmin() {
   if (_setSec) _setSec.style.display = _msData.isMgr ? '' : 'none';
   msRenderPendingRequests();
   msRenderOpenDates();
-  var s = _msData.settings || {};
-  var fields = { 'ms-cfg-monthly': s.monthlyLimit||2, 'ms-cfg-cancel-hrs': s.cancelDeadlineHours||1, 'ms-cfg-violation': s.violationPenaltyCount||3 };
-  Object.keys(fields).forEach(function(id){ var el = document.getElementById(id); if(el) el.value = fields[id]; });
   msRenderSlotTemplates();
   msRenderDraftSlots();
   msRenderAdminTable();
@@ -15260,14 +15260,9 @@ window.msAddSlotTemplate = function() {
 };
 window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTemplates(); };
 
-window.msSaveSettings = async function() {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以修改預約規則設定'); return; }
-  var s = { monthlyLimit: parseInt(document.getElementById('ms-cfg-monthly').value)||2, cancelDeadlineHours: parseInt(document.getElementById('ms-cfg-cancel-hrs').value)||1, violationPenaltyCount: parseInt(document.getElementById('ms-cfg-violation').value)||3, slotTemplates: _msSlotTemplates };
-  if (_msData) _msData.settings = s;
-  _msSaveLocal();
-  toast('✅ 設定已儲存');
-  try { await htApi('massageSaveSettings', { settings: s }); } catch(e) {}
-};
+// 預約規則已定案寫死於前後端（每月 2 次、時段前 1 小時可自行取消免審核、缺席 3 次停權），
+// 「限制設定」表單改為唯讀展示，不再提供儲存
+
 
 // ── 所有預約紀錄（admin） ──
 function msRenderAdminTable() {
