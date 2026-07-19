@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719205657';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719205900';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10749,14 +10749,15 @@ window.htLoadList = async function() {
     }
   } catch(e){}
   _htLoadSheetHistory(); // 舊試算表歷史場次（唯讀，非阻塞，載回後自動補進歷史回顧）
+  var _prevEventsJson = JSON.stringify(_htEvents || []);
   var r = await htApi('htList');
   if (!r.ok) { toast('載入失敗：' + r.error); return; }
   _htEvents = r.events || [];
   try { var _hc2 = JSON.parse(localStorage.getItem('bf_ht_cache')||'{}'); _hc2.events = _htEvents; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc2)); } catch(e){}
   // 從後端同步公告（非阻塞）
   _bulletinSync();
-  htRenderList();
-  _htUpdateCountdown();
+  // 快取已先渲染過且資料無異動 → 不再重畫，避免頁面看起來「載入兩次」的閃動
+  if (JSON.stringify(_htEvents) !== _prevEventsJson) { htRenderList(); _htUpdateCountdown(); }
   // 預載廠商（共用 promise 防止重複呼叫）
   if (!_htVendors.length && !_htVendorsLoading) {
     _htVendorsLoading = htApi('htVendors').then(function(rv){
@@ -11061,12 +11062,14 @@ async function _htLoadSheetHistory() {
     return;
   }
   try {
+    var _prevSheetJson = JSON.stringify(_htSheetSessions || []);
     var r = await htApi('htSheetList');
     if (r && r.ok && Array.isArray(r.sessions)) {
       _htSheetSessions = r.sessions;
       _htSheetLoaded = true;
       try { var _hc = JSON.parse(localStorage.getItem('bf_ht_cache')||'{}'); _hc.sheets = r.sessions; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc)); } catch(e){}
-      if (_htListTab === 'events') { htRenderEvents(); htRenderYearTimeline(); htRenderCalendar(); _htUpdateCountdown(); }
+      // 與快取先渲染的內容相同 → 免重畫，避免二次閃動
+      if (_htListTab === 'events' && JSON.stringify(_htSheetSessions) !== _prevSheetJson) { htRenderEvents(); htRenderYearTimeline(); htRenderCalendar(); _htUpdateCountdown(); }
     }
     // 後端尚未部署 htSheetList 時安靜略過，不影響原功能
   } catch (e) {}
