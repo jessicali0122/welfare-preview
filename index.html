@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719205353';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719205453';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14292,9 +14292,12 @@ function msShowSlots(dateStr) {
     }
     var waitCount = ((_msData && _msData.waitlistCounts) || {})[dateStr + '|' + s.time] || 0;
     var myWaitEntry = ((_msData && _msData.myWaitlist) || []).find(function(w){ return w.date === dateStr && w.timeSlot === s.time; });
+    // 自己已預約的時段不再重複掛「額滿」灰籤（已預約籤已足夠說明），有候補人數才提示
     var remaining = s.remaining > 0
       ? '<span style="background:#F3F7F2;color:#577B53;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">剩 ' + s.remaining + ' 位</span>'
-      : '<span style="background:#ECEEEA;color:#9AA098;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">額滿' + (waitCount > 0 ? ' · 候補 ' + waitCount + ' 人' : '') + '</span>';
+      : (isMySlot
+        ? (waitCount > 0 ? '<span style="background:#ECEEEA;color:#9AA098;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">候補 ' + waitCount + ' 人</span>' : '')
+        : '<span style="background:#ECEEEA;color:#9AA098;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:600">額滿' + (waitCount > 0 ? ' · 候補 ' + waitCount + ' 人' : '') + '</span>');
     var isFuture = new Date(dateStr + 'T' + s.time + ':00') > new Date();
     var actionBtn = '';
     if (isMySlot && myBook && myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
@@ -14315,7 +14318,7 @@ function msShowSlots(dateStr) {
     var myEmail = (_msData && _msData.userEmail) || '';
     var nameChips = slotBookings.map(function(b){
       var nm = givenName(b.userName) || (b.userEmail||'').split('@')[0] || '同事';
-      var mine = b.userEmail && myEmail && b.userEmail === myEmail;
+      var mine = (b.userEmail && myEmail && b.userEmail === myEmail) || (myBook && b.bookingId && b.bookingId === myBook.bookingId);
       var attended = b.status === 'attended';
       var initial = (nm || '?').trim().charAt(0);
       // 頭貼：優先用成員同步下來的大頭貼（bf_avatar_<email>），沒有才退回色圈縮寫
