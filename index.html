@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719211012';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719211122';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14564,11 +14564,7 @@ window.msOpenBookingDetail = function(bookingId) {
     : '<span style="background:#dcfce7;color:#16a34a;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">✓ 已報到</span>';
   else if (isToday)           chip = '<span style="background:#FFF4E4;color:#E0820A;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🔔 今天按摩</span>';
   else                        chip = '<span style="background:#E9F1E7;color:#3E5A3B;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">💆 已預約</span>';
-  // 同時段夥伴（排除自己）
-  var myEmail = (_msData && _msData.userEmail) || '';
-  var mates = ((_msData && _msData.allBookings) || []).filter(function(x){
-    return x.date === b.date && x.timeSlot === b.timeSlot && (x.status === 'booked' || x.status === 'attended') && x.userEmail !== myEmail;
-  }).map(function(x){ return givenName(x.userName) || (x.userEmail || '').split('@')[0]; });
+  // 「同時段夥伴」已移除：每時段名額 1 人，無同時段夥伴可言
   // 該預約「所屬月份」的已約次數（不是當下月份：七月看八月的預約，要算八月的額度）
   var bMonthDate = new Date(b.date + 'T00:00:00');
   var monthCnt = ((_msData && _msData.myBookings) || []).filter(function(x){
@@ -14595,9 +14591,8 @@ window.msOpenBookingDetail = function(bookingId) {
     +   '<div style="margin-top:6px">' + chip + '</div>'
     + '</div>'
     + '<div style="padding:14px 20px 4px">'
-    +   '<div style="background:#F7F8F6;border-radius:12px;padding:10px 12px;font-size:12px;color:#767B75;display:flex;flex-direction:column;gap:4px">'
-    +     '<span>同時段夥伴：' + (mates.length ? htEsc(mates.join('、')) : '目前只有你') + '</span>'
-    +     '<span>' + (bMonthDate.getMonth() + 1) + ' 月已預約 ' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次</span>'
+    +   '<div style="background:#F7F8F6;border-radius:12px;padding:10px 12px;font-size:12px;color:#767B75">'
+    +     (bMonthDate.getMonth() + 1) + ' 月已預約 ' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次'
     +   '</div>'
     + '</div>'
     + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
