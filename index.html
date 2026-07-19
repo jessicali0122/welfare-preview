@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260717220312';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719095557';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10648,7 +10648,7 @@ window.htOcrScan = async function(input) {
           amtInputs[amtInputs.length-1].value = r.suggestedAmount;
           amtInputs[amtInputs.length-1].dispatchEvent(new Event('input'));
         }
-        if (resEl) { resEl.textContent='✅ 偵測金額 NT$' + Number(r.suggestedAmount).toLocaleString() + '，已自動填入'; resEl.style.color='#16a34a'; }
+        if (resEl) { resEl.textContent='✅ 偵測金額 NT$' + Number(r.suggestedAmount).toLocaleString() + (r.vendor ? '（' + r.vendor + '）' : '') + '，已自動填入'; resEl.style.color='#16a34a'; }
       } else {
         if (resEl) { resEl.textContent='⚠️ 無法識別金額，請手動輸入。' + (r && r.text ? '（識別文字：' + r.text.slice(0,40) + '…）' : ''); resEl.style.color='#577B53'; }
       }
