@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719145846';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719164115';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10800,7 +10800,7 @@ function _htUpdateCountdown() {
     var _voteEv = _todayEv || _todaySheetEv;
     if (_voteEv) {
       // 系統場次與試算表場次都一樣：點橫幅在本頁就地展開「獨立投票面板」（不進活動管理表單）
-      _vBanner.style.display = ''; _vBanner.setAttribute('data-vote-ym', _voteEv.month || _evMonth(_voteEv));
+      _vBanner.style.display = ''; _vBanner.setAttribute('data-vote-date', String(_voteEv.date || '').replace(/\//g, '-').slice(0, 10));
       if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日！吃飽喝足了嗎？';
       if (_bnrSub) _bnrSub.textContent = '花 30 秒匿名評分，選出你的心頭好 🍀';
       if (_bnrBtn) _bnrBtn.textContent = '開始投票 →';
@@ -10815,8 +10815,8 @@ function _htUpdateCountdown() {
 // 不帶大家進活動管理表單（品項/預算等僅福委使用）
 window.htGoVote = function() {
   var b = document.getElementById('ht-today-vote-banner');
-  var ym = b && b.getAttribute('data-vote-ym');
-  if (ym) htVoteOpenInline(ym);
+  var d = b && b.getAttribute('data-vote-date');
+  if (d) htVoteOpenInline(d);
 };
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
@@ -12592,12 +12592,16 @@ window.htVoteInit = async function() {
   document.getElementById('ht-vote-results').style.display = 'none';
   if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
   _htvSat = 0; _htvPicks = []; _htvVotes = null;
-  var evId = _htEvent.eventId;
+  // 投票鑰匙＝活動日期（HTD-yyyy-MM-dd）：同月多場（測試/正式）票各自獨立，日期不變票就跟著走
+  var evDateKey = String(_htEvent.date || '').replace(/\//g, '-').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(evDateKey)) return; // 未定日期的活動沒有投票
+  var evId = 'HTD-' + evDateKey;
+  var _openedEventId = _htEvent.eventId;
   _htvEventId = evId;
   var r = null;
   try { r = await htApi('htVoteGet', { eventId: evId }); } catch(e) {}
   if (!r || !r.ok) return;                          // 後端尚未部署投票 API → 安靜隱藏
-  if (!_htEvent || _htEvent.eventId !== evId) return; // 使用者已切到別場
+  if (!_htEvent || _htEvent.eventId !== _openedEventId) return; // 使用者已切到別場
   _htvVotes = r.votes || [];
   var isToday = String(_htEvent.date||'').replace(/\//g,'-') === _htvToday();
   var votedLocal = false; try { votedLocal = !!localStorage.getItem('bf_ht_voted_' + evId); } catch(e) {}
@@ -12609,19 +12613,20 @@ window.htVoteInit = async function() {
   if (showForm) { _htvBuildForm(); document.getElementById('ht-vote-form').style.display = ''; }
   if (showRes) htVoteRenderResults();
 };
-// 試算表唯讀場次：不用轉換，直接在午茶日清單頁（橫幅下方）展開投票；
-// 票以 HT-<yyyy-MM> 為鑰匙儲存，之後若轉為系統活動，票自動銜接顯示在詳情頁
-window.htVoteOpenInline = async function(ym) {
+// 獨立投票面板：在午茶日主頁（橫幅下方）就地展開，全員投票用，不進活動管理表單；
+// 票以「日期」為鑰匙（HTD-yyyy-MM-dd），系統場次與試算表場次通用、互不混票
+window.htVoteOpenInline = async function(dateStr) {
   var wrap = document.getElementById('ht-vote-wrap');
   var banner = document.getElementById('ht-today-vote-banner');
-  if (!wrap || !ym) return;
+  var dkey = String(dateStr || '').replace(/\//g, '-').slice(0, 10);
+  if (!wrap || !/^\d{4}-\d{2}-\d{2}$/.test(dkey)) return;
   if (banner && banner.parentElement) banner.parentElement.insertBefore(wrap, banner.nextSibling);
   wrap.style.display = '';
   document.getElementById('ht-vote-form').style.display = 'none';
   document.getElementById('ht-vote-results').style.display = 'none';
   if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
   _htvSat = 0; _htvPicks = []; _htvVotes = null;
-  _htvEventId = 'HT-' + ym;
+  _htvEventId = 'HTD-' + dkey;
   var r = null;
   try { r = await htApi('htVoteGet', { eventId: _htvEventId }); } catch(e) {}
   if (!r || !r.ok) { wrap.style.display = 'none'; if (typeof toast === 'function') toast('投票暫時無法使用，請稍後再試'); return; }
@@ -12629,9 +12634,9 @@ window.htVoteOpenInline = async function(ym) {
   var voted = !!r.voted;
   try { voted = voted || !!localStorage.getItem('bf_ht_voted_' + _htvEventId); } catch(e) {}
   if (!voted) {
-    // 品項名稱：系統場次抓 htGetItems；試算表場次讀已載入的 session 品項
+    // 品項名稱（依日期找該場）：系統場次抓 htGetItems；試算表場次讀已載入的 session 品項
     var names = [];
-    var platEv = (_htEvents || []).filter(function(e){ return _evMonth(e) === ym; })[0];
+    var platEv = (_htEvents || []).filter(function(e){ return String(e.date||'').replace(/\//g,'-').slice(0,10) === dkey; })[0];
     if (platEv) {
       try {
         var ir = await htApi('htGetItems', { eventId: platEv.eventId });
@@ -12640,7 +12645,8 @@ window.htVoteOpenInline = async function(ym) {
     }
     if (!names.length) {
       (_htSheetSessions || []).forEach(function(s) {
-        if (s.ym === ym && !names.length) names = (s.items || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
+        var sd = String(s.date||'').replace(/\//g,'-').slice(0,10);
+        if (sd === dkey && !names.length) names = (s.items || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
       });
     }
     _htvBuildForm(names);
