@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719164115';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719195931';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1920,9 +1920,7 @@ thead th{color:#767B75!important}
     <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 18px">LINKS・常用連結</div>
     <!-- 連結＝迷你服務磚（圓形 icon 底＋名稱＋↗），一排置中，與上方服務項目同一套視覺語言；不另外包框 -->
     <style>
-    .dash-link-tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:10px 18px 10px 12px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;width:min(300px,86vw);box-sizing:border-box}
-    .dash-link-tile .dl-name{flex:1}
-    .dash-link-tile .dl-arrow{margin-left:auto}
+    .dash-link-tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:10px 18px 10px 12px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;width:fit-content;max-width:86vw;box-sizing:border-box}
     .dash-link-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:linear-gradient(180deg,#F6CC62,#E38845);opacity:.85}
     .dash-link-tile.committee::before{background:linear-gradient(180deg,#8FAE8B,#577B53)}
     .dash-link-tile:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(46,51,45,.06),0 14px 30px rgba(87,123,83,.16)}
@@ -2044,10 +2042,10 @@ thead th{color:#767B75!important}
   .bnf-tile.off .bnf-icon{filter:grayscale(1);opacity:.45}
   .bnf-tile .bnf-name{font-size:16px;font-weight:700;color:#2E332D;letter-spacing:.02em}
   .bnf-tile.off .bnf-name{color:#6F756B}
-  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#8A5E14;line-height:1.5}
+  .bnf-tile .bnf-state{font-size:14px;font-weight:600;color:#4A4F49;line-height:1.5}
   .bnf-tile.off .bnf-state{font-size:14px;font-weight:500;color:#9AA098}
   .bnf-tile.portal .bnf-state{color:#577B53}
-  .bnf-tile .bnf-note{font-size:12px;color:#A07A38;margin-top:4px;line-height:1.6}
+  .bnf-tile .bnf-note{font-size:12px;color:#767B75;margin-top:4px;line-height:1.6}
   .bnf-tile.off .bnf-note{color:#B0B6AD}
   .bnf-tile.portal .bnf-cta{display:inline-flex;align-items:center;gap:6px;background:#577B53;color:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 2px 8px rgba(87,123,83,.22)}
   .bnf-tile.portal:hover .bnf-cta{background:#4A6A47}
@@ -3571,7 +3569,8 @@ thead th{color:#767B75!important}
 .htv-q .en{font-size:12px;font-weight:400;letter-spacing:.18em;color:#738e41}
 .htv-lab{text-align:center;font-size:14px;font-weight:700;color:#8A7A6A;margin-top:6px;min-height:20px}
 .htv-bigface{display:flex;justify-content:center;margin:14px 0 4px;line-height:0;min-height:132px}
-.htv-bigface svg{filter:drop-shadow(0 10px 18px rgba(80,60,40,.22));transition:transform .4s cubic-bezier(.3,1.6,.5,1)}
+/* 不加陰影濾鏡：iOS Safari 會把 drop-shadow 畫成方形外框 */
+.htv-bigface svg{background:none;box-shadow:none;filter:none;transition:transform .4s cubic-bezier(.3,1.6,.5,1)}
 .htv-fan{margin:2px auto 0;width:min(300px,100%)}
 .htv-fan svg{width:100%;display:block;overflow:visible}
 .htv-fan .wedge{cursor:pointer;transition:transform .25s cubic-bezier(.34,1.5,.6,1),filter .25s;transform-origin:160px 172px}
@@ -3629,6 +3628,23 @@ thead th{color:#767B75!important}
 @keyframes htvfly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(var(--rot))}}
 @media(max-width:640px){.htv-items{grid-template-columns:1fr}}
 </style>
+
+<!-- 🗳️ 午茶日投票專頁：全螢幕獨立頁面（點橫幅開啟；投票卡/結果卡由 JS 移入 body） -->
+<div id="ht-vote-page" style="display:none;position:fixed;inset:0;z-index:300;background:#F1F3EE;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:640px;margin:0 auto;padding:16px 16px 40px">
+    <div style="display:flex;align-items:center;gap:12px;margin:6px 0 16px">
+      <button onclick="htVoteClosePage()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #E1E4DF;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='#fff'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6e736d" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:18px;font-weight:700;color:#2E332D;letter-spacing:.08em">午茶日滿意度投票</div>
+        <div id="ht-vote-page-sub" style="font-size:12px;color:#9AA098;margin-top:2px">匿名 · 僅限活動當天</div>
+      </div>
+      <button data-cap="hightea.manage" onclick="htVoteKioskToggle(this)" style="flex-shrink:0;background:#fff;color:#577B53;border:1.5px solid #CDD8CB;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🖥 投票亭模式：關</button>
+    </div>
+    <div id="ht-vote-page-body"></div>
+  </div>
+</div>
 
 <!-- ══ 按摩預約 View ══ -->
 <div class="view" id="view-massage">
@@ -12617,10 +12633,19 @@ window.htVoteInit = async function() {
 // 票以「日期」為鑰匙（HTD-yyyy-MM-dd），系統場次與試算表場次通用、互不混票
 window.htVoteOpenInline = async function(dateStr) {
   var wrap = document.getElementById('ht-vote-wrap');
-  var banner = document.getElementById('ht-today-vote-banner');
   var dkey = String(dateStr || '').replace(/\//g, '-').slice(0, 10);
   if (!wrap || !/^\d{4}-\d{2}-\d{2}$/.test(dkey)) return;
-  if (banner && banner.parentElement) banner.parentElement.insertBefore(wrap, banner.nextSibling);
+  // 移入全螢幕投票專頁並開啟（跳離午茶日頁面，是一個獨立頁）
+  var pageBody = document.getElementById('ht-vote-page-body');
+  var page = document.getElementById('ht-vote-page');
+  if (pageBody && page) {
+    pageBody.appendChild(wrap);
+    page.style.display = '';
+    window._htvPrevBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    var sub = document.getElementById('ht-vote-page-sub');
+    if (sub) sub.textContent = dkey.slice(5).replace('-', '/') + ' 午茶日 · 匿名 · 僅限活動當天';
+  }
   wrap.style.display = '';
   document.getElementById('ht-vote-form').style.display = 'none';
   document.getElementById('ht-vote-results').style.display = 'none';
@@ -12652,9 +12677,31 @@ window.htVoteOpenInline = async function(dateStr) {
     _htvBuildForm(names);
     document.getElementById('ht-vote-form').style.display = '';
   }
-  if (_htvVotes.length) htVoteRenderResults();
-  else if (voted) { if (typeof toast === 'function') toast('你已投過票囉，感謝回饋 🙌'); }
-  setTimeout(function(){ wrap.scrollIntoView({ behavior:'smooth', block:'center' }); }, 120);
+  // 投票亭模式：不顯示結果（結果活動後才公開），只給投票表單
+  if (window._htvKiosk) {
+    document.getElementById('ht-vote-results').style.display = 'none';
+    if (voted) { _htvBuildForm([]); } // 亭模式不受個人已投限制（送出走隨機鑰匙）
+  } else {
+    if (_htvVotes.length) htVoteRenderResults();
+    else if (voted) { if (typeof toast === 'function') toast('你已投過票囉，感謝回饋 🙌'); }
+  }
+  var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
+};
+// 關閉投票專頁（返回午茶日頁面）
+window.htVoteClosePage = function() {
+  var page = document.getElementById('ht-vote-page');
+  if (page) page.style.display = 'none';
+  document.body.style.overflow = window._htvPrevBodyOverflow || '';
+  if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
+};
+// 🖥 投票亭模式（放公用 iPad）：福委在投票頁開啟後，每投完一票自動回到第一步讓下一位投，
+// 全程不顯示結果（結果由福委在活動詳情頁查看／活動後公開），送出改用隨機鑰匙不受單人限一票約束
+window.htVoteKioskToggle = function(btn) {
+  window._htvKiosk = !window._htvKiosk;
+  if (btn) { btn.textContent = window._htvKiosk ? '🖥 投票亭模式：開' : '🖥 投票亭模式：關'; btn.style.background = window._htvKiosk ? '#577B53' : '#fff'; btn.style.color = window._htvKiosk ? '#fff' : '#577B53'; }
+  toast(window._htvKiosk ? '🖥 投票亭模式已開啟：投完自動換下一位、不顯示結果' : '已關閉投票亭模式');
+  // 重新載入面板（亭模式會忽略已投狀態並隱藏結果）
+  if (_htvEventId) htVoteOpenInline(_htvEventId.replace(/^HTD-/, ''));
 };
 
 function _htvBuildForm(namesArg) {
@@ -12738,7 +12785,7 @@ window.htVoteSubmitNow = async function(btn) {
   var evId = _htvEventId;
   var comment = (document.getElementById('htv-comment').value || '').trim().slice(0, 40);
   var r = null;
-  try { r = await htApi('htVoteSubmit', { eventId: evId, sat: _htvSat, favs: _htvPicks, comment: comment }); } catch(e) {}
+  try { r = await htApi('htVoteSubmit', { eventId: evId, sat: _htvSat, favs: _htvPicks, comment: comment, kiosk: !!window._htvKiosk }); } catch(e) {}
   if (!r || !r.ok) {
     var msg = (r && r.error) || '網路連線失敗';
     toast('😥 ' + msg);
@@ -12748,7 +12795,7 @@ window.htVoteSubmitNow = async function(btn) {
     } else { btn.disabled = false; btn.textContent = '送出回饋 🎉'; }
     return;
   }
-  try { localStorage.setItem('bf_ht_voted_' + evId, '1'); } catch(e) {}
+  if (!window._htvKiosk) { try { localStorage.setItem('bf_ht_voted_' + evId, '1'); } catch(e) {} }
   // 🎊 撒花動畫
   var form = document.getElementById('ht-vote-form');
   var EMO = ['🎉','🍰','🧋','⭐','🥳','🍪'];
@@ -12765,6 +12812,17 @@ window.htVoteSubmitNow = async function(btn) {
   toast('🎉 感謝你的回饋！');
   // 本地即時併入結果（不再等後端重抓）
   _htvVotes = (_htvVotes || []).concat([{ sat: _htvSat, favs: _htvPicks.slice(), comment: comment }]);
+  if (window._htvKiosk) {
+    // 🖥 投票亭：不顯示結果，短暫致謝後自動回到第一步換下一位
+    setTimeout(function() {
+      var names = [];
+      document.querySelectorAll('#htv-items .htv-item .nm').forEach(function(n){ names.push(n.textContent); });
+      _htvBuildForm(names);
+      btn.disabled = true; btn.textContent = '送出回饋 🎉';
+      toast('🙌 換下一位夥伴投票囉！');
+    }, 1400);
+    return;
+  }
   setTimeout(function() {
     form.style.display = 'none';
     document.getElementById('ht-vote-wrap').style.display = '';
@@ -14821,7 +14879,7 @@ function msBookingCard(b, isUpcoming) {
     +     '</div>'
     //     內容
     +     '<div style="flex:1;min-width:0">'
-    +       '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B">RELAX PASS</div>'
+    +       '<div style="font-size:12px;font-weight:800;letter-spacing:.14em;color:#8FAE8B;white-space:nowrap">RELAX PASS</div>'
     +       '<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-top:1px">'
     +         '<span style="font-size:26px;font-weight:900;color:#2E332D;line-height:1.1;white-space:nowrap">'+htEsc(b.timeSlot||'—')+'</span>'
     +         '<span style="font-size:12px;color:#577B53;font-weight:700;white-space:nowrap">📍 Change'+(ts?' <span style="color:#C2C7C1;font-weight:500">・預約於 '+ts+'</span>':'')+'</span>'
