@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260719204600';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260719204742';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3675,8 +3675,13 @@ thead th{color:#767B75!important}
         <svg id="ms-notice-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9AA098" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div id="ms-notice-body" style="font-size:14px;color:#4A4F49;line-height:1.7;margin-top:8px">
-        1. 為讓每個夥伴都有機會參與，<strong>每月請儘量控制最多預約二次為主</strong>。連續二週為一排程區間，線上填寫限填一次，如當日仍有空檔可於紙本補位。<br>
-        2. 完成預約後，務必留意預約時間並設小鬧鐘準時參與；按摩完畢後請協助「呼喚下一位夥伴」；若臨時無法參與，<strong>請記得找夥伴遞補</strong>哦～<br>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <span style="background:#EAF1E9;border:1px solid #C9DAC6;color:#3E5A3B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;white-space:nowrap">📅 每月上限 2 次</span>
+          <span style="background:#EAF1E9;border:1px solid #C9DAC6;color:#3E5A3B;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;white-space:nowrap">↩️ 時段前 1 小時可自行取消，免審核</span>
+          <span style="background:#FFF4E4;border:1px solid #F0C48A;color:#B0701F;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;white-space:nowrap">⚠️ 缺席 3 次暫停預約</span>
+        </div>
+        1. 為讓每個夥伴都有機會參與，<strong>每月最多預約二次</strong>。連續二週為一排程區間，如當日仍有空檔可於紙本補位。<br>
+        2. 完成預約後，務必留意預約時間並設小鬧鐘準時參與；按摩完畢後請協助「呼喚下一位夥伴」；若臨時無法參與，<strong>請於時段前 1 小時內自行取消</strong>把名額讓給夥伴哦～未取消且缺席會計入違規。<br>
         3. 按摩過程請保持輕鬆愉悅的心情，完成充電後一起面對更多工作挑戰。Think Big! 👍 Start Small! 🤏 Act Quickly and Massage more! 💪
       </div>
     </div>
@@ -3850,29 +3855,7 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
-    <!-- 限制設定：HR＋管理者可見／可改 -->
-    <div id="ms-settings-section" style="background:#F7F8F6;border-radius:12px;padding:16px 18px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#6B8F67,#46633F);display:flex;align-items:center;justify-content:center;font-size:14px">⚙️</div>
-        <div style="font-size:14px;font-weight:700;color:#2E332D">預約規則</div>
-        <span style="font-size:12px;color:#9AA098">固定規則，如需調整請找開發窗口</span>
-      </div>
-      <!-- 規則已定案並寫死在前後端，這裡只做唯讀展示 -->
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
-          <div style="font-size:12px;color:#767B75;margin-bottom:4px">📅 每月預約上限</div>
-          <div style="font-size:16px;font-weight:700;color:#2E332D">2 次<span style="font-size:12px;font-weight:500;color:#9AA098">／人</span></div>
-        </div>
-        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
-          <div style="font-size:12px;color:#767B75;margin-bottom:4px">↩️ 取消規則</div>
-          <div style="font-size:16px;font-weight:700;color:#2E332D">時段前 1 小時<span style="font-size:12px;font-weight:500;color:#9AA098">，免審核</span></div>
-        </div>
-        <div style="flex:1;min-width:150px;background:#fff;border:1px solid #E6E9E4;border-radius:12px;padding:12px 14px">
-          <div style="font-size:12px;color:#767B75;margin-bottom:4px">⚠️ 違規停權</div>
-          <div style="font-size:16px;font-weight:700;color:#2E332D">缺席 3 次<span style="font-size:12px;font-weight:500;color:#9AA098">（僅缺席計違規）</span></div>
-        </div>
-      </div>
-    </div>
+    <!-- 預約規則已移至頁面上方「按摩注意事項」（全員可見）；進階管理不再重複顯示 -->
 
     <!-- 「已開放日期」清單已移除：開放/編輯改由直接點上方日曆日期操作。
          保留隱藏容器供 msRenderOpenDates 寫入（不再顯示於畫面）。 -->
