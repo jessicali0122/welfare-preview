@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720201754';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720202557';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3548,6 +3548,22 @@ thead th{color:#767B75!important}
     <!-- ── 滿意度回饋：活動當天開放匿名投票；結果永久留存於本場活動 ── -->
     <div id="ht-vote-wrap" style="display:none;margin-top:18px;max-width:720px;margin-left:auto;margin-right:auto">
 
+      <!-- 福委專用：開始投票前檢視/調整可投票品項（一般員工不顯示，直接用福委設定的名單） -->
+      <div id="htv-review" style="display:none">
+        <div class="htv-card">
+          <div class="htv-q">確認投票品項<span class="en">SET UP</span></div>
+          <div class="htv-hint" style="margin-bottom:12px">勾選要讓大家投票的品項（餐具/器材等後勤品項已預設排除）· 目前 <b id="htv-review-cnt">0</b> 項</div>
+          <div id="htv-review-list" class="htv-rvlist"></div>
+          <div class="htv-rvadd">
+            <input id="htv-review-add" type="text" maxlength="20" placeholder="＋ 新增其他品項（例：手工餅乾）" onkeydown="if(event.key==='Enter'){htvReviewAdd();return false;}">
+            <button type="button" class="htv-ghost" onclick="htvReviewAdd()">新增</button>
+          </div>
+          <div class="htv-row2" style="margin-top:16px">
+            <button class="htv-ghost" onclick="htVoteClosePage()">取消</button>
+            <button class="htv-go" id="htv-review-go" onclick="htvReviewConfirm(this)">儲存並開始投票 →</button>
+          </div>
+        </div>
+      </div>
       <!-- 投票卡（Freud 範例風：奶油底＋大表情＋扇形儀表） -->
       <div id="ht-vote-form" style="display:none;position:relative">
         <div class="htv-card">
@@ -3628,6 +3644,20 @@ thead th{color:#767B75!important}
 .htv-go:not(:disabled):active{transform:scale(.98)}
 .htv-hint{text-align:center;font-size:14px;color:#8A7A6A;margin-top:4px}
 .htv-hint b{color:#E0820A}
+/* 福委：開始投票前檢視/調整品項 */
+.htv-rvlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:6px}
+.htv-rvchip{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1.5px solid #E1E4DF;background:#fff;cursor:pointer;font-size:14px;color:#4A4F49;transition:all .12s;user-select:none;min-width:0}
+.htv-rvchip.on{border-color:#577B53;background:#F3F7F2;color:#2E332D;font-weight:600}
+.htv-rvchip .ck{width:18px;height:18px;border-radius:6px;border:1.5px solid #C4CBC0;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;line-height:1}
+.htv-rvchip.on .ck{background:#577B53;border-color:#577B53}
+.htv-rvchip .em{font-size:16px;flex-shrink:0}
+.htv-rvchip .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htv-rvchip .del{color:#C4CBC0;font-size:16px;padding:0 2px;flex-shrink:0}
+.htv-rvchip .del:hover{color:#dc2626}
+.htv-rvadd{display:flex;gap:8px;margin-top:12px}
+.htv-rvadd input{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1.5px solid #E1E4DF;font-size:14px;font-family:inherit;color:#2E332D;background:#fff}
+.htv-rvadd input:focus{outline:none;border-color:#577B53}
+@media(max-width:640px){.htv-rvlist{grid-template-columns:minmax(0,1fr)}}
 .htv-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
 .htv-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:18px;background:#fff;cursor:pointer;transition:.15s;position:relative;box-shadow:0 2px 6px rgba(80,60,40,.08);min-width:0}
 .htv-item:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(80,60,40,.14)}
@@ -12916,6 +12946,7 @@ window.htOpenDetail = async function(eventId) {
 
 // ══ 午茶日滿意度投票（匿名；僅活動當天；結果永久留存於該場活動）══
 var _htvSat = 0, _htvPicks = [], _htvVotes = null, _htvCmtTimer = null;
+var _htvReviewState = []; // 福委「檢視/調整投票品項」畫面的狀態：[{name,on,custom}]
 var _htvEventId = null; // 投票綁定的活動編號（慣例 HT-<yyyy-MM>；試算表場次投票也用同一慣例，轉換後票自動銜接）
 var _HTV_LV = [
   { s:1, t:'待加強', c:'#E8865E', l:'#F4B394' },
@@ -13119,9 +13150,83 @@ window.htVoteOpenInline = async function(dateStr) {
       if (sd === dkey && !names.length) names = (s.items || []).map(function(it){ return String(it.name||'').trim(); }).filter(Boolean);
     });
   }
+  // 取得福委已設定的「列入投票品項」名單；未設定→用關鍵字過濾當預設
+  var cfg = null; try { cfg = await htApi('htVoteItemsGet', { eventId: _htvEventId }); } catch(e) {}
+  var configured = !!(cfg && cfg.ok && cfg.configured && Array.isArray(cfg.items));
+  var savedItems = configured ? cfg.items : null;
+  var isMgr = (typeof can === 'function') && can('hightea.manage');
   _clrLoad();
   wrap.style.display = '';
-  _htvBuildForm(names);
+  document.getElementById('htv-review').style.display = 'none';
+  if (isMgr) {
+    // 福委/管理者：先進「檢視/調整品項」畫面，確認後才開始投票
+    _htvOpenReview(names, savedItems);
+  } else {
+    // 一般員工：用福委存好的名單；未設定則以關鍵字過濾為預設
+    _htvBuildForm(savedItems || names, configured);
+    document.getElementById('ht-vote-form').style.display = '';
+  }
+  var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
+};
+
+// 福委：開啟「檢視/調整投票品項」畫面。allNames＝該場全部品項；savedItems＝已存名單（沒有則食物預設勾）
+function _htvOpenReview(allNames, savedItems) {
+  document.getElementById('ht-vote-form').style.display = 'none';
+  document.getElementById('ht-vote-results').style.display = 'none';
+  var savedSet = null;
+  if (savedItems) { savedSet = {}; savedItems.forEach(function(n){ savedSet[String(n||'').trim()] = 1; }); }
+  var seen = {};
+  _htvReviewState = [];
+  (allNames || []).forEach(function(nm){
+    nm = String(nm || '').trim();
+    if (!nm || seen[nm]) return; seen[nm] = 1;
+    var on = savedSet ? !!savedSet[nm] : !_htvNotVotable(nm);
+    _htvReviewState.push({ name: nm, on: on, custom: false });
+  });
+  // 已存名單中若有不在品項清單裡的自訂品項，補進來並標記可刪除
+  if (savedItems) savedItems.forEach(function(n){
+    n = String(n || '').trim();
+    if (n && !seen[n]) { seen[n] = 1; _htvReviewState.push({ name: n, on: true, custom: true }); }
+  });
+  document.getElementById('htv-review').style.display = '';
+  htvReviewRender();
+}
+
+function htvReviewRender() {
+  var box = document.getElementById('htv-review-list');
+  if (!box) return;
+  document.getElementById('htv-review-cnt').textContent = _htvReviewState.filter(function(x){ return x.on; }).length;
+  box.innerHTML = '';
+  _htvReviewState.forEach(function(it, idx){
+    var d = document.createElement('div');
+    d.className = 'htv-rvchip' + (it.on ? ' on' : '');
+    d.innerHTML = '<span class="ck">' + (it.on ? '✓' : '') + '</span><span class="em">' + _htvEmoji(it.name) + '</span><span class="nm">' + htEsc(it.name) + '</span>' + (it.custom ? '<span class="del" title="移除">✕</span>' : '');
+    d.onclick = function(e){
+      if (e.target && e.target.className === 'del') { _htvReviewState.splice(idx, 1); htvReviewRender(); return; }
+      it.on = !it.on; htvReviewRender();
+    };
+    box.appendChild(d);
+  });
+}
+
+window.htvReviewAdd = function() {
+  var inp = document.getElementById('htv-review-add');
+  var v = String(inp.value || '').trim();
+  if (!v) return;
+  if (_htvReviewState.some(function(x){ return x.name === v; })) { toast('「' + v + '」已在清單中'); inp.value = ''; return; }
+  _htvReviewState.push({ name: v, on: true, custom: true });
+  inp.value = '';
+  htvReviewRender();
+};
+
+window.htvReviewConfirm = async function(btn) {
+  var picked = _htvReviewState.filter(function(x){ return x.on; }).map(function(x){ return x.name; });
+  if (!picked.length) { toast('請至少勾選一項品項'); return; }
+  if (btn) { btn.disabled = true; btn.textContent = '儲存中…'; }
+  try { await htApi('htVoteItemsSave', { eventId: _htvEventId, items: picked }); } catch(e) {}
+  if (btn) { btn.disabled = false; btn.textContent = '儲存並開始投票 →'; }
+  document.getElementById('htv-review').style.display = 'none';
+  _htvBuildForm(picked, true); // 福委已確認，照單投票
   document.getElementById('ht-vote-form').style.display = '';
   var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
 };
@@ -13142,7 +13247,7 @@ window.htVoteKioskToggle = function(btn) {
   if (_htvEventId) htVoteOpenInline(_htvEventId.replace(/^HTD-/, ''));
 };
 
-function _htvBuildForm(namesArg) {
+function _htvBuildForm(namesArg, skipFilter) {
   _htvSat = 0; _htvPicks = [];
   htVoteGoStep(1);
   document.getElementById('htv-next').disabled = true;
@@ -13176,7 +13281,8 @@ function _htvBuildForm(namesArg) {
   srcNames.forEach(function(nm) {
     nm = String(nm || '').trim();
     if (!nm || seen[nm]) return; seen[nm] = 1;
-    if (_htvNotVotable(nm)) return; // 濾掉餐具/器材/佈置/公告等後勤品項
+    // skipFilter＝福委已在檢視畫面確認過名單，直接照單渲染；否則套關鍵字過濾當預設
+    if (!skipFilter && _htvNotVotable(nm)) return; // 濾掉餐具/器材/佈置/公告等後勤品項
     var d = document.createElement('div');
     d.className = 'htv-item';
     d.innerHTML = '<span class="em">'+_htvEmoji(nm)+'</span><span class="nm">'+htEsc(nm)+'</span>';
@@ -13256,7 +13362,7 @@ window.htVoteSubmitNow = async function(btn) {
     setTimeout(function() {
       var names = [];
       document.querySelectorAll('#htv-items .htv-item .nm').forEach(function(n){ names.push(n.textContent); });
-      _htvBuildForm(names);
+      _htvBuildForm(names, true); // 已是福委確認過的名單，換下一位時照單重建、不再過濾
       btn.disabled = true; btn.textContent = '送出回饋 🎉';
       toast('🙌 換下一位夥伴投票囉！');
     }, 1400);
