@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720104441';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720105049';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1960,7 +1960,7 @@ thead th{color:#767B75!important}
           <span class="dl-name">福委會會議紀錄</span>
           <span class="dl-arrow">↗</span>
         </a>
-        <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="fbOpenBoard();return false;" title="集中檢視同事留言（僅福委／HR／管理者）" style="cursor:pointer">
+        <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="sw('feedback');return false;" title="集中檢視同事留言（僅福委／HR／管理者）" style="cursor:pointer">
           <span class="dl-ic">📣</span>
           <span class="dl-name">留言板管理</span>
           <span class="dl-arrow">›</span>
@@ -2226,6 +2226,26 @@ thead th{color:#767B75!important}
   </script>
 
   <!-- ===== 津貼補助（查詢/試算，純前端）===== -->
+  <!-- ===== 留言板管理（福委／HR／管理者）===== -->
+  <div class="view" id="view-feedback" style="position:relative;min-height:calc(100vh - 152px)">
+    <div style="max-width:880px;margin:0 auto">
+      <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="width:56px;height:56px;border-radius:50%;background:#FBE9D8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="留言板管理">📣</span></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
+          <button onclick="sw('dashboard')" style="flex-shrink:0;background:#fff;border:1.5px solid #CDD8CB;color:#577B53;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#F3F7F2'" onmouseout="this.style.background='#fff'">← 總覽</button>
+        </div>
+        <div style="border-top:1px solid #ECEEEA;margin:14px 0 12px"></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <span id="fb-admin-count" style="font-size:13px;color:#767B75;font-weight:600">—</span>
+          <div style="flex:1"></div>
+          <button onclick="fbRenderAdmin()" style="background:#F7F8F6;border:1.5px solid #E1E4DF;color:#4A4F49;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🔄 重新整理</button>
+        </div>
+      </div>
+      <div id="fb-admin-list"></div>
+    </div>
+  </div>
+
   <div class="view" id="view-subsidy" style="position:relative;min-height:calc(100vh - 152px)">
     <div style="max-width:880px;margin:0 auto">
       <!-- 頁首卡：標題＋申請說明＋下載申請單（同一張卡，看完說明就能下載） -->
@@ -7156,7 +7176,7 @@ function openNewForm(){
   window._pendingFiles = [];
   sw('new-form');
 }
-const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助',overview:'福利總覽'};
+const titles={dashboard:'總覽',applications:'案件追蹤','new-form':'費用申請單',detail:'申請詳情',approvals:'請款審核',analytics:'費用分析',admin:'系統管理',hightea:'午茶日',massage:'按摩預約',subsidy:'津貼補助',overview:'福利總覽',feedback:'留言板管理'};
 // navMap: sub-views inherit which nav item stays highlighted
 const navMap={'new-form':'applications','detail':'applications'};
 // ── 瀏覽器上一頁 / 重新整理路由 ──
@@ -7169,11 +7189,11 @@ window.addEventListener('popstate', function(e) {
   if (hash.startsWith('detail/')) { loadDetail(hash.slice(7), true); return; }
   // 主頁面
   const view = state.view || hash;
-  const validViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview'];
+  const validViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview','feedback'];
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 // view → 所需能力（無權限者導回總覽）
-const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view' };
+const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view', feedback:'meeting.view' };
 // 無權限時顯示的「沒有權限」頁（入口卡片不隱藏，點進來才擋）
 function _showNoPerm(name){
   var host = document.getElementById('view-dashboard') ? document.getElementById('view-dashboard').parentNode : document.body;
@@ -7216,7 +7236,7 @@ function sw(name,elOrName,_fromPop){
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   if (!_fromPop && window._appReady) {
-    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview'];
+    const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview','feedback'];
     if (mainViews.includes(name)) {
       history.pushState({ view: name }, '', '#' + name);
     }
@@ -7265,6 +7285,7 @@ function sw(name,elOrName,_fromPop){
   if(name==='admin') loadAdminUsers();
   if(name==='hightea'){ htLoadList(); try{ if(window.htRenderYearTimeline) htRenderYearTimeline(); }catch(e){} }
   if(name==='massage') massageLoad();
+  if(name==='feedback') fbRenderAdmin();
   if(name==='overview'){
     // 每次進入福利總覽都回到新人視角：年資滑桿歸 0
     var _tn = document.getElementById('bnf-tenure');
@@ -10812,6 +10833,55 @@ window.fbRenderList = async function() {
       + textHtml + imgHtml
       + '</div>';
   }).join('');
+};
+
+// 留言板管理頁（福委／HR／管理者）：集中檢視全部留言，含 email，可刪除
+window.fbRenderAdmin = async function() {
+  var list = document.getElementById('fb-admin-list');
+  var cnt = document.getElementById('fb-admin-count');
+  if (!list) return;
+  list.innerHTML = '<div style="text-align:center;color:#9AA098;font-size:14px;padding:30px">載入中…</div>';
+  var items = await fbFetchAll();
+  items = (items || []).slice().sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
+  if (cnt) cnt.textContent = '共 ' + items.length + ' 則留言';
+  if (!items.length) {
+    list.innerHTML = '<div style="text-align:center;color:#9AA098;font-size:14px;padding:40px;background:#fff;border:1px solid #ECEEEA;border-radius:14px">目前還沒有任何留言</div>';
+    return;
+  }
+  list.innerHTML = items.map(function(it){
+    var who = it.userName || '同事';
+    var email = it.userEmail ? '<span style="font-size:12px;color:#9AA098">' + htEsc(it.userEmail) + '</span>' : '';
+    var when = _fbFmtTime(it.createdAt);
+    var imgHtml = '';
+    if (it.imageUrl) {
+      var isData = /^data:/.test(it.imageUrl);
+      var src = isData ? it.imageUrl : (it.imageId ? 'https://drive.google.com/thumbnail?id=' + it.imageId + '&sz=w1000' : it.imageUrl);
+      imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
+        + '<img src="' + htEsc(src) + '" alt="附件圖檔" style="max-width:100%;max-height:320px;border-radius:10px;border:1px solid #E1E4DF" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
+    }
+    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-top:2px">' + _fbLinkify(it.text) + '</div>' : '<div style="font-size:12px;color:#B0B6AD;font-style:italic;margin-top:2px">（僅附圖，無文字）</div>';
+    return '<div style="background:#fff;border:1px solid #E4E1D6;border-left:4px solid #E0820A;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(46,51,45,.05)">'
+      + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">'
+      +   '<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:14px;font-weight:700;color:#3E5A3B">👤 ' + htEsc(who) + '</span>' + email + '</div>'
+      +   '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0"><span style="font-size:12px;color:#9AA098">' + when + '</span>'
+      +     '<button onclick="fbAdminDelete(\'' + (it.id||'') + '\')" style="background:#FDF2F2;border:1px solid #F3C9C4;color:#C0655A;font-size:12px;font-weight:600;border-radius:14px;padding:4px 12px;cursor:pointer;font-family:inherit">🗑 刪除</button></div>'
+      + '</div>'
+      + textHtml + imgHtml
+      + '</div>';
+  }).join('');
+};
+
+// 管理頁刪除：確認後刪，並就地重繪管理清單
+window.fbAdminDelete = function(id) {
+  if (!id) return;
+  _showConfirmModal('確定刪除這則留言？', '刪除後無法復原，附加圖檔也會一併移除。', '刪除', '#C0655A', async function(){
+    var ok = false;
+    try { var r = await htApi('feedbackDelete', { id:id }); ok = !!(r && r.ok); } catch(e) {}
+    if (!ok) { var arr = _fbLocalRead().filter(function(x){ return x.id !== id; }); _fbLocalWrite(arr); }
+    toast('已刪除');
+    fbRenderAdmin();
+    return true;
+  });
 };
 
 // 把純文字中的網址轉成可點連結（先逐段跳脫，避免 XSS）
