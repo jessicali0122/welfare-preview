@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720211118';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720214349';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -13040,10 +13040,11 @@ window.htVoteInit = async function() {
     if (!_htEvent || _htEvent.eventId !== _openedEventId) return; // 等待期間已切到別場
     var configured = !!(cfg && cfg.ok && cfg.configured && Array.isArray(cfg.items));
     var savedItems = configured ? cfg.items : null;
+    var savedKnown = (cfg && cfg.ok && Array.isArray(cfg.known)) ? cfg.known : null;
     if (canMg) {
       // 福委/管理者：先進「檢視/調整品項」畫面，確認後才投票
       var allNames = (_htItems || []).map(function(it){ return String(it.name || '').trim(); });
-      _htvOpenReview(allNames, savedItems, 'detail');
+      _htvOpenReview(allNames, savedItems, savedKnown, 'detail');
     } else {
       // 一般員工：用福委存好的名單；未設定則以關鍵字過濾為預設
       _htvBuildForm(savedItems || undefined, configured);
@@ -13173,13 +13174,14 @@ window.htVoteOpenInline = async function(dateStr) {
   var cfg = null; try { cfg = await htApi('htVoteItemsGet', { eventId: _htvEventId }); } catch(e) {}
   var configured = !!(cfg && cfg.ok && cfg.configured && Array.isArray(cfg.items));
   var savedItems = configured ? cfg.items : null;
+  var savedKnown = (cfg && cfg.ok && Array.isArray(cfg.known)) ? cfg.known : null;
   var isMgr = (typeof can === 'function') && can('hightea.manage');
   _clrLoad();
   wrap.style.display = '';
   document.getElementById('htv-review').style.display = 'none';
   if (isMgr) {
     // 福委/管理者：先進「檢視/調整品項」畫面，確認後才開始投票
-    _htvOpenReview(names, savedItems);
+    _htvOpenReview(names, savedItems, savedKnown, 'kiosk');
   } else {
     // 一般員工：用福委存好的名單；未設定則以關鍵字過濾為預設
     _htvBuildForm(savedItems || names, configured);
@@ -13188,19 +13190,29 @@ window.htVoteOpenInline = async function(dateStr) {
   var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
 };
 
-// 福委：開啟「檢視/調整投票品項」畫面。allNames＝該場全部品項；savedItems＝已存名單（沒有則食物預設勾）
-function _htvOpenReview(allNames, savedItems, ctx) {
+// 福委：開啟「檢視/調整投票品項」畫面。
+// allNames＝該場全部品項；savedItems＝已勾清單；knownItems＝上次存檔當下的全部品項快照（供自動對齊新品項）
+function _htvOpenReview(allNames, savedItems, knownItems, ctx) {
   _htvReviewCtx = ctx || 'kiosk';
   document.getElementById('ht-vote-form').style.display = 'none';
   document.getElementById('ht-vote-results').style.display = 'none';
   var savedSet = null;
   if (savedItems) { savedSet = {}; savedItems.forEach(function(n){ savedSet[String(n||'').trim()] = 1; }); }
+  var hasKnown = Array.isArray(knownItems) && knownItems.length > 0, knownSet = null;
+  if (hasKnown) { knownSet = {}; knownItems.forEach(function(n){ knownSet[String(n||'').trim()] = 1; }); }
   var seen = {};
   _htvReviewState = [];
   (allNames || []).forEach(function(nm){
     nm = String(nm || '').trim();
     if (!nm || seen[nm]) return; seen[nm] = 1;
-    var on = savedSet ? !!savedSet[nm] : !_htvNotVotable(nm);
+    var on;
+    if (savedSet) {
+      if (savedSet[nm]) on = true;                              // 已勾
+      else if (hasKnown && !knownSet[nm]) on = !_htvNotVotable(nm); // 全新品項→自動對齊（食物勾、後勤不勾）
+      else on = false;                                         // 當初故意不勾（或舊資料無 known 快照）
+    } else {
+      on = !_htvNotVotable(nm);                                // 尚未設定過→關鍵字預設
+    }
     _htvReviewState.push({ name: nm, on: on, custom: false });
   });
   // 已存名單中若有不在品項清單裡的自訂品項，補進來並標記可刪除
@@ -13243,7 +13255,8 @@ window.htvReviewConfirm = async function(btn) {
   var picked = _htvReviewState.filter(function(x){ return x.on; }).map(function(x){ return x.name; });
   if (!picked.length) { toast('請至少勾選一項品項'); return; }
   if (btn) { btn.disabled = true; btn.textContent = '儲存中…'; }
-  try { await htApi('htVoteItemsSave', { eventId: _htvEventId, items: picked }); } catch(e) {}
+  var allNow = _htvReviewState.map(function(x){ return x.name; }); // 存檔當下的全部品項快照（含未勾），供下次自動對齊
+  try { await htApi('htVoteItemsSave', { eventId: _htvEventId, items: picked, all: allNow }); } catch(e) {}
   if (btn) { btn.disabled = false; btn.textContent = '儲存並開始投票 →'; }
   document.getElementById('htv-review').style.display = 'none';
   _htvBuildForm(picked, true); // 福委已確認，照單投票
