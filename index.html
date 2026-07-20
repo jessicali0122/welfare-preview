@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720105630';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720110044';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1960,7 +1960,7 @@ thead th{color:#767B75!important}
           <span class="dl-name">福委會會議紀錄</span>
           <span class="dl-arrow">↗</span>
         </a>
-        <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="sw('feedback');return false;" title="集中檢視同事留言（僅福委／HR／管理者）" style="cursor:pointer">
+        <a class="dash-link-tile committee" data-cap="feedback.view" href="javascript:void(0)" onclick="sw('feedback');return false;" title="集中檢視同事留言（僅福委／管理者）" style="cursor:pointer">
           <span class="dl-ic">📣</span>
           <span class="dl-name">留言板管理</span>
           <span class="dl-arrow">›</span>
@@ -1987,7 +1987,6 @@ thead th{color:#767B75!important}
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
           <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div></div>
-          <div id="bnf-summary" style="flex-shrink:0;background:#FFF4E4;border:1px solid #F0C48A;color:#C9760A;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;white-space:nowrap"></div>
         </div>
         <div style="border-top:1px solid #ECEEEA;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
@@ -1996,6 +1995,7 @@ thead th{color:#767B75!important}
             <button data-id="full" class="bnf-id-btn" onclick="bnfSetIdentity('full')">正職</button>
             <button data-id="part" class="bnf-id-btn" onclick="bnfSetIdentity('part')">工讀／實習</button>
           </div>
+          <div id="bnf-summary" style="margin-left:auto;flex-shrink:0;background:#FFF4E4;border:1px solid #F0C48A;color:#C9760A;border-radius:20px;padding:6px 16px;font-size:12px;font-weight:700;white-space:nowrap"></div>
         </div>
         <div id="bnf-tenure-row" style="display:flex;align-items:center;gap:12px;margin-top:14px">
           <span style="font-size:12px;color:#767B75;flex-shrink:0">年資</span>
@@ -4305,6 +4305,7 @@ const CAPABILITY_MAP = {
   'analytics.view':        ['welfare'],
   'hightea.view':          ['welfare'],          // 午茶日「點開」：管理者＋福委
   'meeting.view':          ['welfare', 'hr'],     // 福委會會議紀錄：管理者＋福委＋HR
+  'feedback.view':         ['welfare'],           // 福委聽你說：看留言＝管理者＋福委（保護隱私，HR 不看）
   'hightea.manage':        ['welfare'],
   'hightea.discover':      ['welfare'],
   'massage.manage':        ['hr'],               // 按摩「進階管理區」可見＋產生報到 QR：HR＋管理者
@@ -7193,7 +7194,7 @@ window.addEventListener('popstate', function(e) {
   sw(validViews.includes(view) ? view : 'dashboard', null, true);
 });
 // view → 所需能力（無權限者導回總覽）
-const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view', feedback:'meeting.view' };
+const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view', feedback:'feedback.view' };
 // 無權限時顯示的「沒有權限」頁（入口卡片不隱藏，點進來才擋）
 function _showNoPerm(name){
   var host = document.getElementById('view-dashboard') ? document.getElementById('view-dashboard').parentNode : document.body;
@@ -10801,9 +10802,20 @@ async function fbFetchAll() {
   return _fbLocalRead();
 }
 
+// 誰能看留言：只有管理者＋福委（保護隱私）
+function _fbCanView() {
+  return (typeof can === 'function' && can('feedback.view'))
+    || (typeof hasRole === 'function' && (hasRole('manager') || hasRole('welfare')));
+}
+
 window.fbRenderList = async function() {
   var list = document.getElementById('fb-list');
   if (!list) return;
+  // 一般同事：只能留言，看不到其他人的留言（隱私保護）
+  if (!_fbCanView()) {
+    list.innerHTML = '<div style="text-align:center;color:#9AA098;font-size:13px;padding:26px 16px;line-height:1.8">🔒 為保護大家的隱私，留言只有福委看得到<br>你的留言送出後福委會收到，謝謝你的分享 🙌</div>';
+    return;
+  }
   list.innerHTML = '<div style="text-align:center;color:#9AA098;font-size:13px;padding:20px">載入中…</div>';
   var items = await fbFetchAll();
   items = (items || []).slice().sort(function(a,b){ return String(b.createdAt||'').localeCompare(String(a.createdAt||'')); });
