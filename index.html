@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720091542';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720094230';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3532,7 +3532,7 @@ thead th{color:#767B75!important}
         </div>
       </div>
 
-      <!-- 結果卡（綠色滿版分數＋人氣方塊圖＋一句話輪播） -->
+      <!-- 結果卡（綠色滿版分數＋排行榜長條＋一句話輪播） -->
       <div id="ht-vote-results" style="display:none;margin-top:14px">
         <div class="htv-rescard">
           <div class="htv-hero">
@@ -3541,16 +3541,9 @@ thead th{color:#767B75!important}
             <div class="htv-score-s"><b id="htv-nvotes">0</b> 人投票 · 匿名 · 滿意度回饋</div>
           </div>
           <div class="htv-resbody">
-            <div class="htv-res-h">人氣品項<span class="en">FAVORITES</span></div>
-            <div class="htv-res-sub">方塊越大＝越多人選為最愛 · 顏色越綠＝越滿意</div>
+            <div class="htv-res-h">人氣品項排行<span class="en">RANKING</span></div>
+            <div class="htv-res-sub">依得票數排名 · ★＝你投的品項</div>
             <div class="htv-map" id="htv-map"></div>
-            <div class="htv-legend">
-              <span><i style="background:#5E9E52"></i>滿意</span>
-              <span><i style="background:#9CC15F"></i>不錯</span>
-              <span><i style="background:#E7C24B"></i>普通</span>
-              <span><i style="background:#EE9A55"></i>待加強</span>
-              <span class="you"><i></i>你的選擇</span>
-            </div>
             <div id="htv-cmts-wrap" style="display:none;margin-top:16px">
               <div class="htv-res-h">大家的一句話<span class="en">VOICES</span></div>
               <div class="htv-cmt" id="htv-cmt"></div>
@@ -3609,7 +3602,7 @@ thead th{color:#767B75!important}
 .htv-ghost:hover{background:#FBF8F4}
 .htv-row2 .htv-go{margin-top:0;flex:1}
 .htv-rescard{border-radius:28px;overflow:hidden;box-shadow:0 2px 4px rgba(80,60,40,.05),0 14px 34px rgba(80,60,40,.12);animation:htvpop .35s ease}
-.htv-hero{background:linear-gradient(170deg,#7C9B72 0%,#577B53 100%);padding:30px 22px 20px;text-align:center;color:#fff}
+.htv-hero{background:linear-gradient(160deg,#6E8F6A 0%,#3E5A3B 100%);padding:30px 22px 20px;text-align:center;color:#fff}
 .htv-score{font-size:64px;font-weight:900;line-height:1;text-shadow:0 4px 14px rgba(0,0,0,.14)}
 .htv-score-t{font-size:16px;font-weight:700;margin-top:8px}
 .htv-score-s{font-size:12px;opacity:.85;margin-top:4px}
@@ -3617,17 +3610,18 @@ thead th{color:#767B75!important}
 .htv-res-h{font-size:14px;font-weight:800;letter-spacing:.1em;color:var(--htvbrown);display:flex;align-items:baseline;gap:8px}
 .htv-res-h .en{font-size:12px;font-weight:400;letter-spacing:.18em;color:#8FA886}
 .htv-res-sub{font-size:12px;color:#8A7A6A;margin:4px 0 12px}
-.htv-map{position:relative;width:100%;height:280px;border-radius:18px;overflow:hidden;background:#EDE5D8}
-.htv-blk{position:absolute;border:2px solid var(--htvcream);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;padding:8px 10px;color:#fff;cursor:default;transform:scale(.4);opacity:0;transition:transform .5s cubic-bezier(.34,1.4,.5,1),opacity .4s}
-.htv-blk.in{transform:scale(1);opacity:1}
-.htv-blk .n{font-size:14px;font-weight:800;line-height:1.15;text-shadow:0 1px 2px rgba(0,0,0,.3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.htv-blk .c{font-size:12px;font-weight:600;opacity:.96;text-shadow:0 1px 2px rgba(0,0,0,.3)}
-.htv-blk.you{outline:3px solid #E0820A;outline-offset:-3px}
-.htv-blk .star{position:absolute;top:6px;right:8px;font-size:12px;color:#fff}
-.htv-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:12px;color:#8A7A6A}
-.htv-legend span{display:inline-flex;align-items:center;gap:5px}
-.htv-legend i{width:12px;height:12px;border-radius:4px;display:inline-block}
-.htv-legend .you i{background:#fff;border:2px solid #E0820A}
+/* 排行榜長條（取代原人氣方塊圖） */
+.htv-map{display:flex;flex-direction:column;gap:10px}
+.htv-rank{background:#fff;border-radius:14px;padding:10px 14px;box-shadow:0 2px 6px rgba(80,60,40,.07);opacity:0;transform:translateY(8px);animation:htvrankin .4s ease forwards}
+@keyframes htvrankin{to{opacity:1;transform:none}}
+.htv-rank.you{box-shadow:0 0 0 2px #E0820A,0 2px 6px rgba(224,130,10,.14)}
+.htv-rank-t{display:flex;align-items:center;gap:8px;font-size:14px}
+.htv-rank-t .m{font-size:16px;flex-shrink:0;min-width:24px;text-align:center}
+.htv-rank-t .em{font-size:16px;flex-shrink:0}
+.htv-rank-t .nm{font-weight:700;color:var(--htvbrown);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.htv-rank-t .ct{font-size:12px;color:#8A917B;font-weight:600;flex-shrink:0;white-space:nowrap}
+.htv-rank-bar{background:#EDF2E7;border-radius:8px;height:8px;margin-top:6px;overflow:hidden}
+.htv-rank-bar>div{height:8px;border-radius:8px;transition:width .6s cubic-bezier(.3,1,.4,1)}
 .htv-cmt{position:relative;background:#fff;border-radius:16px;padding:12px 14px 12px 36px;min-height:44px;font-size:14px;color:var(--htvbrown);line-height:1.6;margin-top:8px;transition:opacity .4s;box-shadow:0 2px 6px rgba(80,60,40,.07)}
 .htv-cmt::before{content:'\201C';position:absolute;left:12px;top:6px;font-size:28px;color:#C9BDA8;font-weight:800}
 .htv-confetti{position:absolute;font-size:22px;pointer-events:none;animation:htvfly 1s ease-out forwards;z-index:5}
@@ -3636,16 +3630,15 @@ thead th{color:#767B75!important}
 </style>
 
 <!-- 🗳️ 午茶日投票專頁：全螢幕獨立頁面（點橫幅開啟；投票卡/結果卡由 JS 移入 body） -->
-<div id="ht-vote-page" style="display:none;position:fixed;inset:0;z-index:300;background:#F1F3EE;overflow-y:auto;-webkit-overflow-scrolling:touch">
+<div id="ht-vote-page" style="display:none;position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#F7EFE1 0%,#F0E5CF 48%,#DCE8D2 100%);overflow-y:auto;-webkit-overflow-scrolling:touch">
   <div style="max-width:640px;margin:0 auto;padding:16px 16px 40px">
-    <div style="display:flex;align-items:center;gap:12px;margin:6px 0 16px">
-      <button onclick="htVoteClosePage()" style="width:36px;height:36px;border-radius:50%;border:1.5px solid #E1E4DF;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='#fff'">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6e736d" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    <div style="position:relative;text-align:center;margin:6px 0 16px;padding-top:6px">
+      <button onclick="htVoteClosePage()" style="position:absolute;left:0;top:6px;width:36px;height:36px;border-radius:50%;border:1.5px solid #E0D7C4;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#FBF8F2'" onmouseout="this.style.background='#fff'">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A7A6A" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:700;color:#2E332D;letter-spacing:.08em">午茶日滿意度投票</div>
-        <div id="ht-vote-page-sub" style="font-size:12px;color:#9AA098;margin-top:2px">匿名 · 僅限活動當天</div>
-      </div>
+      <div style="font-size:38px;line-height:1.1">☕</div>
+      <div style="font-size:20px;font-weight:800;color:#4A3B30;letter-spacing:.1em;margin-top:6px">午茶日滿意度投票</div>
+      <div id="ht-vote-page-sub" style="font-size:12px;color:#A08B76;margin-top:4px">匿名 · 大家輪流投</div>
     </div>
     <div id="ht-vote-page-body"></div>
   </div>
@@ -12705,7 +12698,7 @@ window.htVoteOpenInline = async function(dateStr) {
     window._htvPrevBodyOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     var sub = document.getElementById('ht-vote-page-sub');
-    if (sub) sub.textContent = dkey.slice(5).replace('-', '/') + ' 午茶日 · 匿名 · 大家輪流投';
+    if (sub) sub.textContent = dkey.slice(5).replace('-', '/') + ' 午茶日 · 匿名 · 輪到你了，點下方開始 👇';
   }
   wrap.style.display = '';
   document.getElementById('ht-vote-form').style.display = 'none';
@@ -12910,27 +12903,25 @@ function htVoteRenderResults(votesArg) {
   });
   var items = Object.keys(stat).map(function(nm){ return { k: nm, fav: stat[nm].fav, sat: stat[nm].satSum / stat[nm].fav }; })
     .sort(function(a,b){ return b.fav - a.fav; }).slice(0, 12);
-  var satColor = function(s){ return s>=4.3?'#3E5A3B':s>=3.7?'#5E9E52':s>=3.1?'#9CC15F':s>=2.5?'#E7C24B':s>=2.0?'#EE9A55':'#E0694A'; };
+  // 排行榜長條：依得票數排名（🥇🥈🥉），長條寬度＝相對票數
   var map = document.getElementById('htv-map');
-  map.innerHTML = '';
   if (items.length) {
-    var W = map.clientWidth || 640, H = map.clientHeight || 280;
-    var rects = _htvSquarify(items.map(function(it){ return it.fav; }), W, H);
-    items.forEach(function(it, i) {
-      var r = rects[i]; if (!r) return;
-      var mine = _htvPicks.indexOf(it.k) >= 0, big = r.w > 84 && r.h > 56;
-      var d = document.createElement('div');
-      d.className = 'htv-blk' + (mine ? ' you' : '');
-      d.style.cssText += 'left:'+r.x+'px;top:'+r.y+'px;width:'+r.w+'px;height:'+r.h+'px;background:'+satColor(it.sat);
-      d.innerHTML = (mine ? '<span class="star">★</span>' : '')
-        + '<div class="n">'+_htvEmoji(it.k)+(big ? ' '+htEsc(it.k) : '')+'</div>'
-        + (big ? '<div class="c">'+it.fav+' 票 · 滿意 '+it.sat.toFixed(1)+'</div>' : '');
-      d.title = it.k + '：' + it.fav + ' 票，平均滿意 ' + it.sat.toFixed(1);
-      map.appendChild(d);
-      setTimeout(function(){ d.classList.add('in'); }, 80 + i*70);
-    });
+    var maxFav = items[0].fav || 1;
+    var medals = ['🥇', '🥈', '🥉'];
+    map.innerHTML = items.map(function(it, i) {
+      var pct = Math.max(8, Math.round(it.fav / maxFav * 100));
+      var mine = _htvPicks.indexOf(it.k) >= 0;
+      var barBg = i === 0 ? 'linear-gradient(90deg,#7FA05F,#4F7A4A)' : i === 1 ? '#9DC183' : i === 2 ? '#B5CB94' : '#D5E0C2';
+      return '<div class="htv-rank' + (mine ? ' you' : '') + '" style="animation-delay:' + (i * 60) + 'ms" title="' + htEsc(it.k) + '：' + it.fav + ' 票，平均滿意 ' + it.sat.toFixed(1) + '">'
+        + '<div class="htv-rank-t"><span class="m">' + (medals[i] || (i + 1) + '.') + '</span>'
+        + '<span class="em">' + _htvEmoji(it.k) + '</span>'
+        + '<span class="nm">' + htEsc(it.k) + (mine ? ' <b style="color:#E0820A">★</b>' : '') + '</span>'
+        + '<span class="ct">' + it.fav + ' 票 · 滿意 ' + it.sat.toFixed(1) + '</span></div>'
+        + '<div class="htv-rank-bar"><div style="width:' + pct + '%;background:' + barBg + '"></div></div>'
+        + '</div>';
+    }).join('');
   } else {
-    map.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#A8988A;font-size:14px">尚無品項回饋</div>';
+    map.innerHTML = '<div style="text-align:center;padding:24px 0;color:#A8988A;font-size:14px">尚無品項回饋</div>';
   }
   // 一句話輪播（每 3 秒淡入淡出）
   var cmts = votes.map(function(v){ return (v.comment||'').trim(); }).filter(Boolean);
@@ -12943,23 +12934,6 @@ function htVoteRenderResults(votesArg) {
     shw();
     if (cmts.length > 1) _htvCmtTimer = setInterval(shw, 3000);
   } else cw.style.display = 'none';
-}
-// squarified treemap（面積比例排版）
-function _htvSquarify(vals, W, H) {
-  var total = vals.reduce(function(a,b){ return a+b; }, 0), area = W*H;
-  var nodes = vals.map(function(v,i){ return { a: v/total*area, i: i }; });
-  nodes.sort(function(p,q){ return q.a - p.a; });
-  var rects = [], x = 0, y = 0, w = W, h = H, row = [];
-  function worst(r, len){ var s=0,mx=0,mn=1e9; r.forEach(function(n){ s+=n.a; mx=Math.max(mx,n.a); mn=Math.min(mn,n.a); }); var l2=len*len,s2=s*s; return Math.max(l2*mx/s2, s2/(l2*mn)); }
-  function lay(r){ var s=0; r.forEach(function(n){ s+=n.a; }); if (w>=h){ var dw=s/h,yy=y; r.forEach(function(n){ var hh=n.a/dw; rects[n.i]={x:x,y:yy,w:dw,h:hh}; yy+=hh; }); x+=dw; w-=dw; } else { var dh=s/w,xx=x; r.forEach(function(n){ var ww=n.a/dh; rects[n.i]={x:xx,y:y,w:ww,h:dh}; xx+=ww; }); y+=dh; h-=dh; } }
-  var i = 0;
-  while (i < nodes.length) {
-    var n = nodes[i], len = Math.min(w,h);
-    if (!row.length) { row.push(n); i++; continue; }
-    if (worst(row.concat([n]), len) <= worst(row, len)) { row.push(n); i++; } else { lay(row); row = []; }
-  }
-  if (row.length) lay(row);
-  return rects;
 }
 // 供除錯／測試用（正式流程走 htVoteInit）
 window._htvBuildForm = _htvBuildForm;
