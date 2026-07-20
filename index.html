@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720103610';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720104127';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10734,6 +10734,31 @@ var FB_LS_KEY = 'bf_feedback_v1';
 function _fbLocalRead() { try { return JSON.parse(localStorage.getItem(FB_LS_KEY) || '[]'); } catch(e) { return []; } }
 function _fbLocalWrite(arr) { try { localStorage.setItem(FB_LS_KEY, JSON.stringify(arr)); } catch(e) {} }
 
+var _fbImage = null;  // { base64, mime, name, dataUrl }
+window.fbPickImage = function(input) {
+  var f = input && input.files && input.files[0];
+  if (!f) return;
+  if (!/^image\//.test(f.type)) { toast('只能附加圖檔'); input.value = ''; return; }
+  if (f.size > 5 * 1024 * 1024) { toast('圖檔請小於 5MB'); input.value = ''; return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    _fbImage = { dataUrl: dataUrl, mime: f.type, name: f.name, base64: String(dataUrl).split(',')[1] || '' };
+    var pv = document.getElementById('fb-image-preview');
+    var th = document.getElementById('fb-image-thumb');
+    if (th) th.src = dataUrl;
+    if (pv) pv.style.display = 'block';
+  };
+  reader.readAsDataURL(f);
+};
+window.fbClearImage = function() {
+  _fbImage = null;
+  var pv = document.getElementById('fb-image-preview');
+  var inp = document.getElementById('fb-image-input');
+  if (pv) pv.style.display = 'none';
+  if (inp) inp.value = '';
+};
+
 window.fbOpenBoard = function() {
   var m = document.getElementById('fb-board');
   if (!m) return;
@@ -10770,15 +10795,38 @@ window.fbRenderList = async function() {
     var who = it.userName || '同事';
     var when = _fbFmtTime(it.createdAt);
     var del = canManage ? '<button onclick="fbDelete(\'' + (it.id||'') + '\')" style="background:none;border:none;color:#C0655A;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0">刪除</button>' : '';
+    // 圖檔：後端存 Drive（用縮圖網址顯示、點開看原圖）；本機留存則是 data URL
+    var imgHtml = '';
+    if (it.imageUrl) {
+      var isData = /^data:/.test(it.imageUrl);
+      var src = isData ? it.imageUrl : (it.imageId ? 'https://drive.google.com/thumbnail?id=' + it.imageId + '&sz=w1000' : it.imageUrl);
+      imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
+        + '<img src="' + htEsc(src) + '" alt="附件圖檔" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #E1E4DF" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
+    }
+    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word">' + _fbLinkify(it.text) + '</div>' : '';
     return '<div style="background:#fff;border:1px solid #ECEEEA;border-radius:12px;padding:11px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">'
       +   '<span style="font-size:13px;font-weight:700;color:#3E5A3B">💬 ' + htEsc(who) + '</span>'
       +   '<span style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9AA098">' + when + '</span>' + del + '</span>'
       + '</div>'
-      + '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word">' + htEsc(it.text||'') + '</div>'
+      + textHtml + imgHtml
       + '</div>';
   }).join('');
 };
+
+// 把純文字中的網址轉成可點連結（先逐段跳脫，避免 XSS）
+function _fbLinkify(raw) {
+  var re = /(https?:\/\/[^\s<]+)/g;
+  var out = '', last = 0, m;
+  while ((m = re.exec(String(raw)))) {
+    out += htEsc(raw.slice(last, m.index));
+    var url = m[0];
+    out += '<a href="' + htEsc(url) + '" target="_blank" rel="noopener" style="color:#577B53;text-decoration:underline;word-break:break-all">' + htEsc(url) + '</a>';
+    last = m.index + url.length;
+  }
+  out += htEsc(String(raw).slice(last));
+  return out;
+}
 
 function _fbFmtTime(iso) {
   if (!iso) return '';
@@ -10792,20 +10840,28 @@ window.fbPost = async function() {
   var input = document.getElementById('fb-input');
   var btn = document.getElementById('fb-send-btn');
   var text = (input && input.value || '').trim();
-  if (!text) { toast('請先輸入想說的話'); return; }
+  if (!text && !_fbImage) { toast('請先輸入想說的話，或附加一張圖檔'); return; }
   var uname = (currentUser && (LOCAL_EMAIL_TO_NAME[currentUser.email] || currentUser.name)) || (window.currentUser && window.currentUser.name) || '同事';
   var uemail = (currentUser && currentUser.email) || (window.currentUser && window.currentUser.email) || '';
-  var item = { id:'FB'+Date.now(), text:text, anonymous:false, userName:uname, userEmail:uemail, createdAt:new Date().toISOString() };
+  var id = 'FB' + Date.now();
+  var payload = { id:id, text:text, anonymous:false, userName:uname, userEmail:uemail, createdAt:new Date().toISOString() };
+  if (_fbImage) { payload.imageData = _fbImage.base64; payload.imageMime = _fbImage.mime; payload.imageName = _fbImage.name; }
   if (btn) { btn.disabled = true; btn.textContent = '送出中…'; }
   // 後端優先；失敗則存本機（確保紀錄一定留存）
-  var ok = false;
+  var ok = false, backendUrl = '';
   try {
-    var r = await htApi('feedbackPost', item);
+    var r = await htApi('feedbackPost', payload);
     ok = !!(r && r.ok);
+    if (ok) backendUrl = r.imageUrl || '';
   } catch(e) {}
-  if (!ok) { var arr = _fbLocalRead(); arr.push(item); _fbLocalWrite(arr); }
+  if (!ok) {
+    // 本機留存：圖檔以 data URL 直接保存，離線也看得到
+    var local = { id:id, text:text, anonymous:false, userName:uname, createdAt:payload.createdAt, imageUrl: _fbImage ? _fbImage.dataUrl : '', imageId:'' };
+    var arr = _fbLocalRead(); arr.push(local); _fbLocalWrite(arr);
+  }
   if (btn) { btn.disabled = false; btn.textContent = '送出留言'; }
   if (input) input.value = '';
+  fbClearImage();
   toast('✅ 已送出，謝謝你的分享！');
   fbRenderList();
 };
@@ -15856,9 +15912,15 @@ if (document.getElementById('bulletin-list')) bulletinRender();
       <button onclick="fbCloseBoard()" style="background:rgba(255,255,255,.25);border:none;color:#fff;width:30px;height:30px;border-radius:50%;font-size:18px;cursor:pointer;line-height:1;flex-shrink:0">✕</button>
     </div>
     <div style="padding:14px 18px;border-bottom:1px solid #F0EBE2">
-      <textarea id="fb-input" rows="3" maxlength="500" placeholder="有什麼想跟福委說的嗎？（最多 500 字）" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;resize:vertical" onfocus="this.style.borderColor='#E0820A'" onblur="this.style.borderColor='#E1E4DF'"></textarea>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px">
-        <span style="font-size:12px;color:#9AA098">會顯示你的名字，福委才知道找誰討論 🙂</span>
+      <textarea id="fb-input" rows="3" maxlength="500" placeholder="有什麼想跟福委說的嗎？貼上網址會自動變連結（最多 500 字）" style="width:100%;box-sizing:border-box;border:1.5px solid #E1E4DF;border-radius:12px;padding:10px 12px;font-size:14px;font-family:inherit;outline:none;resize:vertical" onfocus="this.style.borderColor='#E0820A'" onblur="this.style.borderColor='#E1E4DF'"></textarea>
+      <div style="font-size:12px;color:#9AA098;margin-top:6px">會顯示你的名字，福委才知道找誰討論 🙂</div>
+      <input type="file" id="fb-image-input" accept="image/*" style="display:none" onchange="fbPickImage(this)">
+      <div id="fb-image-preview" style="display:none;margin-top:8px;position:relative;width:88px;height:88px">
+        <img id="fb-image-thumb" alt="預覽" style="width:88px;height:88px;object-fit:cover;border-radius:10px;border:1.5px solid #E1E4DF">
+        <button onclick="fbClearImage()" title="移除圖檔" style="position:absolute;top:-8px;right:-8px;width:22px;height:22px;border-radius:50%;border:none;background:#C0655A;color:#fff;font-size:13px;line-height:1;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.2)">✕</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:10px">
+        <button onclick="document.getElementById('fb-image-input').click()" style="background:#F7F8F6;color:#4A4F49;border:1.5px solid #E1E4DF;border-radius:20px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">📎 附加圖檔</button>
         <button id="fb-send-btn" onclick="fbPost()" style="background:linear-gradient(135deg,#577B53,#6E8F6A);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(87,123,83,.3)">送出留言</button>
       </div>
     </div>
