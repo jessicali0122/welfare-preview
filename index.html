@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720104127';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720104441';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10844,7 +10844,7 @@ window.fbPost = async function() {
   var uname = (currentUser && (LOCAL_EMAIL_TO_NAME[currentUser.email] || currentUser.name)) || (window.currentUser && window.currentUser.name) || '同事';
   var uemail = (currentUser && currentUser.email) || (window.currentUser && window.currentUser.email) || '';
   var id = 'FB' + Date.now();
-  var payload = { id:id, text:text, anonymous:false, userName:uname, userEmail:uemail, createdAt:new Date().toISOString() };
+  var payload = { id:id, text:text, userName:uname, userEmail:uemail, createdAt:new Date().toISOString() };
   if (_fbImage) { payload.imageData = _fbImage.base64; payload.imageMime = _fbImage.mime; payload.imageName = _fbImage.name; }
   if (btn) { btn.disabled = true; btn.textContent = '送出中…'; }
   // 後端優先；失敗則存本機（確保紀錄一定留存）
@@ -10856,7 +10856,7 @@ window.fbPost = async function() {
   } catch(e) {}
   if (!ok) {
     // 本機留存：圖檔以 data URL 直接保存，離線也看得到
-    var local = { id:id, text:text, anonymous:false, userName:uname, createdAt:payload.createdAt, imageUrl: _fbImage ? _fbImage.dataUrl : '', imageId:'' };
+    var local = { id:id, text:text, userName:uname, createdAt:payload.createdAt, imageUrl: _fbImage ? _fbImage.dataUrl : '', imageId:'' };
     var arr = _fbLocalRead(); arr.push(local); _fbLocalWrite(arr);
   }
   if (btn) { btn.disabled = false; btn.textContent = '送出留言'; }
