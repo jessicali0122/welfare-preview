@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720195343';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720201632';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12956,6 +12956,12 @@ function _htvEmoji(name) {
   for (var i = 0; i < M.length; i++) if (n.indexOf(M[i][0]) >= 0) return M[i][1];
   return '🍽️';
 }
+// 非投票品項：餐具／器材／佈置／公告等後勤項，不列入「心頭好」投票選單。
+// 要新增排除詞，直接加進下方 regex（用 | 分隔）即可。
+function _htvNotVotable(name) {
+  var n = String(name || '');
+  return /餐巾|托盤|餐盤|架|餐具|刀叉|叉子|湯匙|筷|紙杯|杯架|桌巾|桌布|布置|佈置|佈景|道具|器材|花材|花藝|邀請函|公告|通知|海報|布條|名牌|貼紙|dress\s*code/i.test(n);
+}
 function _htvToday() {
   var d = new Date();
   return d.getFullYear() + '-' + _pad2(d.getMonth()+1) + '-' + _pad2(d.getDate());
@@ -13170,6 +13176,7 @@ function _htvBuildForm(namesArg) {
   srcNames.forEach(function(nm) {
     nm = String(nm || '').trim();
     if (!nm || seen[nm]) return; seen[nm] = 1;
+    if (_htvNotVotable(nm)) return; // 濾掉餐具/器材/佈置/公告等後勤品項
     var d = document.createElement('div');
     d.className = 'htv-item';
     d.innerHTML = '<span class="em">'+_htvEmoji(nm)+'</span><span class="nm">'+htEsc(nm)+'</span>';
