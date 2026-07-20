@@ -2240,13 +2240,10 @@ thead th{color:#767B75!important}
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#FBE9D8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="留言板管理">📣</span></div>
           <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
-          <button onclick="sw('dashboard')" style="flex-shrink:0;background:#fff;border:1.5px solid #CDD8CB;color:#577B53;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#F3F7F2'" onmouseout="this.style.background='#fff'">← 總覽</button>
         </div>
         <div style="border-top:1px solid #ECEEEA;margin:14px 0 12px"></div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <span id="fb-admin-count" style="font-size:13px;color:#767B75;font-weight:600">—</span>
-          <div style="flex:1"></div>
-          <button onclick="fbRenderAdmin()" style="background:#F7F8F6;border:1.5px solid #E1E4DF;color:#4A4F49;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">🔄 重新整理</button>
         </div>
       </div>
       <div id="fb-admin-list"></div>
@@ -11463,7 +11460,12 @@ window.htOpenSheetDetail = function (eventId) {
   d.style.cssText = 'position:fixed;inset:0;z-index:400;background:rgba(59,53,44,.4);display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));overflow:auto;-webkit-overflow-scrolling:touch';
   // 開啟時鎖背景捲動（此 modal 非 .modal-bg，需自行處理），關閉時還原
   var _htPrevBodyOverflow = document.body.style.overflow;
-  function _htCloseSheet(){ var m=document.getElementById('ht-sheet-modal'); if(m) m.remove(); document.body.style.overflow=_htPrevBodyOverflow; }
+  function _htCloseSheet(){
+    var wrap = document.getElementById('ht-vote-wrap');
+    if (wrap && window._htvSheetPrevParent) { window._htvSheetPrevParent.appendChild(wrap); wrap.style.display = window._htvSheetPrevDisplay || 'none'; window._htvSheetPrevParent = null; }
+    if (typeof _htvCmtTimer !== 'undefined' && _htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
+    var m=document.getElementById('ht-sheet-modal'); if(m) m.remove(); document.body.style.overflow=_htPrevBodyOverflow;
+  }
   window._htCloseSheetModal = _htCloseSheet;
   document.body.style.overflow = 'hidden';
   d.onclick = function (e) { if (e.target === d) _htCloseSheet(); };
@@ -11496,6 +11498,7 @@ window.htOpenSheetDetail = function (eventId) {
         +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:center;font-weight:700;letter-spacing:.04em">是否訂購</th>'
         +     '<th style="padding:10px;font-size:12px;color:#46633F;text-align:left;font-weight:700;letter-spacing:.04em">備註</th>'
         +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>')
+    +   '<div id="ht-sheet-vote-slot" style="margin-top:4px"></div>'
     + '</div>'
     + '<div style="padding:14px 24px 18px;border-top:1px solid #ECEEEA;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
     +   '<div style="font-size:14px;color:#767B75">合計 <span style="font-weight:700;color:#2E332D">NT$ ' + (s.subtotal || 0).toLocaleString() + '</span>'
@@ -11512,7 +11515,51 @@ window.htOpenSheetDetail = function (eventId) {
     + '</div>'
     + '</div>';
   document.body.appendChild(d);
+  _htRenderSheetVoteSlot(s);
 };
+
+// 唯讀詳情彈窗（Google 試算表場次）借用同一份 #ht-vote-wrap 顯示投票結果——
+// 投票以「日期」為鑰匙，跟這場是不是系統活動／試算表匯入無關，所以這裡也該看得到
+async function _htRenderSheetVoteSlot(sess) {
+  var slot = document.getElementById('ht-sheet-vote-slot');
+  if (!slot) return;
+  var dkey = String(sess.date || '').replace(/\//g, '-').slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dkey)) return;
+  var evId = 'HTD-' + dkey;
+  var r = null;
+  try { r = await htApi('htVoteGet', { eventId: evId }); } catch (e) {}
+  // 彈窗可能已被關閉（slot 已從 DOM 移除）→ 不繼續
+  if (!document.body.contains(slot)) return;
+  if (!r || !r.ok) return; // 後端尚未部署投票 API → 安靜隱藏，不打擾唯讀畫面
+  var votes = r.votes || [];
+  var head = document.createElement('div');
+  head.style.cssText = 'display:flex;align-items:center;gap:8px;margin:10px 0 12px;padding-top:16px;border-top:1px solid #ECEEEA';
+  head.innerHTML = '<span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span>'
+    + '<span style="font-size:14px;font-weight:700;color:#2E332D">🗳️ 投票詳情</span>'
+    + (votes.length ? '<span style="font-size:12px;color:#9AA098">（' + votes.length + ' 人投票）</span>' : '');
+  slot.innerHTML = '';
+  slot.appendChild(head);
+  if (!votes.length) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'text-align:center;padding:20px;color:#9AA098;font-size:13px;background:#FAFBF9;border-radius:12px';
+    empty.textContent = r.closed ? '本場投票已結束，尚無人投票' : '目前尚無投票資料';
+    slot.appendChild(empty);
+    return;
+  }
+  // 借用既有的結果卡片（#ht-vote-wrap 全站唯一一份，固定 DOM id），關閉彈窗時會歸位
+  var wrap = document.getElementById('ht-vote-wrap');
+  if (!wrap) return;
+  window._htvSheetPrevParent = wrap.parentElement;
+  window._htvSheetPrevDisplay = wrap.style.display;
+  slot.appendChild(wrap);
+  wrap.style.display = '';
+  var formEl = document.getElementById('ht-vote-form'); if (formEl) formEl.style.display = 'none';
+  var resEl = document.getElementById('ht-vote-results'); if (resEl) resEl.style.display = '';
+  _htvEventId = evId;
+  _htvVotes = votes;
+  _htvPicks = [];
+  htVoteRenderResults(votes);
+}
 
 // 把「唯讀試算表月份」複製成一筆可編輯的系統活動（存系統庫，原始試算表不動）
 window.htImportSheetEvent = async function (sheetName, btn) {
@@ -16021,7 +16068,6 @@ if (document.getElementById('bulletin-list')) bulletinRender();
         <button id="fb-send-btn" onclick="fbPost()" style="background:linear-gradient(135deg,#577B53,#6E8F6A);color:#fff;border:none;border-radius:20px;padding:8px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 3px 10px rgba(87,123,83,.3)">送出留言</button>
       </div>
     </div>
-    <div id="fb-list" style="flex:1;overflow-y:auto;padding:12px 18px 18px;background:#FAFBF9"></div>
   </div>
 </div>
 
