@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720202557';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720210228';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3559,7 +3559,7 @@ thead th{color:#767B75!important}
             <button type="button" class="htv-ghost" onclick="htvReviewAdd()">新增</button>
           </div>
           <div class="htv-row2" style="margin-top:16px">
-            <button class="htv-ghost" onclick="htVoteClosePage()">取消</button>
+            <button class="htv-ghost" onclick="htvReviewCancel()">取消</button>
             <button class="htv-go" id="htv-review-go" onclick="htvReviewConfirm(this)">儲存並開始投票 →</button>
           </div>
         </div>
@@ -12947,6 +12947,7 @@ window.htOpenDetail = async function(eventId) {
 // ══ 午茶日滿意度投票（匿名；僅活動當天；結果永久留存於該場活動）══
 var _htvSat = 0, _htvPicks = [], _htvVotes = null, _htvCmtTimer = null;
 var _htvReviewState = []; // 福委「檢視/調整投票品項」畫面的狀態：[{name,on,custom}]
+var _htvReviewCtx = 'kiosk'; // 檢視畫面來源：'kiosk'（全螢幕投票頁）或 'detail'（活動詳情頁），決定「取消」行為
 var _htvEventId = null; // 投票綁定的活動編號（慣例 HT-<yyyy-MM>；試算表場次投票也用同一慣例，轉換後票自動銜接）
 var _HTV_LV = [
   { s:1, t:'待加強', c:'#E8865E', l:'#F4B394' },
@@ -13030,7 +13031,23 @@ window.htVoteInit = async function() {
   var showRes  = _htvVotes.length > 0 || (canMg && isToday);
   if (!showForm && !showRes) return;
   wrap.style.display = '';
-  if (showForm) { _htvBuildForm(); document.getElementById('ht-vote-form').style.display = ''; }
+  document.getElementById('htv-review').style.display = 'none';
+  if (showForm) {
+    // 取福委已設定的投票名單（未設定→關鍵字過濾當預設）
+    var cfg = null; try { cfg = await htApi('htVoteItemsGet', { eventId: evId }); } catch(e) {}
+    if (!_htEvent || _htEvent.eventId !== _openedEventId) return; // 等待期間已切到別場
+    var configured = !!(cfg && cfg.ok && cfg.configured && Array.isArray(cfg.items));
+    var savedItems = configured ? cfg.items : null;
+    if (canMg) {
+      // 福委/管理者：先進「檢視/調整品項」畫面，確認後才投票
+      var allNames = (_htItems || []).map(function(it){ return String(it.name || '').trim(); });
+      _htvOpenReview(allNames, savedItems, 'detail');
+    } else {
+      // 一般員工：用福委存好的名單；未設定則以關鍵字過濾為預設
+      _htvBuildForm(savedItems || undefined, configured);
+      document.getElementById('ht-vote-form').style.display = '';
+    }
+  }
   if (showRes) {
     document.getElementById('ht-vote-results').style.display = '';
     htVoteRenderResults();
@@ -13170,7 +13187,8 @@ window.htVoteOpenInline = async function(dateStr) {
 };
 
 // 福委：開啟「檢視/調整投票品項」畫面。allNames＝該場全部品項；savedItems＝已存名單（沒有則食物預設勾）
-function _htvOpenReview(allNames, savedItems) {
+function _htvOpenReview(allNames, savedItems, ctx) {
+  _htvReviewCtx = ctx || 'kiosk';
   document.getElementById('ht-vote-form').style.display = 'none';
   document.getElementById('ht-vote-results').style.display = 'none';
   var savedSet = null;
@@ -13229,6 +13247,19 @@ window.htvReviewConfirm = async function(btn) {
   _htvBuildForm(picked, true); // 福委已確認，照單投票
   document.getElementById('ht-vote-form').style.display = '';
   var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
+};
+
+// 「取消」：全螢幕投票頁→關頁；活動詳情頁→只收起檢視畫面，露出結果看板（若有）
+window.htvReviewCancel = function() {
+  document.getElementById('htv-review').style.display = 'none';
+  if (_htvReviewCtx === 'detail') {
+    if ((_htvVotes || []).length) {
+      document.getElementById('ht-vote-results').style.display = '';
+      htVoteRenderResults();
+    }
+  } else {
+    htVoteClosePage();
+  }
 };
 // 關閉投票專頁（返回午茶日頁面）
 window.htVoteClosePage = function() {
