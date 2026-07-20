@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260720110044';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260720110531';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -473,12 +473,19 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody td[data-label="品名"],#ht-items-tbody td[data-label="廠商"]{grid-column:1/-1}
   #ht-items-tbody td[data-label="負責人"]::before,#ht-items-tbody td[data-label="備註"]::before{min-width:0}
   #ht-items-tbody td[data-label="品名"]{padding-right:26px!important}
-  /* 單價／數量：並排、標籤在上、輸入框在下 */
-  #ht-items-tbody td[data-label="單價"],#ht-items-tbody td[data-label="數量"]{flex-direction:column;align-items:stretch;gap:3px}
-  #ht-items-tbody td[data-label="單價"]::before,#ht-items-tbody td[data-label="數量"]::before{min-width:0}
-  /* 小計＋是否訂購同一列，各半 */
+  /* 所有成對欄位統一「標籤在上、內容在下」，排列一致不雜亂 */
+  #ht-items-tbody td[data-label="單價"],#ht-items-tbody td[data-label="數量"],
+  #ht-items-tbody td[data-label="小計"],#ht-items-tbody td[data-label="負責人"],
+  #ht-items-tbody td[data-label="備註"]{flex-direction:column;align-items:stretch;gap:3px}
+  #ht-items-tbody td[data-label="單價"]::before,#ht-items-tbody td[data-label="數量"]::before,
+  #ht-items-tbody td[data-label="小計"]::before,#ht-items-tbody td[data-label="負責人"]::before,
+  #ht-items-tbody td[data-label="備註"]::before{min-width:0}
+  /* 小計數字左對齊、與其他欄位齊高 */
   #ht-items-tbody td[data-label="小計"]{justify-content:flex-start}
-  #ht-items-tbody td[data-label="是否訂購"]{justify-content:flex-start}
+  /* 是否訂購：標籤在左、勾選在右，單獨成一列（checkbox 不適合標籤在上） */
+  #ht-items-tbody td[data-label="是否訂購"]{grid-column:1/-1;flex-direction:row;justify-content:flex-start;gap:8px;margin-top:2px}
+  /* 備註：整列滿寬（文字欄位較好填、也不會半格孤零零） */
+  #ht-items-tbody td[data-label="備註"]{grid-column:1/-1}
   /* 刪除鈕：絕對定位右上角 */
   #ht-items-tbody td.ht-it-del{position:absolute;top:8px;right:8px;padding:0!important}
   #ht-items-tbody td.ht-it-del::before{display:none}
