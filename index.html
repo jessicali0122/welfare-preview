@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260721110910';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260721111757';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10752,14 +10752,10 @@ var _htRecData  = null;
 var _htRecTab   = 'all';
 
 // ── TSA 全員生日資料庫 ──
-// 已清空：原內容硬編碼約 47 位同事真實姓名+生日，公開 repo 會洩露個資，故先移除。
-// TODO（功能暫時失效，待修復）：
-//   「壽星自動帶入」功能（_htBdaysForMonth）原本靠這份清單作為 fallback，
-//   現在改成完全依賴 window._BF_USER_BDAYS，但該變數目前只在管理者開啟
-//   「使用者管理」頁（loadAdminUsers）時才會被填入 → 一般員工開活動詳情頁時
-//   不會自動帶出壽星。修復方向：讓 _syncMembersFromServer()（所有登入者都會
-//   執行）也順手把生日資料寫進 window._BF_USER_BDAYS，而不是只靠 loadAdminUsers。
-//   後端 GAS 的 getMembers 需要連同 birthday 欄位一起回傳。
+// 已清空：原內容硬編碼約 47 位同事真實姓名+生日，公開 repo 會洩露個資，故移除。
+// 「壽星自動帶入」（_htBdaysForMonth）改為完全依賴 window._BF_USER_BDAYS，
+// 該變數由 _syncMembersFromServer()（所有登入者都會執行）從後端 getMembers
+// 回傳的 birthday 欄位建立，故一般員工也能自動帶出壽星（不再依賴本地清單）。
 var _HT_BDAY_DB = [];
 
 // 取得某月份的壽星名單（回傳帶日期的物件陣列）
