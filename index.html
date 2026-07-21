@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260721111757';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260721125813';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1962,7 +1962,7 @@ thead th{color:#767B75!important}
     <div style="display:flex;flex-direction:column;gap:28px;align-items:center;margin-bottom:8px">
       <div id="dash-links" style="display:flex;flex-direction:column;gap:12px;align-items:center"></div>
       <div id="dash-links-committee" style="display:flex;flex-direction:column;gap:12px;align-items:center">
-        <a class="dash-link-tile committee" href="https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit" target="_blank" rel="noopener" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟">
+        <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟">
           <span class="dl-ic">📋</span>
           <span class="dl-name">福委會會議紀錄</span>
           <span class="dl-arrow">↗</span>
@@ -2101,7 +2101,7 @@ thead th{color:#767B75!important}
       { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號' }; } },
       { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'每月 2～4 次，線上預約' }; } },
       { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職迎新，每人 $150' }; } },
-      { icon:'🏷️', name:'員購價', rule:function(){ return { unlocked:true, state:'到職次月起，官網員購價' }; } },
+      { icon:'🏷️', name:'員購價', rule:function(c){ if (c.m<1) return { unlocked:false, state:'到職次月起，官網員購價' }; return { unlocked:true, state:'官網員購價' }; } },
       { icon:'🍽️', name:'部門季聚餐', rule:function(c){
           if (c.id==='part' && c.m<3) return { unlocked:false, state:'年資滿 3 個月後可參加' };
           return { unlocked:true, state:'每季每人 $600' };
@@ -4386,7 +4386,9 @@ function getCurrentRoles() {
     const pv = window._rolePreview === 'employee' ? ['employee'] : [window._rolePreview, 'employee'];
     return [...new Set(pv)];
   }
-  let roles = cu.roles || USER_ROLES[cu.email] || ['employee'];
+  // 以 USER_ROLES 為權威來源（同步/編輯時會更新）；cu.roles 僅作為尚未同步前的快取後備，
+  // 否則首次同步寫入 cu.roles 後會遮蔽 USER_ROLES 的後續更新，導致角色變更/自我降級到重載才生效
+  let roles = USER_ROLES[cu.email] || cu.roles || ['employee'];
   roles = roles.slice();
   if (ADMIN_EMAILS.includes(cu.email) && !roles.includes('manager')) roles.push('manager');
   if (!roles.includes('employee')) roles.push('employee');
@@ -4475,14 +4477,19 @@ function applyNavVisibility() {
 }
 window.applyNavVisibility = applyNavVisibility;
 
-// 福委會會議紀錄連結：僅管理者／福委／HR 可開，其餘點了顯示「沒有權限」提示
+// 福委會會議紀錄連結：僅管理者／福委／HR 可開，其餘點了顯示「沒有權限」提示。
+// URL 不寫在 <a href> 內（否則任何登入者可從 DOM 直接讀取繞過前端 gate）；
+// 改為通過權限檢查後才於此開啟。data-cap="meeting.view" 另使 applyNavVisibility 對無權限者隱藏整個連結。
+// 註：真正的機密保護仍需該 Google Doc 本身的分享權限設為僅限福委／HR／管理者。
+var _MEETING_NOTES_URL = 'https://docs.google.com/document/d/12kPR1Buh7Mp-Z-1Zqw6OMtFYHnOrb_aPYR3O5bfAM38/edit';
 window.openMeetingNotes = function(e) {
+  if (e && e.preventDefault) e.preventDefault();
   if (typeof can === 'function' && !can('meeting.view')) {
-    if (e && e.preventDefault) e.preventDefault();
     if (typeof toast === 'function') toast('🔒 你沒有查看福委會會議紀錄的權限');
     return false;
   }
-  return true; // 有權限 → 讓 <a> 正常開新分頁
+  window.open(_MEETING_NOTES_URL, '_blank', 'noopener');
+  return false;
 };
 
 // 總覽入口卡片：點擊時先播放「虛線撕開」動畫，再切換頁面
@@ -5290,9 +5297,12 @@ function _cacheGet(key) {
 function _cacheSet(key, data) {
   _apiCache[key] = { ts: Date.now(), data };
 }
+// 世代序號：每次清除遞增，用來讓「清除前發出的背景更新」在清除後不要用舊資料回寫
+let _cacheGen = 0;
 // 手動清除快取（送出、核准、退件等寫入操作後呼叫）
 function _cacheClear() {
   // 寫入操作後清除全部快取（list / get / getFlow 都可能受影響）
+  _cacheGen++;
   Object.keys(_apiCache).forEach(k => delete _apiCache[k]);
 }
 
@@ -5302,9 +5312,11 @@ async function callAPI(action, data = {}, opts = {}) {
   if (_CACHEABLE.has(action) && !opts.noCache) {
     const cached = _cacheGet(cacheKey);
     if (cached) {
-      // 背景靜默更新（不 await）
+      // 背景靜默更新（不 await）；記錄當下世代，若期間發生 _cacheClear（有寫入操作）就丟棄，
+      // 避免用「寫入前」的舊資料回寫快取，蓋掉剛送出/核准的最新狀態
+      const _genAtFetch = _cacheGen;
       _fetchAPI(action, data).then(fresh => {
-        if (fresh && fresh.ok) _cacheSet(cacheKey, fresh);
+        if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(cacheKey, fresh);
       }).catch(function(){});
       return cached;
     }
@@ -5332,7 +5344,7 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       json.error.includes('unauthorized') ||
       (json.error.includes('token') && json.error.includes('invalid'))
     )) {
-      handleAuthError();
+      handleAuthError(true); // 後端明確拒絕（token 失效/未授權）→ 視為 server token 已死
       return { ok: false, error: 'SESSION_EXPIRED', _authError: true };
     }
     // GAS 執行頻率限制 / quota 錯誤：自動退讓重試
@@ -5372,16 +5384,19 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
   }
 }
 
-function handleAuthError() {
+function handleAuthError(serverRejected) {
   // session 失效時順手清掉快取，避免呼叫端拿到舊快取誤判登入正常
   if (typeof _cacheClear === 'function') { try { _cacheClear(); } catch(e) {} }
   if (document.getElementById('auth-expired-bar')) return;
-  // session 還在有效期內 → 可能是暫時性網路問題或後端重新部署，不要強制登出
+  // 後端明確拒絕（token 失效/未授權）→ server token 已死，一律導向重新登入，
+  // 不可只看本地 sessionExpiry（前端會滑動續期，token 真死後本地仍顯示有效 → 卡死）
+  if (serverRejected) { _showAuthExpiredBar(); return; }
+  // 非後端明確拒絕、且 session 本地仍在有效期內 → 可能是暫時性網路問題或後端重新部署，不強制登出
   if (currentUser?.sessionExpiry && Date.now() < currentUser.sessionExpiry) {
     toast('⚠️ 連線驗證失敗，請稍候再試或重新整理頁面');
     return;
   }
-  // session 已真正過期（超過 7 天）→ 顯示重新登入提示
+  // session 已真正過期 → 顯示重新登入提示
   _showAuthExpiredBar();
 }
 function _showAuthExpiredBar() {
@@ -6216,7 +6231,7 @@ async function loadApprovals() {
     var _avatarUrl = c.email ? localStorage.getItem('bf_avatar_' + c.email) : null;
     var _avatar = _avatarUrl
       ? '<img src="'+_avatarUrl+'" style="width:28px;height:28px;border-radius:50%;object-fit:cover;display:block;flex-shrink:0">'
-      : '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#eef4ec;color:#577B53;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+(_nm.charAt(0)||'?')+'</div>';
+      : '<div style="flex-shrink:0;width:28px;height:28px;border-radius:50%;background:#eef4ec;color:#577B53;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">'+htEsc(_nm.charAt(0)||'?')+'</div>';
     return '<div class="evx-approve-card" data-caseid="' + c.caseId + '" onclick="loadDetail(\'' + c.caseId + '\')" style="padding:12px 16px">'
       + '<div class="evx-inner-row" style="display:flex;align-items:center;gap:12px">'
       // 日期方塊
@@ -6233,7 +6248,7 @@ async function loadApprovals() {
       +     '</div>'
       // Row 2: 主旨 + 類別 badges
       +     '<div style="display:flex;align-items:center;gap:5px;overflow:hidden">'
-      +       '<span style="font-size:14px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:40px">' + subject + '</span>'
+      +       '<span style="font-size:14px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex-shrink:1;min-width:40px">' + htEsc(subject) + '</span>'
       +       '<div style="flex-shrink:0;display:flex;align-items:center;gap:4px">' + (catBadges||'') + '</div>'
       +     '</div>'
       +   '</div>'
@@ -6241,7 +6256,7 @@ async function loadApprovals() {
       +   '<div class="evx-name-col" style="flex-shrink:0;display:flex;align-items:center;gap:8px;font-size:14px;color:#767B75;white-space:nowrap;margin:0 8px">'
       +     _avatar
       +     '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">'
-      +       '<span style="font-weight:600;color:#6e736d">' + _nm + '</span>'
+      +       '<span style="font-weight:600;color:#6e736d">' + htEsc(_nm) + '</span>'
       +       '<span style="color:#9AA098;font-size:12px">' + lastAt + '</span>'
       +     '</div>'
       +   '</div>'
@@ -7466,8 +7481,10 @@ async function _syncMembersFromServer() {
       if (idx >= 0) LOCAL_USER_LIST[idx] = entry;
       else LOCAL_USER_LIST.push(entry);
       // 儲存其他成員頭像到 localStorage（供 nameChip 顯示）
+      // 單獨 try/catch：頭像為 base64 大字串，成員多時可能超過 localStorage 配額拋 QuotaExceededError，
+      // 不可讓單一頭像寫入失敗中斷整個成員同步（角色/管理員/壽星資料的建立在後面）
       if (u.avatar) {
-        localStorage.setItem('bf_avatar_' + u.email, u.avatar);
+        try { localStorage.setItem('bf_avatar_' + u.email, u.avatar); } catch (e) {}
       }
     });
     // 同步管理員清單 + 多重角色對照表
@@ -8144,8 +8161,8 @@ function _syncApprovalsToNotif(pendingCases) {
       + '<div style="display:flex;align-items:center;gap:8px">'
       +   '<span style="font-size:18px">📋</span>'
       +   '<div style="flex:1;min-width:0">'
-      +     '<div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + subject + '</div>'
-      +     '<div style="font-size:12px;color:#767B75;margin-top:2px">' + localName(c.email, c.name) + '・' + amount + '</div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + htEsc(subject) + '</div>'
+      +     '<div style="font-size:12px;color:#767B75;margin-top:2px">' + htEsc(localName(c.email, c.name)) + '・' + amount + '</div>'
       +     '<div style="font-size:12px;color:#9AA098;margin-top:1px">' + fmtDate(c.lastActionAt || c.createdAt) + '</div>'
       +   '</div>'
       + '</div>'
@@ -8206,9 +8223,9 @@ function renderAuditLog(c) {
         : '';
       html += '<div style="position:relative;padding-bottom:16px">';
       html += '  <span style="position:absolute;left:-28px;top:3px;width:14px;height:14px;border-radius:50%;background:' + dotColor + ';display:inline-block;border:2px solid #fff;box-shadow:0 0 0 2px ' + dotColor + '"></span>';
-      html += '  <div style="font-size:14px;font-weight:600;color:#2E332D">' + (operatorName || '—') + proxyTag + ' <span style="font-weight:400;color:' + dotColor + '">' + resultLabel + '</span></div>';
+      html += '  <div style="font-size:14px;font-weight:600;color:#2E332D">' + htEsc(operatorName || '—') + proxyTag + ' <span style="font-weight:400;color:' + dotColor + '">' + resultLabel + '</span></div>';
       if (ap.at) html += '  <div style="font-size:12px;color:#9AA098;margin-top:2px">' + fmtDate(ap.at) + '</div>';
-      if (displayComment) html += '  <div style="font-size:12px;color:#767B75;margin-top:4px;padding:6px 10px;background:#F7F8F6;border-radius:6px;border-left:3px solid ' + dotColor + '">' + displayComment + '</div>';
+      if (displayComment) html += '  <div style="font-size:12px;color:#767B75;margin-top:4px;padding:6px 10px;background:#F7F8F6;border-radius:6px;border-left:3px solid ' + dotColor + '">' + htEsc(displayComment) + '</div>';
       html += '</div>';
     });
     html += '</div>';
@@ -8545,7 +8562,7 @@ async function moveFlowStep(index, direction) {
   // 樂觀更新 UI（立即反映，不等後端）
   _flowApprovers = updated;
   APPROVER_EMAILS.length = 0;
-  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);
 
   // 同步儲存至後端
@@ -8633,7 +8650,7 @@ async function doSaveFlowStep() {
 
   _flowApprovers = updated;
   APPROVER_EMAILS.length = 0;
-  _flowApprovers.forEach(a => APPROVER_EMAILS.push(a.email));
+  _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);
   const savedIdx = _editFlowIndex; // 先存，因為 closeEditFlowModal 會重設為 -1
   closeEditFlowModal();
@@ -10226,14 +10243,14 @@ function _renderAnaTablePage(){
     var amt='NT$ '+Number(c.total||0).toLocaleString();
     var subj=c.subject||c.project||'（無主旨）';
     var applicant=localName(c.email, c.name);
-    return'<tr class="tr" style="border-bottom:1px solid #ECEEEA;cursor:pointer" onclick="loadDetail(\''+c.caseId+'\')">'
+    return'<tr class="tr" style="border-bottom:1px solid #ECEEEA;cursor:pointer" onclick="loadDetail('+htJsArg(c.caseId)+')">'
       +'<td style="padding:10px 16px;color:#767B75;font-size:14px;white-space:nowrap">'+dateStr+'</td>'
-      +'<td style="padding:10px 16px;font-size:12px;color:#577B53;font-weight:600;white-space:nowrap">'+c.caseId+'</td>'
-      +'<td style="padding:10px 16px;font-size:14px;color:#4A4F49;white-space:nowrap">'+applicant+'</td>'
-      +'<td style="padding:10px 16px;font-size:14px;color:#363B35;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+subj+'">'+subj+'</td>'
+      +'<td style="padding:10px 16px;font-size:12px;color:#577B53;font-weight:600;white-space:nowrap">'+htEsc(c.caseId)+'</td>'
+      +'<td style="padding:10px 16px;font-size:14px;color:#4A4F49;white-space:nowrap">'+htEsc(applicant)+'</td>'
+      +'<td style="padding:10px 16px;font-size:14px;color:#363B35;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+htEsc(subj)+'">'+htEsc(subj)+'</td>'
       +'<td>'+catHtml+'</td>'
       +'<td style="padding:10px 16px;text-align:right;font-weight:700;color:#577B53;white-space:nowrap">'+amt+'</td>'
-      +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail(\''+c.caseId+'\')">查看</button></td>'
+      +'<td style="padding:10px 16px;text-align:center"><button class="btn btn-o" style="font-size:12px;padding:4px 10px" onclick="event.stopPropagation();loadDetail('+htJsArg(c.caseId)+')">查看</button></td>'
       +'</tr>';
   }).join('');
   _renderAnaTablePager(total,_anaTablePage,totalPages);
@@ -10861,7 +10878,7 @@ window.fbRenderList = async function() {
   list.innerHTML = items.map(function(it){
     var who = it.userName || '同事';
     var when = _fbFmtTime(it.createdAt);
-    var del = canManage ? '<button onclick="fbDelete(\'' + (it.id||'') + '\')" style="background:none;border:none;color:#C0655A;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0">刪除</button>' : '';
+    var del = canManage ? '<button onclick="fbDelete(' + htJsArg(it.id||'') + ')" style="background:none;border:none;color:#C0655A;font-size:12px;cursor:pointer;font-family:inherit;flex-shrink:0">刪除</button>' : '';
     // 圖檔：後端存 Drive（用縮圖網址顯示、點開看原圖）；本機留存則是 data URL
     var imgHtml = '';
     if (it.imageUrl) {
@@ -10874,7 +10891,7 @@ window.fbRenderList = async function() {
     return '<div style="background:#fff;border:1px solid #ECEEEA;border-radius:12px;padding:11px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">'
       +   '<span style="font-size:13px;font-weight:700;color:#3E5A3B">💬 ' + htEsc(who) + '</span>'
-      +   '<span style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9AA098">' + when + '</span>' + del + '</span>'
+      +   '<span style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:#9AA098">' + htEsc(when) + '</span>' + del + '</span>'
       + '</div>'
       + textHtml + imgHtml
       + '</div>';
@@ -10909,8 +10926,8 @@ window.fbRenderAdmin = async function() {
     return '<div style="background:#fff;border:1px solid #E4E1D6;border-left:4px solid #E0820A;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(46,51,45,.05)">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">'
       +   '<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:14px;font-weight:700;color:#3E5A3B">👤 ' + htEsc(who) + '</span>' + email + '</div>'
-      +   '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0"><span style="font-size:12px;color:#9AA098">' + when + '</span>'
-      +     '<button onclick="fbAdminDelete(\'' + (it.id||'') + '\')" style="background:#FDF2F2;border:1px solid #F3C9C4;color:#C0655A;font-size:12px;font-weight:600;border-radius:14px;padding:4px 12px;cursor:pointer;font-family:inherit">🗑 刪除</button></div>'
+      +   '<div style="display:flex;align-items:center;gap:12px;flex-shrink:0"><span style="font-size:12px;color:#9AA098">' + htEsc(when) + '</span>'
+      +     '<button onclick="fbAdminDelete(' + htJsArg(it.id||'') + ')" style="background:#FDF2F2;border:1px solid #F3C9C4;color:#C0655A;font-size:12px;font-weight:600;border-radius:14px;padding:4px 12px;cursor:pointer;font-family:inherit">🗑 刪除</button></div>'
       + '</div>'
       + textHtml + imgHtml
       + '</div>';
@@ -10982,12 +10999,16 @@ window.fbPost = async function() {
   fbRenderList();
 };
 
-window.fbDelete = async function(id) {
+window.fbDelete = function(id) {
   if (!id) return;
-  var ok = false;
-  try { var r = await htApi('feedbackDelete', { id:id }); ok = !!(r && r.ok); } catch(e) {}
-  if (!ok) { var arr = _fbLocalRead().filter(function(x){ return x.id !== id; }); _fbLocalWrite(arr); }
-  fbRenderList();
+  _showConfirmModal('確定刪除這則留言？', '刪除後無法復原，附加圖檔也會一併移除。', '刪除', '#C0655A', async function(){
+    var ok = false;
+    try { var r = await htApi('feedbackDelete', { id:id }); ok = !!(r && r.ok); } catch(e) {}
+    if (!ok) { var arr = _fbLocalRead().filter(function(x){ return x.id !== id; }); _fbLocalWrite(arr); }
+    toast('已刪除');
+    fbRenderList();
+    return true;
+  });
 };
 
 // ── OCR 掃描收據 ──
@@ -13108,11 +13129,13 @@ window.htVoteToggleClose = function(reopen) {
 // 獨立投票專頁（放 iPad 給全員輪流投）：永遠是輪流投模式——投完自動換下一位、
 // 不受單人一票限制（後端隨機鑰匙）、全程不顯示結果；結果由福委在活動詳情頁即時查看，
 // 直到福委按「結束投票」才截止。票以「日期」為鑰匙（HTD-yyyy-MM-dd）。
-window.htVoteOpenInline = async function(dateStr) {
+window.htVoteOpenInline = async function(dateStr, kioskMode) {
   var wrap = document.getElementById('ht-vote-wrap');
   var dkey = String(dateStr || '').replace(/\//g, '-').slice(0, 10);
   if (!wrap || !/^\d{4}-\d{2}-\d{2}$/.test(dkey)) return;
-  window._htvKiosk = true; // 專頁一律輪流投模式
+  // 只有明確以投票亭模式開啟（公用 iPad，福委按「投票亭模式」）才啟用隨機鑰匙無限投；
+  // 一般個人裝置（如全員從橫幅進入）維持單人一票去重，否則人人可重複灌票
+  window._htvKiosk = (kioskMode === true);
   // 移入全螢幕投票專頁並開啟（跳離午茶日頁面，是一個獨立頁）
   var pageBody = document.getElementById('ht-vote-page-body');
   var page = document.getElementById('ht-vote-page');
@@ -13179,7 +13202,19 @@ window.htVoteOpenInline = async function(dateStr) {
     // 福委/管理者：先進「檢視/調整品項」畫面，確認後才開始投票
     _htvOpenReview(names, savedItems, savedKnown, 'kiosk');
   } else {
-    // 一般員工：用福委存好的名單；未設定則以關鍵字過濾為預設
+    // 一般員工：非投票亭模式下，已投過票就不再給表單（避免重複投票；投票亭模式才輪流無限投）
+    var votedLocal = false; try { votedLocal = !!localStorage.getItem('bf_ht_voted_' + _htvEventId); } catch(e) {}
+    var voted = r.voted || votedLocal;
+    if (!window._htvKiosk && voted) {
+      var vnote = document.createElement('div');
+      vnote.id = 'htv-closed-note';
+      vnote.style.cssText = 'background:#fff;border-radius:16px;padding:40px 20px;text-align:center;color:#767B75;font-size:16px;box-shadow:0 1px 3px rgba(46,51,45,.08)';
+      vnote.innerHTML = '<div style="font-size:40px;margin-bottom:10px">✅</div>你已經投過這場票囉，感謝參與！';
+      wrap.parentElement.appendChild(vnote);
+      wrap.style.display = 'none';
+      return;
+    }
+    // 用福委存好的名單；未設定則以關鍵字過濾為預設
     _htvBuildForm(savedItems || names, configured);
     document.getElementById('ht-vote-form').style.display = '';
   }
@@ -13285,8 +13320,8 @@ window.htVoteKioskToggle = function(btn) {
   window._htvKiosk = !window._htvKiosk;
   if (btn) { btn.textContent = window._htvKiosk ? '🖥 投票亭模式：開' : '🖥 投票亭模式：關'; btn.style.background = window._htvKiosk ? '#577B53' : '#fff'; btn.style.color = window._htvKiosk ? '#fff' : '#577B53'; }
   toast(window._htvKiosk ? '🖥 投票亭模式已開啟：投完自動換下一位、不顯示結果' : '已關閉投票亭模式');
-  // 重新載入面板（亭模式會忽略已投狀態並隱藏結果）
-  if (_htvEventId) htVoteOpenInline(_htvEventId.replace(/^HTD-/, ''));
+  // 重新載入面板（亭模式會忽略已投狀態並隱藏結果）；保留切換後的 kiosk 狀態，不要被重設
+  if (_htvEventId) htVoteOpenInline(_htvEventId.replace(/^HTD-/, ''), window._htvKiosk);
 };
 
 function _htvBuildForm(namesArg, skipFilter) {
@@ -13797,6 +13832,11 @@ function htRenderItems() {
 
 function htEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 window.htEsc = htEsc; // 按摩模組（獨立 IIFE）會用到，需匯出全域
+// 供內嵌 onclick 等 HTML 屬性內的 JS 字串字面值安全使用：
+// JSON.stringify 處理 JS 層跳脫（含引號/反斜線），htEsc 再處理 HTML 屬性層，
+// 產生已含雙引號的字面值，用法：onclick="fn(' + htJsArg(x) + ')"
+function htJsArg(s) { return htEsc(JSON.stringify(String(s == null ? '' : s))); }
+window.htJsArg = htJsArg;
 
 window.htItemChange = function(el) {
   var idx = parseInt(el.dataset.idx);
@@ -14157,8 +14197,8 @@ function htRenderBirthday() {
         + '</div>'
         + (inList
             ? '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
-            + '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
-            : '<button onclick="htAddBirthdayByName(\'' + htEsc(p.name) + '\')" style="background:#577B53;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
+            + '<button onclick="htAddBirthdayByName(' + htJsArg(p.name) + ')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+            : '<button onclick="htAddBirthdayByName(' + htJsArg(p.name) + ')" style="background:#577B53;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
           )
         + '</div></div>';
     }).join('');
@@ -14572,12 +14612,16 @@ window.msGetNextBookingHint = function() {
   var data = _msData || (typeof _msLoadLocal === 'function' ? _msLoadLocal() : null);
   if (!data) return null;
   var now = new Date();
-  var upcoming = (data.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date) >= now; })
+  // 用本地午夜比較，避免 new Date('YYYY-MM-DD') 依 ISO 規則解析成 UTC 午夜（台灣 UTC+8 會變成當天 08:00），
+  // 導致今天尚未發生的預約在早上 8 點後被誤判為過去而消失
+  var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  var upcoming = (data.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date + 'T00:00:00') >= today; })
     .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date)>=new Date(now.getFullYear(),now.getMonth(),1);}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
+  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date+'T00:00:00')>=monthStart;}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
   var nd = upcoming[0].date || '';
   var parts = nd.split('-');
-  var wd = ['日','一','二','三','四','五','六'][new Date(nd).getDay()];
+  var wd = ['日','一','二','三','四','五','六'][new Date(nd + 'T00:00:00').getDay()];
   return '下次預約 ' + parseInt(parts[1]) + '/' + parseInt(parts[2]) + '(' + wd + ') ' + (upcoming[0].timeSlot || '');
 };
 
@@ -14951,7 +14995,7 @@ window.msBook = async function(date, timeSlot) {
   if (!_msData) return;
   if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
   // 前端再驗一次：同日不可重複、每月上限（避免畫面未更新或繞過 UI 直接呼叫）
-  var _myBooked = (_msData.myBookings || []).filter(function(b){ return b.status === 'booked'; });
+  var _myBooked = (_msData.myBookings || []).filter(function(b){ return b.status === 'booked' || b.status === 'attended'; });
   if (_myBooked.some(function(b){ return b.date === date; })) { toast('⚠️ 同一天只能預約一個時段唷'); return; }
   var _ym = String(date).slice(0,7);
   var _limit = (_msData.settings && _msData.settings.monthlyLimit) || 2;
