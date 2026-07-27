@@ -3469,6 +3469,7 @@ thead th{color:#767B75!important}
               <tr style="background:#EDF1EC;border-bottom:2px solid #A9C4A5">
                 <th style="padding:12px 10px;text-align:left;color:#3E5A3B;font-weight:700;font-size:14px">品名</th>
                 <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">廠商</th>
+                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">分類</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">單價</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">數量</th>
                 <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">小計</th>
@@ -3481,7 +3482,7 @@ thead th{color:#767B75!important}
             <tbody id="ht-items-tbody"></tbody>
             <tfoot>
               <tr style="background:#EDF1EC;border-top:2px solid #A9C4A5">
-                <td colspan="4" style="padding:14px 12px;font-size:16px;font-weight:600;color:#4A4F49">合計</td>
+                <td colspan="5" style="padding:14px 12px;font-size:16px;font-weight:600;color:#4A4F49">合計</td>
                 <td style="padding:14px 8px;text-align:right;font-size:16px;font-weight:800;color:#3E5A3B" id="ht-total-cell">NT$0</td>
                 <td colspan="4"></td>
               </tr>
@@ -13702,9 +13703,9 @@ var _htPastItemsCache = null;
 
 function _htAutoCategory(name) {
   var n = (name || '').toLowerCase();
-  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|雪糕|霜淇淋|仙草|愛玉|豆花|布丁|銅鑼燒|大福|芋圓|甜點|達克瓦茲/.test(n)) return '甜點';
+  if (/蛋糕|泡芙|馬卡龍|布朗尼|慕斯|塔|派|千層|奶酥|甜甜圈|餅乾|費南雪|可麗露|可頌|甜麵包|聖代|冰淇淋|冰棒|冰棍|枝仔冰|雪糕|霜淇淋|仙草|愛玉|豆花|布丁|銅鑼燒|大福|芋圓|甜點|達克瓦茲/.test(n)) return '甜點';
   if (/拿鐵|奶茶|珍珠|飲料|茶|咖啡|果汁|氣泡|飲品|礦泉水|手搖|可樂|紅茶|綠茶|冰沙|豆漿|燕麥奶|抹茶/.test(n)) return '飲料';
-  if (/三明治|便當|壽司|沙拉|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅|捲餅|飯捲/.test(n)) return '主食';
+  if (/三明治|便當|壽司|沙拉|pizza|披薩|飯糰|漢堡|帕尼尼|貝果|吐司|飯|麵|鹹派|薄餅|捲餅|飯捲|粽/.test(n)) return '主食';
   if (/地瓜球|鹽酥雞|雞排|甜不辣|關東煮|蔥油餅|蘿蔔糕|水煎包|刈包|滷味|臭豆腐|蚵仔煎|碳酸炸物|炸物|輕食/.test(n)) return '鹹食';
   if (/水果|草莓|芒果|西瓜|葡萄|蘋果|梨|桃|荔枝|龍眼|鳳梨|藍莓|奇異果|香蕉|橘子|柳橙|百香果|哈密瓜/.test(n)) return '水果';
   return null;
@@ -13802,7 +13803,7 @@ function _htCheckRepeatWarning() {
 function htRenderItems() {
   var tbody = document.getElementById('ht-items-tbody');
   if (!_htItems.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
     document.getElementById('ht-total-cell').textContent = 'NT$0';
     return;
   }
@@ -13817,6 +13818,7 @@ function htRenderItems() {
     return '<tr style="border-bottom:1px solid #f5f5f5" id="ht-row-'+idx+'">'
       + '<td data-label="品名" '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
+      + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"><option value=""'+(it.category?'':' selected')+'>—</option>'+catOpts+'</select></td>'
       + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="小計" style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#3E5A3B;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
@@ -13874,7 +13876,7 @@ window.htToggleOrderLocal = function(cb) {
 };
 
 window.htAddItemRow = function() {
-  _htItems.push({ itemId:'', name:'', vendor:'', category:'甜點', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', ratingSum:0, ratingCount:0, avgRating:0 });
+  _htItems.push({ itemId:'', name:'', vendor:'', category:'', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', ratingSum:0, ratingCount:0, avgRating:0 });
   htRenderItems();
 };
 
