@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728143527';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728144423';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3392,7 +3392,7 @@ thead th{color:#767B75!important}
     <div id="ht-dtab-plan">
       <!-- 快速設定列 -->
       <div id="ht-event-info-bar" style="background:#fff;border:1.5px solid #CBDCC6;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border-radius:12px;padding:16px 18px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:#577B53;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
+        <div style="font-size:16px;font-weight:700;color:#577B53;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
           <!-- 月份欄位隱藏：以活動日期為準，月份由日期自動帶出（element 保留供 JS 使用，不刪除） -->
           <div style="display:none">
@@ -3443,15 +3443,12 @@ thead th{color:#767B75!important}
             <div id="ht-qty-hint" style="font-size:12px;color:#767B75;margin-top:2px"></div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
-            <div id="ht-view-toggle" style="display:inline-flex;border:1.5px solid #DDE4D8;border-radius:8px;overflow:hidden;background:#F6F9F5">
+            <div id="ht-view-toggle" style="display:inline-flex;flex-wrap:wrap;border:1.5px solid #DDE4D8;border-radius:8px;overflow:hidden;background:#F6F9F5">
               <button onclick="htSetViewMode('order')" id="ht-vm-order" style="padding:7px 12px;border:none;background:#577B53;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="可拖曳排序">↕ 自訂排序</button>
-              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:7px 12px;border:none;background:transparent;color:#577B53;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 依分類</button>
+              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:7px 12px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 依分類</button>
+              <button onclick="htSetViewMode('vendor')" id="ht-vm-vendor" style="padding:7px 12px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依廠商分組顯示">🏬 依廠商</button>
+              <button onclick="htSetViewMode('assignee')" id="ht-vm-assignee" style="padding:7px 12px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依負責人分組顯示">🧑 依負責人</button>
             </div>
-            <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              新增品項
-            </button>
-            <button onclick="htSaveItems()" id="ht-save-btn" style="padding:7px 14px;border-radius:8px;border:none;background:#577B53;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">儲存</button>
           </div>
         </div>
         <!-- 總預算/已用/餘額已併入右側「預算結算」卡片，此處僅保留隱藏容器供既有邏輯寫入 -->
@@ -3485,11 +3482,19 @@ thead th{color:#767B75!important}
             <tfoot>
               <tr style="background:#fff;border-top:2px solid #577B53">
                 <td colspan="5" style="padding:16px 12px;font-size:14px;font-weight:700;color:#6B7268;letter-spacing:.04em">合計</td>
-                <td style="padding:16px 8px;text-align:center;font-size:18px;font-weight:800;color:#577B53;white-space:nowrap" id="ht-total-cell">NT$0</td>
+                <td style="padding:16px 8px;text-align:center;font-size:16px;font-weight:800;color:#577B53;white-space:nowrap" id="ht-total-cell">NT$0</td>
                 <td colspan="4"></td>
               </tr>
             </tfoot>
           </table>
+        </div>
+        <!-- 底部 sticky 工具列：新增品項／儲存釘在畫面底，清單再長都隨手可按 -->
+        <div style="position:sticky;bottom:0;z-index:6;display:flex;gap:10px;justify-content:flex-end;align-items:center;padding:12px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
+          <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:10px 16px;border-radius:10px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            新增品項
+          </button>
+          <button onclick="htSaveItems()" id="ht-save-btn" style="padding:10px 24px;border-radius:10px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:opacity .2s;box-shadow:0 2px 6px rgba(87,123,83,.3)" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">💾 儲存</button>
         </div>
       </div>
     </div>
@@ -3500,7 +3505,7 @@ thead th{color:#767B75!important}
       <!-- 預算結算：試算公式＋結算卡片合併同一區塊，避免與左側重複 -->
       <div id="ht-dtab-budget">
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-bottom:12px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">預算結算</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">預算結算</span></div>
           <div style="font-size:14px;color:#767B75;line-height:1.7;margin-bottom:14px">
             <span style="font-size:12px;font-weight:700;color:#577B53">📐 </span>
             <span id="ht-budget-formula"></span>
@@ -3510,11 +3515,11 @@ thead th{color:#767B75!important}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">支出進度</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">支出進度</span></div>
           <div id="ht-budget-progress-bars"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-top:10px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">類別明細</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">類別明細</span></div>
           <div id="ht-budget-category-detail"></div>
         </div>
       </div>
@@ -3524,7 +3529,7 @@ thead th{color:#767B75!important}
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px">
             <div style="min-width:0">
-              <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">🎂 本月壽星</span></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">🎂 本月壽星</span></div>
               <div style="font-size:12px;color:#9AA098;margin-top:2px">每位壽星 NT$40，加減會自動更新總預算</div>
             </div>
             <button onclick="htAddBirthday()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #577B53;background:#F2F5F1;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F2F5F1'">
@@ -13880,17 +13885,19 @@ function _htCheckRepeatWarning() {
   warning.style.display = '';
 }
 
-var _htViewMode = 'order';   // 'order'（可拖曳排序）｜'category'（依分類分組）
+var _htViewMode = 'order';   // 'order'（可拖曳排序）｜'category'｜'vendor'｜'assignee'（分組顯示）
 var _htDragIdx = null;
+var _HT_VIEW_MODES = ['order','category','vendor','assignee'];
 
 window.htSetViewMode = function(m) {
-  _htViewMode = (m === 'category') ? 'category' : 'order';
-  var bo = document.getElementById('ht-vm-order'), bc = document.getElementById('ht-vm-category');
-  if (bo && bc) {
-    var on = 'background:#577B53;color:#fff', off = 'background:transparent;color:#577B53';
-    bo.style.cssText = 'padding:7px 12px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .15s;' + (_htViewMode==='order'?on:off);
-    bc.style.cssText = 'padding:7px 12px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .15s;' + (_htViewMode==='category'?on:off);
-  }
+  _htViewMode = (_HT_VIEW_MODES.indexOf(m) >= 0) ? m : 'order';
+  _HT_VIEW_MODES.forEach(function(mode, i){
+    var b = document.getElementById('ht-vm-' + mode);
+    if (!b) return;
+    var active = _htViewMode === mode;
+    var base = 'padding:7px 12px;border:none;' + (i>0?'border-left:1px solid #DDE4D8;':'') + 'cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .15s;';
+    b.style.cssText = base + (active ? 'background:#577B53;color:#fff' : 'background:transparent;color:#577B53');
+  });
   htRenderItems();
 };
 
@@ -13934,21 +13941,34 @@ function htRenderItems() {
   }
   var total = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
   var html;
-  if (_htViewMode === 'category') {
-    // 依分類分組（分組模式不提供拖曳；順序由分類決定）
-    var order = _htCats.concat(['']);   // 已知分類在前，未分類殿後
-    var seen = {};
+  if (_htViewMode === 'category' || _htViewMode === 'vendor' || _htViewMode === 'assignee') {
+    // 分組顯示（分組模式不提供拖曳；順序由分組欄位決定）
+    var field = _htViewMode;
+    var emptyLabel = field === 'category' ? '未分類' : (field === 'vendor' ? '未填廠商' : '未指派');
+    // 收集分組
+    var groups = {}, keys = [];
+    _htItems.forEach(function(it, i){
+      var k = String((field === 'assignee' ? it.assignee : it[field]) || '');
+      if (!(k in groups)) { groups[k] = []; keys.push(k); }
+      groups[k].push({ it:it, i:i });
+    });
+    // 分類用固定分類序，其餘用中文字排序；空值一律殿後
+    if (field === 'category') {
+      keys = _htCats.concat(['']).filter(function(k, idx, arr){ return arr.indexOf(k) === idx && groups[k]; });
+    } else {
+      keys.sort(function(a, b){ if (!a) return 1; if (!b) return -1; return a.localeCompare(b, 'zh-Hant'); });
+    }
     html = '';
-    order.forEach(function(cat){
-      if (seen[cat]) return; seen[cat] = 1;
-      var members = _htItems.map(function(it,i){ return {it:it,i:i}; }).filter(function(x){ return (x.it.category||'') === cat; });
-      if (!members.length) return;
-      var c = _htCatColor(cat);
-      var sub = members.reduce(function(s,x){ return s+(x.it.subtotal||0); },0);
-      var label = cat || '未分類';
-      html += '<tr class="ht-cat-group"><td colspan="10" style="padding:10px 14px;background:'+c.bg+';border-left:4px solid '+c.fg+';border-bottom:1px solid '+c.bd+'">'
-        + '<span style="font-weight:800;color:'+c.fg+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
-        + '<span style="margin-left:8px;color:'+c.fg+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+fmtMoney(sub)+'</span></td></tr>';
+    keys.forEach(function(k){
+      var members = groups[k]; if (!members || !members.length) return;
+      var sub = members.reduce(function(s, x){ return s + (x.it.subtotal||0); }, 0);
+      var label = k || emptyLabel;
+      var hb, hf, hbd;
+      if (field === 'category') { var c = _htCatColor(k); hb = c.bg; hf = c.fg; hbd = c.bd; }
+      else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/負責人：中性綠標頭
+      html += '<tr class="ht-cat-group"><td colspan="10" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
+        + '<span style="font-weight:800;color:'+hf+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
+        + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+fmtMoney(sub)+'</span></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, false); }).join('');
     });
   } else {
@@ -14026,6 +14046,7 @@ window.htItemChange = function(el) {
   } else if (f === 'vendor') {
     _htItems[idx][f] = val;
     _htCheckRepeatWarning();
+    if (_htViewMode === 'vendor') htRenderItems();     // 依廠商分組：改廠商即時重新歸組
   } else if (f === 'category') {
     _htItems[idx][f] = val;
     _htPaintCatSelect(el, val);
@@ -14033,6 +14054,7 @@ window.htItemChange = function(el) {
     if (_htViewMode === 'category') htRenderItems();   // 分組模式：改分類即時重新歸組
   } else {
     _htItems[idx][f] = val;
+    if (f === 'assignee' && _htViewMode === 'assignee') htRenderItems();  // 依負責人分組：改負責人即時重新歸組
   }
 };
 
