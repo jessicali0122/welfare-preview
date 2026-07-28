@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728223941';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729001126';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10897,6 +10897,43 @@ function _htFetchRaw(body, timeoutMs) {
     .then(function(r){ if (to) clearTimeout(to); return r; });
 }
 
+// ── 離線快取（localStorage）：把上一次成功的讀取結果留到下次開頁 ──
+// GAS 冷啟動 2～5 秒，第一次進頁面畫面會空著。改成先秒開上次的資料、背景再更新（樂觀顯示）。
+var _HT_LS_PREFIX = 'bf_htcache_';
+var _HT_LS_TTL    = 24 * 60 * 60 * 1000;   // 超過一天的舊資料就不用了，寧可等後端
+var _HT_LS_ACTIONS = new Set(['htList','htGetItems','htVendors']);   // 只存這幾支，避免塞爆 localStorage
+function _htLsGet(ckey) {
+  try {
+    var raw = localStorage.getItem(_HT_LS_PREFIX + ckey);
+    if (!raw) return null;
+    var o = JSON.parse(raw);
+    if (!o || !o.ts || (Date.now() - o.ts) > _HT_LS_TTL) return null;
+    return o.data;
+  } catch (e) { return null; }
+}
+function _htLsSet(ckey, data) {
+  try { localStorage.setItem(_HT_LS_PREFIX + ckey, JSON.stringify({ ts: Date.now(), data: data })); }
+  catch (e) {   // 空間滿了就清掉自己的舊項目再放棄，不影響主流程
+    try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf(_HT_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e2) {}
+  }
+}
+// 存檔/刪除後把離線快取一起清掉，避免下次開頁看到已被改掉的舊資料
+function _htLsClear() {
+  try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf(_HT_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e) {}
+}
+
+// 讀取自動重試：GAS 偶爾逾時或並發被擋，退避 1s→3s 再試，兩次都失敗才回錯誤。
+// 只重試讀取；寫入（存檔/投票）絕不自動重送，避免重複寫入。
+async function _htFetchWithRetry(body, tries) {
+  var delays = [1000, 3000];
+  var r = await _htFetchRaw(body);
+  for (var i = 0; i < (tries || 2) && !(r && r.ok); i++) {
+    await new Promise(function(res){ setTimeout(res, delays[i] || 3000); });
+    r = await _htFetchRaw(body);
+  }
+  return r;
+}
+
 async function htApi(action, payload) {
   // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
   //   currentUser 並未掛到 window（只有 demo 模式才會），用 window.currentUser
@@ -14513,7 +14550,7 @@ function htRenderBudget() {
   // 存檔後 ev.actualExpense 也會被重算，兩者一致。
   var actual    = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
   var surplus   = total - actual;
-  var pct       = total > 0 ? Math.min(Math.round(actual/total*100),100) : 0;
+  var pct       = total > 0 ? Math.round(actual/total*100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
   // 試算公式＋結算卡片已併入右側「預算結算」單一區塊（避免與左側重複）
@@ -14753,6 +14790,11 @@ function htRenderBirthday() {
   var monthNum = parseInt((_evMonth(ev) || '').slice(5, 7), 10) || 0;
   var dbBdays = monthNum ? _htBdaysForMonth(monthNum) : [];
 
+  // 姓名 → 生日（m/d）對照：供沒有從當月 DB 帶入、但已在名單中的壽星也能顯示日期
+  var _bdayByName = {};
+  (window._BF_USER_BDAYS || []).forEach(function(p){ if (p && p.name && p.m && p.d) _bdayByName[p.name] = p.m + '/' + p.d; });
+  (typeof _HT_BDAY_DB !== 'undefined' ? _HT_BDAY_DB : []).forEach(function(p){ if (p && p.name && !_bdayByName[p.name]) _bdayByName[p.name] = p.m + '/' + p.d; });
+
   // 從 DB 自動帶出的壽星（用姓名比對是否已手動加入）
   var listNames = list.map(function(b){ return typeof b === 'object' ? (b.name||b) : b; });
   var autoAdded = dbBdays.filter(function(p){ return listNames.indexOf(p.name) < 0; });
@@ -14764,7 +14806,7 @@ function htRenderBirthday() {
     html += dbBdays.map(function(p) {
       var inList = listNames.indexOf(p.name) >= 0;
       var idx = listNames.indexOf(p.name);
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + (inList ? '#FBF5EC' : '#F6F9F5') + ';border-radius:10px;border:1px solid ' + (inList ? '#EBDFCB' : '#e9f1e7') + ';margin-bottom:6px">'
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F6F9F5;border-radius:10px;border:1px solid #e9f1e7;margin-bottom:6px">'
         + '<span style="font-size:18px">' + (inList ? '🎂' : '🎀') + '</span>'
         + '<div style="flex:1;min-width:0">'
         +   '<div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(p.name) + '</div>'
@@ -14783,9 +14825,12 @@ function htRenderBirthday() {
   var listOnly = listNames.filter(function(n){ return dbNames.indexOf(n) < 0; });
   if (listOnly.length) {
     html += listOnly.map(function(n) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#FBF5EC;border-radius:10px;border:1px solid #EBDFCB;margin-bottom:6px">'
+      var dstr = _bdayByName[n];
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F6F9F5;border-radius:10px;border:1px solid #e9f1e7;margin-bottom:6px">'
         + '<span style="font-size:18px">🎂</span>'
-        + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(n) + '</div></div>'
+        + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(n) + '</div>'
+        +   (dstr ? '<div style="font-size:12px;color:#9AA098;margin-top:2px">' + dstr + ' 生日</div>' : '')
+        + '</div>'
         + '<button onclick="htAddBirthdayByName(' + htJsArg(n) + ')" style="background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
         + '</div>';
     }).join('');
