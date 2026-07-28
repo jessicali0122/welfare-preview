@@ -14342,6 +14342,9 @@ window.htDeleteItem = function(idx) {
 window.htSaveItems = function() {
   if (!_htEvent) return;
   if (window._htSaving) { toast('⏳ 上一次儲存還在進行，請稍候'); return; }   // 避免重複送出
+  // 送出前先讓游標所在的輸入框失焦，觸發其 onchange 把「剛打完還沒失焦」的最後編輯寫進 _htItems，避免漏存
+  var _ae = document.activeElement;
+  if (_ae && _ae.classList && _ae.classList.contains('ht-it-inp') && typeof _ae.blur === 'function') { try { _ae.blur(); } catch(e){} }
   var btn = document.getElementById('ht-save-btn');
   var _evId = _htEvent.eventId;
   // 存檔期間按鈕顯示「儲存中…」（UI 不卡，仍可編輯）；真正成功後才跳「已儲存」，避免「已儲存」與「儲存中…」同時出現造成困惑
