@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728141507';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728142436';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -7289,7 +7289,7 @@ function _showNoPerm(name){
 function sw(name,elOrName,_fromPop){
   // ── 權限守門：無權限的受限頁面 → 顯示「沒有權限」頁（入口不隱藏，點進來才擋）──
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
-    if (name !== 'dashboard') { _showNoPerm(name); return; }
+    if (name !== 'dashboard') { window._htRestoreId = null; _showNoPerm(name); return; }
   }
   // ── 離開表單時提示草稿已儲存 ──
   var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
@@ -7357,9 +7357,11 @@ function sw(name,elOrName,_fromPop){
     htLoadList();
     try{ if(window.htRenderYearTimeline) htRenderYearTimeline(); }catch(e){}
     // 深連結還原：有待還原的單據 id → 直接開該單據（htLoadList 已在背景載列表，供返回用）
-    if (window._htRestoreId && typeof htOpenDetail === 'function') {
+    if (window._htRestoreId) {
       var _rid = window._htRestoreId; window._htRestoreId = null;
-      htOpenDetail(_rid, true);
+      // 試算表唯讀場次(sheet:) 走 modal；系統活動走詳情頁
+      if (/^sheet:/.test(_rid)) { if (typeof htOpenSheetDetail === 'function') htOpenSheetDetail(_rid, true); }
+      else if (typeof htOpenDetail === 'function') { htOpenDetail(_rid, true); }
     }
   }
   if(name==='massage') massageLoad();
@@ -11503,11 +11505,17 @@ function _htBdayLineForYm(ym) {
 window._htBdayLineForYm = _htBdayLineForYm;
 
 // 唯讀詳情彈窗：品項明細＋金額，附原試算表連結
-window.htOpenSheetDetail = function (eventId) {
+window.htOpenSheetDetail = function (eventId, _fromRoute) {
   var name = String(eventId).replace(/^sheet:/, '');
   var s = null;
   _htSheetSessions.forEach(function (x) { if (x.sheetName === name) s = x; });
-  if (!s) return;
+  if (!s) { if (typeof htBackToList === 'function') htBackToList(); return; }
+  // 深連結：試算表場次也寫進 hash，重整可還原
+  try {
+    var _sh = '#hightea/' + encodeURIComponent(eventId);
+    if (_fromRoute) history.replaceState({ view:'hightea', htId:eventId }, '', _sh);
+    else history.pushState({ view:'hightea', htId:eventId }, '', _sh);
+  } catch(e) {}
   var old = document.getElementById('ht-sheet-modal');
   if (old) old.remove();
   var isMobile = window.matchMedia && window.matchMedia('(max-width: 640px)').matches;
@@ -11549,6 +11557,8 @@ window.htOpenSheetDetail = function (eventId) {
     if (wrap && window._htvSheetPrevParent) { window._htvSheetPrevParent.appendChild(wrap); wrap.style.display = window._htvSheetPrevDisplay || 'none'; window._htvSheetPrevParent = null; }
     if (typeof _htvCmtTimer !== 'undefined' && _htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
     var m=document.getElementById('ht-sheet-modal'); if(m) m.remove(); document.body.style.overflow=_htPrevBodyOverflow;
+    // 關閉唯讀場次 modal：把深連結 hash 收回列表
+    try { if ((location.hash||'').indexOf('#hightea/') === 0) history.pushState({ view:'hightea' }, '', '#hightea'); } catch(e) {}
   }
   window._htCloseSheetModal = _htCloseSheet;
   document.body.style.overflow = 'hidden';
@@ -13625,6 +13635,8 @@ function htRenderDetailHeader() {
 window.htBackToList = function() {
   document.getElementById('ht-list-panel').style.display = '';
   document.getElementById('ht-detail-panel').style.display = 'none';
+  // 停止投票留言輪播計時器，避免回到列表後仍每 3 秒空轉
+  try { if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; } } catch(e) {}
   try { history.pushState({ view:'hightea' }, '', '#hightea'); } catch(e) {}
   htLoadList();
 };
@@ -13919,6 +13931,8 @@ function _htItemRowHtml(it, idx, draggable) {
 
 function htRenderItems() {
   var tbody = document.getElementById('ht-items-tbody');
+  if (!tbody) return;                         // 防禦：DOM 未就緒
+  if (!Array.isArray(_htItems)) _htItems = [];
   if (!_htItems.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
     document.getElementById('ht-total-cell').textContent = 'NT$0';
@@ -13974,7 +13988,9 @@ window.htDrop = function(e, idx) {
   var from = _htDragIdx;
   if (from === null || from === idx) { htRenderItems(); return; }
   var moved = _htItems.splice(from, 1)[0];
-  _htItems.splice(idx, 0, moved);
+  // 往下拖時陣列已左移，補償 -1，讓落點與「插入到此列上方」的提示一致
+  var to = from < idx ? idx - 1 : idx;
+  _htItems.splice(to, 0, moved);
   _htDragIdx = null;
   htRenderItems();
 };
@@ -14106,16 +14122,28 @@ window.htSaveItems = async function() {
   }
   if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
   toast('✅ 品項已儲存');
-  // 存檔已成功，本機資料即為最新 → 立即完成回應；
-  // 背景再重讀對帳（取回後端重算的欄位如小計/排序），非阻塞，不讓使用者多等一次往返
-  htApi('htGetItems', { eventId: _htEvent.eventId }).then(function(r2){
-    if (r2 && r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); htRenderBudget(); }
+  // 存檔已成功，本機資料即為最新 → 立即完成回應；背景重讀對帳（非阻塞）。
+  // 防呆：背景回來時可能使用者已切換單據或正在編輯，避免覆蓋錯資料/蓋掉輸入。
+  var _evId = _htEvent.eventId;
+  htApi('htGetItems', { eventId: _evId }).then(function(r2){
+    if (!r2 || !r2.ok) return;
+    if (!_htEvent || _htEvent.eventId !== _evId) return;   // 已切換到別的單據 → 不覆蓋
+    var _tb = document.getElementById('ht-items-tbody');
+    var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
+    if (_editing) {
+      // 使用者仍在編輯：只默默補回後端新產生的 itemId，不整表重繪以免蓋掉輸入
+      (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
+      _htEvent = r2.event;
+      return;
+    }
+    _htEvent = r2.event; _htItems = r2.items || []; htRenderDetailHeader(); htRenderItems(); htRenderBudget();
   }).catch(function(){});
 };
 
 // ── 預算結算 ──
 function htRenderBudget() {
   var ev = _htEvent;
+  if (!ev) return;                            // 防禦：尚未載入單據時不渲染
   var hc        = ev.headcount || 0;
   var bp        = ev.budgetPerPerson || 0;
   var bdayCount = (ev.birthdays || []).length;
