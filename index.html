@@ -3505,7 +3505,7 @@ thead th{color:#767B75!important}
             <span style="color:#9AA098">　＝　</span>
             <span id="ht-calc-budget" style="font-weight:800;color:#577B53;font-size:16px">NT$0</span>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px" id="ht-budget-cards"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:14px;font-weight:700;color:#2E332D">支出進度</span></div>
@@ -13518,8 +13518,25 @@ function _htUpdateQtyHint() {
 function htRenderDetailHeader() {
   var ev = _htEvent;
   document.getElementById('ht-detail-title').textContent = fmtMonth(ev.month) + ' 午茶日';
-  var orgBadges = [ev.organizer1, ev.organizer2].filter(Boolean).map(_htPersonBadge).join(' ');
-  document.getElementById('ht-detail-subtitle').innerHTML = htEsc(ev.date||'日期待定') + ' · ' + htEsc(String(ev.headcount)) + ' 人' + (orgBadges ? ' · 主辦：' + orgBadges : '');
+  // 副標不再重複「人數／主辦」（下方活動設定已有欄位），改顯示星期＋倒數，提供活動設定沒有的即時資訊
+  var subHtml;
+  if (ev.date) {
+    var dObj = new Date(ev.date + 'T00:00:00');
+    if (isNaN(dObj)) {
+      subHtml = htEsc(ev.date);
+    } else {
+      var wd = '週' + ['日','一','二','三','四','五','六'][dObj.getDay()];
+      var today = new Date(); today.setHours(0,0,0,0);
+      var days = Math.round((dObj - today) / 86400000);
+      var cd = days > 0 ? '距活動還有 <b style="color:#577B53">' + days + '</b> 天'
+             : days === 0 ? '<b style="color:#C9760A">就是今天 🎉</b>'
+             : '已結束 ' + (-days) + ' 天';
+      subHtml = htEsc(ev.date) + '（' + wd + '）　·　' + cd;
+    }
+  } else {
+    subHtml = '日期待定';
+  }
+  document.getElementById('ht-detail-subtitle').innerHTML = subHtml;
   var _dispStatus = _htDisplayStatus(ev);
   var sc = statusColor(_dispStatus);
   var badge = document.getElementById('ht-detail-status-badge');
@@ -13956,17 +13973,21 @@ function htRenderBudget() {
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
   // 試算公式＋結算卡片已併入右側「預算結算」單一區塊（避免與左側重複）
+  // 2×2 色彩分區小卡：依語意上色，結餘正常綠、超支轉紅，與下方「支出進度」橘色系呼應
   var cards = [
-    { label:'總預算', val: fmtMoney(total), icon:'💰', color:'#577B53' },
-    { label:'午茶支出', val: fmtMoney(actual), icon:'☕', color:'#577B53' },
-    { label:'慶生預算', val: fmtMoney(bdayBudget), icon:'🎂', color:'#577B53' },
-    { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️', color: surplusColor },
+    { label:'總預算', val: fmtMoney(total),               icon:'💰', color:'#3E5A3B', bg:'#F3F7F2' },
+    { label:'午茶支出', val: fmtMoney(actual),             icon:'☕', color:'#C9760A', bg:'#FFF6EA' },
+    { label:'慶生預算', val: fmtMoney(bdayBudget),         icon:'🎂', color:'#C2456B', bg:'#FBE9EE' },
+    { label: surplus>=0?'預算結餘':'超支金額', val: fmtMoney(Math.abs(surplus)), icon: surplus>=0?'✅':'⚠️',
+      color: surplus>=0?'#1e9d6b':'#ef4444', bg: surplus>=0?'#E9F6EF':'#FDEBEC' },
   ];
   document.getElementById('ht-budget-cards').innerHTML = cards.map(function(c){
-    return '<div style="background:#F7F8F6;border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;min-width:0">'
-      + '<div style="font-size:20px;flex-shrink:0">'+c.icon+'</div>'
-      + '<div style="min-width:0"><div style="font-size:16px;font-weight:800;color:'+c.color+';line-height:1.2;white-space:nowrap">'+c.val+'</div>'
-      + '<div style="font-size:12px;color:#9AA098">'+c.label+'</div></div>'
+    return '<div style="background:'+c.bg+';border-radius:12px;padding:11px 13px;display:flex;flex-direction:column;gap:7px;min-width:0">'
+      + '<div style="display:flex;align-items:center;gap:6px;min-width:0">'
+      +   '<span style="font-size:15px;flex-shrink:0">'+c.icon+'</span>'
+      +   '<span style="font-size:12px;font-weight:600;color:#767B75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.label+'</span>'
+      + '</div>'
+      + '<div style="font-size:17px;font-weight:800;color:'+c.color+';line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.val+'</div>'
       + '</div>';
   }).join('');
 
