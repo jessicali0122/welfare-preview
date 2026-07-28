@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729002302';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729003215';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4732,8 +4732,9 @@ async function _bfBoot() {
   }
   // 確保登入按鈕顯示（單一全頁轉址路徑，不啟動 GIS）
   _showLoginBtn();
-  // demo 模式下跳過所有 session 檢查和畫面重置
-  var _isDemo = !!new URLSearchParams(location.search).get('demo');
+  // demo 模式下跳過所有 session 檢查和畫面重置（僅本機；生產環境忽略 ?demo=，才不會把有效 session 的使用者踢回登入）
+  var _isDemo = !!new URLSearchParams(location.search).get('demo')
+                && (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
   if (_isDemo) { _hideLoggingIn(); initGoogleSignIn(); return; }
   // 確保初始狀態：app 隱藏、login-screen 顯示
   // 若 showApp() 已被呼叫（OAuth redirect 後 handleGoogleLogin 已執行），不可重置畫面
@@ -4755,8 +4756,9 @@ async function _bfBoot() {
         localStorage.setItem('bf_user', JSON.stringify(currentUser));
       }
       currentUser.token = storedToken;
-      // 舊 session（24小時格式）自動升級為 7 天
-      if (!currentUser.sessionExpiry || currentUser.sessionExpiry - Date.now() < 24 * 60 * 60 * 1000) {
+      // 僅「舊格式」session（尚無 sessionExpiry 欄位）初始化為 7 天；
+      // 已有到期時間者不再每次開啟就往後展，否則到期時間會無限順延、前端到期形同虛設
+      if (!currentUser.sessionExpiry) {
         currentUser.sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
         currentUser.tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000;
         localStorage.setItem('bf_user', JSON.stringify(currentUser));
@@ -4851,7 +4853,7 @@ async function handleGoogleLogin(response) {
       }
     }
   } catch(e) {}
-  currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || payload.email.split('@')[0], token: sessionToken, tokenExpiry, sessionExpiry };
+  currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || (payload.email || '').split('@')[0] || '使用者', token: sessionToken, tokenExpiry, sessionExpiry };
   if (_prevCachedRoles) {
     currentUser.cachedRoles = _prevCachedRoles;
     USER_ROLES[currentUser.email] = _prevCachedRoles;
@@ -5430,6 +5432,8 @@ function handleAuthError(serverRejected) {
 function _showAuthExpiredBar() {
   if (document.getElementById('auth-expired-bar')) return;
   localStorage.removeItem('bf_user');
+  localStorage.removeItem('bf_token');       // 一併清掉失效 token，勿讓死 token 留存
+  sessionStorage.removeItem('bf_token');
   currentUser = null;
   const bar = document.createElement('div');
   bar.id = 'auth-expired-bar';
@@ -5438,12 +5442,14 @@ function _showAuthExpiredBar() {
     // Issue 5 fix：手機版改為彈性換行，避免超出螢幕寬度擋住畫面
     ? 'position:fixed;top:12px;left:12px;right:12px;background:#363B35;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:10px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.35);flex-wrap:wrap;justify-content:space-between'
     : 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#363B35;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
-  bar.innerHTML = '<span>🔒 登入憑證已過期，請重新登入</span><button onclick="localStorage.removeItem(\'bf_user\');location.reload()" style="background:#577B53;border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">重新登入</button>';
+  bar.innerHTML = '<span>🔒 登入憑證已過期，請重新登入</span><button onclick="localStorage.removeItem(\'bf_user\');localStorage.removeItem(\'bf_token\');sessionStorage.removeItem(\'bf_token\');location.reload()" style="background:#577B53;border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">重新登入</button>';
   document.body.appendChild(bar);
 }
 
 function reLogin() {
   localStorage.removeItem('bf_user');
+  localStorage.removeItem('bf_token');
+  sessionStorage.removeItem('bf_token');
   window._authErrorShown = false;
   location.reload();
 }
@@ -10959,7 +10965,15 @@ async function htApi(action, payload) {
   var json = await _htFetchRaw(body);
   // 讀取期間若有寫入（世代遞增）就不回寫，避免用舊資料蓋掉剛更新的快取
   if (json && json.ok && isRead && _cacheGen === _genBeforeFetch) _cacheSet(ckey, json);
-  if (json && json.ok && _HT_WRITE.test(action)) _cacheClear();
+  if (json && json.ok && _HT_WRITE.test(action)) {
+    _cacheClear();
+    // 廠商/類別統計另有 6 小時快取，且只以「活動數量」為鍵——編輯品項（數量不變）時會殘留舊統計，
+    // 故每次寫入一併失效記憶體與 localStorage 兩份，避免顯示過期的廠商排行/類別佔比
+    _htItemsCache = null;
+    try {
+      Object.keys(localStorage).forEach(function(k){ if (k.indexOf('bf_ht_items_') === 0) localStorage.removeItem(k); });
+    } catch(e) {}
+  }
   return json;
 }
 // 匯出全域：按摩預約模組為獨立 IIFE，需透過 window 取用 htApi（否則 ReferenceError）
@@ -12227,7 +12241,7 @@ function _htRenderCatBars(el, catTotals, totalSpend) {
     var avgItem = Math.round(totalSpend / grandTotal);
     summaryHtml += '<div style="margin-top:8px;padding:10px 14px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;gap:10px">'
       + '<span style="font-size:16px">💰</span>'
-      + '<span style="font-size:14px;color:#363B35">平均單品花費：<strong style="color:#1e9d6b">NT$' + avgItem + '</strong></span>'
+      + '<span style="font-size:14px;color:#363B35">平均單品花費：<strong style="color:#1e9d6b">' + fmtMoney(avgItem) + '</strong></span>'
       + '</div>';
   }
   el.innerHTML = '<div style="display:flex;justify-content:center;margin-bottom:24px">'
@@ -14024,7 +14038,8 @@ function _htUpdateBalance() {
   var hc = (_htEvent && _htEvent.headcount) || 0;
   var bp = (_htEvent && _htEvent.budgetPerPerson) || 0;
   var totalBudget = hc * bp + bdayCount * 40;
-  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0);
+  // 慶生費同時計入預算與支出（與申請單一致），否則餘額會虛增一個慶生金額
+  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0) + bdayCount * 40;
   var remain = totalBudget - used;
   totalEl.textContent = fmtMoney(totalBudget);
   usedEl.textContent  = fmtMoney(used);
@@ -14552,9 +14567,11 @@ function htRenderBudget() {
   var total     = baseBudget + bdayBudget;
   // 一律用當前品項即時加總（與左側「已用／餘額」同源），編輯品項時右側卡片才會即時連動；
   // 存檔後 ev.actualExpense 也會被重算，兩者一致。
-  var actual    = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
-  var surplus   = total - actual;
-  var pct       = total > 0 ? Math.round(actual/total*100) : 0;
+  var actual    = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);   // 純品項（午茶支出、類別統計用）
+  // 支出合計＝品項＋慶生費（慶生費同時計入預算與支出，與申請單一致），結餘／使用率以此為準
+  var totalSpend = actual + bdayBudget;
+  var surplus   = total - totalSpend;
+  var pct       = total > 0 ? Math.round(totalSpend/total*100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
 
   // 試算公式＋結算卡片已併入右側「預算結算」單一區塊（避免與左側重複）
@@ -14590,7 +14607,7 @@ function htRenderBudget() {
     +   '<span style="display:flex;align-items:center;gap:6px"><span style="background:'+lv.bg+';color:'+lv.c+';border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;line-height:1.5">'+lv.t+'</span>'
     +   '<span style="font-weight:700;color:#2E332D">'+pct+'%</span></span></div>'
     + '<div style="height:12px;background:#ECEEEA;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#9AA098;margin-top:4px"><span>支出 '+fmtMoney(actual)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
+    + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#9AA098;margin-top:4px"><span>支出 '+fmtMoney(totalSpend)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
     + '</div>';
 
   // 類別明細：舊資料的非既定類別文字（輕食/台式小吃等）先智能歸類到 6 個既定類別再統計，避免類別零散、統計失真
