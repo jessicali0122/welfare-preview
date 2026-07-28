@@ -11174,15 +11174,29 @@ function _htMoney(n) { return '$' + Number(n||0).toLocaleString(); }
 // 連結欄內容：輸入框可貼網址，有值時右側出現可點開的 ↗（自動補 https://）
 function _htLinkInnerHtml(it, idx) {
   var url = String((it && it.link) || '').trim();
-  var open = '';
-  if (url) {
+  var editing = !!(it && it._editLink);
+  // 有連結且非編輯中 → 顯示漂亮的可點膠囊（點了開新分頁），旁邊小鉛筆可重新編輯
+  if (url && !editing) {
     var href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
-    open = '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="開啟連結" style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:#F1F6F0;color:#577B53;text-decoration:none;font-size:16px;line-height:1">↗</a>';
+    return '<div style="display:flex;align-items:center;gap:4px">'
+      + '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="' + htEsc(href) + '" style="flex:1;min-width:0;display:inline-flex;align-items:center;gap:6px;background:#EEF4EC;border:1px solid #CFE0CA;border-radius:999px;padding:7px 13px;color:#3E5A3B;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;transition:all .15s" onmouseover="this.style.background=\'#E2EDDF\'" onmouseout="this.style.background=\'#EEF4EC\'">'
+      +   '<span style="font-size:14px;flex-shrink:0">🔗</span><span style="overflow:hidden;text-overflow:ellipsis">開啟連結</span>'
+      + '</a>'
+      + '<button onclick="htEditLink(' + idx + ')" title="編輯連結" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#B6BCB0;font-size:14px;line-height:1;padding:4px" onmouseover="this.style.color=\'#577B53\'" onmouseout="this.style.color=\'#B6BCB0\'">✎</button>'
+      + '</div>';
   }
-  return '<div style="display:flex;align-items:center;gap:6px">'
-    + '<input data-idx="' + idx + '" data-f="link" value="' + htEsc(url) + '" placeholder="貼上網址" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'">'
-    + open + '</div>';
+  // 空的或編輯中 → 顯示輸入框讓你貼網址
+  return '<input data-idx="' + idx + '" data-f="link" value="' + htEsc(url) + '" placeholder="貼上網址" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'">';
 }
+// 點鉛筆：把連結欄切回輸入框重新編輯
+window.htEditLink = function(idx) {
+  if (!_htItems[idx]) return;
+  _htItems[idx]._editLink = true;
+  var row = document.getElementById('ht-row-' + idx);
+  if (!row) return;
+  var lc = row.querySelector('td[data-label="連結"]');
+  if (lc) { lc.innerHTML = _htLinkInnerHtml(_htItems[idx], idx); var inp = lc.querySelector('input'); if (inp) inp.focus(); }
+};
 function fmtMonth(ym) {
   if (!ym) return '';
   var s = String(ym);
@@ -14143,7 +14157,7 @@ function htRenderItems() {
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/負責人：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="11" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
         + '<span style="font-weight:800;color:'+hf+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
-        + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
+        + '<span style="margin-left:10px;color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
   } else {
@@ -14257,7 +14271,8 @@ window.htItemChange = function(el) {
     if (_htViewMode === 'category') htRenderItems();   // 分組模式：改分類即時重新歸組
   } else if (f === 'link') {
     _htItems[idx][f] = val;
-    // 就地重繪連結欄（顯示/隱藏可點開的 ↗），不整表重繪避免焦點跳掉
+    _htItems[idx]._editLink = false;   // 貼完/改完就切回漂亮的膠囊呈現
+    // 就地重繪連結欄，不整表重繪避免焦點跳掉
     var lrow = document.getElementById('ht-row-' + idx);
     if (lrow) { var lc = lrow.querySelector('td[data-label="連結"]'); if (lc) lc.innerHTML = _htLinkInnerHtml(_htItems[idx], idx); }
   } else {
