@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728142436';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728143527';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3423,14 +3423,8 @@ thead th{color:#767B75!important}
             <div style="font-size:12px;color:#767B75;margin-bottom:5px">主辦人 2</div>
             <select id="ht-event-org2" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#C3D2BE'"></select>
           </div>
-          <!-- 壽星人數（唯讀，由下方名單連動）：移到最後，讓可編輯的主辦人先呈現 -->
-          <div>
-            <div style="font-size:12px;color:#767B75;margin-bottom:5px">壽星人數（位）</div>
-            <div style="padding:7px 0;display:flex;align-items:baseline;gap:6px">
-              <span id="ht-event-bday-disp" style="font-size:14px;font-weight:600;color:#2E332D">0</span>
-              <span style="font-size:12px;color:#9AA098">見下方名單管理</span>
-            </div>
-          </div>
+          <!-- 壽星人數欄位已移除（改由下方「本月壽星」名單管理）；保留隱藏 span 供既有計數邏輯寫入 -->
+          <span id="ht-event-bday-disp" style="display:none">0</span>
         </div>
       </div>
 
@@ -3469,21 +3463,21 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:25%"><col style="width:12%"><col style="width:8%">
+              <col style="width:26%"><col style="width:12%"><col style="width:7%">
               <col style="width:7%"><col style="width:6%"><col style="width:11%">
-              <col style="width:9%"><col style="width:7%"><col style="width:12%"><col style="width:3%">
+              <col style="width:8%"><col style="width:7%"><col style="width:13%"><col style="width:3%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
-                <th style="padding:14px 10px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">品名</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">廠商</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">分類</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">單價</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">數量</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">小計</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">負責人</th>
-                <th style="padding:14px 4px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">是否訂購</th>
-                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em">備註</th>
+                <th style="padding:14px 10px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">品名</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">廠商</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">分類</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">單價</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">數量</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">小計</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">負責人</th>
+                <th style="padding:14px 4px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">是否訂購</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">備註</th>
                 <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px"></th>
               </tr>
             </thead>
@@ -13772,7 +13766,7 @@ function _htUserSelectHtml(idx, cur) {
   if (cur && pool.every(function(u){ return u.name !== cur; })) {
     o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
   }
-  return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#F6F7F4;color:#2E332D;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fff\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.background=\'#F6F7F4\';this.style.boxShadow=\'none\'">' + o + '</select>';
+  return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 6px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#2E332D;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'">' + o + '</select>';
 }
 
 // 統一的人名徽章：淺綠底綠字圓角；是登入者本人時改實心綠底白字凸顯
@@ -13904,10 +13898,10 @@ window.htSetViewMode = function(m) {
 function _htItemRowHtml(it, idx, draggable) {
   var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+' style="color:#2E332D;background:#fff">'+c+'</option>'; }).join('');
   var _catC = _htCatColor(it.category);
-  var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#F6F7F4;transition:all .15s"';
-  var inpR = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#2E332D;background:#F6F7F4;transition:all .15s;-moz-appearance:textfield"';
-  var fOn = 'this.style.borderColor=\'#577B53\';this.style.background=\'#fff\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'';
-  var fOff = 'this.style.borderColor=\'#D2D7CD\';this.style.background=\'#F6F7F4\';this.style.boxShadow=\'none\'';
+  var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s"';
+  var inpR = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#2E332D;background:#fff;transition:all .15s;-moz-appearance:textfield"';
+  var fOn = 'this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'';
+  var fOff = 'this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'';
   var td = 'style="padding:10px 8px;vertical-align:middle"';
   var trAttr = draggable
     ? ' ondragover="htDragOver(event,'+idx+')" ondragleave="htDragLeave(event)" ondrop="htDrop(event,'+idx+')"'
@@ -13923,7 +13917,7 @@ function _htItemRowHtml(it, idx, draggable) {
     + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
     + '<td data-label="負責人" '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
-    + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#577B53;cursor:pointer"></td>'
+    + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><span onclick="htToggleOrder(this,'+idx+')" role="switch" aria-checked="'+(it.ordered?'true':'false')+'" title="'+(it.ordered?'已訂購':'未訂購')+'" style="display:inline-block;width:42px;height:24px;border-radius:24px;background:'+(it.ordered?'#577B53':'#D2D7CD')+';position:relative;cursor:pointer;transition:background .18s;vertical-align:middle"><span style="position:absolute;top:2px;left:'+(it.ordered?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .18s"></span></span></td>'
     + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td class="ht-it-del" style="padding:10px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#CBD0C6;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#CBD0C6\'" title="刪除">×</button></td>'
     + '</tr>';
@@ -14055,6 +14049,17 @@ window.htToggleOrderLocal = function(cb) {
   var idx = parseInt(cb.dataset.idx);
   _htItems[idx].ordered = cb.checked;
 };
+// 是否訂購：toggle 開關（取代原方框 checkbox）
+window.htToggleOrder = function(el, idx) {
+  if (!_htItems[idx]) return;
+  var on = !_htItems[idx].ordered;
+  _htItems[idx].ordered = on;
+  el.style.background = on ? '#577B53' : '#D2D7CD';
+  el.setAttribute('aria-checked', on ? 'true' : 'false');
+  el.title = on ? '已訂購' : '未訂購';
+  var knob = el.firstElementChild;
+  if (knob) knob.style.left = on ? '20px' : '2px';
+};
 
 window.htAddItemRow = function() {
   _htItems.push({ itemId:'', name:'', vendor:'', category:'', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', ratingSum:0, ratingCount:0, avgRating:0 });
@@ -14108,36 +14113,36 @@ window.htDeleteItem = function(idx) {
   htRenderBudget();   // 右欄金額/進度/類別明細同步連動
 };
 
-window.htSaveItems = async function() {
+window.htSaveItems = function() {
+  if (!_htEvent) return;
+  if (window._htSaving) { toast('⏳ 上一次儲存還在進行，請稍候'); return; }   // 避免重複送出
   var btn = document.getElementById('ht-save-btn');
-  if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-  var r;
-  try {
-    r = await htApi('htSaveItems', { eventId: _htEvent.eventId, items: _htItems });
-  } catch (e) {
-    r = { ok:false, error:'網路連線失敗，請稍後再試' };
-  } finally {
-    // 無論成功、失敗或逾時，按鈕一定還原，避免卡在「儲存中…」
-    if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
-  }
-  if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
-  toast('✅ 品項已儲存');
-  // 存檔已成功，本機資料即為最新 → 立即完成回應；背景重讀對帳（非阻塞）。
-  // 防呆：背景回來時可能使用者已切換單據或正在編輯，避免覆蓋錯資料/蓋掉輸入。
   var _evId = _htEvent.eventId;
-  htApi('htGetItems', { eventId: _evId }).then(function(r2){
-    if (!r2 || !r2.ok) return;
-    if (!_htEvent || _htEvent.eventId !== _evId) return;   // 已切換到別的單據 → 不覆蓋
-    var _tb = document.getElementById('ht-items-tbody');
-    var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
-    if (_editing) {
-      // 使用者仍在編輯：只默默補回後端新產生的 itemId，不整表重繪以免蓋掉輸入
-      (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
-      _htEvent = r2.event;
-      return;
-    }
-    _htEvent = r2.event; _htItems = r2.items || []; htRenderDetailHeader(); htRenderItems(); htRenderBudget();
-  }).catch(function(){});
+  // 樂觀更新：立即回饋「已儲存」，背景送出，讓體感即時（真正耗時在後端寫入試算表）
+  window._htSaving = true;
+  if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
+  toast('✅ 已儲存');
+  htApi('htSaveItems', { eventId: _evId, items: _htItems }).then(function(r) {
+    if (!r || !r.ok) { toast('⚠️ 剛才儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
+    // 存檔成功 → 背景重讀對帳（取回後端重算欄位）。防呆：已切單據或正在編輯就不覆蓋，只補 itemId。
+    htApi('htGetItems', { eventId: _evId }).then(function(r2) {
+      if (!r2 || !r2.ok) return;
+      if (!_htEvent || _htEvent.eventId !== _evId) return;
+      var _tb = document.getElementById('ht-items-tbody');
+      var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
+      if (_editing) {
+        (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
+        _htEvent = r2.event;
+        return;
+      }
+      _htEvent = r2.event; _htItems = r2.items || []; htRenderDetailHeader(); htRenderItems(); htRenderBudget();
+    }).catch(function(){});
+  }).catch(function() {
+    toast('⚠️ 儲存失敗，請檢查網路後再按一次「儲存」');
+  }).then(function() {
+    window._htSaving = false;
+    if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
+  });
 };
 
 // ── 預算結算 ──
@@ -14410,7 +14415,23 @@ function htRenderBirthday() {
           )
         + '</div></div>';
     }).join('');
-  } else {
+  }
+
+  // ② 已存名單中、但不在本月生日 DB 的壽星（例如 DB 尚未同步或手動加入者）——照樣列出，避免「名單空、計數卻有人」的不一致
+  var dbNames = dbBdays.map(function(p){ return p.name; });
+  var listOnly = listNames.filter(function(n){ return dbNames.indexOf(n) < 0; });
+  if (listOnly.length) {
+    html += listOnly.map(function(n) {
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F2F5F1;border-radius:10px;border:1px solid #C3D4C0;margin-bottom:6px">'
+        + '<span style="font-size:18px">🎂</span>'
+        + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(n) + '</div></div>'
+        + '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
+        + '<button onclick="htAddBirthdayByName(' + htJsArg(n) + ')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+        + '</div>';
+    }).join('');
+  }
+
+  if (!html) {
     html = '<div style="color:#9AA098;font-size:14px;text-align:center;padding:20px">本月無壽星</div>';
   }
 
