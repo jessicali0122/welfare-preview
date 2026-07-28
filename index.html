@@ -14037,8 +14037,11 @@ window.htPickValue = function(idx, field, v) {
   if (field === 'category') htRenderBudget();
 };
 
-// 單列品項 HTML（draggable：僅「自訂排序」模式提供拖曳把手）
-function _htItemRowHtml(it, idx, draggable) {
+// 單列品項 HTML
+//   draggable=true 且未給 groupKey → 「自訂排序」模式：拖曳把手可上下重排
+//   給了 groupKey（可為 ''）→ 分組模式：拖曳把手可把品項移到其他分組（改該欄位值）
+function _htItemRowHtml(it, idx, draggable, groupKey) {
+  var _inGroup = (groupKey !== undefined && groupKey !== null);
   var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+' style="color:#2E332D;background:#fff">'+c+'</option>'; }).join('');
   var _catC = _htCatColor(it.category);
   var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s"';
@@ -14046,11 +14049,13 @@ function _htItemRowHtml(it, idx, draggable) {
   var fOn = 'this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'';
   var fOff = 'this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'';
   var td = 'style="padding:10px 8px;vertical-align:middle"';
-  var trAttr = draggable
-    ? ' ondragover="htDragOver(event,'+idx+')" ondragleave="htDragLeave(event)" ondrop="htDrop(event,'+idx+')"'
-    : '';
-  var grip = draggable
-    ? '<span class="ht-drag-h" draggable="true" ondragstart="htDragStart(event,'+idx+')" ondragend="htDragEnd(event)" style="cursor:grab;color:#C2C8BC;font-size:18px;line-height:1;flex-shrink:0;user-select:none;padding:0 2px;letter-spacing:-2px" title="拖曳排序">⠿</span>'
+  var trAttr = _inGroup
+    ? ' ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(groupKey)+')"'
+    : (draggable
+        ? ' ondragover="htDragOver(event,'+idx+')" ondragleave="htDragLeave(event)" ondrop="htDrop(event,'+idx+')"'
+        : '');
+  var grip = (_inGroup || draggable)
+    ? '<span class="ht-drag-h" draggable="true" ondragstart="htDragStart(event,'+idx+')" ondragend="htDragEnd(event)" style="cursor:grab;color:#C2C8BC;font-size:18px;line-height:1;flex-shrink:0;user-select:none;padding:0 2px;letter-spacing:-2px" title="'+(_inGroup?'拖曳移到其他分組':'拖曳排序')+'">⠿</span>'
     : '';
   return '<tr class="ht-it-row" id="ht-row-'+idx+'"'+trAttr+'>'
     + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></div></td>'
@@ -14103,10 +14108,10 @@ function htRenderItems() {
       var hb, hf, hbd;
       if (field === 'category') { var c = _htCatColor(k); hb = c.bg; hf = c.fg; hbd = c.bd; }
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/負責人：中性綠標頭
-      html += '<tr class="ht-cat-group"><td colspan="10" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
+      html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="10" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
         + '<span style="font-weight:800;color:'+hf+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
         + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+fmtMoney(sub)+'</span></td></tr>';
-      html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, false); }).join('');
+      html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
   } else {
     html = _htItems.map(function(it, idx){ return _htItemRowHtml(it, idx, true); }).join('');
@@ -14148,6 +14153,32 @@ window.htDrop = function(e, idx) {
 window.htDragEnd = function(e) {
   _htDragIdx = null;
   Array.prototype.forEach.call(document.querySelectorAll('#ht-items-tbody tr'), function(r){ r.style.opacity=''; r.style.boxShadow=''; });
+};
+
+// ── 分組模式拖曳：把品項拖到別的分組 = 改該欄位值（分類／廠商／負責人）──
+window.htGroupDragOver = function(e) {
+  if (_htDragIdx === null) return;
+  e.preventDefault();
+  try { e.dataTransfer.dropEffect = 'move'; } catch(err){}
+  var tr = e.currentTarget; if (tr) tr.style.boxShadow = 'inset 0 0 0 2px #577B53';
+};
+window.htGroupDragLeave = function(e) {
+  var tr = e.currentTarget; if (tr) tr.style.boxShadow = '';
+};
+window.htGroupDrop = function(e, groupKey) {
+  e.preventDefault();
+  var from = _htDragIdx; _htDragIdx = null;
+  if (from === null || !_htItems[from]) { htRenderItems(); return; }
+  var field = _htViewMode;   // 'category' | 'vendor' | 'assignee'
+  if (field !== 'category' && field !== 'vendor' && field !== 'assignee') { htRenderItems(); return; }
+  // 拖到同一分組不動作；拖到別組就把該欄位改成目標分組值（'' = 未分類／未填廠商／未指派）
+  if (String(_htItems[from][field] || '') !== String(groupKey || '')) {
+    _htItems[from][field] = groupKey || '';
+    htRenderItems();
+    if (field === 'category') htRenderBudget();   // 分類異動 → 右欄類別明細同步
+  } else {
+    htRenderItems();
+  }
 };
 
 function htEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
