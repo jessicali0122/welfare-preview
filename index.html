@@ -14331,12 +14331,12 @@ window.htSaveItems = function() {
   if (window._htSaving) { toast('⏳ 上一次儲存還在進行，請稍候'); return; }   // 避免重複送出
   var btn = document.getElementById('ht-save-btn');
   var _evId = _htEvent.eventId;
-  // 樂觀更新：立即回饋「已儲存」，背景送出，讓體感即時（真正耗時在後端寫入試算表）
+  // 存檔期間按鈕顯示「儲存中…」（UI 不卡，仍可編輯）；真正成功後才跳「已儲存」，避免「已儲存」與「儲存中…」同時出現造成困惑
   window._htSaving = true;
   if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-  toast('✅ 已儲存');
   htApi('htSaveItems', { eventId: _evId, items: _htItems }).then(function(r) {
-    if (!r || !r.ok) { toast('⚠️ 剛才儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
+    if (!r || !r.ok) { toast('⚠️ 儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
+    toast('✅ 已儲存');
     // 存檔成功 → 背景重讀對帳（取回後端重算欄位）。防呆：已切單據或正在編輯就不覆蓋，只補 itemId。
     htApi('htGetItems', { eventId: _evId }).then(function(r2) {
       if (!r2 || !r2.ok) return;
