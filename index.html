@@ -14106,7 +14106,7 @@ function htRenderItems() {
   if (!tbody) return;                         // 防禦：DOM 未就緒
   if (!Array.isArray(_htItems)) _htItems = [];
   if (!_htItems.length) {
-    tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
     document.getElementById('ht-total-cell').textContent = '$0';
     return;
   }
@@ -14137,7 +14137,7 @@ function htRenderItems() {
       var hb, hf, hbd;
       if (field === 'category') { var c = _htCatColor(k); hb = c.bg; hf = c.fg; hbd = c.bd; }
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/負責人：中性綠標頭
-      html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="10" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
+      html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="11" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
         + '<span style="font-weight:800;color:'+hf+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
         + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
@@ -14631,15 +14631,14 @@ function htRenderBirthday() {
     html += dbBdays.map(function(p) {
       var inList = listNames.indexOf(p.name) >= 0;
       var idx = listNames.indexOf(p.name);
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + (inList ? '#F2F5F1' : '#F6F9F5') + ';border-radius:10px;border:1px solid ' + (inList ? '#C3D4C0' : '#e9f1e7') + ';margin-bottom:6px">'
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:' + (inList ? '#FBF5EC' : '#F6F9F5') + ';border-radius:10px;border:1px solid ' + (inList ? '#EBDFCB' : '#e9f1e7') + ';margin-bottom:6px">'
         + '<span style="font-size:18px">' + (inList ? '🎂' : '🎀') + '</span>'
         + '<div style="flex:1;min-width:0">'
         +   '<div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(p.name) + '</div>'
         +   '<div style="font-size:12px;color:#9AA098;margin-top:2px">' + monthNum + '/' + p.d + ' 生日</div>'
         + '</div>'
         + (inList
-            ? '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
-            + '<button onclick="htAddBirthdayByName(' + htJsArg(p.name) + ')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+            ? '<button onclick="htAddBirthdayByName(' + htJsArg(p.name) + ')" style="background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
             : '<button onclick="htAddBirthdayByName(' + htJsArg(p.name) + ')" style="background:#577B53;border:none;border-radius:8px;color:#fff;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer;white-space:nowrap">+ 加入</button>'
           )
         + '</div></div>';
@@ -14651,11 +14650,10 @@ function htRenderBirthday() {
   var listOnly = listNames.filter(function(n){ return dbNames.indexOf(n) < 0; });
   if (listOnly.length) {
     html += listOnly.map(function(n) {
-      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#F2F5F1;border-radius:10px;border:1px solid #C3D4C0;margin-bottom:6px">'
+      return '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#FBF5EC;border-radius:10px;border:1px solid #EBDFCB;margin-bottom:6px">'
         + '<span style="font-size:18px">🎂</span>'
         + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(n) + '</div></div>'
-        + '<span style="font-size:12px;font-weight:700;color:#16a34a;background:#dcfce8;padding:2px 8px;border-radius:20px">✓ 已加入</span>'
-        + '<button onclick="htAddBirthdayByName(' + htJsArg(n) + ')" style="margin-left:6px;background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
+        + '<button onclick="htAddBirthdayByName(' + htJsArg(n) + ')" style="background:#fff;border:1.5px solid #E1B4B4;border-radius:8px;color:#B94A48;font-size:12px;font-weight:700;padding:4px 10px;cursor:pointer">移除</button>'
         + '</div>';
     }).join('');
   }
