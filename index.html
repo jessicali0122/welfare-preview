@@ -3445,10 +3445,10 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <div id="ht-view-toggle" style="display:inline-flex;flex-wrap:wrap;border:1.5px solid #DDE4D8;border-radius:8px;overflow:hidden;background:#F6F9F5">
-              <button onclick="htSetViewMode('order')" id="ht-vm-order" style="padding:8px 14px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="可拖曳排序">↕ 自訂排序</button>
-              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 依分類</button>
+              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:8px 14px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 依分類</button>
               <button onclick="htSetViewMode('vendor')" id="ht-vm-vendor" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依廠商分組顯示">🏬 依廠商</button>
               <button onclick="htSetViewMode('assignee')" id="ht-vm-assignee" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依負責人分組顯示">🧑 依負責人</button>
+              <button onclick="htSetViewMode('order')" id="ht-vm-order" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="可拖曳排序">↕ 自訂排序</button>
             </div>
           </div>
         </div>
@@ -10876,9 +10876,14 @@ var _HT_CACHEABLE = new Set(['htList','htGetItems','htVendors','htSheetList','ht
 // 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
 var _HT_WRITE = /^(htCreate|htUpdate|htDelete|htSaveItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
-function _htFetchRaw(body) {
-  return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' })
-    .then(function(res){ return res.json().catch(function(){ return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }); });
+// 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
+function _htFetchRaw(body, timeoutMs) {
+  var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  var to = ctrl ? setTimeout(function(){ try { ctrl.abort(); } catch(e){} }, timeoutMs || 25000) : null;
+  return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow', signal: ctrl ? ctrl.signal : undefined })
+    .then(function(res){ return res.json().catch(function(){ return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }); })
+    .catch(function(err){ return { ok:false, error: (err && err.name === 'AbortError') ? '載入逾時，伺服器回應太慢，請重試' : '網路連線失敗' }; })
+    .then(function(r){ if (to) clearTimeout(to); return r; });
 }
 
 async function htApi(action, payload) {
@@ -13060,11 +13065,18 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   } catch(e) {}
   // 立即顯示載入骨架，避免等後端回資料前品項清單一片空白像「頓一下」
   var _tb = document.getElementById('ht-items-tbody');
-  if (_tb) _tb.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">⏳ 載入品項中…</td></tr>';
+  if (_tb) _tb.innerHTML = '<tr><td colspan="11" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">⏳ 載入品項中…</td></tr>';
   var r;
   try { r = await htApi('htGetItems', { eventId: eventId }); }
   catch(e) { r = { ok:false, error:'網路連線失敗' }; }
-  if (!r.ok) { toast('載入失敗：' + r.error); htBackToList(); return; }
+  if (!r.ok) {
+    // 不再無限轉圈或直接踢回列表：就地顯示錯誤與「重試」按鈕，保留深連結
+    toast('載入失敗：' + r.error);
+    if (_tb) _tb.innerHTML = '<tr><td colspan="11" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">😵 ' + htEsc(r.error || '載入失敗')
+      + '<br><button onclick="htOpenDetail(' + htJsArg(eventId) + ',true)" style="margin-top:12px;padding:8px 18px;border-radius:8px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">重試</button></td></tr>';
+    var _t = document.getElementById('ht-detail-title'); if (_t) _t.textContent = '載入失敗';
+    return;
+  }
   _htEvent = r.event;
   _htItems = r.items || [];
 
@@ -13975,12 +13987,13 @@ function _htCheckRepeatWarning() {
   warning.style.display = '';
 }
 
-var _htViewMode = 'order';   // 'order'（可拖曳排序）｜'category'｜'vendor'｜'assignee'（分組顯示）
+var _htViewMode = 'category';   // 預設「依分類」；其餘 'vendor'｜'assignee'（分組顯示）｜'order'（可拖曳排序）
 var _htDragIdx = null;
-var _HT_VIEW_MODES = ['order','category','vendor','assignee'];
+// 陣列順序＝按鈕 DOM 順序（htSetViewMode 用 index 決定左框線），自訂排序移到最後
+var _HT_VIEW_MODES = ['category','vendor','assignee','order'];
 
 window.htSetViewMode = function(m) {
-  _htViewMode = (_HT_VIEW_MODES.indexOf(m) >= 0) ? m : 'order';
+  _htViewMode = (_HT_VIEW_MODES.indexOf(m) >= 0) ? m : 'category';
   _HT_VIEW_MODES.forEach(function(mode, i){
     var b = document.getElementById('ht-vm-' + mode);
     if (!b) return;
