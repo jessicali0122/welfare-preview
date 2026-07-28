@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728222225';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728223103';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3471,9 +3471,9 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:27%"><col style="width:10%"><col style="width:6%">
-              <col style="width:7%"><col style="width:6%"><col style="width:8%">
-              <col style="width:8%"><col style="width:5%"><col style="width:9%"><col style="width:9%"><col style="width:5%">
+              <col style="width:24%"><col style="width:10%"><col style="width:6%">
+              <col style="width:6%"><col style="width:6%"><col style="width:7%">
+              <col style="width:8%"><col style="width:5%"><col style="width:13%"><col style="width:10%"><col style="width:5%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
@@ -3502,7 +3502,7 @@ thead th{color:#767B75!important}
         </div>
         <!-- 底部 sticky 工具列：新增品項／儲存釘在畫面底，清單再長都隨手可按 -->
         <div style="position:sticky;bottom:0;z-index:6;display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
-          <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
+          <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             新增品項
           </button>
@@ -13871,15 +13871,16 @@ function _htCatColor(cat) {
 }
 
 // 負責人專屬色：依姓名雜湊固定對到一組色，同一個人在哪都同色（不用維護名單）
+// 深色實心：分類膠囊是淺色系，負責人走深色白字才不會互相打架（使用者指定 2026-07-28）
 var _HT_PERSON_COLORS = [
-  { fg:'#3F6FA8', bg:'#EDF3FA', bd:'#CFDFEF' },   // 藍
-  { fg:'#B06A9B', bg:'#FAF0F6', bd:'#EED8E6' },   // 桃紫
-  { fg:'#C08A3E', bg:'#FBF4E8', bd:'#EEDFC2' },   // 琥珀
-  { fg:'#4A9E86', bg:'#EEF6F3', bd:'#D2E8E1' },   // 湖綠
-  { fg:'#8A76C4', bg:'#F3F0FB', bd:'#DED6F0' },   // 紫
-  { fg:'#C4715F', bg:'#FBF1EE', bd:'#EFD9D2' },   // 磚紅
-  { fg:'#4E8FA6', bg:'#EDF5F8', bd:'#D2E6ED' },   // 青
-  { fg:'#7E8C3F', bg:'#F4F6EA', bd:'#E1E7C9' }    // 橄欖
+  { fg:'#fff', bg:'#3E5A7D', bd:'#334965' },   // 深藍
+  { fg:'#fff', bg:'#8E4A72', bd:'#753C5E' },   // 深桃紫
+  { fg:'#fff', bg:'#96682A', bd:'#7B5522' },   // 深琥珀
+  { fg:'#fff', bg:'#2F7A64', bd:'#276451' },   // 深湖綠
+  { fg:'#fff', bg:'#5B4A96', bd:'#4B3D7B' },   // 深紫
+  { fg:'#fff', bg:'#9B4A3B', bd:'#813D31' },   // 磚紅
+  { fg:'#fff', bg:'#35707F', bd:'#2C5C68' },   // 深青
+  { fg:'#fff', bg:'#5C6B29', bd:'#4B5722' }    // 深橄欖
 ];
 function _htPersonColor(name) {
   var s = String(name || '').trim();
@@ -14097,7 +14098,7 @@ window.htOpenPicker = function(anchor, idx, field) {
   if (field === 'category') {
     opts = [{ v:'', label:'— 清除' }].concat(_htCats.map(function(c){ return { v:c, label:c, dot:_htCatColor(c).fg }; }));
   } else {
-    opts = [{ v:'', label:'— 清除' }].concat(_htAssigneePool().map(function(n){ return { v:n, label:n, dot:_htPersonColor(n).fg }; }));
+    opts = [{ v:'', label:'— 清除' }].concat(_htAssigneePool().map(function(n){ return { v:n, label:n, dot:_htPersonColor(n).bg }; }));
   }
   var cur = _htItems[idx][field] || '';
   var rect = anchor.getBoundingClientRect();
@@ -14212,11 +14213,14 @@ function htRenderItems() {
       else if (field === 'assignee' && k) { var p = _htPersonColor(k); hb = p.bg; hf = p.fg; hbd = p.bd; }   // 負責人：該人的專屬色
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/未指派：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="11" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
-        + '<span style="font-weight:800;color:'+hf+';font-size:16px;letter-spacing:.02em">'+htEsc(label)+'</span>'
-        + '<span style="margin-left:10px;color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span>'
+        // 三個元素字級不同（16/14/12），用 flex 置中對齊，膠囊才不會看起來偏下
+        + '<div style="display:flex;align-items:center;gap:10px">'
+        +   '<span style="font-weight:800;color:'+hf+';font-size:16px;letter-spacing:.02em">'+htEsc(label)+'</span>'
+        +   '<span style="color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span>'
         // 佔比：這組金額 ÷ 全部品項總額（自動算，總額 0 時不顯示）
-        + (total > 0 ? '<span style="margin-left:8px;display:inline-block;background:'+hf+';color:#fff;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;vertical-align:middle">'+Math.round(sub / total * 100)+'%</span>' : '')
-        + '</td></tr>';
+        // 膠囊用標題的反色（淺底深字 → 深底淺字；深底白字 → 白底深字），兩種標頭都看得清楚
+        +   (total > 0 ? '<span style="background:'+hf+';color:'+hb+';border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;line-height:1.5">'+Math.round(sub / total * 100)+'%</span>' : '')
+        + '</div></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
   } else {
