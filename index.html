@@ -3459,11 +3459,11 @@ thead th{color:#767B75!important}
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
-            <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/刪除（分類為可手選下拉，品名可自動帶入） -->
+            <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:26%"><col style="width:12%"><col style="width:7%">
-              <col style="width:7%"><col style="width:6%"><col style="width:11%">
-              <col style="width:8%"><col style="width:7%"><col style="width:13%"><col style="width:3%">
+              <col style="width:22%"><col style="width:11%"><col style="width:7%">
+              <col style="width:6%"><col style="width:6%"><col style="width:9%">
+              <col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:12%"><col style="width:3%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
@@ -3476,6 +3476,7 @@ thead th{color:#767B75!important}
                 <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">負責人</th>
                 <th style="padding:14px 4px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">是否訂購</th>
                 <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">備註</th>
+                <th style="padding:14px 6px;text-align:center;color:#577B53;font-weight:800;font-size:14px;letter-spacing:.03em;white-space:nowrap">連結</th>
                 <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px"></th>
               </tr>
             </thead>
@@ -3483,8 +3484,8 @@ thead th{color:#767B75!important}
             <tfoot>
               <tr style="background:#fff;border-top:2px solid #577B53">
                 <td colspan="5" style="padding:16px 12px;font-size:14px;font-weight:700;color:#6B7268;letter-spacing:.04em">合計</td>
-                <td style="padding:16px 8px;text-align:center;font-size:16px;font-weight:800;color:#577B53;white-space:nowrap" id="ht-total-cell">NT$0</td>
-                <td colspan="4"></td>
+                <td style="padding:16px 8px;text-align:center;font-size:16px;font-weight:800;color:#577B53;white-space:nowrap" id="ht-total-cell">$0</td>
+                <td colspan="5"></td>
               </tr>
             </tfoot>
           </table>
@@ -11159,6 +11160,20 @@ window.htOcrScan = async function(input) {
 
 // ── 格式化 ──
 function fmtMoney(n) { return 'NT$' + Number(n||0).toLocaleString(); }
+// 品項清單專用：省略 NT，只留 $（右欄預算結算仍用 fmtMoney 的 NT$）
+function _htMoney(n) { return '$' + Number(n||0).toLocaleString(); }
+// 連結欄內容：輸入框可貼網址，有值時右側出現可點開的 ↗（自動補 https://）
+function _htLinkInnerHtml(it, idx) {
+  var url = String((it && it.link) || '').trim();
+  var open = '';
+  if (url) {
+    var href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
+    open = '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="開啟連結" style="flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;background:#F1F6F0;color:#577B53;text-decoration:none;font-size:16px;line-height:1">↗</a>';
+  }
+  return '<div style="display:flex;align-items:center;gap:6px">'
+    + '<input data-idx="' + idx + '" data-f="link" value="' + htEsc(url) + '" placeholder="貼上網址" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'">'
+    + open + '</div>';
+}
 function fmtMonth(ym) {
   if (!ym) return '';
   var s = String(ym);
@@ -14063,10 +14078,11 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
     + '<td data-label="分類" '+td+'>'+_htCatChipHtml(it, idx)+'</td>'
     + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
-    + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
+    + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+_htMoney(it.subtotal)+'</td>'
     + '<td data-label="負責人" '+td+'>'+_htAssigneeChipHtml(it, idx)+'</td>'
     + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><span onclick="htToggleOrder(this,'+idx+')" role="switch" aria-checked="'+(it.ordered?'true':'false')+'" title="'+(it.ordered?'已訂購':'未訂購')+'" style="display:inline-block;width:42px;height:24px;border-radius:24px;background:'+(it.ordered?'#577B53':'#D2D7CD')+';position:relative;cursor:pointer;transition:background .18s;vertical-align:middle"><span style="position:absolute;top:2px;left:'+(it.ordered?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .18s"></span></span></td>'
     + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
+    + '<td data-label="連結" '+td+'>'+_htLinkInnerHtml(it, idx)+'</td>'
     + '<td class="ht-it-del" style="padding:10px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#CBD0C6;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#CBD0C6\'" title="刪除">×</button></td>'
     + '</tr>';
 }
@@ -14078,7 +14094,7 @@ function htRenderItems() {
   if (!Array.isArray(_htItems)) _htItems = [];
   if (!_htItems.length) {
     tbody.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">尚無品項，點擊「新增品項」開始規劃</td></tr>';
-    document.getElementById('ht-total-cell').textContent = 'NT$0';
+    document.getElementById('ht-total-cell').textContent = '$0';
     return;
   }
   var total = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
@@ -14110,14 +14126,14 @@ function htRenderItems() {
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/負責人：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="10" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
         + '<span style="font-weight:800;color:'+hf+';font-size:14px;letter-spacing:.02em">'+htEsc(label)+'</span>'
-        + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+fmtMoney(sub)+'</span></td></tr>';
+        + '<span style="margin-left:8px;color:'+hf+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
   } else {
     html = _htItems.map(function(it, idx){ return _htItemRowHtml(it, idx, true); }).join('');
   }
   tbody.innerHTML = html;
-  document.getElementById('ht-total-cell').textContent = fmtMoney(total);
+  document.getElementById('ht-total-cell').textContent = _htMoney(total);
   _htUpdateBalance();
 }
 
@@ -14196,9 +14212,9 @@ window.htItemChange = function(el) {
   if (f === 'unitPrice' || f === 'qty') {
     _htItems[idx][f] = Number(val) || 0;
     _htItems[idx].subtotal = (_htItems[idx].unitPrice||0) * (_htItems[idx].qty||0);
-    document.getElementById('ht-sub-'+idx).textContent = fmtMoney(_htItems[idx].subtotal);
+    document.getElementById('ht-sub-'+idx).textContent = _htMoney(_htItems[idx].subtotal);
     var t = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
-    document.getElementById('ht-total-cell').textContent = fmtMoney(t);
+    document.getElementById('ht-total-cell').textContent = _htMoney(t);
     _htUpdateBalance();
     htRenderBudget();   // 右欄金額/進度/類別明細即時連動
   } else if (f === 'name') {
@@ -14222,6 +14238,11 @@ window.htItemChange = function(el) {
     _htPaintCatSelect(el, val);
     htRenderBudget();   // 類別明細即時更新
     if (_htViewMode === 'category') htRenderItems();   // 分組模式：改分類即時重新歸組
+  } else if (f === 'link') {
+    _htItems[idx][f] = val;
+    // 就地重繪連結欄（顯示/隱藏可點開的 ↗），不整表重繪避免焦點跳掉
+    var lrow = document.getElementById('ht-row-' + idx);
+    if (lrow) { var lc = lrow.querySelector('td[data-label="連結"]'); if (lc) lc.innerHTML = _htLinkInnerHtml(_htItems[idx], idx); }
   } else {
     _htItems[idx][f] = val;
     if (f === 'assignee' && _htViewMode === 'assignee') htRenderItems();  // 依負責人分組：改負責人即時重新歸組
@@ -14254,7 +14275,7 @@ window.htToggleOrder = function(el, idx) {
 };
 
 window.htAddItemRow = function() {
-  _htItems.push({ itemId:'', name:'', vendor:'', category:'', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', ratingSum:0, ratingCount:0, avgRating:0 });
+  _htItems.push({ itemId:'', name:'', vendor:'', category:'', unitPrice:0, qty:1, subtotal:0, serving:'', assignee:'', ordered:false, notes:'', link:'', ratingSum:0, ratingCount:0, avgRating:0 });
   htRenderItems();
 };
 
