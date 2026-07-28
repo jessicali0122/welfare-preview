@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728221810';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728222225';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -457,13 +457,20 @@ input[type=checkbox]{accent-color:#577B53}
 /* 桌面版：品項表格設最小寬度，欄位不足時改為橫向捲動，避免輸入框被壓扁跑版 */
 @media(min-width:769px){
   /* 空間不足時走外層橫向捲動，不硬壓欄位讓資料貼邊 */
-  #ht-dtab-plan table{min-width:960px}
+  #ht-dtab-plan table{min-width:1320px}
   /* 簡約：純白底、細灰分隔線、hover 極淡中性提亮（不上綠） */
   #ht-items-tbody tr.ht-it-row{background:#fff;border-bottom:1px solid #E1E5DC;transition:background .12s}
   #ht-items-tbody tr.ht-it-row:hover{background:#FAFBFA}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
   .ht-sub-mini{display:none}
 }
+/* 品項表格：橫向捲軸常駐顯示成一根看得見的拉桿（macOS 預設是浮動捲軸，滑到才出現，
+   會讓人以為表格被切掉而不是可以拉） */
+#ht-items-scroll{overflow-x:scroll;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;height:10px}
+#ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
 /* 單價：拿掉瀏覽器原生的上下箭頭（spinner）——欄位窄的時候箭頭會壓在數字上，
    「50」被切成「5」、「0」看起來像「5」。數量保留箭頭（數字短、按加減方便）。 */
 #ht-items-tbody input[data-f="unitPrice"]{-moz-appearance:textfield;appearance:textfield}
@@ -477,7 +484,7 @@ input[type=checkbox]{accent-color:#577B53}
 @media(max-width:768px){
   /* 手機改用「跟桌面一樣的表格＋整張左右滑」（2026-07-28 使用者指定，取代舊的堆疊卡片） */
   /* 加寬到 1080：品名／廠商在手機才看得完整（原本 920 會切成「水月手工冰…」） */
-  #ht-dtab-plan table{min-width:1080px}
+  #ht-dtab-plan table{min-width:1320px}
   /* 檢視切換：手機用短標籤，四顆一次全塞得下，不會有「自訂排序」被切一半的錯覺 */
   #ht-view-toggle .vm-full{display:none!important}
   #ht-view-toggle .vm-mini{display:inline!important}
@@ -3460,13 +3467,13 @@ thead th{color:#767B75!important}
           <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
-        <div id="ht-items-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:26%"><col style="width:13%"><col style="width:6%">
-              <col style="width:8%"><col style="width:6%"><col style="width:8%">
-              <col style="width:8%"><col style="width:5%"><col style="width:6%"><col style="width:9%"><col style="width:5%">
+              <col style="width:27%"><col style="width:10%"><col style="width:6%">
+              <col style="width:7%"><col style="width:6%"><col style="width:8%">
+              <col style="width:8%"><col style="width:5%"><col style="width:9%"><col style="width:9%"><col style="width:5%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
@@ -14130,7 +14137,7 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
   var _inGroup = (groupKey !== undefined && groupKey !== null);
   var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+' style="color:#2E332D;background:#fff">'+c+'</option>'; }).join('');
   var _catC = _htCatColor(it.category);
-  var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s"';
+  var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:all .15s"';
   var inpR = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#2E332D;background:#fff;transition:all .15s;-moz-appearance:textfield"';
   var fOn = 'this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'';
   var fOff = 'this.style.borderColor=\'#D2D7CD\';this.style.boxShadow=\'none\'';
@@ -14206,7 +14213,10 @@ function htRenderItems() {
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/未指派：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="11" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
         + '<span style="font-weight:800;color:'+hf+';font-size:16px;letter-spacing:.02em">'+htEsc(label)+'</span>'
-        + '<span style="margin-left:10px;color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
+        + '<span style="margin-left:10px;color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span>'
+        // 佔比：這組金額 ÷ 全部品項總額（自動算，總額 0 時不顯示）
+        + (total > 0 ? '<span style="margin-left:8px;display:inline-block;background:'+hf+';color:#fff;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;vertical-align:middle">'+Math.round(sub / total * 100)+'%</span>' : '')
+        + '</td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
   } else {
