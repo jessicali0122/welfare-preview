@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728145542';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728145859';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3101,8 +3101,9 @@ thead th{color:#767B75!important}
             <tr><td colspan="9" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">⏳ 載入使用者名單中...</td></tr>
           </tbody>
         </table>
-        <div style="padding:12px 16px;border-top:1px solid #D9DDD3;font-size:14px;color:#9AA098;display:flex;align-items:center;justify-content:space-between">
+        <div style="padding:12px 16px;border-top:1px solid #D9DDD3;font-size:14px;color:#9AA098;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <span id="selected-count">共 0 位使用者</span>
+          <span id="admin-users-pager" style="display:flex;gap:6px;align-items:center"></span>
           <span>限 @tsagroup.com.tw 網域</span>
         </div>
       </div>
@@ -8811,11 +8812,13 @@ async function loadAdminUsers() {
   }).filter(Boolean);
   if (users.length === 0) {
     tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#9AA098;font-size:14px">尚無使用者資料</td></tr>';
+    var _pg = document.getElementById('admin-users-pager'); if (_pg) _pg.innerHTML = '';
+    var _ce = document.getElementById('selected-count'); if (_ce) _ce.textContent = '共 0 位使用者';
   } else {
     tbody.innerHTML = users.map(buildAdminUserRow).join('');
+    _adminPage = 1;
+    if (typeof _applyAdminView === 'function') _applyAdminView(true);   // 套用分頁（每頁 20 筆）
   }
-  const countEl = document.getElementById('selected-count');
-  if (countEl) countEl.textContent = '共 ' + users.length + ' 位使用者';
   setTimeout(applyRolePermissions, 50);
   syncApplicantFilter();
 }
@@ -9008,7 +9011,14 @@ function executeDeleteUser(){
 
 function showBatchTag(){document.getElementById('batch-tag-bar').style.display='flex';}
 function hideBatchTag(){document.getElementById('batch-tag-bar').style.display='none';}
-function adminToggleSelectAll(cb){document.querySelectorAll('.user-cb').forEach(c=>c.checked=cb.checked);updateSelectedCount();}
+function adminToggleSelectAll(cb){
+  // 只作用於目前分頁可見的列，避免誤選到其他頁
+  document.querySelectorAll('#admin-users-tbody tr[data-email]').forEach(function(r){
+    if (r.style.display === 'none') return;
+    var c = r.querySelector('.user-cb'); if (c) c.checked = cb.checked;
+  });
+  updateSelectedCount();
+}
 function updateSelectedCount(){
   const n=document.querySelectorAll('.user-cb:checked').length;
   const total=document.querySelectorAll('#admin-users-tbody tr[data-email]').length;
@@ -9344,30 +9354,73 @@ function _syncAdminFilterBtns() {
     if(active){cb.style.background='#F3F7F2';cb.style.color='#577B53';cb.style.borderColor='#c9dac6';} }
 }
 
-function applyAdminFilter() {
+// ── 使用者清單分頁（與搜尋/篩選共用顯示計算；全部列都留在 DOM，僅切換 display）──
+var _adminPerPage = 20;
+var _adminPage = 1;
+
+// 依目前搜尋/篩選算出符合的列，再只顯示當前頁範圍
+function _applyAdminView(quiet) {
   const q = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
   const dept = (document.getElementById('admin-filter-dept')?.value || '').trim();
-  const rows = document.querySelectorAll('#admin-users-tbody tr');
-  let visible = 0;
-  rows.forEach(r => {
+  const rows = Array.prototype.slice.call(document.querySelectorAll('#admin-users-tbody tr[data-email]'));
+  const matches = rows.filter(function(r){
     const text = r.textContent.toLowerCase();
-    const deptText = (r.getAttribute('data-dept') || r.cells[3]?.textContent || '').trim();
-    const match = (!q || text.includes(q)) && (!dept || deptText === dept || deptText.includes(dept));
-    r.style.display = match ? '' : 'none';
-    if (match) visible++;
+    const deptText = (r.getAttribute('data-dept') || (r.cells[3] ? r.cells[3].textContent : '') || '').trim();
+    return (!q || text.includes(q)) && (!dept || deptText === dept || deptText.includes(dept));
   });
+  const per = _adminPerPage;
+  const totalPages = Math.max(1, Math.ceil(matches.length / per));
+  if (_adminPage > totalPages) _adminPage = totalPages;
+  if (_adminPage < 1) _adminPage = 1;
+  const start = (_adminPage - 1) * per;
+  rows.forEach(function(r){ r.style.display = 'none'; });
+  matches.slice(start, start + per).forEach(function(r){ r.style.display = ''; });
   const countEl = document.getElementById('selected-count');
-  if (countEl) countEl.textContent = '顯示 ' + visible + ' 位使用者';
-  _syncAdminFilterBtns();
-  toast('🔍 顯示 ' + visible + ' 筆結果');
+  if (countEl) countEl.textContent = '共 ' + matches.length + ' 位' + (totalPages > 1 ? '（第 ' + _adminPage + '/' + totalPages + ' 頁）' : '');
+  _renderAdminPager(matches.length, totalPages);
+  if (typeof _syncAdminFilterBtns === 'function') _syncAdminFilterBtns();
+  if (!quiet) toast('🔍 共 ' + matches.length + ' 筆結果');
+}
+
+function _renderAdminPager(total, totalPages) {
+  const el = document.getElementById('admin-users-pager');
+  if (!el) return;
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  const btn = function(label, page, disabled, active){
+    return '<button onclick="adminGoPage(' + page + ')" ' + (disabled ? 'disabled' : '') + ' style="min-width:30px;padding:5px 9px;border-radius:7px;border:1px solid ' + (active ? '#577B53' : '#D2D7CD') + ';background:' + (active ? '#577B53' : '#fff') + ';color:' + (active ? '#fff' : (disabled ? '#C6CDBE' : '#4A4F49')) + ';font-size:13px;font-weight:700;cursor:' + (disabled ? 'default' : 'pointer') + ';font-family:inherit">' + label + '</button>';
+  };
+  // 頁碼：最多顯示當前頁附近，避免一長排
+  var pages = [];
+  var win = 2;
+  for (var p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= _adminPage - win && p <= _adminPage + win)) pages.push(p);
+    else if (pages[pages.length - 1] !== '…') pages.push('…');
+  }
+  var html = btn('‹', _adminPage - 1, _adminPage <= 1, false);
+  html += pages.map(function(p){
+    return p === '…' ? '<span style="padding:0 2px;color:#9AA098">…</span>' : btn(String(p), p, false, p === _adminPage);
+  }).join('');
+  html += btn('›', _adminPage + 1, _adminPage >= totalPages, false);
+  el.innerHTML = html;
+}
+
+window.adminGoPage = function(p) {
+  _adminPage = p;
+  _applyAdminView(true);
+  var mc = document.getElementById('main-content'); if (mc) mc.scrollTop = 0;
+};
+
+function applyAdminFilter() {
+  _adminPage = 1;            // 每次重新搜尋/篩選回到第 1 頁
+  _applyAdminView(false);
 }
 
 function resetAdminFilter() {
   document.getElementById('admin-search').value = '';
   document.getElementById('admin-filter-dept').value = '';
-  document.querySelectorAll('#admin-users-tbody tr').forEach(r => r.style.display = '');
+  _adminPage = 1;
+  _applyAdminView(true);
   updateSelectedCount();
-  _syncAdminFilterBtns();
   toast('🔄 已清除篩選條件');
 }
 
