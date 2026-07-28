@@ -1,0 +1,18 @@
+#!/bin/sh
+# 自動版本蓋章（隨 repo 走，靠 core.hooksPath=scripts/hooks 生效）
+#
+# index.html 開頭的版本檢查會比對 version.txt 與內嵌的 APP_VERSION，
+# 不一致就強制重新載入。這兩個值必須在每次 commit 一起更新，
+# 否則使用者（尤其手機 Safari）會一直吃舊快取，看到的是舊版畫面。
+#
+# 首次 clone 後請執行一次：  sh scripts/setup-hooks.sh
+set -e
+ROOT=$(git rev-parse --show-toplevel)
+
+# index.html 沒被這次 commit 動到就不必蓋章（避免無關 commit 一直產生雜訊 diff）
+git diff --cached --name-only | grep -qx 'index.html' || exit 0
+
+V=$(date +%Y%m%d%H%M%S)
+printf '%s' "$V" > "$ROOT/version.txt"
+perl -pi -e "s/APP_VERSION = '[0-9]*'/APP_VERSION = '$V'/" "$ROOT/index.html"
+git add "$ROOT/version.txt" "$ROOT/index.html"
