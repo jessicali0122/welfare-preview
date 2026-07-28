@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728223540';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728223941';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3527,7 +3527,7 @@ thead th{color:#767B75!important}
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">支出進度</span></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">預算使用率</span></div>
           <div id="ht-budget-progress-bars"></div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-top:10px">
@@ -13715,16 +13715,16 @@ function htRenderDetailHeader() {
       var today = new Date(); today.setHours(0,0,0,0);
       var days = Math.round((dObj - today) / 86400000);
       var dTxt = dObj.getFullYear() + ' 年 ' + (dObj.getMonth()+1) + ' 月 ' + dObj.getDate() + ' 日';
-      // 倒數改用膠囊 badge：一般=淡綠、剩 3 天內=琥珀提醒、當天=實心綠、已過=灰
+      // 倒數膠囊：深色實心才夠明顯（淺底版本使用者反映看不出來）
       var bg, fg, bd, dot, txt, txtMini;
-      if (days > 3)        { bg='#EAF1E9'; fg='#3E5A3B'; bd='#C9DAC6'; dot='#577B53';
-                             txt='還有 <b style="font-size:16px">'+days+'</b> 天'; txtMini='還有 '+days+' 天'; }
-      else if (days > 0)   { bg='#FBF4E8'; fg='#8A6321'; bd='#EEDFC2'; dot='#C08A3E';
-                             txt='只剩 <b style="font-size:16px">'+days+'</b> 天'; txtMini='剩 '+days+' 天'; }
-      else if (days === 0) { bg='#577B53'; fg='#fff';    bd='#577B53'; dot='#EAF1E9';
-                             txt='就是今天 🎉'; txtMini='就是今天 🎉'; }
-      else                 { bg='#ECEEEA'; fg='#767B75'; bd='#E1E4DF'; dot='#9AA098';
-                             txt='已結束 ' + (-days) + ' 天'; txtMini='已結束'; }
+      if (days > 3)        { bg='#46633F'; fg='#fff'; bd='#46633F'; dot='#A9C4A5';
+                             txt='距活動 <b style="font-size:16px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
+      else if (days > 0)   { bg='#B26B00'; fg='#fff'; bd='#B26B00'; dot='#FBE3B8';
+                             txt='距活動 <b style="font-size:16px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
+      else if (days === 0) { bg='#C2410C'; fg='#fff'; bd='#C2410C'; dot='#FBD5C0';
+                             txt='活動就在今天 🎉'; txtMini='今天 🎉'; }
+      else                 { bg='#5F5E5A'; fg='#fff'; bd='#5F5E5A'; dot='#C9CAC6';
+                             txt='活動已結束 ' + (-days) + ' 天'; txtMini='已結束 '+(-days)+' 天'; }
       var pill = function(inner){
         return '<span style="display:inline-flex;align-items:center;gap:6px;vertical-align:middle;background:'+bg+';color:'+fg
           + ';border:1px solid '+bd+';border-radius:20px;padding:3px 12px;font-size:14px;font-weight:700;white-space:nowrap">'
@@ -14535,12 +14535,20 @@ function htRenderBudget() {
       + '</div>';
   }).join('');
 
-  // 支出進度：用橘色系（超支才轉紅），與下方「類別明細」的綠色系區隔，避免兩處進度條看起來一樣
-  var barColor = pct > 95 ? '#ef4444' : pct > 80 ? '#E0820A' : '#F2A03D';
+  // 預算使用率：號誌式分段配色，一眼看出「還很寬鬆／該收斂了／超支」
+  //   ≤50 充裕(淡綠) · 51-70 正常(綠) · 71-85 注意(琥珀) · 86-100 接近上限(橘) · >100 已超支(紅)
+  var lv = pct > 100 ? { c:'#DC2626', bg:'#FFF1F2', t:'已超支' }
+         : pct > 85  ? { c:'#E0820A', bg:'#FBF4E8', t:'接近上限' }
+         : pct > 70  ? { c:'#C9A227', bg:'#FBF8E8', t:'注意' }
+         : pct > 50  ? { c:'#577B53', bg:'#EAF1E9', t:'正常' }
+         :             { c:'#8FAE8B', bg:'#EFF4EE', t:'充裕' };
+  var barColor = lv.c;
   document.getElementById('ht-budget-progress-bars').innerHTML =
     '<div style="margin-bottom:16px">'
-    + '<div style="display:flex;justify-content:space-between;font-size:14px;color:#767B75;margin-bottom:6px"><span>支出合計</span><span style="font-weight:700;color:#2E332D">'+pct+'%</span></div>'
-    + '<div style="height:12px;background:#ECEEEA;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
+    + '<div style="display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#767B75;margin-bottom:6px"><span>支出合計</span>'
+    +   '<span style="display:flex;align-items:center;gap:6px"><span style="background:'+lv.bg+';color:'+lv.c+';border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;line-height:1.5">'+lv.t+'</span>'
+    +   '<span style="font-weight:700;color:#2E332D">'+pct+'%</span></span></div>'
+    + '<div style="height:12px;background:#ECEEEA;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
     + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#9AA098;margin-top:4px"><span>支出 '+fmtMoney(actual)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
     + '</div>';
 
@@ -14548,12 +14556,12 @@ function htRenderBudget() {
   var catTotals = {};
   _htCats.forEach(function(c){ catTotals[c] = 0; });
   _htItems.forEach(function(it){ var cc = _htNormalizeCategory(it); catTotals[cc] = (catTotals[cc]||0) + (it.subtotal||0); });
-  var catColors = { '甜點':'#E38845', '主食':'#577B53', '鹹食':'#A0522D', '飲料':'#06b6d4', '水果':'#1e9d6b', '其他':'#9AA098' };
   var catHtml = _htCats.filter(function(c){ return catTotals[c]>0; }).map(function(c) {
     var cpct = actual > 0 ? Math.round(catTotals[c]/actual*100) : 0;
-    var col = catColors[c] || '#9AA098';
+    // 直接沿用品項清單的分類色，左右兩邊同一個分類永遠同色
+    var col = _htCatColor(c).fg;
     return '<div style="margin-bottom:12px">'
-      + '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="font-weight:600;color:#4A4F49">'+c+'</span><span style="color:#767B75">'+fmtMoney(catTotals[c])+' ('+cpct+'%)</span></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px"><span style="font-weight:700;color:'+col+'">'+c+'</span><span style="color:#767B75">'+fmtMoney(catTotals[c])+' ('+cpct+'%)</span></div>'
       + '<div style="height:8px;background:#ECEEEA;border-radius:16px;overflow:hidden"><div style="height:100%;width:'+cpct+'%;background:'+col+';border-radius:16px"></div></div>'
       + '</div>';
   }).join('');
