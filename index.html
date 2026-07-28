@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728220341';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728220544';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -464,6 +464,11 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
   .ht-sub-mini{display:none}
 }
+/* 單價／數量：拿掉瀏覽器原生的上下箭頭（spinner）——欄位窄的時候箭頭會壓在數字上，
+   「50」被切成「5」、「0」看起來像「5」。滑鼠滾輪也一併停用，避免捲頁時誤改金額。 */
+#ht-items-tbody input[type=number].ht-it-inp{-moz-appearance:textfield;appearance:textfield}
+#ht-items-tbody input[type=number].ht-it-inp::-webkit-outer-spin-button,
+#ht-items-tbody input[type=number].ht-it-inp::-webkit-inner-spin-button{-webkit-appearance:none;appearance:none;margin:0}
 /* 品項清單表頭：用系統最深綠（全域 thead th 有 color !important，這裡需同等權重蓋掉） */
 #ht-dtab-plan thead th{color:#46633F!important;font-weight:800!important}
 @media(max-width:768px){
@@ -3451,8 +3456,8 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:24%"><col style="width:11%"><col style="width:7%">
-              <col style="width:6%"><col style="width:6%"><col style="width:9%">
+              <col style="width:22%"><col style="width:11%"><col style="width:7%">
+              <col style="width:8%"><col style="width:7%"><col style="width:9%">
               <col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:8%"><col style="width:5%">
             </colgroup>
             <thead>
@@ -14248,6 +14253,12 @@ window.htGroupDragOver = function(e) {
 window.htGroupDragLeave = function(e) {
   var tr = e.currentTarget; if (tr) tr.style.boxShadow = '';
 };
+// 滑鼠在單價/數量欄上滾動時，瀏覽器預設會偷改數字 → 讓它失焦，捲頁就只是捲頁
+document.addEventListener('wheel', function(e) {
+  var ae = document.activeElement;
+  if (ae && ae.type === 'number' && ae.classList && ae.classList.contains('ht-it-inp')) ae.blur();
+}, { passive: true });
+
 // 手機用：上/下移一格（分組模式下跨過分組邊界時，順便把該項改成新分組的值）
 window.htMoveItem = function(idx, dir) {
   if (!_htItems[idx]) return;
