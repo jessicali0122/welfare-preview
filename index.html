@@ -10870,14 +10870,36 @@ function _htBdaysForMonth(monthNum) {
 }
 
 // ── API 呼叫 (沿用既有 API_URL + token 機制) ──
+// 午茶唯讀 action：與請款 callAPI 同款「先回快取、背景靜默更新」，避免每次載入／切分頁都重打 GAS（單趟 1～3 秒）
+var _HT_CACHEABLE = new Set(['htList','htGetItems','htVendors','htSheetList','htVoteGet','htVoteItemsGet','feedbackList']);
+// 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
+var _HT_WRITE = /^(htCreate|htUpdate|htDelete|htSaveItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+
+function _htFetchRaw(body) {
+  return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' })
+    .then(function(res){ return res.json().catch(function(){ return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }); });
+}
+
 async function htApi(action, payload) {
   // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
   //   currentUser 並未掛到 window（只有 demo 模式才會），用 window.currentUser
   //   會永遠取到 undefined → token 變空字串 → 後端回「請先登入公司帳號」。
   var body = Object.assign({ action: action, token: ((currentUser && currentUser.token) || (window.currentUser && window.currentUser.token)) || '' }, payload || {});
-  var res  = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow' });
-  try { return await res.json(); }
-  catch(e) { return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }
+  var isRead = _HT_CACHEABLE.has(action);
+  var ckey   = isRead ? _cacheKey(action, payload || {}) : null;
+  // 命中快取：立即回傳，背景靜默更新；期間若發生寫入（_cacheClear 遞增世代）就丟棄背景結果，避免用舊資料蓋掉剛存的最新狀態
+  if (isRead) {
+    var cached = _cacheGet(ckey);
+    if (cached) {
+      var _genAtFetch = _cacheGen;
+      _htFetchRaw(body).then(function(fresh){ if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(ckey, fresh); }).catch(function(){});
+      return cached;
+    }
+  }
+  var json = await _htFetchRaw(body);
+  if (json && json.ok && isRead) _cacheSet(ckey, json);
+  if (json && json.ok && _HT_WRITE.test(action)) _cacheClear();
+  return json;
 }
 // 匯出全域：按摩預約模組為獨立 IIFE，需透過 window 取用 htApi（否則 ReferenceError）
 window.htApi = htApi;
