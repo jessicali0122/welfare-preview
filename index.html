@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729001126';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729002302';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -5347,8 +5347,10 @@ async function callAPI(action, data = {}, opts = {}) {
       return cached;
     }
   }
+  const _genBeforeFetch = _cacheGen;
   const json = await _fetchAPI(action, data);
-  if (json && json.ok && _CACHEABLE.has(action)) _cacheSet(cacheKey, json);
+  // 若讀取期間發生寫入（_cacheClear 遞增世代），不可用寫入前的舊資料回寫快取
+  if (json && json.ok && _CACHEABLE.has(action) && _cacheGen === _genBeforeFetch) _cacheSet(cacheKey, json);
   // 案件有異動（新增/審核/退件/刪除/重送）→ 費用分析 5 分鐘快取立即失效，下次切換抓最新
   if (json && json.ok && /^(submit|approve|reject|resubmit|deleteCase|deleteDraft|saveDraft)$/.test(action) && window._analyticsCacheClear) _analyticsCacheClear();
   return json;
@@ -5866,8 +5868,8 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:14px;font-family:'Noto Sans TC',sans-serif;letter-spacing:.04em">${c.caseId}</span></td>
     <td style="padding:12px 14px;color:#9AA098;white-space:nowrap">${fmtDate(c.createdAt||c.applyDate)}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#4A4F49">${nameChip(localName(c.email,c.name),24,c.email)}</td>
-    <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${c.department||'—'}</td>
-    <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${c.project||c.subject||'—'}</td>
+    <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${htEsc(c.department)||'—'}</td>
+    <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${htEsc(c.project||c.subject)||'—'}</td>
     <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;font-weight:700;color:#4A4F49;white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
     <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
@@ -6781,8 +6783,8 @@ function renderDetailItems(items) {
     <tr style="border-bottom:1px solid #F7F8F6">
       <td style="padding:10px 8px;text-align:center;white-space:nowrap">${catBadge(it.category)}</td>
       <td style="padding:10px 8px;color:#4A4F49;white-space:nowrap">${htEsc(it.description)||'—'}</td>
-      <td style="padding:10px 8px;text-align:center;color:#767B75;white-space:nowrap">${it.receiptType||'—'}</td>
-      <td style="padding:10px 8px;text-align:center;color:#767B75;white-space:nowrap">${it.date||'—'}</td>
+      <td style="padding:10px 8px;text-align:center;color:#767B75;white-space:nowrap">${htEsc(it.receiptType)||'—'}</td>
+      <td style="padding:10px 8px;text-align:center;color:#767B75;white-space:nowrap">${htEsc(it.date)||'—'}</td>
       <td style="padding:10px 8px;text-align:right;white-space:nowrap">NT$ ${Number(it.pretax||0).toLocaleString()}</td>
       <td style="padding:10px 8px;text-align:right;color:#767B75;white-space:nowrap">NT$ ${Number(it.tax||0).toLocaleString()}</td>
       <td style="padding:10px 8px;text-align:right;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
@@ -8730,7 +8732,7 @@ function nameChip(name, size, email) {
     : '<div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:'+color+';display:inline-flex;align-items:center;justify-content:center;font-size:'+fs+'px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px">'+initial+'</div>';
   return '<div style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap">'
     + avatarHtml
-    + '<span>'+n+'</span>'
+    + '<span>'+htEsc(n)+'</span>'
     + '</div>';
 }
 // 角色徽章樣式（依角色配色）
@@ -10885,7 +10887,7 @@ function _htBdaysForMonth(monthNum) {
 var _HT_CACHEABLE = new Set(['htList','htGetItems','htVendors','htSheetList','htVoteGet','htVoteItemsGet','feedbackList']);
 var _HT_SWR_REFRESH = 90000;   // 快取超過 90 秒才在背景更新；90 秒內直接用快取、不打 GAS（避免頻繁讀取灌爆很慢的後端）
 // 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
-var _HT_WRITE = /^(htCreate|htUpdate|htDelete|htSaveItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
 // 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
 function _htFetchRaw(body, timeoutMs) {
@@ -10953,8 +10955,10 @@ async function htApi(action, payload) {
       return entry.data;
     }
   }
+  var _genBeforeFetch = _cacheGen;
   var json = await _htFetchRaw(body);
-  if (json && json.ok && isRead) _cacheSet(ckey, json);
+  // 讀取期間若有寫入（世代遞增）就不回寫，避免用舊資料蓋掉剛更新的快取
+  if (json && json.ok && isRead && _cacheGen === _genBeforeFetch) _cacheSet(ckey, json);
   if (json && json.ok && _HT_WRITE.test(action)) _cacheClear();
   return json;
 }
