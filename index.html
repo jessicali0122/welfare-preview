@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260721125813';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728122835';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3439,12 +3439,12 @@ thead th{color:#767B75!important}
 
       <!-- 品項表格 -->
       <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">品項清單</span></div>
+        <div style="position:relative;padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:center;min-height:32px">
+          <div style="text-align:center">
+            <div style="display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">品項清單</span></div>
             <div id="ht-qty-hint" style="font-size:12px;color:#767B75;margin-top:2px"></div>
           </div>
-          <div style="display:flex;gap:8px">
+          <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:8px">
             <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               新增品項
@@ -3461,9 +3461,9 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:18%"><col style="width:12%"><col style="width:10%">
-              <col style="width:8%"><col style="width:7%"><col style="width:11%">
-              <col style="width:13%"><col style="width:8%"><col style="width:10%"><col style="width:3%">
+              <col style="width:28%"><col style="width:10%"><col style="width:8%">
+              <col style="width:7%"><col style="width:6%"><col style="width:10%">
+              <col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:3%">
             </colgroup>
             <thead>
               <tr style="background:#EDF1EC;border-bottom:2px solid #A9C4A5">
@@ -4426,7 +4426,7 @@ window._renderRolePreviewUI = function() {
     block.style.display = '';
     var btns = ROLES.map(function(r){
       var on = active === r[0];
-      return '<button onclick="setRolePreview(\'' + r[0] + '\')" style="flex:1;min-width:64px;padding:7px 6px;border-radius:9px;border:1.5px solid ' + (on ? '#E0820A' : '#E1E4DF') + ';background:' + (on ? '#FFF4E4' : '#fff') + ';color:' + (on ? '#C9760A' : '#4A4F49') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">' + r[1] + (on ? ' ✓' : '') + '</button>';
+      return '<button onclick="setRolePreview(\'' + r[0] + '\')" style="flex:1;min-width:64px;padding:7px 6px;border-radius:9px;border:1.5px solid ' + (on ? '#E0820A' : '#E1E4DF') + ';background:' + (on ? '#FFF4E4' : '#fff') + ';color:' + (on ? '#C9760A' : '#4A4F49') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">' + r[1] + '</button>';
     }).join('');
     block.innerHTML = '<div style="padding:10px 16px 8px;border-top:1px solid #ECEEEA">'
       + '<div style="font-size:12px;color:#9AA098;font-weight:700;margin-bottom:7px">🎭 角色預覽（僅你看得到，用來確認各角色畫面）</div>'
@@ -7526,6 +7526,8 @@ async function _syncMembersFromServer() {
     }
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
+    // 角色到位後預先渲染角色預覽切換器，避免管理者開選單時要「頓一下」才出現
+    if (typeof _renderRolePreviewUI === 'function') _renderRolePreviewUI();
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
 }
 // 根據 email 查詢本地使用者（名稱 + 部門）
@@ -12104,6 +12106,8 @@ function _htInitCreatePickers(presetYm) {
         var selYm = dates[0].getFullYear() + '-' + String(dates[0].getMonth()+1).padStart(2,'0');
         var budEl = document.getElementById('ht-new-budget');
         if (budEl) budEl.value = _htBudgetForMonth(selYm);
+        var hcEl = document.getElementById('ht-new-headcount');
+        if (hcEl) hcEl.value = _htPrevMonthHeadcount(selYm);
       }
     };
     if (typeof monthSelectPlugin !== 'undefined') {
@@ -12120,6 +12124,8 @@ function _htInitCreatePickers(presetYm) {
       if (_htMonthFp) _htMonthFp.setDate(new Date(d.getFullYear(), d.getMonth(), 1), false);
       var budEl = document.getElementById('ht-new-budget');
       if (budEl) budEl.value = _htBudgetForMonth(selYm);
+      var hcEl = document.getElementById('ht-new-headcount');
+      if (hcEl) hcEl.value = _htPrevMonthHeadcount(selYm);
       // 福寶季節資訊同步
       var sh = _htSeasonHoliday(selYm);
       var sc = document.getElementById('ht-assist-season-chip');
@@ -13654,6 +13660,17 @@ window.htSaveEventInfo = async function() {
 
 // ── 品項規劃 ──
 var _htCats = ['甜點','主食','鹹食','飲料','水果','其他'];
+// 分類配色（下拉框依所選分類上色，方便一眼辨識）
+var _HT_CAT_COLORS = {
+  '主食': { fg:'#3E5A3B', bg:'#EAF1E9', bd:'#C9DAC6' },
+  '甜點': { fg:'#C9760A', bg:'#FDF1E0', bd:'#F3D6A8' },
+  '鹹食': { fg:'#9A4E22', bg:'#F6EAE2', bd:'#E4C6B2' },
+  '飲料': { fg:'#0E7C90', bg:'#E2F4F8', bd:'#B6E1EA' },
+  '水果': { fg:'#1E8A5E', bg:'#E4F4EC', bd:'#BFE4D2' }
+};
+function _htCatColor(cat) {
+  return _HT_CAT_COLORS[cat] || { fg:'#767B75', bg:'#fff', bd:'#ECEEEA' };
+}
 
 async function _htShowRepeatWarning() {
   var warning = document.getElementById('ht-repeat-warning');
@@ -13828,6 +13845,7 @@ function htRenderItems() {
   tbody.innerHTML = _htItems.map(function(it, idx) {
     total += it.subtotal || 0;
     var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('');
+    var _catC = _htCatColor(it.category);
     var inp = 'style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#363B35"';
     var inpR = 'style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:right;color:#363B35"';
     var td = 'style="padding:8px 6px;vertical-align:middle"';
@@ -13835,7 +13853,7 @@ function htRenderItems() {
     return '<tr style="border-bottom:1px solid #f5f5f5" id="ht-row-'+idx+'">'
       + '<td data-label="品名" '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"><option value=""'+(it.category?'':' selected')+'>—</option>'+catOpts+'</select></td>'
+      + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid '+_catC.bd+';border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;font-weight:600;color:'+_catC.fg+';background:'+_catC.bg+'" onfocus="this.style.borderColor=\'#577B53\'" onblur="this.style.borderColor=\''+_catC.bd+'\'"><option value=""'+(it.category?'':' selected')+'>—</option>'+catOpts+'</select></td>'
       + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
       + '<td data-label="小計" style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#3E5A3B;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
@@ -13875,17 +13893,29 @@ window.htItemChange = function(el) {
     if (autocat) {
       _htItems[idx].category = autocat;
       var row = document.getElementById('ht-row-' + idx);
-      if (row) { var cs = row.querySelector('[data-f="category"]'); if (cs) cs.value = autocat; }
+      if (row) { var cs = row.querySelector('[data-f="category"]'); if (cs) { cs.value = autocat; _htPaintCatSelect(cs, autocat); } }
     }
     _htCheckRepeatWarning();
     htRenderBudget();   // 重新分類後類別明細即時更新
   } else if (f === 'vendor') {
     _htItems[idx][f] = val;
     _htCheckRepeatWarning();
+  } else if (f === 'category') {
+    _htItems[idx][f] = val;
+    _htPaintCatSelect(el, val);
+    htRenderBudget();   // 類別明細即時更新
   } else {
     _htItems[idx][f] = val;
   }
 };
+
+// 依所選分類替下拉框上色（即時反映）
+function _htPaintCatSelect(sel, cat) {
+  if (!sel) return;
+  var c = _htCatColor(cat);
+  sel.style.color = c.fg; sel.style.background = c.bg;
+  sel.style.borderColor = c.bd; sel.style.fontWeight = '600';
+}
 
 window.htToggleOrderLocal = function(cb) {
   var idx = parseInt(cb.dataset.idx);
