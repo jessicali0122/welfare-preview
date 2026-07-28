@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728123129';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728133807';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -458,6 +458,11 @@ input[type=checkbox]{accent-color:#577B53}
 @media(min-width:769px){
   /* 空間不足時走外層橫向捲動，不硬壓欄位讓資料貼邊 */
   #ht-dtab-plan table{min-width:960px}
+  /* 清新立體感：斑馬紋 + hover 提亮 + 細分隔線 */
+  #ht-items-tbody tr.ht-it-row{background:#fff;border-bottom:1px solid #EEF1EC}
+  #ht-items-tbody tr.ht-it-row:nth-child(even){background:#FAFCF9}
+  #ht-items-tbody tr.ht-it-row:hover{background:#F2F7F0}
+  #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
 }
 @media(max-width:768px){
   #ht-dtab-plan table{display:block;width:100%!important;table-layout:auto!important}
@@ -3439,12 +3444,16 @@ thead th{color:#767B75!important}
 
       <!-- 品項表格 -->
       <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden">
-        <div style="position:relative;padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:center;min-height:32px">
-          <div style="text-align:center">
-            <div style="display:flex;align-items:center;justify-content:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">品項清單</span></div>
+        <div style="padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">品項清單</span></div>
             <div id="ht-qty-hint" style="font-size:12px;color:#767B75;margin-top:2px"></div>
           </div>
-          <div style="position:absolute;right:20px;top:50%;transform:translateY(-50%);display:flex;gap:8px">
+          <div style="display:flex;gap:8px;align-items:center">
+            <div id="ht-view-toggle" style="display:inline-flex;border:1.5px solid #DDE4D8;border-radius:8px;overflow:hidden;background:#F6F9F5">
+              <button onclick="htSetViewMode('order')" id="ht-vm-order" style="padding:7px 12px;border:none;background:#577B53;color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="可拖曳排序">↕ 自訂排序</button>
+              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:7px 12px;border:none;background:transparent;color:#577B53;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 依分類</button>
+            </div>
             <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:5px;padding:7px 12px;border-radius:8px;border:1.5px dashed #577B53;background:#F6F9F5;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               新增品項
@@ -3461,21 +3470,21 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:28%"><col style="width:10%"><col style="width:8%">
-              <col style="width:7%"><col style="width:6%"><col style="width:10%">
-              <col style="width:10%"><col style="width:8%"><col style="width:10%"><col style="width:3%">
+              <col style="width:23%"><col style="width:11%"><col style="width:9%">
+              <col style="width:7%"><col style="width:6%"><col style="width:11%">
+              <col style="width:12%"><col style="width:7%"><col style="width:11%"><col style="width:3%">
             </colgroup>
             <thead>
-              <tr style="background:#EDF1EC;border-bottom:2px solid #A9C4A5">
-                <th style="padding:12px 10px;text-align:left;color:#3E5A3B;font-weight:700;font-size:14px">品名</th>
-                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">廠商</th>
-                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">分類</th>
-                <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">單價</th>
-                <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">數量</th>
-                <th style="padding:12px 6px;text-align:right;color:#767B75;font-weight:700;font-size:14px">小計</th>
-                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">負責人</th>
-                <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px">是否訂購</th>
-                <th style="padding:12px 6px;text-align:left;color:#767B75;font-weight:700;font-size:14px">備註</th>
+              <tr style="background:linear-gradient(#EAF2E7,#DFEAD9);border-bottom:2px solid #93B78C;box-shadow:0 2px 4px rgba(87,123,83,.08)">
+                <th style="padding:14px 10px;text-align:center;color:#38512F;font-weight:800;font-size:14px;letter-spacing:.03em">品名</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">廠商</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">分類</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">單價</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">數量</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">小計</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">負責人</th>
+                <th style="padding:14px 4px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">是否訂購</th>
+                <th style="padding:14px 6px;text-align:center;color:#4A5F44;font-weight:800;font-size:14px;letter-spacing:.03em">備註</th>
                 <th style="padding:12px 4px;text-align:center;color:#767B75;font-weight:700;font-size:14px"></th>
               </tr>
             </thead>
@@ -13670,11 +13679,11 @@ window.htSaveEventInfo = async function() {
 var _htCats = ['甜點','主食','鹹食','飲料','水果','其他'];
 // 分類配色（下拉框依所選分類上色，方便一眼辨識）
 var _HT_CAT_COLORS = {
-  '主食': { fg:'#3E5A3B', bg:'#EAF1E9', bd:'#C9DAC6' },
-  '甜點': { fg:'#C9760A', bg:'#FDF1E0', bd:'#F3D6A8' },
-  '鹹食': { fg:'#9A4E22', bg:'#F6EAE2', bd:'#E4C6B2' },
-  '飲料': { fg:'#0E7C90', bg:'#E2F4F8', bd:'#B6E1EA' },
-  '水果': { fg:'#1E8A5E', bg:'#E4F4EC', bd:'#BFE4D2' }
+  '主食': { fg:'#5B7A3E', bg:'#F1F5EA', bd:'#DCE7C8' },
+  '甜點': { fg:'#C06A8E', bg:'#FBF0F4', bd:'#F0D8E2' },
+  '鹹食': { fg:'#C08A3E', bg:'#FBF4E8', bd:'#EEDFC2' },
+  '飲料': { fg:'#4E8FA6', bg:'#EDF5F8', bd:'#D2E6ED' },
+  '水果': { fg:'#4A9E86', bg:'#EEF6F3', bd:'#D2E8E1' }
 };
 function _htCatColor(cat) {
   return _HT_CAT_COLORS[cat] || { fg:'#767B75', bg:'#fff', bd:'#ECEEEA' };
@@ -13842,6 +13851,47 @@ function _htCheckRepeatWarning() {
   warning.style.display = '';
 }
 
+var _htViewMode = 'order';   // 'order'（可拖曳排序）｜'category'（依分類分組）
+var _htDragIdx = null;
+
+window.htSetViewMode = function(m) {
+  _htViewMode = (m === 'category') ? 'category' : 'order';
+  var bo = document.getElementById('ht-vm-order'), bc = document.getElementById('ht-vm-category');
+  if (bo && bc) {
+    var on = 'background:#577B53;color:#fff', off = 'background:transparent;color:#577B53';
+    bo.style.cssText = 'padding:7px 12px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .15s;' + (_htViewMode==='order'?on:off);
+    bc.style.cssText = 'padding:7px 12px;border:none;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;transition:all .15s;' + (_htViewMode==='category'?on:off);
+  }
+  htRenderItems();
+};
+
+// 單列品項 HTML（draggable：僅「自訂排序」模式提供拖曳把手）
+function _htItemRowHtml(it, idx, draggable) {
+  var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('');
+  var _catC = _htCatColor(it.category);
+  var inp = 'style="border:1px solid #DDE3D8;border-radius:8px;padding:10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#363B35;background:#fff"';
+  var inpR = 'style="border:1px solid #DDE3D8;border-radius:8px;padding:10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#363B35;background:#fff;-moz-appearance:textfield"';
+  var td = 'style="padding:10px 8px;vertical-align:middle"';
+  var trAttr = draggable
+    ? ' draggable="true" ondragstart="htDragStart(event,'+idx+')" ondragover="htDragOver(event,'+idx+')" ondragleave="htDragLeave(event)" ondrop="htDrop(event,'+idx+')" ondragend="htDragEnd(event)"'
+    : '';
+  var grip = draggable
+    ? '<span class="ht-drag-h" style="cursor:grab;color:#B9C2AF;font-size:16px;line-height:1;flex-shrink:0;user-select:none;letter-spacing:-2px" title="拖曳排序">⠿</span>'
+    : '';
+  return '<tr class="ht-it-row" style="transition:background .12s" id="ht-row-'+idx+'"'+trAttr+'>'
+    + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#DDE3D8\';this.style.background=\'#fff\'"></div></td>'
+    + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#DDE3D8\';this.style.background=\'#fff\'"></td>'
+    + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid '+_catC.bd+';border-radius:8px;padding:10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;font-weight:700;color:'+_catC.fg+';background:'+_catC.bg+';cursor:pointer" onfocus="this.style.borderColor=\'#577B53\'" onblur="this.style.borderColor=\''+_catC.bd+'\'"><option value=""'+(it.category?'':' selected')+'>—</option>'+catOpts+'</select></td>'
+    + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#DDE3D8\';this.style.background=\'#fff\'"></td>'
+    + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#DDE3D8\';this.style.background=\'#fff\'"></td>'
+    + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#3E5A3B;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
+    + '<td data-label="負責人" '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
+    + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
+    + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#DDE3D8\';this.style.background=\'#fff\'"></td>'
+    + '<td class="ht-it-del" style="padding:10px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#CBD0C6;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#CBD0C6\'" title="刪除">×</button></td>'
+    + '</tr>';
+}
+
 function htRenderItems() {
   var tbody = document.getElementById('ht-items-tbody');
   if (!_htItems.length) {
@@ -13849,31 +13899,66 @@ function htRenderItems() {
     document.getElementById('ht-total-cell').textContent = 'NT$0';
     return;
   }
-  var total = 0;
-  tbody.innerHTML = _htItems.map(function(it, idx) {
-    total += it.subtotal || 0;
-    var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+'>'+c+'</option>'; }).join('');
-    var _catC = _htCatColor(it.category);
-    var inp = 'style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#363B35"';
-    var inpR = 'style="border:1px solid #ECEEEA;border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:right;color:#363B35"';
-    var td = 'style="padding:8px 6px;vertical-align:middle"';
-    var tdR = 'style="padding:8px 6px;vertical-align:middle;text-align:right"';
-    return '<tr style="border-bottom:1px solid #f5f5f5" id="ht-row-'+idx+'">'
-      + '<td data-label="品名" '+td+'><input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid '+_catC.bd+';border-radius:8px;padding:8px 10px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;font-weight:600;color:'+_catC.fg+';background:'+_catC.bg+'" onfocus="this.style.borderColor=\'#577B53\'" onblur="this.style.borderColor=\''+_catC.bd+'\'"><option value=""'+(it.category?'':' selected')+'>—</option>'+catOpts+'</select></td>'
-      + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td data-label="小計" style="padding:8px 6px;vertical-align:middle;text-align:right;font-size:16px;font-weight:700;color:#3E5A3B;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
-      + '<td data-label="負責人" '+td+'>'+_htUserSelectHtml(idx, it.assignee)+'</td>'
-      + '<td data-label="是否訂購" style="padding:8px 4px;vertical-align:middle;text-align:center"><input type="checkbox" data-idx="'+idx+'" '+(it.ordered?'checked':'')+' onchange="htToggleOrderLocal(this)" style="width:18px;height:18px;accent-color:#1e9d6b;cursor:pointer"></td>'
-      + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fbfcfa\'" onblur="this.style.borderColor=\'#ECEEEA\';this.style.background=\'#fff\'"></td>'
-      + '<td class="ht-it-del" style="padding:8px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#D2D6D0;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#D2D6D0\'" title="刪除">×</button></td>'
-      + '</tr>';
-  }).join('');
+  var total = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);
+  var html;
+  if (_htViewMode === 'category') {
+    // 依分類分組（分組模式不提供拖曳；順序由分類決定）
+    var order = _htCats.concat(['']);   // 已知分類在前，未分類殿後
+    var seen = {};
+    html = '';
+    order.forEach(function(cat){
+      if (seen[cat]) return; seen[cat] = 1;
+      var members = _htItems.map(function(it,i){ return {it:it,i:i}; }).filter(function(x){ return (x.it.category||'') === cat; });
+      if (!members.length) return;
+      var c = _htCatColor(cat);
+      var sub = members.reduce(function(s,x){ return s+(x.it.subtotal||0); },0);
+      var label = cat || '未分類';
+      html += '<tr class="ht-cat-group"><td colspan="10" style="padding:10px 14px;background:'+c.bg+';border-left:4px solid '+c.fg+';border-bottom:1px solid '+c.bd+'">'
+        + '<span style="font-weight:800;color:'+c.fg+';font-size:13px;letter-spacing:.02em">'+htEsc(label)+'</span>'
+        + '<span style="margin-left:8px;color:'+c.fg+';opacity:.7;font-weight:600;font-size:12px">'+members.length+' 項 · '+fmtMoney(sub)+'</span></td></tr>';
+      html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, false); }).join('');
+    });
+  } else {
+    html = _htItems.map(function(it, idx){ return _htItemRowHtml(it, idx, true); }).join('');
+  }
+  tbody.innerHTML = html;
   document.getElementById('ht-total-cell').textContent = fmtMoney(total);
   _htUpdateBalance();
 }
+
+// ── 品項拖曳排序（自訂排序模式）──
+window.htDragStart = function(e, idx) {
+  // 只允許從拖曳把手開始，避免拖到輸入框內文字/下拉
+  var t = e.target;
+  if (!t || !t.classList || !t.classList.contains('ht-drag-h')) { e.preventDefault(); return; }
+  _htDragIdx = idx;
+  try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', String(idx)); } catch(err){}
+  var row = document.getElementById('ht-row-'+idx);
+  if (row) row.style.opacity = '.4';
+};
+window.htDragOver = function(e, idx) {
+  if (_htDragIdx === null) return;
+  e.preventDefault();
+  try { e.dataTransfer.dropEffect = 'move'; } catch(err){}
+  var row = document.getElementById('ht-row-'+idx);
+  if (row && idx !== _htDragIdx) row.style.boxShadow = 'inset 0 4px 0 -2px #577B53';
+};
+window.htDragLeave = function(e) {
+  var row = e.currentTarget; if (row) row.style.boxShadow = '';
+};
+window.htDrop = function(e, idx) {
+  e.preventDefault();
+  var from = _htDragIdx;
+  if (from === null || from === idx) { htRenderItems(); return; }
+  var moved = _htItems.splice(from, 1)[0];
+  _htItems.splice(idx, 0, moved);
+  _htDragIdx = null;
+  htRenderItems();
+};
+window.htDragEnd = function(e) {
+  _htDragIdx = null;
+  Array.prototype.forEach.call(document.querySelectorAll('#ht-items-tbody tr'), function(r){ r.style.opacity=''; r.style.boxShadow=''; });
+};
 
 function htEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 window.htEsc = htEsc; // 按摩模組（獨立 IIFE）會用到，需匯出全域
@@ -13912,6 +13997,7 @@ window.htItemChange = function(el) {
     _htItems[idx][f] = val;
     _htPaintCatSelect(el, val);
     htRenderBudget();   // 類別明細即時更新
+    if (_htViewMode === 'category') htRenderItems();   // 分組模式：改分類即時重新歸組
   } else {
     _htItems[idx][f] = val;
   }
@@ -13985,9 +14071,16 @@ window.htDeleteItem = function(idx) {
 window.htSaveItems = async function() {
   var btn = document.getElementById('ht-save-btn');
   if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-  var r = await htApi('htSaveItems', { eventId: _htEvent.eventId, items: _htItems });
-  if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
-  if (!r.ok) { toast('儲存失敗：' + r.error); return; }
+  var r;
+  try {
+    r = await htApi('htSaveItems', { eventId: _htEvent.eventId, items: _htItems });
+  } catch (e) {
+    r = { ok:false, error:'網路連線失敗，請稍後再試' };
+  } finally {
+    // 無論成功、失敗或逾時，按鈕一定還原，避免卡在「儲存中…」
+    if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
+  }
+  if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
   toast('✅ 品項已儲存');
   // 存檔已成功，本機資料即為最新 → 立即完成回應；
   // 背景再重讀對帳（取回後端重算的欄位如小計/排序），非阻塞，不讓使用者多等一次往返
