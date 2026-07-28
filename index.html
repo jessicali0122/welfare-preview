@@ -465,19 +465,9 @@ input[type=checkbox]{accent-color:#577B53}
   .ht-sub-mini{display:none}
 }
 @media(max-width:768px){
-  #ht-dtab-plan table{display:block;width:100%!important;table-layout:auto!important}
-  #ht-dtab-plan colgroup{display:none}
-  #ht-dtab-plan thead{display:none}
-  #ht-items-tbody{display:block;width:100%}
-  /* 精簡卡片：2 欄網格，只有品名/廠商滿寬；單價×數量、小計×負責人、是否訂購×備註兩兩並排，卡片高度大幅縮短 */
-  #ht-items-tbody tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;width:auto;border:1.5px solid #D9DDD3;border-radius:14px;padding:12px 12px 10px;margin:8px 2px;background:#fff;position:relative}
-  #ht-items-tbody td{display:flex;align-items:center;gap:6px;width:auto;padding:0!important;text-align:left!important;border:none!important;white-space:normal!important;min-width:0}
-  #ht-items-tbody td::before{content:attr(data-label);font-size:12px;color:#9AA098;font-weight:600;min-width:44px;flex-shrink:0}
-  #ht-items-tbody td .ht-it-inp{width:100%!important;box-sizing:border-box}
-  /* 滿寬欄位（只留品名/廠商） */
-  #ht-items-tbody td[data-label="品名"],#ht-items-tbody td[data-label="廠商"]{grid-column:1/-1}
-  #ht-items-tbody td[data-label="負責人"]::before,#ht-items-tbody td[data-label="備註"]::before{min-width:0}
-  #ht-items-tbody td[data-label="品名"]{padding-right:26px!important}
+  /* 手機改用「跟桌面一樣的表格＋整張左右滑」（2026-07-28 使用者指定，取代舊的堆疊卡片） */
+  #ht-dtab-plan table{min-width:920px}
+  #ht-items-tbody td{white-space:nowrap}
   /* 觸控裝置沒有拖放：顯示上下移動鈕、藏掉拖曳把手 */
   #ht-items-tbody .ht-move-btns{display:inline-flex!important}
   #ht-items-tbody .ht-drag-h{display:none!important}
@@ -493,31 +483,6 @@ input[type=checkbox]{accent-color:#577B53}
   /* 標題副標：手機用短版日期，避免 375px 斷行 */
   .ht-sub-full{display:none}
   .ht-sub-mini{display:inline}
-  /* 分組標題：手機不套用卡片格線，整條滿寬一行（否則「甜點」會被擠成直書） */
-  #ht-items-tbody tr.ht-cat-group{display:block;border:none;border-radius:10px;padding:0;margin:14px 2px 4px;background:none}
-  #ht-items-tbody tr.ht-cat-group td{display:block;white-space:nowrap!important;padding:8px 12px!important;border-radius:10px}
-  /* 所有成對欄位統一「標籤在上、內容在下」，排列一致不雜亂 */
-  #ht-items-tbody td[data-label="單價"],#ht-items-tbody td[data-label="數量"],
-  #ht-items-tbody td[data-label="小計"],#ht-items-tbody td[data-label="負責人"],
-  #ht-items-tbody td[data-label="備註"]{flex-direction:column;align-items:stretch;gap:3px}
-  #ht-items-tbody td[data-label="單價"]::before,#ht-items-tbody td[data-label="數量"]::before,
-  #ht-items-tbody td[data-label="小計"]::before,#ht-items-tbody td[data-label="負責人"]::before,
-  #ht-items-tbody td[data-label="備註"]::before{min-width:0}
-  /* 小計數字左對齊、與其他欄位齊高 */
-  #ht-items-tbody td[data-label="小計"]{justify-content:flex-start}
-  /* 是否訂購：標籤在左、勾選在右，單獨成一列（checkbox 不適合標籤在上） */
-  #ht-items-tbody td[data-label="是否訂購"]{grid-column:1/-1;flex-direction:row;justify-content:flex-start;gap:8px;margin-top:2px}
-  /* 備註：整列滿寬（文字欄位較好填、也不會半格孤零零） */
-  #ht-items-tbody td[data-label="備註"]{grid-column:1/-1}
-  /* 連結：手機卡片版取消桌面的固定欄寬，改跟著卡片走 */
-  #ht-items-tbody td[data-label="連結"]{width:auto!important;grid-column:1/-1;white-space:normal!important}
-  /* 刪除鈕：絕對定位右上角 */
-  #ht-items-tbody td.ht-it-del{position:absolute;top:8px;right:8px;padding:0!important}
-  #ht-items-tbody td.ht-it-del::before{display:none}
-  #ht-dtab-plan tfoot{display:block;width:100%}
-  #ht-dtab-plan tfoot tr{display:flex;justify-content:space-between;align-items:center;padding:12px 16px}
-  #ht-dtab-plan tfoot td{padding:0!important;width:auto}
-  #ht-dtab-plan tfoot td[colspan="4"]{display:none}
 }
 
 
@@ -3478,13 +3443,13 @@ thead th{color:#767B75!important}
           <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
-        <div style="overflow-x:auto">
+        <div id="ht-items-scroll" style="overflow-x:auto;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:22%"><col style="width:11%"><col style="width:7%">
+              <col style="width:24%"><col style="width:11%"><col style="width:7%">
               <col style="width:6%"><col style="width:6%"><col style="width:9%">
-              <col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:12%"><col style="width:3%">
+              <col style="width:8%"><col style="width:7%"><col style="width:9%"><col style="width:8%"><col style="width:5%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
@@ -11199,7 +11164,7 @@ function _htLinkInnerHtml(it, idx) {
   // 有連結且非編輯中 → 顯示漂亮的可點膠囊（點了開新分頁），旁邊小鉛筆可重新編輯
   if (url && !editing) {
     var href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
-    return '<div style="display:flex;align-items:center;gap:2px">'
+    return '<div style="display:flex;align-items:center;justify-content:center;gap:2px">'
       + '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="' + htEsc(href) + '" style="display:inline-flex;align-items:center;gap:4px;background:#EDF1F8;border:1px solid #CFDAEA;border-radius:999px;padding:6px 11px;color:#42597E;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'#E1E9F4\'" onmouseout="this.style.background=\'#EDF1F8\'">'
       +   '<span style="font-size:14px;flex-shrink:0">🔗</span><span>連結</span>'
       + '</a>'
@@ -13725,16 +13690,25 @@ function htRenderDetailHeader() {
       var wd = '週' + ['日','一','二','三','四','五','六'][dObj.getDay()];
       var today = new Date(); today.setHours(0,0,0,0);
       var days = Math.round((dObj - today) / 86400000);
-      var cd = days > 0 ? '距活動還有 <b style="color:#577B53">' + days + '</b> 天'
-             : days === 0 ? '<b style="color:#C9760A">就是今天 🎉</b>'
-             : '已結束 ' + (-days) + ' 天';
       var dTxt = dObj.getFullYear() + ' 年 ' + (dObj.getMonth()+1) + ' 月 ' + dObj.getDate() + ' 日';
-      var cdMini = days > 0 ? '還有 <b style="color:#577B53">' + days + '</b> 天'
-                 : days === 0 ? '<b style="color:#C9760A">就是今天 🎉</b>'
-                 : '已結束 ' + (-days) + ' 天';
-      // 手機用短版（月/日＋週幾＋倒數），避免 375px 斷行
-      subHtml = '<span class="ht-sub-full">' + dTxt + '（' + wd + '）　·　' + cd + '</span>'
-              + '<span class="ht-sub-mini">' + (dObj.getMonth()+1) + '/' + dObj.getDate() + '（' + wd + '）· ' + cdMini + '</span>';
+      // 倒數改用膠囊 badge：一般=淡綠、剩 3 天內=琥珀提醒、當天=實心綠、已過=灰
+      var bg, fg, bd, dot, txt, txtMini;
+      if (days > 3)        { bg='#EAF1E9'; fg='#3E5A3B'; bd='#C9DAC6'; dot='#577B53';
+                             txt='還有 <b style="font-size:16px">'+days+'</b> 天'; txtMini='還有 '+days+' 天'; }
+      else if (days > 0)   { bg='#FBF4E8'; fg='#8A6321'; bd='#EEDFC2'; dot='#C08A3E';
+                             txt='只剩 <b style="font-size:16px">'+days+'</b> 天'; txtMini='剩 '+days+' 天'; }
+      else if (days === 0) { bg='#577B53'; fg='#fff';    bd='#577B53'; dot='#EAF1E9';
+                             txt='就是今天 🎉'; txtMini='就是今天 🎉'; }
+      else                 { bg='#ECEEEA'; fg='#767B75'; bd='#E1E4DF'; dot='#9AA098';
+                             txt='已結束 ' + (-days) + ' 天'; txtMini='已結束'; }
+      var pill = function(inner){
+        return '<span style="display:inline-flex;align-items:center;gap:6px;vertical-align:middle;background:'+bg+';color:'+fg
+          + ';border:1px solid '+bd+';border-radius:20px;padding:3px 12px;font-size:14px;font-weight:700;white-space:nowrap">'
+          + '<span style="width:6px;height:6px;border-radius:50%;background:'+dot+';flex-shrink:0"></span>' + inner + '</span>';
+      };
+      // 手機用短版（月/日＋週幾），避免 375px 斷行
+      subHtml = '<span class="ht-sub-full">' + dTxt + '（' + wd + '）　' + pill(txt) + '</span>'
+              + '<span class="ht-sub-mini">' + (dObj.getMonth()+1) + '/' + dObj.getDate() + '（' + wd + '） ' + pill(txtMini) + '</span>';
     }
   } else {
     subHtml = '日期待定';
@@ -14170,8 +14144,8 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
     + '<td data-label="負責人" '+td+'>'+_htAssigneeChipHtml(it, idx)+'</td>'
     + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><span onclick="htToggleOrder(this,'+idx+')" role="switch" aria-checked="'+(it.ordered?'true':'false')+'" title="'+(it.ordered?'已訂購':'未訂購')+'" style="display:inline-block;width:42px;height:24px;border-radius:24px;background:'+(it.ordered?'#577B53':'#D2D7CD')+';position:relative;cursor:pointer;transition:background .18s;vertical-align:middle"><span style="position:absolute;top:2px;left:'+(it.ordered?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .18s"></span></span></td>'
     + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
-    + '<td data-label="連結" style="padding:10px 8px;vertical-align:middle;width:130px;white-space:nowrap">'+_htLinkInnerHtml(it, idx)+'</td>'
-    + '<td class="ht-it-del" style="padding:10px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="background:none;border:none;cursor:pointer;color:#CBD0C6;font-size:20px;line-height:1;padding:0 4px;transition:color .15s" onmouseover="this.style.color=\'#f43f5e\'" onmouseout="this.style.color=\'#CBD0C6\'" title="刪除">×</button></td>'
+    + '<td data-label="連結" style="padding:10px 8px;vertical-align:middle;white-space:nowrap;text-align:center">'+_htLinkInnerHtml(it, idx)+'</td>'
+    + '<td class="ht-it-del" style="padding:10px 4px;vertical-align:middle;text-align:center"><button onclick="htDeleteItem('+idx+')" style="display:inline-flex;align-items:center;gap:4px;background:#FFF1F2;border:1px solid #FECDD3;border-radius:20px;cursor:pointer;color:#DC2626;font-size:14px;font-weight:700;line-height:1;padding:6px 10px;font-family:inherit;transition:all .15s" onmouseover="this.style.background=\'#FFE4E6\'" onmouseout="this.style.background=\'#FFF1F2\'" title="刪除這一項">🗑<span class="ht-del-txt">刪除</span></button></td>'
     + '</tr>';
 }
 
