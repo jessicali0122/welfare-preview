@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728122835';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728123129';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11117,6 +11117,11 @@ window.htLoadList = async function() {
       htRenderList(); _htUpdateCountdown();
     }
   } catch(e){}
+  // 首次進入且無快取可用時，先放載入骨架，避免等後端期間一片空白像「頓一下」
+  if (!_htEvents.length) {
+    var _eg = document.getElementById('ht-events-grid');
+    if (_eg) _eg.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#9AA098;font-size:14px">⏳ 載入午茶日資料中…</div>';
+  }
   _htLoadSheetHistory(); // 舊試算表歷史場次（唯讀，非阻塞，載回後自動補進歷史回顧）
   var _prevEventsJson = JSON.stringify(_htEvents || []);
   var r = await htApi('htList');
@@ -12923,6 +12928,9 @@ window.htOpenDetail = async function(eventId) {
   document.getElementById('ht-list-panel').style.display = 'none';
   document.getElementById('ht-detail-panel').style.display = '';
   document.getElementById('ht-detail-title').textContent = '載入中…';
+  // 立即顯示載入骨架，避免等後端回資料前品項清單一片空白像「頓一下」
+  var _tb = document.getElementById('ht-items-tbody');
+  if (_tb) _tb.innerHTML = '<tr><td colspan="10" style="padding:30px;text-align:center;color:#9AA098;font-size:14px">⏳ 載入品項中…</td></tr>';
   var r;
   try { r = await htApi('htGetItems', { eventId: eventId }); }
   catch(e) { r = { ok:false, error:'網路連線失敗' }; }
@@ -13981,9 +13989,11 @@ window.htSaveItems = async function() {
   if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
   if (!r.ok) { toast('儲存失敗：' + r.error); return; }
   toast('✅ 品項已儲存');
-  // reload items
-  var r2 = await htApi('htGetItems', { eventId: _htEvent.eventId });
-  if (r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); htRenderBudget(); }
+  // 存檔已成功，本機資料即為最新 → 立即完成回應；
+  // 背景再重讀對帳（取回後端重算的欄位如小計/排序），非阻塞，不讓使用者多等一次往返
+  htApi('htGetItems', { eventId: _htEvent.eventId }).then(function(r2){
+    if (r2 && r2.ok) { _htEvent = r2.event; _htItems = r2.items||[]; htRenderDetailHeader(); htRenderItems(); htRenderBudget(); }
+  }).catch(function(){});
 };
 
 // ── 預算結算 ──
