@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729003215';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729003626';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4756,13 +4756,11 @@ async function _bfBoot() {
         localStorage.setItem('bf_user', JSON.stringify(currentUser));
       }
       currentUser.token = storedToken;
-      // 僅「舊格式」session（尚無 sessionExpiry 欄位）初始化為 7 天；
-      // 已有到期時間者不再每次開啟就往後展，否則到期時間會無限順延、前端到期形同虛設
-      if (!currentUser.sessionExpiry) {
-        currentUser.sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
-        currentUser.tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000;
-        localStorage.setItem('bf_user', JSON.stringify(currentUser));
-      }
+      // 滑動式 session：每次開啟就把到期時間往後展 7 天，讓常用者幾乎不會被強制登出（符合日常高頻登入需求）。
+      // 真正的驗證權威在後端 token；前端到期只用來決定「何時提示重新登入」，故可放心採滑動式。
+      currentUser.sessionExpiry = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      currentUser.tokenExpiry   = Date.now() + 7 * 24 * 60 * 60 * 1000;
+      localStorage.setItem('bf_user', JSON.stringify(currentUser));
       // session 7 天已到期才清除
       if (Date.now() > currentUser.sessionExpiry) {
         localStorage.removeItem('bf_user');
