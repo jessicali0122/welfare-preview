@@ -462,6 +462,7 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody tr.ht-it-row{background:#fff;border-bottom:1px solid #E1E5DC;transition:background .12s}
   #ht-items-tbody tr.ht-it-row:hover{background:#FAFBFA}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
+  .ht-sub-mini{display:none}
 }
 @media(max-width:768px){
   #ht-dtab-plan table{display:block;width:100%!important;table-layout:auto!important}
@@ -477,6 +478,21 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody td[data-label="品名"],#ht-items-tbody td[data-label="廠商"]{grid-column:1/-1}
   #ht-items-tbody td[data-label="負責人"]::before,#ht-items-tbody td[data-label="備註"]::before{min-width:0}
   #ht-items-tbody td[data-label="品名"]{padding-right:26px!important}
+  /* 觸控裝置沒有拖放：顯示上下移動鈕、藏掉拖曳把手 */
+  #ht-items-tbody .ht-move-btns{display:inline-flex!important}
+  #ht-items-tbody .ht-drag-h{display:none!important}
+  /* 品項清單標頭：標題自己一行不斷字，檢視切換改成一排可左右滑（不擠成 2×2） */
+  /* grid/flex 子項預設 min-width:auto 會被內容撐開 → 手機一律允許縮到容器寬 */
+  #ht-detail-grid, #ht-detail-grid > *, #ht-dtab-plan, #ht-dtab-plan > *{min-width:0!important;max-width:100%}
+  #ht-items-head{flex-wrap:wrap;gap:10px;min-width:0}
+  #ht-items-head > div{min-width:0;max-width:100%}
+  #ht-items-head > div:first-child{width:100%}
+  #ht-view-toggle{flex-wrap:nowrap!important;width:100%;min-width:0;max-width:100%;overflow-x:auto!important;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  #ht-view-toggle::-webkit-scrollbar{display:none}
+  #ht-view-toggle button{flex:0 0 auto;white-space:nowrap}
+  /* 標題副標：手機用短版日期，避免 375px 斷行 */
+  .ht-sub-full{display:none}
+  .ht-sub-mini{display:inline}
   /* 分組標題：手機不套用卡片格線，整條滿寬一行（否則「甜點」會被擠成直書） */
   #ht-items-tbody tr.ht-cat-group{display:block;border:none;border-radius:10px;padding:0;margin:14px 2px 4px;background:none}
   #ht-items-tbody tr.ht-cat-group td{display:block;white-space:nowrap!important;padding:8px 12px!important;border-radius:10px}
@@ -3378,7 +3394,7 @@ thead th{color:#767B75!important}
       </button>
       <div>
         <div id="ht-detail-title" style="font-size:18px;font-weight:700;color:#2E332D"></div>
-        <div id="ht-detail-subtitle" style="font-size:14px;color:#9AA098;margin-top:2px"></div>
+        <div id="ht-detail-subtitle" style="font-size:14px;color:#9AA098;margin-top:2px;white-space:nowrap"></div>
       </div>
       <!-- 狀態籤＋刪除鈕：桌面同排；手機改上下排列（.ht-detail-head-acts media query），文字不換行避免被壓成直書 -->
       <div class="ht-detail-head-acts" style="margin-left:auto;display:flex;gap:8px;align-items:center">
@@ -3443,9 +3459,9 @@ thead th{color:#767B75!important}
 
       <!-- 品項表格 -->
       <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden">
-        <div style="padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:space-between">
+        <div id="ht-items-head" style="padding:16px 20px;border-bottom:1px solid #F7F8F6;display:flex;align-items:center;justify-content:space-between">
           <div>
-            <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">品項清單</span></div>
+            <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:16px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px;flex-shrink:0"></span><span style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap">品項清單</span></div>
             <div id="ht-qty-hint" style="font-size:12px;color:#767B75;margin-top:2px"></div>
           </div>
           <div style="display:flex;gap:8px;align-items:center">
@@ -11184,8 +11200,8 @@ function _htLinkInnerHtml(it, idx) {
   if (url && !editing) {
     var href = /^https?:\/\//i.test(url) ? url : 'https://' + url;
     return '<div style="display:flex;align-items:center;gap:2px">'
-      + '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="' + htEsc(href) + '" style="display:inline-flex;align-items:center;gap:4px;background:#EDF1F8;border:1px solid #CFDAEA;border-radius:999px;padding:6px 11px;color:#42597E;text-decoration:none;font-size:13px;font-weight:700;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'#E1E9F4\'" onmouseout="this.style.background=\'#EDF1F8\'">'
-      +   '<span style="font-size:13px;flex-shrink:0">🔗</span><span>連結</span>'
+      + '<a href="' + htEsc(href) + '" target="_blank" rel="noopener noreferrer" title="' + htEsc(href) + '" style="display:inline-flex;align-items:center;gap:4px;background:#EDF1F8;border:1px solid #CFDAEA;border-radius:999px;padding:6px 11px;color:#42597E;text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;transition:all .15s" onmouseover="this.style.background=\'#E1E9F4\'" onmouseout="this.style.background=\'#EDF1F8\'">'
+      +   '<span style="font-size:14px;flex-shrink:0">🔗</span><span>連結</span>'
       + '</a>'
       + '<button onclick="htEditLink(' + idx + ')" title="編輯連結" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#B6BCB0;font-size:14px;line-height:1;padding:4px" onmouseover="this.style.color=\'#577B53\'" onmouseout="this.style.color=\'#B6BCB0\'">✎</button>'
       + '</div>';
@@ -13700,7 +13716,9 @@ function htRenderDetailHeader() {
   // 副標不再重複「人數／主辦」（下方活動設定已有欄位），改顯示星期＋倒數，提供活動設定沒有的即時資訊
   var subHtml;
   if (ev.date) {
-    var dObj = new Date(ev.date + 'T00:00:00');
+    // 後端日期可能是 2026/08/14 或 2026-08-14，一律正規化成 ISO 再解析（斜線加 T 會變 Invalid Date，倒數就整段消失）
+    var _iso = String(ev.date).trim().replace(/\//g, '-').slice(0, 10);
+    var dObj = new Date(_iso + 'T00:00:00');
     if (isNaN(dObj)) {
       subHtml = htEsc(ev.date);
     } else {
@@ -13711,7 +13729,12 @@ function htRenderDetailHeader() {
              : days === 0 ? '<b style="color:#C9760A">就是今天 🎉</b>'
              : '已結束 ' + (-days) + ' 天';
       var dTxt = dObj.getFullYear() + ' 年 ' + (dObj.getMonth()+1) + ' 月 ' + dObj.getDate() + ' 日';
-      subHtml = dTxt + '（' + wd + '）　·　' + cd;
+      var cdMini = days > 0 ? '還有 <b style="color:#577B53">' + days + '</b> 天'
+                 : days === 0 ? '<b style="color:#C9760A">就是今天 🎉</b>'
+                 : '已結束 ' + (-days) + ' 天';
+      // 手機用短版（月/日＋週幾＋倒數），避免 375px 斷行
+      subHtml = '<span class="ht-sub-full">' + dTxt + '（' + wd + '）　·　' + cd + '</span>'
+              + '<span class="ht-sub-mini">' + (dObj.getMonth()+1) + '/' + dObj.getDate() + '（' + wd + '）· ' + cdMini + '</span>';
     }
   } else {
     subHtml = '日期待定';
@@ -14058,14 +14081,14 @@ var _HT_CHIP_BASE = 'display:inline-flex;align-items:center;justify-content:cent
 function _htCatChipHtml(it, idx) {
   if (it.category) {
     var c = _htCatColor(it.category);
-    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'category\')" style="'+_HT_CHIP_BASE+';font-weight:700;background:'+c.bg+';color:'+c.fg+';border:1px solid '+c.bd+'">'+htEsc(it.category)+'<span style="opacity:.4;font-size:11px">▾</span></button>';
+    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'category\')" style="'+_HT_CHIP_BASE+';font-weight:700;background:'+c.bg+';color:'+c.fg+';border:1px solid '+c.bd+'">'+htEsc(it.category)+'<span style="opacity:.4;font-size:12px">▾</span></button>';
   }
   return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'category\')" style="'+_HT_CHIP_BASE+';font-weight:600;background:#fff;color:#9AA098;border:1px dashed #C6CDBE">＋ 分類</button>';
 }
 function _htAssigneeChipHtml(it, idx) {
   if (it.assignee) {
     var pc = _htPersonColor(it.assignee);
-    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';font-weight:700;background:'+pc.bg+';color:'+pc.fg+';border:1px solid '+pc.bd+'">'+htEsc(it.assignee)+'<span style="opacity:.4;font-size:11px">▾</span></button>';
+    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';font-weight:700;background:'+pc.bg+';color:'+pc.fg+';border:1px solid '+pc.bd+'">'+htEsc(it.assignee)+'<span style="opacity:.4;font-size:12px">▾</span></button>';
   }
   return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';font-weight:600;background:#fff;color:#9AA098;border:1px dashed #C6CDBE">＋ 指派</button>';
 }
@@ -14129,8 +14152,16 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
   var grip = (_inGroup || draggable)
     ? '<span class="ht-drag-h" draggable="true" ondragstart="htDragStart(event,'+idx+')" ondragend="htDragEnd(event)" style="cursor:grab;color:#C2C8BC;font-size:18px;line-height:1;flex-shrink:0;user-select:none;padding:0 2px;letter-spacing:-2px" title="'+(_inGroup?'拖曳移到其他分組':'拖曳排序')+'">⠿</span>'
     : '';
+  // 手機（觸控）沒有 HTML5 拖放，改用上下移動鈕；桌面隱藏（CSS）
+  var mvBtn = 'style="background:#F2F5F1;border:1px solid #DDE4D8;border-radius:8px;width:30px;height:28px;line-height:1;font-size:14px;color:#577B53;cursor:pointer;font-family:inherit;padding:0"';
+  var moves = (_inGroup || draggable)
+    ? '<span class="ht-move-btns" style="display:none;gap:4px;flex-shrink:0">'
+      + '<button type="button" onclick="htMoveItem('+idx+',-1)" title="上移" '+mvBtn+'>↑</button>'
+      + '<button type="button" onclick="htMoveItem('+idx+',1)" title="下移" '+mvBtn+'>↓</button>'
+      + '</span>'
+    : '';
   return '<tr class="ht-it-row" id="ht-row-'+idx+'"'+trAttr+'>'
-    + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></div></td>'
+    + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+moves+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></div></td>'
     + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="分類" '+td+'>'+_htCatChipHtml(it, idx)+'</td>'
     + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
@@ -14183,7 +14214,7 @@ function htRenderItems() {
       else if (field === 'assignee' && k) { var p = _htPersonColor(k); hb = p.bg; hf = p.fg; hbd = p.bd; }   // 負責人：該人的專屬色
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/未指派：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="11" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
-        + '<span style="font-weight:800;color:'+hf+';font-size:17px;letter-spacing:.02em">'+htEsc(label)+'</span>'
+        + '<span style="font-weight:800;color:'+hf+';font-size:16px;letter-spacing:.02em">'+htEsc(label)+'</span>'
         + '<span style="margin-left:10px;color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span></td></tr>';
       html += members.map(function(x){ return _htItemRowHtml(x.it, x.i, true, k); }).join('');
     });
@@ -14239,6 +14270,27 @@ window.htGroupDragOver = function(e) {
 window.htGroupDragLeave = function(e) {
   var tr = e.currentTarget; if (tr) tr.style.boxShadow = '';
 };
+// 手機用：上/下移一格（分組模式下跨過分組邊界時，順便把該項改成新分組的值）
+window.htMoveItem = function(idx, dir) {
+  if (!_htItems[idx]) return;
+  // 鄰居要取「畫面上」的上一／下一列（分組檢視下畫面順序 ≠ 陣列順序）
+  var order = Array.prototype.map.call(
+    document.querySelectorAll('#ht-items-tbody tr.ht-it-row'),
+    function(tr){ return parseInt(String(tr.id).replace('ht-row-', ''), 10); }
+  );
+  var pos = order.indexOf(idx);
+  var to = (pos >= 0 && order[pos + dir] !== undefined) ? order[pos + dir] : idx + dir;
+  if (!_htItems[to]) return;
+  var field = _htViewMode;
+  var grouped = (field === 'category' || field === 'vendor' || field === 'assignee');
+  var targetGroup = grouped ? String(_htItems[to][field] || '') : null;
+  var moved = _htItems.splice(idx, 1)[0];
+  _htItems.splice(to, 0, moved);
+  if (grouped && String(moved[field] || '') !== targetGroup) moved[field] = targetGroup;
+  htRenderItems();
+  if (grouped && field === 'category') htRenderBudget();
+};
+
 // 分組模式下拖到「某一列」：同時做兩件事 —— 換到該列所屬分組 + 插到該列位置（組內也能重排）
 window.htGroupRowDrop = function(e, idx, groupKey) {
   e.preventDefault();
