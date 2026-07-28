@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260728141201';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260728141507';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3469,9 +3469,9 @@ thead th{color:#767B75!important}
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
-              <col style="width:23%"><col style="width:11%"><col style="width:9%">
+              <col style="width:25%"><col style="width:12%"><col style="width:8%">
               <col style="width:7%"><col style="width:6%"><col style="width:11%">
-              <col style="width:12%"><col style="width:7%"><col style="width:11%"><col style="width:3%">
+              <col style="width:9%"><col style="width:7%"><col style="width:12%"><col style="width:3%">
             </colgroup>
             <thead>
               <tr style="background:#fff;border-bottom:2px solid #577B53">
@@ -13760,7 +13760,7 @@ function _htUserSelectHtml(idx, cur) {
   if (cur && pool.every(function(u){ return u.name !== cur; })) {
     o += '<option value="' + htEsc(cur) + '" selected>' + htEsc(cur) + '</option>';
   }
-  return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:8px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#fff;color:#2E332D;transition:border-color .15s" onfocus="this.style.borderColor=\'#9DB89A\'" onblur="this.style.borderColor=\'#D2D7CD\'">' + o + '</select>';
+  return '<select data-idx="' + idx + '" data-f="assignee" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;cursor:pointer;background:#F6F7F4;color:#2E332D;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.background=\'#fff\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\'#D2D7CD\';this.style.background=\'#F6F7F4\';this.style.boxShadow=\'none\'">' + o + '</select>';
 }
 
 // 統一的人名徽章：淺綠底綠字圓角；是登入者本人時改實心綠底白字凸顯
@@ -13892,10 +13892,10 @@ window.htSetViewMode = function(m) {
 function _htItemRowHtml(it, idx, draggable) {
   var catOpts = _htCats.map(function(c){ return '<option value="'+c+'"'+(it.category===c?' selected':'')+' style="color:#2E332D;background:#fff">'+c+'</option>'; }).join('');
   var _catC = _htCatColor(it.category);
-  var inp = 'style="border:1px solid #D2D7CD;border-radius:8px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#fff;transition:border-color .15s"';
-  var inpR = 'style="border:1px solid #D2D7CD;border-radius:8px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#2E332D;background:#fff;transition:border-color .15s;-moz-appearance:textfield"';
-  var fOn = 'this.style.borderColor=\'#9DB89A\'';
-  var fOff = 'this.style.borderColor=\'#D2D7CD\'';
+  var inp = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;color:#2E332D;background:#F6F7F4;transition:all .15s"';
+  var inpR = 'style="border:1px solid #D2D7CD;border-radius:10px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;text-align:center;color:#2E332D;background:#F6F7F4;transition:all .15s;-moz-appearance:textfield"';
+  var fOn = 'this.style.borderColor=\'#577B53\';this.style.background=\'#fff\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'';
+  var fOff = 'this.style.borderColor=\'#D2D7CD\';this.style.background=\'#F6F7F4\';this.style.boxShadow=\'none\'';
   var td = 'style="padding:10px 8px;vertical-align:middle"';
   var trAttr = draggable
     ? ' ondragover="htDragOver(event,'+idx+')" ondragleave="htDragLeave(event)" ondrop="htDrop(event,'+idx+')"'
@@ -13906,7 +13906,7 @@ function _htItemRowHtml(it, idx, draggable) {
   return '<tr class="ht-it-row" id="ht-row-'+idx+'"'+trAttr+'>'
     + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></div></td>'
     + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
-    + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid #D2D7CD;border-radius:8px;padding:10px 12px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;font-weight:600;color:'+_catC.fg+';background:#fff;cursor:pointer;transition:border-color .15s" onfocus="'+fOn+'" onblur="'+fOff+'"><option value=""'+(it.category?'':' selected')+' style="color:#9AA098;background:#fff">—</option>'+catOpts+'</select></td>'
+    + '<td data-label="分類" '+td+'><select data-idx="'+idx+'" data-f="category" onchange="htItemChange(this)" class="ht-it-inp" style="border:1px solid '+_catC.bd+';border-radius:10px;padding:10px 8px;font-size:14px;width:100%;box-sizing:border-box;font-family:inherit;outline:none;font-weight:700;color:'+_catC.fg+';background:'+_catC.bg+';cursor:pointer;transition:all .15s" onfocus="this.style.borderColor=\'#577B53\';this.style.boxShadow=\'0 0 0 3px rgba(87,123,83,.10)\'" onblur="this.style.borderColor=\''+_catC.bd+'\';this.style.boxShadow=\'none\'"><option value=""'+(it.category?'':' selected')+' style="color:#9AA098;background:#fff">—</option>'+catOpts+'</select></td>'
     + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+fmtMoney(it.subtotal)+'</td>'
@@ -14030,9 +14030,9 @@ window.htItemChange = function(el) {
 function _htPaintCatSelect(sel, cat) {
   if (!sel) return;
   var c = _htCatColor(cat);
-  // 簡約：只改文字色，維持白底＋中性框
-  sel.style.color = c.fg; sel.style.background = '#fff';
-  sel.style.fontWeight = '600';
+  // 色票：底色＋邊框＋文字色隨分類同步
+  sel.style.color = c.fg; sel.style.background = c.bg;
+  sel.style.borderColor = c.bd; sel.style.fontWeight = '700';
 }
 
 window.htToggleOrderLocal = function(cb) {
