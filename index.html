@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729153848';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729154852';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10921,6 +10921,51 @@ var _htItems    = [];
 var _htEvent    = null; // 目前開啟的活動
 var _htListTab  = 'events';
 var _htDetailTab= 'plan';
+
+// ── 多人協作：防覆蓋＋定期拉新 ──
+// GAS 無 WebSocket，做不到 Google 試算表的逐格即時協作；改以「載入基準比對」偵測衝突、
+// 並在無人編輯時每 25 秒背景拉進他人的最新變更，降低互相覆蓋的資料遺失。
+var _htItemsLoadedSig = '';   // 上次「與後端一致」時的品項簽章
+var _htItemsPollTimer = null;
+// 品項簽章：只取會影響內容的欄位，忽略 itemId 等非內容欄位
+function _htSig(items){
+  return JSON.stringify((items||[]).map(function(it){
+    return [it.name||'', it.vendor||'', it.category||'', Number(it.unitPrice)||0, Number(it.qty)||0, it.assignee||'', !!it.ordered, it.notes||'', it.link||''];
+  }));
+}
+// 目前畫面是否有「尚未存檔」的本機變更（與載入基準不同）
+function _htItemsDirty(){ return _htSig(_htItems) !== _htItemsLoadedSig; }
+// 使用者是否正在品項表格內編輯（游標在輸入框）
+function _htItemsEditing(){ var tb = document.getElementById('ht-items-tbody'); return !!(tb && document.activeElement && tb.contains(document.activeElement)); }
+// 不經快取直接向後端要最新品項（供衝突偵測與輪詢用）
+function _htFetchItemsFresh(eventId){
+  var body = { action:'htGetItems', token:((currentUser && currentUser.token) || (window.currentUser && window.currentUser.token)) || '', eventId:eventId };
+  return _htFetchRaw(body);
+}
+function _htStopItemsPoll(){ if (_htItemsPollTimer) { clearInterval(_htItemsPollTimer); _htItemsPollTimer = null; } }
+function _htStartItemsPoll(eventId){
+  _htStopItemsPoll();
+  _htItemsPollTimer = setInterval(function(){
+    if (document.hidden) return;                                   // 分頁在背景不拉
+    if (!_htEvent || _htEvent.eventId !== eventId) { _htStopItemsPoll(); return; }
+    var _dp = document.getElementById('ht-detail-panel');
+    if (!_dp || _dp.style.display === 'none') return;              // 已離開活動詳情（切頁）→ 本次不拉
+    if (_htItemsEditing() || _htItemsDirty()) return;              // 正在編輯或有未存變更 → 不覆蓋
+    _htFetchItemsFresh(eventId).then(function(r){
+      if (!r || !r.ok) return;
+      if (!_htEvent || _htEvent.eventId !== eventId) return;
+      if (_htItemsEditing() || _htItemsDirty()) return;            // 拉取期間又開始編輯 → 放棄本次
+      var freshSig = _htSig(r.items || []);
+      if (freshSig === _htItemsLoadedSig) return;                  // 內容沒變
+      _htItems = r.items || [];
+      _htItemsLoadedSig = freshSig;
+      if (r.event) _htEvent = r.event;
+      try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
+      if (window.toast) toast('🔄 已同步他人的最新品項');
+    }).catch(function(){});
+  }, 25000);
+}
+window._htStopItemsPoll = _htStopItemsPoll;
 var _htVendors  = [];
 var _htVendorsLoading = null;
 var _htItemsCache = null; // { vendorMap, catTotals } — 避免重複撈全部品項
@@ -13257,6 +13302,7 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   }
   _htEvent = r.event;
   _htItems = r.items || [];
+  _htItemsLoadedSig = _htSig(_htItems);   // 設定「與後端一致」的基準，供衝突偵測／輪詢比對
 
   // 若壽星清單尚未設定，自動從生日資料庫帶入本月壽星
   if (!_htEvent.birthdays || _htEvent.birthdays.length === 0) {
@@ -13275,6 +13321,7 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   htRenderItems();
   htRenderBudget();
   htRenderBirthday();
+  _htStartItemsPoll(_htEvent.eventId);   // 開場後啟動每 25 秒背景拉新（無人編輯時才套用）
   // 預先載入近兩場品項，供重複偵測使用
   _htPastItemsCache = null;
   var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
@@ -13934,6 +13981,7 @@ window.htBackToList = function() {
   document.getElementById('ht-detail-panel').style.display = 'none';
   // 停止投票留言輪播計時器，避免回到列表後仍每 3 秒空轉
   try { if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; } } catch(e) {}
+  try { _htStopItemsPoll(); } catch(e) {}   // 離開活動 → 停止品項背景同步輪詢
   try { history.pushState({ view:'hightea' }, '', '#hightea'); } catch(e) {}
   htLoadList();
 };
@@ -14639,31 +14687,49 @@ window.htSaveItems = function() {
   if (_ae && _ae.classList && _ae.classList.contains('ht-it-inp') && typeof _ae.blur === 'function') { try { _ae.blur(); } catch(e){} }
   var btn = document.getElementById('ht-save-btn');
   var _evId = _htEvent.eventId;
-  // 存檔期間按鈕顯示「儲存中…」（UI 不卡，仍可編輯）；真正成功後才跳「已儲存」，避免「已儲存」與「儲存中…」同時出現造成困惑
+  // 存檔期間按鈕顯示「儲存中…」（UI 不卡，仍可編輯）；真正成功後才跳「已儲存」
   window._htSaving = true;
   if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-  htApi('htSaveItems', { eventId: _evId, items: _htItems }).then(function(r) {
-    if (!r || !r.ok) { toast('⚠️ 儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
-    toast('✅ 已儲存');
-    // 存檔成功 → 背景重讀對帳（取回後端重算欄位）。防呆：已切單據或正在編輯就不覆蓋，只補 itemId。
-    htApi('htGetItems', { eventId: _evId }).then(function(r2) {
-      if (!r2 || !r2.ok) return;
-      if (!_htEvent || _htEvent.eventId !== _evId) return;
-      var _tb = document.getElementById('ht-items-tbody');
-      var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
-      if (_editing) {
-        (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
-        _htEvent = r2.event;
-        return;
-      }
-      _htEvent = r2.event; _htItems = r2.items || []; htRenderDetailHeader(); htRenderItems(); htRenderBudget();
-    }).catch(function(){});
-  }).catch(function() {
-    toast('⚠️ 儲存失敗，請檢查網路後再按一次「儲存」');
-  }).then(function() {
-    window._htSaving = false;
-    if (btn) { btn.textContent = '儲存'; btn.disabled = false; }
-  });
+  var _resetBtn = function(){ window._htSaving = false; if (btn) { btn.textContent = '💾 儲存'; btn.disabled = false; } };
+
+  var _doSave = function() {
+    window._htSaving = true;
+    if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
+    htApi('htSaveItems', { eventId: _evId, items: _htItems }).then(function(r) {
+      if (!r || !r.ok) { toast('⚠️ 儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
+      toast('✅ 已儲存');
+      _htItemsLoadedSig = _htSig(_htItems);   // 剛存成功 → 目前本機狀態即為與後端一致的基準
+      // 存檔成功 → 背景重讀對帳（取回後端重算欄位）。防呆：已切單據或正在編輯就不覆蓋，只補 itemId。
+      htApi('htGetItems', { eventId: _evId }).then(function(r2) {
+        if (!r2 || !r2.ok) return;
+        if (!_htEvent || _htEvent.eventId !== _evId) return;
+        var _tb = document.getElementById('ht-items-tbody');
+        var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
+        if (_editing) {
+          (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
+          _htEvent = r2.event;
+          return;
+        }
+        _htEvent = r2.event; _htItems = r2.items || []; _htItemsLoadedSig = _htSig(_htItems); htRenderDetailHeader(); htRenderItems(); htRenderBudget();
+      }).catch(function(){});
+    }).catch(function() {
+      toast('⚠️ 儲存失敗，請檢查網路後再按一次「儲存」');
+    }).then(_resetBtn);
+  };
+
+  // 存檔前先偵測他人是否已改動（防覆蓋）：後端最新內容 ≠ 我載入時的基準 → 跳確認，不再靜默覆蓋
+  _htFetchItemsFresh(_evId).then(function(fr){
+    var serverSig = (fr && fr.ok) ? _htSig(fr.items || []) : null;
+    if (serverSig !== null && serverSig !== _htItemsLoadedSig) {
+      _resetBtn();   // 先解鎖，交給使用者決定
+      _showConfirmModal('⚠️ 他人剛更新了這張品項',
+        '在你編輯期間，其他人已儲存過這張活動的品項。<br>若直接儲存，<b>他們的變更會被你的版本覆蓋</b>。<br><br>建議先「取消」，把你的修改記下來，重新整理載入最新版後再補上。',
+        '仍以我的版本覆蓋', '#C0655A',
+        function(){ _doSave(); });
+      return;
+    }
+    _doSave();
+  }).catch(function(){ _doSave(); });   // 偵測失敗不擋存檔，維持原本行為
 };
 
 // ── 預算結算 ──
