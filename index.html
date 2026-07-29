@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729171058';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729173830';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -775,6 +775,9 @@ input[type=checkbox]{accent-color:#577B53}
   #ms-cal-layout>div:last-child{width:100%!important;min-width:0!important;flex:none!important}
   /* 午茶日 detail grid：手機版改單欄，避免左欄被壓縮到 52px 導致品項文字消失 */
   #ht-detail-grid{grid-template-columns:1fr!important}
+  /* 品項底部工具列：手機寬度不夠放「狀態＋兩顆按鈕」（375px 只剩約 124px），
+     故把同步狀態獨立成上面一整列，按鈕維持一列，避免擠壓或撐破版面 */
+  #ht-sync-status{flex:1 0 100%!important;order:-1!important;white-space:normal!important;text-align:left}
   /* 午茶日新增 Modal：手機版改底部抽屜（fix iOS overflow-y:auto 無法滑動） */
   #ht-create-modal{align-items:flex-end!important;padding:0!important;backdrop-filter:none!important;background:linear-gradient(to top,rgba(0,0,0,.58) 0%,rgba(0,0,0,.28) 45%,rgba(0,0,0,.12) 100%)!important}
   #ht-create-modal>div{max-height:88vh!important;max-height:85dvh!important;overflow:hidden auto!important;-webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;touch-action:pan-y!important;margin:0!important;width:100%!important;max-width:100%!important;border-radius:20px 20px 0 0!important;padding-top:20px!important;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 20px)!important;animation:slideUpModal .25s cubic-bezier(.32,.72,0,1)!important;box-shadow:0 -4px 24px rgba(0,0,0,.15)!important}
@@ -3504,7 +3507,7 @@ thead th{color:#767B75!important}
           </table>
         </div>
         <!-- 底部 sticky 工具列：新增品項／儲存釘在畫面底，清單再長都隨手可按 -->
-        <div style="position:sticky;bottom:0;z-index:6;display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
+        <div id="ht-items-toolbar" style="position:sticky;bottom:0;z-index:6;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
           <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             新增品項
@@ -10995,16 +10998,18 @@ function _htSyncRender(){
   if (!el) return;
   var n = _htPendingCount();
   var txt, color;
+  // 一律「狀態 · 最後更新時間」的組合：不管在哪個狀態，都看得到最後一次成功存檔是幾點幾分
+  var at = _htSavedAtText();
+  var suffix = at ? (' · ' + at) : '';
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    txt = '⚠️ 目前離線，變更已暫存，連線後會自動儲存'; color = '#C0655A';
+    txt = '⚠️ 離線，待恢復連線' + suffix; color = '#C0655A';
   } else if (_htSyncErr) {
-    txt = '⚠️ 有 ' + (n || _htSyncErr) + ' 筆尚未儲存，重試中…'; color = '#C0655A';
+    txt = '⚠️ ' + (n || _htSyncErr) + ' 筆未儲存，重試中' + suffix; color = '#C0655A';
   } else if (window._htFlushing || _htBusy > 0 || n) {
-    txt = '● 儲存中…'; color = '#C9760A';
+    txt = '● 儲存中…' + suffix; color = '#C9760A';
   } else if (_htSyncMsg) {
-    txt = _htSyncMsg; color = '#738e41';
+    txt = _htSyncMsg + suffix; color = '#738e41';
   } else {
-    var at = _htSavedAtText();
     txt = at ? ('✔ 已儲存 · ' + at) : '✔ 所有變更都已儲存';
     color = '#577B53';
   }
