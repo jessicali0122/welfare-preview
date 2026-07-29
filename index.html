@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729143746';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729150958';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3542,7 +3542,7 @@ thead th{color:#767B75!important}
           <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:14px">
             <div style="min-width:0">
               <div style="display:flex;align-items:center;gap:8px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">🎂 本月壽星</span></div>
-              <div style="font-size:12px;color:#9AA098;margin-top:2px">每位壽星 NT$40，加減會自動更新總預算</div>
+              <div style="font-size:12px;color:#9AA098;margin-top:2px">當月有壽星（不論幾位），全體每人 +NT$40 預算</div>
             </div>
             <button onclick="htAddBirthday()" style="flex-shrink:0;display:flex;align-items:center;gap:4px;padding:6px 10px;border-radius:8px;border:1.5px dashed #577B53;background:#F2F5F1;color:#577B53;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#E7EEE5'" onmouseout="this.style.background='#F2F5F1'">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增
@@ -3550,7 +3550,7 @@ thead th{color:#767B75!important}
           </div>
           <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
           <div style="margin-top:12px;padding-top:10px;border-top:1px solid #D9DDD3;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 10px">
-            <span style="font-size:14px;color:#767B75;white-space:nowrap">慶生費用合計</span>
+            <span style="font-size:14px;color:#767B75;white-space:nowrap">慶生預算加碼</span>
             <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53;white-space:nowrap;margin-left:auto">NT$0</span>
           </div>
         </div>
@@ -13254,7 +13254,7 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
       var autoBdays = _htBdaysForMonth(mNum).map(function(p){ return p.name; });
       if (autoBdays.length) {
         _htEvent.birthdays = autoBdays;
-        _htEvent.birthdayBudget = autoBdays.length * 40;
+        _htEvent.birthdayBudget = (autoBdays.length > 0 ? (_htEvent.headcount || 0) : 0) * 40;
         htApi('htUpdate', { eventId: _htEvent.eventId, birthdays: autoBdays });
       }
     }
@@ -13953,13 +13953,14 @@ window.htUpdateCalcBudget = function() {
   // 壽星人數＝本月壽星名單長度（名單為唯一來源，加減姓名即連動）
   var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
   var baseBudget = hc * bp;
-  var bdayBudget = bdayCount * 40;
+  // 當月有壽星（不論幾位）→ 全體每人 +40 預算
+  var bdayBudget = (bdayCount > 0 ? hc : 0) * 40;
   var total = baseBudget + bdayBudget;
   document.getElementById('ht-calc-budget').textContent = fmtMoney(total);
   var fmEl = document.getElementById('ht-budget-formula');
   if (fmEl) {
     var fStr = hc + ' 人 × NT$' + bp;
-    if (bdayCount > 0) fStr += '　＋　' + bdayCount + ' 位壽星 × NT$40';
+    if (bdayCount > 0) fStr += '　＋　有壽星全體 ' + hc + ' 人 × NT$40';
     fmEl.textContent = fStr;
   }
   var dispEl = document.getElementById('ht-event-bday-disp');
@@ -13981,14 +13982,14 @@ window.htSaveEventInfo = async function() {
     date: document.getElementById('ht-event-date').value,
     headcount: hc,
     budgetPerPerson: bp,
-    totalBudget: hc * bp + bdayCount * 40,
+    totalBudget: hc * bp + (bdayCount > 0 ? hc : 0) * 40,
     organizer1: org1,
     organizer2: org2,
   });
   if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
   _htEvent.headcount = hc;
   _htEvent.budgetPerPerson = bp;
-  _htEvent.totalBudget = hc * bp + bdayCount * 40;
+  _htEvent.totalBudget = hc * bp + (bdayCount > 0 ? hc : 0) * 40;
   _htEvent.organizer1 = org1;
   _htEvent.organizer2 = org2;
   _htEvent.date = document.getElementById('ht-event-date').value;
@@ -14121,9 +14122,11 @@ function _htUpdateBalance() {
   var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
   var hc = (_htEvent && _htEvent.headcount) || 0;
   var bp = (_htEvent && _htEvent.budgetPerPerson) || 0;
-  var totalBudget = hc * bp + bdayCount * 40;
-  // 慶生費同時計入預算與支出（與申請單一致），否則餘額會虛增一個慶生金額
-  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0) + bdayCount * 40;
+  // 當月有壽星（不論幾位）→ 全體每人 +40 預算；沒有壽星則不加
+  var bdayBonus = (bdayCount > 0 ? hc : 0) * 40;
+  var totalBudget = hc * bp + bdayBonus;
+  // 支出只計實際品項；慶生 +40 屬預算加碼（可用額度），不重複計入支出
+  var used = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0);
   var remain = totalBudget - used;
   totalEl.textContent = fmtMoney(totalBudget);
   usedEl.textContent  = fmtMoney(used);
@@ -14647,13 +14650,14 @@ function htRenderBudget() {
   var bp        = ev.budgetPerPerson || 0;
   var bdayCount = (ev.birthdays || []).length;
   var baseBudget= hc * bp;
-  var bdayBudget= bdayCount * 40;
+  // 當月有壽星（不論幾位）→ 全體每人 +40 預算；沒有壽星則不加
+  var bdayBudget= (bdayCount > 0 ? hc : 0) * 40;
   var total     = baseBudget + bdayBudget;
   // 一律用當前品項即時加總（與左側「已用／餘額」同源），編輯品項時右側卡片才會即時連動；
   // 存檔後 ev.actualExpense 也會被重算，兩者一致。
   var actual    = _htItems.reduce(function(s,it){ return s+(it.subtotal||0); },0);   // 純品項（午茶支出、類別統計用）
-  // 支出合計＝品項＋慶生費（慶生費同時計入預算與支出，與申請單一致），結餘／使用率以此為準
-  var totalSpend = actual + bdayBudget;
+  // 支出只計實際品項；慶生 +40 屬預算加碼（可用額度），不重複計入支出，結餘／使用率以此為準
+  var totalSpend = actual;
   var surplus   = total - totalSpend;
   var pct       = total > 0 ? Math.round(totalSpend/total*100) : 0;
   var surplusColor = surplus >= 0 ? '#1e9d6b' : '#ef4444';
@@ -14790,13 +14794,14 @@ function htRenderRecommendList(data) {
 function htRenderMenuCard() {
   var ev = _htEvent;
   var itemsTotal = _htItems.reduce(function(s, it) { return s + (it.subtotal || 0); }, 0);
-  var bdayActual = ev.birthdayBudget || 0;
-  var grandTotal = itemsTotal + bdayActual;
-  var budget     = ev.totalBudget || 0;
-  var surplus    = budget - grandTotal;
   var hc         = ev.headcount || 0;
   var bp         = ev.budgetPerPerson || 0;
   var bdayList   = ev.birthdays || [];
+  // 當月有壽星（不論幾位）→ 全體每人 +40 預算加碼；支出只計實際品項，慶生加碼屬預算
+  var bdayBonus  = (bdayList.length > 0 ? hc : 0) * 40;
+  var budget     = hc * bp + bdayBonus;   // 總預算
+  var grandTotal = itemsTotal;            // 支出合計＝實際品項
+  var surplus    = budget - grandTotal;
   var titleDate  = ev.date || fmtMonth(ev.month);
   var th = 'style="border:1px solid #D2D6D0;padding:10px 12px;background:#ECEEEA;font-weight:700;white-space:nowrap;font-size:14px"';
   var td = 'style="border:1px solid #D2D6D0;padding:9px 12px;font-size:14px"';  // 9→偶數修正下面改
@@ -14854,8 +14859,8 @@ function htRenderMenuCard() {
     + '</tr></thead>'
     + '<tbody>'
     + '<tr><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px">總人數/預算</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-size:14px">' + bp + '</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:center;font-size:14px">' + hc + '</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + (hc * bp).toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>'
-    + (bdayList.length > 0 ? '<tr><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px">' + fmtMonth(ev.month).replace(/\d+年/, '') + '慶生 ' + bdayList.length + ' 位壽星（$40）</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-size:14px">40</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:center;font-size:14px">' + bdayList.length + '</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + bdayActual.toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>' : '')
-    + '<tr><td colspan="3" style="border:1px solid #D2D6D0;padding:10px 14px;text-align:right;font-weight:700;font-size:14px">支出合計：</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + grandTotal.toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>'
+    + (bdayList.length > 0 ? '<tr><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px">' + fmtMonth(ev.month).replace(/\d+年/, '') + '慶生加碼（有壽星 ' + bdayList.length + ' 位 → 全體 $40）</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-size:14px">40</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:center;font-size:14px">' + hc + '</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:600;font-size:14px">' + bdayBonus.toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>' : '')
+    + '<tr><td colspan="3" style="border:1px solid #D2D6D0;padding:10px 14px;text-align:right;font-weight:700;font-size:14px">品項支出合計：</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + grandTotal.toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>'
     + '<tr><td colspan="3" style="border:1px solid #D2D6D0;padding:10px 14px;text-align:right;font-weight:700;font-size:14px">總預算：</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:800;font-size:14px">' + budget.toLocaleString() + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>'
     + '<tr><td colspan="3" style="border:1px solid #D2D6D0;padding:10px 14px;text-align:right;font-weight:700;font-size:14px;color:' + (surplus >= 0 ? '#15803d' : '#dc2626') + '">預算結餘：</td><td style="border:1px solid #D2D6D0;padding:10px 12px;text-align:right;font-weight:800;font-size:14px;color:' + (surplus >= 0 ? '#15803d' : '#dc2626') + '">' + Math.abs(surplus).toLocaleString() + (surplus < 0 ? '（超支）' : '') + '</td><td style="border:1px solid #D2D6D0;padding:10px 14px;font-size:14px"></td></tr>'
     + '</tbody></table>'
@@ -14948,8 +14953,12 @@ function htRenderBirthday() {
   el.innerHTML = html;
 
   var perPerson = 40;
-  var total = list.length * perPerson;
-  document.getElementById('ht-bday-total').textContent = fmtMoney(total) + '（' + list.length + '位壽星 × NT$' + perPerson + '）';
+  var hc = (_htEvent && _htEvent.headcount) || 0;
+  // 有壽星（不論幾位）→ 全體每人 +40 預算加碼；沒有壽星則為 0
+  var bonus = list.length > 0 ? hc * perPerson : 0;
+  document.getElementById('ht-bday-total').textContent = list.length > 0
+    ? fmtMoney(bonus) + '（有壽星 → 全體 ' + hc + ' 人 × NT$' + perPerson + '）'
+    : fmtMoney(0) + '（本月無壽星）';
 }
 
 // 從 DB 建議清單中加入／移除壽星
@@ -14966,7 +14975,7 @@ window.htAddBirthdayByName = async function(name) {
   var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
   if (!r.ok) { toast('儲存失敗'); return; }
   ev.birthdays = list;
-  ev.birthdayBudget = list.length * 40;
+  ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
   htRenderBirthday();
   htUpdateCalcBudget();
   htRenderDetailHeader();
@@ -14980,7 +14989,7 @@ window.htAddBirthday = function() {
     var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
     if (!r.ok) { toast('新增失敗'); return; }
     ev.birthdays = list;
-    ev.birthdayBudget = list.length * 40;
+    ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
     htRenderBirthday();
     htUpdateCalcBudget();
     htRenderDetailHeader();
@@ -14994,7 +15003,7 @@ window.htDeleteBirthday = async function(idx) {
   var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
   if (!r.ok) { toast('刪除失敗'); return; }
   ev.birthdays = list;
-  ev.birthdayBudget = list.length * 40;
+  ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
   htRenderBirthday();
   htUpdateCalcBudget();
   htRenderDetailHeader();
