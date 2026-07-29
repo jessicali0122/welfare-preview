@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729170100';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729170244';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3396,7 +3396,8 @@ thead th{color:#767B75!important}
     </div>
 
     <!-- 主版面：左欄（品項）+ 右欄（預算/壽星）-->
-    <div id="ht-detail-grid" style="display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start">
+    <!-- 品項清單是主角 → 左欄盡量寬，右欄（預算結算）收窄並隨視窗縮放 -->
+    <div id="ht-detail-grid" style="display:grid;grid-template-columns:minmax(0,1fr) clamp(224px,18vw,272px);gap:12px;align-items:start">
     <!-- ── 左欄 ── -->
     <div>
     <!-- Tab: 品項規劃 -->
@@ -14368,16 +14369,10 @@ function _htPersonColor(name) {
   for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return _HT_PERSON_COLORS[h % _HT_PERSON_COLORS.length];
 }
-// 主辦人下拉：白底＋該人員專屬色的文字與邊線（與分類膠囊同一套作法，避免大面積色塊太搶眼）
+// 主辦人下拉：外觀與左邊「人數／每人預算」等欄位完全一致（不套人員專屬色，避免突兀）
 window._htStyleOrgSelect = function(sel) {
   if (!sel) return;
-  var v = sel.value || '';
-  if (v) {
-    var pc = _htPersonColor(v);
-    sel.style.background = '#fff'; sel.style.color = pc.bg; sel.style.borderColor = pc.bg; sel.style.fontWeight = '700';
-  } else {
-    sel.style.background = '#fff'; sel.style.color = '#363B35'; sel.style.borderColor = '#C3D2BE'; sel.style.fontWeight = '600';
-  }
+  sel.style.background = '#fff'; sel.style.color = '#363B35'; sel.style.borderColor = '#C3D2BE'; sel.style.fontWeight = '600';
 };
 
 async function _htShowRepeatWarning() {
