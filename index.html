@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729154852';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729161913';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3502,6 +3502,8 @@ thead th{color:#767B75!important}
         </div>
         <!-- 底部 sticky 工具列：新增品項／儲存釘在畫面底，清單再長都隨手可按 -->
         <div style="position:sticky;bottom:0;z-index:6;display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
+          <!-- 逐列自動存狀態（改完停手 1 秒自動寫回雲端，不必按儲存）-->
+          <span id="ht-sync-status" style="display:none;margin-right:auto;font-size:12px;font-weight:700;color:#738e41;letter-spacing:.02em"></span>
           <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             新增品項
@@ -10943,6 +10945,148 @@ function _htFetchItemsFresh(eventId){
   return _htFetchRaw(body);
 }
 function _htStopItemsPoll(){ if (_htItemsPollTimer) { clearInterval(_htItemsPollTimer); _htItemsPollTimer = null; } }
+
+// ══ 逐列即時協作引擎 ══════════════════════════════════════
+// 作法：任一格改動 → 該列標記 _dirty → debounce 1 秒後只把「有變動的列」用 htUpsertItem 單列寫回；
+// 輪詢改成逐列合併（依 itemId 比對），不再整張覆蓋 → 兩人各改各的列不會互相蓋掉，資料不會遺失。
+var _HT_AUTOSAVE_MS = 1000;   // 停止打字後多久自動存
+var _HT_POLL_MS     = 7000;   // 背景拉新頻率（逐列合併，可以拉快）
+var _htFlushTimer   = null;
+var _htDeleted      = {};     // 本機剛刪除的 itemId → 時間，避免輪詢把它救回來
+var _htSyncBadgeT   = null;
+
+// 本機剛刪的列在 20 秒內不接受後端把它加回來（等後端確實刪掉）
+function _htTombstone(itemId){ if (itemId) _htDeleted[itemId] = Date.now(); }
+function _htTombstoned(itemId){
+  var t = _htDeleted[itemId];
+  if (!t) return false;
+  if (Date.now() - t > 20000) { delete _htDeleted[itemId]; return false; }
+  return true;
+}
+
+// 狀態列提示（沒有對應元素就退回 toast，不影響功能）
+function _htSyncStatus(txt, sticky){
+  var el = document.getElementById('ht-sync-status');
+  if (!el) return;
+  el.textContent = txt;
+  el.style.display = txt ? '' : 'none';
+  if (_htSyncBadgeT) { clearTimeout(_htSyncBadgeT); _htSyncBadgeT = null; }
+  if (txt && !sticky) _htSyncBadgeT = setTimeout(function(){ try { el.style.display = 'none'; } catch(e){} }, 2500);
+}
+
+// 空白列（使用者剛按＋新增還沒填）不送後端，避免產生一堆空品項
+function _htRowEmpty(it){
+  return !String(it.name||'').trim() && !String(it.vendor||'').trim()
+      && !Number(it.unitPrice) && !String(it.assignee||'').trim()
+      && !String(it.notes||'').trim() && !String(it.link||'').trim();
+}
+
+// 標記某列有變動並排程自動存
+function _htTouchRow(idx){
+  var it = _htItems[idx];
+  if (!it) return;
+  it._dirty = true;
+  _htScheduleFlush();
+}
+function _htScheduleFlush(){
+  if (_htFlushTimer) clearTimeout(_htFlushTimer);
+  _htFlushTimer = setTimeout(function(){ _htFlushTimer = null; _htFlushRows(); }, _HT_AUTOSAVE_MS);
+}
+
+// 把所有 _dirty 的列逐列寫回後端（依序送，避免同時打 GAS 搶鎖）
+function _htFlushRows(){
+  if (!_htEvent) return;
+  if (window._htFlushing) { _htScheduleFlush(); return; }   // 上一批還沒送完 → 稍後再試
+  var evId  = _htEvent.eventId;
+  var dirty = _htItems.filter(function(it){ return it && it._dirty && !_htRowEmpty(it); });
+  if (!dirty.length) return;
+  window._htFlushing = true;
+  _htSyncStatus('儲存中…', true);
+  dirty.forEach(function(it){ it._dirty = false; it._saving = true; });
+
+  var i = 0, failed = 0;
+  var next = function(){
+    if (i >= dirty.length || !_htEvent || _htEvent.eventId !== evId) {
+      window._htFlushing = false;
+      _htSyncStatus(failed ? '⚠️ 部分變更尚未存到雲端，將自動重試' : '✅ 已同步', !!failed);
+      if (failed) _htScheduleFlush();     // 失敗的列已被標回 _dirty，稍後重試
+      return;
+    }
+    var it = dirty[i++];
+    var payload = {
+      itemId: it.itemId || '', name: it.name || '', vendor: it.vendor || '',
+      category: it.category || '', unitPrice: Number(it.unitPrice) || 0, qty: Number(it.qty) || 0,
+      serving: it.serving || '', assignee: it.assignee || '', ordered: !!it.ordered,
+      notes: it.notes || '', link: it.link || ''
+    };
+    htApi('htUpsertItem', { eventId: evId, item: payload }).then(function(r){
+      it._saving = false;
+      if (r && r.ok) { if (r.itemId) it.itemId = r.itemId; }
+      else { it._dirty = true; failed++; }                 // 沒存成功 → 標回未存，下輪重試（本機值保留）
+    }).catch(function(){
+      it._saving = false; it._dirty = true; failed++;
+    }).then(next);
+  };
+  next();
+}
+
+// 排序異動（拖曳／上下移）：列順序就是試算表的列順序，無法用單列 upsert 表達，
+// 因此先把未存的列送完，再用整批 htSaveItems 寫回一次順序（緊接在剛合併過的資料之後，覆蓋風險最小）。
+function _htSaveOrder(){
+  if (!_htEvent) return;
+  var evId = _htEvent.eventId;
+  if (_htFlushTimer) { clearTimeout(_htFlushTimer); _htFlushTimer = null; }
+  var go = function(){
+    if (window._htFlushing) { setTimeout(go, 300); return; }
+    _htSyncStatus('儲存排序中…', true);
+    htApi('htSaveItems', { eventId: evId, items: _htItems }).then(function(r){
+      if (r && r.ok) { _htItemsLoadedSig = _htSig(_htItems); _htSyncStatus('✅ 已同步'); }
+      else { _htSyncStatus('⚠️ 排序未存成功，請按「儲存」', true); }
+    }).catch(function(){ _htSyncStatus('⚠️ 排序未存成功，請按「儲存」', true); });
+  };
+  _htFlushRows();
+  go();
+}
+
+// 逐列合併：以後端順序為主，但「我還沒存完的列」一律保留本機版本
+function _htMergeItems(serverItems){
+  var srv = serverItems || [];
+  var localById = {};
+  _htItems.forEach(function(it){ if (it && it.itemId) localById[it.itemId] = it; });
+  var out = [];
+  srv.forEach(function(sv){
+    if (!sv || !sv.itemId) return;
+    if (_htTombstoned(sv.itemId)) return;                  // 我剛刪掉的，別救回來
+    var lo = localById[sv.itemId];
+    if (lo && (lo._dirty || lo._saving)) { out.push(lo); return; }   // 我這列有未存變更 → 保留我的
+    if (lo && lo._editLink) sv._editLink = true;           // 保留「正在編連結」的 UI 狀態
+    out.push(sv);
+  });
+  // 尚未配到 itemId 的本機新列（還沒存或存檔中）→ 保留在最後，不會被輪詢吃掉
+  _htItems.forEach(function(it){ if (it && !it.itemId) out.push(it); });
+  _htItems = out;
+}
+
+// 重繪前後保住游標位置（逐列同步時使用者可能正在打字）
+function _htFocusState(){
+  var ae = document.activeElement, tb = document.getElementById('ht-items-tbody');
+  if (!ae || !tb || !tb.contains(ae) || !ae.dataset || ae.dataset.idx == null) return null;
+  var it = _htItems[parseInt(ae.dataset.idx)];
+  if (!it) return null;
+  var st = { itemId: it.itemId || '', f: ae.dataset.f || '', start: null, end: null };
+  try { st.start = ae.selectionStart; st.end = ae.selectionEnd; } catch(e){}
+  return st;
+}
+function _htRestoreFocus(st){
+  if (!st || !st.itemId) return;
+  var newIdx = -1;
+  for (var i = 0; i < _htItems.length; i++) { if (_htItems[i] && _htItems[i].itemId === st.itemId) { newIdx = i; break; } }
+  if (newIdx < 0) return;
+  var el = document.querySelector('#ht-items-tbody [data-idx="' + newIdx + '"][data-f="' + st.f + '"]');
+  if (!el) return;
+  try { el.focus(); if (st.start != null && el.setSelectionRange) el.setSelectionRange(st.start, st.end); } catch(e){}
+}
+
 function _htStartItemsPoll(eventId){
   _htStopItemsPoll();
   _htItemsPollTimer = setInterval(function(){
@@ -10950,22 +11094,30 @@ function _htStartItemsPoll(eventId){
     if (!_htEvent || _htEvent.eventId !== eventId) { _htStopItemsPoll(); return; }
     var _dp = document.getElementById('ht-detail-panel');
     if (!_dp || _dp.style.display === 'none') return;              // 已離開活動詳情（切頁）→ 本次不拉
-    if (_htItemsEditing() || _htItemsDirty()) return;              // 正在編輯或有未存變更 → 不覆蓋
+    if (window._htFlushing || window._htSaving) return;            // 正在寫入 → 等寫完再合併，避免看到半套資料
     _htFetchItemsFresh(eventId).then(function(r){
       if (!r || !r.ok) return;
       if (!_htEvent || _htEvent.eventId !== eventId) return;
-      if (_htItemsEditing() || _htItemsDirty()) return;            // 拉取期間又開始編輯 → 放棄本次
-      var freshSig = _htSig(r.items || []);
-      if (freshSig === _htItemsLoadedSig) return;                  // 內容沒變
-      _htItems = r.items || [];
-      _htItemsLoadedSig = freshSig;
+      if (window._htFlushing || window._htSaving) return;
+      var before = _htSig(_htItems);
+      _htMergeItems(r.items || []);
+      _htItemsLoadedSig = _htSig(r.items || []);                   // 基準＝目前已知的後端狀態
       if (r.event) _htEvent = r.event;
+      if (_htSig(_htItems) === before) return;                     // 合併後畫面沒變 → 不重繪，不打擾
+      var _fs = _htFocusState();
       try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
-      if (window.toast) toast('🔄 已同步他人的最新品項');
+      _htRestoreFocus(_fs);
+      _htSyncStatus('🔄 已同步他人的變更');
     }).catch(function(){});
-  }, 25000);
+  }, _HT_POLL_MS);
 }
-window._htStopItemsPoll = _htStopItemsPoll;
+window._htStopItemsPoll = function(){
+  _htStopItemsPoll();
+  if (_htFlushTimer) { clearTimeout(_htFlushTimer); _htFlushTimer = null; }
+  _htFlushRows();                       // 離開前把還沒存的列送出去，不讓變更留在記憶體
+};
+// 切到背景／關分頁前，立刻把未存的列送出（避免使用者以為已存卻掉資料）
+document.addEventListener('visibilitychange', function(){ if (document.hidden) { if (_htFlushTimer) { clearTimeout(_htFlushTimer); _htFlushTimer = null; } _htFlushRows(); } });
 var _htVendors  = [];
 var _htVendorsLoading = null;
 var _htItemsCache = null; // { vendorMap, catTotals } — 避免重複撈全部品項
@@ -11036,7 +11188,7 @@ function _htBdaysForMonth(monthNum) {
 var _HT_CACHEABLE = new Set(['htList','htGetItems','htVendors','htSheetList','htVoteGet','htVoteItemsGet','feedbackList']);
 var _HT_SWR_REFRESH = 90000;   // 快取超過 90 秒才在背景更新；90 秒內直接用快取、不打 GAS（避免頻繁讀取灌爆很慢的後端）
 // 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
-var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htDeleteItem|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
 // 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
 function _htFetchRaw(body, timeoutMs) {
@@ -14474,6 +14626,7 @@ window.htDrop = function(e, idx) {
   _htItems.splice(to, 0, moved);
   _htDragIdx = null;
   htRenderItems();
+  _htSaveOrder();
 };
 window.htDragEnd = function(e) {
   _htDragIdx = null;
@@ -14515,6 +14668,7 @@ window.htMoveItem = function(idx, dir) {
   if (grouped && String(moved[field] || '') !== targetGroup) moved[field] = targetGroup;
   htRenderItems();
   if (grouped && field === 'category') htRenderBudget();
+  _htSaveOrder();
 };
 
 // 分組模式下拖到「某一列」：同時做兩件事 —— 換到該列所屬分組 + 插到該列位置（組內也能重排）
@@ -14532,6 +14686,7 @@ window.htGroupRowDrop = function(e, idx, groupKey) {
   }
   htRenderItems();
   if (valid && field === 'category') htRenderBudget();
+  _htSaveOrder();
 };
 window.htGroupDrop = function(e, groupKey) {
   e.preventDefault();
@@ -14544,6 +14699,7 @@ window.htGroupDrop = function(e, groupKey) {
     _htItems[from][field] = groupKey || '';
     htRenderItems();
     if (field === 'category') htRenderBudget();   // 分類異動 → 右欄類別明細同步
+    _htTouchRow(from);                            // 只改欄位值、沒動順序 → 逐列自動存即可
   } else {
     htRenderItems();
   }
@@ -14600,6 +14756,7 @@ window.htItemChange = function(el) {
     _htItems[idx][f] = val;
     if (f === 'assignee' && _htViewMode === 'assignee') htRenderItems();  // 依負責人分組：改負責人即時重新歸組
   }
+  _htTouchRow(idx);   // 逐列自動存：停手 1 秒後只把這一列寫回雲端
 };
 
 // 依所選分類替下拉框上色（即時反映）
@@ -14614,6 +14771,7 @@ function _htPaintCatSelect(sel, cat) {
 window.htToggleOrderLocal = function(cb) {
   var idx = parseInt(cb.dataset.idx);
   _htItems[idx].ordered = cb.checked;
+  _htTouchRow(idx);
 };
 // 是否訂購：toggle 開關（取代原方框 checkbox）
 window.htToggleOrder = function(el, idx) {
@@ -14625,6 +14783,7 @@ window.htToggleOrder = function(el, idx) {
   el.title = on ? '已訂購' : '未訂購';
   var knob = el.firstElementChild;
   if (knob) knob.style.left = on ? '20px' : '2px';
+  _htTouchRow(idx);
 };
 
 window.htAddItemRow = function() {
@@ -14674,9 +14833,32 @@ window.htPickStore = function(name) {
 };
 
 window.htDeleteItem = function(idx) {
+  var it = _htItems[idx];
+  if (!it) return;
   _htItems.splice(idx, 1);
   htRenderItems();
   htRenderBudget();   // 右欄金額/進度/類別明細同步連動
+  // 已存在雲端的列 → 立刻單列刪除（不必等按儲存），並記 tombstone 免得輪詢救回來
+  if (it.itemId && _htEvent) {
+    var evId = _htEvent.eventId;
+    _htTombstone(it.itemId);
+    _htSyncStatus('刪除中…', true);
+    htApi('htDeleteItem', { eventId: evId, itemId: it.itemId }).then(function(r){
+      if (r && r.ok) { _htSyncStatus('✅ 已同步'); return; }
+      // 刪除失敗 → 把列還原回畫面，絕不讓使用者以為刪掉了但雲端還在
+      delete _htDeleted[it.itemId];
+      _htItems.splice(Math.min(idx, _htItems.length), 0, it);
+      htRenderItems(); htRenderBudget();
+      _htSyncStatus('⚠️ 刪除失敗，已還原此列', true);
+      if (window.toast) toast('⚠️ 刪除失敗：' + ((r && r.error) || '網路問題'));
+    }).catch(function(){
+      delete _htDeleted[it.itemId];
+      _htItems.splice(Math.min(idx, _htItems.length), 0, it);
+      htRenderItems(); htRenderBudget();
+      _htSyncStatus('⚠️ 刪除失敗，已還原此列', true);
+      if (window.toast) toast('⚠️ 刪除失敗，請檢查網路');
+    });
+  }
 };
 
 window.htSaveItems = function() {
