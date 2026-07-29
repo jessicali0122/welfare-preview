@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729003626';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729140103';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1960,7 +1960,7 @@ thead th{color:#767B75!important}
     </div>
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
     <!-- 常用連結分兩區：員購專區（動態員購連結，全員可用）＋福委專區（會議紀錄，僅福委/HR/管理者可開） -->
-    <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 18px">LINKS・常用連結</div>
+    <div id="dash-links-label" style="font-size:14px;letter-spacing:.2em;color:#738e41;text-align:center;margin:40px 0 20px">LINKS・常用連結</div>
     <!-- 連結＝迷你服務磚（圓形 icon 底＋名稱＋↗），一排置中，與上方服務項目同一套視覺語言；不另外包框 -->
     <style>
     .dash-link-tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:10px 18px 10px 12px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;width:fit-content;max-width:86vw;box-sizing:border-box}
@@ -3455,7 +3455,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:8px;align-items:center">
             <div id="ht-view-toggle" style="display:inline-flex;flex-wrap:wrap;border:1.5px solid #DDE4D8;border-radius:8px;overflow:hidden;background:#F6F9F5">
-              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:8px 14px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷 <span class="vm-full">依分類</span><span class="vm-mini" style="display:none">分類</span></button>
+              <button onclick="htSetViewMode('category')" id="ht-vm-category" style="padding:8px 14px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依分類分組顯示">🏷️ <span class="vm-full">依分類</span><span class="vm-mini" style="display:none">分類</span></button>
               <button onclick="htSetViewMode('vendor')" id="ht-vm-vendor" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依廠商分組顯示">🏬 <span class="vm-full">依廠商</span><span class="vm-mini" style="display:none">廠商</span></button>
               <button onclick="htSetViewMode('assignee')" id="ht-vm-assignee" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="依負責人分組顯示">🧑 <span class="vm-full">依負責人</span><span class="vm-mini" style="display:none">負責人</span></button>
               <button onclick="htSetViewMode('order')" id="ht-vm-order" style="padding:8px 14px;border:none;border-left:1px solid #DDE4D8;background:transparent;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .15s" title="可拖曳排序">↕ <span class="vm-full">自訂排序</span><span class="vm-mini" style="display:none">自訂</span></button>
@@ -5548,6 +5548,10 @@ function applyDashboardBlocks() {
       setTimeout(function(){ _bdayConfettiRain(bdayChip); }, 350);
     }
   }
+
+  // 公佈欄「＋ 新增公告」按鈕可見性：改由此處重算，避免角色資料比公告同步晚到時，
+  // 按鈕以員工身分算過一次就永遠隱藏（登入後、切換角色預覽時都會重新套用）
+  if (typeof bulletinRender === 'function') bulletinRender();
 
   _renderFestivalMarquee();
   _dashLoadWeather();
@@ -14217,7 +14221,7 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
     + '<td data-label="品名" '+td+'><div style="display:flex;align-items:center;gap:8px">'+grip+moves+'<input data-idx="'+idx+'" data-f="name" value="'+htEsc(it.name)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></div></td>'
     + '<td data-label="廠商" '+td+'><input data-idx="'+idx+'" data-f="vendor" value="'+htEsc(it.vendor)+'" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="分類" '+td+'>'+_htCatChipHtml(it, idx)+'</td>'
-    + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+it.unitPrice+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
+    + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+(it.unitPrice||'')+'" placeholder="0" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+_htMoney(it.subtotal)+'</td>'
     + '<td data-label="負責人" '+td+'>'+_htAssigneeChipHtml(it, idx)+'</td>'
@@ -16682,7 +16686,17 @@ function bulletinRender() {
     if (a.pinned && !b.pinned) return -1; if (!a.pinned && b.pinned) return 1;
     return (b.createdAt||'').localeCompare(a.createdAt||'');
   });
-  if (!sorted.length) { list.innerHTML = '<div style="text-align:center;padding:20px;color:#9AA098;font-size:14px">目前無公告</div>'; return; }
+  if (!sorted.length) {
+    var emptyHint = isAdmin
+      ? '點右上「＋ 新增公告」發布第一則吧'
+      : '最新福利消息、活動資訊都會出現在這裡';
+    list.innerHTML = '<div style="text-align:center;padding:32px 20px;color:#9AA098">'
+      + '<div style="font-size:36px;line-height:1;margin-bottom:12px;opacity:.85">📭</div>'
+      + '<div style="font-size:14px;font-weight:700;color:#7A8078;margin-bottom:6px">目前沒有公告</div>'
+      + '<div style="font-size:12px;color:#A6ABA2;line-height:1.6">' + emptyHint + '</div>'
+      + '</div>';
+    return;
+  }
   list.innerHTML = sorted.map(function(p) {
     var dt = p.createdAt ? new Date(p.createdAt).toLocaleDateString('zh-TW',{month:'numeric',day:'numeric'}) : '';
     return '<div style="background:#fff;border-radius:16px;padding:16px 18px;box-shadow:0 1px 3px rgba(46,51,45,.06);position:relative;overflow:hidden">'
