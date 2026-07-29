@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729170455';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729171058';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3397,7 +3397,9 @@ thead th{color:#767B75!important}
 
     <!-- 主版面：左欄（品項）+ 右欄（預算/壽星）-->
     <!-- 品項清單是主角 → 左欄盡量寬，右欄（預算結算）收窄並隨視窗縮放 -->
-    <div id="ht-detail-grid" style="display:grid;grid-template-columns:minmax(0,1fr) clamp(224px,18vw,272px);gap:12px;align-items:start">
+    <!-- 右欄寬度依「預算結算」2×2 卡片實測字寬回推：金額 18px 粗體，NT$100,000 約 105px，
+         加卡片內距 26 → 單卡 131、雙卡含 10px 間距 272，再加外卡內距 32 與邊框 3 → 307，取 308 保底不斷行 -->
+    <div id="ht-detail-grid" style="display:grid;grid-template-columns:minmax(0,1fr) clamp(308px,22vw,320px);gap:12px;align-items:start">
     <!-- ── 左欄 ── -->
     <div>
     <!-- Tab: 品項規劃 -->
@@ -7623,8 +7625,9 @@ async function _syncMembersFromServer() {
     if (typeof applyDashboardBlocks === 'function') applyDashboardBlocks();
     // 生日資料剛建立好：若午茶「本月壽星」面板已因快取搶先渲染（此時 _BF_USER_BDAYS 還空、日期抓不到），
     // 重新渲染一次讓每位壽星的生日日期補上
-    if (typeof htRenderBirthday === 'function' && typeof _htEvent !== 'undefined' && _htEvent) {
-      try { htRenderBirthday(); } catch(e) {}
+    // （htRenderBirthday 住在午茶 IIFE 內，必須走 window 取用；沒開啟活動時函式內部會自行略過）
+    if (typeof window.htRenderBirthday === 'function') {
+      try { window.htRenderBirthday(); } catch(e) {}
     }
     _refreshDeptOptions(res.members);
     // 把角色快取進 localStorage，下次頁面載入可立即套用
@@ -15272,6 +15275,7 @@ function htRenderMenuCard() {
 // ── 壽星管理 ──
 function htRenderBirthday() {
   var ev = _htEvent;
+  if (!ev) return;                    // 尚未開啟活動（供外部在員工生日資料載入後回呼時防呆）
   var list = ev.birthdays || [];
   var el = document.getElementById('ht-birthday-list');
   if (!el) return; // 壽星名單已改為「活動設定」面板的人數輸入，此區塊已移除
@@ -15387,6 +15391,9 @@ window.htDeleteBirthday = async function(idx) {
   htUpdateCalcBudget();
   htRenderDetailHeader();
 };
+// 匯出給外部：員工生日資料（_BF_USER_BDAYS）是登入後才非同步載入的，
+// 若壽星面板已搶先渲染完（那時抓不到日期），資料到位後要能回來重畫一次把日期補上。
+window.htRenderBirthday = htRenderBirthday;
 
 // ── 評分 Modal ──
 
