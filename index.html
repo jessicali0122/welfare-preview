@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729140103';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729140714';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -5296,6 +5296,9 @@ function logout() {
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token'); // 同時清除備援 token
   sessionStorage.removeItem('bf_token');
+  // 清除本機讀取快取（案件清單/名單等），避免登出後殘留敏感資料
+  try { _apiLsClear(); } catch(e) {}
+  try { if (typeof _htLsClear === 'function') _htLsClear(); } catch(e) {}
   // 清除頁面記憶：登出後重新登入一律回到總覽首頁，不停留在登出前的頁面
   try { sessionStorage.removeItem('bf_return_hash'); } catch(e) {}
   currentUser = null;
@@ -5306,30 +5309,64 @@ function logout() {
 // ══════════════════════════════════════════
 //  API 呼叫通用函式
 // ══════════════════════════════════════════
-// ── API 快取（TTL 30 秒，只快取唯讀查詢）──
+// ── API 快取（記憶體 + localStorage 持久化，只快取唯讀查詢）──
 const _apiCache = {};
-const _CACHE_TTL = 300000; // 5 分鐘（原 30 秒太短，換 tab 就重打 GAS）
+const _CACHE_TTL = 300000; // 5 分鐘（記憶體 SWR：這段時間內直接用快取，逾時才背景更新）
 const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow']); // 唯讀 action 快取
+// ── 離線快取（localStorage）：把上次成功的讀取結果留到下次開頁 ──
+// GAS 冷啟動 1～3 秒，全新載入時首頁會空等。改成先秒開上次資料、背景再更新（樂觀顯示）。
+// 只存會擋首屏的幾支查詢；get（單筆案件）key 太多、易塞爆，只留記憶體快取。
+const _API_LS_PREFIX  = 'bf_apicache_';
+const _API_LS_TTL     = 24 * 60 * 60 * 1000; // 逾一天的舊資料寧可等後端
+const _API_LS_ACTIONS = new Set(['list', 'getMembers', 'getFlow', 'getFlowInfo']);
+// 使用者隔離：把帳號綁進 LS key，避免換人登入時讀到別人的清單/名單
+function _apiLsUser() { try { return (currentUser && currentUser.email) || ''; } catch (e) { return ''; } }
+function _apiLsGet(key) {
+  try {
+    const raw = localStorage.getItem(_API_LS_PREFIX + _apiLsUser() + ':' + key);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    if (!o || !o.ts || (Date.now() - o.ts) > _API_LS_TTL) return null;
+    return o.data;
+  } catch (e) { return null; }
+}
+function _apiLsSet(key, data) {
+  try { localStorage.setItem(_API_LS_PREFIX + _apiLsUser() + ':' + key, JSON.stringify({ ts: Date.now(), data })); }
+  catch (e) { // 空間滿了就清掉自己的舊項目再放棄，不影響主流程
+    try { Object.keys(localStorage).forEach(k => { if (k.indexOf(_API_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e2) {}
+  }
+}
+function _apiLsClear() {
+  try { Object.keys(localStorage).forEach(k => { if (k.indexOf(_API_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e) {}
+}
 
 function _cacheKey(action, data) {
   return action + ':' + JSON.stringify(data);
 }
 function _cacheGet(key) {
   const c = _apiCache[key];
-  if (!c) return null;
-  if (Date.now() - c.ts > _CACHE_TTL) { delete _apiCache[key]; return null; }
-  return c.data;
+  if (c) {
+    if (Date.now() - c.ts > _CACHE_TTL) { delete _apiCache[key]; }
+    else return c.data;
+  }
+  // 記憶體沒有（例：剛重整）→ 回退 localStorage，命中就補回記憶體，讓首屏秒出
+  const ls = _apiLsGet(key);
+  if (ls != null) { _apiCache[key] = { ts: Date.now(), data: ls }; return ls; }
+  return null;
 }
 function _cacheSet(key, data) {
   _apiCache[key] = { ts: Date.now(), data };
+  const action = key.slice(0, key.indexOf(':'));
+  if (_API_LS_ACTIONS.has(action)) _apiLsSet(key, data);
 }
 // 世代序號：每次清除遞增，用來讓「清除前發出的背景更新」在清除後不要用舊資料回寫
 let _cacheGen = 0;
 // 手動清除快取（送出、核准、退件等寫入操作後呼叫）
 function _cacheClear() {
-  // 寫入操作後清除全部快取（list / get / getFlow 都可能受影響）
+  // 寫入操作後清除全部快取（list / get / getFlow 都可能受影響），記憶體與 localStorage 一起清
   _cacheGen++;
   Object.keys(_apiCache).forEach(k => delete _apiCache[k]);
+  _apiLsClear();
 }
 
 async function callAPI(action, data = {}, opts = {}) {
