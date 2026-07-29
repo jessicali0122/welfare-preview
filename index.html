@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729140714';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729143746';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4394,7 +4394,7 @@ function _isRealManager() {
   const cu = currentUser || window.currentUser;
   if (!cu) return false;
   if (typeof ADMIN_EMAILS !== 'undefined' && ADMIN_EMAILS.includes(cu.email)) return true;
-  const real = window._authRealRoles || cu.roles || USER_ROLES[cu.email] || [];
+  const real = window._authRealRoles || USER_ROLES[cu.email] || cu.roles || [];
   return real.includes('manager');
 }
 
@@ -4420,7 +4420,7 @@ window.setRolePreview = function(role) {
   if (!_isRealManager()) return;
   const cu = currentUser || window.currentUser;
   // 首次切換前，先把「真實角色」快照起來，之後 _isRealManager 才不會被覆寫污染
-  if (!window._authRealRoles && cu) window._authRealRoles = (cu.roles || USER_ROLES[cu.email] || []).slice();
+  if (!window._authRealRoles && cu) window._authRealRoles = (USER_ROLES[cu.email] || cu.roles || []).slice();
   window._rolePreview = role;
   if (typeof applyNavVisibility === 'function') applyNavVisibility();
   if (typeof applyRolePermissions === 'function') applyRolePermissions();
@@ -5296,9 +5296,9 @@ function logout() {
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token'); // 同時清除備援 token
   sessionStorage.removeItem('bf_token');
-  // 清除本機讀取快取（案件清單/名單等），避免登出後殘留敏感資料
+  // 清除本機讀取快取（案件清單/名單等）與草稿，避免登出後殘留敏感資料／跨使用者還原
   try { _apiLsClear(); } catch(e) {}
-  try { if (typeof _htLsClear === 'function') _htLsClear(); } catch(e) {}
+  try { localStorage.removeItem('bf_draft'); } catch(e) {}
   // 清除頁面記憶：登出後重新登入一律回到總覽首頁，不停留在登出前的頁面
   try { sessionStorage.removeItem('bf_return_hash'); } catch(e) {}
   currentUser = null;
@@ -5318,7 +5318,7 @@ const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow
 // 只存會擋首屏的幾支查詢；get（單筆案件）key 太多、易塞爆，只留記憶體快取。
 const _API_LS_PREFIX  = 'bf_apicache_';
 const _API_LS_TTL     = 24 * 60 * 60 * 1000; // 逾一天的舊資料寧可等後端
-const _API_LS_ACTIONS = new Set(['list', 'getMembers', 'getFlow', 'getFlowInfo']);
+const _API_LS_ACTIONS = new Set(['list', 'getMembers', 'getFlow', 'getFlowInfo', 'htList', 'htGetItems', 'htVendors']);
 // 使用者隔離：把帳號綁進 LS key，避免換人登入時讀到別人的清單/名單
 function _apiLsUser() { try { return (currentUser && currentUser.email) || ''; } catch (e) { return ''; } }
 function _apiLsGet(key) {
@@ -5369,6 +5369,19 @@ function _cacheClear() {
   _apiLsClear();
 }
 
+// ── 進行中請求去重（in-flight dedup）──
+// 冷啟動/快取過期時，同一支唯讀 action 常被多處（loadDashboard/loadApplications/loadAnalytics）
+// 幾乎同時呼叫，各自打一次慢 GAS。這裡讓相同 key 的讀取共用同一個 Promise，避免重複請求壓垮後端。
+const _inflight = {};
+function _fetchAPIDedup(action, data) {
+  if (!_CACHEABLE.has(action)) return _fetchAPI(action, data); // 寫入類不去重，避免漏送
+  const k = _cacheKey(action, data);
+  if (_inflight[k]) return _inflight[k];
+  const p = _fetchAPI(action, data).finally(() => { delete _inflight[k]; });
+  _inflight[k] = p;
+  return p;
+}
+
 async function callAPI(action, data = {}, opts = {}) {
   const cacheKey = _cacheKey(action, data);
   // 可快取的 action：先回傳快取，背景同時更新
@@ -5378,14 +5391,14 @@ async function callAPI(action, data = {}, opts = {}) {
       // 背景靜默更新（不 await）；記錄當下世代，若期間發生 _cacheClear（有寫入操作）就丟棄，
       // 避免用「寫入前」的舊資料回寫快取，蓋掉剛送出/核准的最新狀態
       const _genAtFetch = _cacheGen;
-      _fetchAPI(action, data).then(fresh => {
+      _fetchAPIDedup(action, data).then(fresh => {
         if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(cacheKey, fresh);
       }).catch(function(){});
       return cached;
     }
   }
   const _genBeforeFetch = _cacheGen;
-  const json = await _fetchAPI(action, data);
+  const json = await _fetchAPIDedup(action, data);
   // 若讀取期間發生寫入（_cacheClear 遞增世代），不可用寫入前的舊資料回寫快取
   if (json && json.ok && _CACHEABLE.has(action) && _cacheGen === _genBeforeFetch) _cacheSet(cacheKey, json);
   // 案件有異動（新增/審核/退件/刪除/重送）→ 費用分析 5 分鐘快取立即失效，下次切換抓最新
@@ -6038,6 +6051,11 @@ function renderDraftsTab() {
 }
 
 async function loadApplications(forceRefresh) {
+  // 效能：8 秒內快速重進本頁、且期間無任何寫入（_cacheGen 未變）→ 沿用現有畫面，不重抓也不重建 DOM
+  var _tb0 = document.getElementById('applications-tbody');
+  if (!forceRefresh && window._appsRenderedGen === _cacheGen
+      && (Date.now() - (window._appsRenderedAt || 0)) < 8000
+      && _tb0 && _tb0.children.length) return;
   showTableSkeleton('applications-tbody', 11, 5);
   const res = await callAPI('list', {}, forceRefresh ? { noCache: true } : {});
   if (!res.ok) {
@@ -6051,6 +6069,9 @@ async function loadApplications(forceRefresh) {
   const allCases = res.cases || [];
   // 快取全部案件供 Tab 使用
   window._allCasesCache = allCases;
+  // 記錄本次成功渲染的世代與時間，供上方 8 秒守門判斷
+  window._appsRenderedGen = _cacheGen;
+  window._appsRenderedAt = Date.now();
   // 更新草稿 Tab 數字
   const myDraftCount = allCases.filter(c =>
     c.status === '草稿' && (isAdmin() || c.email === currentUser?.email)
@@ -7259,6 +7280,7 @@ async function saveDraftForm(silent = false) {
         // 存完後清除內容只留 caseId，避免下次「新增申請」時 Banner 誤觸
         localStorage.setItem('bf_draft', JSON.stringify({
           caseId: res.caseId,
+          owner: (currentUser && currentUser.email) || '',
           uploadedFiles: window._uploadedDraftFiles || []
         }));
       } catch(e) {}
@@ -7458,6 +7480,7 @@ function sw(name,elOrName,_fromPop){
     //        否則點「新增申請」後儲存草稿會以 caseId=null 建立新草稿
     if (!window._openDraftInProgress) {
       try {
+        _purgeForeignDraft();
         const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
         if (_sd.caseId) {
           _draftCaseId = _sd.caseId;
@@ -7835,30 +7858,41 @@ function _renderFileItem(f) {
 }
 
 // ── 載入 Drive 縮圖：先試直接 URL（快），失敗再 fallback 回 GAS（穩）──
+// 效能：改為捲入視窗才載入（IntersectionObserver），避免一進詳情頁就對所有附件同時發圖片/GAS 請求。
+function _loadOneThumb(wrap, isIOS) {
+  const fileId = wrap.dataset.fileid;
+  const href   = wrap.dataset.href || '';
+  wrap.removeAttribute('data-fileid');
+  if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); return; }
+  // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
+  if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); return; }
+  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+  // 先保留 loading spinner（不清空 wrap），圖片載入後才替換
+  const img = new Image();
+  img.onload = function() {
+    img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
+    wrap.innerHTML = '';
+    wrap.appendChild(img);
+    wrap.style.minHeight = '';
+    wrap.style.flexDirection = '';
+  };
+  img.onerror = function() { _loadThumbViaGAS(wrap, fileId, href); };
+  img.src = thumbUrl;
+}
 function loadDriveThumbs(container) {
   const wraps = Array.from((container || document).querySelectorAll('.drive-thumb-wrap[data-fileid]'));
   if (wraps.length === 0) return;
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  for (const wrap of wraps) {
-    const fileId = wrap.dataset.fileid;
-    const href   = wrap.dataset.href || '';
-    wrap.removeAttribute('data-fileid');
-    if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); continue; }
-    // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
-    if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); continue; }
-    const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
-    // 先保留 loading spinner（不清空 wrap），圖片載入後才替換
-    const img = new Image();
-    img.onload = function() {
-      img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
-      wrap.innerHTML = '';
-      wrap.appendChild(img);
-      wrap.style.minHeight = '';
-      wrap.style.flexDirection = '';
-    };
-    img.onerror = function() { _loadThumbViaGAS(wrap, fileId, href); };
-    img.src = thumbUrl;
-  }
+  // 不支援 IntersectionObserver（極舊瀏覽器）→ 沿用一次全載
+  if (typeof IntersectionObserver === 'undefined') { wraps.forEach(w => _loadOneThumb(w, isIOS)); return; }
+  const io = new IntersectionObserver(function(entries, obs) {
+    entries.forEach(function(e) {
+      if (!e.isIntersecting) return;
+      obs.unobserve(e.target);
+      _loadOneThumb(e.target, isIOS);
+    });
+  }, { rootMargin: '200px' });   // 提前 200px 預載，捲到前就備好
+  wraps.forEach(w => io.observe(w));
 }
 
 async function _loadThumbViaGAS(wrap, fileId, href) {
@@ -9714,6 +9748,10 @@ window.addEventListener('orientationchange',function(){setTimeout(updateVH,150);
 
 // ── REAL-TIME TAIWAN TIME ──
 function updateTWTime(){
+  // 分頁在背景、或時鐘（僅總覽頁顯示）不在畫面上時，跳過重寫，省下每秒的定時喚醒與 reflow
+  if(document.hidden)return;
+  const el=document.getElementById('tw-datetime');
+  if(!el||el.offsetParent===null)return;
   const now=new Date();
   const tw=new Date(now.getTime()+(8*60+now.getTimezoneOffset())*60000);
   const days=['日','一','二','三','四','五','六'];
@@ -9722,8 +9760,7 @@ function updateTWTime(){
   const hh=String(tw.getHours()).padStart(2,'0');
   const mm=String(tw.getMinutes()).padStart(2,'0');
   const ss=String(tw.getSeconds()).padStart(2,'0');
-  const el=document.getElementById('tw-datetime');
-  if(el)el.textContent=y+'年'+m+'月'+d+'日 星期'+dow+' '+hh+':'+mm+':'+ss;
+  el.textContent=y+'年'+m+'月'+d+'日 星期'+dow+' '+hh+':'+mm+':'+ss;
 }
 updateTWTime();
 setInterval(updateTWTime,1000);
@@ -9996,6 +10033,7 @@ function autoSaveDraft(){
     name:_applicantEl2?.value||'', payee:_payeeEl2?.value||'',
     department:_deptEl2?.value||'', employeeId:_empIdEl2?.value||'',
     applyDate:_applyDateEl2?.value||'',
+    owner:(currentUser&&currentUser.email)||'',   // 綁定草稿擁有者，避免共用電腦跨使用者還原
     caseId:_draftCaseId||null, uploadedFiles:window._uploadedDraftFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 
@@ -10010,7 +10048,17 @@ function autoSaveDraft(){
     }, 30000);
   }
 }
+// 清掉不屬於目前登入者的本機草稿（共用電腦、換帳號登入後不還原別人的草稿）
+function _purgeForeignDraft(){
+  try{
+    const raw=localStorage.getItem('bf_draft'); if(!raw) return;
+    const d=JSON.parse(raw);
+    const me=(currentUser&&currentUser.email)||'';
+    if(d&&d.owner&&d.owner!==me){ localStorage.removeItem('bf_draft'); }
+  }catch(e){ try{localStorage.removeItem('bf_draft');}catch(e2){} }
+}
 function checkDraftBanner(){
+  _purgeForeignDraft();
   const saved=localStorage.getItem('bf_draft');
   const banner=document.getElementById('draft-banner');
   if(!banner)return;
@@ -10031,6 +10079,7 @@ function checkDraftBanner(){
   banner.classList.remove('show');
 }
 function restoreDraft(){
+  _purgeForeignDraft();
   const saved=localStorage.getItem('bf_draft');
   if(!saved)return;
   try{
@@ -10944,29 +10993,17 @@ function _htFetchRaw(body, timeoutMs) {
     .then(function(r){ if (to) clearTimeout(to); return r; });
 }
 
-// ── 離線快取（localStorage）：把上一次成功的讀取結果留到下次開頁 ──
-// GAS 冷啟動 2～5 秒，第一次進頁面畫面會空著。改成先秒開上次的資料、背景再更新（樂觀顯示）。
-var _HT_LS_PREFIX = 'bf_htcache_';
-var _HT_LS_TTL    = 24 * 60 * 60 * 1000;   // 超過一天的舊資料就不用了，寧可等後端
-var _HT_LS_ACTIONS = new Set(['htList','htGetItems','htVendors']);   // 只存這幾支，避免塞爆 localStorage
-function _htLsGet(ckey) {
-  try {
-    var raw = localStorage.getItem(_HT_LS_PREFIX + ckey);
-    if (!raw) return null;
-    var o = JSON.parse(raw);
-    if (!o || !o.ts || (Date.now() - o.ts) > _HT_LS_TTL) return null;
-    return o.data;
-  } catch (e) { return null; }
-}
-function _htLsSet(ckey, data) {
-  try { localStorage.setItem(_HT_LS_PREFIX + ckey, JSON.stringify({ ts: Date.now(), data: data })); }
-  catch (e) {   // 空間滿了就清掉自己的舊項目再放棄，不影響主流程
-    try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf(_HT_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e2) {}
-  }
-}
-// 存檔/刪除後把離線快取一起清掉，避免下次開頁看到已被改掉的舊資料
-function _htLsClear() {
-  try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf(_HT_LS_PREFIX) === 0) localStorage.removeItem(k); }); } catch (e) {}
+// 離線快取（localStorage）：午茶唯讀 action 已併入全域 _API_LS_ACTIONS，
+// 由 _cacheSet 寫入、htApi 讀取 miss 時回退 _apiLsGet，登出時 _apiLsClear 一併清除。
+
+// 進行中請求去重：相同 ckey 的讀取共用同一個 Promise，避免同支午茶查詢被同時打多次
+var _htInflight = {};
+function _htFetchDedup(ckey, body) {
+  if (!ckey) return _htFetchRaw(body);   // 寫入類（ckey=null）不去重
+  if (_htInflight[ckey]) return _htInflight[ckey];
+  var p = _htFetchRaw(body).finally(function(){ delete _htInflight[ckey]; });
+  _htInflight[ckey] = p;
+  return p;
 }
 
 // 讀取自動重試：GAS 偶爾逾時或並發被擋，退避 1s→3s 再試，兩次都失敗才回錯誤。
@@ -10995,13 +11032,21 @@ async function htApi(action, payload) {
     if (entry && (Date.now() - entry.ts) <= _CACHE_TTL) {
       if ((Date.now() - entry.ts) > _HT_SWR_REFRESH) {
         var _genAtFetch = _cacheGen;
-        _htFetchRaw(body).then(function(fresh){ if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(ckey, fresh); }).catch(function(){});
+        _htFetchDedup(ckey, body).then(function(fresh){ if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(ckey, fresh); }).catch(function(){});
       }
       return entry.data;
     }
+    // 記憶體 miss → 回退 localStorage：秒回上次資料，背景再向 GAS 更新（午茶重開頁不再空等冷啟動）
+    var _ls = _apiLsGet(ckey);
+    if (_ls != null) {
+      _apiCache[ckey] = { ts: Date.now(), data: _ls };
+      var _genLs = _cacheGen;
+      _htFetchDedup(ckey, body).then(function(fresh){ if (fresh && fresh.ok && _cacheGen === _genLs) _cacheSet(ckey, fresh); }).catch(function(){});
+      return _ls;
+    }
   }
   var _genBeforeFetch = _cacheGen;
-  var json = await _htFetchRaw(body);
+  var json = await _htFetchDedup(ckey, body);
   // 讀取期間若有寫入（世代遞增）就不回寫，避免用舊資料蓋掉剛更新的快取
   if (json && json.ok && isRead && _cacheGen === _genBeforeFetch) _cacheSet(ckey, json);
   if (json && json.ok && _HT_WRITE.test(action)) {
@@ -11103,7 +11148,7 @@ window.fbRenderList = async function() {
       var isData = /^data:/.test(it.imageUrl);
       var src = isData ? it.imageUrl : (it.imageId ? 'https://drive.google.com/thumbnail?id=' + it.imageId + '&sz=w1000' : it.imageUrl);
       imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
-        + '<img src="' + htEsc(src) + '" alt="附件圖檔" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
+        + '<img src="' + htEsc(src) + '" alt="附件圖檔" loading="lazy" decoding="async" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
     }
     var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word">' + _fbLinkify(it.text) + '</div>' : '';
     return '<div style="background:#fff;border:1px solid #D9DDD3;border-radius:12px;padding:11px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
@@ -11138,7 +11183,7 @@ window.fbRenderAdmin = async function() {
       var isData = /^data:/.test(it.imageUrl);
       var src = isData ? it.imageUrl : (it.imageId ? 'https://drive.google.com/thumbnail?id=' + it.imageId + '&sz=w1000' : it.imageUrl);
       imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
-        + '<img src="' + htEsc(src) + '" alt="附件圖檔" style="max-width:100%;max-height:320px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
+        + '<img src="' + htEsc(src) + '" alt="附件圖檔" loading="lazy" decoding="async" style="max-width:100%;max-height:320px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
     }
     var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-top:2px">' + _fbLinkify(it.text) + '</div>' : '<div style="font-size:12px;color:#B0B6AD;font-style:italic;margin-top:2px">（僅附圖，無文字）</div>';
     return '<div style="background:#fff;border:1px solid #E4E1D6;border-left:4px solid #E0820A;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(46,51,45,.05)">'
