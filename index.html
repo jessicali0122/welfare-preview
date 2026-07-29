@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729170244';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729170455';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3563,10 +3563,6 @@ thead th{color:#767B75!important}
       <div id="ht-dtab-menu" style="display:none">
         <div id="ht-menu-card" style="background:#fff;border-radius:12px;border:1px solid #D5DAD2;overflow:hidden"></div>
       </div>
-      <button onclick="htPrintMenu()" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;border-radius:10px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;width:100%;transition:background .15s" onmouseover="this.style.background='#eef4ec'" onmouseout="this.style.background='#F6F9F5'">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-        列印申請單
-      </button>
     </div><!-- end 右欄 -->
     </div><!-- end 2-col grid -->
 
@@ -15272,27 +15268,6 @@ function htRenderMenuCard() {
 
   document.getElementById('ht-menu-card').innerHTML = html;
 }
-
-window.htPrintMenu = function() {
-  if (!_htEvent) { toast('請先開啟活動'); return; }
-  // 申請單內容只在切到 menu tab 時才渲染，但該分頁已停用，故列印前先即時產生內容
-  htRenderMenuCard();
-  var card = document.getElementById('ht-menu-card');
-  if (!card || !card.innerHTML.trim()) { toast('沒有可列印的內容'); return; }
-  var w = window.open('', '_blank');
-  if (!w) { toast('列印視窗被瀏覽器封鎖，請允許彈出視窗後再試'); return; }
-  w.document.write('<html><head><meta charset="utf-8"><title>TSA High Tea Day 申請單</title>'
-    + '<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">'
-    + '<style>'
-    + 'body{margin:0;padding:0;font-family:\'Noto Sans TC\',sans-serif;color:#363B35;font-size:14px}'
-    + 'table{border-collapse:collapse}'
-    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}'
-    + '@page{margin:15mm 12mm}'
-    + '</style></head><body>'
-    + card.innerHTML + '</body></html>');
-  w.document.close();
-  setTimeout(function(){ w.print(); }, 800);
-};
 
 // ── 壽星管理 ──
 function htRenderBirthday() {
