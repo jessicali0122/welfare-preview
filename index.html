@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729163516';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729164400';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10967,15 +10967,45 @@ function _htTombstoned(itemId){
   return true;
 }
 
-// 狀態列提示（沒有對應元素就退回 toast，不影響功能）
-function _htSyncStatus(txt, sticky){
+// ── 常駐同步狀態列（比照 Google 試算表：隨時看得到「儲存中／已儲存」）──
+var _htSyncMsg = '';      // 短暫訊息（例如「已同步他人的變更」），2.5 秒後回到常態
+var _htSyncErr = 0;       // 尚未存成功的筆數（>0 會一直顯示警示，直到重試成功）
+var _htBusy    = 0;       // 進行中的刪除／排序寫入（這些不在 _htItems 裡，另外計數）
+
+// 尚未寫回雲端的列數（有內容的才算，空白列不計）
+function _htPendingCount(){
+  var n = 0;
+  (_htItems || []).forEach(function(it){ if (it && (it._dirty || it._saving) && !_htRowEmpty(it)) n++; });
+  return n;
+}
+function _htSyncRender(){
   var el = document.getElementById('ht-sync-status');
   if (!el) return;
+  var n = _htPendingCount();
+  var txt, color;
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    txt = '⚠️ 目前離線，變更已暫存，連線後會自動儲存'; color = '#C0655A';
+  } else if (_htSyncErr) {
+    txt = '⚠️ 有 ' + (n || _htSyncErr) + ' 筆尚未儲存，重試中…'; color = '#C0655A';
+  } else if (window._htFlushing || _htBusy > 0 || n) {
+    txt = '● 儲存中…'; color = '#C9760A';
+  } else {
+    txt = _htSyncMsg || '✔ 所有變更都已儲存'; color = _htSyncMsg ? '#738e41' : '#577B53';
+  }
   el.textContent = txt;
-  el.style.display = txt ? '' : 'none';
-  if (_htSyncBadgeT) { clearTimeout(_htSyncBadgeT); _htSyncBadgeT = null; }
-  if (txt && !sticky) _htSyncBadgeT = setTimeout(function(){ try { el.style.display = 'none'; } catch(e){} }, 2500);
+  el.style.color = color;
+  el.style.display = '';
 }
+// 短暫訊息（例如同步到他人變更），顯示完自動回到常態文字
+function _htSyncFlash(txt){
+  _htSyncMsg = txt;
+  if (_htSyncBadgeT) clearTimeout(_htSyncBadgeT);
+  _htSyncBadgeT = setTimeout(function(){ _htSyncMsg = ''; _htSyncRender(); }, 2500);
+  _htSyncRender();
+}
+// 連線恢復 → 立刻把還沒存的送出去
+window.addEventListener('online',  function(){ _htSyncRender(); if (_htEvent) _htFlushRows(); });
+window.addEventListener('offline', function(){ _htSyncRender(); });
 
 // 空白列（使用者剛按＋新增還沒填）不送後端，避免產生一堆空品項
 function _htRowEmpty(it){
@@ -10992,6 +11022,7 @@ function _htTouchItem(it, field){
   it._dirty = true;
   if (field) { if (!it._dirtyFields) it._dirtyFields = {}; it._dirtyFields[field] = 1; }
   else it._dirtyAll = true;           // 沒指定欄位 → 整列都算我的（保守作法）
+  _htSyncRender();                    // 一有改動就顯示「儲存中…」，使用者隨時知道狀態
   _htScheduleFlush();
 }
 function _htScheduleFlush(){
@@ -11007,14 +11038,15 @@ function _htFlushRows(){
   var dirty = _htItems.filter(function(it){ return it && it._dirty && !_htRowEmpty(it); });
   if (!dirty.length) return;
   window._htFlushing = true;
-  _htSyncStatus('儲存中…', true);
+  _htSyncRender();
   dirty.forEach(function(it){ it._dirty = false; it._saving = true; });
 
   var i = 0, failed = 0;
   var next = function(){
     if (i >= dirty.length || !_htEvent || _htEvent.eventId !== evId) {
       window._htFlushing = false;
-      _htSyncStatus(failed ? '⚠️ 部分變更尚未存到雲端，將自動重試' : '✅ 已同步', !!failed);
+      _htSyncErr = failed;
+      _htSyncRender();
       if (failed) _htScheduleFlush();     // 失敗的列已被標回 _dirty，稍後重試
       else _htPullOnce(evId);             // 存完立刻拉一次，別人幾乎同時就看得到／我也馬上收到他們的
       return;
@@ -11059,11 +11091,12 @@ function _htSaveOrder(){
     _htItems.forEach(function(it, i){ if (it) it.sortOrder = i + 1; });
     var order = _htItems.map(function(it){ return (it && it.itemId) || ''; }).filter(function(x){ return x; });
     if (!order.length) return;
-    _htSyncStatus('儲存排序中…', true);
+    _htBusy++; _htSyncRender();
     htApi('htReorderItems', { eventId: evId, order: order }).then(function(r){
-      if (r && r.ok) _htSyncStatus('✅ 已同步');
-      else _htSyncStatus('⚠️ 排序未存成功，請按「儲存」', true);
-    }).catch(function(){ _htSyncStatus('⚠️ 排序未存成功，請按「儲存」', true); });
+      _htBusy--;
+      if (r && r.ok) { _htSyncErr = 0; _htSyncRender(); }
+      else { _htSyncErr = _htSyncErr || 1; _htSyncRender(); }
+    }).catch(function(){ _htBusy--; _htSyncErr = _htSyncErr || 1; _htSyncRender(); });
   };
   _htFlushRows();
   go();
@@ -11172,7 +11205,7 @@ function _htPullOnce(eventId){
       var _fs = _htFocusState();
       try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
       _htRestoreFocus(_fs);
-      _htSyncStatus('🔄 已同步他人的變更');
+      _htSyncFlash('🔄 已同步他人的變更');
     }
     _htApplyPresence(_htPresence);
   }).catch(function(){});
@@ -14318,13 +14351,13 @@ function _htPersonColor(name) {
   for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return _HT_PERSON_COLORS[h % _HT_PERSON_COLORS.length];
 }
-// 主辦人下拉：套用與「負責人」膠囊一致的人員專屬色（選到誰就變誰的顏色，未選則白底）
+// 主辦人下拉：白底＋該人員專屬色的文字與邊線（與分類膠囊同一套作法，避免大面積色塊太搶眼）
 window._htStyleOrgSelect = function(sel) {
   if (!sel) return;
   var v = sel.value || '';
   if (v) {
     var pc = _htPersonColor(v);
-    sel.style.background = pc.bg; sel.style.color = pc.fg; sel.style.borderColor = pc.bd; sel.style.fontWeight = '700';
+    sel.style.background = '#fff'; sel.style.color = pc.bg; sel.style.borderColor = pc.bg; sel.style.fontWeight = '700';
   } else {
     sel.style.background = '#fff'; sel.style.color = '#363B35'; sel.style.borderColor = '#C3D2BE'; sel.style.fontWeight = '600';
   }
@@ -14673,6 +14706,7 @@ function htRenderItems() {
   document.getElementById('ht-total-cell').textContent = _htMoney(total);
   _htUpdateBalance();
   _htApplyPresence(_htPresence);   // 重繪後把「誰正在編這一列」的標記補回去
+  _htSyncRender();                 // 常駐同步狀態（儲存中／已儲存）
 }
 
 // ── 品項拖曳排序（自訂排序模式）──
@@ -14925,21 +14959,22 @@ window.htDeleteItem = function(idx) {
   if (it.itemId && _htEvent) {
     var evId = _htEvent.eventId;
     _htTombstone(it.itemId);
-    _htSyncStatus('刪除中…', true);
+    _htBusy++; _htSyncRender();
+    var _restore = function(msg){
+      delete _htDeleted[it.itemId];
+      _htItems.splice(Math.min(idx, _htItems.length), 0, it);
+      htRenderItems(); htRenderBudget();
+      _htSyncFlash('⚠️ 刪除失敗，已還原此列');
+      if (window.toast) toast(msg);
+    };
     htApi('htDeleteItem', { eventId: evId, itemId: it.itemId }).then(function(r){
-      if (r && r.ok) { _htSyncStatus('✅ 已同步'); return; }
+      _htBusy--;
+      if (r && r.ok) { _htSyncRender(); return; }
       // 刪除失敗 → 把列還原回畫面，絕不讓使用者以為刪掉了但雲端還在
-      delete _htDeleted[it.itemId];
-      _htItems.splice(Math.min(idx, _htItems.length), 0, it);
-      htRenderItems(); htRenderBudget();
-      _htSyncStatus('⚠️ 刪除失敗，已還原此列', true);
-      if (window.toast) toast('⚠️ 刪除失敗：' + ((r && r.error) || '網路問題'));
+      _restore('⚠️ 刪除失敗：' + ((r && r.error) || '網路問題'));
     }).catch(function(){
-      delete _htDeleted[it.itemId];
-      _htItems.splice(Math.min(idx, _htItems.length), 0, it);
-      htRenderItems(); htRenderBudget();
-      _htSyncStatus('⚠️ 刪除失敗，已還原此列', true);
-      if (window.toast) toast('⚠️ 刪除失敗，請檢查網路');
+      _htBusy--;
+      _restore('⚠️ 刪除失敗，請檢查網路');
     });
   }
 };
