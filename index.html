@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729152512';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729153041';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -14241,9 +14241,9 @@ function _htCatChipHtml(it, idx) {
 function _htAssigneeChipHtml(it, idx) {
   if (it.assignee) {
     var pc = _htPersonColor(it.assignee);
-    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';font-weight:700;background:'+pc.bg+';color:'+pc.fg+';border:1px solid '+pc.bd+'">'+htEsc(it.assignee)+'<span style="opacity:.4;font-size:12px">▾</span></button>';
+    return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';width:auto;max-width:100%;padding-left:12px;padding-right:10px;font-weight:700;background:'+pc.bg+';color:'+pc.fg+';border:1px solid '+pc.bd+'">'+htEsc(it.assignee)+'<span style="opacity:.4;font-size:12px">▾</span></button>';
   }
-  return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';font-weight:600;background:#fff;color:#9AA098;border:1px dashed #C6CDBE">＋ 指派</button>';
+  return '<button type="button" onclick="htOpenPicker(this,'+idx+',\'assignee\')" style="'+_HT_CHIP_BASE+';width:auto;max-width:100%;padding-left:12px;padding-right:10px;font-weight:600;background:#fff;color:#9AA098;border:1px dashed #C6CDBE">＋ 指派</button>';
 }
 window.htOpenPicker = function(anchor, idx, field) {
   htClosePicker();
@@ -14320,7 +14320,7 @@ function _htItemRowHtml(it, idx, draggable, groupKey) {
     + '<td data-label="單價" '+td+'><input data-idx="'+idx+'" data-f="unitPrice" type="number" value="'+(it.unitPrice||'')+'" placeholder="0" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="數量" '+td+'><input data-idx="'+idx+'" data-f="qty" type="number" min="0" value="'+it.qty+'" onchange="htItemChange(this)" class="ht-it-inp" '+inpR+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="小計" style="padding:10px 8px;vertical-align:middle;text-align:center;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap" id="ht-sub-'+idx+'">'+_htMoney(it.subtotal)+'</td>'
-    + '<td data-label="負責人" style="padding:10px 2px;vertical-align:middle;width:1%;white-space:nowrap">'+_htAssigneeChipHtml(it, idx)+'</td>'
+    + '<td data-label="負責人" style="padding:10px 6px;vertical-align:middle;width:1%;white-space:nowrap;text-align:center">'+_htAssigneeChipHtml(it, idx)+'</td>'
     + '<td data-label="是否訂購" style="padding:10px 4px;vertical-align:middle;text-align:center"><span onclick="htToggleOrder(this,'+idx+')" role="switch" aria-checked="'+(it.ordered?'true':'false')+'" title="'+(it.ordered?'已訂購':'未訂購')+'" style="display:inline-block;width:42px;height:24px;border-radius:24px;background:'+(it.ordered?'#577B53':'#D2D7CD')+';position:relative;cursor:pointer;transition:background .18s;vertical-align:middle"><span style="position:absolute;top:2px;left:'+(it.ordered?'20px':'2px')+';width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .18s"></span></span></td>'
     + '<td data-label="備註" '+td+'><input data-idx="'+idx+'" data-f="notes" value="'+htEsc(it.notes)+'" placeholder="—" onchange="htItemChange(this)" class="ht-it-inp" '+inp+' onfocus="'+fOn+'" onblur="'+fOff+'"></td>'
     + '<td data-label="連結" style="padding:10px 8px;vertical-align:middle;white-space:nowrap;text-align:center;overflow:hidden">'+_htLinkInnerHtml(it, idx)+'</td>'
