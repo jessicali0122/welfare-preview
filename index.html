@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729150958';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729151603';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3551,7 +3551,7 @@ thead th{color:#767B75!important}
           <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
           <div style="margin-top:12px;padding-top:10px;border-top:1px solid #D9DDD3;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 10px">
             <span style="font-size:14px;color:#767B75;white-space:nowrap">慶生預算加碼</span>
-            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53;white-space:nowrap;margin-left:auto">NT$0</span>
+            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53;margin-left:auto;text-align:right;min-width:0;line-height:1.4">NT$0</span>
           </div>
         </div>
       </div>
@@ -7617,6 +7617,11 @@ async function _syncMembersFromServer() {
     }).filter(Boolean);
     if (typeof applyNavVisibility === 'function') applyNavVisibility();
     if (typeof applyDashboardBlocks === 'function') applyDashboardBlocks();
+    // 生日資料剛建立好：若午茶「本月壽星」面板已因快取搶先渲染（此時 _BF_USER_BDAYS 還空、日期抓不到），
+    // 重新渲染一次讓每位壽星的生日日期補上
+    if (typeof htRenderBirthday === 'function' && typeof _htEvent !== 'undefined' && _htEvent) {
+      try { htRenderBirthday(); } catch(e) {}
+    }
     _refreshDeptOptions(res.members);
     // 把角色快取進 localStorage，下次頁面載入可立即套用
     try {
@@ -14956,9 +14961,10 @@ function htRenderBirthday() {
   var hc = (_htEvent && _htEvent.headcount) || 0;
   // 有壽星（不論幾位）→ 全體每人 +40 預算加碼；沒有壽星則為 0
   var bonus = list.length > 0 ? hc * perPerson : 0;
-  document.getElementById('ht-bday-total').textContent = list.length > 0
-    ? fmtMoney(bonus) + '（有壽星 → 全體 ' + hc + ' 人 × NT$' + perPerson + '）'
-    : fmtMoney(0) + '（本月無壽星）';
+  var _sub = list.length > 0
+    ? '<span style="display:block;font-size:12px;color:#9AA098;font-weight:400;margin-top:2px">全體 ' + hc + ' 人 × NT$' + perPerson + '</span>'
+    : '<span style="display:block;font-size:12px;color:#9AA098;font-weight:400;margin-top:2px">本月無壽星</span>';
+  document.getElementById('ht-bday-total').innerHTML = fmtMoney(bonus) + _sub;
 }
 
 // 從 DB 建議清單中加入／移除壽星
