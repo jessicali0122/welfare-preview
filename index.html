@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260729153041';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260729153848';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3427,12 +3427,12 @@ thead th{color:#767B75!important}
           <!-- 主辦人 1 -->
           <div>
             <div style="font-size:12px;color:#767B75;margin-bottom:5px">主辦人 1</div>
-            <select id="ht-event-org1" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#C3D2BE'"></select>
+            <select id="ht-event-org1" onchange="_htStyleOrgSelect(this);htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="_htStyleOrgSelect(this)"></select>
           </div>
           <!-- 主辦人 2 -->
           <div>
             <div style="font-size:12px;color:#767B75;margin-bottom:5px">主辦人 2</div>
-            <select id="ht-event-org2" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="this.style.borderColor='#C3D2BE'"></select>
+            <select id="ht-event-org2" onchange="_htStyleOrgSelect(this);htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;cursor:pointer;background:#fff" onfocus="this.style.borderColor='#577B53'" onblur="_htStyleOrgSelect(this)"></select>
           </div>
           <!-- 壽星人數欄位已移除（改由下方「本月壽星」名單管理）；保留隱藏 span 供既有計數邏輯寫入 -->
           <span id="ht-event-bday-disp" style="display:none">0</span>
@@ -13868,9 +13868,9 @@ function htRenderDetailHeader() {
       // 倒數膠囊：深色實心才夠明顯（淺底版本使用者反映看不出來）
       var bg, fg, bd, dot, txt, txtMini;
       if (days > 3)        { bg='#46633F'; fg='#fff'; bd='#46633F'; dot='#A9C4A5';
-                             txt='距活動 <b style="font-size:16px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
+                             txt='距活動 <b style="font-size:14px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
       else if (days > 0)   { bg='#B26B00'; fg='#fff'; bd='#B26B00'; dot='#FBE3B8';
-                             txt='距活動 <b style="font-size:16px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
+                             txt='距活動 <b style="font-size:14px">'+days+'</b> 天'; txtMini='距活動 '+days+' 天'; }
       else if (days === 0) { bg='#C2410C'; fg='#fff'; bd='#C2410C'; dot='#FBD5C0';
                              txt='活動就在今天 🎉'; txtMini='今天 🎉'; }
       else                 { bg='#5F5E5A'; fg='#fff'; bd='#5F5E5A'; dot='#C9CAC6';
@@ -13924,6 +13924,7 @@ function htRenderDetailHeader() {
     }
     sel.innerHTML = opts;
     sel.value = cur;
+    if (typeof _htStyleOrgSelect === 'function') _htStyleOrgSelect(sel);   // 依選到的人套用專屬色
   });
   htUpdateCalcBudget();
 }
@@ -14015,7 +14016,8 @@ var _HT_CAT_COLORS = {
   '甜點': { fg:'#C06A8E', bg:'#FBF0F4', bd:'#F0D8E2' },
   '鹹食': { fg:'#C08A3E', bg:'#FBF4E8', bd:'#EEDFC2' },
   '飲料': { fg:'#4E8FA6', bg:'#EDF5F8', bd:'#D2E6ED' },
-  '水果': { fg:'#4A9E86', bg:'#EEF6F3', bd:'#D2E8E1' }
+  '水果': { fg:'#4A9E86', bg:'#EEF6F3', bd:'#D2E8E1' },
+  '其他': { fg:'#77837A', bg:'#F1F3F0', bd:'#DEE3DC' }
 };
 function _htCatColor(cat) {
   return _HT_CAT_COLORS[cat] || { fg:'#767B75', bg:'#fff', bd:'#ECEEEA' };
@@ -14040,6 +14042,17 @@ function _htPersonColor(name) {
   for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
   return _HT_PERSON_COLORS[h % _HT_PERSON_COLORS.length];
 }
+// 主辦人下拉：套用與「負責人」膠囊一致的人員專屬色（選到誰就變誰的顏色，未選則白底）
+window._htStyleOrgSelect = function(sel) {
+  if (!sel) return;
+  var v = sel.value || '';
+  if (v) {
+    var pc = _htPersonColor(v);
+    sel.style.background = pc.bg; sel.style.color = pc.fg; sel.style.borderColor = pc.bd; sel.style.fontWeight = '700';
+  } else {
+    sel.style.background = '#fff'; sel.style.color = '#363B35'; sel.style.borderColor = '#C3D2BE'; sel.style.fontWeight = '600';
+  }
+};
 
 async function _htShowRepeatWarning() {
   var warning = document.getElementById('ht-repeat-warning');
