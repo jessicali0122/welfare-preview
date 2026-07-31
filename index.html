@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260731132252';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260731132646';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11064,6 +11064,28 @@ function _htFlushRows(){
   dirty.forEach(function(it){ it._dirty = false; it._saving = true; });
 
   var i = 0, failed = 0, running = 0;
+  // 一列的送出內容（批次／單列共用）
+  var _payloadOf = function(it){
+    return {
+      itemId: it.itemId || '', name: it.name || '', vendor: it.vendor || '',
+      category: it.category || '', unitPrice: Number(it.unitPrice) || 0, qty: Number(it.qty) || 0,
+      serving: it.serving || '', assignee: it.assignee || '', ordered: !!it.ordered,
+      notes: it.notes || '', link: it.link || ''
+    };
+  };
+  // 存成功後的欄位收尾：存檔期間又被改到的欄位保留為未存，下輪再送
+  var _settle = function(it, r, sentFields, sentAll){
+    it._saving = false;
+    if (r && r.ok) {
+      if (r.itemId) it.itemId = r.itemId;
+      if (r.sortOrder) it.sortOrder = r.sortOrder;
+      if (!it._dirty) { it._dirtyFields = null; it._dirtyAll = false; }
+      else {
+        if (sentFields && it._dirtyFields) Object.keys(sentFields).forEach(function(k){ delete it._dirtyFields[k]; });
+        if (sentAll) it._dirtyAll = false;
+      }
+    } else { it._dirty = true; failed++; }   // 沒存成功 → 標回未存，下輪重試（本機值保留）
+  };
   var done = function(){
     window._htFlushing = false;
     _htSyncErr = failed;
@@ -11080,33 +11102,34 @@ function _htFlushRows(){
     }
     var it = dirty[i++];
     var _sentFields = it._dirtyFields, _sentAll = it._dirtyAll;
-    var payload = {
-      itemId: it.itemId || '', name: it.name || '', vendor: it.vendor || '',
-      category: it.category || '', unitPrice: Number(it.unitPrice) || 0, qty: Number(it.qty) || 0,
-      serving: it.serving || '', assignee: it.assignee || '', ordered: !!it.ordered,
-      notes: it.notes || '', link: it.link || ''
-    };
-    htApi('htUpsertItem', { eventId: evId, item: payload }).then(function(r){
-      it._saving = false;
-      if (r && r.ok) {
-        if (r.itemId) it.itemId = r.itemId;
-        if (r.sortOrder) it.sortOrder = r.sortOrder;
-        // 已存成功的欄位才清掉；存檔期間又被改動的欄位保留為未存，下輪再送
-        if (!it._dirty) { it._dirtyFields = null; it._dirtyAll = false; }
-        else {
-          if (_sentFields && it._dirtyFields) Object.keys(_sentFields).forEach(function(k){ delete it._dirtyFields[k]; });
-          if (_sentAll) it._dirtyAll = false;
-        }
-      }
-      else { it._dirty = true; failed++; }                 // 沒存成功 → 標回未存，下輪重試（本機值保留）
-    }).catch(function(){
-      it._saving = false; it._dirty = true; failed++;
-    }).then(next);
+    htApi('htUpsertItem', { eventId: evId, item: _payloadOf(it) })
+      .then(function(r){ _settle(it, r, _sentFields, _sentAll); })
+      .catch(function(){ it._saving = false; it._dirty = true; failed++; })
+      .then(next);
   };
   // 開 _HT_FLUSH_CONC 條並行通道；每條做完一列就接下一列，全部收工才算存完
-  var lanes = Math.min(_HT_FLUSH_CONC, dirty.length);
-  running = lanes;
-  for (var L = 0; L < lanes; L++) next();
+  var runPerRow = function(){
+    var lanes = Math.min(_HT_FLUSH_CONC, dirty.length - i);
+    if (lanes <= 0) { done(); return; }
+    running = lanes;
+    for (var L = 0; L < lanes; L++) next();
+  };
+
+  // 兩列以上 → 走批次端點，N 趟 GAS 併成 1 趟；後端若還沒部署（回不 ok）就退回逐列送
+  if (dirty.length < 2) { runPerRow(); return; }
+  var sent = dirty.map(function(it){ return { it: it, f: it._dirtyFields, a: it._dirtyAll }; });
+  htApi('htUpsertItems', { eventId: evId, items: dirty.map(_payloadOf) }).then(function(r){
+    if (!r || !r.ok || !Array.isArray(r.results)) {
+      dirty.forEach(function(it){ it._saving = false; });   // 批次不支援／整批失敗 → 逐列重送
+      runPerRow();
+      return;
+    }
+    sent.forEach(function(s, k){ _settle(s.it, r.results[k], s.f, s.a); });
+    done();
+  }).catch(function(){
+    dirty.forEach(function(it){ it._saving = false; });
+    runPerRow();
+  });
 }
 
 // 排序異動（拖曳／上下移）：走專用的 htReorderItems，後端只寫「排序」欄，
@@ -11327,7 +11350,7 @@ function _htBdaysForMonth(monthNum) {
 var _HT_CACHEABLE = new Set(['htList','htGetItems','htVendors','htSheetList','htVoteGet','htVoteItemsGet','feedbackList']);
 var _HT_SWR_REFRESH = 90000;   // 快取超過 90 秒才在背景更新；90 秒內直接用快取、不打 GAS（避免頻繁讀取灌爆很慢的後端）
 // 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
-var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUpsertItems|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
 // 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
 function _htFetchRaw(body, timeoutMs) {
