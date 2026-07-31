@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260731124859';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260731132252';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -10953,7 +10953,8 @@ function _htStopItemsPoll(){ if (_htItemsPollTimer) { clearInterval(_htItemsPoll
 // ══ 逐列即時協作引擎 ══════════════════════════════════════
 // 作法：任一格改動 → 該列標記 _dirty → debounce 1 秒後只把「有變動的列」用 htUpsertItem 單列寫回；
 // 輪詢改成逐列合併（依 itemId 比對），不再整張覆蓋 → 兩人各改各的列不會互相蓋掉，資料不會遺失。
-var _HT_AUTOSAVE_MS = 1000;   // 停止打字後多久自動存
+var _HT_AUTOSAVE_MS = 400;    // 停止打字後多久自動存（輸入框是 onchange＝離開欄位才觸發，不需要長 debounce）
+var _HT_FLUSH_CONC  = 3;      // 同時送幾列（GAS 來回 1～3 秒，並行才不會改 5 列等 10 秒）
 var _HT_POLL_MS     = 4000;   // 背景拉新頻率（逐列合併＋只在詳情頁前景時才拉，GAS 配額吃得住）
 var _htFlushTimer   = null;
 var _htDeleted      = {};     // 本機剛刪除的 itemId → 時間，避免輪詢把它救回來
@@ -11062,15 +11063,19 @@ function _htFlushRows(){
   _htSyncRender();
   dirty.forEach(function(it){ it._dirty = false; it._saving = true; });
 
-  var i = 0, failed = 0;
+  var i = 0, failed = 0, running = 0;
+  var done = function(){
+    window._htFlushing = false;
+    _htSyncErr = failed;
+    if (!failed) _htMarkSaved();
+    _htSyncRender();
+    if (failed) _htScheduleFlush();     // 失敗的列已被標回 _dirty，稍後重試
+    else _htPullOnce(evId);             // 存完立刻拉一次，別人幾乎同時就看得到／我也馬上收到他們的
+  };
   var next = function(){
     if (i >= dirty.length || !_htEvent || _htEvent.eventId !== evId) {
-      window._htFlushing = false;
-      _htSyncErr = failed;
-      if (!failed) _htMarkSaved();
-      _htSyncRender();
-      if (failed) _htScheduleFlush();     // 失敗的列已被標回 _dirty，稍後重試
-      else _htPullOnce(evId);             // 存完立刻拉一次，別人幾乎同時就看得到／我也馬上收到他們的
+      running--;
+      if (running <= 0) done();
       return;
     }
     var it = dirty[i++];
@@ -11098,7 +11103,10 @@ function _htFlushRows(){
       it._saving = false; it._dirty = true; failed++;
     }).then(next);
   };
-  next();
+  // 開 _HT_FLUSH_CONC 條並行通道；每條做完一列就接下一列，全部收工才算存完
+  var lanes = Math.min(_HT_FLUSH_CONC, dirty.length);
+  running = lanes;
+  for (var L = 0; L < lanes; L++) next();
 }
 
 // 排序異動（拖曳／上下移）：走專用的 htReorderItems，後端只寫「排序」欄，
