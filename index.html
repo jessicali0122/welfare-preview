@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260731132646';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260802200119';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11053,12 +11053,13 @@ function _htScheduleFlush(){
 }
 
 // 把所有 _dirty 的列逐列寫回後端（依序送，避免同時打 GAS 搶鎖）
-function _htFlushRows(){
-  if (!_htEvent) return;
-  if (window._htFlushing) { _htScheduleFlush(); return; }   // 上一批還沒送完 → 稍後再試
+function _htFlushRows(onDone){
+  var _fin = function(failed){ if (typeof onDone === 'function') { try { onDone(failed || 0); } catch(e){} } };
+  if (!_htEvent) { _fin(0); return; }
+  if (window._htFlushing) { _htScheduleFlush(); _fin(0); return; }   // 上一批還沒送完 → 併入下一批，這裡先回呼（那批完成會標記已存）
   var evId  = _htEvent.eventId;
   var dirty = _htItems.filter(function(it){ return it && it._dirty && !_htRowEmpty(it); });
-  if (!dirty.length) return;
+  if (!dirty.length) { _fin(0); return; }
   window._htFlushing = true;
   _htSyncRender();
   dirty.forEach(function(it){ it._dirty = false; it._saving = true; });
@@ -11093,6 +11094,7 @@ function _htFlushRows(){
     _htSyncRender();
     if (failed) _htScheduleFlush();     // 失敗的列已被標回 _dirty，稍後重試
     else _htPullOnce(evId);             // 存完立刻拉一次，別人幾乎同時就看得到／我也馬上收到他們的
+    _fin(failed);                       // 通知呼叫端（手動「儲存」按鈕）本批已收工
   };
   var next = function(){
     if (i >= dirty.length || !_htEvent || _htEvent.eventId !== evId) {
@@ -15040,56 +15042,29 @@ window.htDeleteItem = function(idx) {
 
 window.htSaveItems = function() {
   if (!_htEvent) return;
-  if (window._htSaving) { toast('⏳ 上一次儲存還在進行，請稍候'); return; }   // 避免重複送出
+  if (window._htManualSaving) { toast('⏳ 上一次儲存還在進行，請稍候'); return; }   // 避免重複送出
   // 送出前先讓游標所在的輸入框失焦，觸發其 onchange 把「剛打完還沒失焦」的最後編輯寫進 _htItems，避免漏存
   var _ae = document.activeElement;
   if (_ae && _ae.classList && _ae.classList.contains('ht-it-inp') && typeof _ae.blur === 'function') { try { _ae.blur(); } catch(e){} }
   var btn = document.getElementById('ht-save-btn');
-  var _evId = _htEvent.eventId;
-  // 存檔期間按鈕顯示「儲存中…」（UI 不卡，仍可編輯）；真正成功後才跳「已儲存」
-  window._htSaving = true;
+  // 手動「儲存」＝立刻把未存的列送出。所有欄位改動都已標 _dirty 進自動存佇列，
+  // 這裡直接觸發同一套「逐列批次寫回」（htUpsertItems，1 趟 GAS、且是依 itemId 合併不整張覆蓋，
+  // 不會蓋掉他人同時在改的列）——比舊的「偵測衝突1趟＋整張覆蓋1趟＋回填1趟」快 2～3 倍，也更安全。
+  var pending = _htItems.some(function(it){ return it && (it._dirty || it._saving) && !_htRowEmpty(it); });
+  if (!pending && !_htFlushTimer && !window._htFlushing) {
+    _htMarkSaved(); _htSyncRender();   // 沒有任何未存變更 → 免打 GAS，直接回饋
+    toast('✅ 已是最新，無需重複儲存');
+    return;
+  }
+  window._htManualSaving = true;
   if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-  var _resetBtn = function(){ window._htSaving = false; if (btn) { btn.textContent = '💾 儲存'; btn.disabled = false; } };
-
-  var _doSave = function() {
-    window._htSaving = true;
-    if (btn) { btn.textContent = '儲存中…'; btn.disabled = true; }
-    htApi('htSaveItems', { eventId: _evId, items: _htItems }).then(function(r) {
-      if (!r || !r.ok) { toast('⚠️ 儲存失敗，請再按一次「儲存」：' + ((r && r.error) || '網路問題')); return; }
-      toast('✅ 已儲存');
-      _htMarkSaved(); _htSyncRender();
-      _htItemsLoadedSig = _htSig(_htItems);   // 剛存成功 → 目前本機狀態即為與後端一致的基準
-      // 存檔成功 → 背景重讀對帳（取回後端重算欄位）。防呆：已切單據或正在編輯就不覆蓋，只補 itemId。
-      htApi('htGetItems', { eventId: _evId }).then(function(r2) {
-        if (!r2 || !r2.ok) return;
-        if (!_htEvent || _htEvent.eventId !== _evId) return;
-        var _tb = document.getElementById('ht-items-tbody');
-        var _editing = _tb && document.activeElement && _tb.contains(document.activeElement);
-        if (_editing) {
-          (r2.items || []).forEach(function(sv, i){ if (_htItems[i] && !_htItems[i].itemId && sv && sv.itemId) _htItems[i].itemId = sv.itemId; });
-          _htEvent = r2.event;
-          return;
-        }
-        _htEvent = r2.event; _htItems = r2.items || []; _htItemsLoadedSig = _htSig(_htItems); htRenderDetailHeader(); htRenderItems(); htRenderBudget();
-      }).catch(function(){});
-    }).catch(function() {
-      toast('⚠️ 儲存失敗，請檢查網路後再按一次「儲存」');
-    }).then(_resetBtn);
-  };
-
-  // 存檔前先偵測他人是否已改動（防覆蓋）：後端最新內容 ≠ 我載入時的基準 → 跳確認，不再靜默覆蓋
-  _htFetchItemsFresh(_evId).then(function(fr){
-    var serverSig = (fr && fr.ok) ? _htSig(fr.items || []) : null;
-    if (serverSig !== null && serverSig !== _htItemsLoadedSig) {
-      _resetBtn();   // 先解鎖，交給使用者決定
-      _showConfirmModal('⚠️ 他人剛更新了這張品項',
-        '在你編輯期間，其他人已儲存過這張活動的品項。<br>若直接儲存，<b>他們的變更會被你的版本覆蓋</b>。<br><br>建議先「取消」，把你的修改記下來，重新整理載入最新版後再補上。',
-        '仍以我的版本覆蓋', '#C0655A',
-        function(){ _doSave(); });
-      return;
-    }
-    _doSave();
-  }).catch(function(){ _doSave(); });   // 偵測失敗不擋存檔，維持原本行為
+  if (_htFlushTimer) { clearTimeout(_htFlushTimer); _htFlushTimer = null; }   // 取消 debounce，立即送
+  _htFlushRows(function(failed){
+    window._htManualSaving = false;
+    if (btn) { btn.textContent = '💾 儲存'; btn.disabled = false; }
+    if (failed) toast('⚠️ 有 ' + failed + ' 筆未存成功，系統會自動重試');
+    else toast('✅ 已儲存');
+  });
 };
 
 // ── 預算結算 ──
