@@ -170,12 +170,16 @@
   async function htGetItems(p) {
     if (!p || !p.eventId) return { ok: false, error: '缺少活動編號' };
     var evId = String(p.eventId);
-    var evR = await _sb('ht_events?event_id=eq.' + _enc(evId) + '&select=*&limit=1');
+    // ★ 兩支查詢彼此無關 → 並行送，載入時間砍半（原本是串行等兩趟）
+    // ★ 品項一定要有第二排序鍵：舊資料的 sort_order 可能全是 0，只用 sort_order 排
+    //   每次回傳順序都可能不同 → 畫面每輪詢一次就重排一次（使用者看到的「跳一下」）
+    var both = await Promise.all([
+      _sb('ht_events?event_id=eq.' + _enc(evId) + '&select=*&limit=1'),
+      _sb('ht_items?event_id=eq.' + _enc(evId) + '&select=*&order=sort_order.asc,item_id.asc')
+    ]);
+    var evR = both[0], itR = both[1];
     if (evR.__error) return { ok: false, error: evR.__error };
     var event = (evR.__data && evR.__data[0]) ? eventFromDb(evR.__data[0]) : null;
-    // ★ 一定要有第二排序鍵：舊資料的 sort_order 可能全是 0，只用 sort_order 排會每次回傳不同順序
-    //   → 畫面每輪詢一次就重排一次（使用者看到的「跳一下」）
-    var itR = await _sb('ht_items?event_id=eq.' + _enc(evId) + '&select=*&order=sort_order.asc,item_id.asc');
     if (itR.__error) return { ok: false, error: itR.__error };
     var items = (itR.__data || []).map(itemFromDb);
     _backfillSort(evId, items);   // 舊列補上排序值（背景做，絕不阻塞載入）
@@ -280,13 +284,18 @@
     // 取本活動現有品項的排序值：
     //  ① 已存在的列 → 沿用 DB 既有排序（呼叫端沒帶 sortOrder 時也不會被當成新列丟到最後）
     //  ② 真正的新列 → 接在目前最大值後面
-    var curR = await _sb('ht_items?event_id=eq.' + _enc(p.eventId) + '&select=item_id,sort_order');
+    // 只有「有列沒帶排序」時才需要這趟查詢——前端寫回一律會帶 sortOrder，
+    // 所以正常存檔完全不會多跑，避免每次存檔都多一個來回（存檔變慢的元凶）。
     var curSort = {}, maxSort = 0;
-    if (!curR.__error) (curR.__data || []).forEach(function (r) {
-      var s = Number(r.sort_order) || 0;
-      curSort[String(r.item_id)] = s;
-      if (s > maxSort) maxSort = s;
-    });
+    var needLookup = p.items.some(function (it) { return !(Number(it.sortOrder) > 0); });
+    if (needLookup) {
+      var curR = await _sb('ht_items?event_id=eq.' + _enc(p.eventId) + '&select=item_id,sort_order');
+      if (!curR.__error) (curR.__data || []).forEach(function (r) {
+        var s = Number(r.sort_order) || 0;
+        curSort[String(r.item_id)] = s;
+        if (s > maxSort) maxSort = s;
+      });
+    }
     var rows = p.items.map(function (it) {
       var row = itemToDb(it, p.eventId);
       if (!(Number(row.sort_order) > 0)) {
