@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803162024';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803163137';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11049,7 +11049,9 @@ function _htSyncRender(){
   } else if (_htSyncMsg) {
     txt = _htSyncMsg + suffix; color = '#738e41';
   } else {
-    txt = at ? ('✔ 已儲存 · ' + at) : '✔ 所有變更都已儲存';
+    // Realtime 連上時標一個「⚡」，讓使用者知道現在別人的變更是即時進來的
+    var live = _htRtLive() ? '⚡ ' : '';
+    txt = live + (at ? ('✔ 已儲存 · ' + at) : '✔ 所有變更都已儲存');
     color = '#577B53';
   }
   el.textContent = txt;
@@ -11311,16 +11313,94 @@ function _htPullOnce(eventId){
 }
 function _htStartItemsPoll(eventId){
   _htStopItemsPoll();
+  var tick = 0;
   _htItemsPollTimer = setInterval(function(){
     if (document.hidden) return;                                   // 分頁在背景不拉
     if (!_htEvent || _htEvent.eventId !== eventId) { _htStopItemsPoll(); return; }
     var _dp = document.getElementById('ht-detail-panel');
     if (!_dp || _dp.style.display === 'none') return;              // 已離開活動詳情（切頁）→ 本次不拉
+    tick++;
+    // Realtime 已連上 → 變更是即時推來的，輪詢降為每 5 次才拉一次（20 秒）當安全網；
+    // 沒連上（CDN 被擋／WebSocket 不通）→ 維持原本 4 秒節奏，功能完全不受影響。
+    if (_htRtLive() && (tick % 5) !== 0) return;
     _htPullOnce(eventId);
   }, _HT_POLL_MS);
 }
+
+// ══════════════════════════════════════════
+//  階段 3：Realtime 逐列即時協作
+//  別人改了某一列，幾百毫秒內就套進畫面，不必等輪詢。
+//  規則與輪詢合併一致：我還沒存完的欄位一律保留我的，其餘吃遠端的。
+// ══════════════════════════════════════════
+function _htRtLive(){
+  try { return window.htRealtime && window.htRealtime.status() === 'SUBSCRIBED'; } catch(e){ return false; }
+}
+var _htRtRepaintT = null;
+// 多列同時推來（例如別人按整批儲存）時，收攏成一次重繪，避免畫面連續閃動
+function _htRtScheduleRepaint(){
+  if (_htRtRepaintT) return;
+  _htRtRepaintT = setTimeout(function(){
+    _htRtRepaintT = null;
+    if (!_htEvent) return;
+    var fs = _htFocusState();
+    try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
+    _htRestoreFocus(fs);
+    _htItemsLoadedSig = _htSig(_htItems);
+    _htSyncFlash('🔄 已同步他人的變更');
+  }, 150);
+}
+function _htFindIdxById(itemId){
+  for (var i = 0; i < _htItems.length; i++) if (_htItems[i] && _htItems[i].itemId === itemId) return i;
+  return -1;
+}
+function _htApplyRemoteItem(it){
+  if (!_htEvent || !it || !it.itemId) return;
+  if (_htTombstoned(it.itemId)) return;                 // 我剛刪掉的，別救回來
+  var before = _htSig(_htItems);
+  var idx = _htFindIdxById(it.itemId);
+  if (idx >= 0) {
+    var lo = _htItems[idx];
+    if (lo._dirty || lo._saving) {
+      if (lo._dirtyAll || !lo._dirtyFields) return;     // 整列都算我的 → 完全不動
+      Object.keys(lo._dirtyFields).forEach(function(k){ it[k] = lo[k]; });   // 我改過的欄位留我的
+      it.subtotal = (Number(it.unitPrice) || 0) * (Number(it.qty) || 0);
+      it._dirty = lo._dirty; it._saving = lo._saving;
+      it._dirtyFields = lo._dirtyFields; it._dirtyAll = lo._dirtyAll;
+    }
+    it._editLink = lo._editLink;                        // 保留「正在編連結」的 UI 狀態
+    _htItems[idx] = it;
+  } else {
+    _htItems.push(it);
+    _htItems.sort(function(a,b){ return (Number(a.sortOrder)||0) - (Number(b.sortOrder)||0); });
+  }
+  // 內容沒變（多半是我自己剛存的那筆繞回來）→ 不重繪、不跳提示，免得一直閃
+  if (_htSig(_htItems) !== before) _htRtScheduleRepaint();
+}
+function _htApplyRemoteDelete(itemId){
+  if (!_htEvent || !itemId) return;
+  var idx = _htFindIdxById(itemId);
+  if (idx < 0) return;
+  var lo = _htItems[idx];
+  if (lo._dirty || lo._saving) return;                  // 我正在改這列 → 先不動，交給輪詢對齊
+  _htItems.splice(idx, 1);
+  _htRtScheduleRepaint();
+}
+function _htStartRealtime(eventId){
+  if (!window.htRealtime) return;
+  try {
+    window.htRealtime.subscribe(eventId, {
+      onUpsert: _htApplyRemoteItem,
+      onDelete: _htApplyRemoteDelete,
+      onStatus: function(st){
+        try { console.log('[BeneFlow] Realtime:', st); } catch(e){}
+        _htSyncRender();
+      }
+    });
+  } catch(e){}
+}
 window._htStopItemsPoll = function(){
   _htStopItemsPoll();
+  try { if (window.htRealtime) window.htRealtime.unsubscribe(); } catch(e){}   // 離開活動就退訂
   if (_htFlushTimer) { clearTimeout(_htFlushTimer); _htFlushTimer = null; }
   _htFlushRows();                       // 離開前把還沒存的列送出去，不讓變更留在記憶體
 };
@@ -11468,6 +11548,8 @@ function _htSbTokenLoad() {                   // 從 localStorage 還原（綁 e
 }
 function _htSbTokenSave(token, exp) {
   window.HT_SB_TOKEN = token; _htSbTokenExp = exp;
+  // Realtime 的 WebSocket 也吃這張 JWT，換新時要同步過去，否則到期會被伺服器踢掉
+  try { if (window.htRealtime) window.htRealtime.setAuth(token); } catch (e) {}
   try {
     localStorage.setItem(_HT_SB_TOK_LS, JSON.stringify({
       token: token, exp: exp, email: (currentUser && currentUser.email) || ''
@@ -13777,7 +13859,8 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   htRenderItems();
   htRenderBudget();
   htRenderBirthday();
-  _htStartItemsPoll(_htEvent.eventId);   // 開場後啟動每 25 秒背景拉新（無人編輯時才套用）
+  _htStartItemsPoll(_htEvent.eventId);   // 背景拉新（安全網；Realtime 連上後自動降頻）
+  _htStartRealtime(_htEvent.eventId);    // 階段 3：訂閱本活動的逐列即時變更
   // 預先載入近兩場品項，供重複偵測使用
   _htPastItemsCache = null;
   var _pastIds = (_htEvents || []).filter(function(e){ return e.eventId !== _htEvent.eventId; }).slice(0,2).map(function(e){ return e.eventId; });
