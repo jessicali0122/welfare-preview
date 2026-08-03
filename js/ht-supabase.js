@@ -19,9 +19,15 @@
 
   // 使用者 JWT：登入後由 GAS 用 Supabase JWT secret 簽發（role=authenticated），
   // 存於 window.HT_SB_TOKEN。RLS 只認這張 token；沒有它 → anon → 一律被擋（機密資料不外流）。
-  function _authToken() {
-    return (typeof window !== 'undefined' && window.HT_SB_TOKEN) ? window.HT_SB_TOKEN : SB_KEY;
+  // ★ Fail-closed：沒有有效 JWT 就「不要」退回公開 key。
+  //   退回 anon 的話每個請求都會被 RLS 擋成 401，但前端看起來只是「存檔失敗」，
+  //   使用者會以為存好了 → 這正是「編輯的東西突然全部消失」的成因。
+  function _validToken() {
+    var t = (typeof window !== 'undefined' && window.HT_SB_TOKEN) || '';
+    return (typeof t === 'string' && t.split('.').length === 3) ? t : '';   // JWT 必須是三段
   }
+
+  function _authToken() { return _validToken() || SB_KEY; }
 
   function _headers(extra) {
     var h = {
@@ -36,6 +42,10 @@
   // 統一錯誤處理：一律 resolve 成 {ok:false,error} —— 與 GAS 端呼叫慣例一致（呼叫端只看 r.ok）
   function _sb(path, opts) {
     opts = opts || {};
+    // 沒有有效 JWT → 一律不送出，直接回明確錯誤（尤其寫入：寧可擋下也不要假裝存好了）
+    if (!_validToken()) {
+      return Promise.resolve({ __error: '尚未取得存取憑證（登入憑證簽發失敗），請重新整理頁面；若持續發生請通知管理者', __status: 401 });
+    }
     return fetch(REST + path, {
       method: opts.method || 'GET',
       headers: _headers(opts.headers),
