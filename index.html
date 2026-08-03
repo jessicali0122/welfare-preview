@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803173442';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803174027';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11206,8 +11206,15 @@ function _htSaveOrder(){
   var go = function(){
     // 先等新列拿到 itemId（沒有 id 的列排不進去），再送順序
     if (window._htFlushing) { setTimeout(go, 300); return; }
-    _htItems.forEach(function(it, i){ if (it) it.sortOrder = i + 1; });
-    var order = _htItems.map(function(it){ return (it && it.itemId) || ''; }).filter(function(x){ return x; });
+    // ★ 本機排序值必須與「實際送出的順序」一致。
+    //   清單裡若有還沒存進後端的空白列（按了「新增品項」卻沒填），它們沒有 itemId、
+    //   送不出去；若還照 _htItems 的索引編號，本機 sortOrder 就會比後端多算那幾格 →
+    //   本機與 DB 的排序值從此對不上，下次寫回又把錯的值蓋回 DB → 順序整個亂掉。
+    //   所以編號只依「真正送出去的那些列」遞增。
+    var order = [];
+    _htItems.forEach(function(it){
+      if (it && it.itemId) { order.push(it.itemId); it.sortOrder = order.length; }
+    });
     if (!order.length) return;
     _htBusy++; _htSyncRender();
     htApi('htReorderItems', { eventId: evId, order: order }).then(function(r){
