@@ -168,27 +168,34 @@
     var itR = await _sb('ht_items?event_id=eq.' + _enc(evId) + '&select=*&order=sort_order.asc,item_id.asc');
     if (itR.__error) return { ok: false, error: itR.__error };
     var items = (itR.__data || []).map(itemFromDb);
-    await _backfillSort(evId, items);   // 舊列補上排序值（只寫 sort_order 欄，一次就好）
+    _backfillSort(evId, items);   // 舊列補上排序值（背景做，絕不阻塞載入）
     return { ok: true, event: event, items: items };
   }
 
   // 從試算表搬過來的舊列 sort_order 多半是 0（同分 → 排序不穩定）。
-  // 首次讀到就依目前呈現順序補上 1..N，只 PATCH sort_order 一欄，不碰任何資料欄。
+  // 首次讀到就依目前呈現順序補上 1..N。
+  // ⚠️ 一定要「單一批次 + 不阻塞」：逐列各發一個 PATCH 的話，每列都會觸發回寫
+  //    ht_events.actual_exp 的 trigger → 幾十個併發交易搶同一列的鎖 → 載入卡住/逾時。
   var _sortFixed = {};
   function _backfillSort(evId, items) {
-    if (_sortFixed[evId]) return Promise.resolve();
-    var need = items.filter(function (it) { return !(Number(it.sortOrder) > 0); });
-    if (!need.length) { _sortFixed[evId] = 1; return Promise.resolve(); }
+    if (_sortFixed[evId]) return;
+    var need = items.filter(function (it) { return it.itemId && !(Number(it.sortOrder) > 0); });
     _sortFixed[evId] = 1;
+    if (!need.length) return;
     var max = 0;
     items.forEach(function (it) { if (Number(it.sortOrder) > max) max = Number(it.sortOrder); });
-    var ps = need.map(function (it) {
-      max += 1; it.sortOrder = max;                       // 同步回傳給前端，避免下一次寫回又當成新列
-      return _sb('ht_items?item_id=eq.' + _enc(it.itemId), {
-        method: 'PATCH', body: { sort_order: it.sortOrder }, headers: { 'Prefer': 'return=minimal' }
-      });
+    var rows = need.map(function (it) {
+      max += 1;
+      it.sortOrder = max;                    // 同步回傳給前端，避免下一次寫回又被當成新列
+      return { item_id: it.itemId, event_id: evId, sort_order: max };
     });
-    return Promise.all(ps).catch(function () {});
+    // 一趟 upsert 全部搞定；失敗就算了，下次載入再補（不影響使用者）
+    _sb('ht_items?on_conflict=item_id', {
+      method: 'POST', body: rows,
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }
+    }).then(function (r) {
+      if (r && r.__error) _sortFixed[evId] = 0;   // 沒補成功 → 下次載入再試
+    });
   }
 
   // 建立新活動（同月份重複則擋）
