@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803164121';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803164411';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4355,10 +4355,18 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 // false＝午茶仍走 GAS（線上現況，不受影響）；true＝午茶改走 Supabase（見 js/ht-supabase.js）。
 // 待 GAS 簽發 JWT（htSbToken）上線、實測通過後，才改為 true 切換。
 var HT_USE_SUPABASE = true;
+// ★ 一定要有這個 Promise：模組是動態載入的，深連結（#hightea/HT-xxxx）會在它還沒
+//   載完就呼叫 htApi。少了它，htApi 會判定「模組不在」而掉回 GAS —— GAS 又慢又常
+//   404，使用者就看到「載入逾時，伺服器回應太慢」。載入失敗才真的退回 GAS。
+var _htSbReady = Promise.resolve(false);
 if (HT_USE_SUPABASE) {   // 僅在開關開啟時才載入對接模組
-  var _htSbScript = document.createElement('script');
-  _htSbScript.src = 'js/ht-supabase.js';
-  document.head.appendChild(_htSbScript);
+  _htSbReady = new Promise(function(resolve){
+    var s = document.createElement('script');
+    s.src = 'js/ht-supabase.js';
+    s.onload  = function(){ resolve(!!window.htSupabase); };
+    s.onerror = function(){ resolve(false); };
+    document.head.appendChild(s);
+  });
 }
 
 // 頁面載入後 1.5s 預熱 GAS，避免登入時 cold start 延遲
@@ -11609,6 +11617,8 @@ async function _htSbTokenFetch() {
 
 async function htApi(action, payload) {
   // ★ Supabase 路由：總開關開 + 該 action 已支援 + 模組已載入 + 非 demo → 改走 Supabase（回傳格式與 GAS 相同）
+  // 模組可能還在載入中（深連結會很早就打 API）→ 等它一下，別急著掉回 GAS
+  if (HT_USE_SUPABASE && !window.htSupabase) { try { await _htSbReady; } catch(e){} }
   if (HT_USE_SUPABASE && window.htSupabase && window.HT_SUPABASE_ACTIONS
       && window.HT_SUPABASE_ACTIONS.indexOf(action) >= 0
       && !(currentUser && currentUser.token === 'demo')) {
