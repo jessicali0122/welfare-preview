@@ -379,7 +379,7 @@
   //          連不上（公司網路擋 WebSocket 等）就自動退回原本的輪詢節奏，功能不受影響。
   // ══════════════════════════════════════════════════════════
   var SB_JS_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
-  var _rtLib = null, _rtClient = null, _rtChannel = null, _rtStatus = 'idle', _rtEventId = '';
+  var _rtLib = null, _rtClient = null, _rtChannel = null, _rtStatus = 'idle', _rtEventId = '', _rtSubscribing = '';
 
   function _loadRtLib() {
     if (_rtLib) return _rtLib;
@@ -398,6 +398,15 @@
     return _rtLib;
   }
 
+  // 診斷用計數器寫在 <html> 的 data 屬性上（DevTools／外部工具都看得到，
+  // 排查「訂閱成功但沒收到事件」時不必猜）。錯誤絕不靜默吞掉。
+  function _bump(k, v) {
+    try {
+      document.documentElement.dataset[k] =
+        (v !== undefined) ? v : (Number(document.documentElement.dataset[k] || 0) + 1);
+    } catch (e) {}
+  }
+
   window.htRealtime = {
     status: function () { return _rtStatus; },
 
@@ -412,11 +421,15 @@
       var tok = _validToken();
       if (!tok) return false;                       // 沒憑證就別開，等有了再說
       if (_rtChannel && _rtEventId === eventId) return true;   // 同一場活動已訂閱
+      // htOpenDetail 可能被連呼叫兩次（深連結＋路由）；載入 CDN 期間會有空窗，
+      // 沒有這道鎖就會建出兩條 channel，其中一條變成孤兒
+      if (_rtSubscribing === eventId) return true;
+      _rtSubscribing = eventId;
       window.htRealtime.unsubscribe();
 
       var lib;
       try { lib = await _loadRtLib(); }
-      catch (e) { _rtStatus = 'unavailable'; if (handlers.onStatus) handlers.onStatus(_rtStatus); return false; }
+      catch (e) { _rtSubscribing = ''; _rtStatus = 'unavailable'; if (handlers.onStatus) handlers.onStatus(_rtStatus); return false; }
 
       try {
         if (!_rtClient) {
@@ -429,6 +442,7 @@
         _rtEventId = eventId;
 
         var onRow = function (payload) {
+          _bump('rtRecv');
           try {
             if (payload.eventType === 'DELETE') {
               var oldId = payload.old && payload.old.item_id;
@@ -438,7 +452,11 @@
             var row = payload.new;
             if (!row || !row.item_id) return;
             if (handlers.onUpsert) handlers.onUpsert(itemFromDb(row));
-          } catch (e) {}
+            _bump('rtApplied');
+          } catch (e) {
+            _bump('rtErr', String((e && e.message) || e));
+            try { console.error('[BeneFlow] Realtime 套用失敗：', e); } catch (e2) {}
+          }
         };
 
         _rtChannel = _rtClient
@@ -446,13 +464,18 @@
           .on('postgres_changes',
               { event: '*', schema: 'public', table: 'ht_items', filter: 'event_id=eq.' + eventId },
               onRow)
-          .subscribe(function (status) {
+          .subscribe(function (status, err) {
             _rtStatus = status;                     // SUBSCRIBED / CHANNEL_ERROR / TIMED_OUT / CLOSED
+            _bump('rtStatus', status + (err ? (' / ' + err) : ''));
+            _bump('rtTopic', 'ht-items-' + eventId);
             if (handlers.onStatus) handlers.onStatus(status);
           });
+        _rtSubscribing = '';
         return true;
       } catch (e) {
+        _rtSubscribing = '';
         _rtStatus = 'unavailable';
+        _bump('rtErr', String((e && e.message) || e));
         if (handlers.onStatus) handlers.onStatus(_rtStatus);
         return false;
       }
@@ -460,7 +483,7 @@
 
     unsubscribe: function () {
       try { if (_rtChannel && _rtClient) _rtClient.removeChannel(_rtChannel); } catch (e) {}
-      _rtChannel = null; _rtEventId = ''; _rtStatus = 'idle';
+      _rtChannel = null; _rtEventId = ''; _rtStatus = 'idle'; _rtSubscribing = '';
     }
   };
 
