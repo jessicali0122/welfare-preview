@@ -370,6 +370,100 @@
     return { ok: true, vendors: vendors };
   }
 
+  // ══════════════════════════════════════════════════════════
+  // 階段 3：Realtime（逐列即時協作）
+  // ----------------------------------------------------------
+  // 走 supabase-js 的 postgres_changes：ht_items 任一列被別人 INSERT/UPDATE/DELETE，
+  // 這裡幾百毫秒內就會收到，不必等輪詢。RLS 同樣套用 → 一定要 setAuth(我們的 JWT)。
+  // 設計原則：Realtime 是「加速器」不是「唯一來源」——輪詢永遠留著當安全網，
+  //          連不上（公司網路擋 WebSocket 等）就自動退回原本的輪詢節奏，功能不受影響。
+  // ══════════════════════════════════════════════════════════
+  var SB_JS_CDN = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js';
+  var _rtLib = null, _rtClient = null, _rtChannel = null, _rtStatus = 'idle', _rtEventId = '';
+
+  function _loadRtLib() {
+    if (_rtLib) return _rtLib;
+    _rtLib = new Promise(function (resolve, reject) {
+      if (window.supabase && window.supabase.createClient) return resolve(window.supabase);
+      var s = document.createElement('script');
+      s.src = SB_JS_CDN;
+      s.async = true;
+      s.onload = function () {
+        if (window.supabase && window.supabase.createClient) resolve(window.supabase);
+        else reject(new Error('supabase-js 載入後找不到 createClient'));
+      };
+      s.onerror = function () { reject(new Error('supabase-js 載入失敗（CDN 被擋？）')); };
+      document.head.appendChild(s);
+    }).catch(function (e) { _rtLib = null; throw e; });
+    return _rtLib;
+  }
+
+  window.htRealtime = {
+    status: function () { return _rtStatus; },
+
+    // token 換新時要同步給 Realtime，否則 WebSocket 會在 JWT 過期時被踢掉
+    setAuth: function (token) {
+      try { if (_rtClient && token) _rtClient.realtime.setAuth(token); } catch (e) {}
+    },
+
+    // handlers: { onUpsert(item), onDelete(itemId), onStatus(status) }
+    subscribe: async function (eventId, handlers) {
+      handlers = handlers || {};
+      var tok = _validToken();
+      if (!tok) return false;                       // 沒憑證就別開，等有了再說
+      if (_rtChannel && _rtEventId === eventId) return true;   // 同一場活動已訂閱
+      window.htRealtime.unsubscribe();
+
+      var lib;
+      try { lib = await _loadRtLib(); }
+      catch (e) { _rtStatus = 'unavailable'; if (handlers.onStatus) handlers.onStatus(_rtStatus); return false; }
+
+      try {
+        if (!_rtClient) {
+          _rtClient = lib.createClient(SB_URL, SB_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+            realtime: { params: { eventsPerSecond: 10 } }
+          });
+        }
+        _rtClient.realtime.setAuth(tok);            // ★ RLS 也管 Realtime，一定要帶 JWT
+        _rtEventId = eventId;
+
+        var onRow = function (payload) {
+          try {
+            if (payload.eventType === 'DELETE') {
+              var oldId = payload.old && payload.old.item_id;
+              if (oldId && handlers.onDelete) handlers.onDelete(String(oldId));
+              return;
+            }
+            var row = payload.new;
+            if (!row || !row.item_id) return;
+            if (handlers.onUpsert) handlers.onUpsert(itemFromDb(row));
+          } catch (e) {}
+        };
+
+        _rtChannel = _rtClient
+          .channel('ht-items-' + eventId)
+          .on('postgres_changes',
+              { event: '*', schema: 'public', table: 'ht_items', filter: 'event_id=eq.' + eventId },
+              onRow)
+          .subscribe(function (status) {
+            _rtStatus = status;                     // SUBSCRIBED / CHANNEL_ERROR / TIMED_OUT / CLOSED
+            if (handlers.onStatus) handlers.onStatus(status);
+          });
+        return true;
+      } catch (e) {
+        _rtStatus = 'unavailable';
+        if (handlers.onStatus) handlers.onStatus(_rtStatus);
+        return false;
+      }
+    },
+
+    unsubscribe: function () {
+      try { if (_rtChannel && _rtClient) _rtClient.removeChannel(_rtChannel); } catch (e) {}
+      _rtChannel = null; _rtEventId = ''; _rtStatus = 'idle';
+    }
+  };
+
   // ── 路由表 ──
   var HANDLERS = {
     htList: htList,
