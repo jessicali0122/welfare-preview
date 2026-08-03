@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803160453';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803161043';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4344,7 +4344,10 @@ if (HT_USE_SUPABASE) {   // 僅在開關開啟時才載入對接模組
 
 // 頁面載入後 1.5s 預熱 GAS，避免登入時 cold start 延遲
 setTimeout(function(){
-  fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'ping'})}).catch(function(){});
+  // ⚠️ 一定要用 text/plain：application/json 會觸發 CORS preflight（OPTIONS），
+  //    而 GAS 網頁應用程式不回應 OPTIONS → 預熱其實每次都失敗，還在 Console 留下
+  //    一筆嚇人的 CORS/ERR_FAILED 紅字（曾誤導排查方向）。
+  fetch(API_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'ping'})}).catch(function(){});
 },1500);
 
 // ══════════════════════════════════════════
