@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803223634';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803225112';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12455,14 +12455,20 @@ async function _htLoadSheetHistory() {
 }
 // 轉成歷史回顧卡片可用的偽事件；同月若平台也有場次，兩筆並列、各帶來源標籤
 function _htSheetAsEvents() {
-  // 去重改依「活動日期」：只有當系統活動與試算表場次是同一天（= 匯入副本）才隱藏試算表版；
-  // 同月不同日（例如另外建了測試場）時兩者並存，不再整月吃掉試算表場次
-  var platDates = {};
+  // 去重：系統活動若「同一天」或「由這張試算表匯入（備註帶其名）」→ 視為同一場，隱藏試算表版。
+  // ★ 為何要看匯入來源、不能只看日期：有些舊試算表前幾列沒寫可解析的日期（GAS 抓不到 → 副本日期空），
+  //   只靠日期比對會對不上 → 副本與試算表卡「同時出現」（看起來像沒轉過）。備註裡的來源名是可靠連結。
+  // ★ 為何日期比對仍保留：同月但「另外手動建的測試場」不帶匯入來源 → 不該吃掉試算表場次，靠日期精準比對。
+  //   （匯入時備註寫成「（由試算表「<sheetName>」匯入）」，見 htImportSheetEvent）
+  var platDates = {}, importedSheets = {};
   (_htEvents || []).forEach(function (e) {
     var d = String(e.date || '').replace(/\//g, '-').slice(0, 10);
     if (d) platDates[d] = 1;
+    var mm = /試算表「([^」]+)」/.exec(String(e.notes || ''));
+    if (mm && mm[1]) importedSheets[mm[1]] = 1;
   });
   return _htSheetSessions.filter(function (s) {
+    if (importedSheets[s.sheetName]) return false;                // 已有從這張表匯入的副本 → 藏起試算表版
     var sd = String(s.date || '').replace(/\//g, '-').slice(0, 10);
     return !(sd && platDates[sd]);
   }).map(function (s) {
