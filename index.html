@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803161400';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803162024';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -5538,6 +5538,7 @@ function _showAuthExpiredBar() {
 function reLogin() {
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token');
+  localStorage.removeItem('bf_sb_tok');      // 一併清掉 Supabase JWT 快取
   sessionStorage.removeItem('bf_token');
   window._authErrorShown = false;
   location.reload();
@@ -11446,18 +11447,67 @@ async function _htFetchWithRetry(body, tries) {
   return r;
 }
 
-// ── Supabase JWT：向 GAS（htSbToken）換取 role=authenticated 的短效 JWT，快到期自動續 ──
+// ── Supabase JWT：向 GAS（htSbToken）換取 role=authenticated 的短效 JWT ──
+// ⚠️ GAS 這支端點實測非常不可靠：連打 6 次有 4 次回 404（HTML），成功的也要 3～22 秒。
+//    它又擋在每一次 Supabase 呼叫前面，所以會同時造成「載入很慢」和「存檔失敗」。
+//    對策三件套：① localStorage 快取（重整不必再跟 GAS 要）② 單飛（同時只允許一個
+//    請求在跑，避免併發把 GAS 打成 404）③ 重試（單次成功率僅約 1/3，退避重試才夠穩）
+//    ④ 提前續簽（剩 15 分鐘就在背景換新的，不要等到過期才在使用者面前卡住）
 var _htSbTokenExp = 0;
+var _htSbTokenPromise = null;                 // 單飛：同時只跑一個簽發請求
+var _HT_SB_TOK_LS = 'bf_sb_tok';
+
+function _htSbTokenLoad() {                   // 從 localStorage 還原（綁 email，換人登入即失效）
+  try {
+    var o = JSON.parse(localStorage.getItem(_HT_SB_TOK_LS) || '{}');
+    if (!o || !o.token || !o.exp) return;
+    if (o.email !== (currentUser && currentUser.email)) return;
+    if ((o.exp - Math.floor(Date.now() / 1000)) < 300) return;   // 剩不到 5 分鐘就不用了
+    window.HT_SB_TOKEN = o.token; _htSbTokenExp = o.exp;
+  } catch (e) {}
+}
+function _htSbTokenSave(token, exp) {
+  window.HT_SB_TOKEN = token; _htSbTokenExp = exp;
+  try {
+    localStorage.setItem(_HT_SB_TOK_LS, JSON.stringify({
+      token: token, exp: exp, email: (currentUser && currentUser.email) || ''
+    }));
+  } catch (e) {}
+}
+
 async function _htEnsureSbToken() {
   if (currentUser && currentUser.token === 'demo') return null;
   var now = Math.floor(Date.now() / 1000);
-  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 300) return window.HT_SB_TOKEN; // 尚有 >5 分鐘就沿用
-  var r = await htApi('htSbToken');   // 此 action 不在 Supabase 名單 → 走 GAS 簽發
-  if (r && r.ok && r.token) { window.HT_SB_TOKEN = r.token; _htSbTokenExp = r.exp || (now + 3600); return r.token; }
-  // 簽發失敗（GAS 未部署 htSbToken／SB_JWT_SECRET 未設／網路）→ 清掉過期 token，
-  // 別讓後續請求拿舊的或公開 key 去打，那會變成「看起來有存、其實被 RLS 擋掉」
+  if (!window.HT_SB_TOKEN) _htSbTokenLoad();                     // 冷啟動先看快取
+  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 900) return window.HT_SB_TOKEN;
+
+  // 還有 5～15 分鐘：先把現有的還回去讓使用者繼續用，同時在背景續簽（不擋畫面）
+  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 300) {
+    if (!_htSbTokenPromise) _htSbTokenPromise = _htSbTokenFetch().then(function(t){ _htSbTokenPromise = null; return t; });
+    return window.HT_SB_TOKEN;
+  }
+  if (_htSbTokenPromise) return _htSbTokenPromise;               // 已有人在要了 → 一起等，別再打 GAS
+  _htSbTokenPromise = _htSbTokenFetch().then(function(t){ _htSbTokenPromise = null; return t; });
+  return _htSbTokenPromise;
+}
+
+// 實際去 GAS 要一張新的；單次成功率低 → 退避重試
+async function _htSbTokenFetch() {
+  var delays = [0, 800, 2000, 4000], last = null;
+  for (var i = 0; i < delays.length; i++) {
+    if (delays[i]) await new Promise(function(res){ setTimeout(res, delays[i]); });
+    var r = await htApi('htSbToken');        // 此 action 不在 Supabase 名單 → 走 GAS 簽發
+    if (r && r.ok && r.token) {
+      _htSbTokenSave(r.token, r.exp || (Math.floor(Date.now() / 1000) + 3600));
+      return r.token;
+    }
+    last = r;
+    if (r && r._authError) break;            // 登入真的過期 → 重試沒意義
+  }
+  // 簽發失敗 → 清掉，別讓後續請求拿舊的或公開 key 去打
   window.HT_SB_TOKEN = ''; _htSbTokenExp = 0;
-  console.error('[BeneFlow] Supabase 憑證簽發失敗：', (r && r.error) || r);
+  try { localStorage.removeItem(_HT_SB_TOK_LS); } catch (e) {}
+  console.error('[BeneFlow] Supabase 憑證簽發失敗（已重試 ' + delays.length + ' 次）：', (last && last.error) || last);
   return null;
 }
 
