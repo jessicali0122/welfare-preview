@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803163137';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803163435';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11537,11 +11537,19 @@ var _htSbTokenExp = 0;
 var _htSbTokenPromise = null;                 // 單飛：同時只跑一個簽發請求
 var _HT_SB_TOK_LS = 'bf_sb_tok';
 
+// 目前登入者的 email。★ 一定要能在 currentUser 還沒還原前就取得：
+//   頁面剛載入時 currentUser 還是 null，若只看它，快取會被誤判成「別人的」而棄用，
+//   於是又去打那支很慢又常 404 的 GAS → 深連結進活動就「載入逾時」。
+function _htCurrentEmail() {
+  if (currentUser && currentUser.email) return currentUser.email;
+  try { return (JSON.parse(localStorage.getItem('bf_user') || '{}').email) || ''; } catch (e) { return ''; }
+}
+
 function _htSbTokenLoad() {                   // 從 localStorage 還原（綁 email，換人登入即失效）
   try {
     var o = JSON.parse(localStorage.getItem(_HT_SB_TOK_LS) || '{}');
     if (!o || !o.token || !o.exp) return;
-    if (o.email !== (currentUser && currentUser.email)) return;
+    if (!o.email || o.email !== _htCurrentEmail()) return;
     if ((o.exp - Math.floor(Date.now() / 1000)) < 300) return;   // 剩不到 5 分鐘就不用了
     window.HT_SB_TOKEN = o.token; _htSbTokenExp = o.exp;
   } catch (e) {}
@@ -11552,7 +11560,7 @@ function _htSbTokenSave(token, exp) {
   try { if (window.htRealtime) window.htRealtime.setAuth(token); } catch (e) {}
   try {
     localStorage.setItem(_HT_SB_TOK_LS, JSON.stringify({
-      token: token, exp: exp, email: (currentUser && currentUser.email) || ''
+      token: token, exp: exp, email: _htCurrentEmail()
     }));
   } catch (e) {}
 }
@@ -11576,9 +11584,15 @@ async function _htEnsureSbToken() {
 // 實際去 GAS 要一張新的；單次成功率低 → 退避重試
 async function _htSbTokenFetch() {
   var delays = [0, 800, 2000, 4000], last = null;
+  // 直接打 GAS（不繞 htApi）有兩個理由：
+  //  ① 每次只等 12 秒就放棄重試——htApi 預設 25 秒 × 4 次會讓使用者乾等到「載入逾時」
+  //  ② currentUser 可能還沒還原，這裡自己從 localStorage 補 token，不會送出空 token
+  var gasTok = (currentUser && currentUser.token) || '';
+  if (!gasTok) { try { gasTok = JSON.parse(localStorage.getItem('bf_user') || '{}').token || ''; } catch (e) {} }
+  if (!gasTok) return null;                  // 根本還沒登入 → 不用打
   for (var i = 0; i < delays.length; i++) {
     if (delays[i]) await new Promise(function(res){ setTimeout(res, delays[i]); });
-    var r = await htApi('htSbToken');        // 此 action 不在 Supabase 名單 → 走 GAS 簽發
+    var r = await _htFetchRaw({ action: 'htSbToken', token: gasTok }, 12000);
     if (r && r.ok && r.token) {
       _htSbTokenSave(r.token, r.exp || (Math.floor(Date.now() / 1000) + 3600));
       return r.token;
