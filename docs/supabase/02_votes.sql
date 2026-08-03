@@ -51,13 +51,15 @@ language sql stable as $$
 $$;
 
 create or replace function _ht_is_admin() returns boolean
-language sql stable security definer set search_path = public as $$
+language sql stable security definer set search_path = public, extensions as $$
   select exists (select 1 from ht_admins where lower(email) = _ht_jwt_email())
 $$;
 
 -- 匿名去重鑰匙：與原 GAS 同演算法（sha256 十六進位前 24 碼）
+-- ⚠️ Supabase 的 pgcrypto 裝在 extensions schema，search_path 一定要含 extensions，
+--    否則呼叫時會報 function digest(text, unknown) does not exist。
 create or replace function _ht_vote_key(p_email text, p_event_id text) returns text
-language sql immutable as $$
+language sql immutable security definer set search_path = public, extensions as $$
   select substr(encode(digest(lower(coalesce(p_email,'')) || '|' || coalesce(p_event_id,''), 'sha256'), 'hex'), 1, 24)
 $$;
 
@@ -67,7 +69,7 @@ language sql stable as $$ select (now() at time zone 'Asia/Taipei')::date $$;
 
 -- 該活動編號對應的活動日期（HTD-yyyy-MM-dd 直接取；HT-yyyy-MM 查 ht_events）
 create or replace function _ht_event_date(p_event_id text) returns date
-language plpgsql stable security definer set search_path = public as $$
+language plpgsql stable security definer set search_path = public, extensions as $$
 declare d date;
 begin
   if p_event_id ~ '^HTD-\d{4}-\d{2}-\d{2}$' then
@@ -85,7 +87,7 @@ end $$;
 create or replace function ht_vote_submit(
   p_event_id text, p_sat int, p_favs jsonb default '[]', p_comment text default '', p_kiosk boolean default false
 ) returns jsonb
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare
   v_email text := _ht_jwt_email();
   v_date  date;
@@ -129,7 +131,7 @@ end $$;
 
 -- 讀取投票結果。votes 只回統計所需欄位，不含識別碼 → 無法反查誰投了什麼
 create or replace function ht_vote_get(p_event_id text) returns jsonb
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare
   v_email text := _ht_jwt_email();
   v_votes jsonb;
@@ -151,7 +153,7 @@ end $$;
 
 -- 結束／重開投票（限福委／管理者）
 create or replace function ht_vote_close(p_event_id text, p_reopen boolean default false) returns jsonb
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 begin
   if not _ht_is_admin() then return jsonb_build_object('ok', false, 'error', '限福委／管理者使用'); end if;
   if p_event_id is null or p_event_id = '' then return jsonb_build_object('ok', false, 'error', '缺少活動編號'); end if;
@@ -162,7 +164,7 @@ end $$;
 
 -- 投票品項名單
 create or replace function ht_vote_items_get(p_event_id text) returns jsonb
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare r ht_vote_config%rowtype;
 begin
   select * into r from ht_vote_config where event_id = p_event_id;
@@ -174,7 +176,7 @@ begin
 end $$;
 
 create or replace function ht_vote_items_save(p_event_id text, p_items jsonb, p_all jsonb) returns jsonb
-language plpgsql security definer set search_path = public as $$
+language plpgsql security definer set search_path = public, extensions as $$
 declare v_items jsonb; v_known jsonb;
 begin
   if not _ht_is_admin() then return jsonb_build_object('ok', false, 'error', '限福委／管理者使用'); end if;
