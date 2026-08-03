@@ -176,8 +176,13 @@
   // 首次讀到就依目前呈現順序補上 1..N。
   // ⚠️ 一定要「單一批次 + 不阻塞」：逐列各發一個 PATCH 的話，每列都會觸發回寫
   //    ht_events.actual_exp 的 trigger → 幾十個併發交易搶同一列的鎖 → 載入卡住/逾時。
+  // ⛔ 2026-08-03 暫時停用：出現「編輯的東西不見」的回報，在釐清原因前
+  //    不讓任何「使用者沒操作卻自動寫 DB」的行為存在。排序穩定性已由
+  //    htGetItems 的 item_id.asc 第二排序鍵保證，關掉它不會讓跳列問題復發。
+  var _SORT_BACKFILL_ON = false;
   var _sortFixed = {};
   function _backfillSort(evId, items) {
+    if (!_SORT_BACKFILL_ON) return;
     if (_sortFixed[evId]) return;
     var need = items.filter(function (it) { return it.itemId && !(Number(it.sortOrder) > 0); });
     _sortFixed[evId] = 1;
