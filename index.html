@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803125822';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803140557';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4331,6 +4331,16 @@ var _debouncedAppSearch   = _debounce(function(){ applyAppFilter(); }, 280);
 // ══════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbxqmXRfqubdjDRpYQhBOomC9BUM9_US7Wugal-UJ_CbpNp1MbLKq4YocjVRdGuWQ9cA/exec';
 const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.googleusercontent.com';
+
+// ══ 午茶 Supabase 遷移總開關 ══
+// false＝午茶仍走 GAS（線上現況，不受影響）；true＝午茶改走 Supabase（見 js/ht-supabase.js）。
+// 待 GAS 簽發 JWT（htSbToken）上線、實測通過後，才改為 true 切換。
+var HT_USE_SUPABASE = false;
+if (HT_USE_SUPABASE) {   // 僅在開關開啟時才載入對接模組
+  var _htSbScript = document.createElement('script');
+  _htSbScript.src = 'js/ht-supabase.js';
+  document.head.appendChild(_htSbScript);
+}
 
 // 頁面載入後 1.5s 預熱 GAS，避免登入時 cold start 延遲
 setTimeout(function(){
@@ -11389,7 +11399,34 @@ async function _htFetchWithRetry(body, tries) {
   return r;
 }
 
+// ── Supabase JWT：向 GAS（htSbToken）換取 role=authenticated 的短效 JWT，快到期自動續 ──
+var _htSbTokenExp = 0;
+async function _htEnsureSbToken() {
+  if (currentUser && currentUser.token === 'demo') return null;
+  var now = Math.floor(Date.now() / 1000);
+  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 300) return window.HT_SB_TOKEN; // 尚有 >5 分鐘就沿用
+  var r = await htApi('htSbToken');   // 此 action 不在 Supabase 名單 → 走 GAS 簽發
+  if (r && r.ok && r.token) { window.HT_SB_TOKEN = r.token; _htSbTokenExp = r.exp || (now + 3600); return r.token; }
+  return null;
+}
+
 async function htApi(action, payload) {
+  // ★ Supabase 路由：總開關開 + 該 action 已支援 + 模組已載入 + 非 demo → 改走 Supabase（回傳格式與 GAS 相同）
+  if (HT_USE_SUPABASE && window.htSupabase && window.HT_SUPABASE_ACTIONS
+      && window.HT_SUPABASE_ACTIONS.indexOf(action) >= 0
+      && !(currentUser && currentUser.token === 'demo')) {
+    try {
+      await _htEnsureSbToken();   // 確保帶著有效 JWT，否則會被 RLS 擋
+      var sbRes = await window.htSupabase(action, Object.assign({ _user: currentUser }, payload || {}));
+      if (sbRes && sbRes.ok && _HT_WRITE.test(action)) {   // 寫入成功後清午茶讀取快取，與 GAS 路徑一致
+        _cacheClear(); _htItemsCache = null;
+        try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf('bf_ht_items_') === 0) localStorage.removeItem(k); }); } catch(e) {}
+      }
+      return sbRes;
+    } catch (e) {
+      return { ok: false, error: (e && e.message) || 'Supabase 呼叫失敗' };
+    }
+  }
   // ★ 用頂層的 currentUser（let 變數，閉包可取），不是 window.currentUser——
   //   currentUser 並未掛到 window（只有 demo 模式才會），用 window.currentUser
   //   會永遠取到 undefined → token 變空字串 → 後端回「請先登入公司帳號」。
