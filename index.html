@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803150539';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803154204';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11081,7 +11081,9 @@ function _htFlushRows(onDone){
       itemId: it.itemId || '', name: it.name || '', vendor: it.vendor || '',
       category: it.category || '', unitPrice: Number(it.unitPrice) || 0, qty: Number(it.qty) || 0,
       serving: it.serving || '', assignee: it.assignee || '', ordered: !!it.ordered,
-      notes: it.notes || '', link: it.link || ''
+      notes: it.notes || '', link: it.link || '',
+      // ★ 一定要帶排序：沒帶的話後端會當成新列、把它排到最後 → 打字打到一半整列往下跳
+      sortOrder: Number(it.sortOrder) || 0
     };
   };
   // 存成功後的欄位收尾：存檔期間又被改到的欄位保留為未存，下輪再送

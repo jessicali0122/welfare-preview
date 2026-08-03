@@ -163,10 +163,32 @@
     var evR = await _sb('ht_events?event_id=eq.' + _enc(evId) + '&select=*&limit=1');
     if (evR.__error) return { ok: false, error: evR.__error };
     var event = (evR.__data && evR.__data[0]) ? eventFromDb(evR.__data[0]) : null;
-    var itR = await _sb('ht_items?event_id=eq.' + _enc(evId) + '&select=*&order=sort_order.asc');
+    // ★ 一定要有第二排序鍵：舊資料的 sort_order 可能全是 0，只用 sort_order 排會每次回傳不同順序
+    //   → 畫面每輪詢一次就重排一次（使用者看到的「跳一下」）
+    var itR = await _sb('ht_items?event_id=eq.' + _enc(evId) + '&select=*&order=sort_order.asc,item_id.asc');
     if (itR.__error) return { ok: false, error: itR.__error };
     var items = (itR.__data || []).map(itemFromDb);
+    await _backfillSort(evId, items);   // 舊列補上排序值（只寫 sort_order 欄，一次就好）
     return { ok: true, event: event, items: items };
+  }
+
+  // 從試算表搬過來的舊列 sort_order 多半是 0（同分 → 排序不穩定）。
+  // 首次讀到就依目前呈現順序補上 1..N，只 PATCH sort_order 一欄，不碰任何資料欄。
+  var _sortFixed = {};
+  function _backfillSort(evId, items) {
+    if (_sortFixed[evId]) return Promise.resolve();
+    var need = items.filter(function (it) { return !(Number(it.sortOrder) > 0); });
+    if (!need.length) { _sortFixed[evId] = 1; return Promise.resolve(); }
+    _sortFixed[evId] = 1;
+    var max = 0;
+    items.forEach(function (it) { if (Number(it.sortOrder) > max) max = Number(it.sortOrder); });
+    var ps = need.map(function (it) {
+      max += 1; it.sortOrder = max;                       // 同步回傳給前端，避免下一次寫回又當成新列
+      return _sb('ht_items?item_id=eq.' + _enc(it.itemId), {
+        method: 'PATCH', body: { sort_order: it.sortOrder }, headers: { 'Prefer': 'return=minimal' }
+      });
+    });
+    return Promise.all(ps).catch(function () {});
   }
 
   // 建立新活動（同月份重複則擋）
@@ -233,12 +255,23 @@
     if (!p || !p.eventId) return { ok: false, error: '缺少活動編號' };
     if (!Array.isArray(p.items)) return { ok: false, error: '缺少品項資料' };
     if (!p.items.length) return { ok: true, results: [] };
-    // 取本活動目前最大排序值，供沒帶 sortOrder 的新列接在後面
-    var maxR = await _sb('ht_items?event_id=eq.' + _enc(p.eventId) + '&select=sort_order&order=sort_order.desc&limit=1');
-    var maxSort = (!maxR.__error && maxR.__data && maxR.__data[0]) ? (Number(maxR.__data[0].sort_order) || 0) : 0;
+    // 取本活動現有品項的排序值：
+    //  ① 已存在的列 → 沿用 DB 既有排序（呼叫端沒帶 sortOrder 時也不會被當成新列丟到最後）
+    //  ② 真正的新列 → 接在目前最大值後面
+    var curR = await _sb('ht_items?event_id=eq.' + _enc(p.eventId) + '&select=item_id,sort_order');
+    var curSort = {}, maxSort = 0;
+    if (!curR.__error) (curR.__data || []).forEach(function (r) {
+      var s = Number(r.sort_order) || 0;
+      curSort[String(r.item_id)] = s;
+      if (s > maxSort) maxSort = s;
+    });
     var rows = p.items.map(function (it) {
       var row = itemToDb(it, p.eventId);
-      if (!(Number(row.sort_order) > 0)) { maxSort += 1; row.sort_order = maxSort; }
+      if (!(Number(row.sort_order) > 0)) {
+        var known = curSort[String(row.item_id)];
+        if (known > 0) row.sort_order = known;              // 既有列：位置原地不動
+        else { maxSort += 1; row.sort_order = maxSort; }    // 新列：排到最後
+      }
       return row;
     });
     // on_conflict=item_id：有則更新、無則插入
