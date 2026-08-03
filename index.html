@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803225112';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803230144';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4352,8 +4352,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxqmXRfqubdjDRpYQhBOomC
 const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.googleusercontent.com';
 
 // ══ 午茶 Supabase 遷移總開關 ══
-// false＝午茶仍走 GAS（線上現況，不受影響）；true＝午茶改走 Supabase（見 js/ht-supabase.js）。
-// 待 GAS 簽發 JWT（htSbToken）上線、實測通過後，才改為 true 切換。
+// true＝午茶走 Supabase（現況，見 js/ht-supabase.js）；false＝退回原本的 GAS。
+// 2026-08-03 已切為 true 並實測通過（GAS 端 htSbToken 簽發 JWT 上線）。
 var HT_USE_SUPABASE = true;
 // ★ 一定要有這個 Promise：模組是動態載入的，深連結（#hightea/HT-xxxx）會在它還沒
 //   載完就呼叫 htApi。少了它，htApi 會判定「模組不在」而掉回 GAS —— GAS 又慢又常
@@ -5530,6 +5530,7 @@ function _showAuthExpiredBar() {
   if (document.getElementById('auth-expired-bar')) return;
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token');       // 一併清掉失效 token，勿讓死 token 留存
+  localStorage.removeItem('bf_sb_tok');      // 連 Supabase JWT 快取一起清（與 reLogin 一致），勿留死憑證
   sessionStorage.removeItem('bf_token');
   currentUser = null;
   const bar = document.createElement('div');
@@ -5539,7 +5540,7 @@ function _showAuthExpiredBar() {
     // Issue 5 fix：手機版改為彈性換行，避免超出螢幕寬度擋住畫面
     ? 'position:fixed;top:12px;left:12px;right:12px;background:#363B35;color:#fff;padding:14px 18px;border-radius:12px;display:flex;align-items:center;gap:10px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.35);flex-wrap:wrap;justify-content:space-between'
     : 'position:fixed;bottom:72px;left:50%;transform:translateX(-50%);background:#363B35;color:#fff;padding:12px 20px;border-radius:12px;display:flex;align-items:center;gap:14px;z-index:9999;font-size:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);white-space:nowrap';
-  bar.innerHTML = '<span>🔒 登入憑證已過期，請重新登入</span><button onclick="localStorage.removeItem(\'bf_user\');localStorage.removeItem(\'bf_token\');sessionStorage.removeItem(\'bf_token\');location.reload()" style="background:#577B53;border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">重新登入</button>';
+  bar.innerHTML = '<span>🔒 登入憑證已過期，請重新登入</span><button onclick="localStorage.removeItem(\'bf_user\');localStorage.removeItem(\'bf_token\');localStorage.removeItem(\'bf_sb_tok\');sessionStorage.removeItem(\'bf_token\');location.reload()" style="background:#577B53;border:none;color:#fff;padding:6px 14px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;white-space:nowrap;flex-shrink:0">重新登入</button>';
   document.body.appendChild(bar);
 }
 
