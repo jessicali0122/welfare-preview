@@ -371,6 +371,56 @@
   }
 
   // ══════════════════════════════════════════════════════════
+  // 投票：一律走 RPC（Postgres 函式），不直接讀寫 ht_votes
+  // ----------------------------------------------------------
+  // 規則（一人一票／限活動當天／限福委關閉投票／滿意度 1-5）都在資料庫函式裡，
+  // 前端只是轉呼叫 —— 這樣把關能力與原本的 GAS 伺服器端相同，不會因為改打
+  // PostgREST 就掉到「前端說了算」。ht_votes 沒有任何 RLS 政策，只有函式進得去。
+  // ══════════════════════════════════════════════════════════
+  function _rpc(fn, args) {
+    return _sb('rpc/' + fn, { method: 'POST', body: args || {} }).then(function (r) {
+      if (r.__error) return { ok: false, error: r.__error };
+      var d = r.__data;
+      return (d && typeof d === 'object') ? d : { ok: false, error: '投票服務回應異常' };
+    });
+  }
+
+  function htVoteGet(p) {
+    if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
+    return _rpc('ht_vote_get', { p_event_id: String(p.eventId) });
+  }
+
+  function htVoteSubmit(p) {
+    if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
+    return _rpc('ht_vote_submit', {
+      p_event_id: String(p.eventId),
+      p_sat     : Number(p.sat) || 0,
+      p_favs    : Array.isArray(p.favs) ? p.favs : [],
+      p_comment : String(p.comment || ''),
+      p_kiosk   : !!p.kiosk
+    });
+  }
+
+  function htVoteClose(p) {
+    if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
+    return _rpc('ht_vote_close', { p_event_id: String(p.eventId), p_reopen: !!p.reopen });
+  }
+
+  function htVoteItemsGet(p) {
+    if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
+    return _rpc('ht_vote_items_get', { p_event_id: String(p.eventId) });
+  }
+
+  function htVoteItemsSave(p) {
+    if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
+    return _rpc('ht_vote_items_save', {
+      p_event_id: String(p.eventId),
+      p_items   : Array.isArray(p.items) ? p.items : [],
+      p_all     : Array.isArray(p.all) ? p.all : []
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════
   // 階段 3：Realtime（逐列即時協作）
   // ----------------------------------------------------------
   // 走 supabase-js 的 postgres_changes：ht_items 任一列被別人 INSERT/UPDATE/DELETE，
@@ -499,7 +549,13 @@
     htUpsertItem: htUpsertItem,
     htDeleteItem: htDeleteItem,
     htReorderItems: htReorderItems,
-    htVendors: htVendors
+    htVendors: htVendors,
+    // 投票（走 RPC，規則在資料庫端把關）
+    htVoteGet: htVoteGet,
+    htVoteSubmit: htVoteSubmit,
+    htVoteClose: htVoteClose,
+    htVoteItemsGet: htVoteItemsGet,
+    htVoteItemsSave: htVoteItemsSave
   };
 
   // 對外入口。payload 內含 token（本層不驗，交由 RLS/前端 gate；user 由 payload 帶入）
