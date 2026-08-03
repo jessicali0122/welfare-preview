@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803161043';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803161400';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -16,7 +16,26 @@
         var key = 'bf_reloaded_for';
         if (sessionStorage.getItem(key) === v) return;  // 本次已為此版重載過，避免迴圈
         sessionStorage.setItem(key, v);
-        location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
+        // ★ 只做 location.replace 是不夠的：瀏覽器可能又從 HTTP 快取拿同一份舊 HTML，
+        //   而 sessionStorage 已記下「已為此版重載過」→ 之後連重試都不會做，
+        //   整個分頁就永遠卡在舊版（Ctrl+Shift+R 也未必壓得掉）。
+        //   所以先清 Cache Storage、並用 cache:'reload' 強制從網路重抓一次把快取條目換掉。
+        var _went = false;
+        var go = function(){
+          if (_went) return; _went = true;
+          location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
+        };
+        setTimeout(go, 3000);                            // 保險：3 秒內沒清完也照樣更新
+        var jobs = [];
+        try {
+          if (window.caches && caches.keys) {
+            jobs.push(caches.keys().then(function(ks){
+              return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+            }));
+          }
+        } catch (e) {}
+        jobs.push(fetch(location.pathname, { cache: 'reload' }).catch(function(){}));
+        Promise.all(jobs).catch(function(){}).then(go);
       })
       .catch(function(){});
   } catch (e) {}
