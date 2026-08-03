@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803155423';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803160014';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11372,6 +11372,20 @@ function _htFetchRaw(body, timeoutMs) {
   var to = ctrl ? setTimeout(function(){ try { ctrl.abort(); } catch(e){} }, timeoutMs || 25000) : null;
   return fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(body), redirect:'follow', signal: ctrl ? ctrl.signal : undefined })
     .then(function(res){ return res.json().catch(function(){ return { ok:false, error:'伺服器回應格式錯誤（HTTP ' + res.status + '）' }; }); })
+    // ★ 午茶這條路徑原本沒有「登入過期」判斷（_fetchAPI 才有）→ 後端回「請先登入公司帳號」
+    //   時只會靜默失敗：Supabase JWT 換不到、寫入全被 RLS 擋，使用者卻以為存好了。
+    //   這裡補上與 _fetchAPI 相同的處理：明確標記並觸發重新登入流程。
+    .then(function(json){
+      if (json && !json.ok && json.error && (
+        json.error === '請先登入公司帳號' ||
+        String(json.error).indexOf('SESSION') >= 0 ||
+        String(json.error).indexOf('unauthorized') >= 0
+      )) {
+        try { handleAuthError(true); } catch(e){}
+        return { ok:false, error:'SESSION_EXPIRED', _authError:true };
+      }
+      return json;
+    })
     .catch(function(err){ return { ok:false, error: (err && err.name === 'AbortError') ? '載入逾時，伺服器回應太慢，請重試' : '網路連線失敗' }; })
     .then(function(r){ if (to) clearTimeout(to); return r; });
 }
