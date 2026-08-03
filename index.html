@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803165711';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803170231';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11040,6 +11040,17 @@ function _htPendingCount(){
   (_htItems || []).forEach(function(it){ if (it && (it._dirty || it._saving) && !_htRowEmpty(it)) n++; });
   return n;
 }
+// 焦點欄位裡有「打了但還沒 onchange」的內容？→ 狀態列不可以說「已儲存」
+function _htHasUncommittedInput(){
+  var ae = document.activeElement, tb = document.getElementById('ht-items-tbody');
+  if (!ae || !tb || !tb.contains(ae) || !ae.dataset || ae.dataset.idx == null || !ae.dataset.f) return false;
+  var it = _htItems[parseInt(ae.dataset.idx)];
+  if (!it) return false;
+  var f = ae.dataset.f, num = (f === 'unitPrice' || f === 'qty');
+  var cur   = num ? String(Number(it[f]) || 0)    : String(it[f] == null ? '' : it[f]);
+  var typed = num ? String(Number(ae.value) || 0) : String(ae.value);
+  return cur !== typed;
+}
 function _htSyncRender(){
   var el = document.getElementById('ht-sync-status');
   if (!el) return;
@@ -11052,7 +11063,7 @@ function _htSyncRender(){
     txt = '⚠️ 離線，待恢復連線' + suffix; color = '#C0655A';
   } else if (_htSyncErr) {
     txt = '⚠️ ' + (n || _htSyncErr) + ' 筆未儲存，重試中' + suffix; color = '#C0655A';
-  } else if (window._htFlushing || _htBusy > 0 || n) {
+  } else if (window._htFlushing || _htBusy > 0 || n || _htHasUncommittedInput()) {
     txt = '● 儲存中…' + suffix; color = '#C9760A';
   } else if (_htSyncMsg) {
     txt = _htSyncMsg + suffix; color = '#738e41';
@@ -11265,6 +11276,18 @@ function _htApplyPresence(list){
     td.appendChild(chip);
   });
 }
+// ★ 停止打字 1.5 秒就自動收攏並排程存檔，不必離開欄位。
+//   輸入框是 onchange（要離開欄位才觸發），使用者打完字停在原地時，系統其實
+//   什麼都沒存 —— 這就是「我打字，然後就沒存」的來源。
+var _htTypeT = null;
+document.addEventListener('input', function(e){
+  var tb = document.getElementById('ht-items-tbody');
+  if (!tb || !e.target || !tb.contains(e.target) || !e.target.dataset || e.target.dataset.idx == null) return;
+  _htSyncRender();                    // 立刻改顯示「儲存中…」，不要再顯示「已儲存」誤導
+  if (_htTypeT) clearTimeout(_htTypeT);
+  _htTypeT = setTimeout(function(){ _htTypeT = null; _htCommitActiveInput(); }, 1500);
+});
+
 // 記住我的游標在哪一列（回報給其他人）
 document.addEventListener('focusin', function(e){
   var tb = document.getElementById('ht-items-tbody');
