@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803164411';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803165711';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11105,6 +11105,7 @@ function _htFlushRows(onDone){
   var _fin = function(failed){ if (typeof onDone === 'function') { try { onDone(failed || 0); } catch(e){} } };
   if (!_htEvent) { _fin(0); return; }
   if (window._htFlushing) { _htScheduleFlush(); _fin(0); return; }   // 上一批還沒送完 → 併入下一批，這裡先回呼（那批完成會標記已存）
+  _htCommitActiveInput();               // 正在打的字也一起存（切分頁／關頁前的 flush 尤其重要）
   var evId  = _htEvent.eventId;
   var dirty = _htItems.filter(function(it){ return it && it._dirty && !_htRowEmpty(it); });
   if (!dirty.length) { _fin(0); return; }
@@ -11274,13 +11275,34 @@ document.addEventListener('focusin', function(e){
   _htMyItemId = (it && it.itemId) || '';
 });
 
+// ★ 重繪前先把「正在打、還沒 onchange」的內容收進資料模型。
+//   輸入框是 onchange（離開欄位才觸發），所以使用者還在打字時 _htItems 仍是舊值；
+//   此時只要發生任何重繪（存檔完成、別人改了別列、Realtime 推播），輸入框就會被
+//   用舊值重建 —— 使用者剛打的字當場消失。收進模型後不但不會消失，還會被存檔。
+var _htCommitting = false;
+function _htCommitActiveInput(){
+  if (_htCommitting) return;
+  var ae = document.activeElement, tb = document.getElementById('ht-items-tbody');
+  if (!ae || !tb || !tb.contains(ae) || !ae.dataset || ae.dataset.idx == null || !ae.dataset.f) return;
+  var idx = parseInt(ae.dataset.idx), f = ae.dataset.f, it = _htItems[idx];
+  if (!it) return;
+  var num = (f === 'unitPrice' || f === 'qty');
+  var cur   = num ? String(Number(it[f]) || 0)   : String(it[f] == null ? '' : it[f]);
+  var typed = num ? String(Number(ae.value) || 0) : String(ae.value);
+  if (cur === typed) return;                       // 沒改就別動
+  _htCommitting = true;                            // htItemChange 可能觸發重繪 → 防遞迴
+  try { window.htItemChange(ae); } catch(e){}
+  _htCommitting = false;
+}
+
 // 重繪前後保住游標位置（逐列同步時使用者可能正在打字）
 function _htFocusState(){
+  _htCommitActiveInput();
   var ae = document.activeElement, tb = document.getElementById('ht-items-tbody');
   if (!ae || !tb || !tb.contains(ae) || !ae.dataset || ae.dataset.idx == null) return null;
   var it = _htItems[parseInt(ae.dataset.idx)];
   if (!it) return null;
-  var st = { itemId: it.itemId || '', f: ae.dataset.f || '', start: null, end: null };
+  var st = { itemId: it.itemId || '', f: ae.dataset.f || '', start: null, end: null, raw: ae.value };
   try { st.start = ae.selectionStart; st.end = ae.selectionEnd; } catch(e){}
   return st;
 }
@@ -11291,13 +11313,21 @@ function _htRestoreFocus(st){
   if (newIdx < 0) return;
   var el = document.querySelector('#ht-items-tbody [data-idx="' + newIdx + '"][data-f="' + st.f + '"]');
   if (!el) return;
-  try { el.focus(); if (st.start != null && el.setSelectionRange) el.setSelectionRange(st.start, st.end); } catch(e){}
+  try {
+    // 打到一半的字面值原樣放回（例如數字打到「12.」，轉成數字會掉小數點）
+    if (st.raw != null && el.value !== st.raw) el.value = st.raw;
+    el.focus();
+    if (st.start != null && el.setSelectionRange) el.setSelectionRange(st.start, st.end);
+  } catch(e){}
 }
 
 // 拉一次最新並逐列合併（輪詢與「存完立刻推」共用）
 function _htPullOnce(eventId){
   if (!_htEvent || _htEvent.eventId !== eventId) return;
   if (window._htFlushing || window._htSaving) return;             // 正在寫入 → 等寫完再合併，避免看到半套資料
+  // ★ 合併「之前」就要先把正在打的字收進模型並標記未存，否則這一列會被當成「乾淨的」
+  //   而整列吃掉後端版本 —— 使用者打到一半的內容就這樣消失。
+  _htCommitActiveInput();
   var _seq = _htWriteSeq;                                          // 記下出發時的寫入世代
   return _htFetchItemsFresh(eventId).then(function(r){
     if (!r || !r.ok) return;
@@ -11305,6 +11335,7 @@ function _htPullOnce(eventId){
     if (window._htFlushing || window._htSaving) return;
     // ★ 這份快照是在我存檔之前撈的 → 內容比畫面舊，套用會把剛存好的東西蓋回去。丟棄。
     if (_htWriteSeq !== _seq) return;
+    _htCommitActiveInput();             // 這趟往返期間可能又打了字 → 合併前再收一次
     var before = _htSig(_htItems);
     _htMergeItems(r.items || []);
     _htItemsLoadedSig = _htSig(r.items || []);                    // 基準＝目前已知的後端狀態
@@ -11364,6 +11395,7 @@ function _htFindIdxById(itemId){
 function _htApplyRemoteItem(it){
   if (!_htEvent || !it || !it.itemId) return;
   if (_htTombstoned(it.itemId)) return;                 // 我剛刪掉的，別救回來
+  _htCommitActiveInput();                               // 先收攏正在打的字，才不會被遠端版本蓋掉
   var before = _htSig(_htItems);
   var idx = _htFindIdxById(it.itemId);
   if (idx >= 0) {
