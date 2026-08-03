@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260803180100';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260803223634';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11003,7 +11003,25 @@ window.htDebugItems = function(){
 // 使用者是否正在品項表格內編輯（游標在輸入框）
 function _htItemsEditing(){ var tb = document.getElementById('ht-items-tbody'); return !!(tb && document.activeElement && tb.contains(document.activeElement)); }
 // 不經快取直接向後端要最新品項（供衝突偵測與輪詢用）
+// ★ 一定要跟著 htApi 走同一個後端！這支原本寫死打 GAS（_htFetchRaw），
+//   但寫入（刪除／存檔）已改走 Supabase → 輪詢每 4 秒、以及每次存完立刻 _htPullOnce，
+//   都會拿「還是舊試算表資料的 GAS」回應，把剛刪的列救回來、把剛存的值蓋回舊值：
+//   這正是「編輯像有存、過一下又變回去／刪掉的又冒出來、重整才對」的成因。
+//   Supabase 開啟時改走 Supabase 層（回傳格式與 GAS 相同），關閉時維持原本 GAS。
 function _htFetchItemsFresh(eventId){
+  if (HT_USE_SUPABASE && window.htSupabase && window.HT_SUPABASE_ACTIONS
+      && window.HT_SUPABASE_ACTIONS.indexOf('htGetItems') >= 0
+      && !(currentUser && currentUser.token === 'demo')) {
+    return _htEnsureSbToken().then(function(tk){
+      // 沒憑證就別打（會被 RLS 擋成 401）→ 回明確錯誤，_htPullOnce 會略過不套用
+      if (!tk) return { ok:false, error:'登入憑證取得失敗，資料未同步' };
+      return window.htSupabase('htGetItems', { _user: currentUser, eventId: eventId });
+    }).then(function(r){
+      // Supabase 沒有 GAS 的 presence（誰在編哪列）概念 → 補空陣列，維持回傳格式一致
+      if (r && r.ok && !r.presence) r.presence = [];
+      return r;
+    }).catch(function(e){ return { ok:false, error:(e && e.message) || 'Supabase 呼叫失敗' }; });
+  }
   var body = { action:'htGetItems', token:((currentUser && currentUser.token) || (window.currentUser && window.currentUser.token)) || '', eventId:eventId,
                presence:true, presenceItemId:_htMyItemId };   // 順便回報／取回「誰在編哪一列」，不額外多打一次 GAS
   return _htFetchRaw(body);
