@@ -385,6 +385,11 @@
     });
   }
 
+  // ⛔ 2026-08-03：資料庫端（表 + RPC + RLS + 管理者名單）已建好並實測通過，
+  //    但**試算表的歷史投票資料還沒搬過來**。若現在就把這幾個 action 掛進
+  //    HANDLERS，過去場次的投票結果會全部顯示成 0 筆（看起來像資料不見）。
+  //    搬完歷史資料後，再把下面五個加回 HANDLERS 即可完成切換：
+  //      htVoteGet / htVoteSubmit / htVoteClose / htVoteItemsGet / htVoteItemsSave
   function htVoteGet(p) {
     if (!p || !p.eventId) return Promise.resolve({ ok: false, error: '缺少活動編號' });
     return _rpc('ht_vote_get', { p_event_id: String(p.eventId) });
@@ -549,13 +554,7 @@
     htUpsertItem: htUpsertItem,
     htDeleteItem: htDeleteItem,
     htReorderItems: htReorderItems,
-    htVendors: htVendors,
-    // 投票（走 RPC，規則在資料庫端把關）
-    htVoteGet: htVoteGet,
-    htVoteSubmit: htVoteSubmit,
-    htVoteClose: htVoteClose,
-    htVoteItemsGet: htVoteItemsGet,
-    htVoteItemsSave: htVoteItemsSave
+    htVendors: htVendors
   };
 
   // 對外入口。payload 內含 token（本層不驗，交由 RLS/前端 gate；user 由 payload 帶入）
