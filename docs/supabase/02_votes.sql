@@ -183,12 +183,23 @@ begin
   if p_event_id is null or p_event_id = '' then return jsonb_build_object('ok', false, 'error', '缺少活動編號'); end if;
 
   -- 去空白、去重、每項 60 字、最多 100 項（與原 GAS 的 _htVoteCleanNames_ 一致）
-  select coalesce(jsonb_agg(distinct left(btrim(x), 60)), '[]'::jsonb) into v_items
-    from (select jsonb_array_elements_text(coalesce(p_items, '[]'::jsonb)) as x) t
-   where btrim(x) <> '';
-  select coalesce(jsonb_agg(distinct left(btrim(x), 60)), '[]'::jsonb) into v_known
-    from (select jsonb_array_elements_text(coalesce(p_all, '[]'::jsonb) || coalesce(p_items, '[]'::jsonb)) as x) t
-   where btrim(x) <> '';
+  -- ⚠️ 必須「保留原本的順序」：jsonb_agg(distinct ...) 會照字典序重排，
+  --    使用者勾選的順序就沒了（原 GAS 是保留順序的）。故用 with ordinality
+  --    記住位置，distinct on 取每個名稱第一次出現的位置，最後再依位置排回來。
+  select coalesce(jsonb_agg(val order by ord), '[]'::jsonb) into v_items
+    from (
+      select distinct on (val) val, ord from (
+        select left(btrim(v), 60) as val, ord
+          from jsonb_array_elements_text(coalesce(p_items, '[]'::jsonb)) with ordinality as t(v, ord)
+      ) a where val <> '' order by val, ord
+    ) b;
+  select coalesce(jsonb_agg(val order by ord), '[]'::jsonb) into v_known
+    from (
+      select distinct on (val) val, ord from (
+        select left(btrim(v), 60) as val, ord
+          from jsonb_array_elements_text(coalesce(p_all, '[]'::jsonb) || coalesce(p_items, '[]'::jsonb)) with ordinality as t(v, ord)
+      ) a where val <> '' order by val, ord
+    ) b;
 
   insert into ht_vote_config (event_id, items, known, updated_at) values (p_event_id, v_items, v_known, now())
     on conflict (event_id) do update set items = v_items, known = v_known, updated_at = now();
