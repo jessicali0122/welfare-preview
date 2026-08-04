@@ -23,7 +23,38 @@ create table if not exists ht_sheet_sessions (
 );
 create index if not exists idx_ht_sheet_sessions_ym on ht_sheet_sessions(ym desc);
 
--- ---------- RLS：已登入者唯讀；寫入只在搬移時由 SQL Editor（postgres 角色）進行 ----------
+-- ---------- RLS：已登入者唯讀；寫入只能透過下面的同步 RPC（限管理者）----------
 alter table ht_sheet_sessions enable row level security;
 drop policy if exists p_ht_sheet_sessions_read on ht_sheet_sessions;
 create policy p_ht_sheet_sessions_read on ht_sheet_sessions for select to authenticated using (true);
+
+-- ---------- 同步 RPC ----------
+-- 從 GAS 的 htSheetList 取回 sessions 陣列後，整包丟進來即可（upsert，可重複執行）。
+-- 限管理者（ht_admins），避免任何人都能覆蓋歷史資料。
+-- 之後若舊試算表又被修改，重跑一次這支就好，不必進 SQL Editor。
+create or replace function ht_sheet_sessions_sync(p_sessions jsonb) returns jsonb
+language plpgsql security definer set search_path = public, extensions as $$
+declare n int := 0;
+begin
+  if not _ht_is_admin() then return jsonb_build_object('ok', false, 'error', '限福委／管理者使用'); end if;
+  if p_sessions is null or jsonb_typeof(p_sessions) <> 'array' then
+    return jsonb_build_object('ok', false, 'error', '缺少場次資料');
+  end if;
+
+  insert into ht_sheet_sessions (sheet_name, ym, gid, data, synced_at)
+  select s ->> 'sheetName',
+         s ->> 'ym',
+         nullif(s ->> 'gid', '')::bigint,
+         s,
+         now()
+    from jsonb_array_elements(p_sessions) as s
+   where coalesce(s ->> 'sheetName', '') <> ''
+  on conflict (sheet_name) do update
+     set ym = excluded.ym, gid = excluded.gid, data = excluded.data, synced_at = now();
+
+  get diagnostics n = row_count;
+  return jsonb_build_object('ok', true, 'synced', n,
+                            'total', (select count(*) from ht_sheet_sessions));
+end $$;
+
+grant execute on function ht_sheet_sessions_sync(jsonb) to authenticated;
