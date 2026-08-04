@@ -355,6 +355,17 @@
     return { ok: true };
   }
 
+  // 舊試算表歷史場次（唯讀快照）。
+  // 原本每次都要打 GAS 去解析另一份試算表（慢又常 404）；改讀快照後回傳格式完全相同。
+  // ⛔ 尚未掛進 HANDLERS：資料還沒搬進 ht_sheet_sessions。先掛的話「歷史回顧」會整個空掉
+  //    （與投票搬家時同樣的教訓：資料未到位前不切換）。搬完再把 htSheetList 加進路由表。
+  async function htSheetList() {
+    var r = await _sb('ht_sheet_sessions?select=data&order=ym.desc');
+    if (r.__error) return { ok: false, error: r.__error };
+    var sessions = (r.__data || []).map(function (x) { return x.data; }).filter(Boolean);
+    return { ok: true, sessions: sessions };
+  }
+
   // 廠商清單
   async function htVendors() {
     var r = await _sb('ht_vendors?select=*&order=total_orders.desc');
