@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260804162037';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260805091946';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -7420,7 +7420,7 @@ function _showNoPerm(name){
 function sw(name,elOrName,_fromPop){
   // ── 權限守門：無權限的受限頁面 → 顯示「沒有權限」頁（入口不隱藏，點進來才擋）──
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
-    if (name !== 'dashboard') { window._htRestoreId = null; _showNoPerm(name); return; }
+    if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name); return; }
   }
   // ── 離開表單時提示草稿已儲存 ──
   var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
@@ -7691,6 +7691,18 @@ async function _syncMembersFromServer() {
     }
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
+    // 角色到位後自動救回：若先前因角色未載入（冷啟動＋深連結，如 LINE 內建瀏覽器無快取）
+    // 被誤擋在「無權限」頁，且現在其實有權限，就自動導回原本要去的頁（連午茶日單據 ID 一起還原）
+    try {
+      var _np = window._noPermView;
+      var _npView = document.getElementById('view-noperm');
+      if (_np && _npView && _npView.classList.contains('active') &&
+          VIEW_CAP[_np] && typeof can === 'function' && can(VIEW_CAP[_np])) {
+        if (window._noPermHtId) window._htRestoreId = window._noPermHtId;
+        window._noPermView = null; window._noPermHtId = null;
+        sw(_np);
+      }
+    } catch(e) {}
     // 角色到位後預先渲染角色預覽切換器，避免管理者開選單時要「頓一下」才出現
     if (typeof _renderRolePreviewUI === 'function') _renderRolePreviewUI();
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
