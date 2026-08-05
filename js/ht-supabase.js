@@ -341,17 +341,21 @@
     if (!p || !p.eventId) return { ok: false, error: '缺少活動編號' };
     if (!Array.isArray(p.order)) return { ok: false, error: '缺少排序資料' };
     // p.order 預期為 [{itemId, sortOrder}] 或 [itemId...]（後者用索引當排序）
-    var updates = p.order.map(function (o, i) {
+    // ★ 單一批次 upsert（一趟交易）取代逐列 PATCH：
+    //   逐列各發一個 PATCH 會各自觸發回寫 ht_events 的 trigger、搶同一父列的鎖（大量列拖曳易鎖競爭/逾時），
+    //   且 Promise.all 部分成功時 DB 與本機順序會分歧。單趟 upsert 一次到位、要嘛全成要嘛全不動。
+    var now = new Date().toISOString();
+    var rows = p.order.map(function (o, i) {
       var itemId = (o && o.itemId) ? o.itemId : o;
       var sort = (o && Number(o.sortOrder) > 0) ? Number(o.sortOrder) : (i + 1);
-      return _sb('ht_items?item_id=eq.' + _enc(itemId), {
-        method: 'PATCH', body: { sort_order: sort, updated_at: new Date().toISOString() },
-        headers: { 'Prefer': 'return=minimal' }
-      });
+      return { item_id: String(itemId), event_id: String(p.eventId), sort_order: sort, updated_at: now };
     });
-    var rs = await Promise.all(updates);
-    var bad = rs.find(function (r) { return r.__error; });
-    if (bad) return { ok: false, error: bad.__error };
+    if (!rows.length) return { ok: true };
+    var r = await _sb('ht_items?on_conflict=item_id', {
+      method: 'POST', body: rows,
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }
+    });
+    if (r.__error) return { ok: false, error: r.__error };
     return { ok: true };
   }
 
