@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260805091946';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260805140353';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11665,12 +11665,25 @@ function _htCurrentEmail() {
   try { return (JSON.parse(localStorage.getItem('bf_user') || '{}').email) || ''; } catch (e) { return ''; }
 }
 
+// 檢查 JWT 是否帶 app_roles 角色 claim。RLS（role-aware）需要它；
+// 舊版簽的證沒有 → 一律當成過期，強制重簽，否則福委會被 RLS 擋（讀到空、寫被拒）。
+function _htTokenHasRoles(tok) {
+  try {
+    var p = JSON.parse(atob(String(tok).split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return !!(p && Array.isArray(p.app_roles));
+  } catch (e) { return false; }
+}
+
 function _htSbTokenLoad() {                   // 從 localStorage 還原（綁 email，換人登入即失效）
   try {
     var o = JSON.parse(localStorage.getItem(_HT_SB_TOK_LS) || '{}');
     if (!o || !o.token || !o.exp) return;
     if (!o.email || o.email !== _htCurrentEmail()) return;
     if ((o.exp - Math.floor(Date.now() / 1000)) < 300) return;   // 剩不到 5 分鐘就不用了
+    if (!_htTokenHasRoles(o.token)) {          // 舊版無角色 claim 的證 → 棄用並清掉，強制重簽新證
+      try { localStorage.removeItem(_HT_SB_TOK_LS); } catch (e) {}
+      return;
+    }
     window.HT_SB_TOKEN = o.token; _htSbTokenExp = o.exp;
   } catch (e) {}
 }
