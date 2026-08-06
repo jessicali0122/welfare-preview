@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260806101444';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260806101632';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -5358,7 +5358,9 @@ function logout() {
 // ── API 快取（記憶體 + localStorage 持久化，只快取唯讀查詢）──
 const _apiCache = {};
 const _CACHE_TTL = 300000; // 5 分鐘（記憶體 SWR：這段時間內直接用快取，逾時才背景更新）
-const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow']); // 唯讀 action 快取
+// listUsers 也納入 SWR（僅記憶體、不持久化）：每次切到系統管理都要等 GAS 幾秒太卡；
+// 名單會被增刪改，所以任一使用者寫入後會立刻讓它失效（見下方 _usersCacheClear）
+const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow', 'listUsers']); // 唯讀 action 快取
 // ── 離線快取（localStorage）：把上次成功的讀取結果留到下次開頁 ──
 // GAS 冷啟動 1～3 秒，全新載入時首頁會空等。改成先秒開上次資料、背景再更新（樂觀顯示）。
 // 只存會擋首屏的幾支查詢；get（單筆案件）key 太多、易塞爆，只留記憶體快取。
@@ -5420,6 +5422,12 @@ function _cacheClear() {
   _apiLsClear();
 }
 
+// 只清使用者名單快取（不影響案件/流程快取），並遞增世代讓寫入前發出的背景更新作廢
+function _usersCacheClear() {
+  _cacheGen++;
+  Object.keys(_apiCache).forEach(function(k){ if (k.indexOf('listUsers:') === 0) delete _apiCache[k]; });
+}
+
 // ── 進行中請求去重（in-flight dedup）──
 // 冷啟動/快取過期時，同一支唯讀 action 常被多處（loadDashboard/loadApplications/loadAnalytics）
 // 幾乎同時呼叫，各自打一次慢 GAS。這裡讓相同 key 的讀取共用同一個 Promise，避免重複請求壓垮後端。
@@ -5454,6 +5462,8 @@ async function callAPI(action, data = {}, opts = {}) {
   if (json && json.ok && _CACHEABLE.has(action) && _cacheGen === _genBeforeFetch) _cacheSet(cacheKey, json);
   // 案件有異動（新增/審核/退件/刪除/重送）→ 費用分析 5 分鐘快取立即失效，下次切換抓最新
   if (json && json.ok && /^(submit|approve|reject|resubmit|deleteCase|deleteDraft|saveDraft)$/.test(action) && window._analyticsCacheClear) _analyticsCacheClear();
+  // 使用者名單有異動 → 立刻讓 listUsers 快取失效，下次進系統管理抓最新
+  if (json && json.ok && /^(addUser|editUser|deleteUser|disableUser|enableUser)$/.test(action)) _usersCacheClear();
   return json;
 }
 
@@ -8956,7 +8966,10 @@ async function loadAdminUsers() {
   if (!isAdmin()) return; // 非管理者不呼叫
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
-  tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏳ 載入中…</td></tr>';
+  // 已經有名單就別清空成「載入中」（切回系統管理會閃一下空白）；只有首次載入才顯示
+  if (!tbody.querySelector('tr[data-email]')) {
+    tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏳ 載入中…</td></tr>';
+  }
   const res = await callAPI('listUsers');
   if (!res.ok) {
     if (res._authError) {
@@ -8979,7 +8992,7 @@ async function loadAdminUsers() {
     var _ce = document.getElementById('selected-count'); if (_ce) _ce.textContent = '共 0 位使用者';
   } else {
     tbody.innerHTML = users.map(buildAdminUserRow).join('');
-    _adminPage = 1;
+    // 保留使用者原本停留的頁（刪除/編輯後不要莫名跳回第 1 頁）；_applyAdminView 會自動夾在合法範圍
     if (typeof _applyAdminView === 'function') _applyAdminView(true);   // 套用分頁（每頁 20 筆）
   }
   setTimeout(applyRolePermissions, 50);
