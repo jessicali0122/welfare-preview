@@ -112,22 +112,51 @@ create trigger trg_ht_items_vendor
 alter publication supabase_realtime add table ht_items;
 
 -- ============================================================
--- RLS（列級安全）— 安全版（機密內部資料，不可公開外流）
--- ★ 只有「已驗證身分（authenticated）」可讀寫；anon（拿到公開 key 的路人）一律擋。
---   驗證身分＝前端帶一張「GAS 登入後簽發的 Supabase JWT」（role=authenticated）。
+-- RLS（列級安全）— 角色感知安全版（機密內部資料，不可公開外流）
+-- ★ 只有「福委 / 管理者」（JWT 的 app_roles 含 welfare 或 manager）可讀寫；
+--   一般已登入員工、以及 anon（拿到公開 key 的路人）一律擋。
+--   驗證身分＝前端帶一張「GAS 登入後簽發的 Supabase JWT」（role=authenticated
+--   且帶 app_roles claim，由 gas-online/sb-token.gs 簽入）。
 --   沒有這張 JWT 的請求一筆都讀不到 → 公開前端的 publishable key 單獨無用。
 --   ⚠️ 前提：GAS 需用本專案的 JWT secret 簽 JWT（見 docs 說明），且勿建立任何 anon 政策。
+--
+-- ⚠️⚠️ 這段與 gas-online/rls-role-aware.sql 必須「完全一致」（同名、同條件）。
+--   Postgres 對同角色的 permissive policy 用 OR 合併 → 只要殘留任何一條
+--   using(true) 的寬鬆政策，角色把關就會被整個蓋過。故：
+--     1) 先動態清掉這三張表上「所有」既有 policy（不論名稱），避免舊寬鬆版殘留；
+--     2) 再建與 rls-role-aware.sql 同名（ht_*_rw）的角色版。
+--   這樣「重跑本檔」或「重跑 rls-role-aware」都會收斂到同一個安全狀態，不會退回寬鬆。
 -- ============================================================
 alter table ht_events  enable row level security;
 alter table ht_items   enable row level security;
 alter table ht_vendors enable row level security;
 
--- 清掉任何舊的寬鬆政策（若曾建立過 anon 版）
-drop policy if exists p_ht_events_all  on ht_events;
-drop policy if exists p_ht_items_all   on ht_items;
-drop policy if exists p_ht_vendors_all on ht_vendors;
+-- 1) 動態清掉這三張表上「所有」既有 policy（含歷史上任何寬鬆版：p_*_all / p_*_auth …）
+do $$
+declare pol record;
+begin
+  for pol in
+    select policyname, tablename
+    from pg_policies
+    where schemaname = 'public'
+      and tablename in ('ht_events', 'ht_items', 'ht_vendors')
+  loop
+    execute format('drop policy if exists %I on public.%I', pol.policyname, pol.tablename);
+  end loop;
+end $$;
 
--- 僅 authenticated 可全權存取；未建立 anon 政策 → RLS 預設拒絕 anon
-create policy p_ht_events_auth  on ht_events  for all to authenticated using (true) with check (true);
-create policy p_ht_items_auth   on ht_items   for all to authenticated using (true) with check (true);
-create policy p_ht_vendors_auth on ht_vendors for all to authenticated using (true) with check (true);
+-- 2) 角色版：JWT 的 app_roles 含 welfare 或 manager 才可全權存取；未建立 anon 政策 → RLS 預設拒絕 anon
+create policy ht_events_rw on public.ht_events
+  for all to authenticated
+  using      ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' )
+  with check ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' );
+
+create policy ht_items_rw on public.ht_items
+  for all to authenticated
+  using      ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' )
+  with check ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' );
+
+create policy ht_vendors_rw on public.ht_vendors
+  for all to authenticated
+  using      ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' )
+  with check ( (auth.jwt() -> 'app_roles') ? 'welfare' or (auth.jwt() -> 'app_roles') ? 'manager' );
