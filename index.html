@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260805151839';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260806101444';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3135,8 +3135,8 @@ thead th{color:#767B75!important}
         </table>
         <div style="padding:12px 16px;border-top:1px solid #D9DDD3;font-size:14px;color:#767B75;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <span id="selected-count">共 0 位使用者</span>
-          <span id="admin-users-pager" style="display:flex;gap:6px;align-items:center"></span>
           <span>限 @tsagroup.com.tw 網域</span>
+          <span id="admin-users-pager" class="evx-pages"></span>
         </div>
       </div>
     </div>
@@ -9160,14 +9160,29 @@ function executeDeleteUser(){
   closeDeleteConfirmModal();
   if(!email){ toast('❌ 找不到此使用者的 Email，請重新整理後再試'); return; }
   toast('⏳ 刪除中...');
+  // 樂觀更新：先把該列從畫面移除（GAS 要幾秒才回，否則使用者會以為沒反應）；失敗再還原
+  const _prevDisplay = row.style.display;
+  row.style.display = 'none';
+  row.dataset.deleting = '1';
+  if (typeof _applyAdminView === 'function') _applyAdminView(true);
   callAPI('deleteUser',{email}).then(res=>{
-    if(res.ok){
+    if(res && res.ok){
       if(!_deletedUsers.includes(name))_deletedUsers.push(name);
+      row.remove();
       toast('🗑️ 已刪除 '+name);
       loadAdminUsers();
     } else {
-      toast('❌ 刪除失敗：'+res.error);
+      // 刪除失敗 → 把列還原回畫面，絕不讓使用者以為刪掉了但雲端還在
+      delete row.dataset.deleting;
+      row.style.display = _prevDisplay;
+      if (typeof _applyAdminView === 'function') _applyAdminView(true);
+      toast('❌ 刪除失敗：'+((res&&res.error)||'請稍後再試'));
     }
+  }).catch(()=>{
+    delete row.dataset.deleting;
+    row.style.display = _prevDisplay;
+    if (typeof _applyAdminView === 'function') _applyAdminView(true);
+    toast('❌ 刪除失敗，請檢查網路');
   });
 }
 
@@ -9525,7 +9540,8 @@ var _adminPage = 1;
 function _applyAdminView(quiet) {
   const q = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
   const dept = (document.getElementById('admin-filter-dept')?.value || '').trim();
-  const rows = Array.prototype.slice.call(document.querySelectorAll('#admin-users-tbody tr[data-email]'));
+  // 刪除中的列（樂觀移除）先排除，避免重算分頁時又被顯示回來
+  const rows = Array.prototype.slice.call(document.querySelectorAll('#admin-users-tbody tr[data-email]:not([data-deleting])'));
   const matches = rows.filter(function(r){
     const text = r.textContent.toLowerCase();
     const deptText = (r.getAttribute('data-dept') || (r.cells[3] ? r.cells[3].textContent : '') || '').trim();
@@ -9549,21 +9565,13 @@ function _renderAdminPager(total, totalPages) {
   const el = document.getElementById('admin-users-pager');
   if (!el) return;
   if (totalPages <= 1) { el.innerHTML = ''; return; }
-  const btn = function(label, page, disabled, active){
-    return '<button onclick="adminGoPage(' + page + ')" ' + (disabled ? 'disabled' : '') + ' style="min-width:36px;padding:6px 10px;border-radius:8px;border:1px solid ' + (active ? '#577B53' : '#D2D7CD') + ';background:' + (active ? '#577B53' : '#fff') + ';color:' + (active ? '#fff' : (disabled ? '#C6CDBE' : '#4A4F49')) + ';font-size:14px;font-weight:700;cursor:' + (disabled ? 'default' : 'pointer') + ';font-family:inherit">' + label + '</button>';
-  };
-  // 頁碼：最多顯示當前頁附近，避免一長排
-  var pages = [];
-  var win = 2;
-  for (var p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || (p >= _adminPage - win && p <= _adminPage + win)) pages.push(p);
-    else if (pages[pages.length - 1] !== '…') pages.push('…');
-  }
-  var html = btn('‹', _adminPage - 1, _adminPage <= 1, false);
-  html += pages.map(function(p){
-    return p === '…' ? '<span style="padding:0 2px;color:#767B75">…</span>' : btn(String(p), p, false, p === _adminPage);
+  // 樣式與「案件追蹤」分頁一致（.evx-pb）
+  var html = '<button class="evx-pb" onclick="adminGoPage(' + (_adminPage - 1) + ')" ' + (_adminPage <= 1 ? 'disabled' : '') + '>‹ 上頁</button>';
+  html += _pageRange(_adminPage, totalPages).map(function(p){
+    if (p === '…') return '<span class="evx-pb dot">…</span>';
+    return '<button class="evx-pb' + (p === _adminPage ? ' active' : '') + '" onclick="adminGoPage(' + p + ')">' + p + '</button>';
   }).join('');
-  html += btn('›', _adminPage + 1, _adminPage >= totalPages, false);
+  html += '<button class="evx-pb" onclick="adminGoPage(' + (_adminPage + 1) + ')" ' + (_adminPage >= totalPages ? 'disabled' : '') + '>下頁 ›</button>';
   el.innerHTML = html;
 }
 
