@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260806102428';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260812084909';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -88,7 +88,7 @@ function _loadFlatpickr(cb) {
 <style>
 *{font-family:'Noto Sans TC',sans-serif;box-sizing:border-box}
 html{color-scheme:light only}
-html,body{margin:0;background:#F1F3EE;overflow-x:hidden;width:100%}
+html,body{margin:0;background:#F6F8F3;overflow-x:hidden;width:100%}
 :root{--brand:#577B53;--brand-dark:#46633F;--brand-light:#EDF1EC;--brand-mid:#577B53;--amber:#577B53;--amber-dark:#577B53;--amber-light:#E7EEE5;--amber-mid:#8FAE8B;--green:#577B53;--green-dark:#46633F;--green-light:#EEF3ED}
 .view{display:none}.view.active{display:block}
 
@@ -135,6 +135,7 @@ aside .sl-text{display:none}
   pointer-events:none;
 }
 @keyframes sl-ripple-anim{to{transform:scale(4);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* notification dot */
 .sl-badge{position:absolute!important;top:2px!important;right:2px!important;width:auto!important;height:auto!important;border-radius:0!important;background:transparent!important;padding:0!important;min-width:0!important;font-size:0!important;color:transparent!important;margin:0!important;line-height:0!important;pointer-events:none!important}
@@ -1581,8 +1582,8 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
       '</div>' +
       '<div style="color:#767B75;font-size:14px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.2em">登入中</div>';
     document.body.appendChild(d);
-    document.documentElement.style.background = '#F1F3EE';
-    document.body.style.background = '#F1F3EE';
+    document.documentElement.style.background = '#F6F8F3';
+    document.body.style.background = '#F6F8F3';
   }catch(e){}
 })();
 </script>
@@ -1592,9 +1593,9 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 /* ── 空間層次系統（2026-07 去平面化改造）──
    底層 html/body 奶油色（下拉回彈不再露白線）→ 內容米白 → 卡片暖白，
    三層由深到淺，加上暖色點綴與微漸層，建立縱深。 */
-html,body{background:#F1F3EE}
+html,body{background:#F6F8F3}
 /* 內容區：全站統一近白 #F7F8F6（純白卡片浮於其上；與頂欄同色、零接縫） */
-#main-content{background:#F1F3EE!important}
+#main-content{background:#F6F8F3!important}
 #view-dashboard{background:transparent!important}
 /* ── 首頁深墨綠畫布：白卡浮起、畫布文字翻淺（頂欄為透明浮層，自然融入） ── */
 #main-content:has(#view-dashboard.active){background:#46633F!important}
@@ -2421,6 +2422,9 @@ thead th{color:#767B75!important}
       <button id="apps-tab-analytics" onclick="appsSetTab('analytics')" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#767B75;white-space:nowrap">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="10"/><line x1="3" y1="20" x2="21" y2="20"/></svg>費用分析
       </button>
+      <button id="apps-tab-flow" onclick="appsSetTab('flow')" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#767B75;white-space:nowrap">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>簽核流程
+      </button>
     </div>
     <div id="app-count-label" style="font-size:14px;color:#767B75;margin-bottom:12px;display:none">共 0 件</div>
     <!-- ── 費用分析（自總覽搬入請款模組）── -->
@@ -2583,7 +2587,6 @@ thead th{color:#767B75!important}
       <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 全部案件 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
-      <div id="tab-btn-flow" onclick="switchAppTab('flow')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">⚙️ 簽核流程</div>
     </div>
     <!-- 簽核流程設定（自系統管理移入；元件 ID 保留，renderFlowList/loadAdminFlow 不需改） -->
     <div id="app-tab-flow" style="display:none">
@@ -4686,8 +4689,8 @@ function _showLoggingIn() {
     '</div>' +
     '<div style="color:#767B75;font-size:14px;font-weight:600;font-family:\'Noto Sans TC\',sans-serif;letter-spacing:.2em">登入中</div>';
   document.body.appendChild(d);
-  document.documentElement.style.background = '#F1F3EE';
-  document.body.style.background = '#F1F3EE';
+  document.documentElement.style.background = '#F6F8F3';
+  document.body.style.background = '#F6F8F3';
 }
 function _hideLoggingIn() {
   var d = document.getElementById('bf-logging-in');
@@ -4963,8 +4966,8 @@ function showApp() {
   // 供跨 script 區塊（按摩快取 key、投票等）以 window.currentUser 讀取
   window.currentUser = currentUser;
   _hideLoggingIn();  // 移除「登入中…」過場
-  document.documentElement.style.background = '#F1F3EE';
-  document.body.style.background = '#F1F3EE';
+  document.documentElement.style.background = '#F6F8F3';
+  document.body.style.background = '#F6F8F3';
   document.getElementById('login-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
   // 更新 UI 顯示使用者資訊
@@ -6190,7 +6193,8 @@ function appsSetTab(tab) {
   // pill 樣式更新
   var tabs = {
     analytics: { el: document.getElementById('apps-tab-analytics'), active: tab==='analytics' },
-    all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' }
+    all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' },
+    flow:      { el: document.getElementById('apps-tab-flow'),      active: tab==='flow' }
   };
   // 緊湊膠囊樣式：選中＝品牌綠實心，未選＝白底灰框
   var activeStyle   = { bg:'#577B53', border:'#577B53', color:'#fff' };
@@ -6231,6 +6235,21 @@ function appsSetTab(tab) {
     if (tabCases)  tabCases.style.display  = 'none';
     if (tabDrafts) tabDrafts.style.display = 'none';
     if (tabFlow)   tabFlow.style.display   = 'none';
+  } else if (tab === 'flow') {
+    // 簽核流程：升為頂層膠囊，隱藏費用分析與第二列頁籤，只顯示流程面板
+    if (analyticsEl)  analyticsEl.style.display  = 'none';
+    if (appTabsEl)    appTabsEl.style.display     = 'none';
+    if (filterCard)   filterCard.style.display    = 'none';
+    if (filterNotice) filterNotice.style.display  = 'none';
+    if (countLabel)   countLabel.style.display    = 'none';
+    if (addBtn)       addBtn.style.display        = 'none';
+    var fCases = document.getElementById('app-tab-cases');
+    var fDrafts = document.getElementById('app-tab-drafts');
+    var fFlow  = document.getElementById('app-tab-flow');
+    if (fCases)  fCases.style.display  = 'none';
+    if (fDrafts) fDrafts.style.display = 'none';
+    if (fFlow)   fFlow.style.display   = '';
+    if (typeof loadAdminFlow === 'function') loadAdminFlow();
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
@@ -7408,17 +7427,26 @@ window.addEventListener('popstate', function(e) {
 // view → 所需能力（無權限者導回總覽）
 const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view', feedback:'feedback.view' };
 // 無權限時顯示的「沒有權限」頁（入口卡片不隱藏，點進來才擋）
-function _showNoPerm(name){
+function _showNoPerm(name, pending){
   var host = document.getElementById('view-dashboard') ? document.getElementById('view-dashboard').parentNode : document.body;
   var v = document.getElementById('view-noperm');
   if (!v) { v = document.createElement('div'); v.id = 'view-noperm'; v.className = 'view'; host.appendChild(v); }
   var featTitle = titles[name] || name;
+  if (pending) {
+    // 冷啟動角色尚未載回：先顯示中性「載入中」占位，避免嚇人的「無權限」閃現；
+    // 角色到位後 _resolvePermPending 會導回原頁或（確定無權限時）轉成正式無權限頁。
+    v.innerHTML = '<div style="max-width:520px;margin:80px auto;padding:40px 28px;text-align:center">'
+      + '<div class="spinner" style="width:34px;height:34px;border:3px solid #E3E7DF;border-top-color:#577B53;border-radius:50%;margin:0 auto 16px;animation:spin 0.8s linear infinite"></div>'
+      + '<div style="font-size:15px;color:#767B75;font-weight:600">正在載入…</div>'
+      + '</div>';
+  } else {
   v.innerHTML = '<div style="max-width:520px;margin:56px auto;padding:40px 28px;text-align:center;background:#fff;border-radius:20px;border:1px solid #D2D7CD;box-shadow:0 6px 24px rgba(46,51,45,.06)">'
     + '<div style="font-size:52px;margin-bottom:14px">🔒</div>'
     + '<div style="font-size:20px;font-weight:800;color:#2E332D;margin-bottom:10px">你沒有使用此功能的權限</div>'
     + '<div style="font-size:14px;color:#767B75;line-height:1.7;margin-bottom:24px">「' + featTitle + '」僅開放給特定角色使用。<br>如需開通，請洽福委會或系統管理者。</div>'
     + '<button onclick="sw(\'dashboard\')" class="btn btn-p" style="min-height:44px;padding:10px 28px;justify-content:center">回總覽</button>'
     + '</div>';
+  }
   document.querySelectorAll('.view').forEach(function(x){ x.classList.remove('active'); });
   v.classList.add('active');
   var pt = document.getElementById('ptitle'); if (pt) pt.textContent = featTitle;
@@ -7429,10 +7457,29 @@ function _showNoPerm(name){
   document.getElementById('sidebar-wrapper') && document.getElementById('sidebar-wrapper').classList.remove('open');
   var mc = document.getElementById('main-content'); if (mc) mc.scrollTop = 0; else window.scrollTo(0,0);
 }
+// 角色首次伺服器同步完成後：解決冷啟動期間的「載入中／無權限」占位頁。
+// 有權限→導回原頁；確定無權限→把占位轉成正式無權限頁。無論成功或失敗都標記已同步，
+// 之後 sw() 守門就會直接顯示正式頁，不再走載入中占位。
+function _resolvePermPending(){
+  window._rolesSyncedOnce = true;
+  try {
+    var _np = window._noPermView;
+    var _npView = document.getElementById('view-noperm');
+    if (_np && _npView && _npView.classList.contains('active')) {
+      if (VIEW_CAP[_np] && typeof can === 'function' && can(VIEW_CAP[_np])) {
+        if (window._noPermHtId) window._htRestoreId = window._noPermHtId;
+        window._noPermView = null; window._noPermHtId = null;
+        sw(_np);
+      } else {
+        _showNoPerm(_np, false);
+      }
+    }
+  } catch(e) {}
+}
 function sw(name,elOrName,_fromPop){
   // ── 權限守門：無權限的受限頁面 → 顯示「沒有權限」頁（入口不隱藏，點進來才擋）──
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
-    if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name); return; }
+    if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name, !window._rolesSyncedOnce); return; }
   }
   // ── 離開表單時提示草稿已儲存 ──
   var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
@@ -7642,7 +7689,7 @@ function _refreshDeptOptions(users) {
 async function _syncMembersFromServer() {
   try {
     const res = await callAPI('getMembers');
-    if (!res.ok || !Array.isArray(res.members)) return;
+    if (!res.ok || !Array.isArray(res.members)) { _resolvePermPending(); return; }
     res.members.forEach(function(u) {
       if (!u.email || !u.name) return;
       // 更新姓名對照表
@@ -7704,17 +7751,8 @@ async function _syncMembersFromServer() {
     // 同步完成後重新套用權限（管理員清單可能更新了）
     if (typeof applyRolePermissions === 'function') applyRolePermissions();
     // 角色到位後自動救回：若先前因角色未載入（冷啟動＋深連結，如 LINE 內建瀏覽器無快取）
-    // 被誤擋在「無權限」頁，且現在其實有權限，就自動導回原本要去的頁（連午茶日單據 ID 一起還原）
-    try {
-      var _np = window._noPermView;
-      var _npView = document.getElementById('view-noperm');
-      if (_np && _npView && _npView.classList.contains('active') &&
-          VIEW_CAP[_np] && typeof can === 'function' && can(VIEW_CAP[_np])) {
-        if (window._noPermHtId) window._htRestoreId = window._noPermHtId;
-        window._noPermView = null; window._noPermHtId = null;
-        sw(_np);
-      }
-    } catch(e) {}
+    // 被誤擋在「無權限／載入中」頁，現在有權限就導回原頁、確定無權限才顯示正式無權限頁。
+    _resolvePermPending();
     // 角色到位後預先渲染角色預覽切換器，避免管理者開選單時要「頓一下」才出現
     if (typeof _renderRolePreviewUI === 'function') _renderRolePreviewUI();
   } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
