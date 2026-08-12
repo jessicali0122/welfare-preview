@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260812162823';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260812163843';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11806,7 +11806,15 @@ async function _htEnsureSbToken() {
     if (!_htSbTokenPromise) _htSbTokenPromise = _htSbTokenFetch(false).then(function(t){ _htSbTokenPromise = null; return t; });
     return window.HT_SB_TOKEN;
   }
-  if (_htSbTokenPromise) return _htSbTokenPromise;               // 已有人在要了 → 一起等，別再打 GAS
+  // 已有人在要了 → 一起等，別再打 GAS。但那可能是背景「完整重試」的 promise（最長約 55 秒）；
+  //   使用者此刻正盯著載入，不該被背景任務拖到 55 秒 → 與 ~20 秒逾時競速，逾時就回 null 讓上層跳「重試」
+  //   （背景 promise 仍會繼續跑完並更新快取，使用者按重試時多半已好）。
+  if (_htSbTokenPromise) {
+    return Promise.race([
+      _htSbTokenPromise,
+      new Promise(function(res){ setTimeout(function(){ res(null); }, 20000); })
+    ]);
+  }
   // 憑證確實快死／已過期，只能擋著等：走「快速失敗」重試（約 20 秒內），
   //   失敗就讓上層顯示「重試」鈕，而不是乾等約 55 秒。
   _htSbTokenPromise = _htSbTokenFetch(true).then(function(t){ _htSbTokenPromise = null; return t; });
