@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260812163843';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260812170214';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4764,7 +4764,7 @@ async function _bfBoot() {
     if (_idToken) {
       history.replaceState({}, '', location.pathname);
       _showLoggingIn();  // 顯示「登入中…」過場，避免換 token 期間閃現登入畫面
-      await handleGoogleLogin({ credential: _idToken });
+      await handleGoogleLogin({ credential: _idToken, _viaImplicit: true });
       return;
     }
   }
@@ -4860,6 +4860,17 @@ async function handleGoogleLogin(response) {
   }
   if (!payload.email.endsWith('@tsagroup.com.tw')) {
     return _loginErr('此帳號（' + payload.email + '）非公司帳號，請使用 @tsagroup.com.tw 信箱登入。');
+  }
+  // ── OAuth nonce 防重放：implicit flow（本站唯一登入路徑）回來的 id_token
+  //    必須帶有與本機送出時一致的 nonce，否則拒絕（擋住把他人擷取到的合法 id_token
+  //    注入受害者 #id_token= 造成的重放／登入 CSRF）。nonce 一次性、用後即清。──
+  if (response && response._viaImplicit) {
+    var _storedNonce = null;
+    try { _storedNonce = sessionStorage.getItem('bf_oauth_nonce') || localStorage.getItem('bf_oauth_nonce'); } catch(e) {}
+    try { sessionStorage.removeItem('bf_oauth_nonce'); localStorage.removeItem('bf_oauth_nonce'); } catch(e) {}
+    if (!_storedNonce || !payload.nonce || payload.nonce !== _storedNonce) {
+      return _loginErr('登入驗證失敗，請重新點一次「登入」再試。');
+    }
   }
   // ── 安全修復（2026-06）：用 Google id_token 向後端換取「無法偽造」的自家 session token ──
   // 後端 verifyUser 已不再接受未驗章的 Google id_token，必須先呼叫 login 交換。
@@ -5025,7 +5036,7 @@ function showApp() {
       sw('hightea');
       history.replaceState({ view: 'hightea', htId: _htId }, '', '#' + _initHash);
     } else {
-      const _mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview'];
+      const _mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview','feedback'];
       let _restore = _mainViews.indexOf(_initHash) > -1 ? _initHash : 'dashboard';
       // 受權限管制的頁面：★ 不在這裡提前退回總覽——交給 sw() 守門。
       //   冷啟動（新裝置/清快取/LINE 內建瀏覽器）角色還沒載回時，sw() 會顯示「無權限」頁
@@ -5350,6 +5361,8 @@ function logout() {
   try { localStorage.removeItem('bf_draft'); } catch(e) {}
   // 清除頁面記憶：登出後重新登入一律回到總覽首頁，不停留在登出前的頁面
   try { sessionStorage.removeItem('bf_return_hash'); } catch(e) {}
+  // Supabase JWT 也一併清掉（與 reLogin/過期清場一致，勿留死憑證讓人於效期內冒用）
+  try { localStorage.removeItem('bf_sb_tok'); } catch(e) {}
   currentUser = null;
   history.replaceState({}, '', location.pathname); // 去掉 #hash 與查詢參數
   location.reload();
@@ -7016,7 +7029,7 @@ function doApprove() {
 
 function doReject() {
   const caseId  = document.getElementById('approve-box').getAttribute('data-caseid');
-  const comment = document.querySelector('#approve-box textarea').value;
+  const comment = (document.querySelector('#approve-box textarea').value || '').trim();
   if (!caseId) return;
   if (!comment) { toast('⚠️ 請先填寫退件原因再送出'); return; }
   _showConfirmModal(
@@ -7586,9 +7599,9 @@ function sw(name,elOrName,_fromPop){
     }
     checkDraftBanner();
     // 從 localStorage 還原草稿 caseId 和已上傳附件（僅 sw 直接切換時；openDraft 會自己還原）
-    // ★ Fix：_newFormFreshStart 只阻止填入表單內容，仍需還原 caseId 追蹤，
-    //        否則點「新增申請」後儲存草稿會以 caseId=null 建立新草稿
-    if (!window._openDraftInProgress) {
+    // ★ 修正資料遺失：fresh start（點「＋新增申請」）時「不」還原舊草稿 caseId——
+    //   否則填入全新內容一存/一送會覆蓋掉上一份草稿。新申請本就該以 caseId=null 建立新草稿。
+    if (!window._openDraftInProgress && !window._newFormFreshStart) {
       try {
         _purgeForeignDraft();
         const _sd = JSON.parse(localStorage.getItem('bf_draft') || '{}');
@@ -7755,7 +7768,12 @@ async function _syncMembersFromServer() {
     _resolvePermPending();
     // 角色到位後預先渲染角色預覽切換器，避免管理者開選單時要「頓一下」才出現
     if (typeof _renderRolePreviewUI === 'function') _renderRolePreviewUI();
-  } catch(e) { console.warn('[BeneFlow] 成員同步失敗：', e); }
+  } catch(e) {
+    console.warn('[BeneFlow] 成員同步失敗：', e);
+    // ★ 例外分支也要解除「載入中」占位頁：否則冷啟動深連結遇 getMembers 例外時，
+    //   pending spinner 永遠不會被解除，有權限者也永久卡在載入中（須手動重整）。
+    try { _resolvePermPending(); } catch(_) {}
+  }
 }
 // 根據 email 查詢本地使用者（名稱 + 部門）
 function getLocalUser(email){
@@ -11209,9 +11227,12 @@ window.addEventListener('offline', function(){ _htSyncRender(); });
 
 // 空白列（使用者剛按＋新增還沒填）不送後端，避免產生一堆空品項
 function _htRowEmpty(it){
+  var q = Number(it.qty);
   return !String(it.name||'').trim() && !String(it.vendor||'').trim()
       && !Number(it.unitPrice) && !String(it.assignee||'').trim()
-      && !String(it.notes||'').trim() && !String(it.link||'').trim();
+      && !String(it.notes||'').trim() && !String(it.link||'').trim()
+      && !String(it.category||'').trim() && !String(it.serving||'').trim()
+      && !it.ordered && (q === 0 || q === 1);   // qty 預設 1 → 視為未動；分類/份量/已訂購任一有值都算有意義，要存
 }
 
 // 標記某列有變動並排程自動存；同時記下「我改了哪幾個欄位」，供逐欄位合併用
@@ -11434,6 +11455,10 @@ document.addEventListener('focusin', function(e){
 var _htCommitting = false;
 function _htCommitActiveInput(){
   if (_htCommitting) return;
+  // realtime 重繪排程中／執行中：DOM 的 data-idx 可能與已被遠端改動的 _htItems 對不上，
+  //   此時 commit 會把打到一半的字寫進「錯的列」（改到別人的資料）。先跳過——打字內容由
+  //   _htFocusState 的 raw 捕捉、_htRestoreFocus 依 itemId 還原，等重繪 data-idx 對齊後再 commit。
+  if (_htRtRepaintT || _htRtRepainting) return;
   var ae = document.activeElement, tb = document.getElementById('ht-items-tbody');
   if (!ae || !tb || !tb.contains(ae) || !ae.dataset || ae.dataset.idx == null || !ae.dataset.f) return;
   var idx = parseInt(ae.dataset.idx), f = ae.dataset.f, it = _htItems[idx];
@@ -11527,15 +11552,19 @@ function _htRtLive(){
   try { return window.htRealtime && window.htRealtime.status() === 'SUBSCRIBED'; } catch(e){ return false; }
 }
 var _htRtRepaintT = null;
+var _htRtRepainting = false;   // 重繪執行中：DOM 與 _htItems 可能暫不同步 → commit 一律先跳過
 // 多列同時推來（例如別人按整批儲存）時，收攏成一次重繪，避免畫面連續閃動
 function _htRtScheduleRepaint(){
   if (_htRtRepaintT) return;
   _htRtRepaintT = setTimeout(function(){
     _htRtRepaintT = null;
     if (!_htEvent) return;
-    var fs = _htFocusState();
-    try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
-    _htRestoreFocus(fs);
+    _htRtRepainting = true;
+    try {
+      var fs = _htFocusState();
+      try { htRenderItems(); htRenderBudget(); if (typeof _htUpdateBalance === 'function') _htUpdateBalance(); } catch(e){}
+      _htRestoreFocus(fs);
+    } finally { _htRtRepainting = false; }
     _htItemsLoadedSig = _htSig(_htItems);
     _htSyncFlash('🔄 已同步他人的變更');
   }, 150);
@@ -11554,13 +11583,20 @@ function _htApplyRemoteItem(it){
     var lo = _htItems[idx];
     if (lo._dirty || lo._saving) {
       if (lo._dirtyAll || !lo._dirtyFields) return;     // 整列都算我的 → 完全不動
-      Object.keys(lo._dirtyFields).forEach(function(k){ it[k] = lo[k]; });   // 我改過的欄位留我的
-      it.subtotal = (Number(it.unitPrice) || 0) * (Number(it.qty) || 0);
-      it._dirty = lo._dirty; it._saving = lo._saving;
-      it._dirtyFields = lo._dirtyFields; it._dirtyAll = lo._dirtyAll;
+      // ★ 就地把 server 的「非我改」欄位寫回既有物件 lo，維持同一參照——
+      //   絕不用新物件 _htItems[idx]=it 取代：否則 _htFlushRows 的 _settle 閉包握著舊 lo，
+      //   存檔完成時把旗標清在被抽離的孤兒上，畫面這列的 _saving 永遠清不掉（卡「儲存中」）。
+      Object.keys(it).forEach(function(k){
+        if (k.charAt(0) === '_') return;                // 不覆蓋內部旗標
+        if (lo._dirtyFields[k]) return;                 // 我改過的欄位留我的
+        lo[k] = it[k];
+      });
+      lo.subtotal = (Number(lo.unitPrice) || 0) * (Number(lo.qty) || 0);
+      // lo._dirty / _saving / _dirtyFields / _dirtyAll 保持不變（同一物件，交給 _settle 清）
+    } else {
+      it._editLink = lo._editLink;                      // 保留「正在編連結」的 UI 狀態
+      _htItems[idx] = it;
     }
-    it._editLink = lo._editLink;                        // 保留「正在編連結」的 UI 狀態
-    _htItems[idx] = it;
   } else {
     _htItems.push(it);
     _htItems.sort(function(a,b){ return (Number(a.sortOrder)||0) - (Number(b.sortOrder)||0); });
@@ -11570,6 +11606,7 @@ function _htApplyRemoteItem(it){
 }
 function _htApplyRemoteDelete(itemId){
   if (!_htEvent || !itemId) return;
+  _htCommitActiveInput();                                // 先收攏正在打的字（趁 splice 前 DOM 與 _htItems 還對齊）
   var idx = _htFindIdxById(itemId);
   if (idx < 0) return;
   var lo = _htItems[idx];
