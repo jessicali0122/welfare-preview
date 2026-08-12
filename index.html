@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260812090149';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260812114917';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11793,21 +11793,29 @@ async function _htEnsureSbToken() {
   if (currentUser && currentUser.token === 'demo') return null;
   var now = Math.floor(Date.now() / 1000);
   if (!window.HT_SB_TOKEN) _htSbTokenLoad();                     // 冷啟動先看快取
-  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 900) return window.HT_SB_TOKEN;
+  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 1800) return window.HT_SB_TOKEN;
 
-  // 還有 5～15 分鐘：先把現有的還回去讓使用者繼續用，同時在背景續簽（不擋畫面）
-  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 300) {
-    if (!_htSbTokenPromise) _htSbTokenPromise = _htSbTokenFetch().then(function(t){ _htSbTokenPromise = null; return t; });
+  // 還有 2～30 分鐘：先把現有的還回去讓使用者繼續用，同時在背景「完整重試」續簽（不擋畫面）。
+  //   提早到剩 30 分鐘就開始背景續簽 → 那支很不穩的 GAS 端點有很多次機會在背景成功，
+  //   使用者幾乎不會走到下面的阻塞路徑（先前只提早 15 分鐘、且阻塞窗到 5 分鐘，才會常卡）。
+  if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 120) {
+    if (!_htSbTokenPromise) _htSbTokenPromise = _htSbTokenFetch(false).then(function(t){ _htSbTokenPromise = null; return t; });
     return window.HT_SB_TOKEN;
   }
   if (_htSbTokenPromise) return _htSbTokenPromise;               // 已有人在要了 → 一起等，別再打 GAS
-  _htSbTokenPromise = _htSbTokenFetch().then(function(t){ _htSbTokenPromise = null; return t; });
+  // 憑證確實快死／已過期，只能擋著等：走「快速失敗」重試（約 20 秒內），
+  //   失敗就讓上層顯示「重試」鈕，而不是乾等約 55 秒。
+  _htSbTokenPromise = _htSbTokenFetch(true).then(function(t){ _htSbTokenPromise = null; return t; });
   return _htSbTokenPromise;
 }
 
 // 實際去 GAS 要一張新的；單次成功率低 → 退避重試
-async function _htSbTokenFetch() {
-  var delays = [0, 800, 2000, 4000], last = null;
+async function _htSbTokenFetch(blocking) {
+  // 背景續簽：完整重試（4 次、每次 12 秒），慢慢跟不穩的 GAS 磨，成功率優先。
+  // 阻塞續簽（使用者正盯著載入）：快速失敗（2 次、每次 9 秒，約 20 秒內收工），
+  //   失敗就交給上層顯示「重試」鈕，避免使用者乾等約 55 秒。
+  var delays = blocking ? [0, 1200] : [0, 800, 2000, 4000], last = null;
+  var _timeoutMs = blocking ? 9000 : 12000;
   // 直接打 GAS（不繞 htApi）有兩個理由：
   //  ① 每次只等 12 秒就放棄重試——htApi 預設 25 秒 × 4 次會讓使用者乾等到「載入逾時」
   //  ② currentUser 可能還沒還原，這裡自己從 localStorage 補 token，不會送出空 token
@@ -11816,7 +11824,7 @@ async function _htSbTokenFetch() {
   if (!gasTok) return null;                  // 根本還沒登入 → 不用打
   for (var i = 0; i < delays.length; i++) {
     if (delays[i]) await new Promise(function(res){ setTimeout(res, delays[i]); });
-    var r = await _htFetchRaw({ action: 'htSbToken', token: gasTok }, 12000);
+    var r = await _htFetchRaw({ action: 'htSbToken', token: gasTok }, _timeoutMs);
     if (r && r.ok && r.token) {
       _htSbTokenSave(r.token, r.exp || (Math.floor(Date.now() / 1000) + 3600));
       return r.token;
