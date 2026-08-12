@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260812114917';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260812162823';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -11792,7 +11792,11 @@ function _htSbTokenSave(token, exp) {
 async function _htEnsureSbToken() {
   if (currentUser && currentUser.token === 'demo') return null;
   var now = Math.floor(Date.now() / 1000);
-  if (!window.HT_SB_TOKEN) _htSbTokenLoad();                     // 冷啟動先看快取
+  // 冷啟動、或記憶體這張證快過期時，先從 localStorage 撈最新的：
+  //   ★ 修復「LS 有有效證卻報憑證失敗」：頁面剛載入、currentUser 還沒還原那一刻若跑過一次載入，
+  //     會因 _htCurrentEmail() 尚空、email 不符而沒載到證；之後就直接去打壞掉的 GAS。
+  //     只要記憶體沒證或快過期就重撈一次，把 LS 裡仍有效的證接回來，避免無謂地依賴 GAS 換證。
+  if (!window.HT_SB_TOKEN || (_htSbTokenExp - now) <= 120) _htSbTokenLoad();
   if (window.HT_SB_TOKEN && (_htSbTokenExp - now) > 1800) return window.HT_SB_TOKEN;
 
   // 還有 2～30 分鐘：先把現有的還回去讓使用者繼續用，同時在背景「完整重試」續簽（不擋畫面）。
@@ -11837,6 +11841,13 @@ async function _htSbTokenFetch(blocking) {
   //   否則會把還能用好幾分鐘的證誤清，下一筆存檔就誤報「憑證取得失敗、資料未送出」。
   var _now = Math.floor(Date.now() / 1000);
   if (!window.HT_SB_TOKEN || (_htSbTokenExp - _now) <= 0) {
+    // ★ 最後一搏：GAS 換證掛了，但 localStorage 可能仍有一張有效證（先前 email 未就緒沒載到、
+    //   或本次是背景續簽先跑）。撈回來能用就用，別讓使用者在手上有好證時還被擋著報錯。
+    _htSbTokenLoad();
+    if (window.HT_SB_TOKEN && (_htSbTokenExp - _now) > 0) {
+      console.warn('[BeneFlow] GAS 換證失敗，改用 localStorage 現有有效證（' + (_htSbTokenExp - _now) + ' 秒後到期）');
+      return window.HT_SB_TOKEN;
+    }
     window.HT_SB_TOKEN = ''; _htSbTokenExp = 0;
     try { localStorage.removeItem(_HT_SB_TOK_LS); } catch (e) {}
     console.error('[BeneFlow] Supabase 憑證簽發失敗（已重試 ' + delays.length + ' 次）：', (last && last.error) || last);
