@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813162025';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813162340';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1633,9 +1633,12 @@ html,body{background:#F7F5EC}
 .dash-stat:hover{border-color:#B7CCB4;box-shadow:0 6px 18px rgba(46,51,45,.10);transform:translateY(-2px)}
 .dash-stat .lab{display:flex;align-items:center;gap:6px;font-size:12px;color:#767B75;font-weight:600}
 .dash-stat .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.dash-stat .num{font-size:28px;font-weight:900;color:#33502F;line-height:1;margin-top:12px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.dash-stat .arw{position:absolute;right:14px;bottom:12px;font-size:14px;color:#C7CFC4;transition:color .16s}
-.dash-stat:hover .arw{color:#577B53}
+.dash-stat .numline{display:flex;align-items:baseline;gap:6px;margin-top:12px}
+.dash-stat .num{font-size:28px;font-weight:900;color:#33502F;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.dash-stat .unit{font-size:14px;font-weight:600;color:#8A9086}
+/* 箭頭平時收起來（避免數字與箭頭之間空一塊），滑到卡片才滑出 */
+.dash-stat .arw{position:absolute;right:14px;bottom:14px;font-size:14px;color:#577B53;opacity:0;transform:translateX(-4px);transition:opacity .16s,transform .16s}
+.dash-stat:hover .arw{opacity:1;transform:none}
 /* 有待辦時整張轉橘（凸顯色），沒有時和其他卡一樣安靜 */
 .dash-stat.has-todo{border-color:#E0820A;background:#FFFBF4}
 .dash-stat.has-todo .num{color:#C9760A}
@@ -1930,22 +1933,22 @@ thead th{color:#767B75!important}
     <div id="dash-statline">
       <a class="dash-stat" onclick="sw('applications')">
         <div class="lab"><span class="dot" style="background:#7E8F45"></span>案件進行中</div>
-        <div id="dstat-pending" class="num">—</div>
+        <div class="numline"><span id="dstat-pending" class="num">—</span><span class="unit">件</span></div>
         <span class="arw">→</span>
       </a>
       <a class="dash-stat" id="dstat-myturn-card" onclick="sw('applications')">
         <div class="lab"><span class="dot" style="background:#CFA24B"></span>待你審核</div>
-        <div id="dstat-myturn" class="num">—</div>
+        <div class="numline"><span id="dstat-myturn" class="num">—</span><span class="unit">件</span></div>
         <span class="arw">→</span>
       </a>
       <a class="dash-stat" onclick="sw('applications')">
         <div class="lab"><span class="dot" style="background:#C57A46"></span>下個送件日</div>
-        <div id="dstat-nextdate" class="num">—</div>
+        <div class="numline"><span id="dstat-nextdate" class="num">—</span></div>
         <span class="arw">→</span>
       </a>
       <a class="dash-stat" onclick="sw('hightea')">
         <div class="lab"><span class="dot" style="background:#577B53"></span>本月午茶日</div>
-        <div id="dstat-teaday" class="num">—</div>
+        <div class="numline"><span id="dstat-teaday" class="num">—</span></div>
         <span class="arw">→</span>
       </a>
     </div>
@@ -4813,7 +4816,9 @@ async function _bfBoot() {
   // 字型與 flatpickr CSS：在 onload 後才注入，確保不阻塞頁面載入
   (function(){
     var lf=document.createElement('link');lf.rel='stylesheet';
-    lf.href='https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap';
+    // ★ 一定要含 800/900：站上大量使用 font-weight:800（區塊標題）與 900（快覽數字），
+    //   只載到 700 的話瀏覽器會用假粗體硬撐，筆畫比例跑掉，看起來就「不像 Noto Sans TC」。
+    lf.href='https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;800;900&display=swap';
     document.head.appendChild(lf);
     var lp=document.createElement('link');lp.rel='stylesheet';
     lp.href='https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
