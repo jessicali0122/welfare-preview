@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813153225';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813154808';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -17857,6 +17857,24 @@ window.msStopPolling = function() {
 // ══ 公佈欄模組 ══
 var _bulletinPosts = [];
 
+// 公告本機快取（綁 email，與常用連結／午茶快取同一套慣例）。
+// 沒有快取時，重整後 _bulletinPosts 是空陣列，會先畫出「目前沒有公告」，
+// 再等 GAS 回來補；GAS 慢或抖動回空就一直是空的 → 使用者看到「公告不見了」。
+function _bulletinCacheKey() {
+  var em = '';
+  try { em = (window.currentUser && window.currentUser.email) || ''; } catch (e) {}
+  if (!em) { try { em = JSON.parse(localStorage.getItem('bf_user') || '{}').email || ''; } catch (e) {} }
+  return em ? 'bf_bulletin_' + em : '';
+}
+function _bulletinCacheLoad() {
+  var k = _bulletinCacheKey(); if (!k) return null;
+  try { var v = JSON.parse(localStorage.getItem(k) || 'null'); return Array.isArray(v) ? v : null; } catch (e) { return null; }
+}
+function _bulletinCacheSave(posts) {
+  var k = _bulletinCacheKey(); if (!k) return;
+  try { localStorage.setItem(k, JSON.stringify(posts || [])); } catch (e) {}
+}
+
 function bulletinRender() {
   var list = document.getElementById('bulletin-list'); if (!list) return;
   var isAdmin = canBulletin('home');
@@ -17902,18 +17920,31 @@ function bulletinRender() {
 }
 
 // 從後端同步公告並更新三個獨立公告欄（首頁／午茶日／按摩預約）
-window._bulletinSync = function() {
+window._bulletinSync = function(_isRetry) {
   if (!window.htApi) return;
   htApi('bulletinList', {}).then(function(br) {
     // 只要後端回 ok 就以伺服器為準（含空陣列，才能反映「刪到剩 0 筆」）
     if (br && br.ok && Array.isArray(br.posts)) {
+      // GAS 偶爾會 ok 卻回空陣列（抖動）。手上有資料卻收到空的時候先重試一次，
+      // 兩次都空才當真——這樣「刪到剩 0 筆」仍會正確清空，抖動則不會把公告洗掉。
+      if (!br.posts.length && _bulletinPosts.length && !_isRetry) {
+        setTimeout(function(){ window._bulletinSync(true); }, 1500);
+        return;
+      }
       _bulletinPosts = br.posts;
-      bulletinRender();
-      if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
-      if (typeof msRenderBulletin === 'function') msRenderBulletin();
+      _bulletinCacheSave(_bulletinPosts);
+      _bulletinRenderAll();
     }
-  }).catch(function(){});
+    // 非 ok：保留現有內容（多半是快取），不要清空
+  }).catch(function(){ /* 失敗也保留現有內容 */ });
 };
+
+// 三個公告欄（首頁／午茶日／按摩預約）一起重畫
+function _bulletinRenderAll() {
+  bulletinRender();
+  if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
+  if (typeof msRenderBulletin === 'function') msRenderBulletin();
+}
 // ── 私密常用連結（如員購賣場）：連結存 GAS 後端，登入後才取得，不進公開 repo ──
 // 依連結資料建立一顆按鈕（供快取與線上結果共用，樣式一致）
 function _dashLinkEl(l) {
@@ -17968,11 +17999,7 @@ window.bulletinSubmit = function() {
   if (!title) { document.getElementById('bulletin-title-inp').focus(); return; }
   var post = { id:'B'+Date.now()+Math.random().toString(36).slice(2,6), pinned, title, content:body, scope:_bulletinScope, author:((currentUser||window.currentUser)&&(currentUser||window.currentUser).name)||'管理員', createdAt:new Date().toISOString() };
   _bulletinPosts.unshift(post);
-  var _rerender = function(){
-    bulletinRender();
-    if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
-    if (typeof msRenderBulletin === 'function') msRenderBulletin();
-  };
+  var _rerender = function(){ _bulletinCacheSave(_bulletinPosts); _bulletinRenderAll(); };
   bulletinCloseModal(); _rerender();
   if (window.toast) toast('✅ 公告已發布');
   if (!window.htApi) return;
@@ -17997,11 +18024,7 @@ window.bulletinDelete = function(id) {
     function() {
       var removed = _bulletinPosts.filter(function(p){ return p.id === id; });
       _bulletinPosts = _bulletinPosts.filter(function(p){ return p.id !== id; });
-      var _rerender = function(){
-        bulletinRender();
-        if (typeof htRenderBulletinMini === 'function') htRenderBulletinMini();
-        if (typeof msRenderBulletin === 'function') msRenderBulletin();
-      };
+      var _rerender = function(){ _bulletinCacheSave(_bulletinPosts); _bulletinRenderAll(); };
       _rerender();
       if (!window.htApi) return;
       // 檢查後端是否真的刪除；成功→以伺服器為準重新同步（避免離開再回來又出現）；失敗→還原並提示
@@ -18026,14 +18049,25 @@ window.bulletinDelete = function(id) {
 var _origShowApp = window.showApp;
 window.showApp = function() {
   if (_origShowApp) _origShowApp.apply(this, arguments);
-  setTimeout(function(){ bulletinRender(); }, 100);
+  // 先吃本機快取（有的話），公告立刻就在，不必空等後端
+  if (!_bulletinPosts.length) {
+    var _cached = _bulletinCacheLoad();
+    if (_cached && _cached.length) _bulletinPosts = _cached;
+  }
+  setTimeout(function(){ _bulletinRenderAll(); }, 100);
   // 登入後直接同步公告，首頁公告欄不必等使用者先逛過午茶日頁
   setTimeout(function(){ if (window._bulletinSync) _bulletinSync(); }, 1200);
   // 私密常用連結（存後端）：快取即時渲染，故延遲可縮短
   setTimeout(function(){ if (window._dashLinksSync) _dashLinksSync(); }, 200);
 };
-// 如果已登入，立即 render
-if (document.getElementById('bulletin-list')) bulletinRender();
+// 如果已登入，立即 render（同樣先吃快取，避免重整瞬間閃一下「目前沒有公告」）
+if (document.getElementById('bulletin-list')) {
+  if (!_bulletinPosts.length) {
+    var _cached0 = _bulletinCacheLoad();
+    if (_cached0 && _cached0.length) _bulletinPosts = _cached0;
+  }
+  bulletinRender();
+}
 </script>
 
 <!-- ht-fab-wrap 已移除，福寶已整合至「新增活動」表單內 -->
