@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813151617';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813153225';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -3318,9 +3318,9 @@ thead th{color:#767B75!important}
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch">
         <!-- 左側：日曆（外層卡片＋內層灰底日曆本體，樣式與按摩日曆統一，只有印章圖案不同） -->
-        <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px 18px">
+        <div id="ht-cal-card" style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px 18px">
           <div style="background:#F7F8F6;border-radius:12px;padding:14px">
             <!-- 標題列 -->
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
@@ -3354,8 +3354,8 @@ thead th{color:#767B75!important}
         </div>
 
         <!-- 右側：本月行程 → 歷史回顧 一條時間軸（不用切換，往下捲就看得到過去場次） -->
-        <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column">
-          <div id="ht-side-scroll" style="max-height:592px;overflow-y:auto;padding:16px 18px 10px">
+        <div id="ht-side-card" style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column;max-height:592px">
+          <div id="ht-side-scroll" style="flex:1;min-height:0;overflow-y:auto;padding:16px 18px 10px">
             <!-- 本月行程 -->
             <div id="ht-side-month">
               <div class="ht-sec-head">
@@ -13865,6 +13865,21 @@ function htRenderYearTimeline() {
   if (heroChip) heroChip.style.display = 'none';
 }
 
+// 右側時間軸卡與左側日曆卡等高：日曆列數會隨月份變（5／6 列），所以每次渲染後重算。
+// 窄螢幕（兩欄變一欄）時不鎖高，讓卡片自然展開。
+function _htSyncSideHeight() {
+  var cal = document.getElementById('ht-cal-card');
+  var side = document.getElementById('ht-side-card');
+  if (!cal || !side) return;
+  if (window.innerWidth <= 900) { side.style.maxHeight = ''; return; }
+  var h = cal.offsetHeight;
+  side.style.maxHeight = h > 0 ? h + 'px' : '592px';
+}
+window.addEventListener('resize', function() {
+  clearTimeout(window._htSideHtTimer);
+  window._htSideHtTimer = setTimeout(_htSyncSideHeight, 120);
+});
+
 function htRenderCalendar() {
   var y = _htCalYear, m = _htCalMonth;
   var monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
@@ -14021,6 +14036,9 @@ function htRenderCalendar() {
         + '</div>';
     }).join('');
   }
+
+  // 版面渲染完才量得到日曆實際高度
+  requestAnimationFrame(_htSyncSideHeight);
 }
 
 function _pad2(n) { return n < 10 ? '0' + n : '' + n; }
