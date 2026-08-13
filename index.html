@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813163146';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813163450';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -7629,11 +7629,13 @@ function sw(name,elOrName,_fromPop){
   const v=document.getElementById('view-'+name);
   if(v)v.classList.add('active');
   document.getElementById('ptitle').textContent=titles[name]||name;
-  // header 左側：首頁放品牌列，其他頁放頁名（兩者擇一顯示）
+  // header 左側：首頁放品牌列；其他頁一律留白。
+  // ⚠️ 不要在這裡顯示 #ptitle：header 是透明浮層（無實體 bar），其他頁面的內容會從它底下
+  //    滑過去，頁名會直接疊在內容上（2026-08-13 實際踩過）。要顯示頁名就得先讓 header 有底。
   (function(){
     var _isHome = (name === 'dashboard');
     var _tb = document.getElementById('topbar-brand'); if (_tb) _tb.style.display = _isHome ? 'flex' : 'none';
-    var _pt = document.getElementById('ptitle');       if (_pt) _pt.style.display = _isHome ? 'none' : '';
+    var _pt = document.getElementById('ptitle');       if (_pt) _pt.style.display = 'none';
   })();
   // determine which nav entry to highlight
   let target=navMap[name]||name;
