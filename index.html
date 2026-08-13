@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813140544';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813141325';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1606,8 +1606,8 @@ html,body{background:#F7F5EC}
 /* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
 #view-dashboard.active::before,#view-dashboard.active::after{content:'';position:absolute;width:1400px;height:1400px;border-radius:50%;pointer-events:none;z-index:0}
 /* closest-side 保證漸層在圓邊緣前完全淡出，不會出現方形色塊邊（先前的色差來源） */
-#view-dashboard.active::before{left:-500px;top:-560px;background:radial-gradient(circle closest-side,rgba(143,181,106,.20) 0%,rgba(143,181,106,.12) 40%,rgba(143,181,106,.04) 70%,transparent 100%);animation:wfBlotA 30s ease-in-out infinite}
-#view-dashboard.active::after{right:-560px;bottom:-560px;background:radial-gradient(circle closest-side,rgba(207,162,75,.16) 0%,rgba(207,162,75,.09) 42%,rgba(207,162,75,.03) 72%,transparent 100%);animation:wfBlotB 38s ease-in-out infinite}
+#view-dashboard.active::before{left:-500px;top:-560px;background:radial-gradient(circle closest-side,rgba(143,181,106,.09) 0%,rgba(143,181,106,.05) 40%,rgba(143,181,106,.02) 70%,transparent 100%);animation:wfBlotA 30s ease-in-out infinite}
+#view-dashboard.active::after{right:-560px;bottom:-560px;background:radial-gradient(circle closest-side,rgba(207,162,75,.07) 0%,rgba(207,162,75,.04) 42%,rgba(207,162,75,.02) 72%,transparent 100%);animation:wfBlotB 38s ease-in-out infinite}
 #view-dashboard.active #dash-wrap{position:relative;z-index:1}
 @keyframes wfBlotA{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(9%,7%) scale(1.16)}}
 @keyframes wfBlotB{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-8%,-8%) scale(1.22)}}
@@ -1876,6 +1876,25 @@ thead th{color:#767B75!important}
         <div id="dash-weather" style="display:none;font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em"></div>
       </div>
       <div style="font-size:14px;color:#767B75;margin-top:10px;letter-spacing:.02em;line-height:1.8">認真工作的你，值得被好好照顧。</div>
+      <!-- 快覽數字列（載入後由 loadDashboard 填入真實數字）-->
+      <div id="dash-statline" style="display:flex;flex-wrap:wrap;border-top:1px solid #E2E7D6;margin-top:22px">
+        <div style="flex:1;min-width:130px;padding:16px 22px 4px;border-right:1px solid #E2E7D6">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#767B75;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#7E8F45;flex:0 0 auto"></span>案件進行中</div>
+          <div id="dstat-pending" style="font-size:28px;font-weight:900;color:#33502F;line-height:1;margin-top:10px;letter-spacing:-.03em;font-variant-numeric:tabular-nums">—</div>
+        </div>
+        <div style="flex:1;min-width:130px;padding:16px 22px 4px;border-right:1px solid #E2E7D6">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#767B75;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#CFA24B;flex:0 0 auto"></span>待你審核</div>
+          <div id="dstat-myturn" style="font-size:28px;font-weight:900;color:#33502F;line-height:1;margin-top:10px;letter-spacing:-.03em;font-variant-numeric:tabular-nums">—</div>
+        </div>
+        <div style="flex:1;min-width:130px;padding:16px 22px 4px;border-right:1px solid #E2E7D6">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#767B75;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#C57A46;flex:0 0 auto"></span>下個送件日</div>
+          <div id="dstat-nextdate" style="font-size:28px;font-weight:900;color:#33502F;line-height:1;margin-top:10px;letter-spacing:-.03em;font-variant-numeric:tabular-nums">—</div>
+        </div>
+        <div style="flex:1;min-width:130px;padding:16px 22px 4px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:#767B75;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#577B53;flex:0 0 auto"></span>本月午茶日</div>
+          <div id="dstat-teaday" style="font-size:28px;font-weight:900;color:#33502F;line-height:1;margin-top:10px;letter-spacing:-.03em;font-variant-numeric:tabular-nums">—</div>
+        </div>
+      </div>
       <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#FBE9EE;border:1px solid #F4C0CE;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.10)">
         <span class="wf-bday-cake" style="font-size:18px">🎂</span>
         <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
@@ -5805,6 +5824,20 @@ async function loadDashboard() {
   // 待審核 badge + 卡片小字（有輪到自己才顯示）
   const myTurnPending = cases.filter(c => isMyTurnToApprove(c));
   updateBadge(myTurnPending.length);
+  // Hero 快覽數字列
+  (function(){
+    var _set = function(id,v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+    _set('dstat-pending', pending.length);
+    _set('dstat-myturn', myTurnPending.length);
+    // 下個送件日：每月 10/20/30，過了就跳下一個（月底跳次月 10）
+    var _tw = new Date(Date.now() + 8*3600000);
+    var _dd = _tw.getUTCDate(), _mo = _tw.getUTCMonth()+1, _nmo = _mo, _nd;
+    if (_dd <= 10) _nd = 10; else if (_dd <= 20) _nd = 20; else if (_dd <= 30) _nd = 30; else { _nd = 10; _nmo = _mo % 12 + 1; }
+    _set('dstat-nextdate', _nmo + '/' + _nd);
+    // 本月午茶日：下一場日期（午茶資料已載才有，否則顯示 —）
+    var _tea = (typeof window.htGetNextEventDate === 'function') ? window.htGetNextEventDate() : null;
+    _set('dstat-teaday', _tea || '—');
+  })();
   const myTurnEl = document.getElementById('stat-my-turn');
   if (myTurnEl) myTurnEl.textContent = myTurnPending.length > 0 ? '其中 ' + myTurnPending.length + ' 件輪到您審核' : '';
   // 入口卡片：案件追蹤提示（N 件進行中；有審核權且輪到自己時多顯示 M 件待審核）
@@ -12425,6 +12458,15 @@ window.htGoVote = function() {
 };
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
+// 首頁快覽用：回傳下一場午茶日的 M/D（含試算表場次），無場次回 null
+window.htGetNextEventDate = function() {
+  try {
+    var src = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+    var now = new Date(); now.setHours(0,0,0,0);
+    var up = src.map(function(e){ var ds = String(e.date||'').replace(/\//g,'-'); if(!ds) return null; var d = new Date(ds); d.setHours(0,0,0,0); return isNaN(d.getTime())||d<now ? null : d; }).filter(Boolean).sort(function(a,b){ return a-b; });
+    return up.length ? ((up[0].getMonth()+1) + '/' + up[0].getDate()) : null;
+  } catch(e) { return null; }
+};
 window.htGetNextEventHint = function() {
   if (!_htEvents.length && !(typeof _htSheetAsEvents === 'function' && _htSheetAsEvents().length)) return null;
   var now = new Date(); now.setHours(0,0,0,0);
