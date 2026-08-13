@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813141325';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813142058';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1869,7 +1869,11 @@ thead th{color:#767B75!important}
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- Hero 歡迎區（文青置中版）-->
-    <div id="dash-hero" style="position:relative;padding:28px 32px;margin-bottom:24px;text-align:left;background:#fff;border:1px solid #D5DAD2;border-radius:20px;box-shadow:0 2px 8px -5px rgba(60,80,45,.10)">
+    <div id="dash-hero" style="position:relative;padding:26px 32px 28px;margin-bottom:24px;text-align:left;background:#fff;border:1px solid #D5DAD2;border-radius:20px;box-shadow:0 2px 8px -5px rgba(60,80,45,.10)">
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:14px">
+        <span style="width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13C4 8 8 4 18 4c0 10-4 13-7 14Z"/><path d="M6 18C9 14.5 12 12.5 16 11.5"/></svg></span>
+        <span style="font-size:14px;font-weight:700;color:#5A6650;letter-spacing:.02em">騰勢委員會</span>
+      </div>
       <div id="dashboard-greeting" style="font-size:32px;font-weight:800;color:#2E332D;text-align:left;letter-spacing:-.01em">你好</div>
       <div style="display:flex;align-items:center;justify-content:flex-start;gap:12px;margin-top:12px;flex-wrap:wrap">
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
@@ -2019,9 +2023,9 @@ thead th{color:#767B75!important}
     .dash-link-tile .dl-arrow{font-size:12px;color:#738e41;font-weight:600}
     @media(prefers-reduced-motion:reduce){.dash-link-tile:hover{transform:none}}
     </style>
-    <div style="display:flex;flex-direction:column;gap:28px;align-items:center;margin-bottom:8px">
-      <div id="dash-links" style="display:flex;flex-direction:column;gap:12px;align-items:center"></div>
-      <div id="dash-links-committee" style="display:flex;flex-direction:column;gap:12px;align-items:center">
+    <div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start;margin-bottom:8px">
+      <div id="dash-links" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start"></div>
+      <div id="dash-links-committee" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
         <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟">
           <span class="dl-ic">📋</span>
           <span class="dl-name">福委會會議紀錄</span>
@@ -5837,6 +5841,10 @@ async function loadDashboard() {
     // 本月午茶日：下一場日期（午茶資料已載才有，否則顯示 —）
     var _tea = (typeof window.htGetNextEventDate === 'function') ? window.htGetNextEventDate() : null;
     _set('dstat-teaday', _tea || '—');
+    // 首頁還沒有午茶資料 → 背景預載（先讀快取、真沒有才發一支請求）補上日期
+    if (!_tea && typeof window.htPrefetchNextDate === 'function') {
+      window.htPrefetchNextDate().then(function(d){ if (d) _set('dstat-teaday', d); }).catch(function(){});
+    }
   })();
   const myTurnEl = document.getElementById('stat-my-turn');
   if (myTurnEl) myTurnEl.textContent = myTurnPending.length > 0 ? '其中 ' + myTurnPending.length + ' 件輪到您審核' : '';
@@ -12465,6 +12473,22 @@ window.htGetNextEventDate = function() {
     var now = new Date(); now.setHours(0,0,0,0);
     var up = src.map(function(e){ var ds = String(e.date||'').replace(/\//g,'-'); if(!ds) return null; var d = new Date(ds); d.setHours(0,0,0,0); return isNaN(d.getTime())||d<now ? null : d; }).filter(Boolean).sort(function(a,b){ return a-b; });
     return up.length ? ((up[0].getMonth()+1) + '/' + up[0].getDate()) : null;
+  } catch(e) { return null; }
+};
+// 首頁預載午茶日：先用 localStorage 快取（免請求），真的沒有才背景抓一次；回傳下一場 M/D
+window.htPrefetchNextDate = async function() {
+  try {
+    if (!_htEvents.length) {
+      try { var _hc = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null'); if (_hc && Array.isArray(_hc.events) && _hc.events.length) _htEvents = _hc.events; } catch(e){}
+    }
+    if (!_htEvents.length) {
+      var r = await htApi('htList');
+      if (r && r.ok) {
+        _htEvents = r.events || [];
+        try { var _hc2 = JSON.parse(localStorage.getItem('bf_ht_cache') || '{}'); _hc2.events = _htEvents; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc2)); } catch(e){}
+      }
+    }
+    return window.htGetNextEventDate();
   } catch(e) { return null; }
 };
 window.htGetNextEventHint = function() {
