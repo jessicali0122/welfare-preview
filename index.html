@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813155234';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813160356';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -17876,6 +17876,44 @@ function _bulletinCacheSave(posts) {
   try { localStorage.setItem(k, JSON.stringify(posts || [])); } catch (e) {}
 }
 
+// ── 刪除墓碑 ──
+// GAS 刪除後短時間內仍可能把那則公告回傳回來（後端處理有延遲），
+// 於是「刪掉 → 同步又把它撿回來寫進快取 → 重整還在 → 過一下才真的消失」。
+// 作法：本機記住剛刪掉的 id，同步回來的資料若還帶著就濾掉；
+// 等伺服器也不再回傳（＝真的刪掉了）就把墓碑清掉。10 分鐘自動過期，避免無限期擋住。
+var _BULLETIN_TOMB_TTL = 600000;
+function _bulletinTombKey() { var k = _bulletinCacheKey(); return k ? k + '_del' : ''; }
+function _bulletinTombLoad() {
+  var k = _bulletinTombKey(); if (!k) return {};
+  var m = {};
+  try { m = JSON.parse(localStorage.getItem(k) || '{}') || {}; } catch (e) { m = {}; }
+  var now = Date.now(), changed = false;
+  for (var id in m) { if (!(now - m[id] < _BULLETIN_TOMB_TTL)) { delete m[id]; changed = true; } }
+  if (changed) _bulletinTombSave(m);
+  return m;
+}
+function _bulletinTombSave(m) {
+  var k = _bulletinTombKey(); if (!k) return;
+  try { localStorage.setItem(k, JSON.stringify(m || {})); } catch (e) {}
+}
+function _bulletinTombAdd(id) { var m = _bulletinTombLoad(); m[String(id)] = Date.now(); _bulletinTombSave(m); }
+function _bulletinTombRemove(id) { var m = _bulletinTombLoad(); delete m[String(id)]; _bulletinTombSave(m); }
+// 濾掉已刪除的；同時把「伺服器已經不回傳了」的墓碑清掉
+function _bulletinStripDeleted(posts, serverAuthoritative) {
+  var m = _bulletinTombLoad();
+  var ids = Object.keys(m);
+  if (!ids.length) return posts || [];
+  var out = (posts || []).filter(function (p) { return !m[String(p && p.id)]; });
+  if (serverAuthoritative) {
+    var still = {};
+    (posts || []).forEach(function (p) { still[String(p && p.id)] = 1; });
+    var changed = false;
+    ids.forEach(function (id) { if (!still[id]) { delete m[id]; changed = true; } });
+    if (changed) _bulletinTombSave(m);
+  }
+  return out;
+}
+
 function bulletinRender() {
   var list = document.getElementById('bulletin-list'); if (!list) return;
   var isAdmin = canBulletin('home');
@@ -17932,7 +17970,8 @@ window._bulletinSync = function(_isRetry) {
         setTimeout(function(){ window._bulletinSync(true); }, 1500);
         return;
       }
-      _bulletinPosts = br.posts;
+      // 剛刪掉但伺服器還在回傳的，濾掉；伺服器已不回傳的墓碑順手清除
+      _bulletinPosts = _bulletinStripDeleted(br.posts, true);
       _bulletinCacheSave(_bulletinPosts);
       _bulletinRenderAll();
     }
@@ -18025,6 +18064,7 @@ window.bulletinDelete = function(id) {
     function() {
       var removed = _bulletinPosts.filter(function(p){ return p.id === id; });
       _bulletinPosts = _bulletinPosts.filter(function(p){ return p.id !== id; });
+      _bulletinTombAdd(id);   // 立墓碑：GAS 之後若還回傳這則，同步時會被濾掉
       var _rerender = function(){ _bulletinCacheSave(_bulletinPosts); _bulletinRenderAll(); };
       _rerender();
       if (!window.htApi) return;
@@ -18033,11 +18073,13 @@ window.bulletinDelete = function(id) {
         if (r && r.ok) {
           if (window._bulletinSync) _bulletinSync();
         } else {
+          _bulletinTombRemove(id);   // 後端沒刪成功 → 撤掉墓碑，公告要留著
           if (removed.length) _bulletinPosts = removed.concat(_bulletinPosts);
           _rerender();
           if (window.toast) toast('⚠️ 刪除失敗：' + ((r && r.error) || '請稍後再試'));
         }
       }).catch(function(){
+        _bulletinTombRemove(id);
         if (removed.length) _bulletinPosts = removed.concat(_bulletinPosts);
         _rerender();
         if (window.toast) toast('⚠️ 刪除失敗，請檢查網路後再試');
@@ -18052,7 +18094,7 @@ window.showApp = function() {
   if (_origShowApp) _origShowApp.apply(this, arguments);
   // 先吃本機快取（有的話），公告立刻就在，不必空等後端
   if (!_bulletinPosts.length) {
-    var _cached = _bulletinCacheLoad();
+    var _cached = _bulletinStripDeleted(_bulletinCacheLoad(), false);
     if (_cached && _cached.length) _bulletinPosts = _cached;
   }
   setTimeout(function(){ _bulletinRenderAll(); }, 100);
@@ -18064,7 +18106,7 @@ window.showApp = function() {
 // 如果已登入，立即 render（同樣先吃快取，避免重整瞬間閃一下「目前沒有公告」）
 if (document.getElementById('bulletin-list')) {
   if (!_bulletinPosts.length) {
-    var _cached0 = _bulletinCacheLoad();
+    var _cached0 = _bulletinStripDeleted(_bulletinCacheLoad(), false);
     if (_cached0 && _cached0.length) _bulletinPosts = _cached0;
   }
   bulletinRender();
