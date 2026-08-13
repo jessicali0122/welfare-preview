@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813161253';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813161858';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -12425,6 +12425,12 @@ function starStr(avg, cnt) {
 window.htLoadList = async function() {
   document.getElementById('ht-list-panel').style.display = '';
   document.getElementById('ht-detail-panel').style.display = 'none';
+  // ⚡ 版面先出來：日曆卡原本是 display:none，要等 htRenderList() 才被放出來，
+  //    而那要等快取或後端資料 → 沒快取時進頁只剩最上面那條，日曆與時間軸得等一下才蹦出來。
+  //    這裡先把版面就位並畫出空日曆（不依賴活動資料），資料回來再填內容。
+  if (_htListTab === 'events') {
+    try { _htMergeLayout(); htRenderYearTimeline(); htRenderCalendar(); } catch (e) {}
+  }
   // ⚡ 先用上次的快取立即渲染（秒開），背景再抓最新資料刷新
   try {
     var _hc = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null');
@@ -12438,6 +12444,9 @@ window.htLoadList = async function() {
   if (!_htEvents.length) {
     var _eg = document.getElementById('ht-events-grid');
     if (_eg) _eg.innerHTML = '<div style="text-align:center;padding:60px 20px;color:#767B75;font-size:14px">⏳ 載入午茶日資料中…</div>';
+    // 本月行程也給骨架，否則會先閃一下「本月尚無午茶日」才變成真資料
+    var _ce = document.getElementById('ht-cal-events');
+    if (_ce) _ce.innerHTML = '<div style="text-align:center;padding:40px 0;color:#767B75;font-size:14px">⏳ 載入中…</div>';
   }
   _htLoadSheetHistory(); // 舊試算表歷史場次（唯讀，非阻塞，載回後自動補進歷史回顧）
   var _prevEventsJson = JSON.stringify(_htEvents || []);
