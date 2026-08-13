@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813150935';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813151617';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -1626,6 +1626,12 @@ html,body{background:#F7F5EC}
 /* 卡片表面：純白改暖白微漸層，內緣頂部亮線，質感更立體 */
 #bulletin-section,.dash-hub-card{background:#FFFFFF!important}
 #bulletin-section{position:relative;overflow:hidden}
+/* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
+.dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
+#bulletin-label{margin-top:0}
+.dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
+.dash-sec-title{font-size:18px;font-weight:800;color:#232A1E;white-space:nowrap;letter-spacing:-.01em}
+.dash-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.1em}
 /* 服務入口卡：左側彩色識別條＋各自的暖色 icon 底，一眼分辨、畫面不再單調 */
 .dash-hub-card{position:relative}
 .dash-hub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;opacity:.85}
@@ -1922,24 +1928,27 @@ thead th{color:#767B75!important}
       </button>
     </div>
 
-    <div id="bulletin-section" style="margin-bottom:24px;background:#fff;border-radius:16px;border:1px solid #D5DAD2;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:24px 28px">
-      <div style="display:flex;align-items:center;gap:11px;margin-bottom:16px">
-        <span style="width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15 8a4 4 0 0 1 0 8"/></svg></span>
-        <div style="font-size:18px;font-weight:800;color:#232A1E;white-space:nowrap;letter-spacing:-.01em">公佈欄</div>
-        <span id="bulletin-en" style="font-size:12px;font-weight:700;color:#738e41;letter-spacing:.1em">NOTICE</span>
+    <!-- 公佈欄：標題置於卡片外，與服務項目／常用連結同一種區塊標題語彙 -->
+    <div id="bulletin-wrap" style="margin-bottom:24px">
+      <div id="bulletin-label" class="dash-sec-label">
+        <span class="dash-sec-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15 8a4 4 0 0 1 0 8"/></svg></span>
+        <span class="dash-sec-title">公佈欄</span>
+        <span id="bulletin-en" class="dash-sec-en">NOTICE</span>
         <div style="flex:1"></div>
         <button id="btn-new-bulletin" onclick="bulletinOpenNew()" style="display:none;white-space:nowrap;font-size:14px;padding:6px 16px;border-radius:10px;border:1px solid #577B53;background:#fff;color:#577B53;cursor:pointer;font-family:inherit;font-weight:500;letter-spacing:.08em;transition:all .15s" onmouseover="this.style.background='#577B53';this.style.color='#fff'" onmouseout="this.style.background='#fff';this.style.color='#577B53'">＋ 新增公告</button>
       </div>
-      <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
-        <div style="text-align:center;padding:20px;color:#767B75;font-size:14px;letter-spacing:.08em">載入中…</div>
+      <div id="bulletin-section" style="background:#fff;border-radius:16px;border:1px solid #D5DAD2;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:24px 28px">
+        <div id="bulletin-list" style="display:flex;flex-direction:column;gap:10px">
+          <div style="text-align:center;padding:20px;color:#767B75;font-size:14px;letter-spacing:.08em">載入中…</div>
+        </div>
       </div>
     </div>
 
     <!-- 入口式導覽：四大模組入口卡片（依角色顯示，點擊直接進入） -->
-    <div id="dash-services-label" style="display:flex;align-items:center;gap:11px;margin:36px 2px 18px">
-      <span style="width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></span>
-      <span style="font-size:18px;font-weight:800;color:#232A1E;letter-spacing:-.01em">服務項目</span>
-      <span style="font-size:12px;font-weight:700;color:#738e41;letter-spacing:.1em">SERVICES</span>
+    <div id="dash-services-label" class="dash-sec-label">
+      <span class="dash-sec-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg></span>
+      <span class="dash-sec-title">服務項目</span>
+      <span class="dash-sec-en">SERVICES</span>
     </div>
     <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
       <div class="dash-hub-card" onclick="hubNav(this,'applications')" style="order:3;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
@@ -2029,10 +2038,10 @@ thead th{color:#767B75!important}
     </div>
     <!-- 常用連結：外部資源（開新分頁；會議紀錄因手機瀏覽器擋第三方 Cookie，改為直接外開） -->
     <!-- 常用連結分兩區：員購專區（動態員購連結，全員可用）＋福委專區（會議紀錄，僅福委/HR/管理者可開） -->
-    <div id="dash-links-label" style="display:flex;align-items:center;gap:11px;margin:36px 2px 18px">
-      <span style="width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg></span>
-      <span style="font-size:18px;font-weight:800;color:#232A1E;letter-spacing:-.01em">常用連結</span>
-      <span style="font-size:12px;font-weight:700;color:#738e41;letter-spacing:.1em">LINKS</span>
+    <div id="dash-links-label" class="dash-sec-label">
+      <span class="dash-sec-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg></span>
+      <span class="dash-sec-title">常用連結</span>
+      <span class="dash-sec-en">LINKS</span>
     </div>
     <!-- 連結＝迷你服務磚（圓形 icon 底＋名稱＋↗），一排置中，與上方服務項目同一套視覺語言；不另外包框 -->
     <style>
