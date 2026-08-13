@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813164008';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813164247';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -5598,7 +5598,23 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       body: JSON.stringify(body),
       redirect: 'follow',
     });
-    const json = await res.json();
+    // ⚠️ 不要直接 res.json()：GAS 端不穩時會回一頁 HTML（錯誤頁／登入頁），
+    //    json() 會丟出「Unexpected token '<'」，呼叫端只能顯示看不懂的錯誤且完全沒有重試。
+    //    改成先取文字再解析，解析不出來就當成後端暫時故障，退避重試。
+    const _txt = await res.text();
+    let json;
+    try {
+      json = JSON.parse(_txt);
+    } catch (e) {
+      if (_retry < 3) {
+        const _d = Math.min((_retry + 1) * 1200, 4000);
+        console.warn('[API] 後端回傳非 JSON（多半是 GAS 暫時故障），' + _d + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', _txt.slice(0, 80));
+        await new Promise(r => setTimeout(r, _d));
+        return _fetchAPI(action, data, _retry + 1);
+      }
+      console.error('[API] 後端持續回傳非 JSON：', _txt.slice(0, 200));
+      return { ok: false, error: '伺服器暫時無法回應，請稍後再試', _badPayload: true };
+    }
     if (!json.ok && json.error && (
       json.error === '請先登入公司帳號' ||
       json.error.includes('SESSION') ||
@@ -9166,7 +9182,9 @@ async function loadAdminUsers() {
     if (res._authError) {
       tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
     } else {
-      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#dc2626;font-size:14px">❌ 載入失敗：' + (res.error||'請重試') + '<br><small style="color:#767B75">請確認已在 GAS 執行 initSheets() 與 initDefaultUsers()</small></td></tr>';
+      // 舊訊息會叫使用者去跑 initSheets()，但實務上幾乎都是後端暫時故障，與初始化無關 → 給重試鈕
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#dc2626;font-size:14px">❌ 載入失敗：' + (res.error||'請重試')
+        + '<br><button onclick="loadAdminUsers()" style="margin-top:10px;background:#fff;border:1px solid #577B53;color:#577B53;border-radius:8px;padding:6px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">重新載入</button></td></tr>';
     }
     return;
   }
