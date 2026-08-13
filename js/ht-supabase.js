@@ -554,6 +554,68 @@
     }
   };
 
+  // ══════════════════════════════════════════════════════════
+  // 公佈欄（首頁／午茶日／按摩共用一張表，以 scope 區分）
+  // ----------------------------------------------------------
+  // 搬家動機：GAS 端不穩，實際造成「公告明明有卻不見」「刪掉重整又回來」。
+  // 權限在 DB：讀＝任何 authenticated；寫／刪＝JWT 的 app_roles 含 welfare 或 manager。
+  // 回傳格式與 GAS 端 1:1 相同（{ok, posts:[{id,scope,title,content,pinned,author,createdAt}]}），
+  // 前端渲染完全不用改。
+  // ══════════════════════════════════════════════════════════
+  function bulletinFromDb(r) {
+    return {
+      id       : String(r.id),
+      scope    : String(r.scope || 'home'),
+      title    : String(r.title || ''),
+      content  : String(r.content || ''),
+      pinned   : r.pinned === true,
+      author   : String(r.author || ''),
+      createdAt: r.created_at ? new Date(r.created_at).toISOString() : ''
+    };
+  }
+
+  async function bulletinList() {
+    var r = await _sb('ht_bulletins?select=*&order=pinned.desc,created_at.desc');
+    if (r.__error) return { ok: false, error: r.__error };
+    return { ok: true, posts: (r.__data || []).map(bulletinFromDb) };
+  }
+
+  async function bulletinPost(p) {
+    if (!p || !p.title) return { ok: false, error: '缺少公告標題' };
+    var row = {
+      id        : String(p.id || ('B' + Date.now() + Math.random().toString(36).slice(2, 6))),
+      scope     : String(p.scope || 'home'),
+      title     : String(p.title),
+      content   : String(p.content || ''),
+      pinned    : p.pinned === true,
+      author    : String(p.author || ''),
+      created_at: p.createdAt ? new Date(p.createdAt).toISOString() : new Date().toISOString()
+    };
+    var r = await _sb('ht_bulletins?on_conflict=id', {
+      method: 'POST', body: [row],
+      headers: { 'Prefer': 'resolution=merge-duplicates,return=minimal' }
+    });
+    if (r.__error) return { ok: false, error: r.__error };
+    return { ok: true, id: row.id };
+  }
+
+  async function bulletinDelete(p) {
+    if (!p || !p.id) return { ok: false, error: '缺少公告編號' };
+    var r = await _sb('ht_bulletins?id=eq.' + _enc(String(p.id)), {
+      method: 'DELETE', headers: { 'Prefer': 'return=minimal' }
+    });
+    if (r.__error) return { ok: false, error: r.__error };
+    return { ok: true };
+  }
+
+  // 一次性搬家：把 GAS 現有公告整包倒進來（限福委／管理者，可重複執行）
+  async function bulletinSyncFromGas(posts) {
+    var r = await _sb('rpc/ht_bulletins_sync', { method: 'POST', body: { payload: posts || [] } });
+    if (r.__error) return { ok: false, error: r.__error };
+    return { ok: true, count: Number(r.__data) || 0 };
+  }
+  window.htBulletinSyncFromGas = bulletinSyncFromGas;
+
   // ── 路由表 ──
   var HANDLERS = {
     htList: htList,
@@ -575,6 +637,14 @@
     htVoteItemsGet: htVoteItemsGet,
     htVoteItemsSave: htVoteItemsSave
   };
+
+  // 公佈欄：資料搬完前先不接手（開關關著時仍走 GAS，線上不受影響）。
+  // 搬完並驗證過再把 HT_SB_BULLETIN 設為 true —— 出事把它改回 false 就秒回退。
+  if (window.HT_SB_BULLETIN === true) {
+    HANDLERS.bulletinList   = bulletinList;
+    HANDLERS.bulletinPost   = bulletinPost;
+    HANDLERS.bulletinDelete = bulletinDelete;
+  }
 
   // 對外入口。payload 內含 token（本層不驗，交由 RLS/前端 gate；user 由 payload 帶入）
   window.htSupabase = function (action, payload) {

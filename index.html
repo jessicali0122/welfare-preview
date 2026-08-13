@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813164247';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260813165214';  // 由 pre-commit hook 自動蓋章，請勿手改
   try {
     fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
       .then(function(r){ return r.ok ? r.text() : null; })
@@ -4446,6 +4446,12 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 // true＝午茶走 Supabase（現況，見 js/ht-supabase.js）；false＝退回原本的 GAS。
 // 2026-08-03 已切為 true 並實測通過（GAS 端 htSbToken 簽發 JWT 上線）。
 var HT_USE_SUPABASE = true;
+// ══ 公佈欄 Supabase 開關（獨立於午茶，可單獨回退）══
+// false＝公告仍走 GAS（現況）；true＝改走 Supabase 的 ht_bulletins。
+// 切換前必須先跑 docs/supabase/04_bulletins.sql 並把舊公告搬進去，
+// 否則畫面會變成空的（表存在但沒資料）。
+// ⚠️ 必須在載入 js/ht-supabase.js 之前設定：那支模組在載入當下就會依這個值決定要不要接手。
+window.HT_SB_BULLETIN = false;
 // ★ 一定要有這個 Promise：模組是動態載入的，深連結（#hightea/HT-xxxx）會在它還沒
 //   載完就呼叫 htApi。少了它，htApi 會判定「模組不在」而掉回 GAS —— GAS 又慢又常
 //   404，使用者就看到「載入逾時，伺服器回應太慢」。載入失敗才真的退回 GAS。
