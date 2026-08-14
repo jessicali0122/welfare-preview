@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814112334';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814112806';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -493,13 +493,10 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
   .ht-sub-mini{display:none}
 }
-/* 品項表格：橫向捲軸常駐顯示成一根看得見的拉桿（macOS 預設是浮動捲軸，滑到才出現，
-   會讓人以為表格被切掉而不是可以拉） */
-#ht-items-scroll{overflow-x:scroll;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
-#ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;height:10px}
-#ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
-#ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
-#ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 品項表格：仍可橫向捲動，但隱藏它自己的原生捲軸——改用底部工具列那根常駐同步捲軸，
+   避免出現兩條並排的橫向捲軸 */
+#ht-items-scroll{overflow-x:scroll;scrollbar-width:none;-ms-overflow-style:none}
+#ht-items-scroll::-webkit-scrollbar{display:none;height:0;width:0}
 /* 底部常駐同步捲軸：釘在畫面底（工具列內），捲到哪都能左右拉，不必拉到表格最底 */
 #ht-items-scroll-bar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
 #ht-items-scroll-bar::-webkit-scrollbar{-webkit-appearance:none;height:10px}
@@ -3663,10 +3660,10 @@ thead th{color:#767B75!important}
             <span id="ht-calc-budget" style="font-weight:800;color:#577B53;font-size:16px">NT$0</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
-        </div>
-        <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">預算使用率</span></div>
-          <div id="ht-budget-progress-bars"></div>
+          <!-- 預算使用率進度條：併入「預算結算」，與上方數字同一張卡（原本重複的獨立卡已移除） -->
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EAEDE7">
+            <div id="ht-budget-progress-bars"></div>
+          </div>
         </div>
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-top:10px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px"><span style="width:4px;height:14px;background:linear-gradient(#F6CC62,#E38845);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">類別明細</span></div>
@@ -15548,8 +15545,10 @@ function htRenderItems() {
       else if (field === 'assignee' && k) { var p = _htPersonColor(k); hb = p.bg; hf = p.fg; hbd = p.bd; }   // 負責人：該人的專屬色
       else { hb = '#F2F5F1'; hf = '#3E5A3B'; hbd = '#D9DDD3'; }   // 廠商/未指派：中性綠標頭
       html += '<tr class="ht-cat-group" ondragover="htGroupDragOver(event)" ondragleave="htGroupDragLeave(event)" ondrop="htGroupDrop(event,'+htJsArg(k)+')"><td colspan="12" style="padding:10px 14px;background:'+hb+';border-left:4px solid '+hf+';border-bottom:1px solid '+hbd+'">'
-        // 三個元素字級不同（16/14/12），用 flex 置中對齊，膠囊才不會看起來偏下
-        + '<div style="display:flex;align-items:center;gap:10px">'
+        // 三個元素字級不同（16/14/12），用 inline-flex 置中對齊（inline 才能縮成內容寬，
+        // 讓 position:sticky 生效——滿版 flex 撐滿儲存格會使 sticky 無處可滑而失效），
+        // 左右捲動時分類標籤（含占比膠囊）黏在左側可見
+        + '<div style="display:inline-flex;align-items:center;gap:10px">'
         +   '<span style="font-weight:800;color:'+hf+';font-size:16px;letter-spacing:.02em">'+htEsc(label)+'</span>'
         +   '<span style="color:'+hf+';opacity:.85;font-weight:600;font-size:14px">'+members.length+' 項 · '+_htMoney(sub)+'</span>'
         // 佔比：這組金額 ÷ 全部品項總額（自動算，總額 0 時不顯示）
