@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814140958';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814143125';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3868,6 +3868,11 @@ thead th{color:#767B75!important}
       <button onclick="htVoteClosePage()" style="position:absolute;left:0;top:6px;width:36px;height:36px;border-radius:50%;border:1.5px solid #E0D7C4;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#FBF8F2'" onmouseout="this.style.background='#fff'">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#8A7A6A" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
       </button>
+      <!-- 福委專用工具（一般員工隱藏）：複製投票連結分享 + 投票亭模式（公用 iPad 輪流投） -->
+      <div id="htv-mgr-tools" style="display:none;position:absolute;right:0;top:2px;gap:8px">
+        <button id="htv-share-btn" onclick="htVoteCopyLink(this)" style="border:1.5px solid #E0D7C4;background:#fff;color:#4A6A47;border-radius:22px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="複製這場的投票連結，貼到 LINE 群組給大家">🔗 複製連結</button>
+        <button id="htv-kiosk-btn" onclick="htVoteKioskToggle(this)" style="border:1.5px solid #577B53;background:#fff;color:#577B53;border-radius:22px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap" title="公用 iPad 放桌上輪流投：投完自動換下一位、不顯示結果">🖥 投票亭模式：關</button>
+      </div>
       <div style="font-size:38px;line-height:1.1">☕</div>
       <div style="font-size:20px;font-weight:800;color:#4A3B30;letter-spacing:.1em;margin-top:6px">午茶日滿意度投票</div>
       <div id="ht-vote-page-sub" style="font-size:12px;color:#A08B76;margin-top:4px">大家輪流投</div>
@@ -14683,6 +14688,15 @@ window.htVoteOpenInline = async function(dateStr, kioskMode) {
   var savedItems = configured ? cfg.items : null;
   var savedKnown = (cfg && cfg.ok && Array.isArray(cfg.known)) ? cfg.known : null;
   var isMgr = (typeof can === 'function') && can('hightea.manage');
+  // 福委專用工具（複製連結／投票亭模式）：只有管理者看得到；同步投票亭按鈕現況
+  var _mtools = document.getElementById('htv-mgr-tools');
+  if (_mtools) _mtools.style.display = isMgr ? 'flex' : 'none';
+  var _kbtn = document.getElementById('htv-kiosk-btn');
+  if (_kbtn) {
+    _kbtn.textContent = window._htvKiosk ? '🖥 投票亭模式：開' : '🖥 投票亭模式：關';
+    _kbtn.style.background = window._htvKiosk ? '#577B53' : '#fff';
+    _kbtn.style.color = window._htvKiosk ? '#fff' : '#577B53';
+  }
   _clrLoad();
   wrap.style.display = '';
   document.getElementById('htv-review').style.display = 'none';
@@ -14811,6 +14825,20 @@ window.htVoteClosePage = function() {
 };
 // 🖥 投票亭模式（放公用 iPad）：福委在投票頁開啟後，每投完一票自動回到第一步讓下一位投，
 // 全程不顯示結果（結果由福委在活動詳情頁查看／活動後公開），送出改用隨機鑰匙不受單人限一票約束
+// 🔗 複製這場的投票連結（月份路由），一鍵貼到 LINE 群組給大家；當天大家點進去登入即見投票橫幅
+window.htVoteCopyLink = function(btn) {
+  var m = String(_htvEventId || '').replace(/^HTD-/, '').slice(0, 7);  // yyyy-MM
+  if (!/^\d{4}-\d{2}$/.test(m)) { toast('找不到這場活動編號'); return; }
+  var url = location.origin + location.pathname + '#hightea/HT-' + m;
+  var done = function(){ if (btn) { var o = btn.textContent; btn.textContent = '✓ 已複製'; setTimeout(function(){ btn.textContent = o; }, 1600); } toast('🔗 投票連結已複製，貼到 LINE 群組即可'); };
+  var fallback = function(){
+    try { var ta = document.createElement('textarea'); ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }
+    catch(e){ toast('複製失敗，連結：' + url); }
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(done, fallback);
+  } else fallback();
+};
 window.htVoteKioskToggle = function(btn) {
   window._htvKiosk = !window._htvKiosk;
   if (btn) { btn.textContent = window._htvKiosk ? '🖥 投票亭模式：開' : '🖥 投票亭模式：關'; btn.style.background = window._htvKiosk ? '#577B53' : '#fff'; btn.style.color = window._htvKiosk ? '#fff' : '#577B53'; }
