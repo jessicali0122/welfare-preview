@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814114429';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814140958';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -14949,7 +14949,18 @@ window.htVoteSubmitNow = async function(btn) {
 // 結果渲染：分數跳動＋人氣方塊圖（大小=人氣、顏色=滿意度）＋一句話輪播
 function htVoteRenderResults(votesArg) {
   var votes = votesArg || _htvVotes || [];
-  if (!votes.length) return;
+  if (!votes.length) {
+    // 福委當天 0 票也會顯示結果卡（掌握進度用）→ 給友善空狀態，別留一塊空白卡
+    document.getElementById('ht-vote-results').style.display = '';
+    var _sc = document.getElementById('htv-score'); if (_sc) _sc.textContent = '0';
+    var _nv = document.getElementById('htv-nvotes'); if (_nv) _nv.textContent = '0';
+    var _bd = document.getElementById('htv-badge'); if (_bd) _bd.textContent = '等大家投票中…';
+    var _mp = document.getElementById('htv-map');
+    if (_mp) _mp.innerHTML = '<div style="text-align:center;color:#9AA39A;font-size:14px;padding:28px 12px">目前尚無投票，大家投票後這裡會即時更新 🗳️</div>';
+    if (_htvCmtTimer) { clearInterval(_htvCmtTimer); _htvCmtTimer = null; }
+    var _cw = document.getElementById('htv-cmts-wrap'); if (_cw) _cw.style.display = 'none';
+    return;
+  }
   document.getElementById('ht-vote-results').style.display = '';
   var avg = votes.reduce(function(s,v){ return s + (v.sat||0); }, 0) / votes.length;
   var score = Math.round(avg / 5 * 100);
