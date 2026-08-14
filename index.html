@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814111416';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814112334';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -500,12 +500,18 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
-/* 頂端同步捲軸：貼齊可視區頂端，捲到哪都能左右拉，不必拉到表格最底 */
-#ht-items-scroll-top{overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:6;background:#fff;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
-#ht-items-scroll-top::-webkit-scrollbar{-webkit-appearance:none;height:10px}
-#ht-items-scroll-top::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
-#ht-items-scroll-top::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
-#ht-items-scroll-top::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 底部常駐同步捲軸：釘在畫面底（工具列內），捲到哪都能左右拉，不必拉到表格最底 */
+#ht-items-scroll-bar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-items-scroll-bar::-webkit-scrollbar{-webkit-appearance:none;height:10px}
+#ht-items-scroll-bar::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-items-scroll-bar::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-items-scroll-bar::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 凍結品名（第一欄）：左右捲動時品名固定可見；用 box-shadow 當分隔線（border-collapse 下 border 會被吃掉） */
+#ht-items-scroll thead th:first-child{position:sticky;left:0;z-index:4;background:#fff;box-shadow:2px 0 0 #577B53}
+#ht-items-scroll tfoot td:first-child{position:sticky;left:0;z-index:3;background:#fff;box-shadow:2px 0 0 #577B53}
+#ht-items-tbody tr.ht-it-row td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:2px 0 0 #E1E5DC}
+/* 分組標題列（colspan 整列）：讓標題文字自身黏在左側，捲到右邊也看得到是哪一組 */
+#ht-items-tbody tr.ht-cat-group > td > div{position:sticky;left:14px}
 /* 單價：拿掉瀏覽器原生的上下箭頭（spinner）——欄位窄的時候箭頭會壓在數字上，
    「50」被切成「5」、「0」看起來像「5」。數量保留箭頭（數字短、按加減方便）。 */
 #ht-items-tbody input[data-f="unitPrice"]{-moz-appearance:textfield;appearance:textfield}
@@ -3592,7 +3598,6 @@ thead th{color:#767B75!important}
           <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
-        <div id="ht-items-scroll-top" style="display:none"><div id="ht-items-scroll-top-inner" style="height:1px"></div></div>
         <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/訂購/備註/連結/請款/刪除（分類為可手選下拉，品名可自動帶入） -->
@@ -3627,8 +3632,11 @@ thead th{color:#767B75!important}
             </tfoot>
           </table>
         </div>
-        <!-- 底部 sticky 工具列：新增品項／儲存釘在畫面底，清單再長都隨手可按 -->
-        <div id="ht-items-toolbar" style="position:sticky;bottom:0;z-index:6;display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
+        <!-- 底部 sticky 工具列：橫向捲軸＋新增品項／儲存都釘在畫面底，清單再長、捲到哪都摸得到／隨手可按 -->
+        <div id="ht-items-toolbar" style="position:sticky;bottom:0;z-index:6;background:rgba(255,255,255,.96);backdrop-filter:blur(6px);border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
+          <!-- 常駐橫向捲軸：與表格內容同步，固定在畫面底部，不必捲到表格最底才摸得到 -->
+          <div id="ht-items-scroll-bar" style="display:none;overflow-x:auto;overflow-y:hidden;padding-top:6px"><div id="ht-items-scroll-bar-inner" style="height:1px"></div></div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px">
           <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             新增品項
@@ -3636,6 +3644,7 @@ thead th{color:#767B75!important}
           <button onclick="htSaveItems()" id="ht-save-btn" style="padding:8px 18px;border-radius:8px;border:none;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .2s" onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">💾 儲存</button>
           <!-- 逐列自動存狀態：放在儲存按鈕右側，含最後存檔時間（改完停手 1 秒自動寫回雲端，不必按儲存）-->
           <span id="ht-sync-status" style="display:none;font-size:12px;font-weight:700;color:#577B53;letter-spacing:.02em;white-space:nowrap"></span>
+          </div>
         </div>
       </div>
     </div>
@@ -15560,30 +15569,30 @@ function htRenderItems() {
   _htSyncTopScrollbar();           // 更新頂端同步捲軸的寬度／顯示
 }
 
-// ── 頂端同步橫向捲軸 ──
-// 底部原生捲軸在表格最底，列很多時要拉到最下面才摸得到。這裡在表格上方放一根
-// sticky 捲軸，寬度跟著表格內容走，左右任一根拖動另一根同步，捲到哪都能拉。
-var _htTopBarBound = false;
+// ── 底部常駐同步橫向捲軸 ──
+// 原生捲軸在表格最底，列很多時要拉到最下面才摸得到。這裡把一根捲軸放進「底部 sticky 工具列」，
+// 固定在畫面底部：寬度跟著表格內容走，左右任一根拖動另一根同步，捲到哪都摸得到。
+var _htBottomBarBound = false;
 function _htSyncTopScrollbar(){
   var main = document.getElementById('ht-items-scroll');
-  var top  = document.getElementById('ht-items-scroll-top');
-  var inner = document.getElementById('ht-items-scroll-top-inner');
-  if (!main || !top || !inner) return;
+  var bar  = document.getElementById('ht-items-scroll-bar');
+  var inner = document.getElementById('ht-items-scroll-bar-inner');
+  if (!main || !bar || !inner) return;
   var tbl = main.querySelector('table');
   var w = tbl ? tbl.scrollWidth : main.scrollWidth;
   inner.style.width = w + 'px';
   // 內容沒有超出寬度就不必顯示（避免多一條沒用的軌道）
   if (main.scrollWidth > main.clientWidth + 1) {
-    top.style.display = '';
-    top.scrollLeft = main.scrollLeft;
+    bar.style.display = '';
+    bar.scrollLeft = main.scrollLeft;
   } else {
-    top.style.display = 'none';
+    bar.style.display = 'none';
   }
-  if (!_htTopBarBound) {
-    _htTopBarBound = true;
+  if (!_htBottomBarBound) {
+    _htBottomBarBound = true;
     var lock = false;
-    top.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = top.scrollLeft; lock = false; });
-    main.addEventListener('scroll', function(){ if (lock) return; lock = true; top.scrollLeft = main.scrollLeft; lock = false; });
+    bar.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = bar.scrollLeft; lock = false; });
+    main.addEventListener('scroll', function(){ if (lock) return; lock = true; bar.scrollLeft = main.scrollLeft; lock = false; });
     window.addEventListener('resize', function(){ _htSyncTopScrollbar(); });
   }
 }
