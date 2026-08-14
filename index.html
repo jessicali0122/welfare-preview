@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260813170502';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814105903';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -500,6 +500,12 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 頂端同步捲軸：貼齊可視區頂端，捲到哪都能左右拉，不必拉到表格最底 */
+#ht-items-scroll-top{overflow-x:auto;overflow-y:hidden;position:sticky;top:0;z-index:6;background:#fff;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-items-scroll-top::-webkit-scrollbar{-webkit-appearance:none;height:10px}
+#ht-items-scroll-top::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-items-scroll-top::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-items-scroll-top::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
 /* 單價：拿掉瀏覽器原生的上下箭頭（spinner）——欄位窄的時候箭頭會壓在數字上，
    「50」被切成「5」、「0」看起來像「5」。數量保留箭頭（數字短、按加減方便）。 */
 #ht-items-tbody input[data-f="unitPrice"]{-moz-appearance:textfield;appearance:textfield}
@@ -3586,6 +3592,7 @@ thead th{color:#767B75!important}
           <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
+        <div id="ht-items-scroll-top" style="display:none"><div id="ht-items-scroll-top-inner" style="height:1px"></div></div>
         <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/是否訂購/備註/連結/刪除（分類為可手選下拉，品名可自動帶入） -->
@@ -14716,10 +14723,15 @@ function _htvOpenReview(allNames, savedItems, knownItems, ctx) {
     }
     _htvReviewState.push({ name: nm, on: on, custom: false });
   });
-  // 已存名單中若有不在品項清單裡的自訂品項，補進來並標記可刪除
+  // 已存名單中若有不在品項清單裡的品項，判斷是「福委手動加的自訂品項」還是「表單改名/刪除後的殘留舊名」：
+  //  · 當初來自表單（在 known 快照裡）而現在表單已沒有 → 代表被改名或刪除了，不補回，避免舊名殘留、與表單不同步
+  //  · 不在 known 快照（福委手動輸入的自訂品項）→ 保留，補回清單並標記可刪除
+  //  · 沒有 known 快照（舊資料）→ 維持原行為全部補回，安全回退
   if (savedItems) savedItems.forEach(function(n){
     n = String(n || '').trim();
-    if (n && !seen[n]) { seen[n] = 1; _htvReviewState.push({ name: n, on: true, custom: true }); }
+    if (!n || seen[n]) return;
+    if (hasKnown && knownSet[n]) return;   // 曾是表單品項、現已不在 → 視為改名/刪除，不再補回
+    seen[n] = 1; _htvReviewState.push({ name: n, on: true, custom: true });
   });
   document.getElementById('htv-review').style.display = '';
   htvReviewRender();
@@ -15540,6 +15552,35 @@ function htRenderItems() {
   _htUpdateBalance();
   _htApplyPresence(_htPresence);   // 重繪後把「誰正在編這一列」的標記補回去
   _htSyncRender();                 // 常駐同步狀態（儲存中／已儲存）
+  _htSyncTopScrollbar();           // 更新頂端同步捲軸的寬度／顯示
+}
+
+// ── 頂端同步橫向捲軸 ──
+// 底部原生捲軸在表格最底，列很多時要拉到最下面才摸得到。這裡在表格上方放一根
+// sticky 捲軸，寬度跟著表格內容走，左右任一根拖動另一根同步，捲到哪都能拉。
+var _htTopBarBound = false;
+function _htSyncTopScrollbar(){
+  var main = document.getElementById('ht-items-scroll');
+  var top  = document.getElementById('ht-items-scroll-top');
+  var inner = document.getElementById('ht-items-scroll-top-inner');
+  if (!main || !top || !inner) return;
+  var tbl = main.querySelector('table');
+  var w = tbl ? tbl.scrollWidth : main.scrollWidth;
+  inner.style.width = w + 'px';
+  // 內容沒有超出寬度就不必顯示（避免多一條沒用的軌道）
+  if (main.scrollWidth > main.clientWidth + 1) {
+    top.style.display = '';
+    top.scrollLeft = main.scrollLeft;
+  } else {
+    top.style.display = 'none';
+  }
+  if (!_htTopBarBound) {
+    _htTopBarBound = true;
+    var lock = false;
+    top.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = top.scrollLeft; lock = false; });
+    main.addEventListener('scroll', function(){ if (lock) return; lock = true; top.scrollLeft = main.scrollLeft; lock = false; });
+    window.addEventListener('resize', function(){ _htSyncTopScrollbar(); });
+  }
 }
 
 // ── 品項拖曳排序（自訂排序模式）──
