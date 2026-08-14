@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814143125';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260814154833';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3862,7 +3862,7 @@ thead th{color:#767B75!important}
 </style>
 
 <!-- 🗳️ 午茶日投票專頁：全螢幕獨立頁面（點橫幅開啟；投票卡/結果卡由 JS 移入 body） -->
-<div id="ht-vote-page" style="display:none;position:fixed;inset:0;z-index:300;background:linear-gradient(135deg,#F7EFE1 0%,#F0E5CF 48%,#DCE8D2 100%);overflow-y:auto;-webkit-overflow-scrolling:touch">
+<div id="ht-vote-page" style="display:none;position:fixed;inset:0;z-index:300;background:#F7F5EC;overflow-y:auto;-webkit-overflow-scrolling:touch">
   <div style="max-width:640px;margin:0 auto;padding:16px 16px 40px">
     <div style="position:relative;text-align:center;margin:6px 0 16px;padding-top:6px">
       <button onclick="htVoteClosePage()" style="position:absolute;left:0;top:6px;width:36px;height:36px;border-radius:50%;border:1.5px solid #E0D7C4;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center" onmouseover="this.style.background='#FBF8F2'" onmouseout="this.style.background='#fff'">
@@ -3880,6 +3880,30 @@ thead th{color:#767B75!important}
     <div id="ht-vote-page-body"></div>
   </div>
 </div>
+
+<!-- 📺 全螢幕「純看板」投影模式：只留分數＋排行、大字，適合投影；含開始/結束控制（福委） -->
+<div id="ht-board-page" style="display:none;position:fixed;inset:0;z-index:400;background:#F7F5EC;color:#2E332D;overflow-y:auto;-webkit-overflow-scrolling:touch">
+  <div style="max-width:1100px;margin:0 auto;padding:26px 30px 60px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
+      <div style="min-width:0">
+        <div style="font-size:13px;letter-spacing:.22em;font-weight:700;color:#738e41">TEA DAY · LIVE</div>
+        <div id="ht-board-title" style="font-size:24px;font-weight:800;margin-top:2px;color:#2E332D">午茶日滿意度 · 即時看板</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <span id="ht-board-live" style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:800;color:#577B53;background:#EAF0E7;border:1px solid #D3DACB;border-radius:20px;padding:7px 14px"></span>
+        <button id="ht-board-toggle" onclick="htBoardToggleClose()" style="border:none;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap"></button>
+        <button onclick="htBoardClose()" style="border:1.5px solid #C7CEC2;background:#fff;color:#5B6157;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">✕ 關閉</button>
+      </div>
+    </div>
+    <div style="background:linear-gradient(160deg,#6E8F6A 0%,#3E5A3B 100%);border-radius:24px;margin:22px 0 0;padding:30px 22px;text-align:center;color:#fff;box-shadow:0 14px 34px rgba(80,100,70,.18)">
+      <div id="ht-board-score" style="font-size:clamp(84px,16vw,150px);font-weight:900;line-height:1;text-shadow:0 6px 24px rgba(0,0,0,.2)">0</div>
+      <div id="ht-board-badge" style="font-size:clamp(18px,3vw,26px);font-weight:800;color:#EAF3E6;margin-top:6px">等大家投票中…</div>
+    </div>
+    <div id="ht-board-rank" style="display:flex;flex-direction:column;gap:12px;margin-top:18px"></div>
+    <div id="ht-board-empty" style="display:none;text-align:center;color:#8A917B;font-size:18px;padding:30px 0">目前尚無投票，大家投票後這裡會即時更新 🗳️</div>
+  </div>
+</div>
+<style>@keyframes htbpulse{0%,100%{opacity:1}50%{opacity:.3}}@media(prefers-reduced-motion:reduce){#ht-board-live [style*="htbpulse"]{animation:none!important}}</style>
 
 <!-- ══ 按摩預約 View ══ -->
 <div class="view" id="view-massage">
@@ -12624,7 +12648,9 @@ window.htGetNextEventDate = function() {
     var src = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
     var now = new Date(); now.setHours(0,0,0,0);
     var up = src.map(function(e){ var ds = String(e.date||'').replace(/\//g,'-'); if(!ds) return null; var d = new Date(ds); d.setHours(0,0,0,0); return isNaN(d.getTime())||d<now ? null : d; }).filter(Boolean).sort(function(a,b){ return a-b; });
-    return up.length ? ((up[0].getMonth()+1) + '/' + up[0].getDate()) : null;
+    if (!up.length) return null;
+    // 下一場就是今天 → 直接顯示「今天」，比日期更直覺
+    return up[0].getTime() === now.getTime() ? '今天' : ((up[0].getMonth()+1) + '/' + up[0].getDate());
   } catch(e) { return null; }
 };
 // 首頁預載午茶日：先用 localStorage 快取（免請求），真的沒有才背景抓一次；回傳下一場 M/D
@@ -14594,13 +14620,96 @@ function _htvRenderLiveBar(closed) {
   if (!bar) { bar = document.createElement('div'); bar.id = 'htv-live-bar'; res.insertBefore(bar, res.firstChild); }
   bar.style.cssText = 'display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D2D7CD;border-radius:12px;padding:10px 14px;margin-bottom:10px;flex-wrap:wrap';
   var btnStyle = 'border-radius:20px;padding:7px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap';
+  var boardBtn = '<button onclick="htBoardOpen()" style="background:#3E5A3B;color:#fff;border:none;' + btnStyle + '" title="全螢幕純看板，適合投影給大家看">📺 投影看板</button>';
   bar.innerHTML = closed
     ? '<span style="font-size:14px;font-weight:700;color:#767B75">⏹ 投票已結束</span>'
       + '<span style="flex:1"></span>'
+      + boardBtn
       + '<button onclick="htVoteToggleClose(true)" style="background:#fff;color:#577B53;border:1.5px solid #CDD8CB;' + btnStyle + '">▶ 重新開放投票</button>'
     : '<span style="display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:#C2456B"><span style="width:8px;height:8px;border-radius:50%;background:#C2456B"></span>LIVE 每 10 秒自動更新 · 已收 ' + ((_htvVotes||[]).length) + ' 票</span>'
       + '<span style="flex:1"></span>'
+      + boardBtn
       + '<button onclick="htVoteToggleClose(false)" style="background:#dc2626;color:#fff;border:none;' + btnStyle + '">⏹ 結束投票</button>';
+}
+// ── 📺 全螢幕純看板投影模式（福委）──
+var _htBoardTimer = null, _htBoardPrevOverflow = '';
+window.htBoardOpen = async function() {
+  var pg = document.getElementById('ht-board-page'); if (!pg || !_htvEventId) return;
+  pg.style.display = ''; _htBoardPrevOverflow = document.body.style.overflow; document.body.style.overflow = 'hidden';
+  await _htBoardRefresh();
+  if (_htBoardTimer) clearInterval(_htBoardTimer);
+  _htBoardTimer = setInterval(_htBoardRefresh, 8000);   // 每 8 秒自動刷新
+};
+window.htBoardClose = function() {
+  var pg = document.getElementById('ht-board-page'); if (pg) pg.style.display = 'none';
+  document.body.style.overflow = _htBoardPrevOverflow || '';
+  if (_htBoardTimer) { clearInterval(_htBoardTimer); _htBoardTimer = null; }
+};
+// 開始/結束：投影畫面上用「兩步確認」（再按一次），避免依賴彈窗被看板蓋住
+window.htBoardToggleClose = function() {
+  var pg = document.getElementById('ht-board-page'); var closed = pg && pg.dataset.closed === '1';
+  var tg = document.getElementById('ht-board-toggle'); if (!tg) return;
+  if (tg.dataset.confirm !== '1') {
+    tg.dataset.confirm = '1';
+    tg.textContent = closed ? '再按一次：重新開放' : '再按一次：確定結束';
+    clearTimeout(tg._ct); tg._ct = setTimeout(function(){ tg.dataset.confirm = '0'; _htBoardRefresh(); }, 3000);
+    return;
+  }
+  tg.dataset.confirm = '0';
+  (async function(){
+    var r = null; try { r = await htApi('htVoteClose', { eventId: _htvEventId, reopen: !!closed }); } catch(e) {}
+    if (!r || !r.ok) { toast('❌ 操作失敗：' + ((r && r.error) || '請稍後再試'), 'error'); return; }
+    toast(closed ? '▶ 已重新開放投票' : '⏹ 投票已結束');
+    _htBoardRefresh();
+    if (typeof htVoteInit === 'function') { try { htVoteInit(); } catch(e) {} }
+  })();
+};
+async function _htBoardRefresh() {
+  if (!_htvEventId) return;
+  var r = null; try { r = await htApi('htVoteGet', { eventId: _htvEventId }); } catch(e) {}
+  if (!r || !r.ok) return;
+  _htvVotes = r.votes || [];
+  _htBoardRender(_htvVotes, !!r.closed);
+}
+function _htBoardRender(votes, closed) {
+  var pg = document.getElementById('ht-board-page'); if (!pg) return;
+  pg.dataset.closed = closed ? '1' : '0';
+  var live = document.getElementById('ht-board-live');
+  if (live) live.innerHTML = closed
+    ? '<span style="width:9px;height:9px;border-radius:50%;background:#C9C9C9;display:inline-block"></span> 投票已結束 · 共 ' + votes.length + ' 票'
+    : '<span style="width:9px;height:9px;border-radius:50%;background:#FF5C8A;display:inline-block;animation:htbpulse 1.6s infinite"></span> LIVE · 已收 ' + votes.length + ' 票';
+  var tg = document.getElementById('ht-board-toggle');
+  if (tg && tg.dataset.confirm !== '1') {
+    tg.textContent = closed ? '▶ 重新開放投票' : '⏹ 結束投票';
+    tg.style.background = closed ? '#fff' : '#E0533E'; tg.style.color = closed ? '#2E4A2B' : '#fff';
+  }
+  var m = String(_htvEventId || '').replace(/^HTD-/, '');
+  var t = document.getElementById('ht-board-title'); if (t) t.textContent = (/^\d{4}-\d{2}-\d{2}$/.test(m) ? m.slice(5).replace('-', '/') + ' ' : '') + '午茶日滿意度 · 即時看板';
+  var hero = document.getElementById('ht-board-score'), badge = document.getElementById('ht-board-badge'),
+      rank = document.getElementById('ht-board-rank'), empty = document.getElementById('ht-board-empty');
+  if (!votes.length) { if (hero) hero.textContent = '0'; if (badge) badge.textContent = closed ? '本場沒有人投票' : '等大家投票中…'; if (rank) rank.innerHTML = ''; if (empty) empty.style.display = ''; return; }
+  if (empty) empty.style.display = 'none';
+  var avg = votes.reduce(function(s,v){ return s + (v.sat||0); }, 0) / votes.length;
+  if (hero) hero.textContent = Math.round(avg / 5 * 100);
+  if (badge) badge.textContent = avg >= 4 ? '恭喜！大家都超滿意 🎉' : avg >= 3 ? '整體評價不錯！' : '謝謝回饋，下次更好！';
+  var stat = {};
+  votes.forEach(function(v){ (v.favs||[]).forEach(function(nm){ if (!stat[nm]) stat[nm] = { fav:0, ss:0 }; stat[nm].fav++; stat[nm].ss += (v.sat||0); }); });
+  var items = Object.keys(stat).map(function(nm){ return { k:nm, fav:stat[nm].fav, sat:stat[nm].ss/stat[nm].fav }; }).sort(function(a,b){ return b.fav - a.fav; }).slice(0, 8);
+  if (!rank) return;
+  if (!items.length) { rank.innerHTML = '<div style="text-align:center;color:#8A917B;font-size:18px;padding:20px 0">尚無品項回饋</div>'; return; }
+  var maxFav = items[0].fav || 1, medals = ['🥇','🥈','🥉'];
+  rank.innerHTML = items.map(function(it, i){
+    var pct = Math.max(8, Math.round(it.fav / maxFav * 100));
+    var barBg = i === 0 ? 'linear-gradient(90deg,#7FA05F,#4F7A4A)' : i === 1 ? '#9DC183' : i === 2 ? '#B5CB94' : '#D5E0C2';
+    return '<div style="background:#fff;border:1px solid #E4E8DF;border-radius:16px;padding:13px 18px;box-shadow:0 2px 8px rgba(80,100,70,.06)">'
+      + '<div style="display:flex;align-items:center;gap:12px;font-size:clamp(16px,2.2vw,22px);font-weight:800;color:#2E332D">'
+      +   '<span style="min-width:34px;text-align:center">' + (medals[i] || (i+1) + '.') + '</span>'
+      +   '<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _htvEmoji(it.k) + ' ' + htEsc(it.k) + '</span>'
+      +   '<span style="font-size:clamp(13px,1.6vw,16px);font-weight:700;color:#8A917B;white-space:nowrap">' + it.fav + ' 票 · 滿意 ' + it.sat.toFixed(1) + '</span>'
+      + '</div>'
+      + '<div style="background:#EDF2E7;border-radius:8px;height:12px;margin-top:8px;overflow:hidden"><div style="width:' + pct + '%;height:12px;border-radius:8px;background:' + barBg + ';transition:width .6s"></div></div>'
+      + '</div>';
+  }).join('');
 }
 // 結束／重新開放投票（福委）
 window.htVoteToggleClose = function(reopen) {
