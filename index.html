@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817165914';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817170432';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1924,9 +1924,8 @@ thead th{color:#767B75!important}
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
     <!-- 問候區：不再包卡片（招呼語不是資料，不需要框），維持置中 -->
-    <div id="dash-hero" style="position:relative;padding:28px 4px 4px;margin-bottom:18px">
-      <div id="dash-eyebrow" style="font-size:11px;letter-spacing:.2em;color:#738e41;font-weight:600">TSA WELFARE COMMITTEE</div>
-      <div style="display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap">
+    <div id="dash-hero" style="position:relative;padding:30px 4px 4px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div id="dash-avatar" style="width:48px;height:48px;border-radius:50%;background:#E7EEE5;display:flex;align-items:center;justify-content:center;color:#577B53;font-size:20px;font-weight:800;flex-shrink:0"></div>
         <div style="flex:1;min-width:160px">
           <div id="dashboard-greeting" style="font-size:26px;font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.15">你好</div>
@@ -3521,6 +3520,11 @@ thead th{color:#767B75!important}
           <span id="ht-event-summary" style="font-size:13px;color:#767B75;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
           <span id="ht-event-caret" style="flex-shrink:0;color:#9AA79A;font-size:11px;transition:transform .2s">▼</span>
         </div>
+        <!-- 預算試算式（含壽星加碼）：從「預算結算」搬到這裡，資訊在最上面一次看清楚 -->
+        <div style="font-size:12.5px;color:#8A9086;margin-top:8px;line-height:1.6">
+          <span style="color:#577B53">📐</span> <span id="ht-budget-formula"></span>
+          <span style="color:#A9A69B">＝</span> <span id="ht-calc-budget" style="font-weight:800;color:#577B53">NT$0</span>
+        </div>
         <div id="ht-event-fields" style="display:none;margin-top:12px">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
             <div style="display:none"><div id="ht-event-month-display">—</div></div>
@@ -3646,8 +3650,7 @@ thead th{color:#767B75!important}
       <div id="ht-dtab-budget">
         <div style="background:#fff;border-radius:16px;border:1.5px solid #D3DACB;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px;margin-bottom:12px">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="width:4px;height:14px;background:linear-gradient(#8FAE8B,#577B53);border-radius:4px"></span><span style="font-size:16px;font-weight:700;color:#2E332D">預算結算</span></div>
-          <!-- 試算公式與總額已由下方 2×2 卡片（總預算等）＋活動設定摘要呈現，這裡不重複顯示（元素保留隱藏供 JS 寫入） -->
-          <span id="ht-budget-formula" style="display:none"></span><span id="ht-calc-budget" style="display:none">NT$0</span>
+          <!-- 試算式（含壽星加碼）已搬到上方「活動設定」區；這裡只留 2×2 結算卡片 -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="ht-budget-cards"></div>
           <!-- 預算使用率進度條：併入「預算結算」，與上方數字同一張卡（原本重複的獨立卡已移除） -->
           <div style="margin-top:14px;padding-top:14px;border-top:1px solid #EAEDE7">
@@ -15236,14 +15239,9 @@ function _htUpdateEventSummary() {
   var bp = (document.getElementById('ht-event-budget-pp') || {}).value || '';
   var o1 = (document.getElementById('ht-event-org1') || {}).value || '';
   var o2 = (document.getElementById('ht-event-org2') || {}).value || '';
-  // 日期不放摘要（標題列已顯示完整日期，避免重複兩個 8/14）
-  var parts = [];
-  if (hc) parts.push(htEsc(hc) + ' 人');
-  if (bp) parts.push('每人 ' + htEsc(bp));
-  var html = parts.join(' · ');
-  // 主辦人改用人員色籤（同品項表負責人），比純文字＋頓號更清楚好看
+  // 人數/每人/壽星/總額改由下方「試算式」那行呈現，摘要只留主辦（避免與算式重複 54人·每人200）
   var badges = [o1, o2].filter(Boolean).map(function(n){ return _htPersonBadge(n); }).join(' ');
-  if (badges) html += (html ? ' · ' : '') + '<span style="color:#8A9086">主辦</span> ' + badges;
+  var html = badges ? '<span style="color:#8A9086">主辦</span> ' + badges : '';
   el.innerHTML = html || '（點此設定）';
 }
 // 活動設定：展開／收合
