@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817164615';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817164801';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3378,9 +3378,9 @@ thead th{color:#767B75!important}
 
         <!-- 右側：本月行程 → 歷史回顧 一條時間軸（不用切換，往下捲就看得到過去場次） -->
         <div id="ht-side-card" style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);overflow:hidden;display:flex;flex-direction:column;max-height:592px">
-          <div id="ht-side-scroll" style="flex:1;min-height:0;overflow-y:auto;padding:16px 18px 10px">
-            <!-- 本月行程 -->
-            <div id="ht-side-month">
+          <div id="ht-side-scroll" style="flex:1;min-height:0;overflow:hidden;padding:16px 18px 10px;display:flex;flex-direction:column">
+            <!-- 本月行程：固定，不跟著捲 -->
+            <div id="ht-side-month" style="flex-shrink:0">
               <div class="ht-sec-head">
                 <span class="ht-sec-ico">📅</span>
                 <span class="ht-sec-title">本月行程</span>
@@ -3388,15 +3388,15 @@ thead th{color:#767B75!important}
               </div>
               <div id="ht-cal-events"></div>
             </div>
-            <!-- 歷史回顧（年份小晶片＋場次卡，接在本月行程下方，同一條時間軸） -->
-            <div id="ht-side-history" style="margin-top:22px;padding-top:20px;border-top:1px solid #E4E7E1">
-              <div class="ht-sec-head">
+            <!-- 歷史回顧：只有這一區的清單自己捲（本月行程固定、捲軸也較短） -->
+            <div id="ht-side-history" style="margin-top:22px;padding-top:20px;border-top:1px solid #E4E7E1;flex:1;min-height:0;display:flex;flex-direction:column">
+              <div class="ht-sec-head" style="flex-shrink:0">
                 <span class="ht-sec-ico">🕘</span>
                 <span class="ht-sec-title">歷史回顧</span>
                 <span class="ht-sec-en">HISTORY</span>
                 <span id="ht-history-count" class="ht-sec-count"></span>
               </div>
-              <div id="ht-events-grid"></div>
+              <div id="ht-events-grid" style="flex:1;min-height:0;overflow-y:auto"></div>
             </div>
           </div>
         </div>
