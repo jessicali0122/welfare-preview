@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817171215';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817171453';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -501,6 +501,12 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 表格上方常駐橫向捲軸（與表格同步） */
+#ht-hbar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-hbar::-webkit-scrollbar{-webkit-appearance:none;height:11px}
+#ht-hbar::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-hbar::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-hbar::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
 /* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
 #ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
 /* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
@@ -3589,6 +3595,8 @@ thead th{color:#767B75!important}
           <strong id="ht-bal-total"></strong><strong id="ht-bal-used"></strong><strong id="ht-bal-remain"></strong>
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
+        <!-- 常駐橫向捲軸：與表格同步，放在表頭正上方 → 不必捲到框底、窄視窗也能左右拉 -->
+        <div id="ht-hbar" style="display:none;overflow-x:auto;overflow-y:hidden;margin:0 20px 8px"><div id="ht-hbar-inner" style="height:1px"></div></div>
         <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/訂購/備註/連結/請款/刪除（分類為可手選下拉，品名可自動帶入） -->
@@ -14442,7 +14450,7 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   htRenderBudget();
   htRenderBirthday();
   // 全部渲染完、版面穩定後再對齊一次左側品項框高度＝右欄（避免量到還沒長好的右欄）
-  setTimeout(function(){ try { _htSyncTopScrollbar(); } catch(e){} }, 90);
+  setTimeout(function(){ try { _htSyncTopScrollbar(); if (typeof _htSyncHBar === 'function') _htSyncHBar(); } catch(e){} }, 90);
   _htStartItemsPoll(_htEvent.eventId);   // 背景拉新（安全網；Realtime 連上後自動降頻）
   _htStartRealtime(_htEvent.eventId);    // 階段 3：訂閱本活動的逐列即時變更
   // 預先載入近兩場品項，供重複偵測使用
@@ -15772,6 +15780,33 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
   if (!_htHeightBound) {
     _htHeightBound = true;
     window.addEventListener('resize', function(){ try { _htSyncTopScrollbar(); } catch(e){} });
+  }
+  _htSyncHBar();
+}
+
+// ── 表格上方常駐橫向捲軸：與表格左右同步，永遠在表頭上方可見（窄視窗/框很高也能左右拉）──
+var _htHBarBound = false;
+function _htSyncHBar(){
+  var main = document.getElementById('ht-items-scroll');
+  var bar  = document.getElementById('ht-hbar');
+  var inner = document.getElementById('ht-hbar-inner');
+  if (!main || !bar || !inner) return;
+  var tbl = main.querySelector('table');
+  var w = tbl ? tbl.scrollWidth : main.scrollWidth;
+  inner.style.width = w + 'px';
+  // 只有真的橫向溢出才顯示這根（沒溢出就不佔空間）
+  if (main.scrollWidth > main.clientWidth + 1) {
+    bar.style.display = '';
+    bar.scrollLeft = main.scrollLeft;
+  } else {
+    bar.style.display = 'none';
+  }
+  if (!_htHBarBound) {
+    _htHBarBound = true;
+    var lock = false;
+    bar.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = bar.scrollLeft; lock = false; });
+    main.addEventListener('scroll', function(){ if (lock) return; lock = true; bar.scrollLeft = main.scrollLeft; lock = false; });
+    window.addEventListener('resize', function(){ try { _htSyncHBar(); } catch(e){} });
   }
 }
 
