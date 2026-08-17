@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817130609';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817141031';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1638,24 +1638,28 @@ html,body{background:#F7F5EC}
 /* 卡片表面：純白改暖白微漸層，內緣頂部亮線，質感更立體 */
 #bulletin-section,.dash-hub-card{background:#FFFFFF!important}
 #bulletin-section{position:relative;overflow:hidden}
-/* 首頁快覽數字：四張可點的卡（原本是 hero 卡內的一整排數字，不能點也不顯眼） */
-#dash-statline{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:8px}
-/* transition 不要含 border-color：實測那條過渡會卡在中途，導致「待你審核」轉橘時邊框留在灰色 */
-.dash-stat{position:relative;display:block;background:#fff;border:1px solid #D5DAD2;border-radius:14px;padding:16px 18px;cursor:pointer;text-decoration:none;transition:box-shadow .16s,transform .16s}
-.dash-stat:hover{border-color:#B7CCB4;box-shadow:0 6px 18px rgba(46,51,45,.10);transform:translateY(-2px)}
-.dash-stat .lab{display:flex;align-items:center;gap:6px;font-size:12px;color:#767B75;font-weight:600}
+/* 首頁快覽數字：改為輕盈的「一排統計」——拿掉四個白色卡框，透明底＋細分隔線，直接坐在頁面米色底上，
+   減少主頁的框框感；數字放大當主角，可點。 */
+#dash-statline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:6px 0 26px}
+.dash-stat{position:relative;display:block;background:transparent;border:none;border-radius:0;padding:6px 24px;cursor:pointer;text-decoration:none}
+.dash-stat + .dash-stat{border-left:1px solid #D9DDD3}   /* 細分隔線取代四個白框 */
+.dash-stat .lab{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#767B75;font-weight:600;letter-spacing:.02em;transition:color .15s}
 .dash-stat .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.dash-stat .numline{display:flex;align-items:baseline;gap:6px;margin-top:12px}
-.dash-stat .num{font-size:28px;font-weight:900;color:#33502F;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.dash-stat .numline{display:flex;align-items:baseline;gap:6px;margin-top:9px}
+.dash-stat .num{font-size:32px;font-weight:900;color:#33502F;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
 .dash-stat .unit{font-size:14px;font-weight:600;color:#8A9086}
-/* 箭頭平時收起來（避免數字與箭頭之間空一塊），滑到卡片才滑出 */
-.dash-stat .arw{position:absolute;right:14px;bottom:14px;font-size:14px;color:#577B53;opacity:0;transform:translateX(-4px);transition:opacity .16s,transform .16s}
+.dash-stat .arw{position:absolute;right:14px;top:2px;font-size:14px;color:#577B53;opacity:0;transform:translateX(-3px);transition:opacity .15s,transform .15s}
+.dash-stat:hover .lab{color:#577B53}
 .dash-stat:hover .arw{opacity:1;transform:none}
-/* 有待辦時整張轉橘（凸顯色），沒有時和其他卡一樣安靜 */
-.dash-stat.has-todo{border-color:#E0820A;background:#FFFBF4}
-.dash-stat.has-todo .num{color:#C9760A}
-.dash-stat.has-todo .arw{color:#E0820A}
-@media(max-width:860px){#dash-statline{grid-template-columns:repeat(2,1fr)}}
+/* 有待辦時用橘色數字＋標籤凸顯（不再整塊變橘框），維持輕盈 */
+.dash-stat.has-todo .num{color:#E0820A}
+.dash-stat.has-todo .lab{color:#C9760A}
+@media(max-width:860px){
+  #dash-statline{grid-template-columns:repeat(2,1fr);row-gap:18px}
+  .dash-stat{padding:6px 18px}
+  .dash-stat + .dash-stat{border-left:none}                 /* 兩欄時預設不畫左線 */
+  .dash-stat:nth-child(even){border-left:1px solid #D9DDD3} /* 只在右欄那格畫一條分隔 */
+}
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
@@ -15760,8 +15764,11 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
     var h = Math.round(rightBottom - boxTop - toolbarH - 6);
-    // 用固定 height（精準對齊右欄底部）：品項多→框內捲動；品項少→框較高、左右仍等高。
-    // maxHeight 設 none 覆蓋 CSS 的 80vh 後援，否則 JS 設的高度會被封頂。
+    // 上限卡在視窗內：框太高（比視窗還高）時，框底的橫向捲軸會跑到畫面外 → 只能上下捲、摸不到左右捲軸。
+    // 卡在視窗高度內，框底（含橫向捲軸）就永遠看得到、隨手能拉；右欄很高時以視窗為準（能左右捲 > 完全等高）。
+    var vpCap = Math.round(window.innerHeight - boxTop - toolbarH - 16);
+    if (vpCap > 260) h = Math.min(h, vpCap);
+    // 用固定 height（對齊右欄／視窗）；maxHeight 設 none 覆蓋 CSS 的 80vh 後援
     main.style.maxHeight = 'none';
     main.style.height = (h >= 220) ? (h + 'px') : '';
   } else {
