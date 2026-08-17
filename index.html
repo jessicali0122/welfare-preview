@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817124845';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817125646';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3520,7 +3520,12 @@ thead th{color:#767B75!important}
     <div id="ht-dtab-plan">
       <!-- 快速設定列 -->
       <div id="ht-event-info-bar" style="background:#fff;border:1.5px solid #CBDCC6;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border-radius:12px;padding:16px 18px;margin-bottom:16px">
-        <div style="font-size:16px;font-weight:700;color:#577B53;margin-bottom:12px;display:flex;align-items:center;gap:6px">⚙️ 活動設定</div>
+        <div onclick="htToggleEventInfo()" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
+          <span style="font-size:16px;font-weight:700;color:#577B53;display:flex;align-items:center;gap:6px;flex-shrink:0">⚙️ 活動設定</span>
+          <span id="ht-event-summary" style="font-size:13px;color:#767B75;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <span id="ht-event-caret" style="flex-shrink:0;color:#9AA79A;font-size:11px;transition:transform .2s">▼</span>
+        </div>
+        <div id="ht-event-fields" style="display:none;margin-top:12px">
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
           <!-- 月份欄位隱藏：以活動日期為準，月份由日期自動帶出（element 保留供 JS 使用，不刪除） -->
           <div style="display:none">
@@ -3553,6 +3558,7 @@ thead th{color:#767B75!important}
           </div>
           <!-- 壽星人數欄位已移除（改由下方「本月壽星」名單管理）；保留隱藏 span 供既有計數邏輯寫入 -->
           <span id="ht-event-bday-disp" style="display:none">0</span>
+        </div>
         </div>
       </div>
 
@@ -15217,7 +15223,36 @@ function htRenderDetailHeader() {
     if (typeof _htStyleOrgSelect === 'function') _htStyleOrgSelect(sel);   // 依選到的人套用專屬色
   });
   htUpdateCalcBudget();
+  // 活動設定：更新摘要；已填好（有日期+人數）預設收合，未填則展開讓人設定
+  _htUpdateEventSummary();
+  var _ef = document.getElementById('ht-event-fields'), _ec = document.getElementById('ht-event-caret');
+  if (_ef) { var _has = !!(ev.date && ev.headcount); _ef.style.display = _has ? 'none' : ''; if (_ec) _ec.style.transform = _has ? '' : 'rotate(180deg)'; }
 }
+// 活動設定：一行摘要（收合時顯示）
+function _htUpdateEventSummary() {
+  var el = document.getElementById('ht-event-summary'); if (!el) return;
+  var d  = (document.getElementById('ht-event-date') || {}).value || '';
+  var hc = (document.getElementById('ht-event-headcount') || {}).value || '';
+  var bp = (document.getElementById('ht-event-budget-pp') || {}).value || '';
+  var o1 = (document.getElementById('ht-event-org1') || {}).value || '';
+  var o2 = (document.getElementById('ht-event-org2') || {}).value || '';
+  var parts = [];
+  if (d)  parts.push(d.indexOf('-') > -1 ? d.slice(5).replace('-', '/') : d);
+  if (hc) parts.push(hc + ' 人');
+  if (bp) parts.push('每人 ' + bp);
+  var org = [o1, o2].filter(Boolean).join('/'); if (org) parts.push('主辦 ' + org);
+  el.textContent = parts.length ? parts.join(' · ') : '（點此設定）';
+}
+// 活動設定：展開／收合
+window.htToggleEventInfo = function() {
+  var f = document.getElementById('ht-event-fields'), c = document.getElementById('ht-event-caret');
+  if (!f) return;
+  var open = f.style.display === 'none';
+  f.style.display = open ? '' : 'none';
+  if (c) c.style.transform = open ? 'rotate(180deg)' : '';
+  if (!open) _htUpdateEventSummary();   // 收合時把最新值寫進摘要
+  if (typeof _htSyncTopScrollbar === 'function') { try { _htSyncTopScrollbar(); } catch(e){} }  // 高度變了重新對齊右欄
+};
 
 window.htBackToList = function() {
   document.getElementById('ht-list-panel').style.display = '';
@@ -15274,6 +15309,7 @@ window.htUpdateCalcBudget = function() {
 };
 window.htSaveEventInfo = async function() {
   htUpdateCalcBudget();
+  if (typeof _htUpdateEventSummary === 'function') _htUpdateEventSummary();   // 編輯即時反映到收合摘要
   if (!_htEvent) return;
   var hc = Number(document.getElementById('ht-event-headcount').value) || 0;
   var bp = Number(document.getElementById('ht-event-budget-pp').value) || 0;
