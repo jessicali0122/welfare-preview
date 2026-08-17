@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817130108';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817130609';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15760,11 +15760,12 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
     var h = Math.round(rightBottom - boxTop - toolbarH - 6);
-    // 用固定 height（精準對齊右欄底部）：品項多→框內捲動；品項少→框較高、左右仍等高
-    main.style.maxHeight = '';
+    // 用固定 height（精準對齊右欄底部）：品項多→框內捲動；品項少→框較高、左右仍等高。
+    // maxHeight 設 none 覆蓋 CSS 的 80vh 後援，否則 JS 設的高度會被封頂。
+    main.style.maxHeight = 'none';
     main.style.height = (h >= 220) ? (h + 'px') : '';
   } else {
-    main.style.height = ''; main.style.maxHeight = '';   // 手機：不限高，順順往下排
+    main.style.height = ''; main.style.maxHeight = 'none';   // 手機：不限高、不封頂，順順往下排
   }
   if (!_htHeightBound) {
     _htHeightBound = true;
