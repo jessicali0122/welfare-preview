@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817170432';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817171215';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3519,11 +3519,6 @@ thead th{color:#767B75!important}
           <span style="font-size:14px;font-weight:700;color:#577B53;display:flex;align-items:center;gap:6px;flex-shrink:0">⚙️ 活動設定</span>
           <span id="ht-event-summary" style="font-size:13px;color:#767B75;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
           <span id="ht-event-caret" style="flex-shrink:0;color:#9AA79A;font-size:11px;transition:transform .2s">▼</span>
-        </div>
-        <!-- 預算試算式（含壽星加碼）：從「預算結算」搬到這裡，資訊在最上面一次看清楚 -->
-        <div style="font-size:12.5px;color:#8A9086;margin-top:8px;line-height:1.6">
-          <span style="color:#577B53">📐</span> <span id="ht-budget-formula"></span>
-          <span style="color:#A9A69B">＝</span> <span id="ht-calc-budget" style="font-weight:800;color:#577B53">NT$0</span>
         </div>
         <div id="ht-event-fields" style="display:none;margin-top:12px">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
@@ -15226,23 +15221,33 @@ function htRenderDetailHeader() {
     if (typeof _htStyleOrgSelect === 'function') _htStyleOrgSelect(sel);   // 依選到的人套用專屬色
   });
   htUpdateCalcBudget();
-  // 活動設定：更新摘要；已填好（有日期+人數）預設收合，未填則展開讓人設定
+  // 活動設定：更新摘要。預設收合只在「第一次打開這場活動」套用一次；之後存檔/重繪不再改變展開狀態，
+  // 避免使用者按一下數字（onchange→存檔→重繪）就被自動收合。
   _htUpdateEventSummary();
-  var _ef = document.getElementById('ht-event-fields'), _ec = document.getElementById('ht-event-caret');
-  if (_ef) { var _has = !!(ev.date && ev.headcount); _ef.style.display = _has ? 'none' : ''; if (_ec) _ec.style.transform = _has ? '' : 'rotate(180deg)'; }
+  if (_htDetailInitedId !== ev.eventId) {
+    _htDetailInitedId = ev.eventId;
+    var _ef = document.getElementById('ht-event-fields'), _ec = document.getElementById('ht-event-caret');
+    if (_ef) { var _has = !!(ev.date && ev.headcount); _ef.style.display = _has ? 'none' : ''; if (_ec) _ec.style.transform = _has ? '' : 'rotate(180deg)'; }
+  }
 }
-// 活動設定：一行摘要（收合時顯示）
+var _htDetailInitedId = null;
+// 活動設定：一行摘要 = 主辦色籤 ＋ 試算式（含壽星加碼）＋ 總額，全部同一行；人數/壽星一變即時重算
 function _htUpdateEventSummary() {
   var el = document.getElementById('ht-event-summary'); if (!el) return;
-  var d  = (document.getElementById('ht-event-date') || {}).value || '';
-  var hc = (document.getElementById('ht-event-headcount') || {}).value || '';
-  var bp = (document.getElementById('ht-event-budget-pp') || {}).value || '';
+  var hc = Number((document.getElementById('ht-event-headcount') || {}).value) || 0;
+  var bp = Number((document.getElementById('ht-event-budget-pp') || {}).value) || 0;
   var o1 = (document.getElementById('ht-event-org1') || {}).value || '';
   var o2 = (document.getElementById('ht-event-org2') || {}).value || '';
-  // 人數/每人/壽星/總額改由下方「試算式」那行呈現，摘要只留主辦（避免與算式重複 54人·每人200）
+  var bdayCount = (_htEvent && _htEvent.birthdays) ? _htEvent.birthdays.length : 0;
+  var total = hc * bp + (bdayCount > 0 ? hc : 0) * 40;   // 有壽星→全體每人加 40
+  var parts = [];
   var badges = [o1, o2].filter(Boolean).map(function(n){ return _htPersonBadge(n); }).join(' ');
-  var html = badges ? '<span style="color:#8A9086">主辦</span> ' + badges : '';
-  el.innerHTML = html || '（點此設定）';
+  if (badges) parts.push('<span style="color:#8A9086">主辦</span> ' + badges);
+  var f = '<span style="color:#8A9086">📐 ' + hc + ' 人 × NT$' + bp
+        + (bdayCount > 0 ? ' ＋ ' + bdayCount + ' 位壽星（全體 × NT$40）' : '')
+        + ' ＝ </span><b style="color:#577B53">' + fmtMoney(total) + '</b>';
+  parts.push(f);
+  el.innerHTML = parts.join('<span style="color:#CFD3C9;margin:0 9px">·</span>');
 }
 // 活動設定：展開／收合
 window.htToggleEventInfo = function() {
@@ -15295,13 +15300,8 @@ window.htUpdateCalcBudget = function() {
   // 當月有壽星（不論幾位）→ 全體每人 +40 預算
   var bdayBudget = (bdayCount > 0 ? hc : 0) * 40;
   var total = baseBudget + bdayBudget;
-  document.getElementById('ht-calc-budget').textContent = fmtMoney(total);
-  var fmEl = document.getElementById('ht-budget-formula');
-  if (fmEl) {
-    var fStr = hc + ' 人 × NT$' + bp;
-    if (bdayCount > 0) fStr += '　＋　' + bdayCount + ' 位壽星加碼（全體 ' + hc + ' 人 × NT$40）';
-    fmEl.textContent = fStr;
-  }
+  // 試算式與總額已移到「活動設定」摘要那行，由 _htUpdateEventSummary 統一渲染（人數/每人/壽星一變即時重算）
+  if (typeof _htUpdateEventSummary === 'function') _htUpdateEventSummary();
   var dispEl = document.getElementById('ht-event-bday-disp');
   if (dispEl) dispEl.textContent = bdayCount;
   if (_htEvent) { _htEvent.headcount = hc; _htEvent.budgetPerPerson = bp; }
