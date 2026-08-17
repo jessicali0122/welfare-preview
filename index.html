@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817141031';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817163157';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1880,7 +1880,7 @@ thead th{color:#767B75!important}
     <div id="topbar-left" style="flex:1;min-width:0;display:flex;align-items:center;gap:11px">
       <span id="topbar-brand" style="display:flex;align-items:center;gap:11px;min-width:0;transition:opacity .18s">
         <span class="dash-sec-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13C4 8 8 4 18 4c0 10-4 13-7 14Z"/><path d="M6 18C9 14.5 12 12.5 16 11.5"/></svg></span>
-        <span class="dash-sec-title" style="white-space:nowrap">騰勢委員會</span>
+        <span class="dash-sec-title" style="white-space:nowrap">騰勢福委會</span>
         <span class="dash-sec-en" id="topbar-brand-en">WELFARE</span>
       </span>
       <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">總覽</span>
@@ -15242,11 +15242,11 @@ function _htUpdateEventSummary() {
   var bp = (document.getElementById('ht-event-budget-pp') || {}).value || '';
   var o1 = (document.getElementById('ht-event-org1') || {}).value || '';
   var o2 = (document.getElementById('ht-event-org2') || {}).value || '';
+  // 日期不放摘要（標題列已顯示完整日期，避免重複兩個 8/14）
   var parts = [];
-  if (d)  parts.push(d.indexOf('-') > -1 ? d.slice(5).replace('-', '/') : d);
   if (hc) parts.push(hc + ' 人');
   if (bp) parts.push('每人 ' + bp);
-  var org = [o1, o2].filter(Boolean).join('/'); if (org) parts.push('主辦 ' + org);
+  var org = [o1, o2].filter(Boolean).join('、'); if (org) parts.push('主辦 ' + org);   // 用頓號，不用斜線
   el.textContent = parts.length ? parts.join(' · ') : '（點此設定）';
 }
 // 活動設定：展開／收合
