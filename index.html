@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817171453';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817173825';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3596,7 +3596,10 @@ thead th{color:#767B75!important}
         </div>
         <div id="ht-smart-check" style="padding:0 20px 10px"></div>
         <!-- 常駐橫向捲軸：與表格同步，放在表頭正上方 → 不必捲到框底、窄視窗也能左右拉 -->
-        <div id="ht-hbar" style="display:none;overflow-x:auto;overflow-y:hidden;margin:0 20px 8px"><div id="ht-hbar-inner" style="height:1px"></div></div>
+        <!-- 品項表格外包一層 relative，左右浮出 ‹ › 箭頭鈕控制橫向捲動 -->
+        <div id="ht-items-scrollwrap" style="position:relative">
+        <button id="ht-arrow-left" type="button" aria-label="向左捲" onclick="htScrollItems(-1)" style="display:none;position:absolute;left:8px;top:50%;transform:translateY(-50%);z-index:6;width:36px;height:36px;border-radius:50%;border:1px solid #D9DDD3;background:rgba(255,255,255,.94);box-shadow:0 2px 8px rgba(46,51,45,.16);color:#577B53;font-size:20px;line-height:1;cursor:pointer;align-items:center;justify-content:center">‹</button>
+        <button id="ht-arrow-right" type="button" aria-label="向右捲" onclick="htScrollItems(1)" style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);z-index:6;width:36px;height:36px;border-radius:50%;border:1px solid #D9DDD3;background:rgba(255,255,255,.94);box-shadow:0 2px 8px rgba(46,51,45,.16);color:#577B53;font-size:20px;line-height:1;cursor:pointer;align-items:center;justify-content:center">›</button>
         <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/訂購/備註/連結/請款/刪除（分類為可手選下拉，品名可自動帶入） -->
@@ -3630,6 +3633,7 @@ thead th{color:#767B75!important}
               </tr>
             </tfoot>
           </table>
+        </div>
         </div>
         <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
         <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
@@ -15786,29 +15790,28 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
 
 // ── 表格上方常駐橫向捲軸：與表格左右同步，永遠在表頭上方可見（窄視窗/框很高也能左右拉）──
 var _htHBarBound = false;
+// 左右箭頭鈕：依捲動位置顯示/隱藏（到頭就收起、沒溢出不出現）。沿用原函式名，htRenderItems 呼叫點不變。
 function _htSyncHBar(){
   var main = document.getElementById('ht-items-scroll');
-  var bar  = document.getElementById('ht-hbar');
-  var inner = document.getElementById('ht-hbar-inner');
-  if (!main || !bar || !inner) return;
-  var tbl = main.querySelector('table');
-  var w = tbl ? tbl.scrollWidth : main.scrollWidth;
-  inner.style.width = w + 'px';
-  // 只有真的橫向溢出才顯示這根（沒溢出就不佔空間）
-  if (main.scrollWidth > main.clientWidth + 1) {
-    bar.style.display = '';
-    bar.scrollLeft = main.scrollLeft;
-  } else {
-    bar.style.display = 'none';
-  }
+  var lb = document.getElementById('ht-arrow-left'), rb = document.getElementById('ht-arrow-right');
+  if (!main || !lb || !rb) return;
+  var over = main.scrollWidth > main.clientWidth + 1;
+  var maxSL = main.scrollWidth - main.clientWidth;
+  lb.style.display = (over && main.scrollLeft > 2) ? 'flex' : 'none';
+  rb.style.display = (over && main.scrollLeft < maxSL - 2) ? 'flex' : 'none';
   if (!_htHBarBound) {
     _htHBarBound = true;
-    var lock = false;
-    bar.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = bar.scrollLeft; lock = false; });
-    main.addEventListener('scroll', function(){ if (lock) return; lock = true; bar.scrollLeft = main.scrollLeft; lock = false; });
+    main.addEventListener('scroll', function(){ _htSyncHBar(); });
     window.addEventListener('resize', function(){ try { _htSyncHBar(); } catch(e){} });
   }
 }
+// 點箭頭：橫向捲一段（約 6 成可視寬），平滑捲動
+window.htScrollItems = function(dir){
+  var main = document.getElementById('ht-items-scroll'); if (!main) return;
+  var step = Math.max(200, Math.round(main.clientWidth * 0.6));
+  try { main.scrollBy({ left: dir * step, behavior: 'smooth' }); }
+  catch(e){ main.scrollLeft += dir * step; }
+};
 
 // ── 品項拖曳排序（自訂排序模式）──
 window.htDragStart = function(e, idx) {
