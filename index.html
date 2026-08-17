@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260814155029';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817115316';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -493,21 +493,18 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
   .ht-sub-mini{display:none}
 }
-/* 品項表格：仍可橫向捲動，但隱藏它自己的原生捲軸——改用底部工具列那根常駐同步捲軸，
-   避免出現兩條並排的橫向捲軸 */
-#ht-items-scroll{overflow-x:scroll;scrollbar-width:none;-ms-overflow-style:none}
-#ht-items-scroll::-webkit-scrollbar{display:none;height:0;width:0}
-/* 底部常駐同步捲軸：釘在畫面底（工具列內），捲到哪都能左右拉，不必拉到表格最底 */
-#ht-items-scroll-bar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
-#ht-items-scroll-bar::-webkit-scrollbar{-webkit-appearance:none;height:10px}
-#ht-items-scroll-bar::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
-#ht-items-scroll-bar::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
-#ht-items-scroll-bar::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
-/* 凍結品名（第一欄）：左右捲動時品名固定可見；用 box-shadow 當分隔線（border-collapse 下 border 會被吃掉） */
-/* background 要 !important：全域有一條 `thead th{background:transparent!important}`（見上方），
-   不加會被蓋成透明 → 凍結標題欄後面的「廠商」等會透出來疊字 */
-#ht-items-scroll thead th:first-child{position:sticky;left:0;z-index:4;background:#fff!important;box-shadow:2px 0 0 #577B53}
-#ht-items-scroll tfoot td:first-child{position:sticky;left:0;z-index:3;background:#fff!important;box-shadow:2px 0 0 #577B53}
+/* 品項表格：固定高度、自己內部捲動的區塊。原生雙捲軸常駐（橫向永遠在框底、直向在框右），
+   工具列（新增/儲存）放在框下方正常排版 → 不再用 sticky 浮在內容上、不會與內容重疊 */
+#ht-items-scroll{overflow:auto;max-height:min(62vh,660px);scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;height:10px;width:10px}
+#ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 表頭：內部直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
+#ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
+/* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當左側分隔線（border-collapse 下 border 會被吃掉） */
+#ht-items-scroll thead th:first-child{left:0;z-index:5;box-shadow:2px 0 0 #577B53,0 2px 0 #577B53}
+#ht-items-scroll tfoot td:first-child{position:sticky;left:0;z-index:2;background:#fff!important;box-shadow:2px 0 0 #577B53}
 #ht-items-tbody tr.ht-it-row td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:2px 0 0 #E1E5DC}
 /* 分組標題列（colspan 整列）：讓標題文字自身黏在左側，捲到右邊也看得到是哪一組 */
 #ht-items-tbody tr.ht-cat-group > td > div{position:sticky;left:14px}
@@ -3621,10 +3618,8 @@ thead th{color:#767B75!important}
             </tfoot>
           </table>
         </div>
-        <!-- 底部 sticky 工具列：橫向捲軸＋新增品項／儲存都釘在畫面底，清單再長、捲到哪都摸得到／隨手可按 -->
-        <div id="ht-items-toolbar" style="position:sticky;bottom:0;z-index:6;background:#fff;border-top:1px solid #E2E5DF;box-shadow:0 -4px 12px rgba(46,51,45,.05)">
-          <!-- 常駐橫向捲軸：與表格內容同步，固定在畫面底部，不必捲到表格最底才摸得到 -->
-          <div id="ht-items-scroll-bar" style="display:none;overflow-x:auto;overflow-y:hidden;padding-top:6px"><div id="ht-items-scroll-bar-inner" style="height:1px"></div></div>
+        <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
+        <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px">
           <button onclick="htAddItemRow()" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;border:1.5px solid #577B53;background:#F6F9F5;color:#577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:background .15s" onmouseover="this.style.background='#e9f1e7'" onmouseout="this.style.background='#F6F9F5'">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
