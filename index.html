@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817115316';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817124845';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -493,16 +493,17 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-items-tbody tr.ht-cat-group + tr.ht-it-row{border-top:none}
   .ht-sub-mini{display:none}
 }
-/* 品項表格：固定高度、自己內部捲動的區塊。原生雙捲軸常駐（橫向永遠在框底、直向在框右），
-   工具列（新增/儲存）放在框下方正常排版 → 不再用 sticky 浮在內容上、不會與內容重疊 */
-#ht-items-scroll{overflow:auto;max-height:min(62vh,660px);scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+/* 品項表格：內部捲動框，框高由 JS 動態對齊「右欄」高度（左右一樣高，隨壽星人數變動）。
+   原生雙捲軸常駐（橫向在框底、直向在框右都隨手可及），工具列在框下方正常排版 → 零重疊。
+   max-height 給一個 CSS 後援值，避免 JS 未跑時無上限。 */
+#ht-items-scroll{overflow:auto;max-height:80vh;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;height:10px;width:10px}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
-/* 表頭：內部直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
+/* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
 #ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
-/* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當左側分隔線（border-collapse 下 border 會被吃掉） */
+/* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
 #ht-items-scroll thead th:first-child{left:0;z-index:5;box-shadow:2px 0 0 #577B53,0 2px 0 #577B53}
 #ht-items-scroll tfoot td:first-child{position:sticky;left:0;z-index:2;background:#fff!important;box-shadow:2px 0 0 #577B53}
 #ht-items-tbody tr.ht-it-row td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:2px 0 0 #E1E5DC}
@@ -3671,10 +3672,7 @@ thead th{color:#767B75!important}
             </button>
           </div>
           <div id="ht-birthday-list" style="display:grid;gap:8px"></div>
-          <div style="margin-top:12px;padding-top:10px;border-top:1px solid #D9DDD3;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:4px 10px">
-            <span style="font-size:14px;color:#767B75;white-space:nowrap">慶生預算加碼</span>
-            <span id="ht-bday-total" style="font-size:16px;font-weight:700;color:#577B53;margin-left:auto;text-align:right;min-width:0;line-height:1.4">NT$0</span>
-          </div>
+          <!-- 「慶生預算加碼」金額已在右側「預算結算」的慶生預算卡顯示，這裡不重複 -->
         </div>
       </div>
 
@@ -15706,28 +15704,31 @@ function htRenderItems() {
 // ── 底部常駐同步橫向捲軸 ──
 // 原生捲軸在表格最底，列很多時要拉到最下面才摸得到。這裡把一根捲軸放進「底部 sticky 工具列」，
 // 固定在畫面底部：寬度跟著表格內容走，左右任一根拖動另一根同步，捲到哪都摸得到。
-var _htBottomBarBound = false;
-function _htSyncTopScrollbar(){
+// 把品項捲動框的高度對齊「右欄」底部：左右一樣高，隨壽星人數/右欄內容變動；
+// 右欄太矮（< 220px 可用空間）就退回 CSS 後援上限。桌機才對齊（手機單欄不需要）。
+var _htHeightBound = false;
+function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫點不變）
   var main = document.getElementById('ht-items-scroll');
-  var bar  = document.getElementById('ht-items-scroll-bar');
-  var inner = document.getElementById('ht-items-scroll-bar-inner');
-  if (!main || !bar || !inner) return;
-  var tbl = main.querySelector('table');
-  var w = tbl ? tbl.scrollWidth : main.scrollWidth;
-  inner.style.width = w + 'px';
-  // 內容沒有超出寬度就不必顯示（避免多一條沒用的軌道）
-  if (main.scrollWidth > main.clientWidth + 1) {
-    bar.style.display = '';
-    bar.scrollLeft = main.scrollLeft;
+  if (!main) return;
+  var grid = document.getElementById('ht-detail-grid');
+  var cols = grid ? grid.children : null;
+  var rightCol = (cols && cols.length >= 2) ? cols[cols.length - 1] : null;
+  // 單欄（手機）時 grid 會疊成一欄 → 兩欄的 top 幾乎相同，不套用對齊
+  var singleCol = rightCol && Math.abs(rightCol.getBoundingClientRect().top - (cols[0].getBoundingClientRect().top)) < 4
+                  && rightCol.getBoundingClientRect().left <= cols[0].getBoundingClientRect().left + 4;
+  if (rightCol && !singleCol) {
+    var boxTop = main.getBoundingClientRect().top;
+    var rightBottom = rightCol.getBoundingClientRect().bottom;
+    var toolbar = document.getElementById('ht-items-toolbar');
+    var toolbarH = toolbar ? toolbar.offsetHeight : 0;
+    var maxH = Math.round(rightBottom - boxTop - toolbarH - 6);
+    main.style.maxHeight = (maxH >= 220) ? (maxH + 'px') : '';
   } else {
-    bar.style.display = 'none';
+    main.style.maxHeight = '';   // 手機：不限高，順順往下排
   }
-  if (!_htBottomBarBound) {
-    _htBottomBarBound = true;
-    var lock = false;
-    bar.addEventListener('scroll', function(){ if (lock) return; lock = true; main.scrollLeft = bar.scrollLeft; lock = false; });
-    main.addEventListener('scroll', function(){ if (lock) return; lock = true; bar.scrollLeft = main.scrollLeft; lock = false; });
-    window.addEventListener('resize', function(){ _htSyncTopScrollbar(); });
+  if (!_htHeightBound) {
+    _htHeightBound = true;
+    window.addEventListener('resize', function(){ try { _htSyncTopScrollbar(); } catch(e){} });
   }
 }
 
@@ -16093,7 +16094,7 @@ function htRenderBudget() {
     +   '<span style="display:flex;align-items:center;gap:6px"><span style="background:'+lv.bg+';color:'+lv.c+';border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700;line-height:1.5">'+lv.t+'</span>'
     +   '<span style="font-weight:700;color:#2E332D">'+pct+'%</span></span></div>'
     + '<div style="height:12px;background:#ECEEEA;border-radius:6px;overflow:hidden"><div style="height:100%;width:'+Math.min(pct,100)+'%;background:'+barColor+';border-radius:6px;transition:width .8s ease"></div></div>'
-    + '<div style="display:flex;justify-content:space-between;font-size:12px;color:#767B75;margin-top:4px"><span>支出 '+fmtMoney(totalSpend)+'</span><span>預算 '+fmtMoney(total)+'</span></div>'
+    // 底部「支出/預算」數字已在上方 2×2 卡（午茶支出／總預算）顯示，這裡不重複
     + '</div>';
 
   // 類別明細：舊資料的非既定類別文字（輕食/台式小吃等）先智能歸類到 6 個既定類別再統計，避免類別零散、統計失真
@@ -16110,6 +16111,8 @@ function htRenderBudget() {
       + '</div>';
   }).join('');
   document.getElementById('ht-budget-category-detail').innerHTML = catHtml || '<div style="color:#767B75;font-size:14px">尚無品項資料</div>';
+  // 右欄高度可能變了（類別數／壽星數不同）→ 重新對齊左側品項框高度
+  if (typeof _htSyncTopScrollbar === 'function') { try { _htSyncTopScrollbar(); } catch(e){} }
 }
 
 // ── 智慧推薦 ──
@@ -16341,7 +16344,8 @@ function htRenderBirthday() {
   var _sub = starCount > 0
     ? '<span style="display:block;font-size:12px;color:#767B75;font-weight:400;margin-top:2px">' + starCount + ' 位壽星 → 全體 ' + hc + ' 人 × NT$' + perPerson + '</span>'
     : '<span style="display:block;font-size:12px;color:#767B75;font-weight:400;margin-top:2px">本月無壽星</span>';
-  document.getElementById('ht-bday-total').innerHTML = fmtMoney(bonus) + _sub;
+  var _bt = document.getElementById('ht-bday-total');   // 該列已移除（改由預算結算顯示）→ 容錯
+  if (_bt) _bt.innerHTML = fmtMoney(bonus) + _sub;
 }
 
 // 從 DB 建議清單中加入／移除壽星
