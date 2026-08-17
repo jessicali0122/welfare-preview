@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817174405';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817222120';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1930,18 +1930,13 @@ thead th{color:#767B75!important}
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
     <!-- 問候區：不再包卡片（招呼語不是資料，不需要框），維持置中 -->
-    <div id="dash-hero" style="position:relative;padding:30px 4px 4px;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div id="dash-avatar" style="width:48px;height:48px;border-radius:50%;background:#E7EEE5;display:flex;align-items:center;justify-content:center;color:#577B53;font-size:20px;font-weight:800;flex-shrink:0"></div>
-        <div style="flex:1;min-width:160px">
-          <div id="dashboard-greeting" style="font-size:26px;font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.15">你好</div>
-          <div id="dash-motto" style="font-size:13px;color:#8A8A80;margin-top:3px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
-        </div>
-        <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end">
-          <div id="tw-datetime" style="font-size:13px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
-          <div id="dash-weather" style="display:none;font-size:13px;color:#767B75;font-weight:500;letter-spacing:.02em"></div>
-        </div>
+    <div id="dash-hero" style="position:relative;padding:34px 4px 4px;margin-bottom:18px;text-align:center">
+      <div id="dashboard-greeting" style="font-size:30px;font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.2">你好</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+        <div id="tw-datetime" style="font-size:13px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
+        <div id="dash-weather" style="display:none;font-size:13px;color:#767B75;font-weight:500;letter-spacing:.02em"></div>
       </div>
+      <div id="dash-motto" style="font-size:13px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
       <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#FBE9EE;border:1px solid #F4C0CE;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.10)">
         <span class="wf-bday-cake" style="font-size:18px">🎂</span>
         <span style="font-size:14px;font-weight:600;color:#e16b8c;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
@@ -3635,6 +3630,8 @@ thead th{color:#767B75!important}
           </table>
         </div>
         </div>
+        <!-- 常駐橫向拉桿：放在品項各列下方，與表格同步（箭頭之外也保留一根可拖的拉桿） -->
+        <div id="ht-hbar" style="display:none;overflow-x:auto;overflow-y:hidden;margin:8px 20px 0"><div id="ht-hbar-inner" style="height:1px"></div></div>
         <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
         <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px">
@@ -15793,17 +15790,31 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
 // ── 表格上方常駐橫向捲軸：與表格左右同步，永遠在表頭上方可見（窄視窗/框很高也能左右拉）──
 var _htHBarBound = false;
 // 左右箭頭鈕：依捲動位置顯示/隱藏（到頭就收起、沒溢出不出現）。沿用原函式名，htRenderItems 呼叫點不變。
+var _htHBarLock = false;
 function _htSyncHBar(){
   var main = document.getElementById('ht-items-scroll');
   var lb = document.getElementById('ht-arrow-left'), rb = document.getElementById('ht-arrow-right');
-  if (!main || !lb || !rb) return;
+  var bar = document.getElementById('ht-hbar'), inner = document.getElementById('ht-hbar-inner');
+  if (!main) return;
   var over = main.scrollWidth > main.clientWidth + 1;
   var maxSL = main.scrollWidth - main.clientWidth;
-  lb.style.display = (over && main.scrollLeft > 2) ? 'flex' : 'none';
-  rb.style.display = (over && main.scrollLeft < maxSL - 2) ? 'flex' : 'none';
+  // 箭頭：到頭就收、沒溢出不出現
+  if (lb) lb.style.display = (over && main.scrollLeft > 2) ? 'flex' : 'none';
+  if (rb) rb.style.display = (over && main.scrollLeft < maxSL - 2) ? 'flex' : 'none';
+  // 下方拉桿：與表格寬同步、沒溢出就隱藏
+  if (bar && inner) {
+    var tbl = main.querySelector('table');
+    inner.style.width = (tbl ? tbl.scrollWidth : main.scrollWidth) + 'px';
+    bar.style.display = over ? '' : 'none';
+    if (!_htHBarLock) { _htHBarLock = true; bar.scrollLeft = main.scrollLeft; _htHBarLock = false; }
+  }
   if (!_htHBarBound) {
     _htHBarBound = true;
-    main.addEventListener('scroll', function(){ _htSyncHBar(); });
+    main.addEventListener('scroll', function(){
+      if (bar && !_htHBarLock) { _htHBarLock = true; bar.scrollLeft = main.scrollLeft; _htHBarLock = false; }
+      _htSyncHBar();
+    });
+    if (bar) bar.addEventListener('scroll', function(){ if (_htHBarLock) return; _htHBarLock = true; main.scrollLeft = bar.scrollLeft; _htHBarLock = false; });
     window.addEventListener('resize', function(){ try { _htSyncHBar(); } catch(e){} });
   }
 }
