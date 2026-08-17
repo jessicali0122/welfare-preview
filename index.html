@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817163157';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817163630';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1638,28 +1638,21 @@ html,body{background:#F7F5EC}
 /* 卡片表面：純白改暖白微漸層，內緣頂部亮線，質感更立體 */
 #bulletin-section,.dash-hub-card{background:#FFFFFF!important}
 #bulletin-section{position:relative;overflow:hidden}
-/* 首頁快覽數字：改為輕盈的「一排統計」——拿掉四個白色卡框，透明底＋細分隔線，直接坐在頁面米色底上，
-   減少主頁的框框感；數字放大當主角，可點。 */
-#dash-statline{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:6px 0 26px}
-.dash-stat{position:relative;display:block;background:transparent;border:none;border-radius:0;padding:6px 24px;cursor:pointer;text-decoration:none}
-.dash-stat + .dash-stat{border-left:1px solid #D9DDD3}   /* 細分隔線取代四個白框 */
-.dash-stat .lab{display:flex;align-items:center;gap:6px;font-size:12.5px;color:#767B75;font-weight:600;letter-spacing:.02em;transition:color .15s}
-.dash-stat .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
-.dash-stat .numline{display:flex;align-items:baseline;gap:6px;margin-top:9px}
-.dash-stat .num{font-size:32px;font-weight:900;color:#33502F;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
-.dash-stat .unit{font-size:14px;font-weight:600;color:#8A9086}
-.dash-stat .arw{position:absolute;right:14px;top:2px;font-size:14px;color:#577B53;opacity:0;transform:translateX(-3px);transition:opacity .15s,transform .15s}
-.dash-stat:hover .lab{color:#577B53}
-.dash-stat:hover .arw{opacity:1;transform:none}
-/* 有待辦時用橘色數字＋標籤凸顯（不再整塊變橘框），維持輕盈 */
+/* 首頁快覽數字（樣式 C）：圖示圓底＋標籤＋數字，無白框；整排置中。減少主頁框框感、又有設計層次。 */
+#dash-statline{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px 34px;margin:8px 0 26px}
+.dash-stat{display:flex;align-items:center;gap:12px;background:transparent;border:none;padding:4px 2px;cursor:pointer;text-decoration:none;transition:opacity .15s}
+.dash-stat:hover{opacity:.72}
+.dash-stat .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+.dash-stat .txt{display:flex;flex-direction:column;min-width:0}
+.dash-stat .lab{font-size:12.5px;color:#767B75;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.dash-stat .numline{display:flex;align-items:baseline;gap:5px;margin-top:3px}
+.dash-stat .num{font-size:26px;font-weight:900;color:#33502F;line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.dash-stat .unit{font-size:13px;font-weight:600;color:#8A9086}
+/* 有待辦時圖示底轉橘＋數字轉橘凸顯 */
+.dash-stat.has-todo .ic{background:#FDECD9!important;color:#E0820A!important}
 .dash-stat.has-todo .num{color:#E0820A}
 .dash-stat.has-todo .lab{color:#C9760A}
-@media(max-width:860px){
-  #dash-statline{grid-template-columns:repeat(2,1fr);row-gap:18px}
-  .dash-stat{padding:6px 18px}
-  .dash-stat + .dash-stat{border-left:none}                 /* 兩欄時預設不畫左線 */
-  .dash-stat:nth-child(even){border-left:1px solid #D9DDD3} /* 只在右欄那格畫一條分隔 */
-}
+@media(max-width:640px){#dash-statline{gap:14px 22px}.dash-stat .num{font-size:23px}}
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
@@ -1881,7 +1874,7 @@ thead th{color:#767B75!important}
       <span id="topbar-brand" style="display:flex;align-items:center;gap:11px;min-width:0;transition:opacity .18s">
         <span class="dash-sec-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13C4 8 8 4 18 4c0 10-4 13-7 14Z"/><path d="M6 18C9 14.5 12 12.5 16 11.5"/></svg></span>
         <span class="dash-sec-title" style="white-space:nowrap">騰勢福委會</span>
-        <span class="dash-sec-en" id="topbar-brand-en">WELFARE</span>
+        <span class="dash-sec-en" id="topbar-brand-en">TSA Welfare Committee</span>
       </span>
       <span id="ptitle" style="display:none;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">總覽</span>
     </div>
@@ -1949,26 +1942,23 @@ thead th{color:#767B75!important}
 
     <!-- 快覽數字：四張可點的卡（載入後由 loadDashboard 填入真實數字）。
          「待你審核」有東西時整張轉橘色（凸顯色規則），一眼看到今天要處理什麼。 -->
+    <!-- 快覽數字（樣式 C）：圖示圓底＋標籤＋數字，整排置中；「待你審核」有件時圖示轉橘凸顯 -->
     <div id="dash-statline">
       <a class="dash-stat" onclick="sw('applications')">
-        <div class="lab"><span class="dot" style="background:#7E8F45"></span>案件進行中</div>
-        <div class="numline"><span id="dstat-pending" class="num">—</span><span class="unit">件</span></div>
-        <span class="arw">→</span>
+        <span class="ic" style="background:#EEF3EC;color:#577B53"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>
+        <span class="txt"><span class="lab">案件進行中</span><span class="numline"><span id="dstat-pending" class="num">—</span><span class="unit">件</span></span></span>
       </a>
       <a class="dash-stat" id="dstat-myturn-card" onclick="sw('applications')">
-        <div class="lab"><span class="dot" style="background:#CFA24B"></span>待你審核</div>
-        <div class="numline"><span id="dstat-myturn" class="num">—</span><span class="unit">件</span></div>
-        <span class="arw">→</span>
+        <span class="ic" style="background:#FBF4E4;color:#B9862E"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span>
+        <span class="txt"><span class="lab">待你審核</span><span class="numline"><span id="dstat-myturn" class="num">—</span><span class="unit">件</span></span></span>
       </a>
       <a class="dash-stat" onclick="sw('applications')">
-        <div class="lab"><span class="dot" style="background:#C57A46"></span>下個送件日</div>
-        <div class="numline"><span id="dstat-nextdate" class="num">—</span></div>
-        <span class="arw">→</span>
+        <span class="ic" style="background:#FAEEE7;color:#C57A46"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>
+        <span class="txt"><span class="lab">下個送件日</span><span class="numline"><span id="dstat-nextdate" class="num">—</span></span></span>
       </a>
       <a class="dash-stat" onclick="sw('hightea')">
-        <div class="lab"><span class="dot" style="background:#577B53"></span>本月午茶日</div>
-        <div class="numline"><span id="dstat-teaday" class="num">—</span></div>
-        <span class="arw">→</span>
+        <span class="ic" style="background:#EEF3EC;color:#577B53"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
+        <span class="txt"><span class="lab">本月午茶日</span><span class="numline"><span id="dstat-teaday" class="num">—</span></span></span>
       </a>
     </div>
 
@@ -15244,10 +15234,13 @@ function _htUpdateEventSummary() {
   var o2 = (document.getElementById('ht-event-org2') || {}).value || '';
   // 日期不放摘要（標題列已顯示完整日期，避免重複兩個 8/14）
   var parts = [];
-  if (hc) parts.push(hc + ' 人');
-  if (bp) parts.push('每人 ' + bp);
-  var org = [o1, o2].filter(Boolean).join('、'); if (org) parts.push('主辦 ' + org);   // 用頓號，不用斜線
-  el.textContent = parts.length ? parts.join(' · ') : '（點此設定）';
+  if (hc) parts.push(htEsc(hc) + ' 人');
+  if (bp) parts.push('每人 ' + htEsc(bp));
+  var html = parts.join(' · ');
+  // 主辦人改用人員色籤（同品項表負責人），比純文字＋頓號更清楚好看
+  var badges = [o1, o2].filter(Boolean).map(function(n){ return _htPersonBadge(n); }).join(' ');
+  if (badges) html += (html ? ' · ' : '') + '<span style="color:#8A9086">主辦</span> ' + badges;
+  el.innerHTML = html || '（點此設定）';
 }
 // 活動設定：展開／收合
 window.htToggleEventInfo = function() {
