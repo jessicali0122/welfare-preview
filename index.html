@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260817125646';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260817130108';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -14445,6 +14445,8 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
   htRenderItems();
   htRenderBudget();
   htRenderBirthday();
+  // 全部渲染完、版面穩定後再對齊一次左側品項框高度＝右欄（避免量到還沒長好的右欄）
+  setTimeout(function(){ try { _htSyncTopScrollbar(); } catch(e){} }, 90);
   _htStartItemsPoll(_htEvent.eventId);   // 背景拉新（安全網；Realtime 連上後自動降頻）
   _htStartRealtime(_htEvent.eventId);    // 階段 3：訂閱本活動的逐列即時變更
   // 預先載入近兩場品項，供重複偵測使用
@@ -15757,10 +15759,12 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var rightBottom = rightCol.getBoundingClientRect().bottom;
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
-    var maxH = Math.round(rightBottom - boxTop - toolbarH - 6);
-    main.style.maxHeight = (maxH >= 220) ? (maxH + 'px') : '';
+    var h = Math.round(rightBottom - boxTop - toolbarH - 6);
+    // 用固定 height（精準對齊右欄底部）：品項多→框內捲動；品項少→框較高、左右仍等高
+    main.style.maxHeight = '';
+    main.style.height = (h >= 220) ? (h + 'px') : '';
   } else {
-    main.style.maxHeight = '';   // 手機：不限高，順順往下排
+    main.style.height = ''; main.style.maxHeight = '';   // 手機：不限高，順順往下排
   }
   if (!_htHeightBound) {
     _htHeightBound = true;
@@ -16382,6 +16386,8 @@ function htRenderBirthday() {
     : '<span style="display:block;font-size:12px;color:#767B75;font-weight:400;margin-top:2px">本月無壽星</span>';
   var _bt = document.getElementById('ht-bday-total');   // 該列已移除（改由預算結算顯示）→ 容錯
   if (_bt) _bt.innerHTML = fmtMoney(bonus) + _sub;
+  // 壽星名單高度變了 → 右欄變高/變矮，延遲一拍重新對齊左側品項框高度
+  if (typeof _htSyncTopScrollbar === 'function') { setTimeout(function(){ try { _htSyncTopScrollbar(); } catch(e){} }, 60); }
 }
 
 // 從 DB 建議清單中加入／移除壽星
