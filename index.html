@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818122709';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818122815';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1092,15 +1092,25 @@ input[type=checkbox]{accent-color:#577B53}
     page-break-inside:auto!important;
   }
   /* PDF 每一頁 = 一張紙：限制高度在單頁可用範圍內，避免一頁發票被硬切成好幾張 */
+  /* PDF 照原稿輸出：一頁 PDF＝一張紙，等比填滿版面，不重新排列 */
   #detail-files-list .pdf-page-img{
-    max-height:238mm!important;   /* A4 297mm - 上下邊界 28mm - 頁首約 30mm */
+    max-height:273mm!important;   /* A4 297mm - 上下邊界 24mm */
     width:auto!important;
     max-width:100%!important;
     height:auto!important;
     margin:0 auto!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
+    break-before:page;
+    page-break-before:always;
   }
+  /* 第一頁接在附件區開頭（附件卡本身已另起頁），不再多跳一張空白 */
+  #detail-files-list .pdf-page-img:first-child{
+    break-before:auto;
+    page-break-before:auto;
+  }
+  /* 列印不需要「請款附件」標題，省下的空間留給憑證 */
+  #detail-files-card .section-title{display:none!important}
   #detail-files-list [id^="thumb-"],
   #detail-files-list canvas,
   #detail-files-list img{
