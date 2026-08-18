@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818173931';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818174910';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3054,7 +3054,7 @@ thead th{color:#767B75!important}
               </div>
               <select class="inp" id="payee-select" disabled onchange="syncApplicantFields()">
               </select>
-              <input class="inp" id="payee-free" style="display:none" placeholder="供應商名稱" autocomplete="off" oninput="autoSaveDraft&&autoSaveDraft()">
+              <select class="inp" id="payee-free" style="display:none" onchange="supplierChanged()"></select>
             </div>
             <div>
               <label id="empid-label" style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">員工編號</label>
@@ -10677,6 +10677,39 @@ function toggleSameAsApplicant(cb){
 }
 // 付款方式切換：選「其他」＝匯給廠商等非員工對象 → 收款人改成自由填寫，
 // 員工編號與「同申請人」在這個情境沒有意義，一併停用
+// ── 供應商清單：由後端提供（需登入）──
+// 不放在前端：index.html 是公開網站檔案，任何人檢視原始碼就看得到，等於公開廠商資料。
+// 維護方式：在試算表的「suppliers」分頁增修，不需要改程式。
+var SUPPLIERS = [];
+var _suppliersLoaded = false;
+async function _loadSuppliers(){
+  if (_suppliersLoaded) return SUPPLIERS;
+  try {
+    const r = await callAPI('getSuppliers');
+    if (r && r.ok && Array.isArray(r.suppliers)) { SUPPLIERS = r.suppliers; _suppliersLoaded = true; }
+  } catch(e) {}
+  return SUPPLIERS;
+}
+function _fillSupplierSelect(){
+  var sel = document.getElementById('payee-free');
+  if (!sel || sel.tagName !== 'SELECT') return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— 請選擇供應商 —</option>'
+    + SUPPLIERS.map(function(v){
+        return '<option value="' + htEsc(v.name) + '" data-code="' + htEsc(v.code) + '">'
+             + htEsc(v.code + '－' + v.name) + '</option>';
+      }).join('');
+  if (cur) sel.value = cur;
+}
+// 選了供應商 → 自動帶出供應商編號
+window.supplierChanged = function(){
+  var sel = document.getElementById('payee-free');
+  var emp = document.getElementById('employee-id');
+  if (!sel || !emp) return;
+  var opt = sel.options[sel.selectedIndex];
+  emp.value = (opt && opt.getAttribute('data-code')) || '';
+  if (typeof autoSaveDraft === 'function') autoSaveDraft();
+};
 window.htPayMethodChanged = function(){
   var pm    = document.getElementById('pay-method');
   var sel   = document.getElementById('payee-select');
@@ -10692,15 +10725,20 @@ window.htPayMethodChanged = function(){
   // 其他       → 供應商名稱（自由填）＋ 供應商編號（自由填）
   if (sel)   sel.style.display   = other ? 'none' : '';
   if (free)  free.style.display  = other ? '' : 'none';
+  if (other) {
+    _loadSuppliers().then(function(){ _fillSupplierSelect(); });
+  }
   if (sameW) sameW.style.display = other ? 'none' : '';   // 供應商沒有「同申請人」的概念
   if (payL)  payL.innerHTML      = other ? '④ 供應商名稱 <span style="color:#dc2626">*</span>'
                                          : '④ 收款人 <span style="color:#dc2626">*</span>';
   if (empL)  empL.textContent    = other ? '供應商編號' : '員工編號';
   if (emp) {
-    emp.readOnly    = !other;                                  // 供應商編號要能自己填
-    emp.placeholder = other ? '供應商編號' : '依收款人自動帶入';
-    emp.style.background = other ? '#fff' : '#F7F8F6';
-    if (other && same && same.checked) emp.value = '';         // 從薪轉戶切過來時清掉員工編號
+    emp.readOnly    = true;                                    // 兩種模式都是自動帶出：員工編號依收款人、供應商編號依供應商
+    emp.placeholder = other ? '選擇供應商後自動帶入' : '依收款人自動帶入';
+    if (other) {
+      var _o = free && free.options ? free.options[free.selectedIndex] : null;
+      emp.value = (_o && _o.getAttribute('data-code')) || '';
+    }
   }
   if (same && other) { same.checked = false; if (sel) sel.disabled = false; }
   if (!other && typeof syncApplicantFields === 'function') syncApplicantFields();
