@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818094240';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818095359';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -502,6 +502,10 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 橫向捲動浮動箭頭：position:fixed → 永遠停在「可視畫面」的垂直正中央，框再高也一直可見可點。left 由 JS 貼齊品項框左右邊。 */
+.ht-hscroll-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:40;width:44px;height:44px;border-radius:50%;border:1px solid #D8E0D4;background:rgba(255,255,255,.95);color:#577B53;box-shadow:0 4px 14px rgba(46,51,45,.18);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:background .15s,color .15s,box-shadow .15s}
+.ht-hscroll-arrow:hover{background:#577B53;color:#fff;box-shadow:0 6px 18px rgba(46,51,45,.26)}
+.ht-hscroll-arrow:active{transform:translateY(-50%) scale(.94)}
 /* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
 #ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
 /* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
@@ -3623,7 +3627,14 @@ thead th{color:#767B75!important}
           </table>
         </div>
         </div>
-        <!-- 常駐橫向拉桿：放在品項各列下方，與表格同步（箭頭之外也保留一根可拖的拉桿） -->
+        <!-- 橫向捲動箭頭：position:fixed 永遠停在「可視畫面」的垂直正中央（不是框中央），框再高也一直看得到、點得到。
+             左右各一顆，貼齊品項框的左右邊；沒有橫向溢出或框捲出畫面時自動隱藏。原生底部捲軸另作為可拖的拉桿。 -->
+        <button id="ht-arrow-left" type="button" aria-label="向左捲動品項欄位" onclick="htScrollItems(-1)" class="ht-hscroll-arrow" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button id="ht-arrow-right" type="button" aria-label="向右捲動品項欄位" onclick="htScrollItems(1)" class="ht-hscroll-arrow" style="display:none">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
         <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
         <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px">
@@ -15761,12 +15772,10 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var rightBottom = rightCol.getBoundingClientRect().bottom;
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
-    // 框高夾在三個條件之間，確保永遠好看又好用：
-    //  wantH＝對齊右欄高度；fitH＝塞得進畫面（框底+工具列在視窗內→橫向捲軸永遠摸得到）；minH＝至少約 4~5 列（不會變一小條）
+    // 框高＝與右欄等高（左右一樣高，隨壽星/右欄內容變動）。橫向捲動靠「固定在視窗中央的浮動箭頭」→
+    // 框再高、原生底部捲軸在畫面外也沒關係，箭頭永遠停在可視區正中央可點。
     var wantH = rightBottom - boxTop - toolbarH - 6;
-    var fitH  = window.innerHeight - boxTop - toolbarH - 16;
-    var minH  = 300;
-    var h = Math.round(Math.max(160, Math.min(Math.max(wantH, minH), Math.max(fitH, minH))));
+    var h = Math.round(Math.max(150, wantH));
     main.style.maxHeight = 'none';
     main.style.height = h + 'px';
   } else {
@@ -15776,37 +15785,38 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     _htHeightBound = true;
     window.addEventListener('resize', function(){ try { _htSyncTopScrollbar(); } catch(e){} });
   }
+  _htSyncHBar();   // 高度定案後，更新浮動箭頭位置/顯示
 }
 
-// ── 表格上方常駐橫向捲軸：與表格左右同步，永遠在表頭上方可見（窄視窗/框很高也能左右拉）──
-var _htHBarBound = false;
-// 左右箭頭鈕：依捲動位置顯示/隱藏（到頭就收起、沒溢出不出現）。沿用原函式名，htRenderItems 呼叫點不變。
-var _htHBarLock = false;
-function _htSyncHBar(){
+// ── 橫向捲動浮動箭頭：貼齊品項框左右邊、position:fixed 停在可視畫面垂直中央 ──
+// 顯示條件：表格有橫向溢出 且 品項框有一部分在可視畫面內。左右邊到頂/到底時各自淡出對應箭頭。
+var _htArrowBound = false;
+function _htSyncHBar(){   // 沿用原函式名（htRenderItems / htScrollItems / _htSyncTopScrollbar 呼叫點不變）
   var main = document.getElementById('ht-items-scroll');
   var lb = document.getElementById('ht-arrow-left'), rb = document.getElementById('ht-arrow-right');
-  var bar = document.getElementById('ht-hbar'), inner = document.getElementById('ht-hbar-inner');
-  if (!main) return;
+  if (!main || !lb || !rb) return;
+  // position:fixed 必須相對「視窗」定位，但 .view-hightea 有 transform → 會讓 fixed 改相對它。
+  // 把箭頭移到 <body> 底下（無 transform 祖先），top:50% 才是真正的視窗垂直中央。
+  if (lb.parentElement !== document.body) { document.body.appendChild(lb); document.body.appendChild(rb); }
   var over = main.scrollWidth > main.clientWidth + 1;
+  var r = main.getBoundingClientRect();
+  // 品項框是否有一段落在可視畫面內（上下都留 50px 邊界，箭頭才不會貼著螢幕邊）
+  var inView = over && r.bottom > 50 && r.top < window.innerHeight - 50;
   var maxSL = main.scrollWidth - main.clientWidth;
-  // 箭頭：到頭就收、沒溢出不出現
-  if (lb) lb.style.display = (over && main.scrollLeft > 2) ? 'flex' : 'none';
-  if (rb) rb.style.display = (over && main.scrollLeft < maxSL - 2) ? 'flex' : 'none';
-  // 下方拉桿：與表格寬同步、沒溢出就隱藏
-  if (bar && inner) {
-    var tbl = main.querySelector('table');
-    inner.style.width = (tbl ? tbl.scrollWidth : main.scrollWidth) + 'px';
-    bar.style.display = over ? '' : 'none';
-    if (!_htHBarLock) { _htHBarLock = true; bar.scrollLeft = main.scrollLeft; _htHBarLock = false; }
+  if (!inView) { lb.style.display = 'none'; rb.style.display = 'none'; }
+  else {
+    // 貼齊框的左右內緣；top 由 CSS 的 fixed top:50% 固定在視窗垂直中央
+    lb.style.left = Math.round(r.left + 8) + 'px';
+    rb.style.left = Math.round(r.right - 44 - 8) + 'px';
+    lb.style.display = (main.scrollLeft > 2) ? 'flex' : 'none';       // 已在最左 → 收左箭頭
+    rb.style.display = (main.scrollLeft < maxSL - 2) ? 'flex' : 'none'; // 已在最右 → 收右箭頭
   }
-  if (!_htHBarBound) {
-    _htHBarBound = true;
-    main.addEventListener('scroll', function(){
-      if (bar && !_htHBarLock) { _htHBarLock = true; bar.scrollLeft = main.scrollLeft; _htHBarLock = false; }
-      _htSyncHBar();
-    });
-    if (bar) bar.addEventListener('scroll', function(){ if (_htHBarLock) return; _htHBarLock = true; main.scrollLeft = bar.scrollLeft; _htHBarLock = false; });
+  if (!_htArrowBound) {
+    _htArrowBound = true;
+    main.addEventListener('scroll', function(){ _htSyncHBar(); });
+    window.addEventListener('scroll', function(){ _htSyncHBar(); }, true); // 捕獲階段：頁面/任何容器捲動都重算
     window.addEventListener('resize', function(){ try { _htSyncHBar(); } catch(e){} });
+    window.addEventListener('hashchange', function(){ try { _htSyncHBar(); } catch(e){} }); // 切頁時重算 → 離開午茶頁自動收箭頭
   }
 }
 // 點箭頭：橫向捲一段（約 6 成可視寬）。scrollBy 的 smooth 在此容器無效 → 改用 rAF 手動平滑（直接設 scrollLeft）
