@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818145123';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818145352';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2964,12 +2964,23 @@ thead th{color:#767B75!important}
         <!-- ⑥ 申請人 + ④ 收款人 + ⑤ 所屬部門 -->
         <div class="card" style="padding:20px">
           <div class="section-title">申請人資料</div>
+          <!-- 排列與詳情頁一致：申請人/部門/申請時間 → 收款人/員工編號/付款方式 -->
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
             <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#dc2626">*</span></label>
               <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
               </select>
             </div>
+            <div>
+              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">⑤ 所屬部門</label>
+              <input class="inp" id="form-dept-select" placeholder="依申請人自動帶入" readonly style="background:#F7F8F6;color:#4A4F49">
+            </div>
+            <div>
+              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請時間</label>
+              <input class="inp" id="apply-date-display" value="" readonly placeholder="送出後自動產生" style="background:#F7F8F6;color:#767B75">
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px">
             <div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
                 <label style="font-size:14px;font-weight:600;color:#4A4F49">④ 收款人 <span style="color:#dc2626">*</span></label>
@@ -2981,14 +2992,8 @@ thead th{color:#767B75!important}
               </select>
             </div>
             <div>
-              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">⑤ 所屬部門</label>
-              <input class="inp" id="form-dept-select" placeholder="依申請人自動帶入" readonly style="background:#F7F8F6;color:#4A4F49">
-            </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
-            <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">員工編號</label>
-              <input class="inp" id="employee-id" placeholder="依申請人自動帶入" readonly style="background:#F7F8F6;color:#4A4F49;font-family:'Noto Sans TC',sans-serif;font-weight:600;letter-spacing:.05em">
+              <input class="inp" id="employee-id" placeholder="依收款人自動帶入" readonly style="background:#F7F8F6;color:#4A4F49;font-family:'Noto Sans TC',sans-serif;font-weight:600;letter-spacing:.05em">
             </div>
             <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">付款方式</label>
@@ -8066,6 +8071,10 @@ function sw(name,elOrName,_fromPop){
         var p = function(n){ return String(n).padStart(2,'0'); };
         adEl.value = tw.getUTCFullYear() + '/' + p(tw.getUTCMonth()+1) + '/' + p(tw.getUTCDate())
                    + ' ' + p(tw.getUTCHours()) + ':' + p(tw.getUTCMinutes());
+      }
+      // 畫面上的唯讀顯示欄（實際送出用的是隱藏的 #apply-date）
+      var adShow = document.getElementById('apply-date-display');
+      if (adShow && adEl) { adShow.value = adEl.value || ''; 
       }
     })();
     // 開表單先把全體員工填進申請人／收款人下拉（成員已載入時），再選預設登入者
