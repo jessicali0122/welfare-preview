@@ -5547,7 +5547,12 @@ async function _doPrint() {
   document.body.appendChild(root);
   document.body.classList.add('printing');
 
+  // 瀏覽器列印頁首會印出 document.title（「騰勢福委會」），列印期間先清掉，afterprint 再還原
+  var _oldTitle = document.title;
+  document.title = '';
+
   function restore() {
+    document.title = _oldTitle;
     document.body.classList.remove('printing');
     document.getElementById('print-root')?.remove();
     window.removeEventListener('afterprint', restore);
