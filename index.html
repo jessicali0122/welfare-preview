@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818180201';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818181314';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3211,6 +3211,9 @@ thead th{color:#767B75!important}
         </div>
         <div id="detail-header-subject" style="display:none">—</div>
       </div>
+      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="copyCaseToNewForm(document.getElementById('detail-case-no').textContent.trim())" title="用這張的內容開一張新申請單">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製
+      </button>
       <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(_doPrint,300)">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
       </button>
@@ -6525,8 +6528,8 @@ function _showRowMenu(btn, caseId, type) {
   menu.style.cssText = 'position:fixed;background:#fff;border:1px solid #D5DAD2;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;min-width:130px;overflow:hidden;font-size:14px';
   const actionMap = {
     'draft':   [['✏️ 編輯草稿', () => openDraft(caseId)],      ['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]],
-    'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['🖨️ 列印',     () => printCase(caseId)]],
-    'pending': [['👁 查看詳情',  () => loadDetail(caseId)]],
+    'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)], ['🖨️ 列印', () => printCase(caseId)]],
+    'pending': [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
   };
   let items = actionMap[type] || actionMap['pending'];
   // 管理員：非草稿案件也能從清單直接刪除（原本只有詳情頁右欄有入口）
@@ -7155,10 +7158,17 @@ function _showRejectModal(caseId) {
 // ══════════════════════════════════════════
 //  開啟草稿（繼續編輯）
 // ══════════════════════════════════════════
-async function openDraft(caseId) {
+// ── 複製案件為新申請 ──
+// 單號變更、被退件重送等情況要重跑流程，不必整張重打。
+// 沿用 openDraft 的填表邏輯，差別在：不綁原案件的單號、不帶附件（附件在 Drive，需重新上傳）。
+window.copyCaseToNewForm = async function(caseId){
+  if (!caseId) return;
+  await openDraft(caseId, true);           // true＝複製模式（openDraft 內部會抓資料，不重複請求）
+};
+async function openDraft(caseId, asCopy) {
   // F1 fix：清除上一個 session 遺留的待上傳附件，避免誤帶入草稿
   window._pendingFiles = [];
-  toast('⏳ 載入草稿中...');
+  toast(asCopy ? '⏳ 複製中...' : '⏳ 載入草稿中...');
   const res = await callAPI('get', { caseId });
   if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
   const c = res.case || res.data || res;
@@ -7168,8 +7178,8 @@ async function openDraft(caseId) {
   window._openDraftInProgress = false;
   // 等 DOM 更新完畢
   await new Promise(r => setTimeout(r, 80));
-  // 設定 caseId
-  _draftCaseId = caseId;
+  // 設定 caseId（複製模式不綁原案件 → 送出時會產生新單號、重跑簽核流程）
+  _draftCaseId = asCopy ? null : caseId;
   // 申請日期：載入草稿時，若時間為 00:00 或純日期，補上當下台灣時間
   const adEl = document.getElementById('apply-date');
   if (adEl) {
@@ -7254,7 +7264,9 @@ async function openDraft(caseId) {
   var _mergedMap = {};
   _lsFiles.forEach(f => { if (f.fileId) _mergedMap[f.fileId] = f; });
   _gasFiles.forEach(f => { if (f.fileId) _mergedMap[f.fileId] = f; });
-  window._uploadedDraftFiles = Object.values(_mergedMap);
+  // 複製模式不帶附件：附件掛在原案件的 Drive 檔案上，沿用會讓兩張單共用同一批檔案，
+  // 之後刪其中一張就會把另一張的憑證一起刪掉 → 一律請使用者重新上傳
+  window._uploadedDraftFiles = asCopy ? [] : Object.values(_mergedMap);
   const fileListEl = document.getElementById('file-list');
   if (fileListEl) {
     fileListEl.innerHTML = '';
@@ -7263,20 +7275,21 @@ async function openDraft(caseId) {
   // 同步 localStorage
   try {
     const _sd = { subject: c.project || c.subject || '', reason: c.reason || '',
-      caseId: caseId, uploadedFiles: window._uploadedDraftFiles, ts: Date.now() };
+      caseId: asCopy ? null : caseId,   // ★ 複製模式若寫回原單號，之後自動存草稿會蓋掉被複製的那張案件
+      uploadedFiles: window._uploadedDraftFiles, ts: Date.now() };
     localStorage.setItem('bf_draft', JSON.stringify(_sd));
   } catch(e) {}
   document.getElementById('draft-banner')?.classList.remove('show');
-  // 顯示刪除草稿按鈕（草稿模式）
+  // 顯示刪除草稿按鈕（複製模式還沒有草稿可刪 → 不顯示）
   var _ddb = document.getElementById('delete-draft-btn');
-  if (_ddb) _ddb.style.display = '';
+  if (_ddb) _ddb.style.display = asCopy ? 'none' : '';
   updateFormProgress();
   // 開啟草稿後立即將 server 內容存入 localStorage，以便 session 恢復機制運作
   try { autoSaveDraft(); } catch(e) {}
   // 顯示「刪除草稿」按鈕
   var _ddbOD = document.getElementById('delete-draft-btn');
-  if (_ddbOD) _ddbOD.style.display = '';
-  toast('✅ 草稿已載入，可繼續編輯');
+  if (_ddbOD) _ddbOD.style.display = asCopy ? 'none' : '';
+  toast(asCopy ? '✅ 已複製內容，附件請重新上傳後送出' : '✅ 草稿已載入，可繼續編輯');
 }
 
 // ══════════════════════════════════════════
