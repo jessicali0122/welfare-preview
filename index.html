@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818161824';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818161929';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11241,7 +11241,7 @@ function renderAnalytics(startDate,endDate){
     moMap[key]=(moMap[key]||0)+Number(c.total||0);
   });
   var colors=['#38a3a5','#f9c97e','#10b981','#577B53','#577B53','#767B75'];
-  renderBarChart('chart-category',catMap,colors);
+  renderDonutChart('chart-category',catMap,colors);
   renderBarChart('chart-department',deptMap,colors);
   renderMonthlyChart('chart-monthly',moMap);
   renderApprovedTable(approvedFiltered);
@@ -11260,6 +11260,40 @@ function renderAnalytics(startDate,endDate){
   var _chartsRow = document.getElementById('charts-row');
   if (_chartsRow) _chartsRow.style.display = _hasAnaData ? '' : 'none';
 }
+// 佔比用甜甜圈圖：橫條的長度是「相對最大項」，看不出各佔總額幾成
+function renderDonutChart(id,dataMap,colors){
+  var el=document.getElementById(id);if(!el)return;
+  var entries=Object.entries(dataMap).sort(function(a,b){return b[1]-a[1];});
+  if(entries.length===0){el.innerHTML='<div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">此區間無資料</div>';return;}
+  var total=entries.reduce(function(s,e){return s+e[1];},0);
+  if(total<=0){el.innerHTML='<div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">此區間無資料</div>';return;}
+  var R=54, C=2*Math.PI*R, off=0;
+  var segs=entries.map(function(e,i){
+    var frac=e[1]/total, len=C*frac, color=colors[i%colors.length];
+    var seg='<circle cx="70" cy="70" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="22"'
+      +' stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'"'
+      +' stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 70 70)"></circle>';
+    off+=len;
+    return seg;
+  }).join('');
+  var legend=entries.map(function(e,i){
+    var pct=Math.round(e[1]/total*100), color=colors[i%colors.length];
+    return '<div style="display:flex;align-items:center;gap:8px;font-size:14px;line-height:1.6">'
+      + '<span style="width:10px;height:10px;border-radius:3px;background:'+color+';flex-shrink:0"></span>'
+      + '<span style="flex:1;color:#4A4F49;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+e[0]+'</span>'
+      + '<span style="color:#767B75;font-variant-numeric:tabular-nums">'+pct+'%</span>'
+      + '<span style="font-weight:700;color:#2E332D;font-variant-numeric:tabular-nums;white-space:nowrap">NT$ '+Number(e[1]).toLocaleString()+'</span>'
+      + '</div>';
+  }).join('');
+  el.style.flexDirection='row';
+  el.style.alignItems='center';
+  el.style.gap='20px';
+  el.innerHTML='<svg width="140" height="140" viewBox="0 0 140 140" style="flex-shrink:0">'+segs
+    + '<text x="70" y="66" text-anchor="middle" style="font-size:12px;fill:#767B75">合計</text>'
+    + '<text x="70" y="86" text-anchor="middle" style="font-size:15px;font-weight:800;fill:#2E332D">NT$ '+Number(total).toLocaleString()+'</text>'
+    + '</svg>'
+    + '<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">'+legend+'</div>';
+}
 function renderBarChart(id,dataMap,colors){
   var el=document.getElementById(id);if(!el)return;
   var entries=Object.entries(dataMap).sort(function(a,b){return b[1]-a[1];});
@@ -11274,7 +11308,22 @@ function renderMonthlyChart(id,moMap){
   var el=document.getElementById(id);if(!el)return;
   var keys=Object.keys(moMap).sort();
   if(keys.length===0){el.style.alignItems='center';el.style.justifyContent='center';el.innerHTML='<div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">此區間無資料</div>';return;}
-  el.style.alignItems='flex-end';el.style.justifyContent='flex-start';
+  // 只有一兩個月時，長條圖是孤零零一根、看不出「趨勢」→ 改用數字卡片，等資料夠了再畫圖
+  if(keys.length<3){
+    el.style.alignItems='stretch';el.style.justifyContent='flex-start';el.style.borderBottom='none';
+    el.innerHTML='<div style="display:flex;gap:12px;width:100%;padding:6px 0">'
+      + keys.map(function(k){
+          var mo=Number(k.split('-')[1])+'月';
+          return '<div style="flex:0 0 auto;min-width:150px;border:1px solid #E7E3D8;border-radius:12px;padding:14px 18px;background:#fff">'
+            + '<div style="font-size:12px;color:#767B75;font-weight:600;letter-spacing:.06em;margin-bottom:6px">'+k.split('-')[0]+' 年 '+mo+'</div>'
+            + '<div style="font-size:22px;font-weight:800;color:#33502F;font-variant-numeric:tabular-nums;line-height:1.1">NT$ '+Number(moMap[k]).toLocaleString()+'</div>'
+            + '</div>';
+        }).join('')
+      + '<div style="flex:1;display:flex;align-items:center;color:#A9A69B;font-size:12px;padding-left:4px">累積 3 個月以上會改用趨勢圖顯示</div>'
+      + '</div>';
+    return;
+  }
+  el.style.alignItems='flex-end';el.style.justifyContent='flex-start';el.style.borderBottom='2px solid #D9DDD3';
   var vals=keys.map(function(k){return moMap[k];});var maxVal=Math.max.apply(null,vals);var chartH=120;
   el.innerHTML=keys.map(function(k){
     var val=moMap[k];var barH=maxVal>0?Math.max(8,Math.round(val/maxVal*chartH)):8;
