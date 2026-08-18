@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818111509';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818111757';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1072,7 +1072,7 @@ input[type=checkbox]{accent-color:#577B53}
   #detail-files-list img{
     width:100%!important;
     max-width:100%!important;
-    max-height:280px!important;
+    max-height:420px!important;
     height:auto!important;
     object-fit:contain!important;
     display:block!important;
@@ -8201,7 +8201,8 @@ function _renderFileItem(f) {
   const name    = f.name || f.fileName || (typeof f === 'string' ? f : '附件');
   const url     = f.url  || f.webViewLink || '';
   const ext     = name.split('.').pop().toLowerCase();
-  const isImage = ['png','jpg','jpeg','gif','webp'].includes(ext);
+  // PDF 也走縮圖路徑：Drive thumbnail 端點對 PDF 會回第一頁圖，會計列印時要看得到憑證內容而非檔名
+  const isImage = ['png','jpg','jpeg','gif','webp','pdf'].includes(ext);
   const m       = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
   const fileId  = m ? m[1] : null;
   const extIcon = ext === 'pdf' ? '📄' : (['xlsx','xls','csv'].includes(ext) ? '📊' : '📎');
@@ -8245,7 +8246,7 @@ function _loadOneThumb(wrap, isIOS) {
   if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); return; }
   // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
   if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); return; }
-  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w400';
+  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
   // 先保留 loading spinner（不清空 wrap），圖片載入後才替換
   const img = new Image();
   img.onload = function() {
