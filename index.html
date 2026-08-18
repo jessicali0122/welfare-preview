@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818114955';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818115239';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -918,7 +918,7 @@ input[type=checkbox]{accent-color:#577B53}
   }
 
   /* ── 卡片內距縮小 ── */
-  .card[style*="padding:20px"]{padding:8px 12px!important}
+  .card[style*="padding:20px"]{padding:12px 14px!important}
   /* ── 申請資訊：維持3欄，欄位重新排序 ── */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:repeat(3,1fr)!important;gap:10px 16px!important}
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(1){order:1}  /* 主旨 */
@@ -959,7 +959,7 @@ input[type=checkbox]{accent-color:#577B53}
     flex-direction:row!important;
     align-items:flex-start!important;
     padding:0!important;
-    margin-top:20px!important;
+    margin-top:10px!important;   /* 原 20px：上方過空、與下方 6px 間距落差太大 */
     gap:0!important;
     position:static!important;
   }
@@ -1023,7 +1023,7 @@ input[type=checkbox]{accent-color:#577B53}
     border:1px solid #D5DAD2!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
-    margin-bottom:6px!important;
+    margin-bottom:12px!important;   /* 原 6px：卡片幾乎黏在一起 */
   }
   /* 附件卡片允許跨頁，確保全部附件都能列印出來 */
   #detail-files-card{
@@ -1098,23 +1098,28 @@ input[type=checkbox]{accent-color:#577B53}
     break-inside:auto!important;
     page-break-inside:auto!important;
   }
-  /* PDF 逐頁 canvas：每頁自己一張紙 */
-  #detail-files-list .pdf-page-canvas{
+  /* PDF 每一頁 = 一張紙：限制高度在單頁可用範圍內，避免一頁發票被硬切成好幾張 */
+  #detail-files-list .pdf-page-img{
+    max-height:238mm!important;   /* A4 297mm - 上下邊界 28mm - 頁首約 30mm */
+    width:auto!important;
+    max-width:100%!important;
+    height:auto!important;
+    margin:0 auto!important;
     break-before:page;
     page-break-before:always;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
   }
-  #detail-files-list .pdf-page-canvas:first-child{
+  #detail-files-list .pdf-page-img:first-child{
     break-before:auto;
     page-break-before:auto;
   }
   #detail-files-list [id^="thumb-"],
   #detail-files-list canvas,
   #detail-files-list img{
-    width:100%!important;
+    width:auto!important;
     max-width:100%!important;
-    max-height:none!important;
+    max-height:238mm!important;
     height:auto!important;
     object-fit:contain!important;
     display:block!important;
@@ -8345,10 +8350,14 @@ async function _renderPdfAllPages(wrap, fileId, href) {
       const cv   = document.createElement('canvas');
       cv.width  = vp.width;
       cv.height = vp.height;
-      cv.className = 'pdf-page-canvas';
-      cv.style.cssText = 'width:100%;height:auto;display:block;background:#fff';
       await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
-      wrap.appendChild(cv);
+      // 轉成 <img>：canvas 直接放進頁面時，列印遇到超過一張紙的高度會被硬切成好幾頁；
+      // img 會依 max-height 等比縮放，一頁 PDF 就穩定落在一張紙上
+      const im = document.createElement('img');
+      im.className = 'pdf-page-img';
+      im.src = cv.toDataURL('image/jpeg', 0.92);
+      im.style.cssText = 'width:100%;height:auto;display:block;background:#fff';
+      wrap.appendChild(im);
     }
     if (pdf.numPages > 1) {
       const tag = document.createElement('div');
