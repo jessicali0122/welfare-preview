@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818153444';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818154351';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5334,6 +5334,9 @@ function showApp() {
     // 讓「案件追蹤／系統管理」等入口卡最快 ~1s 到位，不必等 2.5 秒才冒出來
     setTimeout(function(){ _syncMembersFromServer(); }, 150);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
+    // 全體頭像延遲載入：頭像是 base64，不放進 getMembers（會讓每次登入背著好幾 MB），
+    // 拿到後寫進 localStorage 供名字標籤顯示他人頭像
+    setTimeout(function(){ _syncAvatarsFromServer(); }, 4000);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -8131,6 +8134,30 @@ function _refreshDeptOptions(users) {
     }).join('');
     sel.value = cur;
   });
+}
+
+// ── 同步全體成員頭像（獨立於 getMembers，延遲載入）──
+async function _syncAvatarsFromServer() {
+  try {
+    const res = await callAPI('getAvatars');
+    if (!res || !res.ok || !Array.isArray(res.avatars)) return;
+    let changed = 0;
+    res.avatars.forEach(function(u) {
+      if (!u.email || !u.avatar) return;
+      const key = 'bf_avatar_' + u.email;
+      try {
+        if (localStorage.getItem(key) !== u.avatar) { localStorage.setItem(key, u.avatar); changed++; }
+      } catch (e) { /* 配額滿：略過這張，不中斷其他人 */ }
+    });
+    // 有更新才重繪，讓已經畫好的名字標籤補上頭像
+    if (changed) {
+      try {
+        if (typeof loadApplications === 'function' &&
+            document.getElementById('view-applications')?.classList.contains('active')) loadApplications();
+        if (typeof htRenderItems === 'function' && document.getElementById('ht-items-tbody')) htRenderItems();
+      } catch (e) {}
+    }
+  } catch (e) { /* 非關鍵 */ }
 }
 
 // ── 登入後從 GAS 動態同步成員清單（更新姓名對照表 + 管理員清單）──
