@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818112422';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818112610';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7709,15 +7709,17 @@ function sw(name,elOrName,_fromPop){
   if (_leavingForm && name !== 'new-form') {
     var _hasDraft = false;
     try { var _d = JSON.parse(localStorage.getItem('bf_draft')||'{}'); _hasDraft = !!(_d.subject||_d.reason||(_d.items&&_d.items.length)); } catch(e){}
-    // 有主旨就真的在後端建/更新草稿（原本只寫 localStorage，卻 toast「已自動儲存」→
-    // 草稿匣看不到、回表單又跳「偵測到草稿」）。silent=true 不重複跳自己的 toast。
-    var _subjEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
-    if (_subjEl && _subjEl.value.trim() && typeof saveDraftForm === 'function') {
+    // 只要有草稿內容就一律存進後端草稿匣：不分「本機暫存」與「真的存」，
+    // 否則會出現「跳了草稿通知、草稿匣卻找不到」的矛盾。
+    // 後端主旨必填，沒填就自動帶預設主旨，讓它同樣進得了草稿匣。
+    if (_hasDraft && typeof saveDraftForm === 'function') {
+      var _subjEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+      if (_subjEl && !_subjEl.value.trim()) {
+        _subjEl.value = '未命名草稿';
+        if (typeof autoSaveDraft === 'function') autoSaveDraft();
+      }
       saveDraftForm(true);
       toast('💾 草稿已存入草稿匣');
-    } else if (_hasDraft) {
-      // 沒主旨後端存不了（主旨必填），只能留在本機 —— 文案要講實話
-      toast('💾 草稿已暫存在此瀏覽器（未填主旨，尚未進草稿匣）');
     }
   }
   // ── 在切換前記住當前視圖（views 還未變動，此時 active 仍是上一頁）──
