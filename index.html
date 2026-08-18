@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818105218';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818105423';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7841,6 +7841,8 @@ function sw(name,elOrName,_fromPop){
                    + ' ' + p(tw.getUTCHours()) + ':' + p(tw.getUTCMinutes());
       }
     })();
+    // 開表單先把全體員工填進申請人／收款人下拉（成員已載入時），再選預設登入者
+    _fillFormMemberSelects();
     // 申請人/收款人預設為登入者（優先以 email 查中文姓名，避免顯示英文）
     const appSel = document.getElementById('applicant-select');
     const payeeSel = document.getElementById('payee-select');
@@ -7956,6 +7958,7 @@ async function _syncMembersFromServer() {
       try { window.htRenderBirthday(); } catch(e) {}
     }
     _refreshDeptOptions(res.members);
+    _fillFormMemberSelects();   // 成員載入後，把全體員工填進申請人／收款人下拉
     // 把角色快取進 localStorage，下次頁面載入可立即套用
     try {
       var _cu = currentUser || window.currentUser;
@@ -8112,6 +8115,27 @@ function syncApplicantFields(){
 }
 // 向下相容舊呼叫
 function syncEmployeeId(){ syncApplicantFields(); }
+
+// ── 把「全體員工」填進申請人／收款人下拉（原本只帶登入者一人）──
+// 資料來自 LOCAL_USER_LIST（登入後由 _syncMembersFromServer 從後端 getMembers 建立）。
+// 保留目前已選的值；成員未載入時不動作（避免把既有選項清空）。
+function _fillFormMemberSelects(){
+  var list = (LOCAL_USER_LIST || []).filter(function(u){ return u && u.name; });
+  if (!list.length) return;
+  var seen = {}, names = [];
+  list.forEach(function(u){ if (!seen[u.name]) { seen[u.name] = 1; names.push(u.name); } });
+  names.sort(function(a,b){ return a.localeCompare(b, 'zh-Hant'); });
+  var optsHtml = names.map(function(n){ return '<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>'; }).join('');
+  ['applicant-select','payee-select'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var cur = sel.value;
+    sel.innerHTML = optsHtml;
+    // 目前選的值若不在名單（例如非系統成員），補回並選取
+    if (cur && names.indexOf(cur) < 0) { sel.insertBefore(new Option(cur, cur, true, true), sel.firstChild); }
+    if (cur) sel.value = cur;
+  });
+}
 
 // ── FORM ITEMS ──
 let iCount=1;
