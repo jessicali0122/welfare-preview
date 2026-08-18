@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818161125';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818161824';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1250,6 +1250,66 @@ input[type=checkbox]{accent-color:#577B53}
   @page{margin:10mm 14mm 14mm 14mm}
   table{width:100%!important;font-size:14px!important}
   td[style*="font-weight:700"]{font-weight:700!important}
+}
+
+/* ══════════ 午茶日：列印版（給廠商／會計對帳用的品項清單）══════════
+   規則只針對午茶詳情頁的元素，其他頁面沒有這些節點，不受影響。 */
+@media print{
+  /* 操作元件一律不印：拖曳、上下移、刪除、分組切換、新增列、活動操作 */
+  #ht-detail-panel .ht-drag-h,
+  #ht-detail-panel .ht-it-mv,
+  #ht-detail-panel .ht-it-del,
+  #ht-vm-category, #ht-vm-vendor, #ht-vm-assignee, #ht-vm-order,
+  #ht-detail-panel button[onclick*="htAddItemRow"],
+  #ht-detail-panel button[onclick*="htDeleteEvent"],
+  #ht-detail-panel button[onclick*="htOpenSettings"],
+  #ht-detail-panel .ht-hscroll-arrow{display:none!important}
+
+  /* 表格框：列印時展開全部，不要框內捲動、表頭不黏 */
+  #ht-items-scroll{height:auto!important;max-height:none!important;overflow:visible!important}
+  #ht-items-scroll thead th{position:static!important;box-shadow:none!important}
+  #ht-items-scroll thead th::after{display:none!important}
+  #ht-items-tbody tr.ht-it-row td:first-child,
+  #ht-items-scroll tfoot td:first-child{position:static!important;box-shadow:none!important}
+  #ht-items-scroll thead th{border-bottom:2px solid #577B53!important}
+
+  /* 輸入框在紙上就是資料，不要框線與底色 */
+  #ht-items-tbody input,
+  #ht-items-tbody select,
+  #ht-items-tbody .inp{
+    border:0!important;background:transparent!important;padding:0!important;
+    color:#2E332D!important;font-size:13px!important;-webkit-appearance:none;appearance:none;
+    box-shadow:none!important;text-overflow:clip!important;
+  }
+  /* 品名不截斷（紙張夠寬就讓它換行） */
+  #ht-items-tbody input[data-f="name"]{white-space:normal!important;overflow:visible!important}
+  #ht-items-tbody td{padding:6px 4px!important;font-size:13px!important}
+  /* 數量的上下箭頭、負責人下拉的箭頭都不印 */
+  #ht-items-tbody input[type=number]{-moz-appearance:textfield;appearance:textfield}
+  #ht-items-tbody input[type=number]::-webkit-outer-spin-button,
+  #ht-items-tbody input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  #ht-items-tbody .ht-qty-btns{display:none!important}
+
+  /* 訂購／請款開關 → 紙上用文字表示 */
+  #ht-items-tbody [role="switch"]{
+    background:none!important;width:auto!important;height:auto!important;
+    display:inline-block!important;position:static!important;
+  }
+  #ht-items-tbody [role="switch"] > span{display:none!important}
+  #ht-items-tbody [role="switch"][aria-checked="true"]::after{content:'✓';font-size:14px;font-weight:700;color:#33502F}
+  #ht-items-tbody [role="switch"][aria-checked="false"]::after{content:'—';font-size:14px;color:#A9A69B}
+
+  /* 負責人膠囊：去底色留文字，省墨也好讀 */
+  #ht-items-tbody .ht-assignee-chip,
+  #ht-items-tbody [class*="assignee"]{background:transparent!important;color:#2E332D!important;border:0!important}
+
+  /* 右欄預算結算：接在清單後面印，不並排 */
+  #ht-detail-grid{display:block!important}
+  #ht-detail-grid > div{width:100%!important}
+
+  /* 分類分組列與合計列維持可辨識，但不要大面積色塊 */
+  #ht-items-tbody tr.ht-cat-group > td{background:#F2F4F0!important;border-top:1px solid #D2D6D0!important}
+  #ht-items-scroll tfoot td{border-top:2px solid #577B53!important;font-weight:700!important}
 }
 
 /* ── Flatpickr 品牌主題 ── */
