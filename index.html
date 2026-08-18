@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818092532';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818092810';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -496,12 +496,9 @@ input[type=checkbox]{accent-color:#577B53}
 /* 品項表格：內部捲動框，框高由 JS 動態對齊「右欄」高度（左右一樣高，隨壽星人數變動）。
    原生雙捲軸常駐（橫向在框底、直向在框右都隨手可及），工具列在框下方正常排版 → 零重疊。
    max-height 給一個 CSS 後援值，避免 JS 未跑時無上限。 */
-/* 只保留直向捲軸（width:10），把橫向捲軸的 height 設 0 藏起來 → 橫向改用下方 sticky 拉桿，避免兩條橫向捲軸 */
-#ht-items-scroll{overflow:auto;max-height:80vh;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
-#ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;height:0;width:10px}
-#ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
-#ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
-#ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 藏掉框的原生捲軸（只藏橫向在 Chrome 不可靠 → 整組藏）。橫向改用下方 sticky 拉桿；直向用滾輪捲動。 */
+#ht-items-scroll{overflow:auto;max-height:80vh;scrollbar-width:none;-ms-overflow-style:none}
+#ht-items-scroll::-webkit-scrollbar{display:none;width:0;height:0}
 /* 表格上方常駐橫向捲軸（與表格同步） */
 #ht-hbar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
 #ht-hbar::-webkit-scrollbar{-webkit-appearance:none;height:11px}
