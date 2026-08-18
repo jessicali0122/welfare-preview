@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818181314';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818200212';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7225,6 +7225,16 @@ async function openDraft(caseId, asCopy) {
       if (!found2) { const opt2 = new Option(c.payee, c.payee, true, true); payeeSel.prepend(opt2); }
       payeeSel.value = c.payee;
     }
+  }
+  // ★ 收款人設定完成後，依「最終收款人」重算員工編號。
+  //   複製案件／載入草稿時，上方的 syncApplicantFields() 是在收款人尚未設定前跑的，
+  //   員編會停在申請人的編號（例：複製後收款人=林仕涵，員編卻仍是申請人某員工B的 T-XXXX）。
+  //   稽核/會計：員編必須對應收款人本人，這裡補算一次修正。
+  syncApplicantFields();
+  // syncApplicantFields 會用申請人預設值覆蓋部門 → 若草稿有記錄部門，再還原一次
+  if (c.department) {
+    const _deptSel1 = document.getElementById('form-dept-select');
+    if (_deptSel1) _deptSel1.value = c.department;
   }
   // 重建費用明細
   const itemsList = document.getElementById('items-list');
