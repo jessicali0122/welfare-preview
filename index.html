@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818145518';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818152957';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -506,7 +506,9 @@ input[type=checkbox]{accent-color:#577B53}
 .ht-hscroll-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:40;width:44px;height:44px;border-radius:50%;border:1px solid #D8E0D4;background:rgba(255,255,255,.95);color:#577B53;box-shadow:0 4px 14px rgba(46,51,45,.18);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:background .15s,color .15s,box-shadow .15s}
 .ht-hscroll-arrow:hover{background:#577B53;color:#fff;box-shadow:0 6px 18px rgba(46,51,45,.26)}
 .ht-hscroll-arrow:active{transform:translateY(-50%) scale(.94)}
-/* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
+/* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}）
+   ★ 容器必須自己垂直捲動（overflow:auto + max-height），否則 sticky 綁在框上、
+     頁面往上滑時整個框移出視窗，表頭就跟著不見 */
 #ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
 /* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
 #ht-items-scroll thead th:first-child{left:0;z-index:5;box-shadow:2px 0 0 #577B53,0 2px 0 #577B53}
@@ -3707,7 +3709,7 @@ thead th{color:#767B75!important}
         <!-- 常駐橫向捲軸：與表格同步，放在表頭正上方 → 不必捲到框底、窄視窗也能左右拉 -->
         <!-- 品項表格外包一層 relative，左右浮出 ‹ › 箭頭鈕控制橫向捲動 -->
         <div id="ht-items-scrollwrap" style="position:relative">
-        <div id="ht-items-scroll" style="overflow-x:scroll;-webkit-overflow-scrolling:touch">
+        <div id="ht-items-scroll" style="overflow:auto;max-height:calc(100vh - 260px);-webkit-overflow-scrolling:touch">
           <table style="width:100%;border-collapse:collapse;font-size:16px;table-layout:fixed">
             <!-- 欄位：品名/廠商/分類/單價/數量/小計/負責人/訂購/備註/連結/請款/刪除（分類為可手選下拉，品名可自動帶入） -->
             <colgroup>
