@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818112834';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818113352';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7583,6 +7583,12 @@ async function saveDraftForm(silent = false) {
       window._draftSaveOnLeave = false;
       _draftCaseId = res.caseId;
       _cacheClear();
+      // 離開表單存的草稿：清單在切頁當下已用舊快取畫好，只清快取不會重畫
+      // → 人若正停在案件清單，直接重拉一次，草稿匣才會馬上出現而不是等下次切頁
+      if (!_stillEditing && document.getElementById('view-applications')?.classList.contains('active')
+          && typeof loadApplications === 'function') {
+        loadApplications(true);
+      }
       var _ddb = document.getElementById('delete-draft-btn');
       if (_ddb) _ddb.style.display = '';
       try {
