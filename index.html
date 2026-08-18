@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818160009';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818160354';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -509,9 +509,12 @@ input[type=checkbox]{accent-color:#577B53}
 /* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}）
    ★ 容器必須自己垂直捲動，而且要用固定 height 不能用 max-height：
      max-height 在內容不夠高時框不會捲動 → 捲的是整個頁面 → 表頭照樣跑掉 */
-#ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
+#ht-items-scroll thead th{position:sticky;top:0;z-index:6;background:#fff!important}
+/* 表頭底線改用偽元素實線：原本用 box-shadow 畫，陰影不佔空間，
+   捲動時會被下方列的白底蓋掉 → 綠線就消失了 */
+#ht-items-scroll thead th::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:2px;background:#577B53;pointer-events:none}
 /* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
-#ht-items-scroll thead th:first-child{left:0;z-index:5;box-shadow:2px 0 0 #577B53,0 2px 0 #577B53}
+#ht-items-scroll thead th:first-child{left:0;z-index:7;box-shadow:2px 0 0 #577B53}
 #ht-items-scroll tfoot td:first-child{position:sticky;left:0;z-index:2;background:#fff!important;box-shadow:2px 0 0 #577B53}
 #ht-items-tbody tr.ht-it-row td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:2px 0 0 #E1E5DC}
 /* 分組標題列（colspan 整列）：讓標題文字自身黏在左側，捲到右邊也看得到是哪一組 */
