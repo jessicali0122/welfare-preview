@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818160354';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818160643';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8382,6 +8382,8 @@ function syncApplicantFields(){
   const _luByName  = LOCAL_USER_LIST.find(function(u){ return u.name === name; });
   let matchedEmpId=(_luByPayee&&_luByPayee.employeeId)||'';
   let matchedDept=(_luByName&&_luByName.dept)||'';
+  // 名單查得到這個人 → 以名單為準，不讓下面的管理頁表格備援覆寫（那張表可能撈到別人的編號）
+  const _payeeKnown = !!_luByPayee;
 
   document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
     const nameEl=row.querySelector('td:nth-child(2) span');
@@ -8391,7 +8393,7 @@ function syncApplicantFields(){
     const rowEmail=emailCell?emailCell.textContent.trim():'';
     // 姓名完全符合 OR email 和登入者相同
     // 員工編號比對收款人、部門比對申請人
-    if((rowName===_payName) && !matchedEmpId && empCell){
+    if(!_payeeKnown && (rowName===_payName) && !matchedEmpId && empCell){
       const v=empCell.textContent.trim();
       if(v&&v!=='—') matchedEmpId=v;
     }
@@ -8403,7 +8405,8 @@ function syncApplicantFields(){
 
   // 員工編號
   const empInput=document.getElementById('employee-id');
-  if(empInput) empInput.value=matchedEmpId;
+  // 名單查得到就一定覆寫（不保留草稿或上一位收款人留下的殘值）
+  if(empInput && (matchedEmpId || _payeeKnown)) empInput.value=matchedEmpId;
 
   // 所屬部門
   const deptSel=document.getElementById('form-dept-select');
@@ -10948,6 +10951,8 @@ function restoreDraft(){
     // 有伺服器端草稿 caseId 時顯示「刪除草稿」按鈕
     var _ddb = document.getElementById('delete-draft-btn');
     if (_ddb && d.caseId) _ddb.style.display = '';
+    // 草稿存的員工編號可能是舊值 → 一律以成員名單重算
+    if (typeof syncApplicantFields === 'function') setTimeout(syncApplicantFields, 0);
     toast('✅ 草稿已恢復！');
   }catch(e){toast('❌ 草稿恢復失敗');}
 }
