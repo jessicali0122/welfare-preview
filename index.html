@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818145352';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818145518';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -969,18 +969,8 @@ input[type=checkbox]{accent-color:#577B53}
     gap:0!important;
   }
   /* 完成註記：接在最後一關之後、共用同一條虛線，不要自成一個獨立方框（看起來像斷掉）*/
-  #flow-timeline .flow-done-note .fdn-l2{display:block!important}
-  #flow-timeline .flow-done-note .fdn-l2::before{content:''!important}
-  #flow-timeline .flow-done-note{
-    background:none!important;
-    border:0!important;
-    border-top:2px dashed #D2D6D0!important;
-    border-radius:0!important;
-    margin-top:0!important;
-    padding:14px 6px 6px!important;
-    line-height:1.6!important;
-    align-self:stretch!important;
-  }
+  /* 列印時單號旁的狀態標籤不需要（簽核進度已經寫得很清楚）*/
+  #detail-status-badge{display:none!important}
   /* 關卡名稱（總幹事等）清除 inline padding-top，行距與其下狀態/人名一致 */
   #flow-timeline > div > div:last-child > div:first-child{padding-top:0!important}
   /* 左欄（icon 容器）絕對定位置頂部中央 */
@@ -1373,10 +1363,6 @@ span.flatpickr-weekday{color:#767B75!important;font-weight:700!important;font-si
 /* Dashboard 和案件追蹤：隱藏 checkbox 欄 */
 .dashboard-table th:first-child,.dashboard-table td:first-child,
 .app-table th:first-child,.app-table td:first-child{display:none!important}
-/* 簽核完成註記：螢幕上是淡綠卡片，列印時接上關卡虛線（見 @media print） */
-.flow-done-note{margin-top:16px;padding:12px 14px;background:#f3f7f2;border-radius:8px;font-size:14px;font-weight:600;color:#577B53;text-align:center;border:1px solid #A9C4A5;line-height:1.6}
-.flow-done-note .fdn-icon{display:inline-block;vertical-align:-4px;margin-right:6px}
-.flow-done-note .fdn-l2::before{content:'，'}
 .ic-summary{font-size:14px;display:none;margin-left:10px;gap:10px;align-items:center}
 .item-card.ic-collapsed .ic-summary{display:inline-flex}
 .ic-sum-name{color:#2E332D;font-weight:500}
@@ -9239,10 +9225,15 @@ function updateDetailFlow(c){
       + '</div>';
   });
 
-  if (isDone) html += '<div class="flow-done-note">'
-    + '<span class="fdn-icon">' + leafSvg('#577B53', 18) + '</span>'
-    + '<span class="fdn-l1">已完成簽核</span>'
-    + '<span class="fdn-l2">款項處理中</span>'
+  // 完成註記：沿用關卡同一套結構與字級，看起來就是流程的最後一段
+  if (isDone) html += '<div class="flow-done-note" style="display:flex;gap:12px;align-items:stretch">'
+    + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:36px">'
+    +   '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + leafSvg('#577B53', 28) + '</div>'
+    + '</div>'
+    + '<div style="flex:1">'
+    +   '<div style="font-size:14px;font-weight:700;color:#4A4F49;padding-top:8px">已完成簽核</div>'
+    +   '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">款項處理中</div>'
+    + '</div>'
     + '</div>';
   tl.innerHTML = html;
 }
