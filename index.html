@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818154351';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818155651';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6180,12 +6180,36 @@ async function loadDashboard() {
     var _dd = _tw.getUTCDate(), _mo = _tw.getUTCMonth()+1, _nmo = _mo, _nd;
     if (_dd <= 10) _nd = 10; else if (_dd <= 20) _nd = 20; else if (_dd <= 30) _nd = 30; else { _nd = 10; _nmo = _mo % 12 + 1; }
     _set('dstat-nextdate', _nmo + '/' + _nd);
-    // 本月午茶日：下一場日期（午茶資料已載才有，否則顯示 —）
+    // 午茶日：顯示今天之後最近的一場（當天過了就自動指向下一場）；
+    // 已載完卻沒有未來場次 → Coming Soon（尚未安排），而不是空的「—」
+    var _teaLab = function(txt){
+      var el = document.getElementById('dstat-teaday');
+      var lab = el && el.closest('.txt') ? el.closest('.txt').querySelector('.lab') : null;
+      if (lab) lab.textContent = txt;
+    };
+    var _teaSet = function(v){
+      var el = document.getElementById('dstat-teaday');
+      if (!el) return;
+      if (v === 'Coming Soon') {
+        el.textContent = 'Coming Soon';
+        el.style.fontSize = '18px';        // 英文較長，縮一級避免撐破卡片
+        _teaLab('下次午茶日');
+        return;
+      }
+      el.style.fontSize = '';
+      el.textContent = v || '—';
+      // 日期落在本月才叫「本月」，否則是下個月的場次
+      var _twNow = new Date(Date.now() + 8*3600000);
+      var _m = String(v || '').split('/')[0];
+      _teaLab((v && v !== '今天' && Number(_m) !== (_twNow.getUTCMonth()+1)) ? '下次午茶日' : '本月午茶日');
+    };
     var _tea = (typeof window.htGetNextEventDate === 'function') ? window.htGetNextEventDate() : null;
-    _set('dstat-teaday', _tea || '—');
+    _teaSet(_tea || '—');
     // 首頁還沒有午茶資料 → 背景預載（先讀快取、真沒有才發一支請求）補上日期
     if (!_tea && typeof window.htPrefetchNextDate === 'function') {
-      window.htPrefetchNextDate().then(function(d){ if (d) _set('dstat-teaday', d); }).catch(function(){});
+      window.htPrefetchNextDate()
+        .then(function(d){ _teaSet(d || 'Coming Soon'); })
+        .catch(function(){ /* 載入失敗維持「—」，不要誤報成尚未安排 */ });
     }
   })();
   const myTurnEl = document.getElementById('stat-my-turn');
