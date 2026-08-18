@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818111757';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818111902';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8398,15 +8398,28 @@ function renderDraftFileItem(info) {
   const icon = { pdf:'📄', jpg:'🖼️', jpeg:'🖼️', png:'🖼️', xlsx:'📊', xls:'📊' }[ext] || '📎';
   const item = document.createElement('div');
   item.dataset.fileId = info.fileId;
-  item.style.cssText  = 'display:flex;align-items:center;gap:8px;padding:8px 10px;background:#edf7f7;border-radius:8px;border:1px solid #b0dede';
+  item.style.cssText  = 'display:flex;align-items:center;gap:10px;padding:8px 10px;background:#edf7f7;border-radius:8px;border:1px solid #b0dede';
+  // 圖片/PDF 直接顯示 Drive 縮圖預覽（原本只有 emoji + 檔名，看不出傳了什麼）
+  const canThumb = ['png','jpg','jpeg','gif','webp','pdf'].includes(ext);
+  const iconHtml = (canThumb && info.fileId)
+    ? '<img class="dfile-thumb" src="https://drive.google.com/thumbnail?id=' + info.fileId + '&sz=w200" alt="" '
+      + 'style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:1px solid #b0dede;background:#fff;flex-shrink:0">'
+    : '<span style="font-size:16px">' + icon + '</span>';
   const nameHtml = info.url
     ? `<a href="${info.url}" target="_blank" style="font-size:14px;color:#577B53;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;font-weight:500">${info.name||'附件'}</a>`
     : `<span style="font-size:14px;color:#577B53;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${info.name||'附件'}</span>`;
-  item.innerHTML = '<span style="font-size:16px">' + icon + '</span>'
+  item.innerHTML = iconHtml
     + nameHtml
     + '<span style="font-size:12px;background:#d0eeef;color:#1e6b6c;padding:2px 6px;border-radius:6px;white-space:nowrap">已存</span>'
     + '<button style="background:none;border:none;cursor:pointer;color:#767B75;font-size:16px;line-height:1;padding:0 2px" '
     + 'onclick="removeDraftFile(\'' + (info.fileId||'').replace(/'/g,"\\'") + '\',\'' + (info.name||'').replace(/'/g,"\\'") + '\',this)">×</button>';
+  const _thumbEl = item.querySelector('.dfile-thumb');
+  if (_thumbEl) _thumbEl.onerror = function() {
+    const sp = document.createElement('span');
+    sp.style.fontSize = '16px';
+    sp.textContent = icon;
+    this.replaceWith(sp);
+  };
   list.appendChild(item);
 }
 
