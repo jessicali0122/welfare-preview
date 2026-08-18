@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818145021';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818145123';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -969,6 +969,8 @@ input[type=checkbox]{accent-color:#577B53}
     gap:0!important;
   }
   /* 完成註記：接在最後一關之後、共用同一條虛線，不要自成一個獨立方框（看起來像斷掉）*/
+  #flow-timeline .flow-done-note .fdn-l2{display:block!important}
+  #flow-timeline .flow-done-note .fdn-l2::before{content:''!important}
   #flow-timeline .flow-done-note{
     background:none!important;
     border:0!important;
@@ -1373,6 +1375,8 @@ span.flatpickr-weekday{color:#767B75!important;font-weight:700!important;font-si
 .app-table th:first-child,.app-table td:first-child{display:none!important}
 /* 簽核完成註記：螢幕上是淡綠卡片，列印時接上關卡虛線（見 @media print） */
 .flow-done-note{margin-top:16px;padding:12px 14px;background:#f3f7f2;border-radius:8px;font-size:14px;font-weight:600;color:#577B53;text-align:center;border:1px solid #A9C4A5;line-height:1.6}
+.flow-done-note .fdn-icon{display:inline-block;vertical-align:-4px;margin-right:6px}
+.flow-done-note .fdn-l2::before{content:'，'}
 .ic-summary{font-size:14px;display:none;margin-left:10px;gap:10px;align-items:center}
 .item-card.ic-collapsed .ic-summary{display:inline-flex}
 .ic-sum-name{color:#2E332D;font-weight:500}
@@ -9226,7 +9230,11 @@ function updateDetailFlow(c){
       + '</div>';
   });
 
-  if (isDone) html += '<div class="flow-done-note">🌿 已完成簽核<br>款項處理中</div>';
+  if (isDone) html += '<div class="flow-done-note">'
+    + '<span class="fdn-icon">' + leafSvg('#577B53', 18) + '</span>'
+    + '<span class="fdn-l1">已完成簽核</span>'
+    + '<span class="fdn-l2">款項處理中</span>'
+    + '</div>';
   tl.innerHTML = html;
 }
 
