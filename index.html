@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818200212';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818202729';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3446,7 +3446,6 @@ thead th{color:#767B75!important}
           <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
             <select id="audit-filter-action" class="inp" style="flex:1;min-width:110px;font-size:14px;padding:6px 10px" onchange="filterAuditLog()">
               <option value="">全部動作</option>
-              <option value="login">登入</option>
               <option value="submit">送出申請</option>
               <option value="approve">核准</option>
               <option value="reject">退件</option>
@@ -6356,13 +6355,14 @@ async function loadAuditLogDashboard() {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#dc2626">載入逾時，請重新整理後再試</td></tr>';
     }
   }, 15000);
-  const res = await callAPI('getAuditLog', { limit: 200 }, { noCache: true });
+  const res = await callAPI('getAuditLog', { limit: 1000 }, { noCache: true });
   clearTimeout(_auditTimeoutId);
   if (!res.ok) {
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#dc2626">載入失敗：' + (res.error||'請稍後再試') + '</td></tr>';
     return;
   }
-  _auditAllLogs = res.logs || [];
+  // 系統紀錄預設排除「登入」動作（登入太頻繁會淹沒真正要看的操作）；其餘動作全數顯示
+  _auditAllLogs = (res.logs || []).filter(function(l){ return l.action !== 'login'; });
   // 若篩選條件已有值（例如重新整理時），重新套用而非直接渲染全部
   const _hasFilter = (document.getElementById('audit-filter-action')?.value || '').trim()
     || (document.getElementById('audit-filter-name')?.value || '').trim()
