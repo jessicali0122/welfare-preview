@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818091526';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818091819';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -501,6 +501,8 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 藏掉框「原生的橫向捲軸」（保留直向）：橫向改用下方 #ht-hbar 拉桿＋左右箭頭，避免出現兩條橫向捲軸 */
+#ht-items-scroll::-webkit-scrollbar:horizontal{display:none;height:0}
 /* 表格上方常駐橫向捲軸（與表格同步） */
 #ht-hbar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
 #ht-hbar::-webkit-scrollbar{-webkit-appearance:none;height:11px}
@@ -15770,11 +15772,8 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
     var h = Math.round(rightBottom - boxTop - toolbarH - 6);
-    // 上限卡在視窗內：框太高（比視窗還高）時，框底的橫向捲軸會跑到畫面外 → 只能上下捲、摸不到左右捲軸。
-    // 卡在視窗高度內，框底（含橫向捲軸）就永遠看得到、隨手能拉；右欄很高時以視窗為準（能左右捲 > 完全等高）。
-    var vpCap = Math.round(window.innerHeight - boxTop - toolbarH - 16);
-    if (vpCap > 260) h = Math.min(h, vpCap);
-    // 用固定 height（對齊右欄／視窗）；maxHeight 設 none 覆蓋 CSS 的 80vh 後援
+    // 框高＝與右欄等高（橫向由左右箭頭處理，箭頭永遠在框中央可見，不必靠框底捲軸 → 不再卡視窗上限）
+    // 用固定 height（對齊右欄）；maxHeight 設 none 覆蓋 CSS 的 80vh 後援
     main.style.maxHeight = 'none';
     main.style.height = (h >= 220) ? (h + 'px') : '';
   } else {
