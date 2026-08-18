@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818115239';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818115458';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1073,13 +1073,6 @@ input[type=checkbox]{accent-color:#577B53}
     overflow:visible!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
-    break-before:page;
-    page-break-before:always;
-  }
-  /* 第一份附件接在明細後面，不平白多一張空白頁 */
-  #detail-files-list > div:first-child{
-    break-before:auto;
-    page-break-before:auto;
   }
   /* 縮圖容器的置中/灰底/最小高度都是畫面用的，列印要拿掉 */
   #detail-files-list .drive-thumb-wrap{
@@ -1105,14 +1098,8 @@ input[type=checkbox]{accent-color:#577B53}
     max-width:100%!important;
     height:auto!important;
     margin:0 auto!important;
-    break-before:page;
-    page-break-before:always;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
-  }
-  #detail-files-list .pdf-page-img:first-child{
-    break-before:auto;
-    page-break-before:auto;
   }
   #detail-files-list [id^="thumb-"],
   #detail-files-list canvas,
@@ -1126,6 +1113,25 @@ input[type=checkbox]{accent-color:#577B53}
     margin:0!important;
     border-radius:0!important;
     border:0!important;
+  }
+
+  /* 請款明細：表格允許跨頁（整塊不可切時，塞不進當前頁就整塊跳頁 → 前一頁留大片空白），
+     但每一列不被腰斬 */
+  .card:has(#detail-items-tbody){
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+  #detail-items-tbody tr,
+  thead tr, tfoot tr{
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  thead{display:table-header-group}
+
+  /* 區塊標題必須跟著內容走，否則會出現「標題在上一頁、內容在下一頁」的空白頁 */
+  .section-title{
+    break-after:avoid!important;
+    page-break-after:avoid!important;
   }
 
   /* ── 操作紀錄 ── */
