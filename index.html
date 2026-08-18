@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818162503';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818162753';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8317,6 +8317,10 @@ async function _syncMembersFromServer() {
     // （htRenderBirthday 住在午茶 IIFE 內，必須走 window 取用；沒開啟活動時函式內部會自行略過）
     if (typeof window.htRenderBirthday === 'function') {
       try { window.htRenderBirthday(); } catch(e) {}
+    }
+    // 月曆的壽星標註同樣依賴 _BF_USER_BDAYS：月曆常在生日資料到齊前就畫好了 → 補畫一次
+    if (typeof window.htRenderCalendar === 'function') {
+      try { window.htRenderCalendar(); } catch(e) {}
     }
     _refreshDeptOptions(res.members);
     _fillFormMemberSelects();   // 成員載入後，把全體員工填進申請人／收款人下拉
@@ -17113,6 +17117,7 @@ window.htDeleteBirthday = async function(idx) {
 // 匯出給外部：員工生日資料（_BF_USER_BDAYS）是登入後才非同步載入的，
 // 若壽星面板已搶先渲染完（那時抓不到日期），資料到位後要能回來重畫一次把日期補上。
 window.htRenderBirthday = htRenderBirthday;
+window.htRenderCalendar = htRenderCalendar;   // 生日資料到齊後要能從外部補畫月曆的壽星標註
 
 // ── 評分 Modal ──
 
