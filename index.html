@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818114224';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818114529';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1088,7 +1088,19 @@ input[type=checkbox]{accent-color:#577B53}
     display:block!important;
   }
   #detail-files-list a{display:block!important}
+  /* PDF 逐頁 canvas：每頁自己一張紙 */
+  #detail-files-list .pdf-page-canvas{
+    break-before:page;
+    page-break-before:always;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
+  }
+  #detail-files-list .pdf-page-canvas:first-child{
+    break-before:auto;
+    page-break-before:auto;
+  }
   #detail-files-list [id^="thumb-"],
+  #detail-files-list canvas,
   #detail-files-list img{
     width:100%!important;
     max-width:100%!important;
@@ -8255,7 +8267,7 @@ function _renderFileItem(f) {
     // 先顯示 loading 佔位，之後由 loadDriveThumbs() 非同步填入縮圖
     return '<div style="border-radius:10px;overflow:hidden;border:1px solid #D5DAD2;background:#F7F8F6">'
       + '<a href="' + url + '" target="_blank" style="display:block">'
-      + '<div class="drive-thumb-wrap" data-fileid="' + fileId + '" data-href="' + url + '" '
+      + '<div class="drive-thumb-wrap" data-fileid="' + fileId + '" data-href="' + url + '" data-ext="' + ext + '" '
       + 'style="min-height:160px;display:flex;align-items:center;justify-content:center;background:#ECEEEA;flex-direction:column;gap:8px">'
       + '<div class="spinner" style="width:22px;height:22px;border:2.5px solid #D2D7CD;border-top-color:#577B53;border-radius:50%;animation:spin .8s linear infinite"></div>'
       + '<span style="font-size:12px;color:#767B75">縮圖載入中…</span>'
@@ -8283,11 +8295,71 @@ function _renderFileItem(f) {
 
 // ── 載入 Drive 縮圖：先試直接 URL（快），失敗再 fallback 回 GAS（穩）──
 // 效能：改為捲入視窗才載入（IntersectionObserver），避免一進詳情頁就對所有附件同時發圖片/GAS 請求。
+// ── PDF 附件：取回原檔後用 pdf.js 逐頁渲染（多頁憑證要整份印出來）──
+let _pdfJsReady = null;
+function _ensurePdfJs() {
+  if (_pdfJsReady) return _pdfJsReady;
+  _pdfJsReady = new Promise((resolve, reject) => {
+    if (window.pdfjsLib) return resolve(window.pdfjsLib);
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    sc.onload = () => {
+      if (!window.pdfjsLib) return reject(new Error('pdf.js 載入後找不到 pdfjsLib'));
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      resolve(window.pdfjsLib);
+    };
+    sc.onerror = () => reject(new Error('pdf.js 載入失敗'));
+    document.head.appendChild(sc);
+  });
+  return _pdfJsReady;
+}
+async function _renderPdfAllPages(wrap, fileId, href) {
+  try {
+    const [lib, res] = await Promise.all([
+      _ensurePdfJs(),
+      callAPI('getFileB64', { fileId })
+    ]);
+    if (!res || !res.ok || !res.b64) throw new Error((res && res.error) || '取檔失敗');
+    const raw = atob(res.b64);
+    const buf = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) buf[i] = raw.charCodeAt(i);
+    const pdf = await lib.getDocument({ data: buf }).promise;
+    wrap.innerHTML = '';
+    wrap.style.minHeight = '';
+    wrap.style.flexDirection = '';
+    wrap.classList.add('pdf-pages');
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n);
+      const vp   = page.getViewport({ scale: 2 });   // 2 倍解析度，列印才不糊
+      const cv   = document.createElement('canvas');
+      cv.width  = vp.width;
+      cv.height = vp.height;
+      cv.className = 'pdf-page-canvas';
+      cv.style.cssText = 'width:100%;height:auto;display:block;background:#fff';
+      await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+      wrap.appendChild(cv);
+    }
+    if (pdf.numPages > 1) {
+      const tag = document.createElement('div');
+      tag.className = 'no-print';
+      tag.style.cssText = 'font-size:12px;color:#767B75;padding:6px 0;text-align:center';
+      tag.textContent = '共 ' + pdf.numPages + ' 頁';
+      wrap.appendChild(tag);
+    }
+  } catch (e) {
+    // pdf.js 或取檔失敗 → 退回原本的第一頁縮圖，至少看得到東西
+    _loadThumbViaGAS(wrap, fileId, href);
+  }
+}
 function _loadOneThumb(wrap, isIOS) {
   const fileId = wrap.dataset.fileid;
   const href   = wrap.dataset.href || '';
+  const ext    = (wrap.dataset.ext || '').toLowerCase();
   wrap.removeAttribute('data-fileid');
   if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); return; }
+  // PDF 走 pdf.js 逐頁渲染：Drive 縮圖只有第一頁，多頁憑證會計看不到第 2/3 頁
+  if (ext === 'pdf') { _renderPdfAllPages(wrap, fileId, href); return; }
   // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
   if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); return; }
   const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
