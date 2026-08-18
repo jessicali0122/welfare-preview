@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818161929';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818162041';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1260,6 +1260,7 @@ input[type=checkbox]{accent-color:#577B53}
   #ht-detail-panel .ht-it-mv,
   #ht-detail-panel .ht-it-del,
   #ht-vm-category, #ht-vm-vendor, #ht-vm-assignee, #ht-vm-order,
+  #ht-detail-panel button[onclick*="htMoveItem"],
   #ht-detail-panel button[onclick*="htAddItemRow"],
   #ht-detail-panel button[onclick*="htDeleteEvent"],
   #ht-detail-panel button[onclick*="htOpenSettings"],
@@ -1306,6 +1307,15 @@ input[type=checkbox]{accent-color:#577B53}
   /* 右欄預算結算：接在清單後面印，不並排 */
   #ht-detail-grid{display:block!important}
   #ht-detail-grid > div{width:100%!important}
+
+  /* 欄寬依內容自動分配：畫面用的是固定欄寬（table-layout:fixed），紙上會把品名、廠商、備註切掉 */
+  #ht-items-scroll table{table-layout:auto!important;width:100%!important}
+  #ht-items-tbody td, #ht-items-scroll th{white-space:normal!important;overflow:visible!important;text-overflow:clip!important}
+  #ht-items-tbody input, #ht-items-tbody select{width:auto!important;min-width:0!important;max-width:none!important}
+  #ht-items-tbody input[data-f="name"], #ht-items-tbody input[data-f="vendor"], #ht-items-tbody input[data-f="notes"]{width:100%!important}
+  /* 「連結」欄在紙上點不了，省下的寬度讓給品名／備註（第 10 欄）*/
+  #ht-items-scroll thead th:nth-child(10),
+  #ht-items-tbody tr.ht-it-row td:nth-child(10){display:none!important}
 
   /* 分類分組列與合計列維持可辨識，但不要大面積色塊 */
   #ht-items-tbody tr.ht-cat-group > td{background:#F2F4F0!important;border-top:1px solid #D2D6D0!important}
