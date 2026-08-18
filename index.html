@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818114002';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818114224';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1046,39 +1046,59 @@ input[type=checkbox]{accent-color:#577B53}
   }
   .amount-col,td[data-print-bold]{font-weight:700!important}
 
-  /* ── 附件卡片：允許跨頁、完整顯示所有圖片 ── */
+  /* ── 附件：憑證要能當正本看，列印時整頁大圖、不套系統外框 ── */
   #detail-files-card{
     break-inside:auto!important;
     page-break-inside:auto!important;
+    border:0!important;
+    box-shadow:none!important;
+    background:none!important;
+    padding:0!important;
   }
-  /* ── 附件圖片：每行兩欄 ── */
+  /* 單欄：一份附件一頁，不再擠成兩欄縮圖 */
   #detail-files-list{
-    display:grid!important;
-    grid-template-columns:1fr 1fr!important;
-    gap:16px!important;
+    display:block!important;
+    gap:0!important;
     break-inside:auto!important;
   }
-  /* 每個附件項目不跨頁切斷 */
   #detail-files-list > div{
-    display:flex!important;
-    flex-direction:column!important;
-    align-items:center!important;
+    display:block!important;
     width:100%!important;
     max-width:none!important;
+    border:0!important;
+    background:none!important;
+    box-shadow:none!important;
+    border-radius:0!important;
+    padding:0!important;
+    overflow:visible!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
+    break-before:page;
+    page-break-before:always;
   }
+  /* 第一份附件接在明細後面，不平白多一張空白頁 */
+  #detail-files-list > div:first-child{
+    break-before:auto;
+    page-break-before:auto;
+  }
+  /* 縮圖容器的置中/灰底/最小高度都是畫面用的，列印要拿掉 */
+  #detail-files-list .drive-thumb-wrap{
+    min-height:0!important;
+    background:none!important;
+    display:block!important;
+  }
+  #detail-files-list a{display:block!important}
   #detail-files-list [id^="thumb-"],
   #detail-files-list img{
     width:100%!important;
     max-width:100%!important;
-    max-height:420px!important;
+    max-height:none!important;
     height:auto!important;
     object-fit:contain!important;
     display:block!important;
-    margin:0 0 4px 0!important;
-    border-radius:16px!important;
-    border:1px solid #D5DAD2!important;
+    margin:0!important;
+    border-radius:0!important;
+    border:0!important;
   }
 
   /* ── 操作紀錄 ── */
