@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818115458';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818115916';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7044,6 +7044,13 @@ async function loadDetail(caseId, _fromPop) {
   // 在入口白名單化可一次涵蓋現有與未來的拼接點，杜絕屬性注入
   caseId = String(caseId || '').replace(/[^A-Za-z0-9_-]/g, '');
   if (!caseId) return;
+  // 簽核流程資料是登入後延遲載入的，若直接開案件連結（例如從通知點進來），
+  // 詳情渲染時 APPROVER_EMAILS 可能還是空的 → isMyTurnToApprove 一律 false
+  // → 當關簽核人看不到審核按鈕，且之後不會重算。這裡先確保流程已到位。
+  if (typeof APPROVER_EMAILS !== 'undefined' && !APPROVER_EMAILS.length
+      && typeof _preloadFlowInfo === 'function') {
+    try { await _preloadFlowInfo(); } catch(e) {}
+  }
   // Race condition 保護：若上一個請求還沒完成，忽略舊結果
   const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
@@ -9072,6 +9079,16 @@ async function _preloadFlowInfo() {
       _flowApprovers = res.approvers;
       APPROVER_EMAILS.length = 0;
       _flowApprovers.filter(function(a){ return a.enabled !== false; }).forEach(function(a){ APPROVER_EMAILS.push(a.email); });
+      // 若此刻正停在案件詳情（流程比詳情晚載完），重跑一次讓簽核按鈕與關卡名稱補上，
+      // 不必叫使用者重新整理。loadDetail 內的 preload 此時已有資料，不會遞迴。
+      try {
+        var _dv = document.getElementById('view-detail');
+        var _ab = document.getElementById('approve-box');
+        var _cid = _ab && _ab.getAttribute('data-caseid');
+        if (_dv && _dv.classList.contains('active') && _cid && typeof loadDetail === 'function') {
+          loadDetail(_cid);
+        }
+      } catch(e) {}
     }
   } catch(e) { /* 非關鍵，失敗靜默 */ }
 }
