@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818170002';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818170255';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8474,11 +8474,13 @@ function syncApplicantFields(){
     const rowEmail=emailCell?emailCell.textContent.trim():'';
     // 姓名完全符合 OR email 和登入者相同
     // 員工編號比對收款人、部門比對申請人
-    if(!_payeeKnown && (rowName===_payName) && !matchedEmpId && empCell){
+    // 必須有姓名才比對：開表單當下收款人下拉還沒填好，_payName 是空字串，
+    // 表格裡任何抓不到姓名的列都會 ''==='' 命中 → 撈到別人的員工編號
+    if(!_payeeKnown && _payName && rowName && (rowName===_payName) && !matchedEmpId && empCell){
       const v=empCell.textContent.trim();
       if(v&&v!=='—') matchedEmpId=v;
     }
-    const isMatch=rowName===name||(currentUser&&rowEmail===currentUser.email);
+    const isMatch=(name && rowName && rowName===name)||(currentUser&&rowEmail&&rowEmail===currentUser.email);
     if(isMatch){
       if(!matchedDept) matchedDept=row.dataset.dept||'';
     }
