@@ -102,6 +102,7 @@
       assignee  : String(r.assignee || ''),
       ordered   : r.ordered === true,
       orderedAt : r.ordered_at || '',
+      billed    : r.billed === true,
       notes     : String(r.notes || ''),
       ratingSum : Number(r.rating_sum) || 0,
       ratingCount: Number(r.rating_count) || 0,
@@ -125,6 +126,7 @@
       assignee  : it.assignee || '',
       ordered   : !!it.ordered,
       ordered_at: it.ordered ? (it.orderedAt || new Date().toISOString()) : null,
+      billed    : !!it.billed,
       notes     : it.notes || '',
       link      : it.link || '',
       updated_at: new Date().toISOString()
