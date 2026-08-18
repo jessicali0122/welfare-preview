@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818160643';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818161125';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -933,9 +933,10 @@ input[type=checkbox]{accent-color:#577B53}
   /* ── detail-grid 整體 gap 縮小 ── */
   #detail-grid{gap:6px!important}
 
-  /* ── 只顯示詳情頁 ── */
-  .view{display:none!important}
-  #view-detail{display:block!important;overflow:visible!important;height:auto!important}
+  /* ── 只顯示詳情頁：限定在按「列印」按鈕（body.printing）時才套用 ──
+     否則使用者在任何頁面按 Ctrl+P／右鍵列印，都會被強制印出還沒載入資料的空白詳情頁 */
+  body.printing .view{display:none!important}
+  body.printing #view-detail{display:block!important;overflow:visible!important;height:auto!important}
 
   /* ── 列印頁首 ── */
   .print-header{display:block!important}
@@ -10909,7 +10910,8 @@ function restoreDraft(){
     if(_applicantREl&&d.name)_applicantREl.value=d.name;
     if(_payeeREl&&d.payee)_payeeREl.value=d.payee;
     if(_deptREl&&d.department)_deptREl.value=d.department;
-    if(_empIdREl&&d.employeeId)_empIdREl.value=d.employeeId;
+    // 不套用草稿存的員工編號：那是當下算出來的快照，收款人改了、或早期版本存錯（例如 T0066）
+    // 就會一直被帶回來。改由下方 syncApplicantFields() 依「目前的收款人」重算。
     if(_applyDateREl&&d.applyDate)_applyDateREl.value=d.applyDate;
     // F4 fix：還原明細資料
     if(Array.isArray(d.items)&&d.items.length>0){
