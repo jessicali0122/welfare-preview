@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818162753';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818162951';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -14285,14 +14285,12 @@ function _htPrevMonthHeadcount(ym) {
   var parts = (ym || '').split('-');
   var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
   if (!y || !m) return LOCAL_USER_LIST.length || '';
-  var pm = m - 1, py = y; if (pm < 1) { pm = 12; py = y - 1; }
-  var prevYm = py + '-' + String(pm).padStart(2, '0');
+  // 一律取「最新一場」的人數（原本先找上個月、找不到才往前找 → 八月新增時會抓到七月的舊人數，
+  // 而不是最近一場的最新人數）
   var all = _htEvents.concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
-  var prev = all.filter(function(e){ return _evMonth(e) === prevYm && e.headcount > 0; })[0];
-  if (prev) return prev.headcount;
-  var past = all.filter(function(e){ return e.headcount > 0 && _evMonth(e) < ym; })
-    .sort(function(a,b){ return _evMonth(b).localeCompare(_evMonth(a)); })[0];
-  return past ? past.headcount : (LOCAL_USER_LIST.length || '');
+  var latest = all.filter(function(e){ return e.headcount > 0; })
+    .sort(function(a,b){ return String(_evMonth(b)).localeCompare(String(_evMonth(a))); })[0];
+  return latest ? latest.headcount : (LOCAL_USER_LIST.length || '');
 }
 window.htOpenCreate = function() {
   var m = document.getElementById('ht-create-modal');
