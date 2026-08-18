@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818172806';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818173346';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3223,7 +3223,7 @@ thead th{color:#767B75!important}
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請時間</div><div id="detail-apply-date" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#2E332D">—</div></div>
-            <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">付款方式</div><div style="font-weight:600;color:#2E332D">匯款（公司薪轉戶）</div></div>
+            <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">付款方式</div><div id="detail-pay-method" style="font-weight:600;color:#2E332D">匯款（公司薪轉戶）</div></div>
           </div>
           <div id="detail-reason-wrap" style="margin-top:14px;display:none">
             <div style="color:#767B75;font-size:12px;margin-bottom:4px">備註／請款原因</div>
@@ -7332,6 +7332,9 @@ async function loadDetail(caseId, _fromPop) {
   const headerSubjectEl = document.getElementById('detail-header-subject');
   if (headerSubjectEl) headerSubjectEl.textContent = c.subject || c.project || '—';
   // 員工編號（有值直接用；空白時從本地清單補）
+  // 付款方式：舊案件沒有這欄 → 視為薪轉戶（與過去顯示一致）
+  const pmEl = document.getElementById('detail-pay-method');
+  if (pmEl) pmEl.textContent = (c.payMethod && String(c.payMethod).trim()) || '匯款（公司薪轉戶）';
   const empIdEl = document.getElementById('detail-employee-id');
   if (empIdEl) {
     let empId = c.employeeId || '';
@@ -7690,10 +7693,11 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     subject:    subjectEl?.value || '',   // 同時送 subject，讓後端 Chat 通知顯示主旨
     department: departmentEl?.value || '',
     reason:     reasonEl?.value || '',
-    payee:      payeeEl?.value || currentUser?.name,
+    payee:      (typeof _currentPayee==='function' ? _currentPayee() : (payeeEl?.value||'')) || currentUser?.name,
     name:       applicantEl?.value || currentUser?.name,
     applyDate:  _applyDateVal,
     employeeId: employeeIdEl?.value || '',
+    payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
     pretax, tax, total, items,
     files: window._uploadedDraftFiles || [], // 草稿已上傳的附件（確保不被清空）
   });
@@ -7845,9 +7849,10 @@ async function saveDraftForm(silent = false) {
     reason:     reasonEl?.value  || '',
     pretax, tax, total, items,
     name:       applicantEl2?.value || currentUser?.name || '',
-    payee:      payeeEl2?.value     || '',
+    payee:      (typeof _currentPayee==='function' ? _currentPayee() : (payeeEl2?.value||'')) || '',
     department: deptEl2?.value      || '',
     employeeId: empIdEl2?.value     || '',
+    payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
     applyDate:  applyDateEl2?.value || '',
   };
 
@@ -10941,7 +10946,7 @@ function autoSaveDraft(){
   const _empIdEl2=document.getElementById('employee-id');
   const _applyDateEl2=document.getElementById('apply-date');
   const draft={subject:subjectEl?.value||'',reason:reasonEl?.value||'',items:_items,ts:Date.now(),
-    name:_applicantEl2?.value||'', payee:_payeeEl2?.value||'',
+    name:_applicantEl2?.value||'', payee:(typeof _currentPayee==='function' ? _currentPayee() : (_payeeEl2?.value||'')),
     department:_deptEl2?.value||'', employeeId:_empIdEl2?.value||'',
     applyDate:_applyDateEl2?.value||'',
     owner:(currentUser&&currentUser.email)||'',   // 綁定草稿擁有者，避免共用電腦跨使用者還原
