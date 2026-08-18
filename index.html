@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818155651';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818155754';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5468,10 +5468,14 @@ async function _doPrint() {
     document.body.classList.remove('printing');
     document.getElementById('print-root')?.remove();
     window.removeEventListener('afterprint', restore);
+    window.removeEventListener('focus', restore);
   }
   window.addEventListener('afterprint', restore);
+  // 取消列印時 afterprint 不一定會觸發，但對話框關閉後視窗會拿回焦點 → 當作收工訊號。
+  // 沒清乾淨的話，這份請款單快照會一直留在頁面裡，之後在任何頁面按列印都會印到它。
+  window.addEventListener('focus', restore);
   window.print();
-  setTimeout(restore, 60000);   // afterprint 沒觸發時的保險
+  setTimeout(restore, 15000);
 }
 
 
@@ -7926,6 +7930,11 @@ function _resolvePermPending(){
   } catch(e) {}
 }
 function sw(name,elOrName,_fromPop){
+  // 保險：切頁一律清掉列印用的暫存文件（殘留會讓其他頁面按列印時印出上一張案件）
+  try {
+    document.getElementById('print-root')?.remove();
+    document.body.classList.remove('printing');
+  } catch(e) {}
   // ── 權限守門：無權限的受限頁面 → 顯示「沒有權限」頁（入口不隱藏，點進來才擋）──
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
     if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name, !window._rolesSyncedOnce); return; }
