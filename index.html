@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818170255';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818170532';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8452,49 +8452,29 @@ function syncApplicantFields(){
   if(!sel)return;
   const name=sel.value;
 
-  // 員工編號要跟著「收款人」：請款是匯進收款人的薪轉戶，帶申請人的編號會對不上人
-  // （勾了「同申請人」時收款人本來就等於申請人，行為不變）
+  // 員工編號跟著「收款人」：請款匯進收款人的薪轉戶，帶申請人的編號會對不上人
   const _paySel = document.getElementById('payee-select');
-  const _payName = (_paySel && _paySel.value) || name;
+  const _payName = (_paySel && _paySel.value) || '';
 
-  // 優先從使用者表格依 email（最可靠）或姓名比對
-  // 嘗試從 LOCAL_USER_LIST 依姓名比對取得員工編號和部門
-  const _luByPayee = LOCAL_USER_LIST.find(function(u){ return u.name === _payName; });
-  const _luByName  = LOCAL_USER_LIST.find(function(u){ return u.name === name; });
-  let matchedEmpId=(_luByPayee&&_luByPayee.employeeId)||'';
-  let matchedDept=(_luByName&&_luByName.dept)||'';
-  // 名單查得到這個人 → 以名單為準，不讓下面的管理頁表格備援覆寫（那張表可能撈到別人的編號）
-  const _payeeKnown = !!_luByPayee;
+  // ★ 只信 LOCAL_USER_LIST（來自後端 getMembers）。
+  //   舊版還會從管理頁表格 DOM 撈編號當備援，但那張表在一般使用者頁面是空的／未渲染，
+  //   空字串比對又會誤中，導致填入別人的編號（T0066 事件）。備援已整段移除。
+  const _luByPayee = _payName ? LOCAL_USER_LIST.find(function(u){ return u.name === _payName; }) : null;
+  const _luByName  = name    ? LOCAL_USER_LIST.find(function(u){ return u.name === name; })    : null;
 
-  document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
-    const nameEl=row.querySelector('td:nth-child(2) span');
-    const empCell=row.querySelector('td:nth-child(3)');
-    const emailCell=row.querySelector('td:nth-child(5)');
-    const rowName=nameEl?nameEl.textContent.trim():'';
-    const rowEmail=emailCell?emailCell.textContent.trim():'';
-    // 姓名完全符合 OR email 和登入者相同
-    // 員工編號比對收款人、部門比對申請人
-    // 必須有姓名才比對：開表單當下收款人下拉還沒填好，_payName 是空字串，
-    // 表格裡任何抓不到姓名的列都會 ''==='' 命中 → 撈到別人的員工編號
-    if(!_payeeKnown && _payName && rowName && (rowName===_payName) && !matchedEmpId && empCell){
-      const v=empCell.textContent.trim();
-      if(v&&v!=='—') matchedEmpId=v;
-    }
-    const isMatch=(name && rowName && rowName===name)||(currentUser&&rowEmail&&rowEmail===currentUser.email);
-    if(isMatch){
-      if(!matchedDept) matchedDept=row.dataset.dept||'';
-    }
-  });
-
-  // 員工編號
   const empInput=document.getElementById('employee-id');
-  // 名單查得到就一定覆寫（不保留草稿或上一位收款人留下的殘值）
-  if(empInput && (matchedEmpId || _payeeKnown)) empInput.value=matchedEmpId;
+  if(empInput){
+    // 查得到就填，查不到就留空——寧可空白，也不要顯示錯的人的編號
+    empInput.value = (_luByPayee && _luByPayee.employeeId) || '';
+  }
 
-  // 所屬部門
   const deptSel=document.getElementById('form-dept-select');
-  if(deptSel&&matchedDept) deptSel.value=matchedDept;
+  if(deptSel){
+    const _d = (_luByName && _luByName.dept) || '';
+    if(_d) deptSel.value = _d;
+  }
 }
+
 // 向下相容舊呼叫
 function syncEmployeeId(){ syncApplicantFields(); }
 
