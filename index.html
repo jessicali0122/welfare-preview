@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818113352';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818113727';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1250,8 +1250,10 @@ span.flatpickr-weekday{color:#767B75!important;font-weight:700!important;font-si
 /* Dashboard 和案件追蹤：隱藏 checkbox 欄 */
 .dashboard-table th:first-child,.dashboard-table td:first-child,
 .app-table th:first-child,.app-table td:first-child{display:none!important}
-.ic-summary{font-size:12px;color:#767B75;display:none;margin-left:6px;font-weight:500}
-.item-card.ic-collapsed .ic-summary{display:inline}
+.ic-summary{font-size:14px;display:none;margin-left:10px;gap:10px;align-items:center}
+.item-card.ic-collapsed .ic-summary{display:inline-flex}
+.ic-sum-name{color:#2E332D;font-weight:500}
+.ic-sum-amt{color:#577B53;font-weight:700;white-space:nowrap}
 
 /* ── 5. 可排序欄標題 ── */
 .sortable-th{cursor:pointer;user-select:none;white-space:nowrap}
@@ -11154,8 +11156,18 @@ function toggleItemCard(btn) {
     if (isCollapsed) {
       const desc  = card.querySelector('.desc-inp')?.value || '';
       const total = parseFloat(card.querySelector('.withtax')?.value) || 0;
-      summary.textContent = (desc ? desc.slice(0, 12) + (desc.length > 12 ? '…' : '') : '（未填寫）')
-        + (total > 0 ? '  NT$' + total.toLocaleString() : '');
+      // 品名與金額分開排版：品名深色、金額綠色粗體，收合列才看得出是哪一筆（原本整串 12px 灰字）
+      summary.innerHTML = '';
+      const _sName = document.createElement('span');
+      _sName.className = 'ic-sum-name';
+      _sName.textContent = desc ? (desc.slice(0, 18) + (desc.length > 18 ? '…' : '')) : '（未填寫）';
+      summary.appendChild(_sName);
+      if (total > 0) {
+        const _sAmt = document.createElement('span');
+        _sAmt.className = 'ic-sum-amt';
+        _sAmt.textContent = 'NT$' + total.toLocaleString();
+        summary.appendChild(_sAmt);
+      }
     } else {
       summary.textContent = '';
     }
