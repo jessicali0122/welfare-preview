@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818092810';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818093433';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -496,15 +496,12 @@ input[type=checkbox]{accent-color:#577B53}
 /* 品項表格：內部捲動框，框高由 JS 動態對齊「右欄」高度（左右一樣高，隨壽星人數變動）。
    原生雙捲軸常駐（橫向在框底、直向在框右都隨手可及），工具列在框下方正常排版 → 零重疊。
    max-height 給一個 CSS 後援值，避免 JS 未跑時無上限。 */
-/* 藏掉框的原生捲軸（只藏橫向在 Chrome 不可靠 → 整組藏）。橫向改用下方 sticky 拉桿；直向用滾輪捲動。 */
-#ht-items-scroll{overflow:auto;max-height:80vh;scrollbar-width:none;-ms-overflow-style:none}
-#ht-items-scroll::-webkit-scrollbar{display:none;width:0;height:0}
-/* 表格上方常駐橫向捲軸（與表格同步） */
-#ht-hbar{scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
-#ht-hbar::-webkit-scrollbar{-webkit-appearance:none;height:11px}
-#ht-hbar::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
-#ht-hbar::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
-#ht-hbar::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
+/* 框剛好塞滿可視高度（JS 設 height）→ 原生雙捲軸都在框邊緣、隨手可及、下方不露內容、只有一條橫向。 */
+#ht-items-scroll{overflow:auto;max-height:80vh;scrollbar-width:auto;scrollbar-color:#A9C4A5 #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar{-webkit-appearance:none;width:11px;height:11px}
+#ht-items-scroll::-webkit-scrollbar-track{background:#ECEEEA;border-radius:20px}
+#ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
+#ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
 /* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}） */
 #ht-items-scroll thead th{position:sticky;top:0;z-index:3;background:#fff!important;box-shadow:0 2px 0 #577B53}
 /* 凍結品名（第一欄）：左右捲動時品名固定可見；box-shadow 當分隔線 */
@@ -3627,7 +3624,6 @@ thead th{color:#767B75!important}
         </div>
         </div>
         <!-- 常駐橫向拉桿：放在品項各列下方，與表格同步（箭頭之外也保留一根可拖的拉桿） -->
-        <div id="ht-hbar" style="display:none;overflow-x:auto;overflow-y:hidden;position:sticky;bottom:0;z-index:7;background:#fff;padding:7px 20px 8px;margin:0"><div id="ht-hbar-inner" style="height:1px"></div></div>
         <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
         <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
           <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;align-items:center;padding:10px 20px">
@@ -15765,9 +15761,11 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     var rightBottom = rightCol.getBoundingClientRect().bottom;
     var toolbar = document.getElementById('ht-items-toolbar');
     var toolbarH = toolbar ? toolbar.offsetHeight : 0;
-    var h = Math.round(rightBottom - boxTop - toolbarH - 6);
-    // 框高＝與右欄等高（橫向由左右箭頭處理，箭頭永遠在框中央可見，不必靠框底捲軸 → 不再卡視窗上限）
-    // 用固定 height（對齊右欄）；maxHeight 設 none 覆蓋 CSS 的 80vh 後援
+    // 框高取「與右欄等高」和「塞得進可視畫面」兩者的較小值 →
+    // 這樣原生橫向捲軸永遠在可視框底（隨手可拉、下方不露內容、只有一條）；右欄很高（很多壽星）時左邊以塞滿畫面為準。
+    var wantH = rightBottom - boxTop - toolbarH - 6;
+    var fitH  = window.innerHeight - boxTop - toolbarH - 16;   // 讓框底＋工具列剛好在畫面內
+    var h = Math.round(Math.min(wantH, fitH));
     main.style.maxHeight = 'none';
     main.style.height = (h >= 220) ? (h + 'px') : '';
   } else {
@@ -15777,7 +15775,6 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
     _htHeightBound = true;
     window.addEventListener('resize', function(){ try { _htSyncTopScrollbar(); } catch(e){} });
   }
-  _htSyncHBar();
 }
 
 // ── 表格上方常駐橫向捲軸：與表格左右同步，永遠在表頭上方可見（窄視窗/框很高也能左右拉）──
