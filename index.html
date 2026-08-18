@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818122815';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818122944';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8022,7 +8022,7 @@ async function _syncMembersFromServer() {
       LOCAL_EMAIL_TO_NAME[u.email] = u.name;
       // 更新 LOCAL_USER_LIST
       const idx = LOCAL_USER_LIST.findIndex(function(x){ return x.email === u.email; });
-      const entry = { name: u.name, email: u.email, dept: u.department || '', employeeId: u.employeeId || '' };
+      const entry = { name: u.name, email: u.email, dept: u.department || '', employeeId: u.employeeId || '', roles: u.roles || '' };
       if (idx >= 0) LOCAL_USER_LIST[idx] = entry;
       else LOCAL_USER_LIST.push(entry);
       // 儲存其他成員頭像到 localStorage（供 nameChip 顯示）
@@ -8231,14 +8231,28 @@ function syncEmployeeId(){ syncApplicantFields(); }
 function _fillFormMemberSelects(){
   var list = (LOCAL_USER_LIST || []).filter(function(u){ return u && u.name; });
   if (!list.length) return;
-  var seen = {}, names = [];
-  list.forEach(function(u){ if (!seen[u.name]) { seen[u.name] = 1; names.push(u.name); } });
-  names.sort(function(a,b){ return a.localeCompare(b, 'zh-Hant'); });
-  var optsHtml = names.map(function(n){ return '<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>'; }).join('');
+  var _namesOf = function(arr){
+    var seen = {}, names = [];
+    arr.forEach(function(u){ if (!seen[u.name]) { seen[u.name] = 1; names.push(u.name); } });
+    names.sort(function(a,b){ return a.localeCompare(b, 'zh-Hant'); });
+    return names;
+  };
+  var _optsOf = function(names){
+    return names.map(function(n){ return '<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>'; }).join('');
+  };
+  // 申請人只會是福委（含管理者），收款人則可能是任何同事 → 兩個下拉用不同名單
+  var welfare = list.filter(function(u){ return /福委|管理者/.test(String(u.roles || '')); });
+  if (!welfare.length) welfare = list;   // 角色資料還沒到位時不要讓下拉變空
+  var namesByeId = {
+    'applicant-select': _namesOf(welfare),
+    'payee-select'    : _namesOf(list)
+  };
   ['applicant-select','payee-select'].forEach(function(id){
     var sel = document.getElementById(id);
     if (!sel) return;
     var cur = sel.value;
+    var names = namesByeId[id];
+    var optsHtml = _optsOf(names);
     sel.innerHTML = optsHtml;
     // 目前選的值若不在名單（例如非系統成員），補回並選取
     if (cur && names.indexOf(cur) < 0) { sel.insertBefore(new Option(cur, cur, true, true), sel.firstChild); }
