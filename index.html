@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818162240';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818162414';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3574,6 +3574,7 @@ thead th{color:#767B75!important}
             <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;background:#F2A03D;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M6.5 8h11l-1.2 11.4a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="#fff"/><rect x="5.4" y="6.4" width="13.2" height="2.2" rx="1.1" fill="#fff"/><rect x="13.2" y="1.8" width="1.8" height="7" rx=".9" transform="rotate(14 14 5)" fill="#fff"/></svg></span><span style="font-size:12px;color:#767B75">午茶日</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#767B75">國定假日</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#577B53"></div><span style="font-size:12px;color:#767B75">節慶</span></div>
+            <div style="display:flex;align-items:center;gap:5px"><span style="font-size:12px;line-height:1">🎂</span><span style="font-size:12px;color:#767B75">壽星</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e9f1e7"></div><span style="font-size:12px;color:#767B75">今天</span></div>
             </div>
           </div>
@@ -14702,6 +14703,13 @@ function htRenderCalendar() {
         + '<div style="font-size:12px;color:#E0820A;font-weight:600;line-height:1">午茶日</div></div>';
     } else {
       bottomLabel = '<div style="height:16px"></div>';
+    }
+    // 壽星標註：跟節日／午茶日並存（同一天可能都有），資料來自 _BF_USER_BDAYS
+    var _bd = (window._BF_USER_BDAYS || []).filter(function(b){ return b.m === m && b.d === d; });
+    if (_bd.length) {
+      var _names = _bd.map(function(b){ return b.name; });
+      var _txt = _names.length <= 2 ? _names.join('、') : (_names[0] + ' 等 ' + _names.length + ' 位');
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2410C;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🎂 ' + htEsc(_txt) + '</div>';
     }
 
     if (hasEvent) {
