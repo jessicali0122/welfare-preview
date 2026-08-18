@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818162951';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818163152';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3718,6 +3718,10 @@ thead th{color:#767B75!important}
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
             <div style="display:none"><div id="ht-event-month-display">—</div></div>
             <div>
+              <div style="grid-column:1/-1">
+                <label style="display:block;font-size:12px;color:#767B75;font-weight:600;margin-bottom:4px">活動名稱</label>
+                <input id="ht-event-title" type="text" placeholder="未填寫時顯示「午茶日」" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff">
+              </div>
               <div style="font-size:12px;color:#767B75;margin-bottom:5px">活動日期</div>
               <input id="ht-event-date" type="text" placeholder="選擇日期" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff;cursor:pointer">
             </div>
@@ -13813,7 +13817,7 @@ function htRenderEvents() {
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
         +   '</div>'
         +   '<div style="flex:1;min-width:0">'
-        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ (orgLine || (mNum+'月午茶日')) + srcTag +'</div>'
+        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ ((ev.title && ev.title.trim()) ? htEsc(ev.title.trim()) : (orgLine || (mNum+'月午茶日'))) + srcTag +'</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (ev.headcount ? '<span>👥 '+ev.headcount+' 人</span>' : '')
         +       ((ev.birthdays && ev.birthdays.length) ? '<span>🎂 '+ev.birthdays.length+' 位壽星</span>' : '')
@@ -14768,7 +14772,7 @@ function htRenderCalendar() {
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+dayNum+'</div>'
         +   '</div>'
         +   '<div style="flex:1;min-width:0">'
-        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">午茶日'+srcTag+'</div>'
+        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc((e.title && e.title.trim()) ? e.title.trim() : '午茶日')+srcTag+'</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (e.headcount ? '<span>👥 '+e.headcount+' 人</span>' : '')
         +       ((e.birthdays && e.birthdays.length) ? '<span>🎂 '+e.birthdays.length+' 位壽星</span>' : '')
@@ -15768,7 +15772,8 @@ function _htUpdateQtyHint() {
 
 function htRenderDetailHeader() {
   var ev = _htEvent;
-  document.getElementById('ht-detail-title').textContent = fmtMonth(ev.month) + ' 午茶日';
+  document.getElementById('ht-detail-title').textContent = (ev.title && ev.title.trim()) ? ev.title.trim() : (fmtMonth(ev.month) + ' 午茶日');
+  var _tEl = document.getElementById('ht-event-title'); if (_tEl) _tEl.value = ev.title || '';
   // 副標不再重複「人數／主辦」（下方活動設定已有欄位），改顯示星期＋倒數，提供活動設定沒有的即時資訊
   var subHtml;
   if (ev.date) {
@@ -15942,8 +15947,11 @@ window.htSaveEventInfo = async function() {
   var bdayCount = (_htEvent.birthdays || []).length;
   var org1 = (document.getElementById('ht-event-org1') || {}).value || '';
   var org2 = (document.getElementById('ht-event-org2') || {}).value || '';
+  var _titleEl = document.getElementById('ht-event-title');
+  var _title = _titleEl ? _titleEl.value.trim() : '';
   var r = await htApi('htUpdate', {
     eventId: _htEvent.eventId,
+    title: _title,
     date: document.getElementById('ht-event-date').value,
     headcount: hc,
     budgetPerPerson: bp,
@@ -15952,6 +15960,7 @@ window.htSaveEventInfo = async function() {
     organizer2: org2,
   });
   if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '未知錯誤')); return; }
+  _htEvent.title = _title;
   _htEvent.headcount = hc;
   _htEvent.budgetPerPerson = bp;
   _htEvent.totalBudget = hc * bp + (bdayCount > 0 ? hc : 0) * 40;

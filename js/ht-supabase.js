@@ -70,6 +70,7 @@
     return {
       eventId        : String(r.event_id),
       month          : String(r.month || ''),
+      title          : String(r.title || ''),   // 自訂活動名稱；空的話前端顯示「午茶日」
       date           : r.event_date || '',
       headcount      : Number(r.headcount) || 0,
       budgetPerPerson: Number(r.budget_pp) || 0,
@@ -230,6 +231,7 @@
       event_id: eventId,
       month: p.month,
       event_date: p.date || null,
+      title: p.title || null,
       headcount: Number(p.headcount) || 0,
       budget_pp: Number(p.budgetPerPerson) || 0,
       budget_total: Number(p.totalBudget) || 0,
@@ -252,6 +254,7 @@
     if (!p || !p.eventId) return { ok: false, error: '缺少活動編號' };
     var patch = {};
     if (p.date !== undefined) patch.event_date = p.date || null;
+    if (p.title !== undefined) patch.title = p.title || null;
     if (p.headcount !== undefined) patch.headcount = Number(p.headcount) || 0;
     if (p.budgetPerPerson !== undefined) patch.budget_pp = Number(p.budgetPerPerson) || 0;
     if (p.totalBudget !== undefined) patch.budget_total = Number(p.totalBudget) || 0;
