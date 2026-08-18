@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818123217';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818123903';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8715,9 +8715,11 @@ async function uploadPendingFiles(caseId, files) {
   let ok = 0, fail = 0;
   const failedNames = [];
 
-  // ── 並行壓縮 + 上傳 ──
+  // ── 並行壓縮，但逐一上傳 ──
+  // 後端把附件清單存在同一格，並行上傳會互相覆蓋（傳兩個檔只留下一個）
   const _compressed = await Promise.all(files.map(f => compressImageFile(f)));
-  await Promise.all(_compressed.map(async function(file) {
+  for (const file of _compressed) {
+    await (async function(file) {
     try {
       const b64 = await fileToBase64(file);
       const res = await callAPI('uploadFile', {
@@ -8740,7 +8742,8 @@ async function uploadPendingFiles(caseId, files) {
       failedNames.push(file.name);
       console.error('上傳例外', file.name, e);
     }
-  }));
+    })(file);
+  }
 
   window._pendingFiles = [];
   _cacheClear();
