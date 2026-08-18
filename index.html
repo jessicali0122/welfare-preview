@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818105537';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818111306';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6229,7 +6229,11 @@ function _showRowMenu(btn, caseId, type) {
     'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['🖨️ 列印',     () => printCase(caseId)]],
     'pending': [['👁 查看詳情',  () => loadDetail(caseId)]],
   };
-  const items = actionMap[type] || actionMap['pending'];
+  let items = actionMap[type] || actionMap['pending'];
+  // 管理員：非草稿案件也能從清單直接刪除（原本只有詳情頁右欄有入口）
+  if (type !== 'draft' && typeof isAdmin === 'function' && isAdmin()) {
+    items = items.concat([['🗑️ 刪除案件', () => adminDeleteCaseById(caseId)]]);
+  }
   items.forEach(([label, fn]) => {
     const div = document.createElement('div');
     div.style.cssText = 'padding:10px 16px;cursor:pointer;color:#4A4F49;transition:background .1s';
@@ -7438,6 +7442,10 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
 function adminDeleteCase() {
   const box = document.getElementById('admin-delete-box');
   const caseId = box && box.getAttribute('data-caseid');
+  adminDeleteCaseById(caseId);
+}
+// ── 管理員刪除案件（指定 caseId，可從清單三點選單或詳情頁呼叫）──
+function adminDeleteCaseById(caseId) {
   if (!caseId) return;
   _showConfirmModal(
     '確定要永久刪除案件嗎？',
