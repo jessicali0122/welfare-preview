@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818122252';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818122709';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2902,7 +2902,7 @@ thead th{color:#767B75!important}
                   <input type="checkbox" id="same-as-applicant" checked onchange="toggleSameAsApplicant(this)">同申請人
                 </label>
               </div>
-              <select class="inp" id="payee-select" disabled>
+              <select class="inp" id="payee-select" disabled onchange="syncApplicantFields()">
               </select>
             </div>
             <div>
@@ -8174,10 +8174,16 @@ function syncApplicantFields(){
   if(!sel)return;
   const name=sel.value;
 
+  // 員工編號要跟著「收款人」：請款是匯進收款人的薪轉戶，帶申請人的編號會對不上人
+  // （勾了「同申請人」時收款人本來就等於申請人，行為不變）
+  const _paySel = document.getElementById('payee-select');
+  const _payName = (_paySel && _paySel.value) || name;
+
   // 優先從使用者表格依 email（最可靠）或姓名比對
   // 嘗試從 LOCAL_USER_LIST 依姓名比對取得員工編號和部門
-  const _luByName = LOCAL_USER_LIST.find(function(u){ return u.name === name; });
-  let matchedEmpId=(_luByName&&_luByName.employeeId)||'';
+  const _luByPayee = LOCAL_USER_LIST.find(function(u){ return u.name === _payName; });
+  const _luByName  = LOCAL_USER_LIST.find(function(u){ return u.name === name; });
+  let matchedEmpId=(_luByPayee&&_luByPayee.employeeId)||'';
   let matchedDept=(_luByName&&_luByName.dept)||'';
 
   document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
@@ -8187,12 +8193,13 @@ function syncApplicantFields(){
     const rowName=nameEl?nameEl.textContent.trim():'';
     const rowEmail=emailCell?emailCell.textContent.trim():'';
     // 姓名完全符合 OR email 和登入者相同
+    // 員工編號比對收款人、部門比對申請人
+    if((rowName===_payName) && !matchedEmpId && empCell){
+      const v=empCell.textContent.trim();
+      if(v&&v!=='—') matchedEmpId=v;
+    }
     const isMatch=rowName===name||(currentUser&&rowEmail===currentUser.email);
     if(isMatch){
-      if(!matchedEmpId&&empCell){
-        const v=empCell.textContent.trim();
-        if(v&&v!=='—') matchedEmpId=v;
-      }
       if(!matchedDept) matchedDept=row.dataset.dept||'';
     }
   });
@@ -10355,6 +10362,8 @@ function syncPayeeIfSame(){
     const payee=document.getElementById('payee-select');
     if(applicant&&payee)payee.value=applicant.value;
   }
+  // 收款人變了，員工編號要跟著換
+  if(typeof syncApplicantFields==='function') syncApplicantFields();
 }
 
 function closeMobileUserSheet(){
