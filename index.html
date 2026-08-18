@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818103227';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818104309';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -942,20 +942,13 @@ input[type=checkbox]{accent-color:#577B53}
   /* ── 列印頁首 ── */
   .print-header{display:block!important}
 
-  /* ── detail-grid：列印改 flex 單欄，順序：簽核進度 → 申請資訊 → 請款明細 ── */
+  /* ── detail-grid：列印改「block 單欄」讓內容自然分頁（flex 容器會把左欄整塊視為不可分割 →
+     塞不下就整塊跳頁，害簽核進度獨佔一頁+大留白）。順序由 _doPrint 在列印前用 DOM 調整（簽核進度移到最前）。── */
   #detail-grid{
-    display:flex!important;
-    flex-direction:column!important;
-    gap:8px!important;
+    display:block!important;
+    gap:0!important;
   }
-  /* 左欄（申請資訊+明細）排第二 */
-  #detail-grid > div:first-child{
-    order:2!important;
-    width:100%!important;
-  }
-  /* 右欄（簽核進度）排第一 */
-  #detail-grid > div:last-child{
-    order:1!important;
+  #detail-grid > div{
     width:100%!important;
     margin-top:0!important;
   }
@@ -5274,11 +5267,22 @@ function _doPrint() {
   card.style.breakBefore     = 'page';
   card.style.marginTop       = '0';
   detail.appendChild(card);
+  // 列印改 block 版面後，用 DOM 把「簽核進度」（右欄，原本在最後）移到最前，維持「簽核進度→申請資訊→明細」順序。
+  // （block 讓各卡片能自然跨頁，不會再有簽核進度獨佔一頁+大留白）
+  var grid = document.getElementById('detail-grid');
+  var leftCol = grid ? grid.firstElementChild : null;
+  var rightCol = grid ? grid.lastElementChild : null;
+  var reordered = false;
+  if (grid && rightCol && leftCol && rightCol !== leftCol) {
+    grid.insertBefore(rightCol, leftCol);
+    reordered = true;
+  }
   function restore() {
     card.style.pageBreakBefore = '';
     card.style.breakBefore     = '';
     card.style.marginTop       = '';
     if (card.parentNode !== parent) parent.insertBefore(card, nextSib);
+    if (reordered && grid && rightCol) grid.appendChild(rightCol); // 還原：簽核進度移回最後
     window.removeEventListener('afterprint', restore);
   }
   window.addEventListener('afterprint', restore);
