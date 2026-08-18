@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818115916';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818120243';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -918,7 +918,7 @@ input[type=checkbox]{accent-color:#577B53}
   }
 
   /* ── 卡片內距縮小 ── */
-  .card[style*="padding:20px"]{padding:12px 14px!important}
+  .card[style*="padding:20px"]{padding:10px 14px!important}
   /* ── 申請資訊：維持3欄，欄位重新排序 ── */
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:repeat(3,1fr)!important;gap:10px 16px!important}
   #view-detail #detail-grid [style*="grid-template-columns:1fr 1fr 1fr"] > div:nth-child(1){order:1}  /* 主旨 */
@@ -971,7 +971,7 @@ input[type=checkbox]{accent-color:#577B53}
     align-items:center!important;
     text-align:center!important;
     position:relative!important;
-    padding:22px 6px 8px!important; /* 葉子（底緣 16px）到文字約 6px，與下方行距一致 */
+    padding:14px 6px 6px!important; /* 列印壓縮：讓簽核進度+申請資訊+明細塞得進第一頁 */
     border-top:2px dashed #D2D6D0!important;
     gap:0!important;
   }
@@ -1023,7 +1023,7 @@ input[type=checkbox]{accent-color:#577B53}
     border:1px solid #D5DAD2!important;
     break-inside:avoid!important;
     page-break-inside:avoid!important;
-    margin-bottom:12px!important;   /* 原 6px：卡片幾乎黏在一起 */
+    margin-bottom:6px!important;   /* 卡片之間不留大空隙 */
   }
   /* 附件卡片允許跨頁，確保全部附件都能列印出來 */
   #detail-files-card{
@@ -1118,15 +1118,14 @@ input[type=checkbox]{accent-color:#577B53}
   /* 請款明細：表格允許跨頁（整塊不可切時，塞不進當前頁就整塊跳頁 → 前一頁留大片空白），
      但每一列不被腰斬 */
   .card:has(#detail-items-tbody){
-    break-inside:auto!important;
-    page-break-inside:auto!important;
+    break-inside:avoid!important;
+    page-break-inside:avoid!important;
   }
   #detail-items-tbody tr,
   thead tr, tfoot tr{
     break-inside:avoid!important;
     page-break-inside:avoid!important;
   }
-  thead{display:table-header-group}
 
   /* 區塊標題必須跟著內容走，否則會出現「標題在上一頁、內容在下一頁」的空白頁 */
   .section-title{
@@ -1181,7 +1180,7 @@ input[type=checkbox]{accent-color:#577B53}
 .print-header-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.06em;margin-left:8px}
 .print-header-meta{font-size:12px;color:#767B75}
 @media print{
-  @page{margin:12mm 14mm 16mm 14mm}
+  @page{margin:10mm 14mm 14mm 14mm}
   table{width:100%!important;font-size:14px!important}
   td[style*="font-weight:700"]{font-weight:700!important}
 }
