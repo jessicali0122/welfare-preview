@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818114529';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818114808';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1088,6 +1088,16 @@ input[type=checkbox]{accent-color:#577B53}
     display:block!important;
   }
   #detail-files-list a{display:block!important}
+  /* 多頁 PDF 的項目比一張紙高，若維持 break-inside:avoid 會整塊被推到下一頁、
+     前一頁留一大片空白 → 這種項目改成允許跨頁，分頁交給下面的 canvas 規則控制 */
+  #detail-files-list > div:has(.pdf-pages){
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
+  #detail-files-list .pdf-pages{
+    break-inside:auto!important;
+    page-break-inside:auto!important;
+  }
   /* PDF 逐頁 canvas：每頁自己一張紙 */
   #detail-files-list .pdf-page-canvas{
     break-before:page;
