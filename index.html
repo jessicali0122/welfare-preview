@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818124708';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818125017';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1145,10 +1145,63 @@ input[type=checkbox]{accent-color:#577B53}
     page-break-after:avoid!important;
   }
 
+  /* ── 固定版面列印：只印 #print-root，每頁內容由 _doPrint 明確指定 ──
+     （原本靠 break-inside/break-before 讓瀏覽器自行分頁，結果會被
+       頁首頁尾、縮放、紙張大小影響，時而留半頁空白、時而把表格切開）*/
+  body.printing #app,
+  body.printing #app-inner,
+  body.printing > *:not(#print-root){display:none!important}
+  body.printing #print-root{display:block!important}
+  body.printing #print-root .print-page{
+    break-after:page;
+    page-break-after:always;
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+  body.printing #print-root .print-page:last-child{
+    break-after:auto;
+    page-break-after:auto;
+  }
+  /* 附件頁：一張憑證獨占一頁，等比放到最大 */
+  body.printing #print-root .print-page-att{
+    text-align:center;
+  }
+  body.printing #print-root .print-page-att img{
+    max-width:100%!important;
+    max-height:250mm!important;
+    width:auto!important;
+    height:auto!important;
+    object-fit:contain!important;
+    display:inline-block!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+  /* 照片憑證：一頁排 4 張（2×2），省紙 */
+  body.printing #print-root .print-page-grid{
+    display:grid!important;
+    grid-template-columns:1fr 1fr!important;
+    gap:6mm!important;
+    align-items:center!important;
+  }
+  body.printing #print-root .print-page-grid img{
+    max-width:100%!important;
+    max-height:120mm!important;
+    width:auto!important;
+    height:auto!important;
+    object-fit:contain!important;
+    display:block!important;
+    margin:0 auto!important;
+    border:0!important;
+    border-radius:0!important;
+  }
+  body.printing #print-root .card{margin-bottom:10px!important}
+
   /* ── 操作紀錄 ── */
   #audit-log-section{display:none!important}
 }
 .print-header{display:none}
+/* ── 列印專用文件（固定版面）：螢幕上永遠不顯示 ── */
+#print-root{display:none}
 
 /* ── 權限隱藏：依角色能力隱藏元素（保留原本 display）── */
 .cap-hidden{display:none!important}
@@ -5324,37 +5377,96 @@ function showApp() {
 
 // ── 列印：移出 grid → print() → afterprint 再還原 ──
 // Chrome 的 window.print() 是非同步的，不能同步還原，否則 preview 渲染時 card 已被移回
-function _doPrint() {
-  var card   = document.getElementById('detail-files-card');
+async function _doPrint() {
   var detail = document.getElementById('view-detail');
-  if (!card || !detail) { window.print(); return; }
-  var parent  = card.parentNode;
-  var nextSib = card.nextSibling;
-  card.style.pageBreakBefore = 'always';
-  card.style.breakBefore     = 'page';
-  card.style.marginTop       = '0';
-  detail.appendChild(card);
-  // 列印改 block 版面後，用 DOM 把「簽核進度」（右欄，原本在最後）移到最前，維持「簽核進度→申請資訊→明細」順序。
-  // （block 讓各卡片能自然跨頁，不會再有簽核進度獨佔一頁+大留白）
-  var grid = document.getElementById('detail-grid');
-  var leftCol = grid ? grid.firstElementChild : null;
-  var rightCol = grid ? grid.lastElementChild : null;
-  var reordered = false;
-  if (grid && rightCol && leftCol && rightCol !== leftCol) {
-    grid.insertBefore(rightCol, leftCol);
-    reordered = true;
+  if (!detail) { window.print(); return; }
+
+  // ① 附件是捲到才載入的，列印前先把還沒載的補載完，否則會印出空白框
+  try {
+    var pend = detail.querySelectorAll('.drive-thumb-wrap[data-fileid]');
+    if (pend.length && typeof _loadOneThumb === 'function') {
+      pend.forEach(function(w){ try { _loadOneThumb(w, false); } catch(e) {} });
+    }
+    // 等圖片實際解出來（含 PDF 逐頁渲染），最多等 30 秒
+    var deadline = Date.now() + 30000;
+    while (Date.now() < deadline) {
+      var imgs = detail.querySelectorAll('#detail-files-list img');
+      var wraps = detail.querySelectorAll('.drive-thumb-wrap');
+      var allDone = imgs.length > 0 && [].every.call(imgs, function(im){ return im.complete && im.naturalWidth > 0; });
+      if (allDone || wraps.length === 0) break;
+      await new Promise(function(r){ setTimeout(r, 400); });
+    }
+  } catch(e) {}
+
+  // ② 組出固定版面：第一頁＝頁首+單號+簽核進度+申請資訊+請款明細，之後每張附件各一頁
+  document.getElementById('print-root')?.remove();
+  var root = document.createElement('div');
+  root.id = 'print-root';
+
+  var page1 = document.createElement('div');
+  page1.className = 'print-page';
+  var ph = detail.querySelector('.print-header');
+  if (ph) page1.appendChild(ph.cloneNode(true));
+  var head = document.getElementById('detail-case-no');
+  if (head && head.parentElement) {
+    var hc = head.parentElement.cloneNode(true);
+    hc.querySelectorAll('button,.no-print').forEach(function(n){ n.remove(); });
+    page1.appendChild(hc);
   }
+  var grid = document.getElementById('detail-grid');
+  if (grid) {
+    // 簽核進度（右欄）先放，接著申請資訊、請款明細（左欄），與螢幕閱讀順序一致
+    var flowCard = grid.querySelector('#flow-timeline') ? grid.querySelector('#flow-timeline').closest('.card') : null;
+    if (flowCard) page1.appendChild(flowCard.cloneNode(true));
+    grid.querySelectorAll('.card').forEach(function(c){
+      if (c === flowCard) return;
+      if (c.id === 'detail-files-card') return;
+      if (c.id === 'approve-box' || c.id === 'admin-delete-box' || c.id === 'resubmit-box') return;
+      if (c.id === 'audit-log-section' || c.id === 'resubmit-history-section') return;
+      if (!c.offsetParent && c.offsetHeight === 0) return;   // 螢幕上就隱藏的區塊不印
+      page1.appendChild(c.cloneNode(true));
+    });
+  }
+  root.appendChild(page1);
+
+  // 附件分兩種排法：
+  //  ・PDF（已逐頁渲染成圖）→ 照原稿，一頁一張紙
+  //  ・照片憑證 → 排成格狀，一頁放多張，不浪費紙
+  var PHOTOS_PER_PAGE = 4;
+  var photoPage = null, photoCount = 0;
+  detail.querySelectorAll('#detail-files-list img').forEach(function(im){
+    if (!im.src) return;
+    if (im.classList.contains('pdf-page-img')) {
+      var pg = document.createElement('div');
+      pg.className = 'print-page print-page-att';
+      pg.appendChild(im.cloneNode(true));
+      root.appendChild(pg);
+      photoPage = null; photoCount = 0;   // PDF 之後的照片重新開一頁
+      return;
+    }
+    if (!photoPage || photoCount >= PHOTOS_PER_PAGE) {
+      photoPage = document.createElement('div');
+      photoPage.className = 'print-page print-page-grid';
+      root.appendChild(photoPage);
+      photoCount = 0;
+    }
+    photoPage.appendChild(im.cloneNode(true));
+    photoCount++;
+  });
+
+  document.body.appendChild(root);
+  document.body.classList.add('printing');
+
   function restore() {
-    card.style.pageBreakBefore = '';
-    card.style.breakBefore     = '';
-    card.style.marginTop       = '';
-    if (card.parentNode !== parent) parent.insertBefore(card, nextSib);
-    if (reordered && grid && rightCol) grid.appendChild(rightCol); // 還原：簽核進度移回最後
+    document.body.classList.remove('printing');
+    document.getElementById('print-root')?.remove();
     window.removeEventListener('afterprint', restore);
   }
   window.addEventListener('afterprint', restore);
   window.print();
+  setTimeout(restore, 60000);   // afterprint 沒觸發時的保險
 }
+
 
 // ── 大頭貼：觸發上傳 ──
 function triggerAvatarUpload() {
