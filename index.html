@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818173553';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818173931';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3040,7 +3040,7 @@ thead th{color:#767B75!important}
               <input class="inp" id="form-dept-select" placeholder="依申請人自動帶入" readonly autocomplete="off"  style="background:#F7F8F6;color:#4A4F49">
             </div>
             <div>
-              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請時間</label>
+              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">③ 申請時間</label>
               <input class="inp" id="apply-date-display" value="" readonly placeholder="送出後自動產生" style="background:#F7F8F6;color:#767B75">
             </div>
           </div>
@@ -3102,20 +3102,23 @@ thead th{color:#767B75!important}
                   <input class="inp desc-inp" placeholder="例：慶生聚餐費用" value="">
                 </div>
               </div>
-              <!-- ⑫ 單據類型 -->
-              <div style="margin-bottom:10px">
-                <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑫ 單據類型 <span style="color:#dc2626">*</span></label>
-                <select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option></select>
-              </div>
-              <!-- ⑪ 金額 + 稅率切換 -->
-              <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-                <span style="font-size:12px;font-weight:600;color:#4A4F49">稅率</span>
-                <button type="button" class="tax-btn tax-active" onclick="setTaxRate(this,0.05)">5%（含稅）</button>
-                <button type="button" class="tax-btn" onclick="setTaxRate(this,0)">免稅</button>
+              <!-- ⑩ 單據類型 ＋ ⑪ 稅率：並排（單據類型只有兩個選項，不需要整列寬度）-->
+              <div style="display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:12px;align-items:end;margin-bottom:10px">
+                <div>
+                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑩ 單據類型 <span style="color:#dc2626">*</span></label>
+                  <select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option></select>
+                </div>
+                <div>
+                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑪ 稅率</label>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <button type="button" class="tax-btn tax-active" onclick="setTaxRate(this,0.05)">5%（含稅）</button>
+                    <button type="button" class="tax-btn" onclick="setTaxRate(this,0)">免稅</button>
+                  </div>
+                </div>
               </div>
               <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label>
+                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑫ 未稅金額 (NT$)</label>
                   <input class="inp pretax" type="number" placeholder="自動計算" value="" readonly style="background:#F7F8F6;color:#767B75">
                 </div>
                 <div>
@@ -8559,7 +8562,7 @@ function addItem(){
     <button type="button" class="tax-btn" onclick="setTaxRate(this,0)">免稅</button>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-    <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑪ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#F7F8F6;color:#767B75"></div>
+    <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑫ 未稅金額 (NT$)</label><input class="inp pretax" type="number" placeholder="自動計算" readonly style="background:#F7F8F6;color:#767B75"></div>
     <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">稅額 (NT$)</label><input class="inp taxamt" type="number" placeholder="自動計算" readonly style="background:#F7F8F6;color:#767B75"></div>
     <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#dc2626">*</span></label><input class="inp withtax" type="number" placeholder="請輸入含稅金額" oninput="calcRowFromTotal(this);updateFormProgress()" style="font-weight:700"></div>
   </div>
