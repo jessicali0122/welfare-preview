@@ -889,7 +889,7 @@ input[type=checkbox]{accent-color:#577B53}
   #sidebar-wrapper,#main-wrapper>header,
   .btn,.no-print,#toast,#receipt-confirm,
   #user-menu,#notif-panel,
-  #resubmit-box,#approve-box,#admin-delete-box,
+  #resubmit-box,#approve-box,#admin-delete-box,#void-box,
   #audit-log-section,#resubmit-history-section,
   #bottom-nav,
   #mobile-overlay,#mobile-user-sheet,
@@ -3301,6 +3301,12 @@ thead th{color:#767B75!important}
           <div style="font-size:12px;color:#767B75;margin-bottom:12px">此操作將永久刪除案件及所有附件，無法復原。</div>
           <button class="btn" style="width:100%;justify-content:center;background:#dc2626;color:#fff;font-size:14px" onclick="adminDeleteCase()">確認永久刪除</button>
         </div>
+        <!-- 管理員作廢單據（僅管理員可見；保留單號與資料，只標記狀態） -->
+        <div id="void-box" class="card" style="padding:16px;border:2px solid #fed7aa;display:none">
+          <div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:4px">🚫 作廢單據</div>
+          <div style="font-size:12px;color:#767B75;margin-bottom:12px">單號、明細與簽核紀錄都會保留，只把狀態標記為「作廢」，稽核仍查得到。</div>
+          <button class="btn" style="width:100%;justify-content:center;background:#ea580c;color:#fff;font-size:14px" onclick="voidCurrentCase()">確認作廢</button>
+        </div>
         <!-- 退件後重新申請（僅申請人可見） -->
         <div id="resubmit-box" class="card" style="padding:20px;border:2px solid #fca5a5;display:none">
           <div style="font-size:14px;font-weight:700;color:#dc2626;margin-bottom:3px">此案件已退件</div>
@@ -5515,7 +5521,7 @@ async function _doPrint() {
     grid.querySelectorAll('.card').forEach(function(c){
       if (c === flowCard) return;
       if (c.id === 'detail-files-card') return;
-      if (c.id === 'approve-box' || c.id === 'admin-delete-box' || c.id === 'resubmit-box') return;
+      if (c.id === 'approve-box' || c.id === 'admin-delete-box' || c.id === 'void-box' || c.id === 'resubmit-box') return;
       if (c.id === 'audit-log-section' || c.id === 'resubmit-history-section') return;
       if (!c.offsetParent && c.offsetHeight === 0) return;   // 螢幕上就隱藏的區塊不印
       page1.appendChild(c.cloneNode(true));
@@ -6477,7 +6483,7 @@ function goAuditPage(page) {
 // ── 共用：渲染單一案件列（總覽 + 案件追蹤 共用，確保完全一致）──
 function _renderCaseRow(c, opts) {
   opts = opts || {};
-  const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '草稿' ? 'bd' : 'bp';
+  const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : (c.status === '草稿' || c.status === '作廢') ? 'bd' : 'bp';
   const _stepInfo = getStepApproverInfo(c.step);
   const stepApproverName = c.status === '已退件'
     ? (c.rejectedBy ? (LOCAL_EMAIL_TO_NAME[c.rejectedBy] || c.rejectedBy) : _stepInfo.name)
@@ -7466,6 +7472,13 @@ async function loadDetail(caseId, _fromPop) {
     adminDelBox.style.display = isAdmin() ? 'block' : 'none';
     adminDelBox.setAttribute('data-caseid', c.caseId);
   }
+  // 作廢按鈕（管理員；草稿與已作廢的案件不顯示）
+  const voidBox = document.getElementById('void-box');
+  if (voidBox) {
+    const canVoid = isAdmin() && c.status !== '草稿' && c.status !== '作廢';
+    voidBox.style.display = canVoid ? 'block' : 'none';
+    voidBox.setAttribute('data-caseid', c.caseId);
+  }
 
   // ── 退件歷史紀錄（重送案件顯示過去的退件記錄）──
   _renderResubmitHistory(c);
@@ -7784,6 +7797,31 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   }
 }
 
+
+// ── 管理員作廢案件（保留單號與所有紀錄，只把狀態標記為「作廢」）──
+function voidCurrentCase() {
+  const box = document.getElementById('void-box');
+  voidCaseById(box && box.getAttribute('data-caseid'));
+}
+function voidCaseById(caseId) {
+  if (!caseId) return;
+  _showConfirmModal(
+    '確定要作廢這張單嗎？',
+    '案件 <strong>' + caseId + '</strong> 會標記為「作廢」，不再進行簽核。<br><span style="font-size:14px;color:#767B75">資料與簽核紀錄都會保留，稽核仍查得到。</span>',
+    '確認作廢', '#ea580c',
+    async function() {
+      toast('⏳ 作廢中...');
+      const res = await callAPI('voidCase', { caseId });
+      if (res && res.ok) {
+        toast('🚫 案件已作廢');
+        _cacheClear();
+        setTimeout(() => sw('applications'), 800);
+      } else {
+        toast('❌ 作廢失敗：' + ((res && res.error) || '請稍後再試'));
+      }
+    }
+  );
+}
 
 // ── 管理員刪除案件（任意狀態）──
 function adminDeleteCase() {
@@ -9316,7 +9354,8 @@ function updateDetailFlow(c){
   // 更新 badge
   const badge = document.getElementById('detail-status-badge');
   if (badge) {
-    if (isDone)     { badge.className='badge bg'; badge.textContent='已完成'; }
+    if (c.status === '作廢') { badge.className='badge bd'; badge.textContent='作廢'; }
+    else if (isDone)     { badge.className='badge bg'; badge.textContent='已完成'; }
     else if (isRejected){ badge.className='badge br'; badge.textContent='已退件'; }
     else            { badge.className='badge bp'; badge.textContent='簽核中'; }
   }
