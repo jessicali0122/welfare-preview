@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818203248';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260818204635';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3452,7 +3452,6 @@ thead th{color:#767B75!important}
               <option value="resubmit">重新送出</option>
               <option value="deleteFile">刪除附件</option>
               <option value="addUser">新增使用者</option>
-              <option value="editUser">編輯使用者</option>
               <option value="deleteUser">停用使用者</option>
             </select>
             <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:14px;padding:6px 10px" oninput="_debouncedAuditFilter()">
@@ -6360,7 +6359,7 @@ async function loadAuditLogDashboard() {
   }
   // 系統紀錄預設排除雜訊動作（登入、草稿建立/更新、上傳附件、刪除草稿），
   // 只保留真正需要追蹤的操作（送出、核准、退件、重送、刪附件、使用者管理…）
-  var _AUDIT_HIDE = ['login','draft_create','draft_update','upload','deleteDraft'];
+  var _AUDIT_HIDE = ['login','draft_create','draft_update','upload','deleteDraft','editUser'];
   _auditAllLogs = (res.logs || []).filter(function(l){ return _AUDIT_HIDE.indexOf(l.action) < 0; });
   // 若篩選條件已有值（例如重新整理時），重新套用而非直接渲染全部
   const _hasFilter = (document.getElementById('audit-filter-action')?.value || '').trim()
