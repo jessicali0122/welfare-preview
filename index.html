@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819142313';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819143008';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8408,10 +8408,20 @@ function sw(name,elOrName,_fromPop){
     if (_prevView && _prevView !== 'new-form') window._newFormReturnView = _prevView;
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
-  if (!_fromPop && window._appReady) {
+  // ★ 網址列一定要跟著目前這一頁走，否則重整會跳回上一個網址代表的頁面。
+  //   實際回報的災情：案件詳情（網址是 #detail/EWC-…）→ 按首頁 → 在首頁重整 →
+  //   又跳回那張案件。原因是 pushState 綁了 window._appReady，只要那個旗標還沒
+  //   翻正（或這次切頁沒走到 pushState），網址就停在 #detail/… 沒被更新。
+  //   → 改成無論如何都同步網址：_appReady 之前用 replaceState（不污染上一頁歷史），
+  //     之後才用 pushState（保留可回上一頁的行為）。
+  if (!_fromPop) {
     const mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview','feedback'];
     if (mainViews.includes(name)) {
-      history.pushState({ view: name }, '', '#' + name);
+      const _st = { view: name };
+      // 總覽用乾淨網址（與 showApp 的還原邏輯一致），其他頁用 #view
+      const _url = (name === 'dashboard') ? (location.pathname + location.search) : ('#' + name);
+      if (window._appReady) history.pushState(_st, '', _url);
+      else history.replaceState(_st, '', _url);
     }
   }
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
