@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819210813';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819211907';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6048,6 +6048,20 @@ const _BLOCKING_ACTIONS = {
 // 這裡把已知失效的案件標記起來，讓底稿跳過它們（改用骨架等真實資料）。
 window._staleCaseIds = window._staleCaseIds || {};
 function _markCaseStale(caseId) { if (caseId) window._staleCaseIds[caseId] = 1; }
+// 樂觀刪除後，也要把該筆從「list 的 API 快取」拿掉。
+// 否則切頁時 loadApplications 會先用這份還沒過期的快取重畫，把剛才刪掉的那筆又寫回
+// window._allCasesCache → 畫面上已刪的草稿又冒出來，要重整才會消失。
+function _removeCaseFromListCache(caseId) {
+  if (!caseId) return;
+  try {
+    var k = _cacheKey('list', {});
+    var c = _cacheGet(k);
+    if (c && Array.isArray(c.cases)) {
+      c.cases = c.cases.filter(function (x) { return x && x.caseId !== caseId; });
+      _cacheSet(k, c);
+    }
+  } catch (e) {}
+}
 // 依 _allCasesCache 重算所有計數徽章（共 N 件／案件清單／草稿匣／待我審核）
 // 樂觀刪除只把資料從快取拿掉並重繪列表，計數卻只在 loadApplications 裡算 → 刪掉一張草稿後
 // 「草稿匣 2」和「共 5 件」不會跟著減（使用者實際回報）。抽出來讓兩邊共用。
@@ -7187,7 +7201,18 @@ function appsSetTab(tab) {
 // 案件清單三個分頁（全部案件／草稿匣／待我審核）共用的排序：一律由新到舊。
 // 用 localeCompare 而非 `a > b ? 1 : -1`——後者在兩筆時間相同時兩個方向都回 -1，
 // 違反 comparator 規範，同一秒建立的案件順序會不穩定。
+// 清單「申請時間」欄顯示的是 applyDate || createdAt，排序若只看 createdAt，
+// 兩者不同的案件看起來就會像沒排序。這裡用同一個值排，並吸收格式差異
+// （ISO 的 2026-08-19T11:47:53.000Z 與本地格式的 2026/08/19 20:46 直接比字串會錯亂）。
+function _caseTimeVal(c) {
+  var s = String((c && (c.applyDate || c.createdAt)) || '').trim();
+  if (!s) return 0;
+  var t = Date.parse(s.replace(/\//g, '-').replace(' ', 'T'));
+  return isNaN(t) ? 0 : t;
+}
 function _byCreatedDesc(a, b) {
+  var d = _caseTimeVal(b) - _caseTimeVal(a);
+  if (d) return d;
   return String(b && b.createdAt || '').localeCompare(String(a && a.createdAt || ''));
 }
 // renderApplications: 根據 _appsTab 重新渲染案件列表
@@ -8359,6 +8384,7 @@ function confirmDeleteDraftById(caseId) {
     function() {
       // 樂觀更新：草稿立刻從畫面消失，後端在背景刪（同 adminDeleteCaseById 的理由）
       var _removed = _removeCaseLocally(caseId);
+      _removeCaseFromListCache(caseId);   // 不清這份快取，切頁重畫時已刪的草稿會被寫回來
       _markCaseStale(caseId);
       localStorage.removeItem('bf_draft');
       _draftCaseId = null;
@@ -8402,6 +8428,26 @@ function _getClientDraftKey(){
   return window._clientDraftKey;
 }
 function _resetClientDraftKey(){ window._clientDraftKey=null; }
+
+// 存草稿失敗時把附件還回「待上傳」清單。
+// 按下儲存的瞬間附件就從 _pendingFiles 搬走交給背景上傳；存檔失敗時若不還回去，
+// 檔案就從記憶體和畫面上一起消失，使用者以為附件還在（實際上要重選一次）。
+function _restoreFailedUploads(files) {
+  if (!files || !files.length) return;
+  window._pendingFiles = files.concat(window._pendingFiles || []);
+  window._draftUploadingCount = 0;
+  var _fl = document.getElementById('file-list');
+  if (_fl) {
+    Array.from(_fl.querySelectorAll('[data-pending="1"]')).forEach(function (el) {
+      el.style.opacity = ''; el.style.pointerEvents = '';
+      Array.from(el.querySelectorAll('span')).forEach(function (sp) {
+        if (sp.textContent === '上傳中...') sp.remove();
+      });
+    });
+  }
+  if (typeof updateFormProgress === 'function') updateFormProgress();
+  toast('⚠️ 附件還沒上傳，請再按一次「儲存草稿」');
+}
 
 async function saveDraftForm(silent = false) {
   if (_saveDraftLock) return;
@@ -8483,7 +8529,7 @@ async function saveDraftForm(silent = false) {
     if (res.ok) {
       // 這次存檔「送出之後」草稿才失效（送出成正式案件／刪除／捨棄／開全新表單）
       // → 不能寫回 id，否則會綁到另一份表單，下次存檔覆蓋掉別份草稿。
-      if (_mySaveSeq <= _draftVoidSeq) { window._draftUploadingCount = 0; return; }
+      if (_mySaveSeq <= _draftVoidSeq) { window._draftUploadingCount = 0; return; }   // 草稿已失效：附件跟著作廢，不還原
       // ★ 除失效情況外一律寫回後端配發的 caseId，不管使用者還在不在表單上。
       //   舊版只有「還停在表單」或「離開時存檔」才寫回，其餘直接 return
       //   → 後端已建好草稿、前端卻把 id 丟掉 → 下次存檔 caseId 仍是 null
@@ -8519,11 +8565,11 @@ async function saveDraftForm(silent = false) {
         uploadDraftFiles(res.caseId, filesToUp).catch(function(e){ toast('⚠️ 附件上傳失敗，請重新上傳'); }).finally(() => { window._draftUploadInProgress = false; window._draftUploadingCount = 0; if (typeof updateFormProgress === 'function') updateFormProgress(); });
       }
     } else {
-      window._draftUploadingCount = 0;
+      _restoreFailedUploads(filesToUp);
       if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機（' + (res.error || '') + '）');
     }
   }).catch(() => {
-    window._draftUploadingCount = 0;
+    _restoreFailedUploads(filesToUp);
     if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機');
   }).finally(() => {
     _saveDraftLock = false; // API 回應後才釋放，防止重複點擊建立多份草稿
@@ -8982,15 +9028,22 @@ function getLocalUser(email){
   return LOCAL_USER_LIST.find(function(u){return u.email===email;})||null;
 }
 // 顯示用：優先本地中文名，其次 GAS 返回名（去除英文後綴）
+// ★ 以「案件上實際存的值」優先，查不到才用 email 反查名單。
+//   舊行為是 email 優先，有兩個問題：
+//   (1) 名單是登入後才載入的 → 同一筆案件在載入前後會顯示不同的人（不確定性）。
+//   (2) 會把存錯的申請人自動「美化」成 email 對應的人 —— 複製案件把別人的姓名／收款人
+//       帶過來時，清單看起來是對的、底層卻是錯的（實際發生過：連收款人和員編都是別人）。
+//   稽核用的清單不該美化真實資料，改成存什麼就顯示什麼。
 function localName(email,fallback){
+  if(fallback){ var _n=String(fallback).replace(/[A-Za-z\s]+$/,'').trim(); return _n||fallback; }
   if(email&&LOCAL_EMAIL_TO_NAME[email])return LOCAL_EMAIL_TO_NAME[email];
-  if(fallback)return String(fallback).replace(/[A-Za-z\s]+$/,'').trim()||fallback;
   return '—';
 }
-// 顯示用：優先本地部門，其次 GAS 返回部門
+// 顯示用部門：同上，以案件上存的部門優先，沒存才用名單補
 function localDept(email,fallback){
+  if(fallback) return fallback;
   var u=getLocalUser(email);
-  return (u&&u.dept)||fallback||'—';
+  return (u&&u.dept)||'—';
 }
 
 // EMPLOYEE_IDS and EMPLOYEE_DEPTS removed — use LOCAL_USER_LIST / getLocalUser(email) instead
