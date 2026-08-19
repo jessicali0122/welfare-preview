@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819215739';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819222041';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3081,7 +3081,11 @@ thead th{color:#767B75!important}
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
             <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">⑥ 申請人 <span style="color:#dc2626">*</span></label>
-              <select class="inp" id="applicant-select" onchange="syncPayeeIfSame();syncApplicantFields()">
+              <!-- 申請人鎖定為登入者本人（不開放代他人申請）。
+                   開放手選時，後端 email 欄記的是「按存檔的人」、姓名欄記表單值，
+                   兩者選成不同人就會出現「頭像是甲、申請人是乙」的錯位，稽核對不起來。
+                   仍保留 select 與完整選項：載入舊草稿時要顯示當初存的申請人（顯示事實，不竄改）。 -->
+              <select class="inp" id="applicant-select" disabled title="申請人固定為登入帳號本人" style="background:#F7F8F6;color:#4A4F49;opacity:1;cursor:default" onchange="syncPayeeIfSame();syncApplicantFields()">
               </select>
             </div>
             <div>
@@ -9180,7 +9184,13 @@ function syncApplicantFields(){
   const deptSel=document.getElementById('form-dept-select');
   if(deptSel){
     const _d = (_luByName && _luByName.dept) || '';
-    if(_d) deptSel.value = _d;
+    if(_d){ deptSel.value = _d; }
+    else if(name && Array.isArray(LOCAL_USER_LIST) && LOCAL_USER_LIST.length){
+      // 名單已載入、卻查不到這個人的部門 → 清空。與員編同樣的原則：
+      // 寧可空白，也不要把上一個申請人的部門留在欄位裡當成這個人的。
+      // （名單還沒載入時不動，避免開表單瞬間先閃一次空白）
+      deptSel.value = '';
+    }
   }
 }
 
