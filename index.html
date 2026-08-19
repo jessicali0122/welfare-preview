@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819143008';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819143723';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5907,7 +5907,9 @@ const _API_LS_TTL     = 24 * 60 * 60 * 1000; // 逾一天的舊資料寧可等�
 // 注意：htGetItems（可編輯的午茶品項清單）刻意「不」持久化到 localStorage——
 // 品項會被使用者增刪，跨重整用本機舊清單會讓「剛存的異動」看起來像沒存到（顯示過期）。
 // 品項一律走記憶體快取＋開頁即以後端為準；只持久化低編輯風險的清單。
-const _API_LS_ACTIONS = new Set(['list', 'getMembers', 'getFlow', 'getFlowInfo', 'htList', 'htVendors']);
+// 'get'（案件詳情）也持久化：後端不穩的日子裡，成功抓到一次就存起來，之後重開
+// 同一張案件即使後端掛掉也打得開（重新整理、關掉分頁再回來都還在）。
+const _API_LS_ACTIONS = new Set(['list', 'get', 'getMembers', 'getFlow', 'getFlowInfo', 'htList', 'htVendors']);
 // 使用者隔離：把帳號綁進 LS key，避免換人登入時讀到別人的清單/名單
 function _apiLsUser() { try { return (currentUser && currentUser.email) || ''; } catch (e) { return ''; } }
 function _apiLsGet(key) {
@@ -5944,6 +5946,20 @@ function _cacheGet(key) {
   const ls = _API_LS_ACTIONS.has(_act) ? _apiLsGet(key) : null;
   if (ls != null) { _apiCache[key] = { ts: Date.now(), data: ls }; return ls; }
   return null;
+}
+// 過期也照拿：後端整個打不通時，寧可顯示「稍早抓到的資料」也不要讓使用者連開都開不了。
+// 只在請求真的失敗後才會用到，並且會明白告知資料可能不是最新的。
+function _cacheGetStale(key) {
+  const c = _apiCache[key];
+  if (c && c.data != null) return c.data;
+  const _act = key.slice(0, key.indexOf(':'));
+  if (!_API_LS_ACTIONS.has(_act)) return null;
+  try {
+    const raw = localStorage.getItem(_API_LS_PREFIX + _apiLsUser() + ':' + key);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return (o && o.data != null) ? o.data : null;   // 刻意忽略 TTL
+  } catch (e) { return null; }
 }
 function _cacheSet(key, data) {
   _apiCache[key] = { ts: Date.now(), data };
@@ -6070,6 +6086,17 @@ async function _callAPI(action, data = {}, opts = {}) {
   const json = await _fetchAPIDedup(action, data);
   // 若讀取期間發生寫入（_cacheClear 遞增世代），不可用寫入前的舊資料回寫快取
   if (json && json.ok && _CACHEABLE.has(action) && _cacheGen === _genBeforeFetch) _cacheSet(cacheKey, json);
+  // ── 後端整個打不通時的最後防線：拿出過期快取先讓使用者看得到東西 ──
+  // 只在「重試都用完仍失敗」時觸發，且明白標示資料可能不是最新的。
+  // 授權失敗（_authError）不適用：那要走重新登入，不能拿舊資料蒙混。
+  if (json && !json.ok && !json._authError && _CACHEABLE.has(action)) {
+    const _stale = _cacheGetStale(cacheKey);
+    if (_stale) {
+      console.warn('[API] ' + action + ' 取得失敗，改用先前快取的資料');
+      try { toast('⚠️ 伺服器連不上，顯示的是稍早的資料'); } catch(e) {}
+      return Object.assign({}, _stale, { _fromStaleCache: true });
+    }
+  }
   // 案件有異動（新增/審核/退件/刪除/重送）→ 費用分析 5 分鐘快取立即失效，下次切換抓最新
   if (json && json.ok && /^(submit|approve|reject|resubmit|deleteCase|deleteDraft|saveDraft)$/.test(action) && window._analyticsCacheClear) _analyticsCacheClear();
   // 使用者名單有異動 → 立刻讓 listUsers 快取失效，下次進系統管理抓最新
@@ -6084,7 +6111,19 @@ async function _callAPI(action, data = {}, opts = {}) {
 // 再灌 5 倍流量進去，越重試越慢。
 // → 連續失敗達門檻就「開閘」，短時間內直接回錯誤不再打後端，讓它有機會消化積壓。
 var _apiBreaker = { fails: 0, openUntil: 0 };
-const _BREAKER_THRESHOLD = 4;     // 連續失敗幾次後開閘
+// ── 重試次數：依「使用者是不是正在等這筆」決定 ────────────────────────────
+// 2026-08-19 實測：Google 投遞回應的那一段（googleusercontent/echo）今天很不穩，
+// 單次請求成功率只有 4~5 成，而且新舊部署都一樣（換部署實測無效）。
+// 既然每次嘗試都有近半機率成功，對「使用者正盯著看」的讀取就該更有耐心：
+// 試 5 次的話成功率約 97%，慢一點但至少打得開；背景工作維持 2 次不浪費額度。
+const _PATIENT_ACTIONS = new Set(['get', 'list']);
+function _maxRetry(action) { return _PATIENT_ACTIONS.has(action) ? 4 : 1; }
+// 讓使用者知道還在努力，而不是以為當掉了（只對前景讀取提示，背景工作安靜處理）
+function _retryNotice(action, retry) {
+  if (!_PATIENT_ACTIONS.has(action)) return;
+  try { toast('⏳ 伺服器回應不穩，重試中…（第 ' + (retry + 2) + ' / ' + (_maxRetry(action) + 1) + ' 次）'); } catch(e) {}
+}
+const _BREAKER_THRESHOLD = 6;     // 連續失敗幾次後開閘
 const _BREAKER_COOLDOWN  = 20000; // 開閘後靜默多久（毫秒）
 function _breakerBlocked(action) {
   // 登入與健康檢查永遠放行，否則後端一忙就沒人能登入
@@ -6164,10 +6203,10 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     try {
       json = JSON.parse(_txt);
     } catch (e) {
-      // 重試次數由 3 降為 2：後端塞車時多打只會更塞（見 _apiBreaker 說明）
-      if (_retry < 2) {
+      if (_retry < _maxRetry(action)) {
         const _d = _backoff((_retry + 1) * 1500);
         console.warn('[API] 後端回傳非 JSON（多半是 GAS 暫時故障），' + _d + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', _txt.slice(0, 80));
+        _retryNotice(action, _retry);
         await new Promise(r => setTimeout(r, _d));
         return _fetchAPI(action, data, _retry + 1);
       }
@@ -6208,10 +6247,10 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       err.message.includes('NetworkError') ||
       err.message.includes('network')
     );
-    // 重試次數由 4 降為 2（同上：後端塞車時重試會放大負載）
-    if (isNetworkAbort && _retry < 2) {
+    if (isNetworkAbort && _retry < _maxRetry(action)) {
       const delay = _backoff((_retry + 1) * 1800);
       console.warn('[API] 網路中斷，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', err.message);
+      _retryNotice(action, _retry);
       await new Promise(r => setTimeout(r, delay));
       return _fetchAPI(action, data, _retry + 1);
     }
