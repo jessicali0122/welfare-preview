@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819163956';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819165017';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6983,9 +6983,19 @@ async function loadApplications(forceRefresh) {
   if (!forceRefresh && window._appsRenderedGen === _cacheGen
       && (Date.now() - (window._appsRenderedAt || 0)) < 8000
       && _tb0 && _tb0.children.length) return;
-  showTableSkeleton('applications-tbody', 11, 5);
+  // 先用快取即時渲染，避免每次點開都先看到空白骨架（GAS 慢時尤其明顯）；沒有快取才顯示骨架
+  var _renderedFromCache = false;
+  if (!forceRefresh) {
+    var _cl = null;
+    try { _cl = _cacheGet(_cacheKey('list', {})); } catch (e) {}
+    var _cachedCases = (_cl && Array.isArray(_cl.cases)) ? _cl.cases
+                     : (Array.isArray(window._allCasesCache) ? window._allCasesCache : null);
+    if (_cachedCases && _cachedCases.length) { _applyCasesData(_cachedCases); _renderedFromCache = true; }
+  }
+  if (!_renderedFromCache) showTableSkeleton('applications-tbody', 11, 5);
   const res = await callAPI('list', {}, forceRefresh ? { noCache: true } : {});
   if (!res.ok) {
+    if (_renderedFromCache) return;   // 已用快取畫出畫面 → 不用錯誤訊息蓋掉
     if(!res._authError) toast('❌ 載入失敗：' + res.error);
     const tb = document.getElementById('applications-tbody');
     if(tb) tb.innerHTML = '<tr><td colspan="12"><div class="empty-state"><p>資料載入失敗</p><small>請確認網路連線後重新整理</small></div></td></tr>';
@@ -6993,7 +7003,11 @@ async function loadApplications(forceRefresh) {
     if(cl) cl.textContent = '共 0 件';
     return;
   }
-  const allCases = res.cases || [];
+  _applyCasesData(res.cases || []);
+}
+
+function _applyCasesData(allCases) {
+  allCases = allCases || [];
   // 快取全部案件供 Tab 使用
   window._allCasesCache = allCases;
   // 記錄本次成功渲染的世代與時間，供上方 8 秒守門判斷
@@ -7513,15 +7527,15 @@ async function openDraft(caseId, asCopy) {
   window._pendingFiles = [];
   _resetClientDraftKey();   // 載入既有草稿走 caseId、複製則需全新識別碼 → 一律先重置
   toast(asCopy ? '⏳ 複製中...' : '⏳ 載入草稿中...');
-  const res = await callAPI('get', { caseId });
-  if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
-  const c = res.case || res.data || res;
-  // 先切換到新增申請畫面（會清空表單）；旗標避免 sw 重複還原附件
+  // 先立即切到表單畫面（不等後端）→ 使用者馬上看到跳轉，避免盯著舊畫面空等 GAS 幾秒；
+  //   旗標避免 sw 從 localStorage 重複還原附件；資料回來後再填入欄位/明細。
   window._openDraftInProgress = true;
   sw('new-form');
   window._openDraftInProgress = false;
-  // 等 DOM 更新完畢
-  await new Promise(r => setTimeout(r, 80));
+  await new Promise(r => setTimeout(r, 30));   // 等 DOM 更新完畢
+  const res = await callAPI('get', { caseId });
+  if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
+  const c = res.case || res.data || res;
   // 設定 caseId（複製模式不綁原案件 → 送出時會產生新單號、重跑簽核流程）
   _draftCaseId = asCopy ? null : caseId;
   // 申請日期：載入草稿時，若時間為 00:00 或純日期，補上當下台灣時間
@@ -8090,6 +8104,8 @@ async function confirmSubmitForm() {
 }
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
+  if (window._doSubmitInProgress) { toast('⏳ 送出中，請稍候...'); return; } // 防確認鈕連點造成重複送出
+  window._doSubmitInProgress = true;
   _submitLock = true; // 防止送出中重複觸發
   toast('⏳ 送出中...');
   try {
@@ -8112,6 +8128,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   }
   const res = await callAPI('submit', {
     ...( _draftCaseId ? { caseId: _draftCaseId } : {}), // 草稿轉送出
+    clientDraftKey: _getClientDraftKey(),   // ★ 冪等鍵：同一張表單重複送出只會產生一個單號
     project:    subjectEl?.value || '',
     subject:    subjectEl?.value || '',   // 同時送 subject，讓後端 Chat 通知顯示主旨
     department: departmentEl?.value || '',
@@ -8179,6 +8196,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     toast('❌ 送出時發生錯誤：' + e.message);
   } finally {
     _submitLock = false; // 無論成功/失敗/例外，一定釋放鎖
+    window._doSubmitInProgress = false;
   }
 }
 
