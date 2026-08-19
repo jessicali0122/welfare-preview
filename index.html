@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819135902';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819141540';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6091,6 +6091,37 @@ function _breakerOnFailure() {
 // 退避加隨機抖動：多個使用者同時被擋時，避免大家在同一毫秒一起重試（thundering herd）
 function _backoff(base) { return Math.round(base * (0.75 + Math.random() * 0.5)); }
 
+// ── 請求節流（同時在途上限）─────────────────────────────────────────────
+// 2026-08-19 從 GAS 執行紀錄查到真正的病灶：每個 doPost 在後端只跑 0.65~3.7 秒且
+// 全部成功，但前端會在 15 秒內丟出 13 個請求。GAS 對同一個帳號是「排隊執行」的，
+// 第 13 個就得等前面 12 個跑完（≈26 秒）→ 前端誤判逾時 → 重試 → 排更多 → 惡性循環。
+// 觀察到的 5~36 秒與 404，幾乎都是自己塞自己。
+// → 限制同時在途數量；使用者正在等的動作優先，背景工作（預抓/頭像/名單）排後面。
+const _MAX_INFLIGHT = 3;
+// 背景性質的 action：使用者沒有盯著它們看，可以讓路
+const _BG_ACTIONS = new Set(['logLogin', 'getMembers', 'listUsers', 'getFlow', 'getFlowInfo']);
+var _inflightCount = 0;
+var _waitQueue = [];   // [{fg:bool, resume:fn}]
+function _acquireSlot(action, isPrefetch) {
+  if (_inflightCount < _MAX_INFLIGHT) { _inflightCount++; return Promise.resolve(); }
+  const fg = !isPrefetch && !_BG_ACTIONS.has(action);
+  return new Promise(function(resume){
+    const item = { fg: fg, resume: resume };
+    // 前景請求插到所有背景請求前面：使用者點下去的動作不該排在頭像同步後面
+    if (fg) {
+      var i = _waitQueue.findIndex(function(x){ return !x.fg; });
+      if (i < 0) _waitQueue.push(item); else _waitQueue.splice(i, 0, item);
+    } else {
+      _waitQueue.push(item);
+    }
+  });
+}
+function _releaseSlot() {
+  const next = _waitQueue.shift();
+  if (next) next.resume();     // 名額直接交棒，不遞減
+  else _inflightCount = Math.max(0, _inflightCount - 1);
+}
+
 async function _fetchAPI(action, data = {}, _retry = 0) {
   if (_retry === 0 && _breakerBlocked(action)) {
     const _wait = Math.ceil((_apiBreaker.openUntil - Date.now()) / 1000);
@@ -6098,16 +6129,24 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
   }
   try {
     const body = { action, token: currentUser?.token, ...data };
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(body),
-      redirect: 'follow',
-    });
-    // ⚠️ 不要直接 res.json()：GAS 端不穩時會回一頁 HTML（錯誤頁／登入頁），
-    //    json() 會丟出「Unexpected token '<'」，呼叫端只能顯示看不懂的錯誤且完全沒有重試。
-    //    改成先取文字再解析，解析不出來就當成後端暫時故障，退避重試。
-    const _txt = await res.text();
+    // 佔一個在途名額再打；名額在拿到回應後立刻釋放（退避等待不佔名額）
+    // 註：不用 data 上的旗標區分前景/背景，否則會改變 _cacheKey 而破壞與其他呼叫點的去重
+    await _acquireSlot(action, false);
+    let res, _txt;
+    try {
+      res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(body),
+        redirect: 'follow',
+      });
+      // ⚠️ 不要直接 res.json()：GAS 端不穩時會回一頁 HTML（錯誤頁／登入頁），
+      //    json() 會丟出「Unexpected token '<'」，呼叫端只能顯示看不懂的錯誤且完全沒有重試。
+      //    改成先取文字再解析，解析不出來就當成後端暫時故障，退避重試。
+      _txt = await res.text();
+    } finally {
+      _releaseSlot();
+    }
     let json;
     try {
       json = JSON.parse(_txt);
