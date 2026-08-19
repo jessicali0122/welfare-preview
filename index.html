@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819230205';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819231723';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -180,7 +180,7 @@ button{touch-action:manipulation}
 .inp{width:100%;border:1.5px solid #D2D7CD;border-radius:8px;padding:8px 12px;font-size:14px;color:#111827;outline:none;transition:border .15s;font-family:inherit;background:#fff}
 .inp:focus{border-color:#577B53;box-shadow:0 0 0 3px rgba(87,123,83,.15)}
 /* 全站立體感：卡片用三層陰影（貼地細影＋中距柔影＋遠距環境影），滑過微升起 */
-.card{background:#FFFDF9;border-radius:16px;border:1px solid rgba(214,208,193,.7);box-shadow:0 1px 2px rgba(90,74,48,.06),0 2px 6px rgba(90,74,48,.06),0 8px 20px rgba(90,74,48,.08);transition:box-shadow .2s ease}
+.card{background:#fff;border-radius:16px;border:1px solid rgba(214,208,193,.7);box-shadow:0 1px 2px rgba(90,74,48,.06),0 2px 6px rgba(90,74,48,.06),0 8px 20px rgba(90,74,48,.08);transition:box-shadow .2s ease}
 .card:hover{box-shadow:0 1px 2px rgba(90,74,48,.07),0 4px 10px rgba(90,74,48,.08),0 12px 26px rgba(90,74,48,.1)}
 /* 主要按鈕：帶品牌色投影＋按下回饋，增加可按的立體感 */
 .btn-p{box-shadow:0 2px 8px rgba(87,123,83,.28)}
@@ -1949,7 +1949,7 @@ html,body{background:#F6F4EE}
 /* 案件詳情頁：卡片較多且堆疊，左側色條連成一串顯得雜亂 → 這頁不加左條，畫面清爽 */
 #view-detail .card::before{display:none!important}
 /* 卡片：暖白底＋暖調細邊線＋收緊的暖影（不再用中性灰陰影，在奶油底上會顯濁、發散） */
-.card{background:#FFFDF9!important;border:1px solid rgba(214,208,193,.7)!important;box-shadow:0 1px 2px rgba(90,74,48,.06),0 2px 6px rgba(90,74,48,.06),0 8px 20px rgba(90,74,48,.08)!important}
+.card{background:#fff!important;border:1px solid rgba(214,208,193,.7)!important;box-shadow:0 1px 2px rgba(90,74,48,.06),0 2px 6px rgba(90,74,48,.06),0 8px 20px rgba(90,74,48,.08)!important}
 /* 頂欄：透明浮層（無 bar），內容從房子/頭像底下滑過；內容區補頂部留白 */
 header{background:transparent!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 #main-content{padding-top:calc(60px + env(safe-area-inset-top,0px))!important}
@@ -2058,14 +2058,6 @@ header::after{display:none!important}
 .section-title{color:#363B35!important}
 /* 表格表頭配色 */
 thead th{color:#767B75!important}
-
-/* ── 資料表區一律純白 ──
-   卡片是暖白 #FFFDF9，讀一整片數字時那層淡色會顯得不清爽。
-   表格本身沒有自己的底色（表頭是 transparent），所以直接把「裝著表格的卡片」改白，
-   邊角與內距才不會露出一圈暖色。
-   ★ 必須放在上面 .card{background:#FFFDF9!important} 之後才蓋得過。 */
-.card:has(.evx-table),
-.card:has(#detail-items-tbody){ background:#fff!important; }
 
 /* ── 列印：一律純白，不帶畫面上的暖白底 ──
    ★ 這段必須放在本區塊「最後面」：上面第 1940 行的 .card{background:#FFFDF9!important}
