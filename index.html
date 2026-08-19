@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819095515';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819100747';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3267,7 +3267,7 @@ thead th{color:#767B75!important}
         </div>
         <div id="detail-files-card" class="card" style="padding:20px">
           <div class="section-title">請款附件</div>
-          <div id="detail-files-list" style="display:flex;flex-direction:column;gap:6px">
+          <div id="detail-files-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">
             <div style="text-align:center;padding:16px;color:#767B75;font-size:14px">尚無附件</div>
           </div>
         </div>
@@ -3586,7 +3586,7 @@ thead th{color:#767B75!important}
             <div style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:16px;background:#F2A03D;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:inline-flex;align-items:center;justify-content:center"><svg viewBox="0 0 24 24" width="10" height="10" aria-hidden="true"><path d="M6.5 8h11l-1.2 11.4a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="#fff"/><rect x="5.4" y="6.4" width="13.2" height="2.2" rx="1.1" fill="#fff"/><rect x="13.2" y="1.8" width="1.8" height="7" rx=".9" transform="rotate(14 14 5)" fill="#fff"/></svg></span><span style="font-size:12px;color:#767B75">午茶日</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#f43f5e"></div><span style="font-size:12px;color:#767B75">國定假日</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#577B53"></div><span style="font-size:12px;color:#767B75">節慶</span></div>
-            <div style="display:flex;align-items:center;gap:5px"><span style="font-size:12px;line-height:1">🎂</span><span style="font-size:12px;color:#767B75">壽星</span></div>
+            <div style="display:flex;align-items:center;gap:5px"><span style="display:inline-flex;width:15px;height:15px;background:#C2456B;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;align-items:center;justify-content:center;flex-shrink:0"><svg viewBox="0 0 24 24" width="11" height="11" aria-hidden="true"><rect x="4.5" y="12" width="15" height="7.5" rx="1.6" fill="#fff"/><rect x="11" y="6" width="2" height="4.6" rx="1" fill="#fff"/><circle cx="12" cy="4.5" r="1.5" fill="#fff"/></svg></span><span style="font-size:12px;color:#767B75">壽星</span></div>
             <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:50%;background:#e9f1e7"></div><span style="font-size:12px;color:#767B75">今天</span></div>
             </div>
           </div>
@@ -8826,7 +8826,7 @@ async function _loadThumbViaGAS(wrap, fileId, href) {
     const res = await callAPI('getThumb', { fileId });
     if (res.ok && res.url) {
       wrap.innerHTML = '<img src="' + res.url + '" alt="附件預覽" '
-        + 'style="width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA">';
+        + 'style="width:100%;height:180px;object-fit:cover;display:block;background:#ECEEEA">';
       wrap.style.minHeight = '';
       wrap.style.flexDirection = '';
     } else {
@@ -9426,16 +9426,21 @@ function updateDetailFlow(c){
     let isProxy = false;
     const proxyMatch = comment ? comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
     if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
+    // 簽核人 email（稽核用）：優先用後端記錄的實際操作者 email，舊案退回流程設定 email
+    const signerEmail = String(apv.signerEmail || a.email || '').trim();
+    const emailHtml = signerEmail ? '<div style="font-size:12px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
 
     if (result === '核准') {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">✓ 已核准</div>'
                  + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + emailHtml
                  + at;
     } else if (result === '退件') {
       iconSvg = leafSvg('#dc2626', 28);
       statusHtml = '<div style="font-size:14px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div>'
                  + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + emailHtml
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">原因：' + displayComment + '</div>' : '');
     } else if (!isDone && !isRejected && i === currentStep - 1) {
@@ -14793,6 +14798,17 @@ window.addEventListener('resize', function() {
   window._htSideHtTimer = setTimeout(_htSyncSideHeight, 120);
 });
 
+// 壽星印章圖示（比照午茶日的圓潤色底＋白圖，改用慶生粉以區別）
+function _bdayStamp(sz) {
+  sz = sz || 11;
+  var box = sz + 4;
+  return '<span style="display:inline-flex;width:'+box+'px;height:'+box+'px;background:#C2456B;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;align-items:center;justify-content:center;vertical-align:-2px;flex-shrink:0">'
+    + '<svg viewBox="0 0 24 24" width="'+sz+'" height="'+sz+'" aria-hidden="true">'
+    +   '<rect x="4.5" y="12" width="15" height="7.5" rx="1.6" fill="#fff"/>'
+    +   '<rect x="11" y="6" width="2" height="4.6" rx="1" fill="#fff"/>'
+    +   '<circle cx="12" cy="4.5" r="1.5" fill="#fff"/>'
+    + '</svg></span>';
+}
 function htRenderCalendar() {
   var y = _htCalYear, m = _htCalMonth;
   var monthNames = ['一月','二月','三月','四月','五月','六月','七月','八月','九月','十月','十一月','十二月'];
@@ -14884,7 +14900,7 @@ function htRenderCalendar() {
     if (_bd.length) {
       var _names = _bd.map(function(b){ return b.name; });
       var _txt = _names.length <= 2 ? _names.join('、') : (_names[0] + ' 等 ' + _names.length + ' 位');
-      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2410C;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🎂 ' + htEsc(_txt) + '</div>';
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2410C;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _bdayStamp(11) + ' ' + htEsc(_txt) + '</div>';
     }
 
     if (hasEvent) {
