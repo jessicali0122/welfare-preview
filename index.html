@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819215335';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819215739';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3048,6 +3048,9 @@ thead th{color:#767B75!important}
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
       <button type="button" class="btn btn-o" style="padding:6px 12px" onclick="_backFromNewForm()">← 返回</button>
       <div style="flex:1"><div style="font-size:20px;font-weight:700;color:#2E332D">費用申請單</div></div>
+      <button id="copy-draft-btn" type="button" class="btn btn-o" style="display:none;padding:6px 12px;font-size:14px;flex-shrink:0" onclick="_copyCurrentDraft()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製為新申請
+      </button>
       <button id="delete-draft-btn" type="button" class="btn btn-r" style="display:none;padding:6px 12px;font-size:14px;flex-shrink:0" onclick="confirmDeleteDraft()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除草稿
       </button>
@@ -7592,6 +7595,25 @@ function _showRejectModal(caseId) {
 // 沿用 openDraft 的填表邏輯，差別在：不綁原案件的單號、不帶附件（附件在 Drive，需重新上傳）。
 // 表單的「返回」：回到進表單前的那一頁，且回到當時停留的分頁。
 // sw('applications') 會把分頁重設為預設值，所以分頁要排在它之後（setTimeout 0）再切回去。
+// 「複製為新申請」「刪除草稿」都只在編輯既有草稿時才有意義，顯示條件一致 → 共用一個開關
+window._setDraftBtns = function(show){
+  var d = document.getElementById('delete-draft-btn');
+  var c = document.getElementById('copy-draft-btn');
+  if (d) d.style.display = show ? '' : 'none';
+  if (c) c.style.display = show ? '' : 'none';
+};
+// 表單內複製：用「已儲存」的內容另開一張新申請，原草稿不動。
+// 先確認再執行——畫面上還沒存的修改不會被帶過去，靜默覆蓋掉會讓人以為資料不見了。
+window._copyCurrentDraft = function(){
+  var id = _draftCaseId;
+  if (!id) return;
+  _showConfirmModal(
+    '📄 複製為新申請',
+    '會用<strong>已儲存</strong>的內容另外開一張新的申請單，目前這張草稿不會有任何變動。'
+      + '<br><span style="font-size:14px;color:#767B75">尚未儲存的修改不會被帶過去；附件請重新上傳。</span>',
+    '複製', '#577B53', function(){ copyCaseToNewForm(id); }
+  );
+};
 window._backFromNewForm = function(){
   var v = window._newFormReturnView || 'applications';
   var t = window._newFormReturnTab;
@@ -7750,14 +7772,12 @@ async function openDraft(caseId, asCopy) {
   } catch(e) {}
   document.getElementById('draft-banner')?.classList.remove('show');
   // 顯示刪除草稿按鈕（複製模式還沒有草稿可刪 → 不顯示）
-  var _ddb = document.getElementById('delete-draft-btn');
-  if (_ddb) _ddb.style.display = asCopy ? 'none' : '';
+  _setDraftBtns(!asCopy);
   updateFormProgress();
   // 開啟草稿後立即將 server 內容存入 localStorage，以便 session 恢復機制運作
   try { autoSaveDraft(); } catch(e) {}
   // 顯示「刪除草稿」按鈕
-  var _ddbOD = document.getElementById('delete-draft-btn');
-  if (_ddbOD) _ddbOD.style.display = asCopy ? 'none' : '';
+  _setDraftBtns(!asCopy);
   toast(asCopy ? '✅ 已複製內容，附件請重新上傳後送出' : '✅ 草稿已載入，可繼續編輯');
 }
 
@@ -8402,8 +8422,7 @@ function confirmDeleteDraftById(caseId) {
       _draftCaseId = null;
       _voidDraftSaves();
       _resetClientDraftKey();
-      var _ddb = document.getElementById('delete-draft-btn');
-      if (_ddb) _ddb.style.display = 'none';
+      _setDraftBtns(false);
       toast('🗑️ 草稿已刪除');
       // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
       var _curV = (document.querySelector('.view.active') || {}).id || '';
@@ -8568,8 +8587,7 @@ async function saveDraftForm(silent = false) {
         loadApplications(true);
       }
       if (_stillEditing) {
-        var _ddb = document.getElementById('delete-draft-btn');
-        if (_ddb) _ddb.style.display = '';
+        _setDraftBtns(true);
       }
       // 附件上傳（需要 caseId 才能上傳）
       if (filesToUp.length > 0) {
@@ -8815,8 +8833,7 @@ function sw(name,elOrName,_fromPop){
     if (!window._draftUploadInProgress) {
       _draftCaseId = null; // 每次開新表單時重置，確保「儲存草稿」建立新案件
       // 隱藏刪除草稿按鈕（新表單不需要）
-      var _ddb = document.getElementById('delete-draft-btn');
-      if (_ddb) _ddb.style.display = 'none';
+      _setDraftBtns(false);
       window._uploadedDraftFiles = []; // 清除草稿附件追蹤
       // 清除 file-list UI
       const _fl = document.getElementById('file-list');
@@ -8842,8 +8859,7 @@ function sw(name,elOrName,_fromPop){
             }
           }
           // 有伺服器端草稿時顯示「刪除草稿」按鈕
-          var _ddb2 = document.getElementById('delete-draft-btn');
-          if (_ddb2) _ddb2.style.display = '';
+          _setDraftBtns(true);
         }
       } catch(e) {}
     }
@@ -11873,8 +11889,7 @@ function restoreDraft(){
     }
     document.getElementById('draft-banner').classList.remove('show');
     // 有伺服器端草稿 caseId 時顯示「刪除草稿」按鈕
-    var _ddb = document.getElementById('delete-draft-btn');
-    if (_ddb && d.caseId) _ddb.style.display = '';
+    if (d.caseId) _setDraftBtns(true);
     // 草稿存的員工編號可能是舊值 → 一律以成員名單重算
     if (typeof syncApplicantFields === 'function') setTimeout(syncApplicantFields, 0);
     toast('✅ 草稿已恢復！');
@@ -11915,8 +11930,7 @@ function _clearDraftDo(){
   const _fl=document.getElementById('file-list');
   if(_fl)_fl.innerHTML='';
   // 隱藏刪除草稿按鈕
-  var _ddb=document.getElementById('delete-draft-btn');
-  if(_ddb)_ddb.style.display='none';
+  _setDraftBtns(false);
   _cacheClear(); // 讓列表下次載入時重新抓取（使刪除效果立即反映）
   toast('🗑️ 草稿已捨棄');
 }
