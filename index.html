@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819225526';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819225830';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3282,7 +3282,7 @@ thead th{color:#767B75!important}
       <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="copyCaseToNewForm(document.getElementById('detail-case-no').textContent.trim())" title="用這張的內容開一張新申請單">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>複製
       </button>
-      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="toast('🖨️ 正在準備列印...');setTimeout(_doPrint,300)">
+      <button class="btn btn-o no-print" style="flex-shrink:0;padding:6px 12px" onclick="_doPrint()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>列印
       </button>
     </div>
@@ -5576,6 +5576,12 @@ async function _doPrint() {
   var detail = document.getElementById('view-detail');
   if (!detail) { window.print(); return; }
 
+  // ★ 下面第 ① 步會在「使用者眼前的頁面上」把縮圖載出來、把 PDF 展開成全部頁面，
+  //   畫面會明顯跳動好幾秒，看起來像「按了列印卻先跳出一堆附件」。
+  //   用整頁遮罩蓋住並說明正在做什麼；送印前一定要收掉，否則遮罩會被印進去。
+  var _pbusy = false;
+  try { if (typeof _busyShow === 'function') { _busyShow('列印準備中：載入附件…'); _pbusy = true; } } catch(e) {}
+
   // ① 附件是捲到才載入的，列印前先把還沒載的補載完，否則會印出空白框
   try {
     var pend = detail.querySelectorAll('.drive-thumb-wrap[data-fileid]');
@@ -5600,6 +5606,9 @@ async function _doPrint() {
       await new Promise(function(r){ setTimeout(r, 400); });
     }
   } catch(e) {}
+
+  // 遮罩必須在送印前收掉，不能被複製進列印版面
+  try { if (_pbusy && typeof _busyHide === 'function') _busyHide(); } catch(e) {}
 
   // ② 組出固定版面（同步；與 beforeprint 共用同一支 → 按鈕/右鍵/Ctrl+P 版面一致）
   _setupPrintDOM();
