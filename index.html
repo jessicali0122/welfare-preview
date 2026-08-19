@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819093113';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819094502';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3249,8 +3249,8 @@ thead th{color:#767B75!important}
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">項目</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">憑證</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">日期</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">未稅</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">稅額</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">未稅 (NT$)</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">稅額 (NT$)</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
@@ -5511,13 +5511,27 @@ async function _doPrint() {
   if (head && head.parentElement) {
     var hc = head.parentElement.cloneNode(true);
     hc.querySelectorAll('button,.no-print').forEach(function(n){ n.remove(); });
+    // 列印版：單號前加「申請單號：」字樣，並與下方簽核進度框留一點空隙
+    var _cn = hc.querySelector('#detail-case-no');
+    if (_cn) {
+      var _lb = document.createElement('span');
+      _lb.textContent = '申請單號：';
+      _lb.style.cssText = 'font-size:18px;font-weight:700;color:#2E332D';
+      _cn.parentNode.insertBefore(_lb, _cn);
+      _cn.removeAttribute('id');   // 避免與螢幕上的 #detail-case-no 重複 id
+    }
+    hc.style.marginBottom = '12px';
     page1.appendChild(hc);
   }
   var grid = document.getElementById('detail-grid');
   if (grid) {
     // 簽核進度（右欄）先放，接著申請資訊、請款明細（左欄），與螢幕閱讀順序一致
     var flowCard = grid.querySelector('#flow-timeline') ? grid.querySelector('#flow-timeline').closest('.card') : null;
-    if (flowCard) page1.appendChild(flowCard.cloneNode(true));
+    if (flowCard) {
+      var _fc = flowCard.cloneNode(true);
+      _fc.style.marginBottom = '12px';   // 與下方「申請資訊」再留一點空隙
+      page1.appendChild(_fc);
+    }
     grid.querySelectorAll('.card').forEach(function(c){
       if (c === flowCard) return;
       if (c.id === 'detail-files-card') return;
@@ -7511,8 +7525,8 @@ function renderDetailItems(items) {
       <td style="padding:10px 8px;text-align:left;vertical-align:middle;color:#4A4F49;white-space:nowrap">${htEsc(it.description)||'—'}</td>
       <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${htEsc(it.receiptType)||'—'}</td>
       <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${htEsc(it.date)||'—'}</td>
-      <td style="padding:10px 8px;text-align:center;vertical-align:middle;white-space:nowrap">NT$ ${Number(it.pretax||0).toLocaleString()}</td>
-      <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">NT$ ${Number(it.tax||0).toLocaleString()}</td>
+      <td style="padding:10px 8px;text-align:center;vertical-align:middle;white-space:nowrap">${Number(it.pretax||0).toLocaleString()}</td>
+      <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${Number(it.tax||0).toLocaleString()}</td>
       <td style="padding:10px 8px;text-align:center;vertical-align:middle;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
     </tr>`).join('');
   // 動態更新 tfoot 合計（用ID直接定位，最穩定）
@@ -7525,8 +7539,8 @@ function renderDetailItems(items) {
   const spEl = document.getElementById('detail-sum-pretax');
   const stEl = document.getElementById('detail-sum-tax');
   const suEl = document.getElementById('detail-sum-total');
-  if (spEl) spEl.textContent = 'NT$ ' + sumPretax.toLocaleString();
-  if (stEl) stEl.textContent = 'NT$ ' + sumTax.toLocaleString();
+  if (spEl) spEl.textContent = sumPretax.toLocaleString();
+  if (stEl) stEl.textContent = sumTax.toLocaleString();
   if (suEl) suEl.textContent = 'NT$ ' + sumTotal.toLocaleString();
 }
 
@@ -9440,11 +9454,11 @@ function updateDetailFlow(c){
       // 左欄：icon 置中 + 下方虛線（最後一關不顯示虛線）
       + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:36px">'
       +   '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + iconSvg + '</div>'
-      +   ((!isLast || isDone) ? '<div style="flex:1;width:2px;min-height:12px;margin-top:4px;background:' + _dashedLine + '"></div>' : '')
+      +   ((!isLast || isDone) ? '<div style="flex:1;width:2px;min-height:8px;margin-top:3px;background:' + _dashedLine + '"></div>' : '')
       + '</div>'
       // 右欄：文字，底部留間距（最後一關不留）
-      + '<div style="flex:1;' + ((!isLast || isDone) ? 'padding-bottom:16px;' : '') + '">'
-      +   '<div style="font-size:14px;font-weight:700;color:' + titleColor + ';padding-top:8px">' + a.label + '</div>'
+      + '<div style="flex:1;' + ((!isLast || isDone) ? 'padding-bottom:10px;' : '') + '">'
+      +   '<div style="font-size:14px;font-weight:700;color:' + titleColor + ';padding-top:4px">' + a.label + '</div>'
       +   statusHtml
       + '</div>'
       + '</div>';
@@ -9456,7 +9470,7 @@ function updateDetailFlow(c){
     +   '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + leafSvg('#577B53', 28) + '</div>'
     + '</div>'
     + '<div style="flex:1">'
-    +   '<div style="font-size:14px;font-weight:700;color:#4A4F49;padding-top:8px">已完成簽核</div>'
+    +   '<div style="font-size:14px;font-weight:700;color:#4A4F49;padding-top:4px">已完成簽核</div>'
     +   '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">款項處理中</div>'
     + '</div>'
     + '</div>';
