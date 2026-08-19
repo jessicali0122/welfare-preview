@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819173511';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819173612';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6175,9 +6175,14 @@ function _maxRetry(action) {
   return _PATIENT_ACTIONS.has(action) ? 4 : 1;
 }
 // 讓使用者知道還在努力，而不是以為當掉了（只對前景讀取提示，背景工作安靜處理）
+// 節流：今天 GAS 很不穩時每次重試都彈提示會洗版 → 12 秒內最多提示一次
+var _retryNoticeAt = 0;
 function _retryNotice(action, retry) {
   if (!_PATIENT_ACTIONS.has(action)) return;
-  try { toast('⏳ 伺服器回應不穩，重試中…（第 ' + (retry + 2) + ' / ' + (_maxRetry(action) + 1) + ' 次）'); } catch(e) {}
+  var _now = Date.now();
+  if (_now - _retryNoticeAt < 12000) return;   // 距上次提示未滿 12 秒 → 安靜重試，不再洗版
+  _retryNoticeAt = _now;
+  try { toast('⏳ 伺服器回應較慢，自動重試中…'); } catch(e) {}
 }
 const _BREAKER_THRESHOLD = 6;     // 連續失敗幾次後開閘
 const _BREAKER_COOLDOWN  = 20000; // 開閘後靜默多久（毫秒）
