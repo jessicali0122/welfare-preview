@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819102527';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819102741';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3735,7 +3735,7 @@ thead th{color:#767B75!important}
         <div onclick="htToggleEventInfo()" style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none">
           <span style="font-size:14px;font-weight:700;color:#577B53;display:flex;align-items:center;gap:6px;flex-shrink:0">⚙️ 活動設定</span>
           <span id="ht-event-summary" style="font-size:13px;color:#767B75;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
-          <span id="ht-event-caret" style="flex-shrink:0;color:#9AA79A;font-size:11px;transition:transform .2s">▼</span>
+          <span id="ht-event-caret" style="flex-shrink:0;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:#577B53;background:#EEF3ED;border:1px solid #CBDCC6;border-radius:20px;padding:4px 12px;transition:background .15s">展開<span style="font-size:10px">▾</span></span>
         </div>
         <div id="ht-event-fields" style="display:none;margin-top:12px">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
@@ -16051,7 +16051,7 @@ function htRenderDetailHeader() {
   if (_htDetailInitedId !== ev.eventId) {
     _htDetailInitedId = ev.eventId;
     var _ef = document.getElementById('ht-event-fields'), _ec = document.getElementById('ht-event-caret');
-    if (_ef) { var _has = !!(ev.date && ev.headcount); _ef.style.display = _has ? 'none' : ''; if (_ec) _ec.style.transform = _has ? '' : 'rotate(180deg)'; }
+    if (_ef) { var _has = !!(ev.date && ev.headcount); _ef.style.display = _has ? 'none' : ''; if (_ec) _ec.innerHTML = _has ? '展開<span style="font-size:10px">▾</span>' : '收合<span style="font-size:10px">▴</span>'; }
   }
 }
 var _htDetailInitedId = null;
@@ -16081,7 +16081,7 @@ window.htToggleEventInfo = function() {
   if (!f) return;
   var open = f.style.display === 'none';
   f.style.display = open ? '' : 'none';
-  if (c) c.style.transform = open ? 'rotate(180deg)' : '';
+  if (c) c.innerHTML = open ? '收合<span style="font-size:10px">▴</span>' : '展開<span style="font-size:10px">▾</span>';
   if (!open) _htUpdateEventSummary();   // 收合時把最新值寫進摘要
   if (typeof _htSyncTopScrollbar === 'function') { try { _htSyncTopScrollbar(); } catch(e){} }  // 高度變了重新對齊右欄
 };
