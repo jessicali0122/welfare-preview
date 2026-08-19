@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819181210';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819210037';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4777,6 +4777,13 @@ setTimeout(function(){
 // ══════════════════════════════════════════
 let currentUser  = null; // { email, name, token }
 let _draftCaseId = null; // 追蹤草稿儲存後的 caseId，避免重複建立
+// 草稿存檔是「射後不理」的背景請求，回呼可能在使用者切頁之後才落地。
+// 用序號標記每次送出：草稿失效（送出成案／刪除／捨棄／開全新表單）時記下當下序號，
+// 只有「失效前送出的回呼」不寫回 caseId，其餘一律寫回。
+// 否則後端已建好草稿、前端卻忘了 id → 下次存檔又建一張一模一樣的。
+let _draftSaveSeq = 0;
+let _draftVoidSeq = 0;
+function _voidDraftSaves(){ _draftVoidSeq = _draftSaveSeq; }
 
 // ── 管理者名單（初始為空，登入後由 getMembers 動態更新；需與 GAS CONFIG.ADMIN_EMAILS 一致）──
 // 注意：請勿在此硬編碼真實 email，避免公開 repo 洩露帳號資訊；登入後 2.5 秒內由 _syncMembersFromServer() 補上
@@ -5454,6 +5461,10 @@ function showApp() {
       sw('applications');
       if (typeof appsSetTab === 'function' && (_tab === 'analytics' || _tab === 'flow')) {
         setTimeout(function(){ try { appsSetTab(_tab); } catch(e) {} }, 0);
+      } else if (typeof switchAppTab === 'function' && (_tab === 'drafts' || _tab === 'pending')) {
+        // 草稿匣／待我審核：sw('applications') 會把 _currentAppTab 重設成 cases，
+        // 所以要在它之後（setTimeout 0）才切回來
+        setTimeout(function(){ try { switchAppTab(_tab); } catch(e) {} }, 0);
       }
       history.replaceState({ view: 'applications', appsTab: _tab }, '', '#' + _initHash);
     } else {
@@ -6940,6 +6951,16 @@ function updateBadge(count) {
 var _currentAppTab = 'cases';
 function switchAppTab(tab) {
   _currentAppTab = tab;
+  // ★ 跟 appsSetTab 一樣把分頁寫進網址：在草稿匣按 F5／重整會掉回「全部案件」（使用者實際回報）。
+  //   只處理 drafts/pending —— flow 由 appsSetTab 自己管，cases 是預設值寫回 #applications。
+  try {
+    if (tab === 'drafts' || tab === 'pending' || tab === 'cases') {
+      if (window._appReady !== false || location.hash) {
+        var _h2 = (tab === 'cases') ? '#applications' : ('#applications/' + tab);
+        history.replaceState({ view: 'applications', appsTab: tab }, '', _h2);
+      }
+    }
+  } catch(e) {}
   // 「待審核案件」沿用申請案件的列表容器，只是換資料篩選（見 renderApplications）
   document.getElementById('app-tab-drafts').style.display = tab === 'drafts' ? '' : 'none';
   document.getElementById('app-tab-cases').style.display  = (tab !== 'drafts' && tab !== 'flow') ? '' : 'none';
@@ -6969,7 +6990,7 @@ function renderDraftsTab() {
   if (!container) return;
   const myDrafts = (window._allCasesCache || []).filter(c =>
     c.status === '草稿' && (isAdmin() || c.email === currentUser?.email)
-  );
+  ).sort(_byCreatedDesc);   // 原本沒排序＝沿用後端順序（最舊的在最上面），與其他分頁不一致
   if (myDrafts.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>目前沒有草稿</p><small>按「新增申請」開始填寫</small></div>';
     return;
@@ -7069,7 +7090,7 @@ function _applyCasesData(allCases) {
 </div></td></tr>`;
     return;
   }
-  window._appSortedCases = [...cases].sort((a,b) => (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1));
+  window._appSortedCases = [...cases].sort(_byCreatedDesc);
   window._appCurrentPage = 1;
   if (!window._appPageSize) window._appPageSize = 15;
   _renderAppPage(window._appCurrentPage);
@@ -7163,6 +7184,12 @@ function appsSetTab(tab) {
     renderApplications();
   }
 }
+// 案件清單三個分頁（全部案件／草稿匣／待我審核）共用的排序：一律由新到舊。
+// 用 localeCompare 而非 `a > b ? 1 : -1`——後者在兩筆時間相同時兩個方向都回 -1，
+// 違反 comparator 規範，同一秒建立的案件順序會不穩定。
+function _byCreatedDesc(a, b) {
+  return String(b && b.createdAt || '').localeCompare(String(a && a.createdAt || ''));
+}
 // renderApplications: 根據 _appsTab 重新渲染案件列表
 function renderApplications() {
   var allCases = window._allCasesCache || [];
@@ -7171,7 +7198,7 @@ function renderApplications() {
     // 一律只顯示輪到自己審的案件（管理者不再特例看到全部待審案件）
     cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
   }
-  window._appSortedCases = cases.slice().sort(function(a,b){ return (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1); });
+  window._appSortedCases = cases.slice().sort(_byCreatedDesc);
   window._appCurrentPage = 1;
   window._appFilteredCases = null;
   var countLabel = document.getElementById('app-count-label');
@@ -7560,6 +7587,7 @@ async function openDraft(caseId, asCopy) {
   window._openDraftInProgress = false;
   await new Promise(r => setTimeout(r, 30));   // 等 DOM 更新完畢
   // 設定 caseId（複製模式不綁原案件 → 送出時會產生新單號、重跑簽核流程）
+  _voidDraftSaves();  // 切到另一份草稿：上一份在途的存檔回呼不可再蓋掉這裡設好的 id
   _draftCaseId = asCopy ? null : caseId;
   // 申請日期：載入草稿時，若時間為 00:00 或純日期，補上當下台灣時間
   const adEl = document.getElementById('apply-date');
@@ -7584,15 +7612,20 @@ async function openDraft(caseId, asCopy) {
   const reasonEl = document.querySelector('#view-new-form textarea');
   if (reasonEl) reasonEl.value = c.reason || '';
   // 申請人
+  // ★ 複製模式不沿用原案件的申請人：複製出來的是「複製者自己的」新申請。
+  //   沿用的話會變成大頭貼是我（清單頭像看 email）、姓名和部門卻是原申請人（看 name 欄），
+  //   而且 cases 表也跟著記成別人 —— 只有 Log 記對，稽核上對不起來。
+  //   申請人／部門一律維持 sw('new-form') 已帶入的登入者資料。
   const appSel = document.getElementById('applicant-select');
-  if (appSel && c.name) {
+  if (appSel && c.name && !asCopy) {
     let found = Array.from(appSel.options).some(o => o.value === c.name || o.text === c.name);
     if (!found) { const opt = new Option(c.name, c.name, true, true); appSel.prepend(opt); }
     appSel.value = c.name;
     syncApplicantFields();
   }
   // 還原草稿中的部門（syncApplicantFields 會用申請人預設值覆蓋，手動改過的部門要補回）
-  if (c.department) {
+  // ★ 複製模式跳過：部門要跟著新的申請人（登入者），不是原案件的部門
+  if (c.department && !asCopy) {
     const _deptSel0 = document.getElementById('form-dept-select');
     if (_deptSel0) _deptSel0.value = c.department;
   }
@@ -7620,7 +7653,8 @@ async function openDraft(caseId, asCopy) {
     if (_empEl0 && !String(_empEl0.value || '').trim()) _empEl0.value = c.employeeId;
   }
   // syncApplicantFields 會用申請人預設值覆蓋部門 → 若草稿有記錄部門，再還原一次
-  if (c.department) {
+  // ★ 複製模式同樣跳過，讓部門維持登入者自己的部門
+  if (c.department && !asCopy) {
     const _deptSel1 = document.getElementById('form-dept-select');
     if (_deptSel1) _deptSel1.value = c.department;
   }
@@ -8183,6 +8217,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
 
   if (res.ok) {
     _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
+    _voidDraftSaves();     // 在途的存草稿回呼不可再把 id 寫回（否則會復活成孤兒草稿）
     _resetClientDraftKey();   // 下一張新表單用新的識別碼
     _submitLock = false;
     if (typeof _autoSaveGasTimer !== 'undefined' && _autoSaveGasTimer) { clearTimeout(_autoSaveGasTimer); _autoSaveGasTimer = null; }
@@ -8327,6 +8362,7 @@ function confirmDeleteDraftById(caseId) {
       _markCaseStale(caseId);
       localStorage.removeItem('bf_draft');
       _draftCaseId = null;
+      _voidDraftSaves();
       _resetClientDraftKey();
       var _ddb = document.getElementById('delete-draft-btn');
       if (_ddb) _ddb.style.display = 'none';
@@ -8424,6 +8460,9 @@ async function saveDraftForm(silent = false) {
 
   // 若有待上傳的附件，先標記「上傳中」UI（不等 GAS 回應）
   if (filesToUp.length > 0) {
+    // 這批附件已離開 _pendingFiles、還沒進 _uploadedDraftFiles，中間這段空窗期
+    // 兩個清單都是空的 → 送出確認會顯示「附件 0 份」。用這個數字補上。
+    window._draftUploadingCount = filesToUp.length;
     window._pendingFiles = [];
     const _fle = document.getElementById('file-list');
     if (_fle) {
@@ -8439,42 +8478,52 @@ async function saveDraftForm(silent = false) {
 
   // 背景同步到 GAS（不 await，不阻塞 UI）
   // ★ Fix：鎖必須等 API 回應後才釋放，避免重複點擊時 _draftCaseId 仍為 null 而建立多份草稿
+  const _mySaveSeq = ++_draftSaveSeq;
   callAPI('draft', payload).then(res => {
     if (res.ok) {
-      // 回呼落地時使用者可能已送出或離開表單——此時不可把舊草稿 id 寫回（避免孤兒草稿覆蓋）
-      const _stillEditing = document.getElementById('view-new-form')?.classList.contains('active');
-      // 「離開表單時自動存草稿」的回呼一定在離開之後才落地，若照舊直接 return，
-      // 草稿其實已建在後端、前端卻沒清快取 → 草稿匣看起來沒東西（送出路徑仍要 return，避免孤兒草稿）
-      const _leaveSave = window._draftSaveOnLeave === true;
-      if (!_stillEditing && !_leaveSave) return;
-      window._draftSaveOnLeave = false;
+      // 這次存檔「送出之後」草稿才失效（送出成正式案件／刪除／捨棄／開全新表單）
+      // → 不能寫回 id，否則會綁到另一份表單，下次存檔覆蓋掉別份草稿。
+      if (_mySaveSeq <= _draftVoidSeq) { window._draftUploadingCount = 0; return; }
+      // ★ 除失效情況外一律寫回後端配發的 caseId，不管使用者還在不在表單上。
+      //   舊版只有「還停在表單」或「離開時存檔」才寫回，其餘直接 return
+      //   → 後端已建好草稿、前端卻把 id 丟掉 → 下次存檔 caseId 仍是 null
+      //   → 又建一張內容一模一樣的草稿（草稿匣出現重複單據的主因）。
       _draftCaseId = res.caseId;
+      try {
+        // 存完後清除內容只留 caseId，避免下次「新增申請」時 Banner 誤觸
+        // ★ clientDraftKey 一定要留著：那是後端的冪等鍵。被清掉之後同一張表單再存一次
+        //   會換成新鍵，後端就認不出是同一張 → 冪等保護等於失效。
+        localStorage.setItem('bf_draft', JSON.stringify({
+          caseId: res.caseId,
+          clientDraftKey: window._clientDraftKey || null,
+          owner: (currentUser && currentUser.email) || '',
+          uploadedFiles: window._uploadedDraftFiles || []
+        }));
+      } catch(e) {}
       _cacheClear();
+      const _stillEditing = document.getElementById('view-new-form')?.classList.contains('active');
+      window._draftSaveOnLeave = false;
       // 離開表單存的草稿：清單在切頁當下已用舊快取畫好，只清快取不會重畫
       // → 人若正停在案件清單，直接重拉一次，草稿匣才會馬上出現而不是等下次切頁
       if (!_stillEditing && document.getElementById('view-applications')?.classList.contains('active')
           && typeof loadApplications === 'function') {
         loadApplications(true);
       }
-      var _ddb = document.getElementById('delete-draft-btn');
-      if (_ddb) _ddb.style.display = '';
-      try {
-        // 存完後清除內容只留 caseId，避免下次「新增申請」時 Banner 誤觸
-        localStorage.setItem('bf_draft', JSON.stringify({
-          caseId: res.caseId,
-          owner: (currentUser && currentUser.email) || '',
-          uploadedFiles: window._uploadedDraftFiles || []
-        }));
-      } catch(e) {}
+      if (_stillEditing) {
+        var _ddb = document.getElementById('delete-draft-btn');
+        if (_ddb) _ddb.style.display = '';
+      }
       // 附件上傳（需要 caseId 才能上傳）
       if (filesToUp.length > 0) {
         window._draftUploadInProgress = true;
-        uploadDraftFiles(res.caseId, filesToUp).catch(function(e){ toast('⚠️ 附件上傳失敗，請重新上傳'); }).finally(() => { window._draftUploadInProgress = false; });
+        uploadDraftFiles(res.caseId, filesToUp).catch(function(e){ toast('⚠️ 附件上傳失敗，請重新上傳'); }).finally(() => { window._draftUploadInProgress = false; window._draftUploadingCount = 0; if (typeof updateFormProgress === 'function') updateFormProgress(); });
       }
-    } else if (!silent) {
-      toast('⚠️ 雲端同步失敗，資料已暫存本機（' + (res.error || '') + '）');
+    } else {
+      window._draftUploadingCount = 0;
+      if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機（' + (res.error || '') + '）');
     }
   }).catch(() => {
+    window._draftUploadingCount = 0;
     if (!silent) toast('⚠️ 雲端同步失敗，資料已暫存本機');
   }).finally(() => {
     _saveDraftLock = false; // API 回應後才釋放，防止重複點擊建立多份草稿
@@ -8500,6 +8549,7 @@ function openNewForm(){
   // 每次新增申請都是全新開始，不連結任何舊草稿
   // 保留 localStorage 是為了 session 恢復（瀏覽器意外關閉時能找回）
   _draftCaseId = null;
+  _voidDraftSaves();                // 在途的舊草稿回呼不可綁到這張全新表單上
   _resetClientDraftKey();           // 開新表單＝全新識別碼，避免沿用舊碼誤蓋上一張草稿
   window._newFormFreshStart = true; // 告訴 sw() 不要從 localStorage 還原 caseId
   window._uploadedDraftFiles = [];
@@ -11795,6 +11845,7 @@ function _clearDraftDo(){
   localStorage.removeItem('bf_draft');
   document.getElementById('draft-banner').classList.remove('show');
   _draftCaseId=null;
+  _voidDraftSaves();
   _resetClientDraftKey();
   window._uploadedDraftFiles=[];
   window._pendingFiles=[];
@@ -12172,7 +12223,8 @@ function updateFormProgress() {
   const hasItems   = document.querySelectorAll('.item-card .withtax').length > 0
     && Array.from(document.querySelectorAll('.item-card .withtax')).some(el => parseFloat(el.value) > 0);
   const hasFiles   = (window._pendingFiles && window._pendingFiles.length > 0)
-    || (window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0);
+    || (window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0)
+    || (window._draftUploadingCount > 0);   // 上傳中也算已有附件，否則進度條第 3 步會倒退
 
   const steps = [
     { id:'fp-1', done: hasSubject, active: !hasSubject },
@@ -12200,9 +12252,15 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, ne
   const payee      = payeeEl?.value  || currentUser?.name || '';
   const applicant  = document.getElementById('applicant-select')?.value || currentUser?.name || '';
   const total      = items.reduce((s,i) => s + i.total, 0);
-  const pendingCnt = (window._pendingFiles||[]).length;
-  const draftCnt   = (window._uploadedDraftFiles||[]).length;
-  const fileCnt    = pendingCnt + draftCnt;
+  const pendingCnt   = (window._pendingFiles||[]).length;
+  const draftCnt     = (window._uploadedDraftFiles||[]).length;
+  // 已交給背景上傳、還沒回報成功的附件：不算進來的話，存過草稿後按送出會顯示「附件 0 份」
+  const uploadingCnt = window._draftUploadingCount || 0;
+  const fileCnt      = pendingCnt + draftCnt + uploadingCnt;
+  const _fnotes = [];
+  if (uploadingCnt > 0) _fnotes.push(uploadingCnt + ' 份上傳中');
+  if (pendingCnt   > 0) _fnotes.push(pendingCnt + ' 份送出後上傳');
+  const fileNote = _fnotes.length ? '（' + _fnotes.join('、') + '）' : '';
   const cats       = [...new Set(items.map(i => i.category).filter(Boolean))].join('、') || '—';
 
   let m = document.getElementById('_submit_preview_modal');
@@ -12222,7 +12280,7 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, ne
       <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">部門</span><span style="color:#577B53;font-weight:600;flex:1">${dept||'—'}</span></div>
       <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">分類</span><span style="color:#577B53;font-weight:600;flex:1">${cats}</span></div>
       <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">明細</span><span style="color:#577B53;font-weight:600;flex:1">${items.length} 筆</span></div>
-      <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">附件</span><span style="color:#577B53;font-weight:600;flex:1">${fileCnt} 份${pendingCnt > 0 ? '（' + pendingCnt + ' 份送出後上傳）' : ''}</span></div>
+      <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">附件</span><span style="color:#577B53;font-weight:600;flex:1">${fileCnt} 份${fileNote}</span></div>
       ${reason ? `<div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">備註</span><span style="color:#577B53;flex:1;line-height:1.5">${htEsc(reason)}</span></div>` : ''}
     </div>
     ${needsReceipt ? `<div style="font-size:12px;color:#767B75;margin-bottom:12px;display:flex;align-items:center;gap:6px">📎 請確認已準備好實體發票或收據，審核人員將會核對。</div>` : ''}
@@ -12268,6 +12326,7 @@ async function copyAndReapply(caseId) {
   sw('new-form');
   await new Promise(r => setTimeout(r, 80));
   _draftCaseId = null; // 確保是全新申請，不復用退件案件的 caseId
+  _voidDraftSaves();
   // 填入主旨
   const subjectEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   if (subjectEl) subjectEl.value = (c.project || c.subject || '') + '（重新申請）';
