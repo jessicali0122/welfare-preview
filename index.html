@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260818204635';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819092538';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6511,11 +6511,12 @@ function _renderCaseRow(c, opts) {
   const rowClick = isDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
   const _dataCat = (c.category||'').replace(/"/g,'&quot;');
   // "..." dropdown actions
+  const _menuStatus = (c.status||'').replace(/'/g,'');
   const dotMenu = isDraft
-    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','draft')"`
+    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','draft','${_menuStatus}')"`
     : isDone
-    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','done')"`
-    : `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','pending')"`;
+    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','done','${_menuStatus}')"`
+    : `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','pending','${_menuStatus}')"`;
   return `<tr class="tr" onclick="${rowClick}" data-cat="${_dataCat}" data-status="${c.status||''}">
     <td style="padding:12px 14px;padding-left:16px;width:36px" onclick="event.stopPropagation()"><input type="checkbox" class="app-row-cb" data-caseid="${c.caseId}" style="accent-color:#577B53;width:24px;height:24px;cursor:pointer"></td>
     <td style="padding:12px 14px;white-space:nowrap"><span class="${idCls}" style="font-weight:700;font-size:14px;font-family:'Noto Sans TC',sans-serif;letter-spacing:.04em">${c.caseId}</span></td>
@@ -6533,7 +6534,7 @@ function _renderCaseRow(c, opts) {
 }
 
 // 行操作下拉選單
-function _showRowMenu(btn, caseId, type) {
+function _showRowMenu(btn, caseId, type, status) {
   // 移除舊的選單
   document.querySelectorAll('._evx-row-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
@@ -6541,13 +6542,13 @@ function _showRowMenu(btn, caseId, type) {
   menu.style.cssText = 'position:fixed;background:#fff;border:1px solid #D5DAD2;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;min-width:130px;overflow:hidden;font-size:14px';
   const actionMap = {
     'draft':   [['✏️ 編輯草稿', () => openDraft(caseId)],      ['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]],
-    'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)], ['🖨️ 列印', () => printCase(caseId)]],
+    'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
     'pending': [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
   };
   let items = actionMap[type] || actionMap['pending'];
-  // 管理員：非草稿案件也能從清單直接刪除（原本只有詳情頁右欄有入口）
-  if (type !== 'draft' && typeof isAdmin === 'function' && isAdmin()) {
-    items = items.concat([['🗑️ 刪除案件', () => adminDeleteCaseById(caseId)]]);
+  // 管理員：非草稿、且尚未作廢的案件可從清單直接作廢（保留單號與簽核紀錄，只標記狀態）
+  if (type !== 'draft' && status !== '作廢' && typeof isAdmin === 'function' && isAdmin()) {
+    items = items.concat([['🚫 作廢單據', () => voidCaseById(caseId)]]);
   }
   items.forEach(([label, fn]) => {
     const div = document.createElement('div');
