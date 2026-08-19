@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819130010';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819135902';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7524,21 +7524,42 @@ async function loadDetail(caseId, _fromPop) {
       _setTxt('detail-header-subject', _sub0);
       _setTxt('detail-apply-date', fmtDate(c0.applyDate || c0.createdAt));
       _setTxt('detail-payee', c0.payee || localName(c0.email, c0.name));
-      // 簽核進度：列表有 status/step/totalSteps，足以先畫出時間軸
-      try { updateDetailFlow(c0); } catch(e) {}
+      // ⚠️ 簽核進度「不可」用列表底稿畫：列表沒有每一關的簽核紀錄（approvals），
+      //    餵給 updateDetailFlow 會把每關都畫成「等待前一關完成」，卻同時顯示
+      //    「3/3 關・已完成」——自相矛盾，而且後端慢/失敗時會一直停在這個錯誤畫面。
+      //    稽核系統寧可顯示「載入中」，也絕不能顯示錯誤的簽核狀態。
+      var _fl0 = document.getElementById('flow-timeline');
+      if (_fl0) _fl0.innerHTML = '<div style="padding:14px 0;text-align:center;color:#767B75;font-size:14px">簽核進度載入中…</div>';
     } else {
       var _skFields = {'detail-case-no':90,'detail-applicant-name':70,'detail-department':60,'detail-subject':160};
       Object.keys(_skFields).forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=_sk(_skFields[id]); });
       var flowEl=document.getElementById('flow-timeline'); if(flowEl) flowEl.innerHTML='<span class="skeleton" style="display:inline-block;width:100%;height:80px;border-radius:8px">&nbsp;</span>';
     }
-    // 明細與附件列表無論如何都拿不到完整資料 → 留骨架等 get
+    // 明細／附件／員工編號在列表裡都沒有 → 一律顯示「載入中」，不可沿用上一筆案件的殘留值
     var _itemsEl = document.getElementById('detail-items-tbody');
     if (_itemsEl) _itemsEl.innerHTML = '<tr><td colspan="9"><span class="skeleton" style="display:block;width:100%;height:48px;border-radius:8px">&nbsp;</span></td></tr>';
+    var _filesEl0 = document.getElementById('detail-files-list');
+    if (_filesEl0) _filesEl0.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:14px">附件載入中…</div>';
+    _setTxt('detail-employee-id', '載入中…');
   })();
   if (!_cachedRow) toast('⏳ 載入中…');
   const res = await callAPI('get', { caseId });
   if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
-  if (!res.ok) { toast('❌ ' + res.error); return; }
+  if (!res.ok) {
+    // 載入失敗時，畫面上那些「載入中…」不能就這樣留著，否則使用者會以為還在跑。
+    // 明確標示失敗並提供重試，尤其簽核進度絕不可停在半成品狀態。
+    toast('❌ ' + res.error);
+    var _failHtml = '<div style="padding:14px;text-align:center;color:#dc2626;font-size:14px">'
+      + '載入失敗：' + htEsc(String(res.error || '伺服器無回應'))
+      + '<div style="margin-top:10px"><button class="btn btn-o" style="padding:6px 14px" onclick="loadDetail(\'' + caseId + '\')">重新載入</button></div></div>';
+    var _flF = document.getElementById('flow-timeline'); if (_flF) _flF.innerHTML = _failHtml;
+    var _itF = document.getElementById('detail-items-tbody');
+    if (_itF) _itF.innerHTML = '<tr><td colspan="9">' + _failHtml + '</td></tr>';
+    var _fiF = document.getElementById('detail-files-list');
+    if (_fiF) _fiF.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:14px">—</div>';
+    var _emF = document.getElementById('detail-employee-id'); if (_emF) _emF.textContent = '—';
+    return;
+  }
   const c = res.case;
   // 已拿到權威資料 → 解除「底稿不可用」標記
   if (window._staleCaseIds) delete window._staleCaseIds[caseId];
