@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819225147';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819225249';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2046,6 +2046,16 @@ header::after{display:none!important}
 .section-title{color:#363B35!important}
 /* 表格表頭配色 */
 thead th{color:#767B75!important}
+
+/* ── 列印：一律純白，不帶畫面上的暖白底 ──
+   ★ 這段必須放在本區塊「最後面」：上面第 1940 行的 .card{background:#FFFDF9!important}
+     與前面 @media print 裡的規則同為 !important、特異度也相同，後出現的才會贏。
+     先前把列印規則寫在前面的 @media print 區塊，結果被這裡的暖白蓋掉，印出來仍有底色。 */
+@media print{
+  html,body{background:#fff!important}
+  .card{background:#fff!important;box-shadow:none!important}
+  #detail-reason{background:#fff!important;border:1px solid #E4E7E1!important}
+}
 </style>
 <!-- ===== MAIN APP (hidden until login) ===== -->
 <div id="app" style="display:none;height:100vh;overflow:hidden;background:#fff">
