@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819160327';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819161712';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3501,9 +3501,11 @@ thead th{color:#767B75!important}
               <option value="approve">核准</option>
               <option value="reject">退件</option>
               <option value="resubmit">重新送出</option>
-              <option value="deleteFile">刪除附件</option>
+              <option value="void">作廢單據</option>
               <option value="addUser">新增使用者</option>
-              <option value="deleteUser">停用使用者</option>
+              <option value="enableUser">啟用使用者</option>
+              <option value="disableUser">停用使用者</option>
+              <option value="deleteUser">刪除使用者</option>
             </select>
             <input id="audit-filter-name" type="text" class="inp" placeholder="操作人" style="flex:1;min-width:80px;font-size:14px;padding:6px 10px" oninput="_debouncedAuditFilter()">
             <input id="audit-filter-date" type="text" class="inp date-inp" placeholder="篩選日期" readonly style="flex:1;min-width:130px;font-size:14px;padding:6px 10px;color:#4A4F49;cursor:pointer">
@@ -6659,6 +6661,8 @@ const _auditActionLabel = {
   'approve'    : { label:'核准',     color:'#16a34a', bg:'#dcfce7' },
   'reject'     : { label:'退件',     color:'#b91c1c', bg:'#fee2e2' },
   'resubmit'   : { label:'重新送出', color:'#577B53', bg:'#E7EEE5' },
+  'void'       : { label:'作廢單據', color:'#b45309', bg:'#fef3c7' },
+  'ht_convert' : { label:'午茶轉報銷',color:'#0e7490', bg:'#ecfeff' },
   'draft_create':{ label:'建立草稿', color:'#767B75', bg:'#ECEEEA' },
   'draft_update':{ label:'更新草稿', color:'#767B75', bg:'#ECEEEA' },
   'deleteDraft': { label:'刪除草稿', color:'#767B75', bg:'#F7F8F6' },
@@ -6666,7 +6670,9 @@ const _auditActionLabel = {
   'deleteFile' : { label:'刪除附件', color:'#767B75', bg:'#F7F8F6' },
   'addUser'    : { label:'新增使用者',color:'#46633F', bg:'#f5f3ff' },
   'editUser'   : { label:'編輯使用者',color:'#46633F', bg:'#f5f3ff' },
-  'deleteUser' : { label:'停用使用者',color:'#9f1239', bg:'#fff1f2' },
+  'enableUser' : { label:'啟用使用者',color:'#46633F', bg:'#f0fdf4' },
+  'disableUser': { label:'停用使用者',color:'#9f1239', bg:'#fff1f2' },
+  'deleteUser' : { label:'刪除使用者',color:'#9f1239', bg:'#fff1f2' },
 };
 
 async function loadAuditLogDashboard() {
