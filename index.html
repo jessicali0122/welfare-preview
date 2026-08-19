@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819172718';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819173511';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9593,8 +9593,9 @@ async function uploadPendingFiles(caseId, files) {
     return;
   }
   updateSubmitCardStatus('⏳', '壓縮 & 上傳附件中（共 ' + files.length + ' 個）...');
-  let ok = 0, fail = 0;
+  let ok = 0, fail = 0, uncertain = 0;
   const failedNames = [];
+  const uncertainNames = [];
 
   // ── 並行壓縮，但逐一上傳 ──
   // 後端把附件清單存在同一格，並行上傳會互相覆蓋（傳兩個檔只留下一個）
@@ -9612,6 +9613,12 @@ async function uploadPendingFiles(caseId, files) {
       if (res.ok) {
         ok++;
         updateSubmitCardStatus('⏳', '上傳中 ' + ok + '/' + files.length + '...');
+      } else if (res._maybeSucceeded) {
+        // 連線中斷但後端很可能已收到（回應在半路掉了）→ 不算失敗，標為「待確認」，
+        // 避免使用者誤以為沒上傳而重傳（重傳會在同一張單留下兩份一樣的檔案）
+        uncertain++;
+        uncertainNames.push(file.name);
+        console.warn('上傳結果未確認（很可能成功）', file.name, res.error);
       } else {
         fail++;
         const errDetail = res.error ? '（' + res.error + '）' : '';
@@ -9619,20 +9626,29 @@ async function uploadPendingFiles(caseId, files) {
         console.warn('上傳失敗', file.name, res.error);
       }
     } catch(e) {
-      fail++;
-      failedNames.push(file.name);
-      console.error('上傳例外', file.name, e);
+      // 例外多半是連線中斷 → 同樣視為「待確認」，不直接說失敗
+      uncertain++;
+      uncertainNames.push(file.name);
+      console.error('上傳例外（結果未確認）', file.name, e);
     }
     })(file);
   }
 
   window._pendingFiles = [];
   _cacheClear();
-  if (fail === 0) {
+  if (fail === 0 && uncertain === 0) {
     updateSubmitCardStatus('✅', '附件已上傳（' + ok + ' 個），已存至雲端資料夾');
+  } else if (fail === 0 && uncertain > 0) {
+    // 全部不是「明確失敗」，只是連線不穩沒收到回應 → 很可能已上傳
+    updateSubmitCardStatus('⏳', '附件可能已上傳（連線不穩，未收到確認）：' + uncertainNames.join('、') + '，請點「查看案件」確認附件是否已在，沒有再重傳');
+    toast('ℹ️ 連線不穩，附件「' + uncertainNames.join('、') + '」可能已上傳成功，請到案件確認後再決定是否重傳');
   } else {
-    updateSubmitCardStatus('⚠️', ok + ' 個成功，' + fail + ' 個失敗：' + failedNames.join('、'));
-    toast('⚠️ 部分附件上傳失敗：' + failedNames.join('、'));
+    var _msgParts = [];
+    if (ok > 0) _msgParts.push(ok + ' 個成功');
+    if (uncertain > 0) _msgParts.push(uncertain + ' 個待確認（' + uncertainNames.join('、') + '）');
+    if (fail > 0) _msgParts.push(fail + ' 個失敗：' + failedNames.join('、'));
+    updateSubmitCardStatus('⚠️', _msgParts.join('，'));
+    toast('⚠️ 附件上傳：' + _msgParts.join('，'));
   }
   // 上傳完成後才刷新總覽（不在送出當下立即打 API）
   loadDashboard();
