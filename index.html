@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819102741';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819103025';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -276,7 +276,7 @@ input[type=radio]{accent-color:#577B53}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D9DDD3}
 /* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分，這裡固定每列高度並裁切溢出） */
-#ht-cal-grid,#ms-cal-grid{grid-auto-rows:94px}
+#ht-cal-grid{grid-auto-rows:106px}#ms-cal-grid{grid-auto-rows:82px}
 #ht-cal-grid>div,#ms-cal-grid>div{overflow:hidden}
 /* 午茶日右側卡：本月行程 → 歷史回顧 一條時間軸（區塊標題、年份小晶片） */
 .ht-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -956,18 +956,20 @@ input[type=checkbox]{accent-color:#577B53}
   #flow-timeline{
     display:flex!important;
     flex-direction:row!important;
-    align-items:flex-start!important;
+    align-items:stretch!important;   /* 各關等高，短欄（已完成簽核）才能垂直置中 */
+    justify-content:center!important;
     padding:0!important;
     margin-top:10px!important;   /* 原 20px：上方過空、與下方 6px 間距落差太大 */
     gap:0!important;
     position:static!important;
   }
-  /* 每個步驟等寬，icon 置中上方 */
+  /* 每個步驟等寬，icon 置中上方；內容垂直＋水平置中 */
   #flow-timeline > div{
     flex:1!important;
     display:flex!important;
     flex-direction:column!important;
     align-items:center!important;
+    justify-content:center!important;
     text-align:center!important;
     position:relative!important;
     padding:14px 6px 6px!important; /* 列印壓縮：讓簽核進度+申請資訊+明細塞得進第一頁 */
