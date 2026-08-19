@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819144318';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819144609';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9070,26 +9070,22 @@ function _appendPdfExpandBtn(wrap, fileId, href) {
   wrap.appendChild(bar);
 }
 function _renderPdfFirstPage(wrap, fileId, href) {
-  // sz=w800：預覽夠清楚又比 w1600 快一半；要高解析度的列印走 _renderPdfAllPages
-  var thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
-  var img = new Image();
-  img.decoding = 'async';
-  img.onload = function() {
-    img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
-    wrap.innerHTML = '';
-    wrap.appendChild(img);
-    wrap.style.minHeight = '';
-    wrap.style.flexDirection = '';
-    _appendPdfExpandBtn(wrap, fileId, href);
-  };
-  // Drive 直連縮圖拿不到（權限／縮圖尚未產生／第三方 cookie 被擋）→ 改跟後端要縮圖。
-  // ⚠️ 這裡退的是 getThumb（回傳一張小 JPEG），不是 getFileB64（整份 PDF）——
-  //    後者回應太大，Google 的投遞端點會 404，正是今天卡住的原因。
-  img.onerror = async function() {
-    try { await _loadThumbViaGAS(wrap, fileId, href); } catch(e) {}
-    _appendPdfExpandBtn(wrap, fileId, href);
-  };
-  img.src = thumbUrl;
+  // ★ PDF 預覽改用 Drive 內嵌預覽 iframe：完全不經過後端，開啟即顯示。
+  //   2026-08-19 在真實環境實測：drive.google.com/thumbnail 對 PDF 一律失敗
+  //   （FAIL 868ms），所以舊做法必定退回後端；而後端今天回應投遞不穩，縮圖就
+  //   永遠卡在「載入中」。iframe 走使用者自己的 Google 登入狀態，秒開且可翻頁。
+  //   列印仍需要 pdf.js 逐頁點陣圖（iframe 印不出來）→ 保留「顯示全部頁面」，
+  //   _doPrint 會在送印前自動按下它。
+  wrap.innerHTML = '';
+  wrap.style.minHeight = '';
+  wrap.style.flexDirection = '';
+  var fr = document.createElement('iframe');
+  fr.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+  fr.loading = 'lazy';
+  fr.setAttribute('title', 'PDF 預覽');
+  fr.style.cssText = 'width:100%;height:320px;border:0;display:block;background:#ECEEEA;border-radius:6px';
+  wrap.appendChild(fr);
+  _appendPdfExpandBtn(wrap, fileId, href);
 }
 
 async function _renderPdfAllPages(wrap, fileId, href) {
