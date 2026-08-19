@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819174520';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819175115';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7545,15 +7545,20 @@ async function openDraft(caseId, asCopy) {
   window._pendingFiles = [];
   _resetClientDraftKey();   // 載入既有草稿走 caseId、複製則需全新識別碼 → 一律先重置
   toast(asCopy ? '⏳ 複製中...' : '⏳ 載入草稿中...');
-  // 先立即切到表單畫面（不等後端）→ 使用者馬上看到跳轉，避免盯著舊畫面空等 GAS 幾秒；
-  //   旗標避免 sw 從 localStorage 重複還原附件；資料回來後再填入欄位/明細。
+  // ★ 一定要「資料成功回來」才切換到表單畫面。
+  //   （曾經為了秒跳而先切畫面再抓資料，但後端慢/失敗時，表單會先顯示預設值——收款人預設「同申請人」＝
+  //     使用者自己，害人誤以為複製把收款人變成自己。改回：先確認拿到資料，再切畫面填入，永不顯示預設值。）
+  const res = await callAPI('get', { caseId });
+  if (!res.ok) {
+    toast('❌ ' + (asCopy ? '複製' : '載入草稿') + '失敗：伺服器忙碌，請稍後再試' + (res.error ? '（' + res.error + '）' : ''));
+    return;   // 留在原畫面，不切到半空的新表單
+  }
+  const c = res.case || res.data || res;
+  // 先切換到新增申請畫面（會清空表單）；旗標避免 sw 重複還原附件
   window._openDraftInProgress = true;
   sw('new-form');
   window._openDraftInProgress = false;
   await new Promise(r => setTimeout(r, 30));   // 等 DOM 更新完畢
-  const res = await callAPI('get', { caseId });
-  if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
-  const c = res.case || res.data || res;
   // 設定 caseId（複製模式不綁原案件 → 送出時會產生新單號、重跑簽核流程）
   _draftCaseId = asCopy ? null : caseId;
   // 申請日期：載入草稿時，若時間為 00:00 或純日期，補上當下台灣時間
