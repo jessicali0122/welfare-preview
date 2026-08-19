@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819210037';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819210813';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8637,24 +8637,13 @@ function sw(name,elOrName,_fromPop){
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
     if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name, !window._rolesSyncedOnce); return; }
   }
-  // ── 離開表單時提示草稿已儲存 ──
+  // ── 離開表單：只留本機暫存，不再自動存進草稿匣 ──
+  // 舊行為是「離開就幫你存一份到草稿匣」，使用者沒按儲存卻一直冒出草稿，草稿匣很亂
+  // （也是同內容重複兩張的來源之一）。改成：只有按「儲存草稿」才會真的進草稿匣；
+  // 這裡僅把內容寫進本機，讓下次進表單的「偵測到草稿→恢復」還能救回沒存的內容。
   var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
   if (_leavingForm && name !== 'new-form') {
-    var _hasDraft = false;
-    try { var _d = JSON.parse(localStorage.getItem('bf_draft')||'{}'); _hasDraft = !!(_d.subject||_d.reason||(_d.items&&_d.items.length)); } catch(e){}
-    // 只要有草稿內容就一律存進後端草稿匣：不分「本機暫存」與「真的存」，
-    // 否則會出現「跳了草稿通知、草稿匣卻找不到」的矛盾。
-    // 後端主旨必填，沒填就自動帶預設主旨，讓它同樣進得了草稿匣。
-    if (_hasDraft && typeof saveDraftForm === 'function') {
-      var _subjEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
-      if (_subjEl && !_subjEl.value.trim()) {
-        _subjEl.value = '未命名草稿';
-        if (typeof autoSaveDraft === 'function') autoSaveDraft();
-      }
-      window._draftSaveOnLeave = true;   // 讓回呼在離開表單後仍能寫回 caseId + 清列表快取
-      saveDraftForm(true);
-      toast('💾 草稿已存入草稿匣');
-    }
+    if (typeof autoSaveDraft === 'function') { try { autoSaveDraft(); } catch(e) {} }
   }
   // ── 在切換前記住當前視圖（views 還未變動，此時 active 仍是上一頁）──
   // new-form 的返回路徑：必須在 view 切換前記錄，否則 active view 已經是 new-form
@@ -11720,16 +11709,9 @@ function autoSaveDraft(){
     caseId:_draftCaseId||null, clientDraftKey:window._clientDraftKey||null, uploadedFiles:window._uploadedDraftFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 
-  // 有主旨內容才排程自動同步到 GAS（30 秒後靜默儲存）
-  if (subjectEl && subjectEl.value.trim()) {
-    if (_autoSaveGasTimer) clearTimeout(_autoSaveGasTimer);
-    _autoSaveGasTimer = setTimeout(function() {
-      _autoSaveGasTimer = null;
-      if (!document.getElementById('view-new-form')?.classList.contains('active')) return;
-      if (!_draftCaseId) return; // 尚未儲存過的新表單不自動建立草稿
-      saveDraftForm(true); // silent=true，不顯示 toast
-    }, 30000);
-  }
+  // 30 秒定時靜默同步到 GAS 已移除：使用者要的是「只有按儲存草稿才會存」。
+  // 本函式現在只寫本機（localStorage），不再自己打後端。
+  if (_autoSaveGasTimer) { clearTimeout(_autoSaveGasTimer); _autoSaveGasTimer = null; }
 }
 // 清掉不屬於目前登入者的本機草稿（共用電腦、換帳號登入後不還原別人的草稿）
 function _purgeForeignDraft(){
