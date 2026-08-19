@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819121551';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819122924';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5452,6 +5452,15 @@ function showApp() {
     setTimeout(function(){ _preloadFlowInfo(); }, 800);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
+    // ── 背景預抓案件清單 ──
+    // GAS 一次往返 5～15 秒，等使用者點「案件追蹤」才抓就是讓他乾等。登入後就先抓好放進
+    // 快取與 _allCasesCache，切過去時直接有資料；也讓「點案件秒開」有底稿可用（直接從
+    // 通知連結開單時尤其明顯）。callAPI 內建去重，和 loadApplications 同時發不會重複打。
+    setTimeout(function(){
+      callAPI('list').then(function(r){
+        if (r && r.ok && r.cases && !window._allCasesCache) window._allCasesCache = r.cases;
+      }).catch(function(){});
+    }, 300);
     // 角色權威資料來自 getMembers；提早觸發（150ms，僅讓主資料 list 稍先出手），
     // 讓「案件追蹤／系統管理」等入口卡最快 ~1s 到位，不必等 2.5 秒才冒出來
     setTimeout(function(){ _syncMembersFromServer(); }, 150);
@@ -5963,11 +5972,28 @@ function _fetchAPIDedup(action, data) {
 // 送出/簽核/刪除按下去後畫面若毫無反應，使用者會以為沒送出而重複點擊，
 // 因而產生重複單據（2026-08-18 實際發生：同一張單被建成 3 筆）。
 // → 寫入型 action 一律蓋上不可穿透的遮罩，並顯示已等待秒數，明確告知「還在跑」。
+// 註：刪除改為樂觀更新（畫面先動、背景送），不再蓋遮罩讓使用者乾等。
 const _BLOCKING_ACTIONS = {
   submit:'送出申請中', approve:'核准處理中', reject:'退件處理中', voidCase:'作廢處理中',
-  resubmit:'重新送出中', deleteCase:'刪除案件中', deleteDraft:'刪除草稿中',
-  uploadFile:'上傳附件中', deleteFile:'刪除附件中'
+  resubmit:'重新送出中', uploadFile:'上傳附件中', deleteFile:'刪除附件中'
 };
+
+// ── 樂觀更新輔助 ──────────────────────────────────────────────────────
+// 寫入後 _cacheClear() 會讓下次讀取重抓，但 _allCasesCache 仍是寫入前的舊資料。
+// 詳情頁的「秒開」底稿就是從它來的 → 剛核准完再開該案件會閃一下舊狀態。
+// 這裡把已知失效的案件標記起來，讓底稿跳過它們（改用骨架等真實資料）。
+window._staleCaseIds = window._staleCaseIds || {};
+function _markCaseStale(caseId) { if (caseId) window._staleCaseIds[caseId] = 1; }
+// 從本地案件快取移除一筆（刪除用）；回傳被移除的那筆，失敗時可還原
+function _removeCaseLocally(caseId) {
+  var arr = window._allCasesCache;
+  if (!Array.isArray(arr)) return null;
+  var i = arr.findIndex(function(x){ return x && x.caseId === caseId; });
+  if (i < 0) return null;
+  var removed = arr[i];
+  arr.splice(i, 1);
+  return removed;
+}
 var _busyCount = 0, _busyTimer = null, _busyT0 = 0;
 function _busyShow(msg) {
   _busyCount++;
@@ -7440,18 +7466,47 @@ async function loadDetail(caseId, _fromPop) {
   // 立即清空退件原因，不等 API 回應，避免顯示上一筆殘留內容
   const _commentTa = document.getElementById('approve-box-comment');
   if (_commentTa) _commentTa.value = '';
-  // 立即顯示 skeleton 佔位，避免空白感
+  // ── 秒開：先用案件列表已有的資料把畫面畫出來，不等後端 ──
+  // GAS 單次往返 5～15 秒，等 get 回來才渲染 = 盯著骨架看 7 秒。但列表（list）其實已經
+  // 帶了單號/申請人/部門/主旨/日期/金額/狀態/第幾關，足以先把上半頁畫完；明細與附件
+  // 拿不到的部分才留骨架，等 get 回來再補齊。
+  var _cachedRow = null;
+  try {
+    if (!window._staleCaseIds || !window._staleCaseIds[caseId]) {
+      _cachedRow = (window._allCasesCache || []).find(function(x){ return x && x.caseId === caseId; }) || null;
+    }
+  } catch(e) {}
   (function(){
     var _sk = function(w){ return '<span class="skeleton" style="display:inline-block;width:'+w+'px;height:14px;border-radius:16px">&nbsp;</span>'; };
-    var _skFields = {'detail-case-no':90,'detail-applicant-name':70,'detail-department':60,'detail-subject':160};
-    Object.keys(_skFields).forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=_sk(_skFields[id]); });
-    var flowEl=document.getElementById('flow-timeline'); if(flowEl) flowEl.innerHTML='<span class="skeleton" style="display:inline-block;width:100%;height:80px;border-radius:8px">&nbsp;</span>';
+    var _setTxt = function(id, v){ var el=document.getElementById(id); if(el) el.textContent = v; };
+    if (_cachedRow) {
+      var c0 = _cachedRow;
+      _setTxt('detail-case-no', c0.caseId);
+      _setTxt('detail-applicant-name', localName(c0.email, c0.name));
+      _setTxt('detail-department', localDept(c0.email, c0.department));
+      var _sub0 = c0.subject || c0.project || '—';
+      _setTxt('detail-subject', _sub0);
+      _setTxt('detail-header-subject', _sub0);
+      _setTxt('detail-apply-date', fmtDate(c0.applyDate || c0.createdAt));
+      _setTxt('detail-payee', c0.payee || localName(c0.email, c0.name));
+      // 簽核進度：列表有 status/step/totalSteps，足以先畫出時間軸
+      try { updateDetailFlow(c0); } catch(e) {}
+    } else {
+      var _skFields = {'detail-case-no':90,'detail-applicant-name':70,'detail-department':60,'detail-subject':160};
+      Object.keys(_skFields).forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=_sk(_skFields[id]); });
+      var flowEl=document.getElementById('flow-timeline'); if(flowEl) flowEl.innerHTML='<span class="skeleton" style="display:inline-block;width:100%;height:80px;border-radius:8px">&nbsp;</span>';
+    }
+    // 明細與附件列表無論如何都拿不到完整資料 → 留骨架等 get
+    var _itemsEl = document.getElementById('detail-items-tbody');
+    if (_itemsEl) _itemsEl.innerHTML = '<tr><td colspan="9"><span class="skeleton" style="display:block;width:100%;height:48px;border-radius:8px">&nbsp;</span></td></tr>';
   })();
-  toast('⏳ 載入中…');
+  if (!_cachedRow) toast('⏳ 載入中…');
   const res = await callAPI('get', { caseId });
   if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
   if (!res.ok) { toast('❌ ' + res.error); return; }
   const c = res.case;
+  // 已拿到權威資料 → 解除「底稿不可用」標記
+  if (window._staleCaseIds) delete window._staleCaseIds[caseId];
   // 更新詳情頁面
   const el = document.getElementById('detail-case-no');
   if (el) el.textContent = c.caseId;
@@ -7681,7 +7736,7 @@ function doApprove() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('approve', { caseId, comment });
-        if (res.ok) { _cacheClear(); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadDetail(caseId); loadDashboard(); }
+        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadDetail(caseId); loadDashboard(); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
@@ -7703,7 +7758,7 @@ function doReject() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('reject', { caseId, comment });
-        if (res.ok) { _cacheClear(); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); loadDashboard(); }
+        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); loadDashboard(); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
@@ -7933,16 +7988,26 @@ function adminDeleteCaseById(caseId) {
     '確定要永久刪除案件嗎？',
     '案件 <strong>' + caseId + '</strong> 將被永久刪除，此操作無法復原。',
     '確定刪除', '#dc2626',
-    async function() {
-      toast('⏳ 刪除中...');
-      const res = await callAPI('deleteCase', { caseId });
-      if (res && res.ok) {
-        toast('🗑️ 案件已刪除');
+    function() {
+      // 樂觀更新：畫面立刻移除並跳回列表，後端在背景刪。
+      // 原本 await 完才動作，GAS 要 5～15 秒 → 使用者以為沒刪成功而重複點。
+      var _removed = _removeCaseLocally(caseId);
+      _markCaseStale(caseId);
+      toast('🗑️ 案件已刪除');
+      sw('applications');
+      if (typeof renderApplications === 'function') { try { renderApplications(); } catch(e) {} }
+      callAPI('deleteCase', { caseId }).then(function(res){
+        if (res && res.ok) { _cacheClear(); return; }
+        // 失敗 → 把案件放回去並如實告知
+        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
         _cacheClear();
-        setTimeout(() => sw('applications'), 800);
-      } else {
         toast('❌ 刪除失敗：' + ((res && res.error) || '後端尚未支援此操作，請聯繫系統管理員'));
-      }
+        if (typeof loadApplications === 'function') loadApplications(true);
+      }).catch(function(err){
+        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
+        toast('❌ 刪除失敗：' + (err && err.message ? err.message : '網路錯誤'));
+        if (typeof loadApplications === 'function') loadApplications(true);
+      });
     }
   );
 }
@@ -7959,26 +8024,34 @@ function confirmDeleteDraftById(caseId) {
     '確定刪除草稿 <strong>' + caseId + '</strong>？<br><span style="font-size:14px;color:#dc2626">此操作無法復原，草稿將被永久刪除。</span>',
     '確認刪除',
     '#dc2626',
-    async function() {
-      toast('⏳ 刪除中...');
-      const res = await callAPI('deleteDraft', { caseId });
-      if (res.ok) {
-        _cacheClear();
-        localStorage.removeItem('bf_draft');
-        _draftCaseId = null;
-        var _ddb = document.getElementById('delete-draft-btn');
-        if (_ddb) _ddb.style.display = 'none';
-        toast('🗑️ 草稿已刪除');
-        // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
-        var _curV = (document.querySelector('.view.active') || {}).id || '';
-        if (_curV === 'view-new-form') {
-          sw(window._newFormReturnView || 'applications');
-        } else {
-          sw(_curV ? _curV.replace('view-', '') : 'applications');
-        }
+    function() {
+      // 樂觀更新：草稿立刻從畫面消失，後端在背景刪（同 adminDeleteCaseById 的理由）
+      var _removed = _removeCaseLocally(caseId);
+      _markCaseStale(caseId);
+      localStorage.removeItem('bf_draft');
+      _draftCaseId = null;
+      var _ddb = document.getElementById('delete-draft-btn');
+      if (_ddb) _ddb.style.display = 'none';
+      toast('🗑️ 草稿已刪除');
+      // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
+      var _curV = (document.querySelector('.view.active') || {}).id || '';
+      if (_curV === 'view-new-form') {
+        sw(window._newFormReturnView || 'applications');
       } else {
-        toast('❌ 刪除失敗：' + (res.error || ''));
+        sw(_curV ? _curV.replace('view-', '') : 'applications');
       }
+      if (typeof renderDraftsTab === 'function') { try { renderDraftsTab(); } catch(e) {} }
+      callAPI('deleteDraft', { caseId }).then(function(res){
+        if (res && res.ok) { _cacheClear(); return; }
+        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
+        _cacheClear();
+        toast('❌ 刪除失敗：' + ((res && res.error) || ''));
+        if (typeof loadApplications === 'function') loadApplications(true);
+      }).catch(function(err){
+        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
+        toast('❌ 刪除失敗：' + (err && err.message ? err.message : '網路錯誤'));
+        if (typeof loadApplications === 'function') loadApplications(true);
+      });
     }
   );
 }
