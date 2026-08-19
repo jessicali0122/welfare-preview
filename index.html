@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819143927';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819144318';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9055,27 +9055,40 @@ function _ensurePdfJs() {
 }
 // PDF 第一頁縮圖：直接跟 Drive 要圖片，零後端呼叫。附上「顯示全部頁面」讓需要
 // 核對多頁憑證的人自己觸發完整載入（那才會走 getFileB64）。
+// 在縮圖下方掛「顯示全部頁面」：要核對多頁憑證的人才付完整載入的成本
+function _appendPdfExpandBtn(wrap, fileId, href) {
+  if (!wrap || wrap.querySelector('.pdf-expand-bar')) return;
+  var bar = document.createElement('div');
+  bar.className = 'pdf-expand-bar';
+  bar.style.cssText = 'text-align:center;padding:8px 0 2px';
+  bar.innerHTML = '<button type="button" class="btn btn-o" style="padding:4px 12px;font-size:12px">顯示全部頁面</button>';
+  bar.querySelector('button').onclick = function() {
+    bar.remove();
+    wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:12px">載入全部頁面中…</div>';
+    _renderPdfAllPages(wrap, fileId, href);
+  };
+  wrap.appendChild(bar);
+}
 function _renderPdfFirstPage(wrap, fileId, href) {
-  var thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
+  // sz=w800：預覽夠清楚又比 w1600 快一半；要高解析度的列印走 _renderPdfAllPages
+  var thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w800';
   var img = new Image();
+  img.decoding = 'async';
   img.onload = function() {
     img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
     wrap.innerHTML = '';
     wrap.appendChild(img);
-    var bar = document.createElement('div');
-    bar.style.cssText = 'text-align:center;padding:8px 0 2px';
-    bar.innerHTML = '<button type="button" class="btn btn-o" style="padding:4px 12px;font-size:12px">顯示全部頁面</button>';
-    bar.querySelector('button').onclick = function() {
-      bar.remove();
-      wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:12px">載入全部頁面中…</div>';
-      _renderPdfAllPages(wrap, fileId, href);
-    };
-    wrap.appendChild(bar);
     wrap.style.minHeight = '';
     wrap.style.flexDirection = '';
+    _appendPdfExpandBtn(wrap, fileId, href);
   };
-  // Drive 縮圖拿不到（權限或尚未產生）→ 才退回原本的完整載入
-  img.onerror = function() { _renderPdfAllPages(wrap, fileId, href); };
+  // Drive 直連縮圖拿不到（權限／縮圖尚未產生／第三方 cookie 被擋）→ 改跟後端要縮圖。
+  // ⚠️ 這裡退的是 getThumb（回傳一張小 JPEG），不是 getFileB64（整份 PDF）——
+  //    後者回應太大，Google 的投遞端點會 404，正是今天卡住的原因。
+  img.onerror = async function() {
+    try { await _loadThumbViaGAS(wrap, fileId, href); } catch(e) {}
+    _appendPdfExpandBtn(wrap, fileId, href);
+  };
   img.src = thumbUrl;
 }
 
