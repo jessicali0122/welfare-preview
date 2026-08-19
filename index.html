@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819180242';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819180635';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7698,13 +7698,6 @@ async function loadDetail(caseId, _fromPop) {
   // 在入口白名單化可一次涵蓋現有與未來的拼接點，杜絕屬性注入
   caseId = String(caseId || '').replace(/[^A-Za-z0-9_-]/g, '');
   if (!caseId) return;
-  // 簽核流程資料是登入後延遲載入的，若直接開案件連結（例如從通知點進來），
-  // 詳情渲染時 APPROVER_EMAILS 可能還是空的 → isMyTurnToApprove 一律 false
-  // → 當關簽核人看不到審核按鈕，且之後不會重算。這裡先確保流程已到位。
-  if (typeof APPROVER_EMAILS !== 'undefined' && !APPROVER_EMAILS.length
-      && typeof _preloadFlowInfo === 'function') {
-    try { await _preloadFlowInfo(); } catch(e) {}
-  }
   // Race condition 保護：若上一個請求還沒完成，忽略舊結果
   const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
@@ -7760,6 +7753,13 @@ async function loadDetail(caseId, _fromPop) {
     _setTxt('detail-employee-id', '載入中…');
   })();
   if (!_cachedRow) toast('⏳ 載入中…');
+  // 簽核流程資料是登入後延遲載入的；詳情渲染時 APPROVER_EMAILS 可能還空著 → isMyTurnToApprove 一律 false，
+  // 當關簽核人會看不到審核按鈕。這裡「在畫面已切好、快取已顯示之後」才補載流程，避免卡住畫面切換（點了沒反應）。
+  if (typeof APPROVER_EMAILS !== 'undefined' && !APPROVER_EMAILS.length
+      && typeof _preloadFlowInfo === 'function') {
+    try { await _preloadFlowInfo(); } catch(e) {}
+    if (window._detailReqId !== _reqId) { toast(''); return; }   // 期間被新請求取代就放手
+  }
   const res = await callAPI('get', { caseId });
   if (window._detailReqId !== _reqId) { toast(''); return; } // 已被更新的請求取代，清除 toast 並丟棄
   if (!res.ok) {
