@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819224716';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819225147';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7624,6 +7624,78 @@ window._copyCurrentDraft = function(){
     '複製', '#577B53', function(){ copyCaseToNewForm(id); }
   );
 };
+// ══ 離開表單前的未儲存守門 ══
+// 拿掉自動存草稿之後，填到一半切頁就會直接不見。與其事後靠「偵測到草稿」的提示補救
+// （那個提示會在按新增申請時莫名跳出來，使用者根本不記得自己建過草稿），
+// 不如在離開的當下就問清楚：存成草稿、還是不要了。
+// 只有「有內容 && 跟進入表單/上次儲存時不一樣」才會問，單純看一眼就離開不會被打擾。
+function _formFingerprint(){
+  var v = function(sel){ var e = document.querySelector(sel); return e ? String(e.value || '') : ''; };
+  var items = [];
+  document.querySelectorAll('#view-new-form .item-card').forEach(function(c){
+    items.push([
+      c.querySelector('.date-inp')?.value || '',
+      c.querySelectorAll('select')[0]?.value || '',
+      c.querySelector('.desc-inp')?.value || '',
+      c.querySelectorAll('select')[1]?.value || '',
+      c.querySelector('.withtax')?.value || ''
+    ].join('|'));
+  });
+  return [
+    v('#view-new-form input[placeholder*="主旨"]'),
+    v('#view-new-form textarea'),
+    document.getElementById('applicant-select')?.value || '',
+    document.getElementById('payee-select')?.value || '',
+    document.getElementById('form-dept-select')?.value || '',
+    (window._pendingFiles || []).length,
+    items.join('#')
+  ].join('~');
+}
+window._markFormClean = function(){ window._formCleanFp = _formFingerprint(); };
+function _formHasContent(){
+  var subj = document.querySelector('#view-new-form input[placeholder*="主旨"]');
+  var rsn  = document.querySelector('#view-new-form textarea');
+  if (subj && subj.value.trim()) return true;
+  if (rsn  && rsn.value.trim())  return true;
+  if ((window._pendingFiles || []).length) return true;
+  var hit = false;
+  document.querySelectorAll('#view-new-form .item-card').forEach(function(c){
+    var d = c.querySelector('.desc-inp')?.value || '';
+    var t = parseFloat(c.querySelector('.withtax')?.value) || 0;
+    if (d.trim() || t > 0) hit = true;
+  });
+  return hit;
+}
+function _formIsDirty(){
+  if (!_formHasContent()) return false;
+  if (window._formCleanFp === undefined) return true;
+  return _formFingerprint() !== window._formCleanFp;
+}
+// 三選一：存成草稿再離開／直接離開／留下繼續編輯
+function _showUnsavedGuard(targetView){
+  var m = document.getElementById('_unsaved_guard');
+  if (!m) { m = document.createElement('div'); m.id = '_unsaved_guard'; m.className = 'modal-bg'; document.body.appendChild(m); }
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:400px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+    + '<div style="font-size:16px;font-weight:700;color:#2E332D;margin-bottom:10px">尚未儲存</div>'
+    + '<div style="font-size:14px;color:#6e736d;line-height:1.7;margin-bottom:18px">這張表單還沒存成草稿，直接離開的話填的內容就不見了。</div>'
+    + '<div style="display:flex;flex-direction:column;gap:9px">'
+    +   '<button class="btn btn-p" style="justify-content:center;min-height:44px" id="_ug_save">存成草稿再離開</button>'
+    +   '<button class="btn btn-o" style="justify-content:center;min-height:44px" id="_ug_discard">不儲存，直接離開</button>'
+    +   '<button class="btn btn-o" style="justify-content:center;min-height:44px;border:none;color:#767B75" id="_ug_stay">留下繼續編輯</button>'
+    + '</div></div>';
+  m.classList.add('open');
+  var close = function(){ m.classList.remove('open'); };
+  var go = function(){ window._skipUnsavedGuard = true; try { localStorage.removeItem('bf_draft'); } catch(e) {} sw(targetView); };
+  document.getElementById('_ug_stay').onclick = close;
+  m.onclick = function(e){ if (e.target === m) close(); };
+  document.getElementById('_ug_discard').onclick = function(){ close(); go(); };
+  document.getElementById('_ug_save').onclick = function(){
+    close();
+    if (typeof saveDraftForm === 'function') saveDraftForm();   // 樂觀儲存，不必等後端
+    go();
+  };
+}
+
 window._backFromNewForm = function(){
   var v = window._newFormReturnView || 'applications';
   var t = window._newFormReturnTab;
@@ -7788,6 +7860,7 @@ async function openDraft(caseId, asCopy) {
   try { autoSaveDraft(); } catch(e) {}
   // 顯示「刪除草稿」按鈕
   _setDraftBtns(!asCopy);
+  if (window._markFormClean) window._markFormClean();   // 以「剛載入的內容」為基準，沒改就不會被問
   toast(asCopy ? '✅ 已複製內容，附件請重新上傳後送出' : '✅ 草稿已載入，可繼續編輯');
 }
 
@@ -8437,6 +8510,7 @@ function confirmDeleteDraftById(caseId) {
       // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
       var _curV = (document.querySelector('.view.active') || {}).id || '';
       if (_curV === 'view-new-form') {
+        window._skipUnsavedGuard = true;   // 草稿都刪了，不必再問要不要存
         _backFromNewForm();   // 刪完草稿也回到草稿匣，不要掉到別的分頁
       } else {
         sw(_curV ? _curV.replace('view-', '') : 'applications');
@@ -8541,6 +8615,7 @@ async function saveDraftForm(silent = false) {
 
   // ── 樂觀更新：先存 localStorage 並立即顯示成功，API 在背景同步 ──
   autoSaveDraft(); // 確保 localStorage 是最新狀態
+  if (window._markFormClean) window._markFormClean();   // 已儲存 → 重設基準，之後沒再改就不會被問
   const filesToUp = window._pendingFiles && window._pendingFiles.length > 0
     ? [...window._pendingFiles] : [];
   if (!silent) toast(filesToUp.length > 0 ? '💾 草稿已儲存，附件上傳中...' : '💾 草稿已儲存！');
@@ -8638,6 +8713,7 @@ function openNewForm(){
   _voidDraftSaves();                // 在途的舊草稿回呼不可綁到這張全新表單上
   _resetClientDraftKey();           // 開新表單＝全新識別碼，避免沿用舊碼誤蓋上一張草稿
   window._newFormFreshStart = true; // 告訴 sw() 不要從 localStorage 還原 caseId
+  setTimeout(function(){ if (window._markFormClean) window._markFormClean(); }, 200);  // 空白表單為基準
   window._uploadedDraftFiles = [];
   window._pendingFiles = [];
   sw('new-form');
@@ -8729,7 +8805,15 @@ function sw(name,elOrName,_fromPop){
   // 這裡僅把內容寫進本機，讓下次進表單的「偵測到草稿→恢復」還能救回沒存的內容。
   var _leavingForm = document.querySelector('.view.active')?.id === 'view-new-form';
   if (_leavingForm && name !== 'new-form') {
-    if (typeof autoSaveDraft === 'function') { try { autoSaveDraft(); } catch(e) {} }
+    if (window._skipUnsavedGuard) {
+      window._skipUnsavedGuard = false;            // 使用者已在守門視窗做過決定
+    } else if (typeof _formIsDirty === 'function' && _formIsDirty()) {
+      _showUnsavedGuard(name);
+      return;                                       // 先不切頁，等使用者決定
+    }
+    // 決定完（或本來就沒東西要存）→ 清掉本機暫存，
+    // 否則下次按「新增申請」會跳出使用者根本不記得的「偵測到草稿」提示。
+    try { localStorage.removeItem('bf_draft'); } catch(e) {}
   }
   // ── 在切換前記住當前視圖（views 還未變動，此時 active 仍是上一頁）──
   // new-form 的返回路徑：必須在 view 切換前記錄，否則 active view 已經是 new-form
