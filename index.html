@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819154123';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819154341';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6035,6 +6035,25 @@ const _BLOCKING_ACTIONS = {
 // 這裡把已知失效的案件標記起來，讓底稿跳過它們（改用骨架等真實資料）。
 window._staleCaseIds = window._staleCaseIds || {};
 function _markCaseStale(caseId) { if (caseId) window._staleCaseIds[caseId] = 1; }
+// 依 _allCasesCache 重算所有計數徽章（共 N 件／案件清單／草稿匣／待我審核）
+// 樂觀刪除只把資料從快取拿掉並重繪列表，計數卻只在 loadApplications 裡算 → 刪掉一張草稿後
+// 「草稿匣 2」和「共 5 件」不會跟著減（使用者實際回報）。抽出來讓兩邊共用。
+function _refreshAppCounts() {
+  var all = window._allCasesCache;
+  if (!Array.isArray(all)) return;
+  var _set = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+  var drafts = all.filter(function(c){
+    return c.status === '草稿' && ((typeof isAdmin === 'function' && isAdmin()) || c.email === (window.currentUser && currentUser.email));
+  }).length;
+  var cases = all.filter(function(c){ return c.status !== '草稿'; }).length;
+  var pending = all.filter(function(c){ return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
+  _set('tab-drafts-count', drafts);
+  _set('tab-cases-count', cases);
+  _set('apps-tab-all-badge', cases);
+  _set('tab-pending-count', pending);
+  _set('app-count-label', '共 ' + cases + ' 件');
+}
+
 // 從本地案件快取移除一筆（刪除用）；回傳被移除的那筆，失敗時可還原
 function _removeCaseLocally(caseId) {
   var arr = window._allCasesCache;
@@ -8196,6 +8215,7 @@ function adminDeleteCaseById(caseId) {
       toast('🗑️ 案件已刪除');
       sw('applications');
       if (typeof renderApplications === 'function') { try { renderApplications(); } catch(e) {} }
+      _refreshAppCounts();
       callAPI('deleteCase', { caseId }).then(function(res){
         if (res && res.ok) { _cacheClear(); return; }
         // 失敗 → 把案件放回去並如實告知
@@ -8241,6 +8261,7 @@ function confirmDeleteDraftById(caseId) {
         sw(_curV ? _curV.replace('view-', '') : 'applications');
       }
       if (typeof renderDraftsTab === 'function') { try { renderDraftsTab(); } catch(e) {} }
+      _refreshAppCounts();
       callAPI('deleteDraft', { caseId }).then(function(res){
         if (res && res.ok) { _cacheClear(); return; }
         if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
