@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819144737';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819145240';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -196,9 +196,15 @@ thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!imp
 .tr:last-child td{border-bottom:none!important}
 /* 表格卡片 */
 .card.table-wrap table{border-collapse:collapse}
-/* 詳情頁與費用申請單在超寬螢幕上限置中，避免欄位被拉得太開（僅螢幕，列印不受影響） */
+/* ── 頁面內容最大寬度（超寬螢幕置中，僅螢幕，列印不受影響）──────────────
+   閱讀／表單型頁面套用；案件追蹤與午茶日刻意不套用 —— 它們是很寬的表格，
+   限制寬度反而會把欄位擠在一起。要調整寬度改 --page-max 一個數字即可。 */
+:root{--page-max:1500px}
 @media screen and (min-width:769px){
-  #view-detail,#view-new-form{max-width:1500px;margin-left:auto;margin-right:auto}
+  #view-detail,#view-new-form,#view-approvals,#view-admin,
+  #view-feedback,#view-subsidy,#view-overview,#view-massage{
+    max-width:var(--page-max);margin-left:auto;margin-right:auto
+  }
 }
 /* detail-grid：桌面兩欄，手機單欄 */
 #detail-grid{grid-template-columns:minmax(0,1fr) 400px}
@@ -3281,9 +3287,9 @@ thead th{color:#767B75!important}
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">項目</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">憑證</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">日期</th>
-              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">未稅</th>
-              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">稅額</th>
-              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">含稅</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">未稅</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">稅額</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
               <tr><td colspan="7" style="text-align:center;color:#767B75;padding:20px">無明細資料</td></tr>
