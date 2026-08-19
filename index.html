@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819105100';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819112144';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5511,7 +5511,18 @@ async function _doPrint() {
     }
   } catch(e) {}
 
-  // ② 組出固定版面：第一頁＝頁首+單號+簽核進度+申請資訊+請款明細，之後每張附件各一頁
+  // ② 組出固定版面（同步；與 beforeprint 共用同一支 → 按鈕/右鍵/Ctrl+P 版面一致）
+  _setupPrintDOM();
+  window.print();
+  setTimeout(_restorePrint, 15000);
+}
+
+// ── 列印版面建立/還原：抽出讓「按鈕列印」與「右鍵／Ctrl+P」共用同一套版面 ──
+var _printOldTitle = null;
+function _setupPrintDOM() {
+  if (document.body.classList.contains('printing')) return;   // 已建立就不重建（避免 beforeprint 與按鈕重複）
+  var detail = document.getElementById('view-detail');
+  if (!detail) return;
   document.getElementById('print-root')?.remove();
   var root = document.createElement('div');
   root.id = 'print-root';
@@ -5524,14 +5535,14 @@ async function _doPrint() {
   if (head && head.parentElement) {
     var hc = head.parentElement.cloneNode(true);
     hc.querySelectorAll('button,.no-print').forEach(function(n){ n.remove(); });
-    // 列印版：單號前加「申請單號：」字樣（字級縮小，不用像螢幕那麼大），並與下方簽核進度框留一點空隙
+    // 列印版：單號前加「申請單號：」字樣（字級縮小），並與下方簽核進度框留一點空隙
     var _cn = hc.querySelector('#detail-case-no');
     if (_cn) {
       var _lb = document.createElement('span');
       _lb.textContent = '申請單號：';
       _lb.style.cssText = 'font-size:14px;font-weight:700;color:#2E332D';
       _cn.parentNode.insertBefore(_lb, _cn);
-      _cn.style.fontSize = '14px';   // 縮小單號字級（原 18px 太大）
+      _cn.style.fontSize = '14px';
       _cn.removeAttribute('id');     // 避免與螢幕上的 #detail-case-no 重複 id
     }
     hc.style.marginBottom = '12px';
@@ -5539,11 +5550,10 @@ async function _doPrint() {
   }
   var grid = document.getElementById('detail-grid');
   if (grid) {
-    // 簽核進度（右欄）先放，接著申請資訊、請款明細（左欄），與螢幕閱讀順序一致
     var flowCard = grid.querySelector('#flow-timeline') ? grid.querySelector('#flow-timeline').closest('.card') : null;
     if (flowCard) {
       var _fc = flowCard.cloneNode(true);
-      _fc.style.marginBottom = '12px';   // 與下方「申請資訊」再留一點空隙
+      _fc.style.marginBottom = '12px';
       page1.appendChild(_fc);
     }
     grid.querySelectorAll('.card').forEach(function(c){
@@ -5557,9 +5567,7 @@ async function _doPrint() {
   }
   root.appendChild(page1);
 
-  // 附件分兩種排法：
-  //  ・PDF（已逐頁渲染成圖）→ 照原稿，一頁一張紙
-  //  ・照片憑證 → 排成格狀，一頁放多張，不浪費紙
+  // 附件：PDF 一頁一張、照片憑證 2×2 格狀
   var PHOTOS_PER_PAGE = 4;
   var photoPage = null, photoCount = 0;
   detail.querySelectorAll('#detail-files-list img').forEach(function(im){
@@ -5569,7 +5577,7 @@ async function _doPrint() {
       pg.className = 'print-page print-page-att';
       pg.appendChild(im.cloneNode(true));
       root.appendChild(pg);
-      photoPage = null; photoCount = 0;   // PDF 之後的照片重新開一頁
+      photoPage = null; photoCount = 0;
       return;
     }
     if (!photoPage || photoCount >= PHOTOS_PER_PAGE) {
@@ -5584,25 +5592,22 @@ async function _doPrint() {
 
   document.body.appendChild(root);
   document.body.classList.add('printing');
-
-  // 瀏覽器列印頁首會印出 document.title（「騰勢福委會」），列印期間先清掉，afterprint 再還原
-  var _oldTitle = document.title;
+  _printOldTitle = document.title;   // 清掉瀏覽器頁首會印出的「騰勢福委會」
   document.title = '';
-
-  function restore() {
-    document.title = _oldTitle;
-    document.body.classList.remove('printing');
-    document.getElementById('print-root')?.remove();
-    window.removeEventListener('afterprint', restore);
-    window.removeEventListener('focus', restore);
-  }
-  window.addEventListener('afterprint', restore);
-  // 取消列印時 afterprint 不一定會觸發，但對話框關閉後視窗會拿回焦點 → 當作收工訊號。
-  // 沒清乾淨的話，這份請款單快照會一直留在頁面裡，之後在任何頁面按列印都會印到它。
-  window.addEventListener('focus', restore);
-  window.print();
-  setTimeout(restore, 15000);
 }
+function _restorePrint() {
+  if (_printOldTitle != null) { document.title = _printOldTitle; _printOldTitle = null; }
+  document.body.classList.remove('printing');
+  document.getElementById('print-root')?.remove();
+}
+// ★ 右鍵／Ctrl+P 也套用「按鈕列印」的版面：僅在停留於「案件詳情頁」時建立（其他頁照常列印）
+window.addEventListener('beforeprint', function(){
+  var av = document.querySelector('.view.active');
+  if (av && av.id === 'view-detail') _setupPrintDOM();
+});
+window.addEventListener('afterprint', _restorePrint);
+// 取消列印時 afterprint 不一定觸發，視窗拿回焦點時若還在列印態就收工
+window.addEventListener('focus', function(){ if (document.body.classList.contains('printing')) _restorePrint(); });
 
 
 // ── 大頭貼：觸發上傳 ──
