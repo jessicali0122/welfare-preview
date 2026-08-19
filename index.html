@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819100747';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819102527';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -276,7 +276,7 @@ input[type=radio]{accent-color:#577B53}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D9DDD3}
 /* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分，這裡固定每列高度並裁切溢出） */
-#ht-cal-grid,#ms-cal-grid{grid-auto-rows:82px}
+#ht-cal-grid,#ms-cal-grid{grid-auto-rows:94px}
 #ht-cal-grid>div,#ms-cal-grid>div{overflow:hidden}
 /* 午茶日右側卡：本月行程 → 歷史回顧 一條時間軸（區塊標題、年份小晶片） */
 .ht-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -1015,6 +1015,17 @@ input[type=checkbox]{accent-color:#577B53}
   #flow-timeline .flow-at{
     white-space:nowrap!important;
     font-size:12px!important;
+  }
+  /* 簽核人 email：列印時整串不斷行（縮小字級塞進窄欄）*/
+  #flow-timeline .flow-email{
+    white-space:nowrap!important;
+    word-break:normal!important;
+    font-size:9px!important;
+    color:#8A908A!important;
+  }
+  /* 「已完成簽核」尾節點：壓縮欄寬，不佔滿整格 */
+  #flow-timeline > .flow-done-note{
+    flex:0.55 1 0!important;
   }
 
   /* ── 申請資訊：列印順序同畫面（主旨、申請人、收款人、部門、員工編號、付款方式、申請時間）── */
@@ -3730,10 +3741,10 @@ thead th{color:#767B75!important}
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
             <div style="display:none"><div id="ht-event-month-display">—</div></div>
             <div>
-              <div style="grid-column:1/-1">
-                <label style="display:block;font-size:12px;color:#767B75;font-weight:600;margin-bottom:4px">活動名稱</label>
-                <input id="ht-event-title" type="text" placeholder="未填寫時顯示「午茶日」" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff">
-              </div>
+              <div style="font-size:12px;color:#767B75;margin-bottom:5px">活動名稱</div>
+              <input id="ht-event-title" type="text" placeholder="未填寫時顯示「午茶日」" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff">
+            </div>
+            <div>
               <div style="font-size:12px;color:#767B75;margin-bottom:5px">活動日期</div>
               <input id="ht-event-date" type="text" placeholder="選擇日期" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff;cursor:pointer">
             </div>
@@ -9415,7 +9426,7 @@ function updateDetailFlow(c){
   APPROVERS.forEach(function(a, i) {
     const apv    = approvals[i] || {};
     const result = String(apv.result || '').trim();
-    const at     = apv.at     ? '<div class="flow-at" style="font-size:12px;color:#767B75;margin-top:1px;white-space:nowrap">' + fmtDate(apv.at) + '</div>' : '';
+    const at     = apv.at     ? '<div class="flow-at" style="font-size:11px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + fmtDate(apv.at) + '</div>' : '';
     const comment= apv.comment ? apv.comment : '';
     const stepColor = stepColors[Math.min(i, stepColors.length - 1)];
     let iconSvg = '', statusHtml = '';
@@ -9428,21 +9439,21 @@ function updateDetailFlow(c){
     if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
     // 簽核人 email（稽核用）：優先用後端記錄的實際操作者 email，舊案退回流程設定 email
     const signerEmail = String(apv.signerEmail || a.email || '').trim();
-    const emailHtml = signerEmail ? '<div style="font-size:12px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
+    const emailHtml = signerEmail ? '<div class="flow-email" style="font-size:11px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
 
     if (result === '核准') {
       iconSvg = leafSvg(stepColor, 28);
-      statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">✓ 已核准</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+      statusHtml = '<div style="font-size:13px;color:#1e9d6b;font-weight:700;margin-top:2px">✓ 已核准</div>'
+                 + '<div style="font-size:13px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
                  + emailHtml
                  + at;
     } else if (result === '退件') {
       iconSvg = leafSvg('#dc2626', 28);
-      statusHtml = '<div style="font-size:14px;color:#dc2626;font-weight:600;margin-top:2px">✗ 已退件</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+      statusHtml = '<div style="font-size:13px;color:#dc2626;font-weight:700;margin-top:2px">✗ 已退件</div>'
+                 + '<div style="font-size:13px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
                  + emailHtml
                  + at
-                 + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">原因：' + displayComment + '</div>' : '');
+                 + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
@@ -14900,7 +14911,7 @@ function htRenderCalendar() {
     if (_bd.length) {
       var _names = _bd.map(function(b){ return b.name; });
       var _txt = _names.length <= 2 ? _names.join('、') : (_names[0] + ' 等 ' + _names.length + ' 位');
-      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2410C;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _bdayStamp(11) + ' ' + htEsc(_txt) + '</div>';
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2456B;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + _bdayStamp(11) + ' ' + htEsc(_txt) + '</div>';
     }
 
     if (hasEvent) {
