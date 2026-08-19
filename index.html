@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819103025';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819103211';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15970,7 +15970,11 @@ function _htUpdateQtyHint() {
 
 function htRenderDetailHeader() {
   var ev = _htEvent;
-  document.getElementById('ht-detail-title').textContent = (ev.title && ev.title.trim()) ? ev.title.trim() : (fmtMonth(ev.month) + ' 午茶日');
+  // 未自訂活動名稱時，標題退回「實際活動日期 午茶日」（比照試算表連來的格式），抓不到日期才退回年月
+  var _evDateDisp = ev.date ? String(ev.date).replace(/-/g, '/').replace(/\//g, ' / ') : '';
+  document.getElementById('ht-detail-title').textContent = (ev.title && ev.title.trim())
+    ? ev.title.trim()
+    : (_evDateDisp ? _evDateDisp + ' 午茶日' : (fmtMonth(ev.month) + ' 午茶日'));
   var _tEl = document.getElementById('ht-event-title'); if (_tEl) _tEl.value = ev.title || '';
   // 副標不再重複「人數／主辦」（下方活動設定已有欄位），改顯示星期＋倒數，提供活動設定沒有的即時資訊
   var subHtml;
