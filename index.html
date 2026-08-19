@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819095002';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819095515';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -196,7 +196,7 @@ thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!imp
 /* 表格卡片 */
 .card.table-wrap table{border-collapse:collapse}
 /* detail-grid：桌面兩欄，手機單欄 */
-#detail-grid{grid-template-columns:1.5fr 1fr}
+#detail-grid{grid-template-columns:minmax(0,1fr) 400px}
 @media(max-width:768px){#detail-grid{grid-template-columns:1fr!important;width:100%!important;max-width:100%!important}}
 @media(min-width:769px){#sidebar-user-section{display:none!important}}
 .stat{background:#fff;border-radius:20px;padding:20px 22px;border:none;box-shadow:0 2px 12px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);transition:transform .2s ease,box-shadow .2s ease}
@@ -3249,18 +3249,18 @@ thead th{color:#767B75!important}
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">項目</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">憑證</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">日期</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">未稅</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">稅額</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">含稅</th>
+              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">未稅</th>
+              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">稅額</th>
+              <th style="text-align:right;vertical-align:middle;padding:6px 12px;color:#767B75;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
               <tr><td colspan="7" style="text-align:center;color:#767B75;padding:20px">無明細資料</td></tr>
             </tbody>
             <tfoot><tr style="border-top:2px solid #D2D7CD">
               <td colspan="4" style="padding:10px 0;vertical-align:middle;font-weight:700;color:#2E332D;white-space:nowrap">合計</td>
-              <td id="detail-sum-pretax" style="padding:10px 8px;text-align:center;vertical-align:middle;font-weight:700;white-space:nowrap">NT$ 0</td>
-              <td id="detail-sum-tax" style="padding:10px 8px;text-align:center;vertical-align:middle;font-weight:700;color:#767B75;white-space:nowrap">NT$ 0</td>
-              <td id="detail-sum-total" style="padding:10px 8px;text-align:center;vertical-align:middle;font-size:14px;font-weight:700;color:#577B53;white-space:nowrap">NT$ 0</td>
+              <td id="detail-sum-pretax" style="padding:10px 12px;text-align:right;vertical-align:middle;font-weight:700;white-space:nowrap">0</td>
+              <td id="detail-sum-tax" style="padding:10px 12px;text-align:right;vertical-align:middle;font-weight:700;color:#767B75;white-space:nowrap">0</td>
+              <td id="detail-sum-total" style="padding:10px 12px;text-align:right;vertical-align:middle;font-size:14px;font-weight:700;color:#577B53;white-space:nowrap">NT$ 0</td>
             </tfoot>
           </table>
           </div>
@@ -7526,9 +7526,9 @@ function renderDetailItems(items) {
       <td style="padding:10px 8px;text-align:left;vertical-align:middle;color:#4A4F49;white-space:nowrap">${htEsc(it.description)||'—'}</td>
       <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${htEsc(it.receiptType)||'—'}</td>
       <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${htEsc(it.date)||'—'}</td>
-      <td style="padding:10px 8px;text-align:center;vertical-align:middle;white-space:nowrap">${Number(it.pretax||0).toLocaleString()}</td>
-      <td style="padding:10px 8px;text-align:center;vertical-align:middle;color:#767B75;white-space:nowrap">${Number(it.tax||0).toLocaleString()}</td>
-      <td style="padding:10px 8px;text-align:center;vertical-align:middle;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
+      <td style="padding:10px 12px;text-align:right;vertical-align:middle;white-space:nowrap">${Number(it.pretax||0).toLocaleString()}</td>
+      <td style="padding:10px 12px;text-align:right;vertical-align:middle;color:#767B75;white-space:nowrap">${Number(it.tax||0).toLocaleString()}</td>
+      <td style="padding:10px 12px;text-align:right;vertical-align:middle;font-weight:600;white-space:nowrap">NT$ ${Number(it.total||0).toLocaleString()}</td>
     </tr>`).join('');
   // 動態更新 tfoot 合計（用ID直接定位，最穩定）
   let sumPretax = 0, sumTax = 0, sumTotal = 0;
