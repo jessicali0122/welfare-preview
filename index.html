@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819122924';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819130010';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -51,6 +51,7 @@
 <link rel="icon" id="main-favicon" type="image/png" sizes="32x32" href="assets/icons/app-icon-32.png?v=4">
 <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/app-icon-180.png?v=4">
 <link rel="apple-touch-icon" sizes="512x512" href="assets/icons/app-icon-512.png?v=4">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="騰勢福委會">
@@ -6065,7 +6066,36 @@ async function _callAPI(action, data = {}, opts = {}) {
   return json;
 }
 
+// ── 後端過載保護（熔斷器）──────────────────────────────────────────────
+// GAS 的執行是「以部署者身分排隊」的：同時湧入的請求不會平行處理，而是排隊，
+// 因此後端一忙，每個請求都變慢，甚至回 404（redirect 到 googleusercontent 的
+// echo 端點失敗）。原本的重試策略是失敗就再打最多 4 次 —— 等於在後端已經塞車時
+// 再灌 5 倍流量進去，越重試越慢。
+// → 連續失敗達門檻就「開閘」，短時間內直接回錯誤不再打後端，讓它有機會消化積壓。
+var _apiBreaker = { fails: 0, openUntil: 0 };
+const _BREAKER_THRESHOLD = 4;     // 連續失敗幾次後開閘
+const _BREAKER_COOLDOWN  = 20000; // 開閘後靜默多久（毫秒）
+function _breakerBlocked(action) {
+  // 登入與健康檢查永遠放行，否則後端一忙就沒人能登入
+  if (action === 'login' || action === 'ping') return false;
+  return Date.now() < _apiBreaker.openUntil;
+}
+function _breakerOnSuccess() { _apiBreaker.fails = 0; _apiBreaker.openUntil = 0; }
+function _breakerOnFailure() {
+  _apiBreaker.fails++;
+  if (_apiBreaker.fails >= _BREAKER_THRESHOLD) {
+    _apiBreaker.openUntil = Date.now() + _BREAKER_COOLDOWN;
+    console.warn('[API] 連續失敗 ' + _apiBreaker.fails + ' 次 → 暫停呼叫 ' + (_BREAKER_COOLDOWN/1000) + ' 秒，讓後端消化積壓');
+  }
+}
+// 退避加隨機抖動：多個使用者同時被擋時，避免大家在同一毫秒一起重試（thundering herd）
+function _backoff(base) { return Math.round(base * (0.75 + Math.random() * 0.5)); }
+
 async function _fetchAPI(action, data = {}, _retry = 0) {
+  if (_retry === 0 && _breakerBlocked(action)) {
+    const _wait = Math.ceil((_apiBreaker.openUntil - Date.now()) / 1000);
+    return { ok: false, error: '伺服器忙碌中，請等 ' + _wait + ' 秒後再試', _breakerOpen: true };
+  }
   try {
     const body = { action, token: currentUser?.token, ...data };
     const res = await fetch(API_URL, {
@@ -6082,13 +6112,15 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     try {
       json = JSON.parse(_txt);
     } catch (e) {
-      if (_retry < 3) {
-        const _d = Math.min((_retry + 1) * 1200, 4000);
+      // 重試次數由 3 降為 2：後端塞車時多打只會更塞（見 _apiBreaker 說明）
+      if (_retry < 2) {
+        const _d = _backoff((_retry + 1) * 1500);
         console.warn('[API] 後端回傳非 JSON（多半是 GAS 暫時故障），' + _d + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', _txt.slice(0, 80));
         await new Promise(r => setTimeout(r, _d));
         return _fetchAPI(action, data, _retry + 1);
       }
       console.error('[API] 後端持續回傳非 JSON：', _txt.slice(0, 200));
+      _breakerOnFailure();
       return { ok: false, error: '伺服器暫時無法回應，請稍後再試', _badPayload: true };
     }
     if (!json.ok && json.error && (
@@ -6113,6 +6145,7 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       await new Promise(r => setTimeout(r, delay));
       return _fetchAPI(action, data, _retry + 1);
     }
+    _breakerOnSuccess();   // 拿到合法 JSON（不論業務上成功與否）＝後端還活著
     return json;
   } catch(err) {
     // iOS Safari 切換頁面時 fetch 可能被中斷（Load failed / Failed to fetch）
@@ -6123,12 +6156,14 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       err.message.includes('NetworkError') ||
       err.message.includes('network')
     );
-    if (isNetworkAbort && _retry < 4) {
-      const delay = Math.min((_retry + 1) * 1500, 6000);
+    // 重試次數由 4 降為 2（同上：後端塞車時重試會放大負載）
+    if (isNetworkAbort && _retry < 2) {
+      const delay = _backoff((_retry + 1) * 1800);
       console.warn('[API] 網路中斷，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', err.message);
       await new Promise(r => setTimeout(r, delay));
       return _fetchAPI(action, data, _retry + 1);
     }
+    if (isNetworkAbort) _breakerOnFailure();
     console.error('API Error:', err);
     const friendlyMsg = err.message && err.message.includes('Failed to fetch')
       ? '網路連線失敗，請檢查網路後重試'
