@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819180635';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819181210';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8051,10 +8051,10 @@ function doResubmit() {
 let _submitLock = false;
 async function submitForm() {
   if (_submitLock) { toast('⏳ 送出中，請稍候...'); return; }
-  // ★ 防漏附件：若背景還在上傳附件（有檔顯示「上傳中」），先擋下，等全部變「已存」再送出，
-  //   否則送出當下 data.files 不含還沒傳完的檔 → 那個附件會遺漏。
-  if (window._draftUploadInProgress || (window._pendingFiles && window._pendingFiles.length)) {
-    toast('⏳ 附件還在上傳中，請等附件都顯示「已存」再送出，以免遺漏');
+  // 附件會在「送出後」背景上傳到案件，所以待上傳的檔（_pendingFiles）不擋送出——送出可立即完成。
+  // 只有「手動存草稿的上傳正在進行」時才擋，避免那批檔還沒寫進草稿就送出而漏檔。
+  if (window._draftUploadInProgress) {
+    toast('⏳ 草稿附件還在上傳，請稍候幾秒再送出，以免遺漏');
     return;
   }
   _submitLock = true;
@@ -8141,8 +8141,8 @@ async function confirmSubmitForm() {
 
 async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   if (window._doSubmitInProgress) { toast('⏳ 送出中，請稍候...'); return; } // 防確認鈕連點造成重複送出
-  if (window._draftUploadInProgress || (window._pendingFiles && window._pendingFiles.length)) {
-    toast('⏳ 附件還在上傳中，請等附件都顯示「已存」再送出，以免遺漏'); return;
+  if (window._draftUploadInProgress) {
+    toast('⏳ 草稿附件還在上傳，請稍候幾秒再送出，以免遺漏'); return;
   }
   window._doSubmitInProgress = true;
   _submitLock = true; // 防止送出中重複觸發
@@ -9434,22 +9434,9 @@ function handleFileUpload(files) {
   document.getElementById('file-upload-input').value = '';
   // iOS Safari：檔案 picker 關閉後強制恢復 viewport 高度
   updateVH();
-  // C：邊編輯邊上傳 —— 選檔後若已填主旨，背景靜默存草稿（saveDraftForm 會順帶把待上傳附件傳到 Drive），
-  //   這樣按送出時附件多半已就位，不必再等上傳。沒填主旨時仍維持「送出時上傳」。
-  var _subjEl = document.querySelector('#view-new-form input[placeholder*="主旨"]');
-  if (_subjEl && _subjEl.value.trim() && !window._draftUploadInProgress && typeof saveDraftForm === 'function') {
-    toast('✅ 已選取 ' + files.length + ' 個檔案（背景上傳中…）');
-    clearTimeout(window._autoUploadTimer);
-    window._autoUploadTimer = setTimeout(function(){
-      // 仍在新增申請畫面、且有待上傳檔案才觸發
-      if (document.getElementById('view-new-form')?.classList.contains('active')
-          && window._pendingFiles && window._pendingFiles.length) {
-        try { saveDraftForm(true); } catch(e){}
-      }
-    }, 700);
-  } else {
-    toast('✅ 已選取 ' + files.length + ' 個檔案（填主旨後或送出時自動上傳）');
-  }
+  // 附件在「送出後」於背景自動上傳到案件（送出瞬間完成、不必等上傳）。
+  //   （曾試過選檔即背景上傳，但後端慢時反而卡住又擋住送出，故改回送出後上傳。）
+  toast('✅ 已選取 ' + files.length + ' 個檔案（送出後會自動上傳）');
 }
 
 function removePendingFile(uid) {
