@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819214901';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819215335';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2901,7 +2901,7 @@ thead th{color:#767B75!important}
 
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #D2D7CD;margin-bottom:16px">
-      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 進行中 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 全部案件 <span id="tab-cases-count" style="background:#577B53;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
       <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
     </div>
@@ -3046,7 +3046,7 @@ thead th{color:#767B75!important}
       <button type="button" class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="clearDraft()">捨棄</button>
     </div>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-      <button type="button" class="btn btn-o" style="padding:6px 12px" onclick="sw(window._newFormReturnView||'applications')">← 返回</button>
+      <button type="button" class="btn btn-o" style="padding:6px 12px" onclick="_backFromNewForm()">← 返回</button>
       <div style="flex:1"><div style="font-size:20px;font-weight:700;color:#2E332D">費用申請單</div></div>
       <button id="delete-draft-btn" type="button" class="btn btn-r" style="display:none;padding:6px 12px;font-size:14px;flex-shrink:0" onclick="confirmDeleteDraft()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>刪除草稿
@@ -7200,7 +7200,7 @@ function appsSetTab(tab) {
     renderApplications();
   }
 }
-// 案件清單三個分頁（進行中／草稿匣／待我審核）共用的排序：一律由新到舊。
+// 案件清單三個分頁（全部案件／草稿匣／待我審核）共用的排序：一律由新到舊。
 // 用 localeCompare 而非 `a > b ? 1 : -1`——後者在兩筆時間相同時兩個方向都回 -1，
 // 違反 comparator 規範，同一秒建立的案件順序會不穩定。
 // 清單「申請時間」欄顯示的是 applyDate || createdAt，排序若只看 createdAt，
@@ -7590,6 +7590,16 @@ function _showRejectModal(caseId) {
 // ── 複製案件為新申請 ──
 // 單號變更、被退件重送等情況要重跑流程，不必整張重打。
 // 沿用 openDraft 的填表邏輯，差別在：不綁原案件的單號、不帶附件（附件在 Drive，需重新上傳）。
+// 表單的「返回」：回到進表單前的那一頁，且回到當時停留的分頁。
+// sw('applications') 會把分頁重設為預設值，所以分頁要排在它之後（setTimeout 0）再切回去。
+window._backFromNewForm = function(){
+  var v = window._newFormReturnView || 'applications';
+  var t = window._newFormReturnTab;
+  sw(v);
+  if (v === 'applications' && t && t !== 'cases' && typeof switchAppTab === 'function') {
+    setTimeout(function(){ try { switchAppTab(t); } catch(e) {} }, 0);
+  }
+};
 window.copyCaseToNewForm = async function(caseId){
   if (!caseId) return;
   await openDraft(caseId, true);           // true＝複製模式（openDraft 內部會抓資料，不重複請求）
@@ -8398,7 +8408,7 @@ function confirmDeleteDraftById(caseId) {
       // 從哪裡來回哪裡去：表單內刪除→回開表單前的頁面；清單刪除→留在原頁重新整理
       var _curV = (document.querySelector('.view.active') || {}).id || '';
       if (_curV === 'view-new-form') {
-        sw(window._newFormReturnView || 'applications');
+        _backFromNewForm();   // 刪完草稿也回到草稿匣，不要掉到別的分頁
       } else {
         sw(_curV ? _curV.replace('view-', '') : 'applications');
       }
@@ -8697,7 +8707,13 @@ function sw(name,elOrName,_fromPop){
   // new-form 的返回路徑：必須在 view 切換前記錄，否則 active view 已經是 new-form
   if (name === 'new-form') {
     var _prevView = document.querySelector('.view.active')?.id?.replace('view-','') || '';
-    if (_prevView && _prevView !== 'new-form') window._newFormReturnView = _prevView;
+    if (_prevView && _prevView !== 'new-form') {
+      window._newFormReturnView = _prevView;
+      // 只記住頁面還不夠：從草稿匣點進草稿、按返回會落在案件清單的預設分頁。
+      // 這裡一併記住當時停在哪個分頁，返回時才回得去。
+      window._newFormReturnTab = (_prevView === 'applications' && typeof _currentAppTab !== 'undefined')
+        ? _currentAppTab : null;
+    }
   }
   // ── 瀏覽器歷史紀錄（讓上一頁/重整正常運作）──
   // ★ 網址列一定要跟著目前這一頁走，否則重整會跳回上一個網址代表的頁面。
