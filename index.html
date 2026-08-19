@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819154341';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819155738';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6164,7 +6164,10 @@ const _PATIENT_ACTIONS = new Set(['get', 'list']);
 //   掉了，前端誤判失敗。若此時自動重試，就會再建一張新單、再吃一個單號，稽核上變成
 //   跳號＋重複單（2026-08-18 的 001/002/003 就是這樣來的，使用者今天又差點按到第三張）。
 //   → 寧可讓使用者自己去案件追蹤確認，也絕不自動重送。
-const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft']);
+const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft',
+  // 這些重試不會產生新單號，但一樣有副作用：核准/退件/作廢重送可能讓案件多跳一關，
+  // 附件重送會在同一張單留下兩份一樣的檔案。稽核上都不能接受 → 一律只送一次。
+  'approve', 'reject', 'voidCase', 'uploadFile']);
 function _maxRetry(action) {
   if (_NO_RETRY_ACTIONS.has(action)) return -1;   // -1 → 連第一次的重試都不做
   return _PATIENT_ACTIONS.has(action) ? 4 : 1;
@@ -6283,7 +6286,10 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       json.error.includes('quota') || json.error.includes('Quota') ||
       json.error.includes('rate') || json.error.includes('Rate') ||
       json.error.includes('429') || json.error.includes('限制')
-    ) && _retry < 3) {
+    ) && _retry < Math.min(3, _maxRetry(action) < 0 ? -1 : 3)) {
+      // 這條分支原本寫死 _retry < 3，沒有套用不重試規則。後端其實是在跑 action 之前
+      // 就先擋掉（rate_limit 檢查在 dispatch 之前），所以案件不會被建立、重試是安全的；
+      // 但使用者已經被重複送單嚇到，而且重試也只是繼續消耗配額 → 建立型動作一律不重試。
       const delay = Math.min((_retry + 1) * 3000, 9000);
       console.warn('[API] 頻率限制，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…');
       if (_retry === 0) toast('⏳ 伺服器忙碌中，自動重試…');
