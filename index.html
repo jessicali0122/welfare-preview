@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819165017';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819172718';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6204,6 +6204,14 @@ function _backoff(base) { return Math.round(base * (0.75 + Math.random() * 0.5))
 // 觀察到的 5~36 秒與 404，幾乎都是自己塞自己。
 // → 限制同時在途數量；使用者正在等的動作優先，背景工作（預抓/頭像/名單）排後面。
 const _MAX_INFLIGHT = 3;
+// ── fetch 逾時（AbortController）──────────────────────────────────────────
+// 2026-08-19 實測：後端成功回應只要 ~1.3 秒，但「失敗」會乾等 ~20 秒才報錯 →
+// 沒逾時的話一遇到 Google 投遞不穩就卡 20 秒、重試更是 20 秒×N，這是卡頓主因。
+// → 讀取類 10 秒沒回應就中止改重試（成功遠快於此，10 秒很寬鬆）；寫入類給足 30 秒，
+//   且已有 clientDraftKey 冪等保護，即使逾時後由使用者重送也只會有一個單號。
+// uploadFile 檔案大，給 90 秒。
+const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000 };
+function _timeoutFor(action){ return _API_TIMEOUT_MS[action] || 10000; }
 // 背景性質的 action：使用者沒有盯著它們看，可以讓路
 // 附件預覽（getThumb/getFileB64）也列為背景：使用者要先看到金額與簽核狀態，
 // 縮圖晚幾秒沒關係，絕不該讓整份 PDF 的 base64 傳輸擋住案件資料本身。
@@ -6241,18 +6249,22 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     // 註：不用 data 上的旗標區分前景/背景，否則會改變 _cacheKey 而破壞與其他呼叫點的去重
     await _acquireSlot(action, false);
     let res, _txt;
+    const _ac = new AbortController();
+    const _toId = setTimeout(function(){ try { _ac.abort(); } catch(e){} }, _timeoutFor(action));
     try {
       res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(body),
         redirect: 'follow',
+        signal: _ac.signal,
       });
       // ⚠️ 不要直接 res.json()：GAS 端不穩時會回一頁 HTML（錯誤頁／登入頁），
       //    json() 會丟出「Unexpected token '<'」，呼叫端只能顯示看不懂的錯誤且完全沒有重試。
       //    改成先取文字再解析，解析不出來就當成後端暫時故障，退避重試。
       _txt = await res.text();
     } finally {
+      clearTimeout(_toId);
       _releaseSlot();
     }
     let json;
@@ -6303,12 +6315,13 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
   } catch(err) {
     // iOS Safari 切換頁面時 fetch 可能被中斷（Load failed / Failed to fetch）
     // 自動重試最多 2 次
-    const isNetworkAbort = err.message && (
+    const _isTimeout = err && (err.name === 'AbortError' || (err.message && err.message.toLowerCase().includes('abort')));
+    const isNetworkAbort = _isTimeout || (err.message && (
       err.message.includes('Load failed') ||
       err.message.includes('Failed to fetch') ||
       err.message.includes('NetworkError') ||
       err.message.includes('network')
-    );
+    ));
     if (isNetworkAbort && _retry < _maxRetry(action)) {
       const delay = _backoff((_retry + 1) * 1800);
       console.warn('[API] 網路中斷，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', err.message);
