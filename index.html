@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819161712';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819163956';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7511,6 +7511,7 @@ window.copyCaseToNewForm = async function(caseId){
 async function openDraft(caseId, asCopy) {
   // F1 fix：清除上一個 session 遺留的待上傳附件，避免誤帶入草稿
   window._pendingFiles = [];
+  _resetClientDraftKey();   // 載入既有草稿走 caseId、複製則需全新識別碼 → 一律先重置
   toast(asCopy ? '⏳ 複製中...' : '⏳ 載入草稿中...');
   const res = await callAPI('get', { caseId });
   if (!res.ok) { toast('❌ 載入草稿失敗：' + (res.error || '')); return; }
@@ -8126,6 +8127,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
 
   if (res.ok) {
     _draftCaseId = null;   // 草稿已轉為正式案件，清除追蹤
+    _resetClientDraftKey();   // 下一張新表單用新的識別碼
     _submitLock = false;
     if (typeof _autoSaveGasTimer !== 'undefined' && _autoSaveGasTimer) { clearTimeout(_autoSaveGasTimer); _autoSaveGasTimer = null; }
     window._uploadedDraftFiles = []; // 清除草稿附件追蹤
@@ -8268,6 +8270,7 @@ function confirmDeleteDraftById(caseId) {
       _markCaseStale(caseId);
       localStorage.removeItem('bf_draft');
       _draftCaseId = null;
+      _resetClientDraftKey();
       var _ddb = document.getElementById('delete-draft-btn');
       if (_ddb) _ddb.style.display = 'none';
       toast('🗑️ 草稿已刪除');
@@ -8295,6 +8298,17 @@ function confirmDeleteDraftById(caseId) {
     }
   );
 }
+
+// ── 草稿防重複：每張「新表單」一組識別碼（clientDraftKey）；後端靠它避免逾時重存/連點建出多份 ──
+// 送出成功、開新表單、複製、刪草稿時都要重置，否則新表單沿用舊碼會誤蓋上一張草稿。
+function _getClientDraftKey(){
+  if(!window._clientDraftKey){
+    try{ var _d=JSON.parse(localStorage.getItem('bf_draft')||'{}'); if(_d && _d.clientDraftKey) window._clientDraftKey=_d.clientDraftKey; }catch(e){}
+  }
+  if(!window._clientDraftKey){ window._clientDraftKey='cdk_'+Date.now()+'_'+Math.random().toString(36).slice(2); }
+  return window._clientDraftKey;
+}
+function _resetClientDraftKey(){ window._clientDraftKey=null; }
 
 async function saveDraftForm(silent = false) {
   if (_saveDraftLock) return;
@@ -8333,6 +8347,7 @@ async function saveDraftForm(silent = false) {
 
   const payload = {
     ...(_draftCaseId ? { caseId: _draftCaseId } : {}),
+    clientDraftKey: _getClientDraftKey(),
     project:    subjectEl?.value || '',
     reason:     reasonEl?.value  || '',
     pretax, tax, total, items,
@@ -8428,6 +8443,7 @@ function openNewForm(){
   // 每次新增申請都是全新開始，不連結任何舊草稿
   // 保留 localStorage 是為了 session 恢復（瀏覽器意外關閉時能找回）
   _draftCaseId = null;
+  _resetClientDraftKey();           // 開新表單＝全新識別碼，避免沿用舊碼誤蓋上一張草稿
   window._newFormFreshStart = true; // 告訴 sw() 不要從 localStorage 還原 caseId
   window._uploadedDraftFiles = [];
   window._pendingFiles = [];
@@ -11576,7 +11592,7 @@ function autoSaveDraft(){
     department:_deptEl2?.value||'', employeeId:_empIdEl2?.value||'',
     applyDate:_applyDateEl2?.value||'',
     owner:(currentUser&&currentUser.email)||'',   // 綁定草稿擁有者，避免共用電腦跨使用者還原
-    caseId:_draftCaseId||null, uploadedFiles:window._uploadedDraftFiles||[]};
+    caseId:_draftCaseId||null, clientDraftKey:window._clientDraftKey||null, uploadedFiles:window._uploadedDraftFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
 
   // 有主旨內容才排程自動同步到 GAS（30 秒後靜默儲存）
@@ -11704,6 +11720,7 @@ function _clearDraftDo(){
   localStorage.removeItem('bf_draft');
   document.getElementById('draft-banner').classList.remove('show');
   _draftCaseId=null;
+  _resetClientDraftKey();
   window._uploadedDraftFiles=[];
   window._pendingFiles=[];
   // 清除表單欄位
