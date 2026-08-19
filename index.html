@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819144609';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819144737';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9076,16 +9076,23 @@ function _renderPdfFirstPage(wrap, fileId, href) {
   //   永遠卡在「載入中」。iframe 走使用者自己的 Google 登入狀態，秒開且可翻頁。
   //   列印仍需要 pdf.js 逐頁點陣圖（iframe 印不出來）→ 保留「顯示全部頁面」，
   //   _doPrint 會在送印前自動按下它。
-  wrap.innerHTML = '';
-  wrap.style.minHeight = '';
-  wrap.style.flexDirection = '';
-  var fr = document.createElement('iframe');
-  fr.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
-  fr.loading = 'lazy';
-  fr.setAttribute('title', 'PDF 預覽');
-  fr.style.cssText = 'width:100%;height:320px;border:0;display:block;background:#ECEEEA;border-radius:6px';
-  wrap.appendChild(fr);
-  _appendPdfExpandBtn(wrap, fileId, href);
+  // 先試 Drive 的圖片端點（純圖片、沒有預覽器的黑色外框，最好看也最快）
+  _tryDriveImage(wrap, fileId, 800,
+    function() { _appendPdfExpandBtn(wrap, fileId, href); },
+    function() {
+      // 圖片端點都拿不到 → 退回 Drive 內嵌預覽 iframe（仍然零後端呼叫，
+      // 只是會帶 Google 預覽器自己的深色外框）
+      wrap.innerHTML = '';
+      wrap.style.minHeight = '';
+      wrap.style.flexDirection = '';
+      var fr = document.createElement('iframe');
+      fr.src = 'https://drive.google.com/file/d/' + fileId + '/preview';
+      fr.loading = 'lazy';
+      fr.setAttribute('title', 'PDF 預覽');
+      fr.style.cssText = 'width:100%;height:320px;border:0;display:block;background:#ECEEEA;border-radius:6px';
+      wrap.appendChild(fr);
+      _appendPdfExpandBtn(wrap, fileId, href);
+    });
 }
 
 async function _renderPdfAllPages(wrap, fileId, href) {
@@ -9146,18 +9153,41 @@ function _loadOneThumb(wrap, isIOS) {
   if (ext === 'pdf') { _renderPdfFirstPage(wrap, fileId, href); return; }
   // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
   if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); return; }
-  const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
   // 先保留 loading spinner（不清空 wrap），圖片載入後才替換
-  const img = new Image();
-  img.onload = function() {
-    img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
-    wrap.innerHTML = '';
-    wrap.appendChild(img);
-    wrap.style.minHeight = '';
-    wrap.style.flexDirection = '';
-  };
-  img.onerror = function() { _loadThumbViaGAS(wrap, fileId, href); };
-  img.src = thumbUrl;
+  _tryDriveImage(wrap, fileId, 1600, null, function(){ _loadThumbViaGAS(wrap, fileId, href); });
+}
+
+// ── Drive 圖片端點：依序試，第一個成功就用 ──────────────────────────────
+// 2026-08-19 在正式環境實測同一個檔案：
+//   lh3.googleusercontent.com/d/<id>=w800            ✅ 1078ms 800x1132
+//   drive.google.com/thumbnail?id=…&sz=w800&authuser=0 ✅ 1095ms
+//   drive.google.com/thumbnail?id=…&sz=w800          ❌ FAIL（就是原本唯一在用的那個）
+// 也就是說舊路徑幾乎必定失敗、每個附件都被迫退回後端拿圖，後端一慢就永遠轉圈。
+function _driveImgUrls(fileId, size) {
+  return [
+    'https://lh3.googleusercontent.com/d/' + fileId + '=w' + size,
+    'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w' + size + '&authuser=0',
+    'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w' + size
+  ];
+}
+// onOk(img) 可選；全部失敗才呼叫 onFail
+function _tryDriveImage(wrap, fileId, size, onOk, onFail) {
+  var urls = _driveImgUrls(fileId, size), i = 0;
+  (function next() {
+    if (i >= urls.length) { if (onFail) onFail(); return; }
+    var img = new Image();
+    img.decoding = 'async';
+    img.onload = function() {
+      img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA;border-radius:6px';
+      wrap.innerHTML = '';
+      wrap.appendChild(img);
+      wrap.style.minHeight = '';
+      wrap.style.flexDirection = '';
+      if (onOk) onOk(img);
+    };
+    img.onerror = function() { i++; next(); };
+    img.src = urls[i];
+  })();
 }
 function loadDriveThumbs(container) {
   const wraps = Array.from((container || document).querySelectorAll('.drive-thumb-wrap[data-fileid]'));
