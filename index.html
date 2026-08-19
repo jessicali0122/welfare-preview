@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819113034';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819120012';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6725,9 +6725,8 @@ async function loadApplications(forceRefresh) {
   // 更新新 pill tab 的 badge
   var allBadge = document.getElementById('apps-tab-all-badge');
   if (allBadge) allBadge.textContent = cases.length;
-  var pendingCount = (typeof isAdmin === 'function' && isAdmin())
-    ? allCases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; }).length
-    : allCases.filter(function(c){ return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
+  // 「待我審核」一律只算輪到自己那一關（管理者不再特例顯示全部待審案件）
+  var pendingCount = allCases.filter(function(c){ return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
   var pendingBadge = document.getElementById('tab-pending-count');
   if (pendingBadge) pendingBadge.textContent = pendingCount;
   if (!tbody) return;
@@ -6833,13 +6832,8 @@ function renderApplications() {
   var allCases = window._allCasesCache || [];
   var cases = allCases.filter(function(c){ return c.status !== '草稿'; });
   if (_currentAppTab === 'pending') {
-    if (typeof isAdmin === 'function' && isAdmin()) {
-      // 管理員：顯示所有待審核（簽核中）案件
-      cases = cases.filter(function(c){ return c.status && c.status.indexOf('待') !== -1; });
-    } else {
-      // 一般審核人：只顯示輪到自己審的案件
-      cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
-    }
+    // 一律只顯示輪到自己審的案件（管理者不再特例看到全部待審案件）
+    cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
   }
   window._appSortedCases = cases.slice().sort(function(a,b){ return (String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1); });
   window._appCurrentPage = 1;
@@ -6925,10 +6919,8 @@ async function loadApprovals() {
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   if (res.cases) window._allCasesCache = res.cases;
-  // 管理者：顯示全部待審核案件（可代理任一關）；一般審核人：只顯示輪到自己那關
-  const pending = (res.cases || []).filter(c =>
-    isMyTurnToApprove(c) || (isAdmin() && c.status && c.status.includes('待'))
-  );
+  // 一律只列出輪到自己那一關的案件（管理者不再特例列出全部待審；仍可從案件詳情代理簽核）
+  const pending = (res.cases || []).filter(c => isMyTurnToApprove(c));
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
