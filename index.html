@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819094502';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819095002';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3249,8 +3249,8 @@ thead th{color:#767B75!important}
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">項目</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">憑證</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">日期</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">未稅 (NT$)</th>
-              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">稅額 (NT$)</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">未稅</th>
+              <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">稅額</th>
               <th style="text-align:center;vertical-align:middle;padding:6px 8px;color:#767B75;font-weight:500">含稅</th>
             </tr></thead>
             <tbody id="detail-items-tbody">
@@ -5511,14 +5511,15 @@ async function _doPrint() {
   if (head && head.parentElement) {
     var hc = head.parentElement.cloneNode(true);
     hc.querySelectorAll('button,.no-print').forEach(function(n){ n.remove(); });
-    // 列印版：單號前加「申請單號：」字樣，並與下方簽核進度框留一點空隙
+    // 列印版：單號前加「申請單號：」字樣（字級縮小，不用像螢幕那麼大），並與下方簽核進度框留一點空隙
     var _cn = hc.querySelector('#detail-case-no');
     if (_cn) {
       var _lb = document.createElement('span');
       _lb.textContent = '申請單號：';
-      _lb.style.cssText = 'font-size:18px;font-weight:700;color:#2E332D';
+      _lb.style.cssText = 'font-size:14px;font-weight:700;color:#2E332D';
       _cn.parentNode.insertBefore(_lb, _cn);
-      _cn.removeAttribute('id');   // 避免與螢幕上的 #detail-case-no 重複 id
+      _cn.style.fontSize = '14px';   // 縮小單號字級（原 18px 太大）
+      _cn.removeAttribute('id');     // 避免與螢幕上的 #detail-case-no 重複 id
     }
     hc.style.marginBottom = '12px';
     page1.appendChild(hc);
@@ -9471,7 +9472,6 @@ function updateDetailFlow(c){
     + '</div>'
     + '<div style="flex:1">'
     +   '<div style="font-size:14px;font-weight:700;color:#4A4F49;padding-top:4px">已完成簽核</div>'
-    +   '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">款項處理中</div>'
     + '</div>'
     + '</div>';
   tl.innerHTML = html;
