@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819142046';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819142313';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5526,12 +5526,20 @@ async function _doPrint() {
     if (pend.length && typeof _loadOneThumb === 'function') {
       pend.forEach(function(w){ try { _loadOneThumb(w, false); } catch(e) {} });
     }
+    // PDF 平常只顯示第一頁縮圖（省掉沉重的 getFileB64）。但列印是照畫面 DOM 複製的，
+    // 多頁憑證只印第一頁會漏憑證 → 列印前把所有還沒展開的 PDF 一律展開成全部頁面。
+    detail.querySelectorAll('#detail-files-list button').forEach(function(b){
+      if (b.textContent.trim() === '顯示全部頁面') { try { b.click(); } catch(e) {} }
+    });
     // 等圖片實際解出來（含 PDF 逐頁渲染），最多等 30 秒
     var deadline = Date.now() + 30000;
     while (Date.now() < deadline) {
       var imgs = detail.querySelectorAll('#detail-files-list img');
       var wraps = detail.querySelectorAll('.drive-thumb-wrap');
       var allDone = imgs.length > 0 && [].every.call(imgs, function(im){ return im.complete && im.naturalWidth > 0; });
+      // 還有 PDF 正在展開成全部頁面 → 不能先送印，否則會漏印第 2 頁以後的憑證
+      var _expanding = /載入全部頁面中/.test((document.getElementById('detail-files-list') || {}).textContent || '');
+      if (_expanding) { await new Promise(function(r){ setTimeout(r, 400); }); continue; }
       if (allDone || wraps.length === 0) break;
       await new Promise(function(r){ setTimeout(r, 400); });
     }
@@ -8994,6 +9002,32 @@ function _ensurePdfJs() {
   });
   return _pdfJsReady;
 }
+// PDF 第一頁縮圖：直接跟 Drive 要圖片，零後端呼叫。附上「顯示全部頁面」讓需要
+// 核對多頁憑證的人自己觸發完整載入（那才會走 getFileB64）。
+function _renderPdfFirstPage(wrap, fileId, href) {
+  var thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
+  var img = new Image();
+  img.onload = function() {
+    img.style.cssText = 'width:100%;max-height:300px;object-fit:contain;display:block;background:#ECEEEA';
+    wrap.innerHTML = '';
+    wrap.appendChild(img);
+    var bar = document.createElement('div');
+    bar.style.cssText = 'text-align:center;padding:8px 0 2px';
+    bar.innerHTML = '<button type="button" class="btn btn-o" style="padding:4px 12px;font-size:12px">顯示全部頁面</button>';
+    bar.querySelector('button').onclick = function() {
+      bar.remove();
+      wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:12px">載入全部頁面中…</div>';
+      _renderPdfAllPages(wrap, fileId, href);
+    };
+    wrap.appendChild(bar);
+    wrap.style.minHeight = '';
+    wrap.style.flexDirection = '';
+  };
+  // Drive 縮圖拿不到（權限或尚未產生）→ 才退回原本的完整載入
+  img.onerror = function() { _renderPdfAllPages(wrap, fileId, href); };
+  img.src = thumbUrl;
+}
+
 async function _renderPdfAllPages(wrap, fileId, href) {
   try {
     const [lib, res] = await Promise.all([
@@ -9043,7 +9077,13 @@ function _loadOneThumb(wrap, isIOS) {
   wrap.removeAttribute('data-fileid');
   if (!fileId) { wrap.innerHTML = _thumbFallback(href, ''); return; }
   // PDF 走 pdf.js 逐頁渲染：Drive 縮圖只有第一頁，多頁憑證會計看不到第 2/3 頁
-  if (ext === 'pdf') { _renderPdfAllPages(wrap, fileId, href); return; }
+  // PDF：預設只顯示 Drive 的第一頁縮圖（直接向 Drive 要圖，完全不經過後端）。
+  // 原本一律走 _renderPdfAllPages → getFileB64 把整份 PDF 以 base64 透過 GAS 傳回，
+  // 而大檔案的回應會讓 Google 的投遞端點（googleusercontent/macros/echo）吐 404，
+  // 前端再重試、後端再執行一次⋯⋯ 一張有兩個 PDF 的單就這樣把整個佇列拖垮
+  // （2026-08-19 從 console 與執行紀錄雙邊確認）。
+  // → 要看第 2、3 頁的人按「顯示全部頁面」再載，需要的人才付這個成本。
+  if (ext === 'pdf') { _renderPdfFirstPage(wrap, fileId, href); return; }
   // iOS Safari 封鎖第三方 cookie，直接 URL 必失敗 → 跳過，直接走 GAS
   if (isIOS) { _loadThumbViaGAS(wrap, fileId, href); return; }
   const thumbUrl = 'https://drive.google.com/thumbnail?id=' + fileId + '&sz=w1600';
