@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819155738';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819160327';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6026,7 +6026,7 @@ function _fetchAPIDedup(action, data) {
 // → 讓上傳在背景跑，使用者可以繼續做別的事。
 const _BLOCKING_ACTIONS = {
   submit:'送出申請中', approve:'核准處理中', reject:'退件處理中', voidCase:'作廢處理中',
-  resubmit:'重新送出中', deleteFile:'刪除附件中'
+  resubmit:'重新送出中', deleteFile:'刪除附件中', deleteCase:'刪除案件中'
 };
 
 // ── 樂觀更新輔助 ──────────────────────────────────────────────────────
@@ -8213,27 +8213,33 @@ function adminDeleteCaseById(caseId) {
     '確定要永久刪除案件嗎？',
     '案件 <strong>' + caseId + '</strong> 將被永久刪除，此操作無法復原。',
     '確定刪除', '#dc2626',
-    function() {
-      // 樂觀更新：畫面立刻移除並跳回列表，後端在背景刪。
-      // 原本 await 完才動作，GAS 要 5～15 秒 → 使用者以為沒刪成功而重複點。
-      var _removed = _removeCaseLocally(caseId);
+    async function() {
+      // ⚠️ 刪除案件不做樂觀更新。
+      // 先前為了讓畫面「有反應」而先移除再背景送，結果後端明明刪成功、回應卻在半路
+      // 掉了 → 前端誤判失敗 → 把案件放回畫面且沒清快取 → 使用者重整還看得到那張單，
+      // 以為沒刪掉（2026-08-19 實際發生）。稽核系統上，「說刪了其實沒刪」和
+      // 「刪了卻說沒刪」都不能接受 → 一律等後端確認，並且不論結果都清掉本機快取。
+      var res = null;
+      try { res = await callAPI('deleteCase', { caseId }); } catch(e) { res = null; }
       _markCaseStale(caseId);
-      toast('🗑️ 案件已刪除');
-      sw('applications');
-      if (typeof renderApplications === 'function') { try { renderApplications(); } catch(e) {} }
-      _refreshAppCounts();
-      callAPI('deleteCase', { caseId }).then(function(res){
-        if (res && res.ok) { _cacheClear(); return; }
-        // 失敗 → 把案件放回去並如實告知
-        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
-        _cacheClear();
-        toast('❌ 刪除失敗：' + ((res && res.error) || '後端尚未支援此操作，請聯繫系統管理員'));
+      _cacheClear();   // 不論成功失敗都清，避免下次讀到過期清單
+      if (res && res.ok) {
+        _removeCaseLocally(caseId);
+        toast('🗑️ 案件已刪除');
+        sw('applications');
+        if (typeof renderApplications === 'function') { try { renderApplications(); } catch(e) {} }
+        _refreshAppCounts();
         if (typeof loadApplications === 'function') loadApplications(true);
-      }).catch(function(err){
-        if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
-        toast('❌ 刪除失敗：' + (err && err.message ? err.message : '網路錯誤'));
-        if (typeof loadApplications === 'function') loadApplications(true);
-      });
+        return;
+      }
+      // 沒拿到明確成功 → 不能說刪掉了，也不能說沒刪掉，如實告知並帶去確認
+      _showConfirmModal(
+        '⚠️ 無法確認刪除結果',
+        '伺服器沒有在時間內回應，這張單<strong>可能已經刪除、也可能還在</strong>。<br><br>'
+        + '請重新整理案件清單確認實際狀態，<span style="color:#dc2626;font-weight:700">不要重複按刪除</span>。',
+        '重新載入清單', 'var(--brand)',
+        function(){ sw('applications'); if (typeof loadApplications === 'function') loadApplications(true); }
+      );
     }
   );
 }
@@ -8276,6 +8282,7 @@ function confirmDeleteDraftById(caseId) {
         if (typeof loadApplications === 'function') loadApplications(true);
       }).catch(function(err){
         if (_removed && Array.isArray(window._allCasesCache)) window._allCasesCache.push(_removed);
+        _cacheClear();   // 漏了這行會讓下次讀到過期清單，重整又看到已刪的草稿
         toast('❌ 刪除失敗：' + (err && err.message ? err.message : '網路錯誤'));
         if (typeof loadApplications === 'function') loadApplications(true);
       });
