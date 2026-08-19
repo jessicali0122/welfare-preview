@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819153902';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819154123';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6020,9 +6020,13 @@ function _fetchAPIDedup(action, data) {
 // 因而產生重複單據（2026-08-18 實際發生：同一張單被建成 3 筆）。
 // → 寫入型 action 一律蓋上不可穿透的遮罩，並顯示已等待秒數，明確告知「還在跑」。
 // 註：刪除改為樂觀更新（畫面先動、背景送），不再蓋遮罩讓使用者乾等。
+// uploadFile 不列入：附件是「案件已經建立之後」才傳的，而且要逐一序列上傳
+// （後端把附件清單存在同一格，並行會互相覆蓋）。單檔就要 20~60 秒，把整個畫面
+// 鎖住等它跑完毫無意義 —— 送出結果卡片本來就會顯示「上傳中 1/2…」的進度。
+// → 讓上傳在背景跑，使用者可以繼續做別的事。
 const _BLOCKING_ACTIONS = {
   submit:'送出申請中', approve:'核准處理中', reject:'退件處理中', voidCase:'作廢處理中',
-  resubmit:'重新送出中', uploadFile:'上傳附件中', deleteFile:'刪除附件中'
+  resubmit:'重新送出中', deleteFile:'刪除附件中'
 };
 
 // ── 樂觀更新輔助 ──────────────────────────────────────────────────────
@@ -6136,7 +6140,16 @@ var _apiBreaker = { fails: 0, openUntil: 0 };
 // 既然每次嘗試都有近半機率成功，對「使用者正盯著看」的讀取就該更有耐心：
 // 試 5 次的話成功率約 97%，慢一點但至少打得開；背景工作維持 2 次不浪費額度。
 const _PATIENT_ACTIONS = new Set(['get', 'list']);
-function _maxRetry(action) { return _PATIENT_ACTIONS.has(action) ? 4 : 1; }
+// ★ 絕不重試的動作：每執行一次就會「產生一筆新資料 / 吃掉一個單號」。
+//   今天 Google 的回應投遞很不穩 —— 後端明明已經建好案件、單號也發了，回應卻在半路
+//   掉了，前端誤判失敗。若此時自動重試，就會再建一張新單、再吃一個單號，稽核上變成
+//   跳號＋重複單（2026-08-18 的 001/002/003 就是這樣來的，使用者今天又差點按到第三張）。
+//   → 寧可讓使用者自己去案件追蹤確認，也絕不自動重送。
+const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft']);
+function _maxRetry(action) {
+  if (_NO_RETRY_ACTIONS.has(action)) return -1;   // -1 → 連第一次的重試都不做
+  return _PATIENT_ACTIONS.has(action) ? 4 : 1;
+}
 // 讓使用者知道還在努力，而不是以為當掉了（只對前景讀取提示，背景工作安靜處理）
 function _retryNotice(action, retry) {
   if (!_PATIENT_ACTIONS.has(action)) return;
@@ -6231,7 +6244,10 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       }
       console.error('[API] 後端持續回傳非 JSON：', _txt.slice(0, 200));
       _breakerOnFailure();
-      return { ok: false, error: '伺服器暫時無法回應，請稍後再試', _badPayload: true };
+      return { ok: false, _badPayload: true, _maybeSucceeded: _NO_RETRY_ACTIONS.has(action),
+        error: _NO_RETRY_ACTIONS.has(action)
+          ? '伺服器沒有回應，但這筆很可能已經送出成功。請先到「案件追蹤」確認，不要直接重送（重送會多產生一個單號）'
+          : '伺服器暫時無法回應，請稍後再試' };
     }
     if (!json.ok && json.error && (
       json.error === '請先登入公司帳號' ||
@@ -6275,6 +6291,11 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     }
     if (isNetworkAbort) _breakerOnFailure();
     console.error('API Error:', err);
+    // 建立型動作即使「網路失敗」，後端也可能已經寫入成功（回應在半路掉了）→ 不能叫人重試
+    if (_NO_RETRY_ACTIONS.has(action)) {
+      return { ok: false, _maybeSucceeded: true,
+        error: '連線中斷，但這筆很可能已經送出成功。請先到「案件追蹤」確認，不要直接重送（重送會多產生一個單號）' };
+    }
     const friendlyMsg = err.message && err.message.includes('Failed to fetch')
       ? '網路連線失敗，請檢查網路後重試'
       : err.message;
@@ -8105,7 +8126,21 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     // 上傳附件（並行上傳，完成後再刷新總覽）
     uploadPendingFiles(submittedCaseId, filesToUpload);
   } else {
-    toast('❌ 送出失敗：' + res.error);
+    // 「可能已成功」的情況用強提示，不能只靠會自動消失的 toast —— 使用者看不到就會再按一次送出，
+    // 而每按一次就多吃一個單號（稽核不允許跳號）。
+    if (res && res._maybeSucceeded) {
+      _showConfirmModal(
+        '⚠️ 無法確認送出結果',
+        '伺服器沒有在時間內回應，但這筆申請<strong>很可能已經建立成功</strong>。<br><br>'
+        + '請先到「案件追蹤」確認是否已經有這筆單。<br>'
+        + '<span style="color:#dc2626;font-weight:700">確認之前請不要再按送出</span>'
+        + '——重送會再產生一個新單號，稽核上會變成跳號。',
+        '前往案件追蹤', 'var(--brand)',
+        function(){ sw('applications'); loadApplications(true); }
+      );
+    } else {
+      toast('❌ 送出失敗：' + res.error);
+    }
   }
   } catch(e) {
     toast('❌ 送出時發生錯誤：' + e.message);
