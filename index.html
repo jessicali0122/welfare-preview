@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819152647';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819153141';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5444,6 +5444,14 @@ function showApp() {
       window._htRestoreId = _htId;
       sw('hightea');
       history.replaceState({ view: 'hightea', htId: _htId }, '', '#' + _initHash);
+    } else if (_initHash.startsWith('applications/')) {
+      // 案件追蹤的分頁（費用分析／簽核流程）：在哪個分頁重整就回哪個分頁
+      const _tab = _initHash.slice(13);
+      sw('applications');
+      if (typeof appsSetTab === 'function' && (_tab === 'analytics' || _tab === 'flow')) {
+        setTimeout(function(){ try { appsSetTab(_tab); } catch(e) {} }, 0);
+      }
+      history.replaceState({ view: 'applications', appsTab: _tab }, '', '#' + _initHash);
     } else {
       const _mainViews = ['dashboard','applications','approvals','admin','hightea','massage','subsidy','overview','feedback'];
       let _restore = _mainViews.indexOf(_initHash) > -1 ? _initHash : 'dashboard';
@@ -6988,6 +6996,16 @@ function appsSetTab(tab) {
   // 舊入口相容：頂層「待審核」已併入案件頁第三個 tab
   if (tab === 'pending') { appsSetTab('all'); switchAppTab('pending'); return; }
   _appsTab = tab;
+  // ★ 把分頁寫進網址，重整才會留在原本那個分頁。
+  //   費用分析／簽核流程都是「案件追蹤」底下的分頁，網址一直是 #applications，
+  //   所以在費用分析按 F5 會掉回案件清單（使用者實際回報）。
+  //   用 replaceState 不新增歷史紀錄 —— 切分頁不該讓「上一頁」變成切回前一個分頁。
+  try {
+    if (window._appReady !== false || location.hash) {
+      var _h = (tab === 'all') ? '#applications' : ('#applications/' + tab);
+      history.replaceState({ view: 'applications', appsTab: tab }, '', _h);
+    }
+  } catch(e) {}
   // pill 樣式更新
   var tabs = {
     analytics: { el: document.getElementById('apps-tab-analytics'), active: tab==='analytics' },
