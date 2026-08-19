@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819153141';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819153902';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2843,7 +2843,9 @@ thead th{color:#767B75!important}
     <!-- 圖表 -->
     <div class="card" style="overflow:hidden;margin-bottom:14px">
       <div style="padding:18px 20px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:20px" id="charts-row">
+        <!-- 三個圖表並排：auto-fit 讓寬螢幕排三欄、中等寬度自動變兩欄、手機一欄，
+             不會像原本那樣一欄直排、右半邊整片留白 -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:28px;align-items:start" id="charts-row">
           <div>
             <div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:3px">部門費用排行</div>
             <div style="font-size:12px;color:#767B75;margin-bottom:12px">已完成案件・依部門累計</div>
@@ -2858,12 +2860,12 @@ thead th{color:#767B75!important}
               <div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0">載入中…</div>
             </div>
           </div>
-        </div>
-        <div>
-          <div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:3px">月份趨勢（含稅）</div>
-          <div style="font-size:12px;color:#767B75;margin-bottom:10px">已完成案件・各月費用統計</div>
-          <div id="chart-monthly" style="min-height:140px;display:flex;align-items:flex-end;gap:4px;padding:0 4px;border-bottom:2px solid #D9DDD3">
-            <div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">載入中…</div>
+          <div>
+            <div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:3px">月份趨勢（含稅）</div>
+            <div style="font-size:12px;color:#767B75;margin-bottom:12px">已完成案件・各月費用統計</div>
+            <div id="chart-monthly" style="min-height:140px;display:flex;align-items:flex-end;gap:4px;padding:0 4px;border-bottom:2px solid #D9DDD3">
+              <div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">載入中…</div>
+            </div>
           </div>
         </div>
       </div>
@@ -11851,7 +11853,9 @@ function renderAnalytics(startDate,endDate){
   var _hasAnaData = Object.keys(catMap).length > 0 || Object.keys(deptMap).length > 0;
   _anaEmpty.style.display = _hasAnaData ? 'none' : 'block';
   var _chartsRow = document.getElementById('charts-row');
-  if (_chartsRow) _chartsRow.style.display = _hasAnaData ? '' : 'none';
+  // ★ 必須寫回 'grid'：設成空字串會把行內的 display:grid 一併移除，版面退回 block，
+  //   三個圖表就變成一欄直排、右半邊整片留白（使用者實際回報）。
+  if (_chartsRow) _chartsRow.style.display = _hasAnaData ? 'grid' : 'none';
 }
 // 佔比用甜甜圈圖：橫條的長度是「相對最大項」，看不出各佔總額幾成
 function renderDonutChart(id,dataMap,colors){
