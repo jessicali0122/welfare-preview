@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819225830';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819230205';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1486,7 +1486,9 @@ span.flatpickr-weekday{color:#767B75!important;font-weight:700!important;font-si
 
 /* ══════════════════════════════════════════════════════════
    ── 6. Typography System（字型比例系統）──
-   Scale: 12 → 13 → 14 → 15 → 16 → 20 → 22px（＋stat 數字 24/28px）
+   文字級距：12 → 14 → 16 → 18 → 20 → 22 → 24 → 28 → 30px
+   （13/15px 已於 2026-08-19 併入 14px；規範外的尺寸請勿新增）
+   圖示尺寸另有一套 --ic-*，emoji 圖示屬於「圖形」不套文字級距。
    ══════════════════════════════════════════════════════════ */
 :root{
   --fs-xs         : 12px;   /* 微型：時間戳、單號（monospace）、badge、卡片副說明 */
@@ -1498,6 +1500,16 @@ span.flatpickr-weekday{color:#767B75!important;font-weight:700!important;font-si
   --fs-xl         : 20px;   /* 表單頁大標 */
   --fs-2xl        : 24px;   /* stat card 數字（小卡）*/
   --fs-3xl        : 28px;   /* stat card 大數字（hero stat）*/
+  /* ── 2026-08-19 補上原本漏定義、但實際一直在用的兩級 ── */
+  --fs-section    : 18px;   /* 頁面／區塊標題：福利總覽、案件追蹤、午茶日…（weight 600＋字距 .16em）*/
+  --fs-display    : 30px;   /* Display：首頁問候語，全站最大的文字 */
+  /* ── 圖示尺寸（emoji 圖形，不屬於文字級距）──
+     入口卡、空狀態、首頁主視覺的 emoji 用這組；
+     仍在用但不在級距上的 34/36/38/52px 共 10 處待視覺確認後歸位。 */
+  --ic-sm         : 26px;   /* 清單列前綴小圖示 */
+  --ic-md         : 32px;   /* 卡片內圖示 */
+  --ic-lg         : 40px;   /* 入口卡圖示 */
+  --ic-xl         : 64px;   /* 特大：空狀態、首頁主視覺 */
 
   /* ── 字距 letter-spacing 分級（適中）：內文最緊 → 英文小標最寬 ── */
   --ls-body       : .02em;  /* 內文、一般文字（全站基準）*/
@@ -2047,6 +2059,14 @@ header::after{display:none!important}
 /* 表格表頭配色 */
 thead th{color:#767B75!important}
 
+/* ── 資料表區一律純白 ──
+   卡片是暖白 #FFFDF9，讀一整片數字時那層淡色會顯得不清爽。
+   表格本身沒有自己的底色（表頭是 transparent），所以直接把「裝著表格的卡片」改白，
+   邊角與內距才不會露出一圈暖色。
+   ★ 必須放在上面 .card{background:#FFFDF9!important} 之後才蓋得過。 */
+.card:has(.evx-table),
+.card:has(#detail-items-tbody){ background:#fff!important; }
+
 /* ── 列印：一律純白，不帶畫面上的暖白底 ──
    ★ 這段必須放在本區塊「最後面」：上面第 1940 行的 .card{background:#FFFDF9!important}
      與前面 @media print 裡的規則同為 !important、特異度也相同，後出現的才會贏。
@@ -2175,7 +2195,7 @@ thead th{color:#767B75!important}
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
     <!-- 問候區：不再包卡片（招呼語不是資料，不需要框），維持置中 -->
     <div id="dash-hero" style="position:relative;padding:34px 4px 4px;margin-bottom:18px;text-align:center">
-      <div id="dashboard-greeting" style="font-size:30px;font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.2">你好</div>
+      <div id="dashboard-greeting" style="font-size:var(--fs-display);font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.2">你好</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
         <div id="dash-weather" style="display:none;font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em"></div>
@@ -2360,7 +2380,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap">
@@ -2608,7 +2628,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#FBE9D8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="留言板管理">📣</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:14px 0 12px"></div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2625,7 +2645,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="津貼補助">💰</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
           <button onclick="sw('overview')" style="flex-shrink:0;background:#fff;border:1.5px solid #CDD8CB;color:#577B53;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#F3F7F2'" onmouseout="this.style.background='#fff'">← 福利總覽</button>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
@@ -2728,7 +2748,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="案件追蹤">📋</span>
       </div>
       <div style="flex:1;min-width:180px">
-        <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">案件追蹤<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">CASES</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">案件追蹤<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">CASES</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">請款申請與簽核進度</div>
       </div>
       <button id="apps-add-btn" class="btn btn-p" onclick="openNewForm()" style="flex-shrink:0;white-space:nowrap">
@@ -3436,7 +3456,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="系統管理">🛡️</span>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">ADMIN</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">ADMIN</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者與角色管理（簽核流程請至「案件追蹤」）</div>
       </div>
       <button id="add-user-btn" class="btn btn-p" style="flex-shrink:0" onclick="showAddUserModal()">
@@ -3569,7 +3589,7 @@ thead th{color:#767B75!important}
           <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍿</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">TEA DAY</span></div>
+          <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">TEA DAY</span></div>
           <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">每月一場，充電的下午茶時光</div>
         </div>
         <!-- 資訊籤條列：下次午茶日／天氣，桌面併入標題列同排；手機用 media query 強制換行成獨立一排 -->
@@ -4190,7 +4210,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="按摩預約">💆🏻</span>
       </div>
       <div style="flex:1;min-width:180px">
-        <div style="font-size:18px;font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">MASSAGE</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">MASSAGE</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">充飽電，再一起面對更多挑戰</div>
       </div>
       <div id="ms-quota-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
