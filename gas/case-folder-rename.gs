@@ -40,3 +40,40 @@ function renameCaseFolder(oldName, newName) {
 // ── 還原方式 ──
 // 線上部署 …Q9cA 原本釘在 253 版，本次改為 254 版。
 // 要退回：clasp deploy -i AKfycbxqmXRfqubdjDRpYQhBOomC9BUM9_US7Wugal-UJ_CbpNp1MbLKq4YocjVRdGuWQ9cA -V 253
+
+
+// ════════════════════════════════════════════════════════════════════
+//  刪除案件／草稿時，一併把附件資料夾移到 Drive 垃圾桶
+//  狀態：✅ 已於 2026-08-19 用 clasp 推上線並部署（255 版）
+//
+//  背景：deleteDraftCase() 與 deleteCaseByAdmin() 原本只有 sh.deleteRow()，
+//        完全不碰 Drive → 案件刪掉了，附件資料夾永遠留在雲端硬碟變孤兒。
+//        （相對的好處是不會誤刪：所以刪掉重複草稿 0011 並沒有影響 0010 的檔案。）
+// ════════════════════════════════════════════════════════════════════
+
+// ── ① deleteDraftCase()：writeLog 之後、return 之前 ──
+//     trashCaseFolder(data.caseId);
+// ── ② deleteCaseByAdmin()：sh.deleteRow(i + 1) 之後、return 之前 ──
+//     trashCaseFolder(p.caseId);
+// ── ③ 新增下列函式（放在 renameCaseFolder 旁邊）──
+
+// 刪除案件／草稿時，一併把該單號的附件資料夾移到 Drive 垃圾桶。
+// ・只認「名稱完全等於單號、且直接位於 CONFIG.DRIVE_FOLDER_ID 底下」的資料夾，
+//   不會誤刪其他東西；不比對 fileId（同一個檔案可能被別的列引用到）。
+// ・用 setTrashed：進垃圾桶保留 30 天可還原，不做永久刪除。
+// ・一定要在資料列刪掉「之後」才呼叫。反過來若 Drive 先成功、寫入卻失敗，
+//   會變成案件還在、憑證卻不見了。
+// ・整段 try/catch：Drive 失敗最多留下一個孤兒資料夾（等同修改前的行為），
+//   不該讓刪除流程整個報錯。
+function trashCaseFolder(caseId) {
+  if (!caseId) return;
+  try {
+    const root = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
+    const it   = root.getFoldersByName(String(caseId));
+    while (it.hasNext()) it.next().setTrashed(true);   // 同名多個（舊資料）一併處理
+  } catch (e) {
+    Logger.log('資料夾刪除失敗（' + caseId + '）：' + e.message);
+  }
+}
+
+// 注意：作廢（voidCase）刻意不刪 —— 作廢保留單號與簽核紀錄供稽核，憑證必須留著。
