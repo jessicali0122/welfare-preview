@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819141540';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260819142046';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5887,7 +5887,10 @@ const _apiCache = {};
 const _CACHE_TTL = 300000; // 5 分鐘（記憶體 SWR：這段時間內直接用快取，逾時才背景更新）
 // listUsers 也納入 SWR（僅記憶體、不持久化）：每次切到系統管理都要等 GAS 幾秒太卡；
 // 名單會被增刪改，所以任一使用者寫入後會立刻讓它失效（見下方 _usersCacheClear）
-const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow', 'listUsers']); // 唯讀 action 快取
+// 唯讀 action 快取。getThumb / getFileB64 是附件預覽用的：每個附件各打一次後端，
+// 一張有 5 個附件的單就多 5 次執行，而且原本沒快取 → 每次重看同一張單都重抓一遍。
+// 兩者都不在 _API_LS_ACTIONS 裡，所以只存在記憶體（base64 檔案很大，不可寫進 localStorage）。
+const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow', 'listUsers', 'getThumb', 'getFileB64']);
 // ── 離線快取（localStorage）：把上次成功的讀取結果留到下次開頁 ──
 // GAS 冷啟動 1～3 秒，全新載入時首頁會空等。改成先秒開上次資料、背景再更新（樂觀顯示）。
 // 只存會擋首屏的幾支查詢；get（單筆案件）key 太多、易塞爆，只留記憶體快取。
@@ -6099,7 +6102,9 @@ function _backoff(base) { return Math.round(base * (0.75 + Math.random() * 0.5))
 // → 限制同時在途數量；使用者正在等的動作優先，背景工作（預抓/頭像/名單）排後面。
 const _MAX_INFLIGHT = 3;
 // 背景性質的 action：使用者沒有盯著它們看，可以讓路
-const _BG_ACTIONS = new Set(['logLogin', 'getMembers', 'listUsers', 'getFlow', 'getFlowInfo']);
+// 附件預覽（getThumb/getFileB64）也列為背景：使用者要先看到金額與簽核狀態，
+// 縮圖晚幾秒沒關係，絕不該讓整份 PDF 的 base64 傳輸擋住案件資料本身。
+const _BG_ACTIONS = new Set(['logLogin', 'getMembers', 'listUsers', 'getFlow', 'getFlowInfo', 'getThumb', 'getFileB64']);
 var _inflightCount = 0;
 var _waitQueue = [];   // [{fg:bool, resume:fn}]
 function _acquireSlot(action, isPrefetch) {
