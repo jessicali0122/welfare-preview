@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820095839';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820101611';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -994,11 +994,14 @@ input[type=checkbox]{accent-color:#577B53}
   /* 左欄（icon 容器）絕對定位置頂部中央 */
   #flow-timeline > div > div:first-child{
     position:absolute!important;
-    top:-16px!important;
+    top:-17px!important;
     left:50%!important;
     transform:translateX(-50%)!important;
     width:32px!important;
     flex-direction:column!important;
+    /* 白底把上方虛線在葉子處斷開，讓葉子與線之間留出乾淨間距（不再交疊）*/
+    background:#fff!important;
+    padding:0 5px!important;
   }
   /* icon 本身 */
   #flow-timeline > div > div:first-child > div:first-child{
@@ -1054,7 +1057,7 @@ input[type=checkbox]{accent-color:#577B53}
     flex:0.55 1 0!important;
   }
 
-  /* ── 申請資訊：列印順序同畫面（主旨、申請人、收款人、部門、員工編號、付款方式、申請時間）── */
+  /* ── 申請資訊：列印順序同畫面，由 DOM 決定（主旨；申請人、部門、申請時間；付款方式、員工編號、收款人）── */
 
   /* ── 卡片 ── */
   .card{
@@ -1081,11 +1084,12 @@ input[type=checkbox]{accent-color:#577B53}
   table{width:100%!important;min-width:0!important;font-size:12px!important;border-collapse:collapse!important}
   /* 所有欄位預設不斷行（分類/憑證/日期/金額）*/
   th,td{padding:4px 5px!important;white-space:nowrap!important}
-  /* 項目欄（第2欄）允許斷行，超過約10字自動換行 */
+  /* 項目欄（第2欄）：只有它可斷行，且拿掉寬度上限——其餘欄位都不斷行，
+     項目吃剩餘寬度，短字維持一行，真的太長才換行 */
   #detail-items-tbody td:nth-child(2){
     white-space:normal!important;
     word-break:break-all!important;
-    max-width:90px!important;
+    max-width:none!important;
     min-width:40px!important;
   }
   .amount-col,td[data-print-bold]{font-weight:700!important}
@@ -1322,6 +1326,20 @@ input[type=checkbox]{accent-color:#577B53}
   #print-root .card,
   #print-root table,
   #print-root [style*="border-radius"]{border-radius:0!important}
+
+  /* ── 框線再細一點 ── 深色但收細，避免 1px 深灰看起來偏粗 */
+  #print-root .card,
+  #print-root [style*="border"],
+  #print-root table,
+  #print-root td,
+  #print-root th{border-width:0.75px!important}
+
+  /* ── 明細金額配色：含稅整排（小計+總計）是重點 → 深色粗體；
+     未稅、稅額（小計+總計）一律正常深色、正常粗細，黑白列印也清楚且平均 ── */
+  #print-root #detail-items-tbody td:nth-child(6){color:#2E332D!important}          /* 稅額小計：由灰改深 */
+  #print-root #detail-sum-pretax,
+  #print-root #detail-sum-tax{color:#2E332D!important;font-weight:400!important}      /* 未稅/稅額總計：正常 */
+  #print-root #detail-sum-total{color:#2E332D!important;font-weight:700!important}     /* 含稅總計：深色粗體 */
 }
 
 /* ══════════ 午茶日：列印版（給廠商／會計對帳用的品項清單）══════════
@@ -3347,9 +3365,9 @@ thead th{color:#767B75!important}
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請人</div><div id="detail-applicant-name" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請時間</div><div id="detail-apply-date" style="font-weight:600;color:#2E332D">—</div></div>
-            <div><div id="detail-payee-label" style="color:#767B75;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#2E332D">—</div></div>
-            <div><div id="detail-empid-label" style="color:#767B75;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">付款方式</div><div id="detail-pay-method" style="font-weight:600;color:#2E332D">匯款（公司薪轉戶）</div></div>
+            <div><div id="detail-empid-label" style="color:#767B75;font-size:12px;margin-bottom:3px">員工編號</div><div id="detail-employee-id" style="font-weight:600;color:#2E332D">—</div></div>
+            <div><div id="detail-payee-label" style="color:#767B75;font-size:12px;margin-bottom:3px">收款人</div><div id="detail-payee" style="font-weight:600;color:#2E332D">—</div></div>
           </div>
           <div id="detail-reason-wrap" style="margin-top:14px;display:none">
             <div style="color:#767B75;font-size:12px;margin-bottom:4px">備註／請款原因</div>
@@ -10245,7 +10263,7 @@ function updateDetailFlow(c){
   // 更新標題
   const titleEl = document.getElementById('flow-title');
   if (titleEl) {
-    if (isDone)     titleEl.textContent = '簽核進度（' + APPROVERS.length + ' / ' + APPROVERS.length + ' 關 · 已完成）';
+    if (isDone)     titleEl.textContent = '簽核進度（' + APPROVERS.length + ' / ' + APPROVERS.length + ' 關 · 已完成簽核）';
     else if (isRejected) titleEl.textContent = '簽核進度（已退件）';
     else            titleEl.textContent = '簽核進度（' + (currentStep - 1) + ' / ' + APPROVERS.length + ' 關）';
   }
@@ -10326,25 +10344,17 @@ function updateDetailFlow(c){
       // 左欄：icon 置中 + 下方虛線（最後一關不顯示虛線）
       + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:36px">'
       +   '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + iconSvg + '</div>'
-      +   ((!isLast || isDone) ? '<div style="flex:1;width:2px;min-height:8px;margin-top:3px;background:' + _dashedLine + '"></div>' : '')
+      +   ((!isLast) ? '<div style="flex:1;width:2px;min-height:8px;margin-top:3px;background:' + _dashedLine + '"></div>' : '')
       + '</div>'
       // 右欄：文字，底部留間距（最後一關不留）
-      + '<div style="flex:1;' + ((!isLast || isDone) ? 'padding-bottom:10px;' : '') + '">'
+      + '<div style="flex:1;' + ((!isLast) ? 'padding-bottom:10px;' : '') + '">'
       +   '<div style="font-size:14px;font-weight:700;color:' + titleColor + ';padding-top:4px">' + a.label + '</div>'
       +   statusHtml
       + '</div>'
       + '</div>';
   });
 
-  // 完成註記：沿用關卡同一套結構與字級，看起來就是流程的最後一段
-  if (isDone) html += '<div class="flow-done-note" style="display:flex;gap:12px;align-items:stretch">'
-    + '<div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;width:36px">'
-    +   '<div style="width:36px;height:36px;display:flex;align-items:center;justify-content:center;flex-shrink:0">' + leafSvg('#577B53', 28) + '</div>'
-    + '</div>'
-    + '<div style="flex:1">'
-    +   '<div style="font-size:14px;font-weight:700;color:#4A4F49;padding-top:4px">已完成簽核</div>'
-    + '</div>'
-    + '</div>';
+  // 「已完成簽核」尾節點已移除（與標題「…·已完成簽核」重複）；完成狀態改由標題呈現
   tl.innerHTML = html;
 }
 
