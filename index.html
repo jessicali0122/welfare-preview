@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820102016';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820104609';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6983,12 +6983,16 @@ function _renderCaseRow(c, opts) {
     }
     return rows.join('');
   })();
-  const rowClick = isDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`;
+  // 草稿：只有建立人可進編輯（openDraft）；其他福委只能檢視（loadDetail 唯讀）＋複製
+  const _isOwnDraft = isDraft && (c.email === currentUser?.email);
+  const rowClick = isDraft
+    ? (_isOwnDraft ? `openDraft('${c.caseId}')` : `loadDetail('${c.caseId}')`)
+    : `loadDetail('${c.caseId}')`;
   const _dataCat = (c.category||'').replace(/"/g,'&quot;');
   // "..." dropdown actions
   const _menuStatus = (c.status||'').replace(/'/g,'');
   const dotMenu = isDraft
-    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','draft','${_menuStatus}')"`
+    ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','draft','${_menuStatus}',${_isOwnDraft})"`
     : isDone
     ? `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','done','${_menuStatus}')"`
     : `onclick="event.stopPropagation();_showRowMenu(this,'${c.caseId}','pending','${_menuStatus}')"`;
@@ -7009,19 +7013,26 @@ function _renderCaseRow(c, opts) {
 }
 
 // 行操作下拉選單
-function _showRowMenu(btn, caseId, type, status) {
+function _showRowMenu(btn, caseId, type, status, isOwn) {
   // 移除舊的選單
   document.querySelectorAll('._evx-row-menu').forEach(m => m.remove());
   const menu = document.createElement('div');
   menu.className = '_evx-row-menu';
   menu.style.cssText = 'position:fixed;background:#fff;border:1px solid #D5DAD2;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:500;min-width:130px;overflow:hidden;font-size:14px';
   const actionMap = {
+    // 草稿：建立人可編輯/刪除；其他福委只能檢視＋複製（編輯後端也會擋，這裡先不給入口）
     // 複製對草稿一樣適用（openDraft 的 asCopy 模式不綁原單號）；刪除放最後，破壞性操作不緊鄰其他項目
-    'draft':   [['✏️ 編輯草稿', () => openDraft(caseId)],      ['📄 複製為新申請', () => copyCaseToNewForm(caseId)], ['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]],
+    'draft':   isOwn
+      ? [['✏️ 編輯草稿', () => openDraft(caseId)],      ['📄 複製為新申請', () => copyCaseToNewForm(caseId)], ['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]]
+      : [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
     'done':    [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
     'pending': [['👁 查看詳情',  () => loadDetail(caseId)],     ['📄 複製為新申請', () => copyCaseToNewForm(caseId)]],
   };
   let items = actionMap[type] || actionMap['pending'];
+  // 管理員可刪除任何人的草稿（本人的已在上面提供）
+  if (type === 'draft' && !isOwn && typeof isAdmin === 'function' && isAdmin()) {
+    items = items.concat([['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]]);
+  }
   // 管理員：非草稿、且尚未作廢的案件可從清單直接作廢（保留單號與簽核紀錄，只標記狀態）
   if (type !== 'draft' && status !== '作廢' && typeof isAdmin === 'function' && isAdmin()) {
     items = items.concat([['🚫 作廢單據', () => voidCaseById(caseId)]]);
@@ -7108,8 +7119,9 @@ function switchAppTab(tab) {
 function renderDraftsTab() {
   const container = document.getElementById('drafts-list-container');
   if (!container) return;
+  // 顯示所有「看得到的」草稿：後端已依角色（福委/管理者見全部；一般員工僅自己）過濾，前端直接全列
   const myDrafts = (window._allCasesCache || []).filter(c =>
-    c.status === '草稿' && (isAdmin() || c.email === currentUser?.email)
+    c.status === '草稿'
   ).sort(_byCreatedDesc);   // 原本沒排序＝沿用後端順序（最舊的在最上面），與其他分頁不一致
   if (myDrafts.length === 0) {
     container.innerHTML = '<div class="empty-state"><p>目前沒有草稿</p><small>按「新增申請」開始填寫</small></div>';
@@ -7174,7 +7186,7 @@ function _applyCasesData(allCases) {
   window._appsRenderedAt = Date.now();
   // 更新草稿 Tab 數字
   const myDraftCount = allCases.filter(c =>
-    c.status === '草稿' && (isAdmin() || c.email === currentUser?.email)
+    c.status === '草稿'
   ).length;
   var countEl = document.getElementById('tab-drafts-count');
   if (countEl) countEl.textContent = myDraftCount;
@@ -7813,6 +7825,12 @@ async function openDraft(caseId, asCopy) {
     return;   // 留在原畫面，不切到半空的新表單
   }
   const c = res.case || res.data || res;
+  // 安全網：草稿僅建立人可編輯。若不小心開到別人的草稿（非複製模式），自動轉為「複製為新申請」，
+  // 避免誤入編輯（後端 saveDraft 也會擋非本人存檔，這裡是前端體驗上的防呆）
+  if (!asCopy && c && c.email && currentUser && c.email !== currentUser.email) {
+    asCopy = true;
+    toast('ℹ️ 這是其他人的草稿，僅能複製為新申請');
+  }
   // 先切換到新增申請畫面（會清空表單）；旗標避免 sw 重複還原附件
   window._openDraftInProgress = true;
   sw('new-form');
