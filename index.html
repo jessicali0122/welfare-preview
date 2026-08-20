@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820113910';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820114107';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2992,10 +2992,10 @@ thead th{color:#767B75!important}
     </div>
     <!-- 簽核流程設定（自系統管理移入；元件 ID 保留，renderFlowList/loadAdminFlow 不需改） -->
     <div id="app-tab-flow" style="display:none">
-      <!-- 系統設定子分頁：簽核流程 / 供應商管理 -->
-      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
-        <button id="sysset-tab-flow" onclick="sysSetTab('flow')" style="padding:8px 18px;border-radius:22px;border:1.5px solid #577B53;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap">簽核流程</button>
-        <button id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" style="padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;background:#fff;color:#767B75;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap">供應商管理</button>
+      <!-- 系統設定子分頁：簽核流程 / 供應商管理（同案件清單頁籤樣式 .admin-tab）-->
+      <div style="display:flex;gap:0;border-bottom:2px solid #D2D7CD;margin-bottom:16px">
+        <div id="sysset-tab-flow" onclick="sysSetTab('flow')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">⚙️ 簽核流程</div>
+        <div id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" class="admin-tab" style="display:flex;align-items:center;gap:6px">🏢 供應商管理</div>
       </div>
       <div id="sysset-pane-flow">
       <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
@@ -11714,13 +11714,10 @@ function sysSetTab(which){
   var ps = document.getElementById('sysset-pane-supplier');
   if (pf) pf.style.display = isF ? '' : 'none';
   if (ps) ps.style.display = isF ? 'none' : '';
-  var on  = { bg:'#577B53', bd:'#577B53', c:'#fff' };
-  var off = { bg:'#fff',    bd:'#D5DAD2', c:'#767B75' };
-  [['sysset-tab-flow', isF], ['sysset-tab-supplier', !isF]].forEach(function(x){
-    var b = document.getElementById(x[0]); if (!b) return;
-    var s = x[1] ? on : off;
-    b.style.background = s.bg; b.style.borderColor = s.bd; b.style.color = s.c;
-  });
+  var bf = document.getElementById('sysset-tab-flow');
+  var bs = document.getElementById('sysset-tab-supplier');
+  if (bf) bf.classList.toggle('active', isF);
+  if (bs) bs.classList.toggle('active', !isF);
   if (!isF && typeof loadSupplierAdmin === 'function') loadSupplierAdmin();
 }
 // ── 供應商管理（系統設定頁；僅管理者）────────────────────────────
