@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820121915';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820124209';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1972,7 +1972,7 @@ html,body{background:#F6F4EE}
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
 .dash-sec-title{font-size:18px;font-weight:800;color:#232A1E;white-space:nowrap;letter-spacing:-.01em}
-.dash-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.1em}
+.dash-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.12em;text-transform:uppercase}
 /* 服務入口卡：左側彩色識別條＋各自的暖色 icon 底，一眼分辨、畫面不再單調 */
 .dash-hub-card{position:relative}
 .dash-hub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;opacity:.85}
@@ -2995,22 +2995,22 @@ thead th{color:#767B75!important}
       <!-- 系統設定子分頁：簽核流程 / 供應商管理（同案件清單頁籤樣式 .admin-tab）-->
       <div style="display:flex;gap:0;border-bottom:2px solid #D2D7CD;margin-bottom:16px">
         <div id="sysset-tab-flow" onclick="sysSetTab('flow')" class="admin-tab active" style="display:flex;align-items:center;gap:6px;padding:10px 22px">⚙️ 簽核流程</div>
-        <div id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" class="admin-tab" style="display:flex;align-items:center;gap:6px;padding:10px 22px">🏢 供應商管理</div>
+        <div id="sysset-tab-supplier" data-cap="supplier.manage" onclick="sysSetTab('supplier')" class="admin-tab" style="display:flex;align-items:center;gap:6px;padding:10px 22px">🏢 供應商管理</div>
       </div>
       <div id="sysset-pane-flow">
       <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
         ⚠️ <b>注意：</b>流程設定為<b>唯讀顯示</b>，僅管理員可修改。
       </div>
       <div class="card" style="padding:22px">
-        <div id="flow-list-title" class="section-title">目前簽核流程</div>
+        <div id="flow-list-title" class="section-title">簽核流程</div>
         <div id="flow-list" style="display:flex;flex-direction:column;gap:10px">
           <div style="text-align:center;padding:30px;color:#767B75">載入中…</div>
         </div>
       </div>
       </div>
       <div id="sysset-pane-supplier" style="display:none">
-      <!-- 供應商管理（僅管理者）：寫入 suppliers 分頁，供「付款方式＝其他」下拉選用 -->
-      <div class="card" data-cap="admin.users" style="padding:22px">
+      <!-- 供應商管理（管理者＋福委）：寫入 suppliers 分頁，供「付款方式＝其他」下拉選用 -->
+      <div class="card" data-cap="supplier.manage" style="padding:22px">
         <div class="section-title">供應商管理</div>
         <div style="font-size:13px;color:#767B75;margin-bottom:14px;line-height:1.6">供「付款方式＝其他」時選用的廠商清單。新增／編輯／刪除會即時寫入資料庫，使用者重新整理後生效。</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
@@ -4926,7 +4926,8 @@ const CAPABILITY_MAP = {
   'hightea.discover':      ['welfare'],
   'massage.manage':        ['hr'],               // 按摩「進階管理區」可見＋產生報到 QR：HR＋管理者
   'bulletin.post':         ['welfare', 'hr'],    // 公告基底能力；實際新增/刪除依版位用 canBulletin(scope)：首頁/午茶日含福委，按摩僅 HR/管理者
-  'admin.users':           []                    // 系統管理：僅管理者（按摩後臺管理另由 massage.manage 控管＝HR＋管理者）
+  'admin.users':           [],                   // 系統管理：僅管理者（按摩後臺管理另由 massage.manage 控管＝HR＋管理者）
+  'supplier.manage':       ['welfare']          // 供應商管理：管理者＋福委（可看也可新增／編輯／刪除）
 };
 
 // email → roles 陣列（由 getMembers 動態填入）
@@ -4989,6 +4990,14 @@ window.setRolePreview = function(role) {
   // 重繪目前頁面（不推歷史），讓頁內受權限控制的區塊立即反映
   var cur = (document.querySelector('.view.active') && document.querySelector('.view.active').id.replace('view-','')) || 'dashboard';
   try { sw(cur, undefined, true); } catch(e) {}
+  _revalidateAppsTab();
+  // 簽核流程是「一次渲染、之後不動」的列表，不重繪的話編輯／排序鈕會停在上一個角色的狀態
+  try {
+    if (typeof renderFlowList === 'function' && typeof _flowApprovers !== 'undefined'
+        && _flowApprovers && _flowApprovers.length && document.getElementById('flow-list')) {
+      renderFlowList(_flowApprovers);
+    }
+  } catch(e) {}
   var _labels = { manager:'管理者', hr:'HR', welfare:'福委', employee:'沒標籤（一般員工）' };
   if (typeof toast === 'function') toast('🎭 已切換為「' + (_labels[role] || role) + '」視角');
 };
@@ -7260,6 +7269,15 @@ var _appsTab = 'all';
 function appsSetTab(tab) {
   // 舊入口相容：頂層「待審核」已併入案件頁第三個 tab
   if (tab === 'pending') { appsSetTab('all'); switchAppTab('pending'); return; }
+  // ── 子分頁權限守門：擋掉「按鈕藏起來、但貼網址就能進」的繞道 ──
+  //   角色尚未從伺服器同步回來時一律先擋（fail-closed），並記下想去的分頁，
+  //   由 _resolvePermPending() 在角色到位後自動補開，管理者深連結不會被誤殺。
+  var _tabCap = APPS_TAB_CAP[tab];
+  if (_tabCap && typeof can === 'function' && !can(_tabCap)) {
+    if (!window._rolesSyncedOnce) { window._appsTabPending = tab; }
+    else if (typeof toast === 'function') toast('🔒 你沒有這個分頁的權限');
+    tab = 'all';
+  }
   _appsTab = tab;
   // ★ 把分頁寫進網址，重整才會留在原本那個分頁。
   //   費用分析／簽核流程都是「案件追蹤」底下的分頁，網址一直是 #applications，
@@ -8878,6 +8896,19 @@ window.addEventListener('popstate', function(e) {
 });
 // view → 所需能力（無權限者導回總覽）
 const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.approve', admin:'admin.users', analytics:'analytics.view', hightea:'hightea.view', feedback:'feedback.view' };
+// 案件追蹤底下的子分頁能力（必須與各分頁按鈕的 data-cap 一致）。
+// ★ 沒有這張表時，按鈕雖被 cap-hidden 藏起來，但直接貼網址 #applications/supplier
+//   仍會被 appsSetTab 打開面板 —— 造成「福委貼網址看得到、切角色預覽看不到」的權限不一致。
+const APPS_TAB_CAP = { flow:'reimbursement.approve', supplier:'supplier.manage' };
+// 角色變動後重新驗證「目前開著的子分頁」：無權限就交給 appsSetTab 的守門收起面板。
+// 少了這步，切換角色預覽（或角色被伺服器降級）時，先前開著的供應商管理面板會繼續留在畫面上。
+function _revalidateAppsTab(){
+  try {
+    if (typeof _appsTab === 'undefined' || !_appsTab) return;
+    var _need = APPS_TAB_CAP[_appsTab];
+    if (_need && typeof can === 'function' && !can(_need) && typeof appsSetTab === 'function') appsSetTab(_appsTab);
+  } catch(e) {}
+}
 // 無權限時顯示的「沒有權限」頁（入口卡片不隱藏，點進來才擋）
 function _showNoPerm(name, pending){
   var host = document.getElementById('view-dashboard') ? document.getElementById('view-dashboard').parentNode : document.body;
@@ -8927,6 +8958,17 @@ function _resolvePermPending(){
       }
     }
   } catch(e) {}
+  // ★ 順序很重要：上面 sw(_np) 先把使用者從「載入中／無權限」占位頁導回目標頁，
+  //   view-applications 這時才會是 active，子分頁才補得開（冷啟動貼 #applications/supplier 的情境）。
+  try {
+    var _pt = window._appsTabPending;
+    window._appsTabPending = null;
+    var _appsView = document.getElementById('view-applications');
+    if (_pt && APPS_TAB_CAP[_pt] && typeof can === 'function' && can(APPS_TAB_CAP[_pt])
+        && _appsView && _appsView.classList.contains('active')
+        && typeof appsSetTab === 'function') { appsSetTab(_pt); }
+  } catch(e) {}
+  _revalidateAppsTab();
 }
 function sw(name,elOrName,_fromPop){
   // 保險：切頁一律清掉列印用的暫存文件（殘留會讓其他頁面按列印時印出上一張案件）
@@ -10452,16 +10494,16 @@ async function loadAdminFlow() {
   // 同步更新 APPROVER_EMAILS（只包含啟用的關卡，讓 isMyTurnToApprove 用最新資料）
   APPROVER_EMAILS.length = 0;
   _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
-  renderFlowList(_flowApprovers);
-  // 唯讀提示
-  const notice = document.getElementById('flow-readonly-notice');
-  if (notice) notice.style.display = isAdmin() ? 'none' : 'block';
+  renderFlowList(_flowApprovers);  // 唯讀提示條由 renderFlowList 一併更新
 }
 
 // 渲染流程列表
 function renderFlowList(approvers) {
   const list = document.getElementById('flow-list');
   const admin = isAdmin();
+  // 唯讀提示條在這裡更新（而非只在 loadAdminFlow）：切換角色預覽時會重繪本函式，提示才跟得上
+  const _notice = document.getElementById('flow-readonly-notice');
+  if (_notice) _notice.style.display = admin ? 'none' : 'block';
   const avatarColors = ['#38a3a5','#1e9d6b','#577B53','#06b6d4','#577B53','#f97316','#577B53','#16a34a'];
   const numLabels = ['一','二','三','四','五','六','七','八'];
 
@@ -10473,7 +10515,7 @@ function renderFlowList(approvers) {
   // 計算啟用數量並更新標題
   const activeCount = approvers.filter(a => a.enabled !== false).length;
   const title = document.getElementById('flow-list-title');
-  if (title) title.textContent = '目前簽核流程（共 ' + approvers.length + ' 關，' + activeCount + ' 關啟用中）';
+  if (title) title.textContent = '簽核流程（共 ' + approvers.length + ' 關，' + activeCount + ' 關啟用中）';
 
   // 計算每個關卡的「啟用序號」（停用的不計入）
   let _activeSeq = 0;
@@ -11718,6 +11760,8 @@ function _fillSupplierSelect(){
 }
 // ── 系統設定頁：簽核流程 / 供應商管理 子分頁切換 ──
 function sysSetTab(which){
+  // 供應商管理＝管理者＋福委：不論從按鈕或網址進來都用同一把尺，避免「貼網址就進得去」
+  if (which === 'supplier' && typeof can === 'function' && !can('supplier.manage')) which = 'flow';
   var isF = which !== 'supplier';
   var pf = document.getElementById('sysset-pane-flow');
   var ps = document.getElementById('sysset-pane-supplier');
@@ -11735,14 +11779,19 @@ function sysSetTab(which){
   } catch(e){}
   if (!isF && typeof loadSupplierAdmin === 'function') loadSupplierAdmin();
 }
-// ── 供應商管理（系統設定頁；僅管理者）────────────────────────────
+// ── 供應商管理（系統設定頁；管理者＋福委）──────────────────────────
 async function loadSupplierAdmin(){
   var box = document.getElementById('supplier-admin-list');
   if (!box) return;
-  // 有預載清單就直接顯示、完全不打後端（避免每次開都等 GAS，甚至觸發「伺服器較慢」重試）
+  // 有清單就直接顯示、不打後端；沒有才用共用的 _loadSuppliers（與填單頁共用同一份快取、去重、失敗會重試）
   if (typeof SUPPLIERS !== 'undefined' && SUPPLIERS && SUPPLIERS.length) { _renderSupplierAdmin(SUPPLIERS); return; }
   box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
-  await _refreshSupplierAdmin();
+  try {
+    if (typeof _loadSuppliers === 'function') await _loadSuppliers();
+    _renderSupplierAdmin((typeof SUPPLIERS !== 'undefined' && SUPPLIERS) ? SUPPLIERS : []);
+  } catch(e){
+    box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗，請重新整理</div>';
+  }
 }
 // 抓最新供應商並更新畫面（首次載入、或新增／編輯／刪除後才呼叫）
 async function _refreshSupplierAdmin(){
@@ -11796,7 +11845,7 @@ function _renderSupPage(page){
     +   '<div class="evx-page-left"><span>每頁顯示</span>'
     +     '<select class="evx-page-size" onchange="supSetPageSize(+this.value)">'+sizeOpts+'</select>'
     +     '<span>筆・共 '+list.length+' 筆</span></div>'
-    +   '<div class="evx-pages">'+pagesHtml+'</div>'
+    +   '<div class="evx-pages" style="margin-left:0">'+pagesHtml+'</div>'
     + '</div>';
 }
 async function supplierAdd(){
