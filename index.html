@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820161155';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820162613';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7695,7 +7695,7 @@ async function _doQuickReject(caseId, comment) {
 }
 
 // ── 通用確認 Modal（取代 native confirm）──
-function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
+function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm, validate) {
   closeNotif(); // 關閉通知面板，避免 z-index 衝突
   let m = document.getElementById('_confirm_modal');
   if (!m) {
@@ -7716,6 +7716,12 @@ function _showConfirmModal(title, bodyHtml, btnLabel, btnColor, onConfirm) {
   _okBtn.disabled = false;
   _okBtn.onclick = async function() {
     if (_okBtn.disabled) return;
+    // 可選的送出前驗證：回傳錯誤訊息字串＝擋下並保留視窗（欄位內容不會被清掉），
+    // 回傳空值＝通過。沒傳 validate 的呼叫點行為完全不變。
+    if (typeof validate === 'function') {
+      var _vErr = validate();
+      if (_vErr) { if (typeof toast === 'function') toast(_vErr); return; }
+    }
     _okBtn.disabled = true;
     _okBtn.style.opacity = '0.6';
     m.classList.remove('open');
@@ -8643,11 +8649,16 @@ function voidCaseById(caseId, caseObj) {
   }
   _showConfirmModal(
     '確定要作廢這張單嗎？',
-    '案件 <strong>' + caseId + '</strong> 會標記為「作廢」，不再進行簽核。<br><span style="font-size:14px;color:#767B75">資料與簽核紀錄都會保留，稽核仍查得到。</span>',
+    '案件 <strong>' + caseId + '</strong> 會標記為「作廢」，不再進行簽核。<br><span style="font-size:14px;color:#767B75">資料與簽核紀錄都會保留，稽核仍查得到。</span>'
+    + '<div style="margin-top:14px">'
+    +   '<label for="void-reason-inp" style="display:block;font-size:12px;font-weight:600;color:#4A4F49;margin-bottom:6px">作廢原因 <span style="color:#dc2626">*</span></label>'
+    +   '<textarea id="void-reason-inp" class="inp" rows="3" placeholder="請說明作廢原因，會一併寫進稽核紀錄" style="width:100%;box-sizing:border-box;resize:vertical"></textarea>'
+    + '</div>',
     '確認作廢', '#ea580c',
     async function() {
+      var _rsn = (document.getElementById('void-reason-inp') || {}).value || '';
       toast('⏳ 作廢中...');
-      const res = await callAPI('voidCase', { caseId });
+      const res = await callAPI('voidCase', { caseId, reason: _rsn.trim() });
       if (res && res.ok) {
         toast('🚫 案件已作廢');
         _cacheClear();
@@ -8655,6 +8666,14 @@ function voidCaseById(caseId, caseObj) {
       } else {
         toast('❌ 作廢失敗：' + ((res && res.error) || '請稍後再試'));
       }
+    },
+    function() {   // 送出前驗證：作廢原因必填（稽核要看得到為什麼作廢）
+      var _el = document.getElementById('void-reason-inp');
+      if (!_el || !String(_el.value || '').trim()) {
+        if (_el) { _el.style.borderColor = '#dc2626'; _el.focus(); }
+        return '⚠️ 請填寫作廢原因';
+      }
+      return '';
     }
   );
 }
