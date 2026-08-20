@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820114107';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820115013';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2826,7 +2826,7 @@ thead th{color:#767B75!important}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>系統設定
       </button>
     </div>
-    <div id="app-count-label" style="font-size:14px;color:#767B75;margin-bottom:12px;display:none">共 0 件</div>
+    <!-- 「共 X 件」已移除：全部案件頁籤的 badge 已顯示件數，避免重複 -->
     <!-- ── 費用分析（自總覽搬入請款模組）── -->
     <!-- ── 費用分析（併入總覽）── -->
     <!-- 請款概況 + 費用分析（待我審核 tab 隱藏）-->
@@ -2994,8 +2994,8 @@ thead th{color:#767B75!important}
     <div id="app-tab-flow" style="display:none">
       <!-- 系統設定子分頁：簽核流程 / 供應商管理（同案件清單頁籤樣式 .admin-tab）-->
       <div style="display:flex;gap:0;border-bottom:2px solid #D2D7CD;margin-bottom:16px">
-        <div id="sysset-tab-flow" onclick="sysSetTab('flow')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">⚙️ 簽核流程</div>
-        <div id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" class="admin-tab" style="display:flex;align-items:center;gap:6px">🏢 供應商管理</div>
+        <div id="sysset-tab-flow" onclick="sysSetTab('flow')" class="admin-tab active" style="display:flex;align-items:center;gap:6px;padding:10px 22px">⚙️ 簽核流程</div>
+        <div id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" class="admin-tab" style="display:flex;align-items:center;gap:6px;padding:10px 22px">🏢 供應商管理</div>
       </div>
       <div id="sysset-pane-flow">
       <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
@@ -11724,12 +11724,23 @@ function sysSetTab(which){
 async function loadSupplierAdmin(){
   var box = document.getElementById('supplier-admin-list');
   if (!box) return;
-  box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  // 先用已預載的清單即時顯示（登入時背景載過），避免每次開都空等後端；再背景抓最新覆蓋
+  if (typeof SUPPLIERS !== 'undefined' && SUPPLIERS && SUPPLIERS.length) {
+    _renderSupplierAdmin(SUPPLIERS);
+  } else {
+    box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  }
   try {
     var r = await callAPI('getSuppliers', {}, { noCache: true });
-    if (!r || !r.ok) { box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>'; return; }
-    _renderSupplierAdmin(r.suppliers || []);
-  } catch(e){ box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>'; }
+    if (!r || !r.ok) {
+      if (!(SUPPLIERS && SUPPLIERS.length)) box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>';
+      return;
+    }
+    SUPPLIERS = r.suppliers || []; _suppliersLoaded = true;
+    _renderSupplierAdmin(SUPPLIERS);
+  } catch(e){
+    if (!(SUPPLIERS && SUPPLIERS.length)) box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>';
+  }
 }
 function _renderSupplierAdmin(list){
   var box = document.getElementById('supplier-admin-list');
@@ -11763,23 +11774,45 @@ async function supplierAdd(){
 }
 window.supplierEdit = function(btn){
   var tr = btn.closest('tr'); if (!tr) return;
-  var orig = tr.getAttribute('data-code');
-  var curName = tr.children[1].textContent;
-  var newCode = prompt('供應商編號：', orig); if (newCode === null) return;
-  var newName = prompt('供應商名稱：', curName); if (newName === null) return;
-  newCode = newCode.trim(); newName = newName.trim();
-  if (!newCode || !newName){ toast('⚠️ 編號與名稱不可空白'); return; }
-  callAPI('updateSupplier', { origCode: orig, code: newCode, name: newName }).then(function(r){
+  _showSupplierEditModal(tr.getAttribute('data-code'), tr.children[1].textContent);
+};
+// 供應商編輯：系統風格雙欄 modal（取代 native prompt）
+function _showSupplierEditModal(orig, curName){
+  if (typeof closeNotif === 'function') closeNotif();
+  var m = document.getElementById('_supplier_edit_modal');
+  if (!m) { m = document.createElement('div'); m.id = '_supplier_edit_modal'; m.className = 'modal-bg'; document.body.appendChild(m); }
+  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
+    + '<div style="font-size:16px;font-weight:700;color:#2E332D;margin-bottom:14px">編輯供應商</div>'
+    + '<label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商編號</label>'
+    + '<input id="_sup_edit_code" class="inp" type="text" style="width:100%;box-sizing:border-box;margin-bottom:12px">'
+    + '<label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商名稱</label>'
+    + '<input id="_sup_edit_name" class="inp" type="text" style="width:100%;box-sizing:border-box;margin-bottom:16px">'
+    + '<div style="display:flex;gap:10px">'
+    + '<button class="btn btn-o" style="flex:1;justify-content:center;min-height:44px" onclick="document.getElementById(\'_supplier_edit_modal\').classList.remove(\'open\')">取消</button>'
+    + '<button class="btn" style="flex:1;justify-content:center;min-height:44px;background:#577B53;color:#fff" id="_sup_edit_ok">儲存</button>'
+    + '</div></div>';
+  m.classList.add('open');
+  var codeEl = document.getElementById('_sup_edit_code'), nameEl = document.getElementById('_sup_edit_name');
+  codeEl.value = orig; nameEl.value = curName;
+  setTimeout(function(){ try { nameEl.focus(); } catch(e){} }, 50);
+  var ok = document.getElementById('_sup_edit_ok');
+  ok.onclick = async function(){
+    var code = (codeEl.value || '').trim(), name = (nameEl.value || '').trim();
+    if (!code || !name){ toast('⚠️ 編號與名稱不可空白'); return; }
+    ok.disabled = true; ok.style.opacity = '0.6'; m.classList.remove('open');
+    var r = await callAPI('updateSupplier', { origCode: orig, code: code, name: name });
+    ok.disabled = false; ok.style.opacity = '';
     if (!r || !r.ok){ toast('❌ ' + ((r && r.error) || '更新失敗')); return; }
     _suppliersLoaded = false; toast('✅ 已更新'); loadSupplierAdmin();
-  });
-};
+  };
+  m.onclick = function(e){ if (e.target === m) m.classList.remove('open'); };
+}
 window.supplierDelete = function(btn){
   var tr = btn.closest('tr'); if (!tr) return;
   var code = tr.getAttribute('data-code');
   var name = tr.children[1].textContent;
-  if (!confirm('確定刪除供應商「' + name + '（' + code + '）」？')) return;
-  callAPI('deleteSupplier', { code: code }).then(function(r){
+  _showConfirmModal('刪除供應商', '確定刪除供應商「<b>' + htEsc(name) + '</b>（' + htEsc(code) + '）」？此動作無法復原。', '刪除', '#dc2626', async function(){
+    var r = await callAPI('deleteSupplier', { code: code });
     if (!r || !r.ok){ toast('❌ ' + ((r && r.error) || '刪除失敗')); return; }
     _suppliersLoaded = false; toast('✅ 已刪除'); loadSupplierAdmin();
   });
