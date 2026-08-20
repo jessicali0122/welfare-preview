@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820104609';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820110250';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2823,7 +2823,7 @@ thead th{color:#767B75!important}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="18" y1="20" x2="18" y2="10"/><line x1="3" y1="20" x2="21" y2="20"/></svg>費用分析
       </button>
       <button id="apps-tab-flow" onclick="appsSetTab('flow')" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#fff;color:#767B75;white-space:nowrap">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>簽核流程
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>系統設定
       </button>
     </div>
     <div id="app-count-label" style="font-size:14px;color:#767B75;margin-bottom:12px;display:none">共 0 件</div>
@@ -3000,6 +3000,17 @@ thead th{color:#767B75!important}
         <div id="flow-list" style="display:flex;flex-direction:column;gap:10px">
           <div style="text-align:center;padding:30px;color:#767B75">載入中…</div>
         </div>
+      </div>
+      <!-- 供應商管理（僅管理者）：寫入 suppliers 分頁，供「付款方式＝其他」下拉選用 -->
+      <div class="card" data-cap="admin.users" style="padding:22px;margin-top:16px">
+        <div class="section-title">供應商管理</div>
+        <div style="font-size:13px;color:#767B75;margin-bottom:14px;line-height:1.6">供「付款方式＝其他」時選用的廠商清單。新增／編輯／刪除會即時寫入資料庫，使用者重新整理後生效。</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
+          <div><label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商編號</label><input id="sup-add-code" class="inp" placeholder="例：A1000003" style="width:150px"></div>
+          <div style="flex:1;min-width:200px"><label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商名稱</label><input id="sup-add-name" class="inp" placeholder="供應商全名" style="width:100%"></div>
+          <button class="btn btn-o" style="padding:9px 18px;white-space:nowrap" onclick="supplierAdd()">＋ 新增</button>
+        </div>
+        <div id="supplier-admin-list"><div style="text-align:center;padding:20px;color:#767B75">載入中…</div></div>
       </div>
     </div>
     <!-- 草稿列表 -->
@@ -7305,6 +7316,7 @@ function appsSetTab(tab) {
     if (fDrafts) fDrafts.style.display = 'none';
     if (fFlow)   fFlow.style.display   = '';
     if (typeof loadAdminFlow === 'function') loadAdminFlow();
+    if (typeof loadSupplierAdmin === 'function' && typeof isAdmin === 'function' && isAdmin()) loadSupplierAdmin();
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
@@ -11686,6 +11698,70 @@ function _fillSupplierSelect(){
       }).join('');
   if (cur) sel.value = cur;
 }
+// ── 供應商管理（系統設定頁；僅管理者）────────────────────────────
+async function loadSupplierAdmin(){
+  var box = document.getElementById('supplier-admin-list');
+  if (!box) return;
+  box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  try {
+    var r = await callAPI('getSuppliers', {}, { noCache: true });
+    if (!r || !r.ok) { box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>'; return; }
+    _renderSupplierAdmin(r.suppliers || []);
+  } catch(e){ box.innerHTML = '<div style="text-align:center;padding:20px;color:#dc2626">載入失敗</div>'; }
+}
+function _renderSupplierAdmin(list){
+  var box = document.getElementById('supplier-admin-list');
+  if (!box) return;
+  if (!list.length){ box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">尚無供應商，請於上方新增</div>'; return; }
+  box.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:14px">'
+    + '<thead><tr style="border-bottom:1px solid #D9DDD3;color:#767B75">'
+    + '<th style="text-align:left;padding:8px 6px;width:160px">供應商編號</th><th style="text-align:left;padding:8px 6px">供應商名稱</th><th style="width:130px"></th></tr></thead><tbody>'
+    + list.map(function(v){
+        var c = htEsc(v.code), n = htEsc(v.name);
+        return '<tr data-code="'+c+'" style="border-bottom:1px solid #F0F2EE">'
+          + '<td style="padding:8px 6px;font-weight:600;color:#2E332D">'+c+'</td>'
+          + '<td style="padding:8px 6px;color:#4A4F49">'+n+'</td>'
+          + '<td style="padding:8px 6px;text-align:right;white-space:nowrap">'
+          + '<button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="supplierEdit(this)">編輯</button> '
+          + '<button class="btn btn-o" style="padding:4px 10px;font-size:12px;color:#dc2626;border-color:#f0b3b3" onclick="supplierDelete(this)">刪除</button>'
+          + '</td></tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+async function supplierAdd(){
+  var codeEl = document.getElementById('sup-add-code'), nameEl = document.getElementById('sup-add-name');
+  var code = (codeEl && codeEl.value || '').trim(), name = (nameEl && nameEl.value || '').trim();
+  if (!code || !name){ toast('⚠️ 請填寫供應商編號與名稱'); return; }
+  toast('⏳ 新增中…');
+  var r = await callAPI('addSupplier', { code: code, name: name });
+  if (!r || !r.ok){ toast('❌ ' + ((r && r.error) || '新增失敗')); return; }
+  if (codeEl) codeEl.value = ''; if (nameEl) nameEl.value = '';
+  _suppliersLoaded = false;   // 讓填單的供應商下拉重新抓最新
+  toast('✅ 已新增'); loadSupplierAdmin();
+}
+window.supplierEdit = function(btn){
+  var tr = btn.closest('tr'); if (!tr) return;
+  var orig = tr.getAttribute('data-code');
+  var curName = tr.children[1].textContent;
+  var newCode = prompt('供應商編號：', orig); if (newCode === null) return;
+  var newName = prompt('供應商名稱：', curName); if (newName === null) return;
+  newCode = newCode.trim(); newName = newName.trim();
+  if (!newCode || !newName){ toast('⚠️ 編號與名稱不可空白'); return; }
+  callAPI('updateSupplier', { origCode: orig, code: newCode, name: newName }).then(function(r){
+    if (!r || !r.ok){ toast('❌ ' + ((r && r.error) || '更新失敗')); return; }
+    _suppliersLoaded = false; toast('✅ 已更新'); loadSupplierAdmin();
+  });
+};
+window.supplierDelete = function(btn){
+  var tr = btn.closest('tr'); if (!tr) return;
+  var code = tr.getAttribute('data-code');
+  var name = tr.children[1].textContent;
+  if (!confirm('確定刪除供應商「' + name + '（' + code + '）」？')) return;
+  callAPI('deleteSupplier', { code: code }).then(function(r){
+    if (!r || !r.ok){ toast('❌ ' + ((r && r.error) || '刪除失敗')); return; }
+    _suppliersLoaded = false; toast('✅ 已刪除'); loadSupplierAdmin();
+  });
+};
 // 選了供應商 → 自動帶出供應商編號
 window.supplierChanged = function(){
   var sel = document.getElementById('payee-free');
