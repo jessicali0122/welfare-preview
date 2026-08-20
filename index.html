@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820094529';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820095515';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1035,6 +1035,20 @@ input[type=checkbox]{accent-color:#577B53}
     font-size:9px!important;
     color:#8A908A!important;
   }
+  /* ── 每格三排併兩排 + 去除多餘留白 ──
+     原本「關卡名／已核准／姓名」各佔一排（3 排）。改成「關卡名 已核准」同一行、
+     姓名獨立一行（2 排）；並壓縮行距與格內上下 padding，減少列印留白。 */
+  #flow-timeline > div{padding:10px 4px 2px!important}
+  #flow-timeline > div > div:last-child > div:nth-child(1),
+  #flow-timeline > div > div:last-child > div:nth-child(2){
+    display:inline!important;margin:0!important;padding:0!important;
+  }
+  #flow-timeline > div > div:last-child > div:nth-child(2){margin-left:5px!important}
+  #flow-timeline > div > div:last-child > div:nth-child(3){display:block!important;margin-top:2px!important}
+  #flow-timeline .flow-email,
+  #flow-timeline .flow-at{margin-top:1px!important}
+  /* 簽核進度卡片：收掉多餘的上下內距 */
+  .card:has(#flow-timeline){padding-top:10px!important;padding-bottom:8px!important}
   /* 「已完成簽核」尾節點：壓縮欄寬，不佔滿整格 */
   #flow-timeline > .flow-done-note{
     flex:0.55 1 0!important;
@@ -1173,6 +1187,9 @@ input[type=checkbox]{accent-color:#577B53}
   .section-title{
     break-after:avoid!important;
     page-break-after:avoid!important;
+    /* 標題底線到內容留白過大（原 padding-bottom:10 + margin-bottom:14 = 24px）→ 列印時收窄 */
+    padding-bottom:6px!important;
+    margin-bottom:8px!important;
   }
 
   /* ── 固定版面列印：只印 #print-root，每頁內容由 _doPrint 明確指定 ──
