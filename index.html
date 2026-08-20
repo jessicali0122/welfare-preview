@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820150751';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820152215';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2101,9 +2101,9 @@ header::after{display:none!important}
 @media(prefers-reduced-motion:reduce){.dash-hub-card::before,.view .card::before,.view .stat::before,#dash-links>a::before{animation:none!important}}
 /* 費用分析 KPI 卡：四張線條各自配色（與卡內燈號一致：綠/藍青/橘/玫紅） */
 #analytics-grid .stat:nth-child(1)::before{background:linear-gradient(180deg,#8FAE8B,#577B53,#8FAE8B)!important}
-#analytics-grid .stat:nth-child(2)::before{background:linear-gradient(180deg,#7CC9CB,#38A3A5,#7CC9CB)!important}
+#analytics-grid .stat:nth-child(2)::before{background:linear-gradient(180deg,#A3B76A,#738e41,#A3B76A)!important}
 #analytics-grid .stat:nth-child(3)::before{background:linear-gradient(180deg,#F6CC62,#E0820A,#F6CC62)!important}
-#analytics-grid .stat:nth-child(4)::before{background:linear-gradient(180deg,#E38845,#A73B4E,#E38845)!important}
+#analytics-grid .stat:nth-child(4)::before{background:linear-gradient(180deg,#B4B9B2,#767B75,#B4B9B2)!important}
 /* 右上玻璃膠囊（房子＋頭像合體）：內頁淺色毛玻璃，捲動重疊時柔和不突兀 */
 #topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12)}
 /* 首頁改淺色底後：膠囊、分隔線、房屋圖示比照其他頁的淺底樣式 */
@@ -9125,6 +9125,10 @@ function sw(name,elOrName,_fromPop){
     if(typeof _resetAnalyticsButtons==='function') _resetAnalyticsButtons();
     if(typeof _syncAnalyticsApplyBtn==='function') _syncAnalyticsApplyBtn();
     loadAnalytics();
+  // 「請款概況」那四張卡的數字由 loadDashboard() 填。它原本只在進首頁時才跑，
+  // 所以直接進「案件追蹤→費用分析」的人會看到四個「—」。
+  // callAPI('list') 有快取與去重，這裡再呼叫一次不會多打一趟 GAS。
+  if (typeof loadDashboard === 'function') loadDashboard();
   }
   if(name==='approvals') { sw('applications'); appsSetTab('pending'); return; }
   if(name==='analytics'){ sw('applications'); return; }
