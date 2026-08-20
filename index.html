@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820110250';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820113910';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2992,6 +2992,12 @@ thead th{color:#767B75!important}
     </div>
     <!-- 簽核流程設定（自系統管理移入；元件 ID 保留，renderFlowList/loadAdminFlow 不需改） -->
     <div id="app-tab-flow" style="display:none">
+      <!-- 系統設定子分頁：簽核流程 / 供應商管理 -->
+      <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+        <button id="sysset-tab-flow" onclick="sysSetTab('flow')" style="padding:8px 18px;border-radius:22px;border:1.5px solid #577B53;background:#577B53;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap">簽核流程</button>
+        <button id="sysset-tab-supplier" data-cap="admin.users" onclick="sysSetTab('supplier')" style="padding:8px 18px;border-radius:22px;border:1.5px solid #D5DAD2;background:#fff;color:#767B75;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;white-space:nowrap">供應商管理</button>
+      </div>
+      <div id="sysset-pane-flow">
       <div id="flow-readonly-notice" style="background:#E7EEE5;border:1px solid #C3D4C0;border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:14px;color:#46633F;line-height:1.6;display:none">
         ⚠️ <b>注意：</b>流程設定為<b>唯讀顯示</b>，僅管理員可修改。
       </div>
@@ -3001,8 +3007,10 @@ thead th{color:#767B75!important}
           <div style="text-align:center;padding:30px;color:#767B75">載入中…</div>
         </div>
       </div>
+      </div>
+      <div id="sysset-pane-supplier" style="display:none">
       <!-- 供應商管理（僅管理者）：寫入 suppliers 分頁，供「付款方式＝其他」下拉選用 -->
-      <div class="card" data-cap="admin.users" style="padding:22px;margin-top:16px">
+      <div class="card" data-cap="admin.users" style="padding:22px">
         <div class="section-title">供應商管理</div>
         <div style="font-size:13px;color:#767B75;margin-bottom:14px;line-height:1.6">供「付款方式＝其他」時選用的廠商清單。新增／編輯／刪除會即時寫入資料庫，使用者重新整理後生效。</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
@@ -3011,6 +3019,7 @@ thead th{color:#767B75!important}
           <button class="btn btn-o" style="padding:9px 18px;white-space:nowrap" onclick="supplierAdd()">＋ 新增</button>
         </div>
         <div id="supplier-admin-list"><div style="text-align:center;padding:20px;color:#767B75">載入中…</div></div>
+      </div>
       </div>
     </div>
     <!-- 草稿列表 -->
@@ -7316,7 +7325,7 @@ function appsSetTab(tab) {
     if (fDrafts) fDrafts.style.display = 'none';
     if (fFlow)   fFlow.style.display   = '';
     if (typeof loadAdminFlow === 'function') loadAdminFlow();
-    if (typeof loadSupplierAdmin === 'function' && typeof isAdmin === 'function' && isAdmin()) loadSupplierAdmin();
+    if (typeof sysSetTab === 'function') sysSetTab('flow');   // 每次進系統設定預設回「簽核流程」子分頁
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
@@ -11697,6 +11706,22 @@ function _fillSupplierSelect(){
              + htEsc(v.name) + '</option>';
       }).join('');
   if (cur) sel.value = cur;
+}
+// ── 系統設定頁：簽核流程 / 供應商管理 子分頁切換 ──
+function sysSetTab(which){
+  var isF = which !== 'supplier';
+  var pf = document.getElementById('sysset-pane-flow');
+  var ps = document.getElementById('sysset-pane-supplier');
+  if (pf) pf.style.display = isF ? '' : 'none';
+  if (ps) ps.style.display = isF ? 'none' : '';
+  var on  = { bg:'#577B53', bd:'#577B53', c:'#fff' };
+  var off = { bg:'#fff',    bd:'#D5DAD2', c:'#767B75' };
+  [['sysset-tab-flow', isF], ['sysset-tab-supplier', !isF]].forEach(function(x){
+    var b = document.getElementById(x[0]); if (!b) return;
+    var s = x[1] ? on : off;
+    b.style.background = s.bg; b.style.borderColor = s.bd; b.style.color = s.c;
+  });
+  if (!isF && typeof loadSupplierAdmin === 'function') loadSupplierAdmin();
 }
 // ── 供應商管理（系統設定頁；僅管理者）────────────────────────────
 async function loadSupplierAdmin(){
