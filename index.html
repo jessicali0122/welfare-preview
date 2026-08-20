@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820164813';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820165533';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6359,7 +6359,7 @@ const _PATIENT_ACTIONS = new Set(['get', 'list']);
 const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft',
   // 這些重試不會產生新單號，但一樣有副作用：核准/退件/作廢重送可能讓案件多跳一關，
   // 附件重送會在同一張單留下兩份一樣的檔案。稽核上都不能接受 → 一律只送一次。
-  'approve', 'reject', 'voidCase', 'uploadFile']);
+  'approve', 'reject', 'voidCase', 'uploadFile', 'uploadTempFile']);
 function _maxRetry(action) {
   if (_NO_RETRY_ACTIONS.has(action)) return -1;   // -1 → 連第一次的重試都不做
   return _PATIENT_ACTIONS.has(action) ? 4 : 1;
@@ -8574,7 +8574,8 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     employeeId: employeeIdEl?.value || '',
     payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
     pretax, tax, total, items,
-    files: window._uploadedDraftFiles || [], // 草稿已上傳的附件（確保不被清空）
+    // 草稿已上傳的附件 ＋ 選檔階段就傳到暫存區的附件（後端以 fileId 去重）
+    files: (window._uploadedDraftFiles || []).concat(_currentTempFiles()),
   });
 
   if (res.ok) {
@@ -8589,8 +8590,14 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     const submittedCaseId = res.caseId;
     window._lastSubmittedCaseId = submittedCaseId;
     // 取出待上傳檔案並清空全域清單 & UI
-    const filesToUpload = [...(window._pendingFiles || [])];
+    // 已傳到暫存區的檔案，URL 已隨 payload 送出 → 不再重傳；
+    // 只有「選完檔案馬上按送出、還沒傳完」的才走這條舊路徑，確保永遠不會漏檔。
+    const filesToUpload = [...(window._pendingFiles || [])].filter(function(f){
+      return !(window._tempUploaded && window._tempUploaded[f._uid]);
+    });
     window._pendingFiles = [];
+    window._tempUploaded = {};    // 這張單已送出，暫存紀錄不再需要
+    window._tempUploading = {};
     const fileListEl = document.getElementById('file-list');
     if (fileListEl) fileListEl.innerHTML = '';
     // F5 fix：清空表單欄位，防止返回時看到舊資料或誤觸重複送出
@@ -8855,13 +8862,16 @@ async function saveDraftForm(silent = false) {
     employeeId: empIdEl2?.value     || '',
     payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
     applyDate:  applyDateEl2?.value || '',
+    files: _currentTempFiles(),   // 選檔階段已傳好的附件，讓草稿也記得住
   };
 
   // ── 樂觀更新：先存 localStorage 並立即顯示成功，API 在背景同步 ──
   autoSaveDraft(); // 確保 localStorage 是最新狀態
   if (window._markFormClean) window._markFormClean();   // 已儲存 → 重設基準，之後沒再改就不會被問
-  const filesToUp = window._pendingFiles && window._pendingFiles.length > 0
-    ? [...window._pendingFiles] : [];
+  // 已在暫存區的不重複上傳（payload.files 已帶著它們的 URL）
+  const filesToUp = (window._pendingFiles || []).filter(function(f){
+    return !(window._tempUploaded && window._tempUploaded[f._uid]);
+  });
   if (!silent) toast(filesToUp.length > 0 ? '💾 草稿已儲存，附件上傳中...' : '💾 草稿已儲存！');
 
   // 若有待上傳的附件，先標記「上傳中」UI（不等 GAS 回應）
@@ -9938,6 +9948,7 @@ function handleFileUpload(files) {
       + '<span style="font-size:12px;color:#767B75">' + (file.size > 1024*1024 ? (file.size/1024/1024).toFixed(1)+'MB' : Math.round(file.size/1024)+'KB') + '</span>'
       + '<button style="background:none;border:none;cursor:pointer;color:#767B75;font-size:16px;line-height:1;padding:0 2px" onclick="removePendingFile(\'' + file._uid + '\');this.closest(\'div\').remove()">×</button>';
     list.appendChild(item);
+    _tempUploadFile(file, item);   // 選檔即背景上傳到暫存區（不阻塞送出）
   });
   updateFormProgress();
   document.getElementById('file-upload-input').value = '';
@@ -9945,12 +9956,71 @@ function handleFileUpload(files) {
   updateVH();
   // 附件在「送出後」於背景自動上傳到案件（送出瞬間完成、不必等上傳）。
   //   （曾試過選檔即背景上傳，但後端慢時反而卡住又擋住送出，故改回送出後上傳。）
-  toast('✅ 已選取 ' + files.length + ' 個檔案（送出後會自動上傳）');
+  toast('✅ 已選取 ' + files.length + ' 個檔案，上傳中…');
+}
+
+// ── 選檔即上傳（暫存區）──────────────────────────────────────────
+// 為什麼：舊做法是「送出後才在背景上傳」，使用者一送出就關掉瀏覽器，上傳會中斷、附件遺失。
+// 改成選檔就先傳到暫存資料夾，送出時只帶 URL 過去。
+// ★ 註解 9940 提過「曾試過選檔即上傳，後端慢時卡住送出」——這次的差別是：
+//   上傳純粹在背景跑，送出完全不等它；還沒傳完的檔案自動走回原本的「送出後上傳」路徑。
+window._tempUploaded  = window._tempUploaded  || {};   // uid -> {key,name,url,fileId}
+window._tempUploading = window._tempUploading || {};   // uid -> true
+
+// 只取「屬於當前這張表單」的暫存附件。用 clientDraftKey 綁定：開新表單時 key 會換掉，
+// 就算殘留了上一張單的紀錄也不可能被帶進新單。
+function _currentTempFiles() {
+  var k = (typeof _getClientDraftKey === 'function') ? _getClientDraftKey() : null;
+  if (!k) return [];
+  var m = window._tempUploaded || {};
+  return Object.keys(m).map(function(u){ return m[u]; })
+    .filter(function(f){ return f && f.key === k && f.url; })
+    .map(function(f){ return { name: f.name, url: f.url, fileId: f.fileId }; });
+}
+// 還有檔案在傳嗎？送出前用來提示使用者稍等（不強制擋）
+function _tempUploadingCount() {
+  return Object.keys(window._tempUploading || {}).length;
+}
+
+async function _tempUploadFile(file, itemEl) {
+  var uid = file && file._uid;
+  var key = (typeof _getClientDraftKey === 'function') ? _getClientDraftKey() : null;
+  if (!uid || !key) return;
+  window._tempUploading[uid] = true;
+  var badge = document.createElement('span');
+  badge.className = '_tmp-badge';
+  badge.style.cssText = 'font-size:12px;color:#767B75;padding:2px 6px;border-radius:6px;background:#ECEEEA;white-space:nowrap;flex-shrink:0';
+  badge.textContent = '上傳中…';
+  try { if (itemEl) itemEl.insertBefore(badge, itemEl.lastElementChild); } catch(e) {}
+  try {
+    var cf  = (typeof compressImageFile === 'function') ? await compressImageFile(file) : file;
+    var b64 = await fileToBase64(cf);
+    var res = await callAPI('uploadTempFile', {
+      uploadKey: key,
+      fileName : file.name,
+      mimeType : (cf && cf.type) || file.type || 'application/octet-stream',
+      fileData : b64,
+    });
+    if (res && res.ok && res.url) {
+      window._tempUploaded[uid] = { key: key, name: res.name || file.name, url: res.url, fileId: res.fileId };
+      badge.textContent = '已上傳';
+      badge.style.color = '#577B53';
+      badge.style.background = '#E7EEE5';
+    } else {
+      try { badge.remove(); } catch(e) {}   // 失敗不吵使用者：送出時會照原路徑補傳
+    }
+  } catch (e) {
+    try { badge.remove(); } catch(_e) {}
+  } finally {
+    delete window._tempUploading[uid];
+  }
 }
 
 function removePendingFile(uid) {
   // 用唯一 ID 篩選，避免同名檔案被同時刪除（L1 fix）
   window._pendingFiles = window._pendingFiles.filter(f => f._uid !== uid);
+  // 已經傳到暫存區的也要一起忘掉，否則送出時仍會把這個檔案掛進案件
+  if (window._tempUploaded) delete window._tempUploaded[uid];
 }
 
 // ── 草稿附件：批次上傳到 Drive（並行 + 壓縮）──
