@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820160700';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820161155';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8498,17 +8498,20 @@ async function submitForm() {
   });
   if (_itemFieldErr) { _failValidation('⚠️ 每筆明細的憑證日期、類別、項目和單據類型為必填'); return; }
 
+  // 是否有任何一筆明細需要憑證。全部選「無憑證」時就沒有憑證可附，
+  // 不該再強制上傳附件（只要有任一筆是發票／收據，附件仍為必填）。
+  const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
+
   // 附件必填驗證（含草稿已上傳的檔案）
   const _hasPending = window._pendingFiles && window._pendingFiles.length > 0;
   const _hasDraftFiles = window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0;
-  if (!_hasPending && !_hasDraftFiles) {
+  if (needsReceipt && !_hasPending && !_hasDraftFiles) {
     const dz = document.getElementById('upload-drop-zone');
     if (dz) { dz.style.borderColor='#dc2626'; dz.style.background='#fff5f5'; setTimeout(()=>{dz.style.borderColor='#D2D6D0';dz.style.background='#F7F8F6';},2500); }
     _failValidation('⚠️ 請上傳至少一張附件圖片或憑證'); return;
   }
 
   // 直接進預覽（收據提醒已整合進摘要 modal）
-  const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
   showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, needsReceipt);
 }
 
