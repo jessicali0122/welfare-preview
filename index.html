@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820152215';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820152746';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7908,7 +7908,9 @@ async function openDraft(caseId, asCopy) {
   //     使用者自己，害人誤以為複製把收款人變成自己。改回：先確認拿到資料，再切畫面填入，永不顯示預設值。）
   const res = await callAPI('get', { caseId });
   if (!res.ok) {
-    toast('❌ ' + (asCopy ? '複製' : '載入草稿') + '失敗：伺服器忙碌，請稍後再試' + (res.error ? '（' + res.error + '）' : ''));
+    // 後端有給明確原因（例如權限不足）就照實顯示；一律說成「伺服器忙碌」會讓使用者
+    // 以為是系統當機而一直重試，實際上是權限或資料問題。
+    toast('❌ ' + (asCopy ? '複製' : '載入草稿') + '失敗：' + (res.error || '伺服器忙碌，請稍後再試'));
     return;   // 留在原畫面，不切到半空的新表單
   }
   const c = res.case || res.data || res;
