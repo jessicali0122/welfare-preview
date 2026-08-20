@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820115420';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820120014';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2987,8 +2987,8 @@ thead th{color:#767B75!important}
     <!-- 草稿 / 申請案件 Tab -->
     <div id="app-tabs" style="display:flex;gap:0;border-bottom:2px solid #D2D7CD;margin-bottom:16px">
       <div id="tab-btn-cases" onclick="switchAppTab('cases')" class="admin-tab active" style="display:flex;align-items:center;gap:6px">📋 全部案件 <span id="tab-cases-count" style="background:#E0820A;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
-      <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#E0820A;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
-      <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#E0820A;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-drafts" onclick="switchAppTab('drafts')" class="admin-tab" style="display:flex;align-items:center;gap:6px">📝 草稿匣 <span id="tab-drafts-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
+      <div id="tab-btn-pending" onclick="switchAppTab('pending')" class="admin-tab" data-cap="reimbursement.approve" style="display:flex;align-items:center;gap:6px">✅ 待我審核 <span id="tab-pending-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span></div>
     </div>
     <!-- 簽核流程設定（自系統管理移入；元件 ID 保留，renderFlowList/loadAdminFlow 不需改） -->
     <div id="app-tab-flow" style="display:none">
@@ -7128,6 +7128,12 @@ function switchAppTab(tab) {
   });
   var activeBtn = tab === 'drafts' ? btnDrafts : tab === 'pending' ? btnPending : tab === 'flow' ? btnFlow : btnCases;
   if (activeBtn) activeBtn.classList.add('active');
+  // 數字圈：只有被選到的頁籤用橘色凸顯，其餘維持灰色
+  var _cntMap = { cases:'tab-cases-count', drafts:'tab-drafts-count', pending:'tab-pending-count' };
+  Object.keys(_cntMap).forEach(function(k){
+    var el = document.getElementById(_cntMap[k]);
+    if (el) el.style.background = (k === tab) ? '#E0820A' : '#767B75';
+  });
   // 「共 N 件」計數與簽核流程分頁無關，切到流程時隱藏
   var countLabel = document.getElementById('app-count-label');
   if (countLabel && tab === 'flow') countLabel.style.display = 'none';
@@ -7328,6 +7334,8 @@ function appsSetTab(tab) {
     if (typeof sysSetTab === 'function') sysSetTab('flow');   // 每次進系統設定預設回「簽核流程」子分頁
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
+    // ★ 修：一定要隱藏系統設定(流程/供應商)面板，否則從「系統設定」切回案件清單時會殘留、兩頁混在一起
+    var _eFlow = document.getElementById('app-tab-flow'); if (_eFlow) _eFlow.style.display = 'none';
     if (appTabsEl)    appTabsEl.style.display     = tab==='all' ? 'flex' : 'none';
     if (filterCard)   filterCard.style.display    = tab==='all' ? '' : 'none';
     if (filterNotice && tab !== 'all') filterNotice.style.display = 'none';
