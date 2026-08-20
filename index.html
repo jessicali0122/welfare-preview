@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820165533';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820171403';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -521,8 +521,8 @@ input[type=checkbox]{accent-color:#577B53}
 #ht-items-scroll::-webkit-scrollbar-thumb{background:#A9C4A5;border-radius:20px;border:2px solid #ECEEEA}
 #ht-items-scroll::-webkit-scrollbar-thumb:hover{background:#8FAE8B}
 /* 橫向捲動浮動箭頭：position:fixed → 永遠停在「可視畫面」的垂直正中央，框再高也一直可見可點。left 由 JS 貼齊品項框左右邊。 */
-.ht-hscroll-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:40;width:44px;height:44px;border-radius:50%;border:1px solid #D8E0D4;background:rgba(255,255,255,.95);color:#577B53;box-shadow:0 4px 14px rgba(46,51,45,.18);cursor:pointer;align-items:center;justify-content:center;padding:0;transition:background .15s,color .15s,box-shadow .15s}
-.ht-hscroll-arrow:hover{background:#577B53;color:#fff;box-shadow:0 6px 18px rgba(46,51,45,.26)}
+.ht-hscroll-arrow{position:fixed;top:50%;transform:translateY(-50%);z-index:40;width:32px;height:32px;border-radius:50%;border:1px solid rgba(210,215,205,.7);background:rgba(255,255,255,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#7E8879;box-shadow:0 2px 6px rgba(46,51,45,.08);cursor:pointer;align-items:center;justify-content:center;padding:0;opacity:.66;transition:opacity .15s,background .15s,color .15s,box-shadow .15s}
+.ht-hscroll-arrow:hover{opacity:1;background:#fff;color:#577B53;border-color:#C9D2C4;box-shadow:0 4px 12px rgba(46,51,45,.14)}
 .ht-hscroll-arrow:active{transform:translateY(-50%) scale(.94)}
 /* 表頭：框內直向捲動時黏在框頂（background 需 !important 蓋過全域 thead th{background:transparent!important}）
    ★ 容器必須自己垂直捲動，而且要用固定 height 不能用 max-height：
@@ -4004,10 +4004,10 @@ thead th{color:#767B75!important}
         <!-- 橫向捲動箭頭：position:fixed 永遠停在「可視畫面」的垂直正中央（不是框中央），框再高也一直看得到、點得到。
              左右各一顆，貼齊品項框的左右邊；沒有橫向溢出或框捲出畫面時自動隱藏。原生底部捲軸另作為可拖的拉桿。 -->
         <button id="ht-arrow-left" type="button" aria-label="向左捲動品項欄位" onclick="htScrollItems(-1)" class="ht-hscroll-arrow" style="display:none">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
         </button>
         <button id="ht-arrow-right" type="button" aria-label="向右捲動品項欄位" onclick="htScrollItems(1)" class="ht-hscroll-arrow" style="display:none">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
         </button>
         <!-- 工具列：正常排版在表格框下方（表格已改固定高度內部捲動，橫向捲軸常駐在框底）→ 不再浮動、不會與內容重疊 -->
         <div id="ht-items-toolbar" style="background:#fff;border-top:1px solid #E2E5DF">
@@ -17918,7 +17918,8 @@ function _htSyncHBar(){   // 沿用原函式名（htRenderItems / htScrollItems 
   else {
     // 貼齊框的左右內緣；top 由 CSS 的 fixed top:50% 固定在視窗垂直中央
     lb.style.left = Math.round(r.left + 8) + 'px';
-    rb.style.left = Math.round(r.right - 44 - 8) + 'px';
+    // 用實際寬度而非寫死數字：display:none 時 offsetWidth 為 0，退回 CSS 的 32px
+    rb.style.left = Math.round(r.right - (rb.offsetWidth || 32) - 8) + 'px';
     lb.style.display = (main.scrollLeft > 2) ? 'flex' : 'none';       // 已在最左 → 收左箭頭
     rb.style.display = (main.scrollLeft < maxSL - 2) ? 'flex' : 'none'; // 已在最右 → 收右箭頭
   }
