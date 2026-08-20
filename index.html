@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820164214';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820164813';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -189,6 +189,12 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 /* ── 表格現代化 ── */
 .tr{transition:background .1s}
 .tr:hover td{background:#F7F8F6!important}
+/* 作廢單據：整列淡底＋文字轉灰，讓失效的單一眼可辨（狀態 badge 仍維持原色，才看得到「作廢」兩字）。
+   背景設在 td 而非 tr —— 上面的 hover 規則是設在 td 且帶 !important，設在 tr 會被蓋掉。
+   文字用 !important 是為了蓋過各欄的 inline color（主旨、金額都有寫死顏色）。 */
+tr.tr[data-status="作廢"] td{background:#F1F2EF;color:#9AA096!important}
+tr.tr[data-status="作廢"]:hover td{background:#E9EBE6!important}
+tr.tr[data-status="作廢"] .evx-id-pending{color:#9AA096}
 /* 表頭：小字、灰色、大寫英文字母間距、無背景 */
 thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!important;border-bottom:1.5px solid #D9DDD3!important;padding:10px 16px;white-space:nowrap}
 /* 資料列：只有底部細線 */
