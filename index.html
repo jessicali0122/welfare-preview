@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260819231801';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820091926';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9483,7 +9483,10 @@ function _appendPdfExpandBtn(wrap, fileId, href) {
   bar.className = 'pdf-expand-bar';
   bar.style.cssText = 'text-align:center;padding:8px 0 2px';
   bar.innerHTML = '<button type="button" class="btn btn-o" style="padding:4px 12px;font-size:12px">顯示全部頁面</button>';
-  bar.querySelector('button').onclick = function() {
+  bar.querySelector('button').onclick = function(e) {
+    // 按鈕外層包了 <a href=".../view" target="_blank">，若不擋冒泡，click 會傳到 <a>
+    // 把附件開到新分頁（列印時 _doPrint 會自動按此鈕 → 每次列印都先彈出 Drive 檢視頁）
+    if (e) { e.preventDefault(); e.stopPropagation(); }
     bar.remove();
     wrap.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:12px">載入全部頁面中…</div>';
     _renderPdfAllPages(wrap, fileId, href);
