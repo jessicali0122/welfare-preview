@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820121632';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820121915';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11781,23 +11781,18 @@ function _renderSupPage(page){
       + '<button class="btn btn-o" style="padding:4px 10px;font-size:12px;color:#dc2626;border-color:#f0b3b3" onclick="supplierDelete(this)">刪除</button>'
       + '</td></tr>';
   }).join('');
-  // 頁碼（僅超過一頁時顯示，帶省略號，沿用 _pageRange 與 .evx-pb 樣式）
-  var pagesHtml = '';
-  if (list.length > size) {
-    pagesHtml = '<button class="evx-pb" onclick="_renderSupPage('+(page-1)+')" '+(page===1?'disabled':'')+'>‹ 上頁</button>';
-    _pageRange(page, totalPages).forEach(function(p){
-      pagesHtml += (p === '…') ? '<span class="evx-pb dot">…</span>'
-        : '<button class="evx-pb'+(p===page?' active':'')+'" onclick="_renderSupPage('+p+')">'+p+'</button>';
-    });
-    pagesHtml += '<button class="evx-pb" onclick="_renderSupPage('+(page+1)+')" '+(page===totalPages?'disabled':'')+'>下頁 ›</button>';
-  }
+  // 頁碼：左右箭頭切換（‹ 目前頁 / 總頁數 ›），箭頭到底時停用
+  var pagesHtml = '<button class="evx-pb" onclick="_renderSupPage('+(page-1)+')" '+(page===1?'disabled':'')+' aria-label="上一頁">‹</button>'
+    + '<span style="padding:0 8px;color:#4A4F49;font-size:14px;white-space:nowrap">'+page+' / '+totalPages+'</span>'
+    + '<button class="evx-pb" onclick="_renderSupPage('+(page+1)+')" '+(page===totalPages?'disabled':'')+' aria-label="下一頁">›</button>';
   var sizeOpts = ['15','30','50'].map(function(o){ return '<option value="'+o+'"'+(String(size)===o?' selected':'')+'>'+o+'</option>'; }).join('');
   box.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:14px">'
     + '<thead><tr style="border-bottom:1px solid #D9DDD3;color:#767B75">'
     + '<th style="text-align:left;padding:8px 6px;width:160px">供應商編號</th><th style="text-align:left;padding:8px 6px">供應商名稱</th><th style="width:130px"></th></tr></thead><tbody>'
     + rows
     + '</tbody></table>'
-    + '<div class="evx-pagination" style="margin-top:14px">'
+    // 整條分頁列靠右：每頁顯示 + 共 N 筆 + 左右切換，全部靠右對齊
+    + '<div class="evx-pagination" style="margin-top:14px;justify-content:flex-end;gap:16px;border-top:none">'
     +   '<div class="evx-page-left"><span>每頁顯示</span>'
     +     '<select class="evx-page-size" onchange="supSetPageSize(+this.value)">'+sizeOpts+'</select>'
     +     '<span>筆・共 '+list.length+' 筆</span></div>'
