@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820124209';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820125101';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3456,10 +3456,10 @@ thead th{color:#767B75!important}
           <div style="font-size:12px;color:#767B75;margin-bottom:12px">此操作將永久刪除案件及所有附件，無法復原。</div>
           <button class="btn" style="width:100%;justify-content:center;background:#dc2626;color:#fff;font-size:14px" onclick="adminDeleteCase()">確認永久刪除</button>
         </div>
-        <!-- 管理員作廢單據（僅管理員可見；保留單號與資料，只標記狀態） -->
+        <!-- 作廢單據（管理者不限；福委限自己申請且未簽核的單 —— 見 canVoidCase）：保留單號與資料，只標記狀態 -->
         <div id="void-box" class="card" style="padding:16px;border:2px solid #fed7aa;display:none">
           <div style="font-size:14px;font-weight:700;color:#c2410c;margin-bottom:4px">🚫 作廢單據</div>
-          <div style="font-size:12px;color:#767B75;margin-bottom:12px">單號、明細與簽核紀錄都會保留，只把狀態標記為「作廢」，稽核仍查得到。</div>
+          <div id="void-box-hint" style="font-size:12px;color:#767B75;margin-bottom:12px">單號、明細與簽核紀錄都會保留，只把狀態標記為「作廢」，稽核仍查得到。</div>
           <button class="btn" style="width:100%;justify-content:center;background:#ea580c;color:#fff;font-size:14px" onclick="voidCurrentCase()">確認作廢</button>
         </div>
         <!-- 退件後重新申請（僅申請人可見） -->
@@ -4927,7 +4927,8 @@ const CAPABILITY_MAP = {
   'massage.manage':        ['hr'],               // 按摩「進階管理區」可見＋產生報到 QR：HR＋管理者
   'bulletin.post':         ['welfare', 'hr'],    // 公告基底能力；實際新增/刪除依版位用 canBulletin(scope)：首頁/午茶日含福委，按摩僅 HR/管理者
   'admin.users':           [],                   // 系統管理：僅管理者（按摩後臺管理另由 massage.manage 控管＝HR＋管理者）
-  'supplier.manage':       ['welfare']          // 供應商管理：管理者＋福委（可看也可新增／編輯／刪除）
+  'supplier.manage':       ['welfare'],         // 供應商管理：管理者＋福委（可看也可新增／編輯／刪除）
+  'case.void':             ['welfare']          // 作廢單據：管理者不限；福委另受 canVoidCase() 條件限制（自己的單＋未簽核）
 };
 
 // email → roles 陣列（由 getMembers 動態填入）
@@ -5097,6 +5098,29 @@ function isMyTurnToApprove(c) {
   const stepIdx = (c.step || 1) - 1;
   return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length && APPROVER_EMAILS[stepIdx] === _cu.email;
 }
+
+// ── 作廢單據的權限判斷（唯一真相；三個入口都走這裡）──
+//   管理者：任何非草稿／未作廢的單都能作廢。
+//   福委　：只能作廢「自己申請、且還沒有人簽過」的單；一旦進入審核關卡就只能請管理者處理。
+//   c 可能來自清單快取（沒有 approvals，只有 step／status），故兩種欄位都判，缺一即擋。
+function canVoidCase(c) {
+  if (!c) return false;
+  var st = c.status;
+  if (st === '草稿' || st === '作廢') return false;
+  if (typeof isAdmin === 'function' && isAdmin()) return true;
+  if (typeof can !== 'function' || !can('case.void')) return false;
+  var cu = currentUser || window.currentUser;
+  if (!cu || !c.email) return false;
+  if (String(c.email).trim().toLowerCase() !== String(cu.email).trim().toLowerCase()) return false; // 只能作廢自己的
+  if (st === '已完成' || st === '已退件') return false;      // 已結案＝必然簽過（清單快取無 approvals 時的保險）
+  if (Number(c.step || 1) !== 1) return false;               // 已過第一關
+  var apv = c.approvals || [];
+  for (var i = 0; i < apv.length; i++) {
+    if (apv[i] && String(apv[i].result || '').trim()) return false; // 已有人簽核
+  }
+  return true;
+}
+window.canVoidCase = canVoidCase;
 
 // ── 根據角色套用 / 移除受限功能 ──
 function applyRolePermissions() {
@@ -7041,6 +7065,18 @@ function _renderCaseRow(c, opts) {
   </tr>`;
 }
 
+// 從既有快取找案件物件（清單、詳情都可能有）；找不到回 null，由呼叫端決定要不要擋
+function _findCaseInCache(caseId) {
+  if (!caseId) return null;
+  var pools = [window._allCasesCache, window._appFilteredCases, window._appSortedCases];
+  for (var p = 0; p < pools.length; p++) {
+    var arr = pools[p];
+    if (!arr || !arr.length) continue;
+    for (var i = 0; i < arr.length; i++) if (arr[i] && arr[i].caseId === caseId) return arr[i];
+  }
+  if (window._currentCase && window._currentCase.caseId === caseId) return window._currentCase;
+  return null;
+}
 // 行操作下拉選單
 function _showRowMenu(btn, caseId, type, status, isOwn) {
   // 移除舊的選單
@@ -7062,9 +7098,11 @@ function _showRowMenu(btn, caseId, type, status, isOwn) {
   if (type === 'draft' && !isOwn && typeof isAdmin === 'function' && isAdmin()) {
     items = items.concat([['🗑️ 刪除草稿', () => confirmDeleteDraftById(caseId)]]);
   }
-  // 管理員：非草稿、且尚未作廢的案件可從清單直接作廢（保留單號與簽核紀錄，只標記狀態）
-  if (type !== 'draft' && status !== '作廢' && typeof isAdmin === 'function' && isAdmin()) {
-    items = items.concat([['🚫 作廢單據', () => voidCaseById(caseId)]]);
+  // 作廢單據：管理者不限、福委限自己申請且未簽核的單（判斷統一走 canVoidCase）。
+  // 清單快取的案件沒有 approvals，canVoidCase 會退而用 status／step 判斷，一樣是保守的。
+  if (type !== 'draft') {
+    const _vc = _findCaseInCache(caseId) || { caseId: caseId, status: status };
+    if (canVoidCase(_vc)) items = items.concat([['🚫 作廢單據', () => voidCaseById(caseId, _vc)]]);
   }
   items.forEach(([label, fn]) => {
     const div = document.createElement('div');
@@ -8217,12 +8255,21 @@ async function loadDetail(caseId, _fromPop) {
     adminDelBox.style.display = isAdmin() ? 'block' : 'none';
     adminDelBox.setAttribute('data-caseid', c.caseId);
   }
-  // 作廢按鈕（管理員；草稿與已作廢的案件不顯示）
+  // 記住目前開啟的案件：作廢守門要靠它判斷「是不是自己的、有沒有人簽過」
+  window._currentCase = c;
+  // 作廢按鈕（管理者不限；福委限自己申請且未簽核的單。判斷統一走 canVoidCase）
   const voidBox = document.getElementById('void-box');
   if (voidBox) {
-    const canVoid = isAdmin() && c.status !== '草稿' && c.status !== '作廢';
+    const canVoid = canVoidCase(c);
     voidBox.style.display = canVoid ? 'block' : 'none';
     voidBox.setAttribute('data-caseid', c.caseId);
+    // 福委看到的說明要講清楚限制，才不會以為別人的單也能作廢
+    const voidHint = document.getElementById('void-box-hint');
+    if (voidHint) {
+      voidHint.textContent = isAdmin()
+        ? '單號、明細與簽核紀錄都會保留，只把狀態標記為「作廢」，稽核仍查得到。'
+        : '單號、明細與簽核紀錄都會保留，只把狀態標記為「作廢」，稽核仍查得到。已進入簽核的單請洽管理者。';
+    }
   }
 
   // ── 退件歷史紀錄（重送案件顯示過去的退件記錄）──
@@ -8575,10 +8622,19 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
 // ── 管理員作廢案件（保留單號與所有紀錄，只把狀態標記為「作廢」）──
 function voidCurrentCase() {
   const box = document.getElementById('void-box');
-  voidCaseById(box && box.getAttribute('data-caseid'));
+  const id = box && box.getAttribute('data-caseid');
+  voidCaseById(id, (window._currentCase && window._currentCase.caseId === id) ? window._currentCase : null);
 }
-function voidCaseById(caseId) {
+function voidCaseById(caseId, caseObj) {
   if (!caseId) return;
+  // ★ 函式層守門：入口按鈕只是「不顯示」，直接呼叫本函式仍會送出，所以這裡要再擋一次。
+  //   管理者不受限；其他人一律要拿得到案件資料才判斷得了「是不是自己的、有沒有人簽過」，
+  //   拿不到就擋（fail-closed），請使用者重新整理，不做寬鬆放行。
+  if (!(typeof isAdmin === 'function' && isAdmin())) {
+    var _c = caseObj || _findCaseInCache(caseId);
+    if (!_c) { if (typeof toast === 'function') toast('⚠️ 資料尚未載入完成，請重新整理後再試'); return; }
+    if (!canVoidCase(_c)) { if (typeof toast === 'function') toast('🔒 只能作廢自己申請、且尚未進入簽核的單據'); return; }
+  }
   _showConfirmModal(
     '確定要作廢這張單嗎？',
     '案件 <strong>' + caseId + '</strong> 會標記為「作廢」，不再進行簽核。<br><span style="font-size:14px;color:#767B75">資料與簽核紀錄都會保留，稽核仍查得到。</span>',
