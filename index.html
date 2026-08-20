@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820120014';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820120144';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5573,7 +5573,7 @@ function showApp() {
       // 案件追蹤的分頁（費用分析／簽核流程）：在哪個分頁重整就回哪個分頁
       const _tab = _initHash.slice(13);
       sw('applications');
-      if (typeof appsSetTab === 'function' && (_tab === 'analytics' || _tab === 'flow')) {
+      if (typeof appsSetTab === 'function' && (_tab === 'analytics' || _tab === 'flow' || _tab === 'supplier')) {
         setTimeout(function(){ try { appsSetTab(_tab); } catch(e) {} }, 0);
       } else if (typeof switchAppTab === 'function' && (_tab === 'drafts' || _tab === 'pending')) {
         // 草稿匣／待我審核：sw('applications') 會把 _currentAppTab 重設成 cases，
@@ -7275,7 +7275,7 @@ function appsSetTab(tab) {
   var tabs = {
     analytics: { el: document.getElementById('apps-tab-analytics'), active: tab==='analytics' },
     all:       { el: document.getElementById('apps-tab-all'),       active: tab==='all' },
-    flow:      { el: document.getElementById('apps-tab-flow'),      active: tab==='flow' }
+    flow:      { el: document.getElementById('apps-tab-flow'),      active: tab==='flow' || tab==='supplier' }
   };
   // 緊湊膠囊樣式：選中＝品牌綠實心，未選＝白底灰框
   var activeStyle   = { bg:'#577B53', border:'#577B53', color:'#fff' };
@@ -7316,8 +7316,8 @@ function appsSetTab(tab) {
     if (tabCases)  tabCases.style.display  = 'none';
     if (tabDrafts) tabDrafts.style.display = 'none';
     if (tabFlow)   tabFlow.style.display   = 'none';
-  } else if (tab === 'flow') {
-    // 簽核流程：升為頂層膠囊，隱藏費用分析與第二列頁籤，只顯示流程面板
+  } else if (tab === 'flow' || tab === 'supplier') {
+    // 系統設定（含 flow=簽核流程 / supplier=供應商管理 兩子分頁）：隱藏費用分析與第二列頁籤，只顯示設定面板
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     if (appTabsEl)    appTabsEl.style.display     = 'none';
     if (filterCard)   filterCard.style.display    = 'none';
@@ -7331,7 +7331,8 @@ function appsSetTab(tab) {
     if (fDrafts) fDrafts.style.display = 'none';
     if (fFlow)   fFlow.style.display   = '';
     if (typeof loadAdminFlow === 'function') loadAdminFlow();
-    if (typeof sysSetTab === 'function') sysSetTab('flow');   // 每次進系統設定預設回「簽核流程」子分頁
+    // 還原子分頁：從網址進來是 supplier 就開供應商管理，否則預設簽核流程
+    if (typeof sysSetTab === 'function') sysSetTab(tab === 'supplier' ? 'supplier' : 'flow');
   } else {
     if (analyticsEl)  analyticsEl.style.display  = 'none';
     // ★ 修：一定要隱藏系統設定(流程/供應商)面板，否則從「系統設定」切回案件清單時會殘留、兩頁混在一起
@@ -11726,6 +11727,12 @@ function sysSetTab(which){
   var bs = document.getElementById('sysset-tab-supplier');
   if (bf) bf.classList.toggle('active', isF);
   if (bs) bs.classList.toggle('active', !isF);
+  // 記住子分頁到網址，重整後停在原處（在哪個子分頁重整就留在哪個）
+  try {
+    if (window._appReady !== false || location.hash) {
+      history.replaceState({ view:'applications', appsTab: isF ? 'flow' : 'supplier' }, '', isF ? '#applications/flow' : '#applications/supplier');
+    }
+  } catch(e){}
   if (!isF && typeof loadSupplierAdmin === 'function') loadSupplierAdmin();
 }
 // ── 供應商管理（系統設定頁；僅管理者）────────────────────────────
