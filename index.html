@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820101611';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820102016';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3184,8 +3184,19 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px">
             <div>
+              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">④ 付款方式</label>
+              <select class="inp" id="pay-method" onchange="htPayMethodChanged()">
+                <option value="匯款（公司薪轉戶）">匯款（公司薪轉戶）</option>
+                <option value="其他">其他</option>
+              </select>
+            </div>
+            <div>
+              <label id="empid-label" style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">員工編號</label>
+              <input class="inp" id="employee-id" placeholder="依收款人自動帶入" readonly autocomplete="off"  style="background:#F7F8F6;color:#4A4F49;font-family:'Noto Sans TC',sans-serif;font-weight:600;letter-spacing:.05em">
+            </div>
+            <div>
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
-                <label id="payee-label" style="font-size:14px;font-weight:600;color:#4A4F49">④ 收款人 <span style="color:#dc2626">*</span></label>
+                <label id="payee-label" style="font-size:14px;font-weight:600;color:#4A4F49">⑤ 收款人 <span style="color:#dc2626">*</span></label>
                 <label id="same-as-wrap" style="display:flex;align-items:center;gap:4px;font-size:12px;color:#767B75;cursor:pointer;font-weight:500">
                   <input type="checkbox" id="same-as-applicant" checked onchange="toggleSameAsApplicant(this)">同申請人
                 </label>
@@ -3193,17 +3204,6 @@ thead th{color:#767B75!important}
               <select class="inp" id="payee-select" disabled onchange="syncApplicantFields()">
               </select>
               <select class="inp" id="payee-free" style="display:none" onchange="supplierChanged()"></select>
-            </div>
-            <div>
-              <label id="empid-label" style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">員工編號</label>
-              <input class="inp" id="employee-id" placeholder="依收款人自動帶入" readonly autocomplete="off"  style="background:#F7F8F6;color:#4A4F49;font-family:'Noto Sans TC',sans-serif;font-weight:600;letter-spacing:.05em">
-            </div>
-            <div>
-              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">付款方式</label>
-              <select class="inp" id="pay-method" onchange="htPayMethodChanged()">
-                <option value="匯款（公司薪轉戶）">匯款（公司薪轉戶）</option>
-                <option value="其他">其他（匯款給廠商等）</option>
-              </select>
             </div>
           </div>
         </div>
@@ -5595,6 +5595,8 @@ function showApp() {
     // 全體頭像延遲載入：頭像是 base64，不放進 getMembers（會讓每次登入背著好幾 MB），
     // 拿到後寫進 localStorage 供名字標籤顯示他人頭像
     setTimeout(function(){ _syncAvatarsFromServer(); }, 4000);
+    // 供應商清單背景預載：使用者切到「付款方式＝其他」時下拉即刻有選項，不必等當下才抓
+    setTimeout(function(){ if (typeof _loadSuppliers === 'function') _loadSuppliers().catch(function(){}); }, 4500);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -11662,7 +11664,7 @@ function _fillSupplierSelect(){
   sel.innerHTML = '<option value="">— 請選擇供應商 —</option>'
     + SUPPLIERS.map(function(v){
         return '<option value="' + htEsc(v.name) + '" data-code="' + htEsc(v.code) + '">'
-             + htEsc(v.code + '－' + v.name) + '</option>';
+             + htEsc(v.name) + '</option>';
       }).join('');
   if (cur) sel.value = cur;
 }
@@ -11691,11 +11693,15 @@ window.htPayMethodChanged = function(){
   if (sel)   sel.style.display   = other ? 'none' : '';
   if (free)  free.style.display  = other ? '' : 'none';
   if (other) {
+    // 供應商清單若尚未載入，先給「載入中」提示，避免出現空白下拉；載回後再填入
+    if (free && free.tagName === 'SELECT' && free.options.length <= 1) {
+      free.innerHTML = '<option value="">載入供應商中…</option>';
+    }
     _loadSuppliers().then(function(){ _fillSupplierSelect(); });
   }
   if (sameW) sameW.style.display = other ? 'none' : '';   // 供應商沒有「同申請人」的概念
-  if (payL)  payL.innerHTML      = other ? '④ 供應商名稱 <span style="color:#dc2626">*</span>'
-                                         : '④ 收款人 <span style="color:#dc2626">*</span>';
+  if (payL)  payL.innerHTML      = other ? '⑤ 供應商名稱 <span style="color:#dc2626">*</span>'
+                                         : '⑤ 收款人 <span style="color:#dc2626">*</span>';
   if (empL)  empL.textContent    = other ? '供應商編號' : '員工編號';
   if (emp) {
     emp.readOnly    = true;                                    // 兩種模式都是自動帶出：員工編號依收款人、供應商編號依供應商
