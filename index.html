@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820152746';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260820153559';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9035,6 +9035,14 @@ function sw(name,elOrName,_fromPop){
     document.getElementById('print-root')?.remove();
     document.body.classList.remove('printing');
   } catch(e) {}
+  // 午茶日的橫向捲動箭頭為了 position:fixed 定位被移到 <body> 底下（見 _htSyncHBar），
+  // 因此切頁時不會跟著 .view 一起隱藏 —— 不明確收掉就會殘留在首頁等其他頁面上。
+  // 放在權限守門之前：就算等一下因無權限而 return，箭頭一樣要收乾淨。
+  if (name !== 'hightea') {
+    ['ht-arrow-left','ht-arrow-right'].forEach(function(id){
+      var _fa = document.getElementById(id); if (_fa) _fa.style.display = 'none';
+    });
+  }
   // ── 權限守門：無權限的受限頁面 → 顯示「沒有權限」頁（入口不隱藏，點進來才擋）──
   if (VIEW_CAP[name] && typeof can === 'function' && !can(VIEW_CAP[name])) {
     if (name !== 'dashboard') { window._noPermView = name; window._noPermHtId = window._htRestoreId; window._htRestoreId = null; _showNoPerm(name, !window._rolesSyncedOnce); return; }
@@ -17795,6 +17803,11 @@ function _htSyncHBar(){   // 沿用原函式名（htRenderItems / htScrollItems 
   var main = document.getElementById('ht-items-scroll');
   var lb = document.getElementById('ht-arrow-left'), rb = document.getElementById('ht-arrow-right');
   if (!main || !lb || !rb) return;
+  // 午茶日不在前景就一律收起（殘留的 scroll/resize 監聽仍可能觸發本函式）
+  var _htView = document.getElementById('view-hightea');
+  if (!_htView || !_htView.classList.contains('active')) {
+    lb.style.display = 'none'; rb.style.display = 'none'; return;
+  }
   // position:fixed 必須相對「視窗」定位，但 .view-hightea 有 transform → 會讓 fixed 改相對它。
   // 把箭頭移到 <body> 底下（無 transform 祖先），top:50% 才是真正的視窗垂直中央。
   if (lb.parentElement !== document.body) { document.body.appendChild(lb); document.body.appendChild(rb); }
