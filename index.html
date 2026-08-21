@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821202145';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821214627';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -373,15 +373,14 @@ input[type=checkbox]{accent-color:#577B53}
   transition:all .12s;margin:0 auto;font-weight:500;position:relative;
 }
 .dp-day:hover{background:#EFF4ED;color:#4C6E45;transform:scale(1.08)}
-/* 今日小點（橘） */
-.dp-day.dp-today{color:#4C6E45;font-weight:800}
-.dp-day.dp-today::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#E0820A}
+/* 今日：橘色外圈 */
+.dp-day.dp-today{color:#E0820A;font-weight:800;box-shadow:inset 0 0 0 2px #E0820A}
+.dp-day.dp-today:hover{background:#FFF4E6;color:#E0820A;box-shadow:inset 0 0 0 2px #E0820A}
 /* 選中 */
 .dp-day.dp-selected{
   background:linear-gradient(135deg,#6B8F67,#4C6E45);color:#fff!important;font-weight:700;
   box-shadow:0 2px 8px rgba(76,110,69,.4);transform:scale(1.1);
 }
-.dp-day.dp-selected.dp-today::after{background:#fff}
 /* 範圍 */
 .dp-day.dp-in-range{background:#f3f7f2;color:#577B53;border-radius:0}
 .dp-day.dp-range-start{border-radius:10px 0 0 10px}
@@ -1457,11 +1456,13 @@ input[type=checkbox]{accent-color:#577B53}
 .numInputWrapper span.arrowUp:after{border-bottom-color:rgba(255,255,255,.7)!important}
 .numInputWrapper span.arrowDown:after{border-top-color:rgba(255,255,255,.7)!important}
 /* 星期列 */
-.flatpickr-weekdays{background:#fff!important;padding:10px 8px 4px!important;border-bottom:1px solid #EDF0EA!important}
-span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-size:12px!important;letter-spacing:.06em!important}
-.flatpickr-days{border:none!important;background:#fff!important;width:100%!important}
-/* 用 grid 鎖定一列 7 格，避免自訂格寬造成一列擠進 8 天、星期對不上 */
-.dayContainer{padding:6px 8px 8px!important;display:grid!important;grid-template-columns:repeat(7,1fr)!important;width:100%!important;min-width:0!important;max-width:none!important;justify-items:center}
+.flatpickr-weekdays{background:#fff!important;padding:10px 12px 4px!important;border-bottom:1px solid #EDF0EA!important;width:100%!important;box-sizing:border-box!important}
+.flatpickr-weekdaycontainer{display:grid!important;grid-template-columns:repeat(7,1fr)!important;width:100%!important}
+span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-size:12px!important;letter-spacing:.06em!important;text-align:center!important}
+.flatpickr-rContainer{width:100%!important;box-sizing:border-box!important}
+.flatpickr-days{border:none!important;background:#fff!important;width:100%!important;box-sizing:border-box!important;padding:0 12px!important}
+/* 星期列與日期格用「同寬 grid」對齊：外框都 100%+box-sizing，水平內距統一放外層 → 七欄完全對齊 */
+.dayContainer{padding:6px 0 10px!important;display:grid!important;grid-template-columns:repeat(7,1fr)!important;width:100%!important;min-width:0!important;max-width:none!important;justify-items:center}
 /* 日期格：圓形 */
 .flatpickr-day{
   border-radius:10px!important;
@@ -1477,17 +1478,15 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
   margin:2px 0!important;
 }
 .flatpickr-day:hover{background:#EFF4ED!important;color:#4C6E45!important}
-/* 今日：底部橘點 */
-.flatpickr-day.today{color:#4C6E45!important;font-weight:800!important;background:transparent!important;border:none!important}
-.flatpickr-day.today::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#E0820A}
-.flatpickr-day.selected.today::after{background:#fff!important}
-.flatpickr-day.today:hover{background:#f3f7f2!important}
+/* 今日：橘色外圈 */
+.flatpickr-day.today{color:#E0820A!important;font-weight:800!important;background:transparent!important;box-shadow:inset 0 0 0 2px #E0820A!important}
+.flatpickr-day.today:hover{background:#FFF4E6!important;color:#E0820A!important;box-shadow:inset 0 0 0 2px #E0820A!important}
 /* 月份選擇 plugin：套用系統粉紅主題 */
 .flatpickr-monthSelect-month{font-family:'Noto Sans TC',sans-serif!important;border-radius:8px!important;font-weight:500!important}
 .flatpickr-monthSelect-month:hover{background:#f3f7f2!important;color:#577B53!important}
 .flatpickr-monthSelect-month.selected{background:#577B53!important;color:#fff!important}
 /* 選中：漸層圓 + 光暈 */
-.flatpickr-day.selected,.flatpickr-day.selected:hover,
+.flatpickr-day.selected,.flatpickr-day.selected:hover,.flatpickr-day.selected.today,
 .flatpickr-day.selected.startRange,.flatpickr-day.selected.endRange{
   background:linear-gradient(135deg,#6B8F67 0%,#4C6E45 100%)!important;
   border:none!important;color:#fff!important;font-weight:800!important;
