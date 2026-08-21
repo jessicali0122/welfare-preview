@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821231853';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821232208';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10585,8 +10585,8 @@ function updateDetailFlow(c){
     const proxyMatch  = comment ? comment.match(/^\[(.+?) 代理操作\]\s*([\s\S]*)$/) : null;
     if (proxyMatch2) { actorName = proxyMatch2[1]; proxyFor = proxyMatch2[2]; displayComment = proxyMatch2[3]; isProxy = true; }
     else if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
-    // 明顯的「代理簽核」標籤（原簽核人請假、由代理人代簽）
-    const proxyTag = isProxy ? '<span style="display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:#C9760A;background:#FFF4E4;border:1px solid #F3D9A9;border-radius:20px;padding:1px 8px;vertical-align:1px;white-space:nowrap">🌴 代理簽核' + (proxyFor ? '（原簽核人：' + htEsc(proxyFor) + '）' : '') + '</span>' : '';
+    // 代理簽核：名字旁邊出現小小「（代理）」字樣即可（維持會計列印公版簡潔）
+    const proxyTag = isProxy ? '<span style="font-size:12px;font-weight:700;color:#C9760A;margin-left:3px">（代理）</span>' : '';
     // 簽核人 email（稽核用）：優先用後端記錄的實際操作者 email，舊案退回流程設定 email
     const signerEmail = String(apv.signerEmail || a.email || '').trim();
     const emailHtml = signerEmail ? '<div class="flow-email" style="font-size:12px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
