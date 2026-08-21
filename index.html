@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821223943';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821224749';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4665,6 +4665,16 @@ thead th{color:#767B75!important}
       <div>
         <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">負責人 <span style="color:#dc2626">*</span></label>
         <select class="inp" id="edit-flow-person"></select>
+      </div>
+      <div style="border-top:1px dashed #E4E7E1;padding-top:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:14px;font-weight:600;color:#4A4F49">
+          <input type="checkbox" id="edit-flow-onleave" onchange="_toggleFlowLeaveUI()" style="width:16px;height:16px;cursor:pointer;flex-shrink:0">
+          🌴 此關簽核人請假中（由代理人代簽）
+        </label>
+        <div id="edit-flow-proxy-wrap" style="display:none;margin-top:10px">
+          <label style="font-size:13px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">代理人 <span style="color:#dc2626">*</span> <span style="font-weight:400;color:#767B75;font-size:12px">（請假期間改由此人簽；須為簽核人以外的員工）</span></label>
+          <select class="inp" id="edit-flow-proxy"></select>
+        </div>
       </div>
     </div>
     <div style="padding:14px 22px;border-top:1px solid #D9DDD3;display:flex;gap:8px;justify-content:flex-end">
@@ -10738,6 +10748,7 @@ function renderFlowList(approvers) {
       <div>
         <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || a.name}</div>
         ${!isEnabled ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">⚠️ 已停用・不計入流程</div>' : ''}
+        ${isEnabled && a.onLeave ? '<div style="font-size:12px;color:#C9760A;margin-top:2px;font-weight:600">🌴 請假中 · 代理：' + htEsc(a.proxyName || a.proxyEmail || '未設定') + '</div>' : ''}
       </div>
       <!-- 審核人（nameChip 已含姓名，不重複顯示） -->
       <div style="display:flex;align-items:center;gap:10px;min-width:0">
@@ -10815,6 +10826,9 @@ function addFlowStep() {
   document.getElementById('edit-flow-subtitle').textContent = '新增關卡';
   document.getElementById('edit-flow-name').value = '';
   document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions('');
+  document.getElementById('edit-flow-onleave').checked = false;
+  document.getElementById('edit-flow-proxy').setAttribute('data-cur', '');
+  _toggleFlowLeaveUI();
   document.getElementById('edit-flow-modal').classList.add('open');
 }
 
@@ -10871,6 +10885,40 @@ function getFlowUserOptions(selectedEmail) {
   ).join('');
 }
 
+// 代理人下拉：只列「福委」（有福委標籤的人），且排除目前所有啟用關卡的簽核人
+function getFlowProxyOptions(selectedEmail) {
+  var signerEmails = {};
+  (_flowApprovers || []).forEach(function(a){ if (a.enabled !== false) signerEmails[String(a.email||'').trim().toLowerCase()] = true; });
+  var users = LOCAL_USER_LIST.slice();
+  document.querySelectorAll('#admin-users-tbody tr').forEach(function(row){
+    var nameEl = row.querySelector('td:nth-child(2) span');
+    var emailEl = row.querySelector('td:nth-child(5)');
+    var name = nameEl ? nameEl.textContent.trim() : '';
+    var email = emailEl ? emailEl.textContent.trim() : '';
+    if (name && email && !users.find(function(u){ return u.email === email; })) users.push({ name: name, email: email });
+  });
+  var _isWelfare = function(email){
+    var r = USER_ROLES[email] || USER_ROLES[String(email||'').trim().toLowerCase()] || [];
+    return Array.isArray(r) && r.indexOf('welfare') >= 0;
+  };
+  var opts = '<option value="">請選擇代理人…</option>';
+  var list = users.filter(function(u){
+    var em = String(u.email||'').trim().toLowerCase();
+    return !signerEmails[em] && _isWelfare(u.email);   // 只留福委、且非現有簽核人
+  });
+  if (!list.length) opts = '<option value="">（目前沒有可當代理的福委——福委都已在簽核關卡內）</option>';
+  list.forEach(function(u){ opts += '<option value="' + u.email + '"' + (u.email === selectedEmail ? ' selected' : '') + '>' + u.name + '（' + u.email + '）</option>'; });
+  return opts;
+}
+// 切換「請假中」時顯示/隱藏代理人選單，並填入（排除簽核人的）人選
+function _toggleFlowLeaveUI() {
+  var on = document.getElementById('edit-flow-onleave').checked;
+  var wrap = document.getElementById('edit-flow-proxy-wrap');
+  var sel = document.getElementById('edit-flow-proxy');
+  wrap.style.display = on ? 'block' : 'none';
+  if (on) sel.innerHTML = getFlowProxyOptions(sel.getAttribute('data-cur') || sel.value || '');
+}
+
 // 顯示編輯 modal
 function showEditFlowModal(index) {
   try {
@@ -10881,6 +10929,9 @@ function showEditFlowModal(index) {
     document.getElementById('edit-flow-subtitle').textContent = '修改第' + (index + 1) + '關設定';
     document.getElementById('edit-flow-name').value = a.label || a.name || '';
     document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email);
+    document.getElementById('edit-flow-onleave').checked = a.onLeave === true;
+    document.getElementById('edit-flow-proxy').setAttribute('data-cur', a.proxyEmail || '');
+    _toggleFlowLeaveUI();
     document.getElementById('edit-flow-modal').classList.add('open');
   } catch(e) {
     toast('❌ 編輯視窗錯誤：' + e.message);
@@ -10902,11 +10953,28 @@ async function doSaveFlowStep() {
   const nameText = sel.selectedOptions[0] ? sel.selectedOptions[0].text.split('（')[0] : '';
   if (!label || !email) { toast('⚠️ 請填寫關卡名稱和負責人'); return; }
 
+  // 請假中 / 代理人
+  const onLeave = document.getElementById('edit-flow-onleave').checked;
+  const proxySel = document.getElementById('edit-flow-proxy');
+  const proxyEmail = onLeave ? proxySel.value : '';
+  const proxyName  = (onLeave && proxySel.selectedOptions[0]) ? proxySel.selectedOptions[0].text.split('（')[0] : '';
+  if (onLeave && !proxyEmail) { toast('⚠️ 已勾選「請假中」，請選擇代理人'); return; }
+
+  const stageObj = { label, name: nameText, email, onLeave: onLeave, proxyEmail: proxyEmail, proxyName: proxyName };
   const _isAdd = _editFlowIndex === -1;
   // 更新本地資料：_editFlowIndex=-1 → 新增到最後一關；否則覆蓋該關（沿用原 enabled 狀態）
   const updated = _isAdd
-    ? _flowApprovers.concat([{ label, name: nameText, email }])
-    : _flowApprovers.map((a, i) => (i === _editFlowIndex ? Object.assign({}, a, { label, name: nameText, email }) : a));
+    ? _flowApprovers.concat([stageObj])
+    : _flowApprovers.map((a, i) => (i === _editFlowIndex ? Object.assign({}, a, stageObj) : a));
+
+  // 前端防呆：各啟用關卡「實際簽核人」（請假中→代理人，否則本人）不可重複（GAS 端也會再擋一次）
+  var _seen = {}, _dup = false;
+  updated.filter(function(a){ return a.enabled !== false; }).forEach(function(a){
+    var eff = (a.onLeave && a.proxyEmail) ? String(a.proxyEmail).trim().toLowerCase() : String(a.email||'').trim().toLowerCase();
+    if (_seen[eff]) _dup = true;
+    _seen[eff] = true;
+  });
+  if (_dup) { toast('⚠️ 設定後會有同一人同時簽兩關（代理後仍需每關不同的人），請調整代理人'); return; }
 
   const btn = document.querySelector('#edit-flow-modal .btn-p');
   if (btn) { btn.disabled = true; btn.textContent = '儲存中...'; }
