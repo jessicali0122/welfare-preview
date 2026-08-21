@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821231518';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821231626';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10885,7 +10885,13 @@ function getFlowUserOptions(selectedEmail) {
     if (name && email && !users.find(u => u.email === email)) extra.push({ name, email });
   });
   const all = users.concat(extra);
-  return all.map(u =>
+  // 簽核人只列「福委」（有福委標籤的人）；但保留目前已選的人，避免編輯時消失
+  var _isWelfare = function(email){
+    var r = USER_ROLES[email] || USER_ROLES[String(email||'').trim().toLowerCase()] || [];
+    return Array.isArray(r) && r.indexOf('welfare') >= 0;
+  };
+  return all.filter(function(u){ return _isWelfare(u.email) || u.email === selectedEmail; })
+    .map(u =>
     `<option value="${u.email}" ${u.email === selectedEmail ? 'selected' : ''}>${u.name}（${u.email}）</option>`
   ).join('');
 }
