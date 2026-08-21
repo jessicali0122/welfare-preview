@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821175926';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821194512';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15005,8 +15005,15 @@ function _htSheetAsEvents() {
     return !(sd && platDates[sd]);
   }).map(function (s) {
     // 卡片標題只顯示「午茶日」：年月已在左側日期方塊呈現，不重複
+    // 壽星：試算表沒存壽星，改依「該月」從成員生日名單推算（資料同 _htBdayLineForYm）
+    var _bMon = parseInt(String(s.ym || '').slice(5, 7), 10);
+    var _bdays = (_bMon && Array.isArray(window._BF_USER_BDAYS))
+      ? window._BF_USER_BDAYS.filter(function (b) { return b.m === _bMon; })
+      : [];
     return { eventId: 'sheet:' + s.sheetName, month: s.ym, date: s.date || '',
              headcount: s.headcount || 0, itemCount: (s.items || []).length,
+             birthdays: _bdays,                       // ← 補：壽星（依月份）
+             totalBudget: s.budgetTotal || 0,         // ← 補：預算（試算表欄位叫 budgetTotal）
              actualExpense: s.subtotal || 0, organizer1: '午茶日', status: '已完成', _sheet: true };
   });
 }
@@ -15301,8 +15308,10 @@ function htRenderEvents() {
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (ev.headcount ? '<span>👥 '+ev.headcount+' 人</span>' : '')
         +       ((ev.birthdays && ev.birthdays.length) ? '<span>🎂 '+ev.birthdays.length+' 位壽星</span>' : '')
+        +     '</div>'
+        +     '<div style="font-size:14px;color:#8A8F88;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 12px">'
+        +       (ev.itemCount ? '<span>🍽️ '+ev.itemCount+' 品項</span>' : '')
         +       (ev.totalBudget ? '<span>💰 預算 NT$'+Number(ev.totalBudget).toLocaleString()+'</span>' : '')
-        +       (ev.itemCount ? '<span>'+ev.itemCount+' 品項</span>' : '')
         +     '</div>'
         +   '</div>'
         +   (!isSheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ ev.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;margin-right:8px;background:#F3F7F2;color:#577B53;border:1px solid #CDD8CB;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
@@ -16272,8 +16281,10 @@ function htRenderCalendar() {
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (e.headcount ? '<span>👥 '+e.headcount+' 人</span>' : '')
         +       ((e.birthdays && e.birthdays.length) ? '<span>🎂 '+e.birthdays.length+' 位壽星</span>' : '')
+        +     '</div>'
+        +     '<div style="font-size:14px;color:#8A8F88;margin-top:2px;display:flex;flex-wrap:wrap;gap:4px 12px">'
+        +       (e.itemCount ? '<span>🍽️ '+e.itemCount+' 品項</span>' : '')
         +       (e.totalBudget ? '<span>💰 預算 NT$'+Number(e.totalBudget).toLocaleString()+'</span>' : '')
-        +       (e.itemCount ? '<span>'+e.itemCount+' 品項</span>' : '')
         +     '</div>'
         +   '</div>'
         +   (!e._sheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ e.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;margin-right:8px;background:#FFF6EA;color:#C9760A;border:1px solid #FBE6C8;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
