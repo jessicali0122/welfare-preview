@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
-"""Generate transparent-corner favicon PNGs + SVG wrapper from the TSA logo JPG."""
+"""Generate cream-filled, full-bleed favicon + OG share images from the TSA logo JPG."""
 from PIL import Image, ImageDraw
-import os, base64
+import os
 
-SRC = os.path.expanduser("~/welfare-preview/S__129761284.jpg")
+SRC = os.path.expanduser("~/welfare-preview/scripts/tsa-logo-src.jpg")
 OUT = os.path.expanduser("~/welfare-preview/assets/icons")
+CREAM = (254, 247, 237)
 
-img = Image.open(SRC).convert("RGBA")
+img = Image.open(SRC).convert("RGB")
 w, h = img.size
 px = img.load()
 
-# Detect logo circle bounds on the center row/col (background is near-black)
 def is_dark(p):
     return p[0] + p[1] + p[2] < 60
 
@@ -18,43 +18,50 @@ cy = h // 2
 xs = [x for x in range(w) if not is_dark(px[x, cy])]
 cx = w // 2
 ys = [y for y in range(h) if not is_dark(px[cx, y])]
-left, right = xs[0], xs[-1]
-top, bottom = ys[0], ys[-1]
-ccx = (left + right) / 2
-ccy = (top + bottom) / 2
-radius = (max(right - left, bottom - top) / 2) + 2  # tiny pad to keep edge
-print(f"circle center=({ccx:.0f},{ccy:.0f}) radius={radius:.0f}")
+ccx = (xs[0] + xs[-1]) / 2
+ccy = (ys[0] + ys[-1]) / 2
+radius = max(xs[-1] - xs[0], ys[-1] - ys[0]) / 2 + 2
 
-# High-res circular alpha mask (supersampled for smooth edge)
-SS = 4
-mask = Image.new("L", (w * SS, h * SS), 0)
-d = ImageDraw.Draw(mask)
-d.ellipse(
-    [(ccx - radius) * SS, (ccy - radius) * SS,
-     (ccx + radius) * SS, (ccy + radius) * SS],
-    fill=255,
-)
-mask = mask.resize((w, h), Image.LANCZOS)
-
-logo = img.copy()
-logo.putalpha(mask)
-
-# Crop tight to the circle so the icon fills the frame
+# Crop tight to the logo circle
 box = (int(ccx - radius), int(ccy - radius), int(ccx + radius), int(ccy + radius))
-logo = logo.crop(box)
+logo = img.crop(box)  # RGB, cream interior, thin dark outer ring
 
-for size, name in [(32, "app-icon-32.png"), (180, "app-icon-180.png"), (512, "app-icon-512.png")]:
-    logo.resize((size, size), Image.LANCZOS).save(os.path.join(OUT, name))
+def render(size, scale=1.06, rounded=False, transparent_corners=False):
+    """Cream square with the logo enlarged (scale>1 = bleed past edges a touch)."""
+    canvas = Image.new("RGBA", (size, size), CREAM + (255,))
+    d = int(size * scale)
+    lg = logo.resize((d, d), Image.LANCZOS).convert("RGBA")
+    off = (size - d) // 2
+    # circular mask so the crop's black square corners are never pasted
+    SS = 4
+    dm = Image.new("L", (d * SS, d * SS), 0)
+    ImageDraw.Draw(dm).ellipse([0, 0, d * SS - 1, d * SS - 1], fill=255)
+    dm = dm.resize((d, d), Image.LANCZOS)
+    canvas.paste(lg, (off, off), dm)
+    if transparent_corners:
+        # circular alpha so tab/home-screen shows a clean disc, corners clear
+        SS = 4
+        m = Image.new("L", (size * SS, size * SS), 0)
+        ImageDraw.Draw(m).ellipse([0, 0, size * SS - 1, size * SS - 1], fill=255)
+        canvas.putalpha(m.resize((size, size), Image.LANCZOS))
+    return canvas
+
+# Favicon / app icons: transparent-corner disc, logo scaled up to fill the disc
+for size, name in [(32, "app-icon-32.png"), (180, "app-icon-180.png"),
+                   (512, "app-icon-512.png")]:
+    render(size, scale=1.06, transparent_corners=True).save(os.path.join(OUT, name))
     print("wrote", name)
 
-# SVG wrapper embedding the 512 PNG so the vector <link> shows the new logo too
-png512 = os.path.join(OUT, "app-icon-512.png")
-b64 = base64.b64encode(open(png512, "rb").read()).decode()
-svg = (
+# OG share image: full-bleed cream square, no transparency (LINE/FB show a solid tile)
+render(1200, scale=1.06, transparent_corners=False).convert("RGB").save(
+    os.path.join(OUT, "app-og.png"), quality=92)
+print("wrote app-og.png")
+
+# SVG wrapper embeds the 512 disc
+import base64
+b64 = base64.b64encode(open(os.path.join(OUT, "app-icon-512.png"), "rb").read()).decode()
+open(os.path.join(OUT, "app-icon.svg"), "w").write(
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" '
     'role="img" aria-label="騰勢福委會">'
-    f'<image href="data:image/png;base64,{b64}" width="512" height="512"/>'
-    '</svg>\n'
-)
-open(os.path.join(OUT, "app-icon.svg"), "w").write(svg)
+    f'<image href="data:image/png;base64,{b64}" width="512" height="512"/></svg>\n')
 print("wrote app-icon.svg")
