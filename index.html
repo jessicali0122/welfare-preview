@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821232456';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821233110';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3621,7 +3621,6 @@ thead th{color:#767B75!important}
               <option value="submit">送出申請</option>
               <option value="approve">核准</option>
               <option value="reject">退件</option>
-              <option value="resubmit">重新送出</option>
               <option value="void">作廢單據</option>
               <option value="addUser">新增使用者</option>
               <option value="enableUser">啟用使用者</option>
@@ -7448,6 +7447,7 @@ function renderApplications() {
   window._appFilteredCases = null;
   var countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
+  if (typeof syncApplicantFilter === 'function') syncApplicantFilter();   // 申請人下拉只列實際有案件的人
   _renderAppPage(1);
 }
 
@@ -11526,44 +11526,23 @@ function getAdminUserList() {
 // 已刪除但曾存在的名單（持久化）
 let _deletedUsers = [];
 
-// 同步申請人下拉選單
+// 同步申請人下拉選單：只列「實際有案件的申請人」（從案件清單去重），不列全部員工
 function syncApplicantFilter() {
   const sel = document.getElementById('app-filter-applicant');
   if (!sel) return;
-  // 以 LOCAL_USER_LIST（登入後從伺服器同步的完整成員清單）為主要來源
-  var allNames = [];
-  (typeof LOCAL_USER_LIST !== 'undefined' ? LOCAL_USER_LIST : []).forEach(function(u) {
-    if (u.name && !allNames.includes(u.name)) allNames.push(u.name);
-  });
-  // 補足案件中出現但不在成員清單的人
+  const prev = sel.value;
+  var names = [];
   (window._allCasesCache || []).forEach(function(c) {
     var n = (typeof localName === 'function' ? localName(c.email, c.name) : c.name) || '';
-    if (n && !allNames.includes(n)) allNames.push(n);
+    if (n && names.indexOf(n) < 0) names.push(n);
   });
-  const current = allNames;
-  const existing = Array.from(sel.options).map(o => o.value).filter(v => v);
-  // 加入新人
-  current.forEach(name => {
-    if (!existing.includes(name)) {
-      const opt = document.createElement('option');
-      opt.value = name; opt.textContent = name;
-      sel.appendChild(opt);
-    }
-  });
-  // 被刪除的人：標記但保留
-  existing.forEach(name => {
-    if (!current.includes(name) && !_deletedUsers.includes(name) && name) {
-      _deletedUsers.push(name);
-    }
-  });
-  _deletedUsers.forEach(name => {
-    if (!Array.from(sel.options).some(o => o.value === name)) {
-      const opt = document.createElement('option');
-      opt.value = name; opt.textContent = name + '（已移除）';
-      opt.style.color = '#767B75';
-      sel.appendChild(opt);
-    }
-  });
+  names.sort(function(a, b){ return String(a).localeCompare(String(b), 'zh-Hant'); });
+  sel.innerHTML = '<option value="" disabled hidden>申請人</option>'
+    + '<option value="">全部申請人</option>'
+    + names.map(function(n){ return '<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>'; }).join('');
+  // 還原原本選取；若原選取的人已不在清單則退回未選狀態
+  sel.value = (prev && names.indexOf(prev) >= 0) ? prev : '';
+  if (!sel.value) sel.selectedIndex = 0;   // 顯示 placeholder「申請人」
 }
 
 // confirmDeleteUser 已整合 syncApplicantFilter，無需再覆寫
