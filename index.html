@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821230218';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821230803';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8365,10 +8365,11 @@ function _renderResubmitHistory(c) {
     + history.map(function(h, hi) {
         const rejIdx = (h.approvals || []).findIndex(function(a){ return a.result === '退件'; });
         const rejEntry = rejIdx >= 0 ? (h.approvals[rejIdx] || {}) : {};
-        const proxyMatch = rejEntry.comment ? rejEntry.comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
-        const isProxy  = !!proxyMatch;
-        const rejector = isProxy ? proxyMatch[1] : ((APPROVERS_LOCAL[rejIdx] || {}).name || '—');
-        const reason   = isProxy ? proxyMatch[2] : (rejEntry.comment || '');
+        const proxyMatch2 = rejEntry.comment ? rejEntry.comment.match(/^\[(.+?) 代理 (.+?) (?:簽核|退件)\]\s*([\s\S]*)$/) : null;
+        const proxyMatch = rejEntry.comment ? rejEntry.comment.match(/^\[(.+?) 代理操作\]\s*([\s\S]*)$/) : null;
+        const isProxy  = !!(proxyMatch2 || proxyMatch);
+        const rejector = proxyMatch2 ? proxyMatch2[1] : (proxyMatch ? proxyMatch[1] : ((APPROVERS_LOCAL[rejIdx] || {}).name || '—'));
+        const reason   = proxyMatch2 ? proxyMatch2[3] : (proxyMatch ? proxyMatch[2] : (rejEntry.comment || ''));
         const stepNum  = rejIdx >= 0 ? rejIdx + 1 : null;
         const stepLabel= stepNum ? ('第 ' + stepNum + ' 關') : '—';
         var rejTime = rejEntry.at || h.resubmittedAt || '';
@@ -10578,8 +10579,14 @@ function updateDetailFlow(c){
     let actorName = (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name;
     let displayComment = comment;
     let isProxy = false;
-    const proxyMatch = comment ? comment.match(/^\[(.+?) 代理操作\]\s*(.*)$/) : null;
-    if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
+    let proxyFor = '';
+    // 兩種代理留痕格式：①管理者代理「[X 代理操作] …」 ②指定代理「[X 代理 Y 簽核/退件] …」
+    const proxyMatch2 = comment ? comment.match(/^\[(.+?) 代理 (.+?) (?:簽核|退件)\]\s*([\s\S]*)$/) : null;
+    const proxyMatch  = comment ? comment.match(/^\[(.+?) 代理操作\]\s*([\s\S]*)$/) : null;
+    if (proxyMatch2) { actorName = proxyMatch2[1]; proxyFor = proxyMatch2[2]; displayComment = proxyMatch2[3]; isProxy = true; }
+    else if (proxyMatch) { actorName = proxyMatch[1]; displayComment = proxyMatch[2]; isProxy = true; }
+    // 明顯的「代理簽核」標籤（原簽核人請假、由代理人代簽）
+    const proxyTag = isProxy ? '<span style="display:inline-block;margin-left:6px;font-size:11px;font-weight:700;color:#C9760A;background:#FFF4E4;border:1px solid #F3D9A9;border-radius:20px;padding:1px 8px;vertical-align:1px;white-space:nowrap">🌴 代理簽核' + (proxyFor ? '（原簽核人：' + htEsc(proxyFor) + '）' : '') + '</span>' : '';
     // 簽核人 email（稽核用）：優先用後端記錄的實際操作者 email，舊案退回流程設定 email
     const signerEmail = String(apv.signerEmail || a.email || '').trim();
     const emailHtml = signerEmail ? '<div class="flow-email" style="font-size:12px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
@@ -10587,13 +10594,13 @@ function updateDetailFlow(c){
     if (result === '核准') {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#1e9d6b;font-weight:700;margin-top:2px">✓ 已核准</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + proxyTag + '</div>'
                  + emailHtml
                  + at;
     } else if (result === '退件') {
       iconSvg = leafSvg('#dc2626', 28);
       statusHtml = '<div style="font-size:14px;color:#dc2626;font-weight:700;margin-top:2px">✗ 已退件</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + (isProxy ? '（代理）' : '') + '</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + proxyTag + '</div>'
                  + emailHtml
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
@@ -10753,16 +10760,17 @@ function renderFlowList(approvers) {
       <!-- 操作 -->
       <div style="display:flex;align-items:center;gap:6px">
         ${toggleBtn}
+        ${(isEnabled && admin) ? `<button onclick="toggleProxyPanel(${i})" title="設定請假／代理" style="height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${a.onLeave?'#F3C05A':'#D2D7CD'};background:${a.onLeave?'#FFF8EC':'#fff'};color:${a.onLeave?'#C9760A':'#767B75'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s">${a.onLeave ? ('🌴 代理中：'+htEsc(a.proxyName||a.proxyEmail||'?')) : '🌴 代理'}</button>` : ''}
         ${orderBtns}
         ${editBtn}
         ${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}
       </div>
       </div>
-      ${isEnabled && admin ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:rgba(255,255,255,.55);flex-wrap:wrap">
-        <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">🌴 代理設定</span>
-        <select onchange="setFlowProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid ${a.onLeave?'#F3C05A':'#D2D7CD'};background:${a.onLeave?'#FFF8EC':'#fff'};border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:280px">${_flowProxySelectOptions(i, a.onLeave ? (a.proxyEmail||'') : '')}</select>
-        <span style="font-size:12px;color:#9AA096">選代理人＝此關簽核人請假、改由代理人代簽；「正常」＝無代理</span>
-      </div>` : (isEnabled && a.onLeave ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#C9760A;font-weight:600">🌴 請假中 · 代理：${htEsc(a.proxyName || a.proxyEmail || '未設定')}</div>` : '')}
+      ${isEnabled && admin && window._flowProxyOpen && window._flowProxyOpen[i] ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:#FBFCFA;flex-wrap:wrap">
+        <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">選代理人</span>
+        <select onchange="setFlowProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid #F3C05A;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:300px">${_flowProxySelectOptions(i, a.onLeave ? (a.proxyEmail||'') : '')}</select>
+        <span style="font-size:12px;color:#9AA096">選福委＝此關請假、由其代簽；選「正常」＝取消代理</span>
+      </div>` : (isEnabled && !admin && a.onLeave ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#C9760A;font-weight:600">🌴 請假中 · 代理：${htEsc(a.proxyName || a.proxyEmail || '未設定')}</div>` : '')}
     </div>`;
   }).join('');
 }
@@ -10909,7 +10917,14 @@ function _flowProxySelectOptions(index, selectedEmail) {
   });
   return opts;
 }
-// 直接在關卡列上設定/取消代理（email 空＝取消請假＝正常）
+// 展開/收合某關的「代理人」下拉面板（按了才跳出下拉）
+function toggleProxyPanel(index) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  window._flowProxyOpen = window._flowProxyOpen || {};
+  window._flowProxyOpen[index] = !window._flowProxyOpen[index];
+  renderFlowList(_flowApprovers);
+}
+// 直接在關卡列上設定/取消代理（email 空＝取消請假＝正常）；存檔後收合面板
 async function setFlowProxy(index, email, name) {
   if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
   var onLeave = !!email;
@@ -10917,6 +10932,7 @@ async function setFlowProxy(index, email, name) {
     return i === index ? Object.assign({}, a, { onLeave: onLeave, proxyEmail: email || '', proxyName: onLeave ? (name || '') : '' }) : a;
   });
   var res = await callAPI('saveFlow', { approvers: updated });
+  if (window._flowProxyOpen) delete window._flowProxyOpen[index];   // 收合面板
   if (res && res.ok) {
     _flowApprovers = updated;
     renderFlowList(_flowApprovers);
