@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821165938';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821171535';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5634,29 +5634,37 @@ function showApp() {
       history.replaceState({ view: _restore }, '', _restore === 'dashboard' ? (location.pathname + location.search) : ('#' + _restore));
     }
     startTokenRefreshTimer();
-    // 非關鍵呼叫延遲執行，避免跟主資料搶 GAS 執行緒
+    // 停在午茶頁（#hightea）時，主應用的舊系統（GAS）背景預抓要「讓路」：午茶自己也得先跟
+    // 同一條又慢又擠的 GAS 通道要一張 Supabase 憑證（htSbToken），若此時又灌一堆案件清單／
+    // 頭像進去排隊，會把憑證簽發拖慢 → 午茶頁反而更卡。故在午茶頁把這些非必要預抓延後，
+    // 等 GAS 通道空出來、或使用者真的切到案件追蹤時再抓（切過去時 loadApplications 會自己抓）。
+    var _onHighTea = (location.hash || '').toLowerCase().indexOf('hightea') >= 0;
+    var _dFlow    = _onHighTea ? 6000 : 800;   // 流程資訊（關卡數）
+    var _dList    = _onHighTea ? 7000 : 300;   // 案件清單預抓
+    var _dAvatar  = _onHighTea ? 12000 : 4000; // 全體頭像（最重，最後）
     // 所有使用者都先載入流程資訊（讓 updateDetailFlow 知道正確關卡數）
-    setTimeout(function(){ _preloadFlowInfo(); }, 800);
+    setTimeout(function(){ _preloadFlowInfo(); }, _dFlow);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
     // ── 背景預抓案件清單 ──
     // GAS 一次往返 5～15 秒，等使用者點「案件追蹤」才抓就是讓他乾等。登入後就先抓好放進
     // 快取與 _allCasesCache，切過去時直接有資料；也讓「點案件秒開」有底稿可用（直接從
     // 通知連結開單時尤其明顯）。callAPI 內建去重，和 loadApplications 同時發不會重複打。
+    // ★ 標記 bg:true：這是「使用者沒在等」的背景預抓，慢就安靜重試，不要彈「伺服器回應較慢」提示。
     setTimeout(function(){
-      callAPI('list').then(function(r){
+      callAPI('list', {}, { bg: true }).then(function(r){
         if (r && r.ok && r.cases && !window._allCasesCache) window._allCasesCache = r.cases;
       }).catch(function(){});
-    }, 300);
+    }, _dList);
     // 角色權威資料來自 getMembers；提早觸發（150ms，僅讓主資料 list 稍先出手），
     // 讓「案件追蹤／系統管理」等入口卡最快 ~1s 到位，不必等 2.5 秒才冒出來
     setTimeout(function(){ _syncMembersFromServer(); }, 150);
     setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
     // 全體頭像延遲載入：頭像是 base64，不放進 getMembers（會讓每次登入背著好幾 MB），
     // 拿到後寫進 localStorage 供名字標籤顯示他人頭像
-    setTimeout(function(){ _syncAvatarsFromServer(); }, 4000);
+    setTimeout(function(){ _syncAvatarsFromServer(); }, _dAvatar);
     // 供應商清單背景預載：使用者切到「付款方式＝其他」時下拉即刻有選項，不必等當下才抓
-    setTimeout(function(){ if (typeof _loadSuppliers === 'function') _loadSuppliers().catch(function(){}); }, 4500);
+    setTimeout(function(){ if (typeof _loadSuppliers === 'function') _loadSuppliers().catch(function(){}); }, _onHighTea ? 13000 : 4500);
     setTimeout(() => { window._appReady = true; }, 1500);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
@@ -6183,11 +6191,11 @@ function _usersCacheClear() {
 // 冷啟動/快取過期時，同一支唯讀 action 常被多處（loadDashboard/loadApplications/loadAnalytics）
 // 幾乎同時呼叫，各自打一次慢 GAS。這裡讓相同 key 的讀取共用同一個 Promise，避免重複請求壓垮後端。
 const _inflight = {};
-function _fetchAPIDedup(action, data) {
-  if (!_CACHEABLE.has(action)) return _fetchAPI(action, data); // 寫入類不去重，避免漏送
+function _fetchAPIDedup(action, data, opts) {
+  if (!_CACHEABLE.has(action)) return _fetchAPI(action, data, 0, opts); // 寫入類不去重，避免漏送
   const k = _cacheKey(action, data);
   if (_inflight[k]) return _inflight[k];
-  const p = _fetchAPI(action, data).finally(() => { delete _inflight[k]; });
+  const p = _fetchAPI(action, data, 0, opts).finally(() => { delete _inflight[k]; });
   _inflight[k] = p;
   return p;
 }
@@ -6310,14 +6318,14 @@ async function _callAPI(action, data = {}, opts = {}) {
       // 背景靜默更新（不 await）；記錄當下世代，若期間發生 _cacheClear（有寫入操作）就丟棄，
       // 避免用「寫入前」的舊資料回寫快取，蓋掉剛送出/核准的最新狀態
       const _genAtFetch = _cacheGen;
-      _fetchAPIDedup(action, data).then(fresh => {
+      _fetchAPIDedup(action, data, opts).then(fresh => {
         if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(cacheKey, fresh);
       }).catch(function(){});
       return cached;
     }
   }
   const _genBeforeFetch = _cacheGen;
-  const json = await _fetchAPIDedup(action, data);
+  const json = await _fetchAPIDedup(action, data, opts);
   // 若讀取期間發生寫入（_cacheClear 遞增世代），不可用寫入前的舊資料回寫快取
   if (json && json.ok && _CACHEABLE.has(action) && _cacheGen === _genBeforeFetch) _cacheSet(cacheKey, json);
   // ── 後端整個打不通時的最後防線：拿出過期快取先讓使用者看得到東西 ──
@@ -6367,7 +6375,8 @@ function _maxRetry(action) {
 // 讓使用者知道還在努力，而不是以為當掉了（只對前景讀取提示，背景工作安靜處理）
 // 節流：今天 GAS 很不穩時每次重試都彈提示會洗版 → 12 秒內最多提示一次
 var _retryNoticeAt = 0;
-function _retryNotice(action, retry) {
+function _retryNotice(action, retry, opts) {
+  if (opts && opts.bg) return;   // 背景預抓（使用者沒在等）→ 安靜重試，不彈提示洗版
   if (!_PATIENT_ACTIONS.has(action)) return;
   var _now = Date.now();
   if (_now - _retryNoticeAt < 12000) return;   // 距上次提示未滿 12 秒 → 安靜重試，不再洗版
@@ -6433,7 +6442,7 @@ function _releaseSlot() {
   else _inflightCount = Math.max(0, _inflightCount - 1);
 }
 
-async function _fetchAPI(action, data = {}, _retry = 0) {
+async function _fetchAPI(action, data = {}, _retry = 0, opts = {}) {
   if (_retry === 0 && _breakerBlocked(action)) {
     const _wait = Math.ceil((_apiBreaker.openUntil - Date.now()) / 1000);
     return { ok: false, error: '伺服器忙碌中，請等 ' + _wait + ' 秒後再試', _breakerOpen: true };
@@ -6469,9 +6478,9 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       if (_retry < _maxRetry(action)) {
         const _d = _backoff((_retry + 1) * 1500);
         console.warn('[API] 後端回傳非 JSON（多半是 GAS 暫時故障），' + _d + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', _txt.slice(0, 80));
-        _retryNotice(action, _retry);
+        _retryNotice(action, _retry, opts);
         await new Promise(r => setTimeout(r, _d));
-        return _fetchAPI(action, data, _retry + 1);
+        return _fetchAPI(action, data, _retry + 1, opts);
       }
       console.error('[API] 後端持續回傳非 JSON：', _txt.slice(0, 200));
       _breakerOnFailure();
@@ -6501,9 +6510,9 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
       // 但使用者已經被重複送單嚇到，而且重試也只是繼續消耗配額 → 建立型動作一律不重試。
       const delay = Math.min((_retry + 1) * 3000, 9000);
       console.warn('[API] 頻率限制，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…');
-      if (_retry === 0) toast('⏳ 伺服器忙碌中，自動重試…');
+      if (_retry === 0 && !(opts && opts.bg)) toast('⏳ 伺服器忙碌中，自動重試…');
       await new Promise(r => setTimeout(r, delay));
-      return _fetchAPI(action, data, _retry + 1);
+      return _fetchAPI(action, data, _retry + 1, opts);
     }
     _breakerOnSuccess();   // 拿到合法 JSON（不論業務上成功與否）＝後端還活著
     return json;
@@ -6520,9 +6529,9 @@ async function _fetchAPI(action, data = {}, _retry = 0) {
     if (isNetworkAbort && _retry < _maxRetry(action)) {
       const delay = _backoff((_retry + 1) * 1800);
       console.warn('[API] 網路中斷，' + delay + 'ms 後重試（第 ' + (_retry + 1) + ' 次）…', err.message);
-      _retryNotice(action, _retry);
+      _retryNotice(action, _retry, opts);
       await new Promise(r => setTimeout(r, delay));
-      return _fetchAPI(action, data, _retry + 1);
+      return _fetchAPI(action, data, _retry + 1, opts);
     }
     if (isNetworkAbort) _breakerOnFailure();
     console.error('API Error:', err);
