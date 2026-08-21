@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821231626';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821231853';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10668,6 +10668,7 @@ let _editFlowIndex = -1;
 
 // 從後端載入流程並渲染
 async function loadAdminFlow() {
+  window._flowProxyOpen = {};   // 每次進頁重設：把上次展開的代理面板收合
   const list = document.getElementById('flow-list');
   list.innerHTML = '<div style="text-align:center;padding:30px;color:#767B75">載入中…</div>';
   const res = await callAPI('getFlow');
