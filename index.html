@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260820171403';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821165938';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -16121,6 +16121,11 @@ function htRenderCalendar() {
   var ym = y + '-' + (m < 10 ? '0' : '') + m;
   var _allEv = _htEvents.concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
   var monthEvents = _allEv.filter(function(e){ return _evMonth(e) === ym; });
+  // 右側「本月行程 THIS MONTH」固定顯示「真正的本月」，不跟著日曆翻月而變（翻到九月時
+  // 這裡仍顯示八月）；日曆格子的圓點才跟著 ym（翻月看得到該月的午茶日標記）。
+  var _nowD = new Date();
+  var _realYM = _nowD.getFullYear() + '-' + _pad2(_nowD.getMonth()+1);
+  var sideEvents = _allEv.filter(function(e){ return _evMonth(e) === _realYM; });
   // 建立 date→event 的快速查找（e.date 格式 yyyy/MM/dd 或 yyyy-MM-dd）
   var eventDays = {};
   monthEvents.forEach(function(e) {
@@ -16228,14 +16233,14 @@ function htRenderCalendar() {
   // 已移除「本月 X 場午茶日」小字（依需求）
   if (subEl) subEl.style.display = 'none';
 
-  // 當月活動行程列表
-  if (!monthEvents.length) {
-    evEl.innerHTML = '<div style="text-align:center;padding:40px 0">'
-      + '<div style="margin-bottom:10px"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>'
-      + '<div style="font-size:14px;color:#ccc;font-weight:600">本月尚無午茶日</div>'
+  // 本月行程列表（固定顯示真正的本月，見上方 sideEvents）
+  if (!sideEvents.length) {
+    evEl.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;color:#B8BDB4">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>'
+      + '<span style="font-size:14px;font-weight:600">本月尚無午茶日</span>'
       + '</div>';
   } else {
-    evEl.innerHTML = monthEvents.map(function(e) {
+    evEl.innerHTML = sideEvents.map(function(e) {
       var dispStatus = _htDisplayStatus(e);
       var sc = statusColor(dispStatus);
       var d = String(e.date||'');
