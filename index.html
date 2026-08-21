@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821225955';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821230218';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3024,10 +3024,10 @@ thead th{color:#767B75!important}
       <div class="card" data-cap="supplier.manage" style="padding:22px">
         <div class="section-title">供應商管理</div>
         <div style="font-size:13px;color:#767B75;margin-bottom:14px;line-height:1.6">供「付款方式＝其他」時選用的廠商清單。新增／編輯／刪除會即時寫入資料庫，使用者重新整理後生效。</div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px">
-          <div><label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商編號</label><input id="sup-add-code" class="inp" placeholder="例：A1000003" style="width:150px"></div>
-          <div style="flex:1;min-width:200px"><label style="font-size:12px;color:#767B75;display:block;margin-bottom:4px">供應商名稱</label><input id="sup-add-name" class="inp" placeholder="供應商全名" style="width:100%"></div>
-          <button class="btn btn-o" style="padding:9px 18px;white-space:nowrap" onclick="supplierAdd()">＋ 新增</button>
+        <div style="background:#F7FAF6;border:1px solid #E1E8DD;border-radius:12px;padding:14px 16px;margin-bottom:18px;display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          <div><label style="font-size:12px;color:#767B75;display:block;margin-bottom:5px;font-weight:600">供應商編號</label><input id="sup-add-code" class="inp" placeholder="例：A1000003" style="width:150px"></div>
+          <div style="flex:1;min-width:200px"><label style="font-size:12px;color:#767B75;display:block;margin-bottom:5px;font-weight:600">供應商名稱</label><input id="sup-add-name" class="inp" placeholder="供應商全名" style="width:100%"></div>
+          <button onclick="supplierAdd()" style="background:#46633F;color:#fff;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(70,99,63,.25);transition:background .15s" onmouseover="this.style.background='#3A5435'" onmouseout="this.style.background='#46633F'">＋ 新增</button>
         </div>
         <div id="supplier-admin-list"><div style="text-align:center;padding:20px;color:#767B75">載入中…</div></div>
       </div>
@@ -12092,12 +12092,12 @@ function _renderSupPage(page){
   var slice = list.slice((page - 1) * size, (page - 1) * size + size);
   var rows = slice.map(function(v){
     var c = htEsc(v.code), n = htEsc(v.name);
-    return '<tr data-code="'+c+'" style="border-bottom:1px solid #F0F2EE">'
-      + '<td style="padding:8px 6px;font-weight:600;color:#2E332D">'+c+'</td>'
-      + '<td style="padding:8px 6px;color:#4A4F49">'+n+'</td>'
-      + '<td style="padding:8px 6px;text-align:right;white-space:nowrap">'
-      + '<button class="btn btn-o" style="padding:4px 10px;font-size:12px" onclick="supplierEdit(this)">編輯</button> '
-      + '<button class="btn btn-o" style="padding:4px 10px;font-size:12px;color:#dc2626;border-color:#f0b3b3" onclick="supplierDelete(this)">刪除</button>'
+    return '<tr data-code="'+c+'" style="border-bottom:1px solid #EEF1EC;transition:background .12s" onmouseover="this.style.background=\'#F7FAF6\'" onmouseout="this.style.background=\'\'">'
+      + '<td style="padding:12px 8px;font-weight:700;color:#2E332D;font-variant-numeric:tabular-nums;letter-spacing:.02em">'+c+'</td>'
+      + '<td style="padding:12px 8px;color:#4A4F49">'+n+'</td>'
+      + '<td style="padding:12px 8px;text-align:right;white-space:nowrap">'
+      + '<button class="btn btn-o" style="padding:5px 12px;font-size:13px" onclick="supplierEdit(this)">編輯</button> '
+      + '<button style="padding:5px 12px;font-size:13px;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background=\'#fde8e8\'" onmouseout="this.style.background=\'#fff5f5\'" onclick="supplierDelete(this)">刪除</button>'
       + '</td></tr>';
   }).join('');
   // 頁碼：左右箭頭切換（‹ 目前頁 / 總頁數 ›），箭頭到底時停用
@@ -12106,8 +12106,8 @@ function _renderSupPage(page){
     + '<button class="evx-pb" onclick="_renderSupPage('+(page+1)+')" '+(page===totalPages?'disabled':'')+' aria-label="下一頁">›</button>';
   var sizeOpts = ['15','30','50'].map(function(o){ return '<option value="'+o+'"'+(String(size)===o?' selected':'')+'>'+o+'</option>'; }).join('');
   box.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:14px">'
-    + '<thead><tr style="border-bottom:1px solid #D9DDD3;color:#767B75">'
-    + '<th style="text-align:left;padding:8px 6px;width:160px">供應商編號</th><th style="text-align:left;padding:8px 6px">供應商名稱</th><th style="width:130px"></th></tr></thead><tbody>'
+    + '<thead><tr style="border-bottom:2px solid #E1E8DD;color:#9AA096">'
+    + '<th style="text-align:left;padding:10px 8px;width:160px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商編號</th><th style="text-align:left;padding:10px 8px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商名稱</th><th style="width:130px"></th></tr></thead><tbody>'
     + rows
     + '</tbody></table>'
     // 整條分頁列靠右：每頁顯示 + 共 N 筆 + 左右切換，全部靠右對齊
