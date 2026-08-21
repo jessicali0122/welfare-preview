@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821215829';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821221453';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -165,10 +165,10 @@ aside .sl-text{display:none}
 /* ── 狀態 Badge：圓點 + 文字（HR dashboard 風格）── */
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 .badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.bd{background:#F7F8F6;color:#767B75;border:1px solid #D5DAD2}.bd::before{background:#767B75}
-.bp{background:#fff7ed;color:#c2410c;border:1px solid #fed7aa}.bp::before{background:#577B53}
-.bg{background:#f0fdf8;color:#065f46;border:1px solid #a7f3d0}.bg::before{background:var(--brand,#1e9d6b)}
-.br{background:#fff1f2;color:#dc2626;border:1px solid #fecdd3}.br::before{background:#f43f5e}
+.bd{background:#6B7280;color:#fff;border:1px solid #5A606B}.bd::before{background:#fff}
+.bp{background:#E0820A;color:#fff;border:1px solid #C9760A}.bp::before{background:#fff}
+.bg{background:#577B53;color:#fff;border:1px solid #4C6E45}.bg::before{background:#fff}
+.br{background:#DC2626;color:#fff;border:1px solid #C11F1F}.br::before{background:#fff}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;touch-action:manipulation}
 button{touch-action:manipulation}
 .btn-p{background:#577B53;color:#fff;box-shadow:0 2px 8px rgba(87,123,83,.25);border-color:#577B53}.btn-p:hover{background:#577B53;box-shadow:0 4px 14px rgba(87,123,83,.38)}
@@ -16313,7 +16313,10 @@ function htRenderCalendar() {
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+dayNum+'</div>'
         +   '</div>'
         +   '<div style="flex:1;min-width:0">'
-        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc((e.title && e.title.trim()) ? e.title.trim() : '午茶日')+srcTag+'</div>'
+        +     '<div style="display:flex;align-items:center;gap:8px">'
+        +       '<div style="flex:1;min-width:0;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc((e.title && e.title.trim()) ? e.title.trim() : '午茶日')+srcTag+'</div>'
+        +       (!e._sheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ e.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;background:#FFF6EA;color:#C9760A;border:1px solid #FBE6C8;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
+        +     '</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (e.headcount ? '<span>👥 '+e.headcount+' 人</span>' : '')
         +       ((e.birthdays && e.birthdays.length) ? '<span>🎂 '+e.birthdays.length+' 位壽星</span>' : '')
@@ -16321,7 +16324,6 @@ function htRenderCalendar() {
         +       (e.totalBudget ? '<span>💰 預算 NT$'+Number(e.totalBudget).toLocaleString()+'</span>' : '')
         +     '</div>'
         +   '</div>'
-        +   (!e._sheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ e.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;margin-right:8px;background:#FFF6EA;color:#C9760A;border:1px solid #FBE6C8;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
         +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#ECEEEA 4px,#ECEEEA 9px)"></div>'
         + '</div>'
         + '<div style="width:78px;flex-shrink:0;background:'+stubColor+';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;padding:10px 6px">'
