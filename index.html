@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260821232321';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260821232456';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10761,7 +10761,7 @@ function renderFlowList(approvers) {
       <!-- 操作 -->
       <div style="display:flex;align-items:center;gap:6px">
         ${toggleBtn}
-        ${(isEnabled && admin) ? `<label title="勾選＝此關簽核人請假、由代理人代簽" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;font-size:12px;font-weight:700;border:1.5px solid ${a.onLeave?'#F3C05A':'#D2D7CD'};background:${a.onLeave?'#FFF8EC':'#fff'};color:${a.onLeave?'#C9760A':'#6B7069'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s"><input type="checkbox" ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'checked':''} onchange="toggleFlowLeaveCheck(${i}, this.checked)" style="width:15px;height:15px;cursor:pointer;accent-color:#C9760A">🌴 代理</label>` : ''}
+        ${(isEnabled && admin) ? `<button onclick="toggleFlowLeaveCheck(${i}, ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i])) ? 'false' : 'true'})" title="開關：此關簽核人請假，由代理人代簽" style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border:1.5px solid ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#F3C05A':'#D2D7CD'};background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#FFF8EC':'#fff'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s"><span style="width:32px;height:18px;border-radius:20px;background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#E0820A':'#CBD0C7'};position:relative;flex-shrink:0;display:inline-block;transition:background .15s"><span style="position:absolute;top:2px;left:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'16px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s"></span></span><span style="font-size:12px;font-weight:700;color:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#C9760A':'#6B7069'}">🌴 代理</span></button>` : ''}
         ${orderBtns}
         ${editBtn}
         ${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}
