@@ -50,13 +50,13 @@ def render(size, scale=1.24, rounded=False, transparent_corners=False):
 render(32, scale=1.24, transparent_corners=True).save(os.path.join(OUT, "app-icon-32.png"))
 print("wrote app-icon-32.png")
 
-# apple-touch-icon（180/512）：iOS 加入主畫面會把透明處填成黑色 → 四角改填奶油底，避免黑角
+# apple-touch-icon（180/512）：奶油底填滿（避免 iOS 主畫面黑角），logo 縮到 ~86% 留出奶油色邊框
 for size, name in [(180, "app-icon-180.png"), (512, "app-icon-512.png")]:
-    render(size, scale=1.24, transparent_corners=False).convert("RGB").save(os.path.join(OUT, name))
+    render(size, scale=0.86, transparent_corners=False).convert("RGB").save(os.path.join(OUT, name))
     print("wrote", name)
 
 # OG share image: full-bleed cream square, no transparency (LINE/FB show a solid tile)
-render(1200, scale=1.24, transparent_corners=False).convert("RGB").save(
+render(1200, scale=0.92, transparent_corners=False).convert("RGB").save(
     os.path.join(OUT, "app-og.png"), quality=92)
 print("wrote app-og.png")
 
