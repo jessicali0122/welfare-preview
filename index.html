@@ -2841,12 +2841,12 @@ thead th{color:#767B75!important}
           <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>單張請款金額達 <strong>$3,000（含）以上</strong>，經核准後可不受送件日限制，隨時提出申請</span></li>
           <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>請款時須檢附憑證正本及影本各 1 份（統一編號：61409721）※ 如無法提供憑證，請於備註欄說明原因。</span></li>
         </ul>
+        <!-- 資訊安全提醒（個資保護警語）：融入送件須知卡片內，白底襯托更顯眼 -->
+        <div style="margin-top:12px;border:1px solid #EAC985;background:#FEF7EA;border-radius:10px;padding:10px 12px;display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.7">
+          <span style="flex-shrink:0" role="img" aria-label="資訊安全">🔒</span>
+          <div style="min-width:0;color:#7A6636"><strong style="color:#B4791C">資訊安全提醒</strong>　為落實資訊安全及個人資料保護，請勿於本系統上傳含有個人敏感資料之文件。如因請款程序須提供相關資料，請於紙本送件時檢附，以完成後續審核作業。</div>
+        </div>
       </div>
-    </div>
-    <!-- 資訊安全提醒（個資保護警語，細長版） -->
-    <div style="border:1px solid #EAC985;background:#FEF7EA;border-radius:10px;padding:8px 12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.6">
-      <span style="flex-shrink:0" role="img" aria-label="資訊安全">🔒</span>
-      <div style="min-width:0;color:#7A6636"><strong style="color:#B4791C">資訊安全提醒｜</strong>請勿上傳含個人敏感資料之文件；如請款程序須提供，請於紙本送件時檢附。</div>
     </div>
     <!-- 切換列：緊湊膠囊（靠左、不佔整行；選中變品牌綠） -->
     <div id="apps-tab-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
@@ -4998,6 +4998,36 @@ function _isRealManager() {
   return real.includes('manager');
 }
 
+// 🎭 角色預覽時，是否要「模擬一般福委的可見範圍」（只看自己的案件）。
+// 真正的權限由後端依實際登入者過濾；這裡只是讓管理者在預覽非管理者視角時，
+// 畫面也呈現「一般福委（非簽核人）實際會看到的樣子」，方便自我驗證。
+function _previewOwnOnly() {
+  return !!(window._rolePreview && window._rolePreview !== 'manager' && _isRealManager());
+}
+window._previewOwnOnly = _previewOwnOnly;
+
+// 前端「案件全覽權」判斷（與後端 _canViewAllCases_ 同一把尺）：管理者＋啟用中簽核人＋生效中代理人。
+// 用於鎖「費用分析」等會揭露全會資料的功能。尊重角色預覽（預覽一般福委→無全覽）。
+function _canViewAllCasesFE() {
+  if (_previewOwnOnly()) return false;
+  if (typeof isAdmin === 'function' && isAdmin()) return true;
+  var cu = currentUser || window.currentUser; if (!cu) return false;
+  var me = String(cu.email || '').trim().toLowerCase();
+  if (Array.isArray(APPROVER_EMAILS) &&
+      APPROVER_EMAILS.some(function(e){ return String(e).trim().toLowerCase() === me; })) return true;
+  try {
+    var enabled = (typeof _flowApprovers !== 'undefined' ? _flowApprovers : [])
+                    .filter(function(a){ return a.enabled !== false; });
+    for (var i = 0; i < enabled.length; i++) {
+      var a = enabled[i];
+      if (a.onLeave === true && a.proxyEmail &&
+          String(a.proxyEmail).trim().toLowerCase() === me) return true;
+    }
+  } catch(e) {}
+  return false;
+}
+window._canViewAllCasesFE = _canViewAllCasesFE;
+
 function getCurrentRoles() {
   const cu = currentUser || window.currentUser;
   if (!cu) return ['employee'];
@@ -5030,6 +5060,9 @@ window.setRolePreview = function(role) {
   var cur = (document.querySelector('.view.active') && document.querySelector('.view.active').id.replace('view-','')) || 'dashboard';
   try { sw(cur, undefined, true); } catch(e) {}
   _revalidateAppsTab();
+  // 🎭 立即依預覽視角重繪案件清單與計數（模擬一般福委只看自己）
+  try { if (typeof renderApplications === 'function') renderApplications(); } catch(e) {}
+  try { if (typeof _refreshAppCounts === 'function') _refreshAppCounts(); } catch(e) {}
   // 簽核流程是「一次渲染、之後不動」的列表，不重繪的話編輯／排序鈕會停在上一個角色的狀態
   try {
     if (typeof renderFlowList === 'function' && typeof _flowApprovers !== 'undefined'
@@ -6287,6 +6320,11 @@ function _removeCaseFromListCache(caseId) {
 function _refreshAppCounts() {
   var all = window._allCasesCache;
   if (!Array.isArray(all)) return;
+  // 🎭 角色預覽（模擬一般福委）：計數也只算自己的案件
+  if (_previewOwnOnly()) {
+    var _me = (currentUser || window.currentUser || {}).email;
+    all = all.filter(function(c){ return c.email === _me; });
+  }
   var _set = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
   var drafts = all.filter(function(c){
     return c.status === '草稿' && ((typeof isAdmin === 'function' && isAdmin()) || c.email === (window.currentUser && currentUser.email));
@@ -7369,6 +7407,16 @@ var _appsTab = 'all';
 function appsSetTab(tab) {
   // 舊入口相容：頂層「待審核」已併入案件頁第三個 tab
   if (tab === 'pending') { appsSetTab('all'); switchAppTab('pending'); return; }
+  // ── 費用分析：僅「有簽核權者（簽核人＋管理者）」可見 ──
+  //   分析頁彙總全會金額，與「案件全覽」同一把尺；一般福委看不到按鈕，直接貼網址也擋。
+  var _analyticsAllowed = _canViewAllCasesFE();
+  var _anaBtn = document.getElementById('apps-tab-analytics');
+  if (_anaBtn) _anaBtn.style.display = _analyticsAllowed ? '' : 'none';
+  if (tab === 'analytics' && !_analyticsAllowed) {
+    if (!window._rolesSyncedOnce) { window._appsTabPending = tab; }
+    else if (typeof toast === 'function') toast('🔒 費用分析僅簽核人／管理者可檢視');
+    tab = 'all';
+  }
   // ── 子分頁權限守門：擋掉「按鈕藏起來、但貼網址就能進」的繞道 ──
   //   角色尚未從伺服器同步回來時一律先擋（fail-closed），並記下想去的分頁，
   //   由 _resolvePermPending() 在角色到位後自動補開，管理者深連結不會被誤殺。
@@ -7484,6 +7532,11 @@ function _byCreatedDesc(a, b) {
 // renderApplications: 根據 _appsTab 重新渲染案件列表
 function renderApplications() {
   var allCases = window._allCasesCache || [];
+  // 🎭 角色預覽（模擬一般福委）：只顯示自己發起的案件，與後端真實過濾一致
+  if (_previewOwnOnly()) {
+    var _me = (currentUser || window.currentUser || {}).email;
+    allCases = allCases.filter(function(c){ return c.email === _me; });
+  }
   var cases = allCases.filter(function(c){ return c.status !== '草稿'; });
   if (_currentAppTab === 'pending') {
     // 一律只顯示輪到自己審的案件（管理者不再特例看到全部待審案件）
@@ -7576,7 +7629,8 @@ async function loadApprovals() {
   if (res.cases) window._allCasesCache = res.cases;
   // 一律只列出輪到自己那一關的案件（管理者不再特例列出全部待審；仍可從案件詳情代理簽核）
   // 待處理＝輪到我簽的 ＋ 我是該案當關的請假指定代理人（真正代理人才看得到，管理員不再萬能代簽）
-  const pending = (res.cases || []).filter(c => isMyTurnToApprove(c) || _isActiveProxyForCase(c));
+  // 🎭 角色預覽（模擬一般福委，非簽核人）：待審清單為空，符合非簽核人實際情況
+  const pending = _previewOwnOnly() ? [] : (res.cases || []).filter(c => isMyTurnToApprove(c) || _isActiveProxyForCase(c));
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
@@ -9063,6 +9117,14 @@ const APPS_TAB_CAP = { flow:'reimbursement.approve', supplier:'supplier.manage' 
 // 少了這步，切換角色預覽（或角色被伺服器降級）時，先前開著的供應商管理面板會繼續留在畫面上。
 function _revalidateAppsTab(){
   try {
+    // 費用分析按鈕：依「簽核權」即時顯示/隱藏（角色預覽切換時也要立即反映）
+    var _anaBtn = document.getElementById('apps-tab-analytics');
+    if (_anaBtn && typeof _canViewAllCasesFE === 'function') {
+      var _ok = _canViewAllCasesFE();
+      _anaBtn.style.display = _ok ? '' : 'none';
+      // 目前正停在分析頁但已無權限 → 收回到全部案件
+      if (!_ok && _appsTab === 'analytics' && typeof appsSetTab === 'function') appsSetTab('all');
+    }
     if (typeof _appsTab === 'undefined' || !_appsTab) return;
     var _need = APPS_TAB_CAP[_appsTab];
     if (_need && typeof can === 'function' && !can(_need) && typeof appsSetTab === 'function') appsSetTab(_appsTab);
