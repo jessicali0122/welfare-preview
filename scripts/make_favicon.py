@@ -32,10 +32,12 @@ def render(size, scale=1.24, rounded=False, transparent_corners=False):
     d = int(size * scale)
     lg = logo.resize((d, d), Image.LANCZOS).convert("RGBA")
     off = (size - d) // 2
-    # circular mask so the crop's black square corners are never pasted
+    # circular mask so the crop's black square corners are never pasted；
+    # 往內縮 ~4%（ins）裁掉 logo 最外圈的深色描邊，讓圖案無縫融入奶油底、不留黑線圈
     SS = 4
+    ins = int(d * SS * 0.04)
     dm = Image.new("L", (d * SS, d * SS), 0)
-    ImageDraw.Draw(dm).ellipse([0, 0, d * SS - 1, d * SS - 1], fill=255)
+    ImageDraw.Draw(dm).ellipse([ins, ins, d * SS - 1 - ins, d * SS - 1 - ins], fill=255)
     dm = dm.resize((d, d), Image.LANCZOS)
     canvas.paste(lg, (off, off), dm)
     if transparent_corners:
