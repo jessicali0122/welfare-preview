@@ -11255,7 +11255,15 @@ async function loadAdminUsers() {
     }
     return;
   }
-  const users = res.users || [];
+  const users = (res.users || []).slice().sort(function(a, b){
+    // 依員工編號由小到大（取編號中的數字比較，例：T0028 < T0033 < T0076）；無編號者排最後
+    var na = parseInt(String((a && a.employeeId) || '').replace(/\D/g, ''), 10);
+    var nb = parseInt(String((b && b.employeeId) || '').replace(/\D/g, ''), 10);
+    var va = isNaN(na) ? Infinity : na;
+    var vb = isNaN(nb) ? Infinity : nb;
+    if (va !== vb) return va - vb;
+    return String((a && a.employeeId) || '').localeCompare(String((b && b.employeeId) || ''));
+  });
   if (typeof _refreshDeptOptions === 'function') _refreshDeptOptions(users);
   // 建立全域生日表，供午茶日壽星自動帶入（單一來源：使用者管理）
   window._BF_USER_BDAYS = users.map(function(u){
