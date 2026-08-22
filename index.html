@@ -5006,6 +5006,15 @@ function _previewOwnOnly() {
 }
 window._previewOwnOnly = _previewOwnOnly;
 
+// 角色預覽（模擬一般福委）時，把任何案件清單過濾成「只有自己發起的」。
+// 真實權限由後端依登入者過濾；這是讓管理者預覽非管理者視角時，畫面與真實一致的唯一過濾點。
+function _scopeForView(arr) {
+  if (!Array.isArray(arr) || !_previewOwnOnly()) return arr || [];
+  var me = String((currentUser || window.currentUser || {}).email || '').trim().toLowerCase();
+  return arr.filter(function(c){ return c && String(c.email || '').trim().toLowerCase() === me; });
+}
+window._scopeForView = _scopeForView;
+
 // 前端「案件全覽權」判斷（與後端 _canViewAllCases_ 同一把尺）：管理者＋啟用中簽核人＋生效中代理人。
 // 用於鎖「費用分析」等會揭露全會資料的功能。尊重角色預覽（預覽一般福委→無全覽）。
 function _canViewAllCasesFE() {
@@ -7352,8 +7361,10 @@ async function loadApplications(forceRefresh) {
 
 function _applyCasesData(allCases) {
   allCases = allCases || [];
-  // 快取全部案件供 Tab 使用
+  // 快取「完整」資料供切回管理者視角時使用
   window._allCasesCache = allCases;
+  // 🎭 角色預覽（模擬一般福委）：以下顯示與計數只用自己發起的案件（快取仍保留完整）
+  allCases = _scopeForView(allCases);
   // 記錄本次成功渲染的世代與時間，供上方 8 秒守門判斷
   window._appsRenderedGen = _cacheGen;
   window._appsRenderedAt = Date.now();
