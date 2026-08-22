@@ -46,10 +46,13 @@ def render(size, scale=1.24, rounded=False, transparent_corners=False):
         canvas.putalpha(m.resize((size, size), Image.LANCZOS))
     return canvas
 
-# Favicon / app icons: transparent-corner disc, logo scaled up to fill the disc
-for size, name in [(32, "app-icon-32.png"), (180, "app-icon-180.png"),
-                   (512, "app-icon-512.png")]:
-    render(size, scale=1.24, transparent_corners=True).save(os.path.join(OUT, name))
+# 瀏覽器分頁 favicon（32）：透明圓角，深/淺色分頁列都好看
+render(32, scale=1.24, transparent_corners=True).save(os.path.join(OUT, "app-icon-32.png"))
+print("wrote app-icon-32.png")
+
+# apple-touch-icon（180/512）：iOS 加入主畫面會把透明處填成黑色 → 四角改填奶油底，避免黑角
+for size, name in [(180, "app-icon-180.png"), (512, "app-icon-512.png")]:
+    render(size, scale=1.24, transparent_corners=False).convert("RGB").save(os.path.join(OUT, name))
     print("wrote", name)
 
 # OG share image: full-bleed cream square, no transparency (LINE/FB show a solid tile)
