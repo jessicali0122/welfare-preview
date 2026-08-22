@@ -26,7 +26,7 @@ radius = max(xs[-1] - xs[0], ys[-1] - ys[0]) / 2 + 2
 box = (int(ccx - radius), int(ccy - radius), int(ccx + radius), int(ccy + radius))
 logo = img.crop(box)  # RGB, cream interior, thin dark outer ring
 
-def render(size, scale=1.06, rounded=False, transparent_corners=False):
+def render(size, scale=1.24, rounded=False, transparent_corners=False):
     """Cream square with the logo enlarged (scale>1 = bleed past edges a touch)."""
     canvas = Image.new("RGBA", (size, size), CREAM + (255,))
     d = int(size * scale)
@@ -49,11 +49,11 @@ def render(size, scale=1.06, rounded=False, transparent_corners=False):
 # Favicon / app icons: transparent-corner disc, logo scaled up to fill the disc
 for size, name in [(32, "app-icon-32.png"), (180, "app-icon-180.png"),
                    (512, "app-icon-512.png")]:
-    render(size, scale=1.06, transparent_corners=True).save(os.path.join(OUT, name))
+    render(size, scale=1.24, transparent_corners=True).save(os.path.join(OUT, name))
     print("wrote", name)
 
 # OG share image: full-bleed cream square, no transparency (LINE/FB show a solid tile)
-render(1200, scale=1.06, transparent_corners=False).convert("RGB").save(
+render(1200, scale=1.24, transparent_corners=False).convert("RGB").save(
     os.path.join(OUT, "app-og.png"), quality=92)
 print("wrote app-og.png")
 
