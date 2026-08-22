@@ -2843,6 +2843,11 @@ thead th{color:#767B75!important}
         </ul>
       </div>
     </div>
+    <!-- 資訊安全提醒（個資保護警語，細長版） -->
+    <div style="border:1px solid #EAC985;background:#FEF7EA;border-radius:10px;padding:8px 12px;margin-bottom:16px;display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.6">
+      <span style="flex-shrink:0" role="img" aria-label="資訊安全">🔒</span>
+      <div style="min-width:0;color:#7A6636"><strong style="color:#B4791C">資訊安全提醒｜</strong>請勿上傳含個人敏感資料之文件；如請款程序須提供，請於紙本送件時檢附。</div>
+    </div>
     <!-- 切換列：緊湊膠囊（靠左、不佔整行；選中變品牌綠） -->
     <div id="apps-tab-bar" style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap">
       <button id="apps-tab-all" onclick="appsSetTab('all')" style="display:flex;align-items:center;gap:7px;padding:8px 18px;border-radius:22px;border:1.5px solid #577B53;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .18s;background:#577B53;color:#fff;white-space:nowrap">
@@ -3346,6 +3351,11 @@ thead th{color:#767B75!important}
       <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
         <div class="card" style="padding:20px">
           <div class="section-title">附件上傳（Google Drive）</div>
+          <!-- 資訊安全提醒（個資保護警語） -->
+          <div style="border:1px solid #EAC985;background:#FEF7EA;border-radius:10px;padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.7">
+            <span style="flex-shrink:0" role="img" aria-label="資訊安全">🔒</span>
+            <div style="min-width:0;color:#7A6636"><strong style="color:#B4791C">資訊安全提醒</strong><br>為落實資訊安全及個人資料保護，請勿於本系統上傳含有個人敏感資料之文件。如因請款程序須提供相關資料，請於紙本送件時檢附，以完成後續審核作業。</div>
+          </div>
           <input type="file" id="file-upload-input" multiple accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="handleFileUpload(this.files)">
           <!-- 上傳＋掃描收據合併為同一虛線區塊：整塊點擊/拖放＝上傳，底部按鈕＝OCR 掃描（stopPropagation 避免觸發上傳） -->
           <div id="upload-drop-zone" style="border:2px dashed #D2D6D0;border-radius:10px;padding:24px 24px 14px;text-align:center;cursor:pointer;background:#F7F8F6" onclick="document.getElementById('file-upload-input').click()" ondragover="event.preventDefault();this.style.background='#ECEEEA';this.style.borderColor='#767B75'" ondragleave="this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0'" ondrop="event.preventDefault();this.style.background='#F7F8F6';this.style.borderColor='#D2D6D0';handleFileUpload(event.dataTransfer.files)">
@@ -5126,6 +5136,21 @@ function isMyTurnToApprove(c) {
   const stepIdx = (c.step || 1) - 1;
   return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length && APPROVER_EMAILS[stepIdx] === _cu.email;
 }
+
+// 目前登入者是否為「此案當關的請假指定代理人」（原簽核人請假中→其指定代理人可代簽）。
+// 只認真正的代理人，管理員不再萬能代簽（2026-08-23 依需求移除管理員越權）。
+function _isActiveProxyForCase(c) {
+  var _cu = window.currentUser; if (!_cu) return false;
+  if (!c || !c.status || !String(c.status).includes('待')) return false;
+  var stepIdx = (c.step || 1) - 1;
+  var enabled = (typeof _flowApprovers !== 'undefined' ? _flowApprovers : [])
+                  .filter(function(a){ return a.enabled !== false; });
+  var entry = enabled[stepIdx];
+  if (!entry) return false;
+  return entry.onLeave === true && entry.proxyEmail
+      && String(entry.proxyEmail).trim().toLowerCase() === String(_cu.email).trim().toLowerCase();
+}
+window._isActiveProxyForCase = _isActiveProxyForCase;
 
 // ── 作廢單據的權限判斷（唯一真相；三個入口都走這裡）──
 //   管理者：任何非草稿／未作廢的單都能作廢。
@@ -7550,7 +7575,8 @@ async function loadApprovals() {
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   if (res.cases) window._allCasesCache = res.cases;
   // 一律只列出輪到自己那一關的案件（管理者不再特例列出全部待審；仍可從案件詳情代理簽核）
-  const pending = (res.cases || []).filter(c => isMyTurnToApprove(c));
+  // 待處理＝輪到我簽的 ＋ 我是該案當關的請假指定代理人（真正代理人才看得到，管理員不再萬能代簽）
+  const pending = (res.cases || []).filter(c => isMyTurnToApprove(c) || _isActiveProxyForCase(c));
   const container = document.getElementById('approvals-list');
   if (!container) return;
   if (pending.length === 0) {
@@ -7564,10 +7590,11 @@ async function loadApprovals() {
   // 依送出時間由新到舊排列
   const sortByDate = arr => [...arr].sort((a,b) => String(b.createdAt||'') > String(a.createdAt||'') ? 1 : -1);
   const myTurnCases = sortByDate(pending.filter(c => isMyTurnToApprove(c)));
-  const proxyCases  = isAdmin() ? sortByDate(pending.filter(c => !isMyTurnToApprove(c))) : [];
+  // 代理案件：我是該案當關的請假指定代理人（且不是我本來就該簽的關）
+  const proxyCases  = sortByDate(pending.filter(c => !isMyTurnToApprove(c) && _isActiveProxyForCase(c)));
   const countLbl = document.getElementById('approvals-count-label');
   if (countLbl) {
-    if (isAdmin() && proxyCases.length > 0) {
+    if (proxyCases.length > 0) {
       countLbl.textContent = pending.length + ' 件需要處理（' + myTurnCases.length + ' 件我的責任・' + proxyCases.length + ' 件代理）';
     } else {
       countLbl.textContent = pending.length + ' 件需要您處理';
@@ -7675,7 +7702,8 @@ async function loadApprovals() {
   const tabMineCount = document.getElementById('atab-mine-count');
   const tabProxyCount = document.getElementById('atab-proxy-count');
 
-  if (isAdmin()) {
+  // 有代理案件時才顯示「我的／代理」分頁（改由是否有代理案件決定，不再綁管理員）
+  if (proxyCases.length > 0) {
     if (tabsEl) tabsEl.style.display = '';
     if (tabMineCount) tabMineCount.textContent = myTurnCases.length;
     if (tabProxyCount) tabProxyCount.textContent = proxyCases.length;
@@ -8263,7 +8291,8 @@ async function loadDetail(caseId, _fromPop) {
   const approveBox = document.getElementById('approve-box');
   if (approveBox) {
     const isPending   = c.status && c.status.includes('待');
-    const canApprove  = isMyTurnToApprove(c) || (isAdmin() && isPending);
+    // 只有「當關簽核人本人」或「該關請假指定代理人」可簽核；管理員不再萬能代簽
+    const canApprove  = isMyTurnToApprove(c) || _isActiveProxyForCase(c);
     approveBox.style.display = canApprove ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
     // 每次切換案件時清空退件原因，避免帶入上一筆的內容
@@ -8272,8 +8301,8 @@ async function loadDetail(caseId, _fromPop) {
     // 動態更新標籤
     const stepLabel = approveBox.querySelector('.approve-step-label');
     if (stepLabel) {
-      if (isAdmin() && isPending && !isMyTurnToApprove(c)) {
-        stepLabel.textContent = '管理員代理第 ' + (c.step||1) + ' 關簽核';
+      if (_isActiveProxyForCase(c) && !isMyTurnToApprove(c)) {
+        stepLabel.textContent = '您是代理簽核人：第 ' + (c.step||1) + ' 關（代理簽核會留痕）';
       } else {
         stepLabel.textContent = '您是本關簽核人：第 ' + (c.step||1) + ' 關';
       }
@@ -8296,10 +8325,11 @@ async function loadDetail(caseId, _fromPop) {
     resubmitBox.setAttribute('data-caseid', c.caseId);
   }
   // 管理員刪除按鈕（任意狀態皆可刪除）
+  // 「管理員刪除案件」功能已移除（2026-08-23）：為保留稽核紀錄，非草稿一律改用「作廢」。
+  // 後端 deleteCaseByAdmin 也會擋非草稿；此處永遠隱藏入口。
   const adminDelBox = document.getElementById('admin-delete-box');
   if (adminDelBox) {
-    adminDelBox.style.display = isAdmin() ? 'block' : 'none';
-    adminDelBox.setAttribute('data-caseid', c.caseId);
+    adminDelBox.style.display = 'none';
   }
   // 記住目前開啟的案件：作廢守門要靠它判斷「是不是自己的、有沒有人簽過」
   window._currentCase = c;
@@ -9814,7 +9844,7 @@ async function _renderPdfAllPages(wrap, fileId, href) {
   try {
     const [lib, res] = await Promise.all([
       _ensurePdfJs(),
-      callAPI('getFileB64', { fileId })
+      callAPI('getFileB64', { fileId, caseId: (window._currentCase && window._currentCase.caseId) || '' })
     ]);
     if (!res || !res.ok || !res.b64) throw new Error((res && res.error) || '取檔失敗');
     const raw = atob(res.b64);
@@ -9922,7 +9952,7 @@ function loadDriveThumbs(container) {
 
 async function _loadThumbViaGAS(wrap, fileId, href) {
   try {
-    const res = await callAPI('getThumb', { fileId });
+    const res = await callAPI('getThumb', { fileId, caseId: (window._currentCase && window._currentCase.caseId) || '' });
     if (res.ok && res.url) {
       wrap.innerHTML = '<img src="' + res.url + '" alt="附件預覽" '
         + 'style="width:100%;height:180px;object-fit:cover;display:block;background:#ECEEEA">';
