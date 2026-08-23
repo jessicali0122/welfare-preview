@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260823211516';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260823212201';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -306,8 +306,9 @@ input[type=radio]{accent-color:#577B53}
 .ht-tab-btn,.massage-tab,.ms-myseg,.ms-admseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
 .ht-tab-btn.active,.massage-tab.active,.ms-myseg.active,.ms-admseg.active{background:#fff;color:#738e41;font-weight:700;box-shadow:0 1px 4px rgba(0,0,0,.1);border-bottom-color:transparent!important}
 .section-title{font-size:14px;font-weight:700;color:#2E332D;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #D9DDD3}
-/* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分，這裡固定每列高度並裁切溢出） */
-#ht-cal-grid{grid-auto-rows:106px}#ms-cal-grid{grid-auto-rows:82px}
+/* 午茶日／按摩日曆：每一格寬高一致（欄寬已由 repeat(7,1fr) 等分）。
+   午茶日格高改 minmax(106px,auto)：最矮維持 106px，但同一天同時有午茶日＋壽星等內容較多時該列自動長高，避免底部壽星被 overflow:hidden 裁掉。 */
+#ht-cal-grid{grid-auto-rows:minmax(106px,auto)}#ms-cal-grid{grid-auto-rows:82px}
 #ht-cal-grid>div,#ms-cal-grid>div{overflow:hidden}
 /* 午茶日右側卡：本月行程 → 歷史回顧 一條時間軸（區塊標題、年份小晶片） */
 .ht-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
@@ -1779,6 +1780,9 @@ tbody td{font-size:var(--fs-base)!important}
   #ht-panel-calendar [style*="position:sticky"]{position:static!important}
   /* 活動日曆月份節日文字縮小 */
   #ht-cal-grid>div{min-height:60px}
+  /* 活動日曆手機版：縮小外卡(18px)＋內層灰底面板(14px)左右 padding，讓 7 欄格子更寬、日期/節日/午茶日文字不擠 */
+  #ht-cal-card{padding-left:8px!important;padding-right:8px!important}
+  #ht-cal-card>div{padding-left:8px!important;padding-right:8px!important}
   /* 年曆時間軸：手機版微縮，避免 12 個月份標籤過擠（仍維持可讀 12px） */
   #ht-year-timeline span[style*="font-size:14px"]{font-size:12px!important}
   #ht-year-timeline [style*="left:3%;right:3%;top:52px"]{left:1%!important;right:1%!important}
