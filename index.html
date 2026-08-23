@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260823205818';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260823210443';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -589,9 +589,6 @@ input[type=checkbox]{accent-color:#577B53}
 }
 
 
-/* ── BATCH BAR ── */
-#batch-bar{display:none;background:#363B35;color:#fff;padding:10px 16px;border-radius:10px;margin-bottom:14px;align-items:center;gap:12px}
-#batch-bar.show{display:flex}
 .cb-item{width:18px;height:18px;accent-color:#577B53;cursor:pointer;flex-shrink:0}
 
 /* ── DRAFT BANNER ── */
@@ -617,7 +614,6 @@ input[type=checkbox]{accent-color:#577B53}
   main{padding:14px!important}
   .card{border-radius:10px!important}
   #view-approvals .card{padding:14px!important}
-  #batch-bar{flex-wrap:wrap;gap:8px}
   /* table / btn font-size 由 Typography System 統一管理 */
   th,td{padding:8px 10px!important}
   #main-wrapper{margin-left:0!important}
@@ -3537,15 +3533,6 @@ thead th{color:#767B75!important}
           <span id="atab-proxy-count" style="background:#767B75;color:#fff;font-size:12px;font-weight:700;padding:1px 7px;border-radius:20px;min-width:18px;text-align:center">0</span>
         </div>
       </div>
-    </div>
-    <!-- 批次操作列 -->
-    <div id="batch-bar">
-      <input type="checkbox" id="select-all-cb" onchange="toggleSelectAll()" style="width:18px;height:18px;accent-color:#577B53;cursor:pointer;flex-shrink:0" title="全選">
-      <span id="batch-count-label" style="font-size:14px">已選 0 件</span>
-      <div style="flex:1"></div>
-      <button class="btn" style="background:#22c55e;color:#fff;padding:5px 14px;font-size:14px" onclick="batchApprove()">批次核准</button>
-      <button class="btn" style="background:#dc2626;color:#fff;padding:5px 14px;font-size:14px" onclick="batchReject()">批次退件</button>
-      <button class="btn" style="padding:5px 14px;font-size:14px;color:#fff;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3)" onclick="clearSelection()">取消</button>
     </div>
     <!-- 我需要審核 -->
     <div id="approvals-list">
@@ -7728,7 +7715,6 @@ async function loadApprovals() {
       +     '<button class="evx-act evx-act-ng" onclick="quickReject(\'' + c.caseId + '\')" title="退件" style="background:#fff1f2;color:#dc2626;border:1.5px solid #fecdd3;border-radius:8px;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center">'
       +       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
       +     '</button>'
-      +     '<input type="checkbox" class="approval-cb" data-caseid="' + c.caseId + '" onchange="updateBatchBar()" onclick="event.stopPropagation()" style="accent-color:#577B53;width:15px;height:15px;cursor:pointer;margin-left:3px">'
       +   '</div>'
       + '</div>'
       + '</div>';
@@ -12444,19 +12430,8 @@ function closeSidebar(){
   ov.style.display='none';  // 強制立即隱藏，避免 iOS 延遲渲染造成黑色殘影
 }
 // ══════════════════════════════════════════
-//  批次核准
+//  審核分頁切換
 // ══════════════════════════════════════════
-function _activeApprovalPanel(){
-  const p=document.getElementById('approvals-list-proxy');
-  return (p&&p.style.display==='block') ? p : (document.getElementById('approvals-list')||document);
-}
-function updateBatchBar(){
-  const checked=_activeApprovalPanel().querySelectorAll('.approval-cb:checked');
-  const bar=document.getElementById('batch-bar');
-  const lbl=document.getElementById('batch-count-label');
-  if(lbl)lbl.textContent='已選 '+checked.length+' 件';
-  if(bar){if(checked.length>0)bar.classList.add('show');else bar.classList.remove('show');}
-}
 function switchApprovalTab(tab){
   window._savedApprovalTab = tab;
   const mine=document.getElementById('approvals-list');
@@ -12474,91 +12449,6 @@ function switchApprovalTab(tab){
     if(tabMine)tabMine.classList.remove('active');
     if(tabProxy)tabProxy.classList.add('active');
   }
-  clearSelection();
-}
-function toggleSelectAll(){
-  // 只選目前可見分頁的 checkbox
-  const proxyPanel = document.getElementById('approvals-list-proxy');
-  const isProxyActive = proxyPanel && proxyPanel.style.display === 'block';
-  const activePanel = isProxyActive ? proxyPanel : document.getElementById('approvals-list');
-  const allCb = activePanel ? activePanel.querySelectorAll('.approval-cb') : document.querySelectorAll('.approval-cb');
-  const selectAllCb=document.getElementById('select-all-cb');
-  const shouldCheck=selectAllCb?selectAllCb.checked:true;
-  allCb.forEach(cb=>cb.checked=shouldCheck);
-  updateBatchBar();
-}
-function clearSelection(){
-  const _proxyP = document.getElementById('approvals-list-proxy');
-  const _activeP = (_proxyP && _proxyP.style.display==='block') ? _proxyP : (document.getElementById('approvals-list') || document);
-  _activeP.querySelectorAll('.approval-cb').forEach(cb=>cb.checked=false);
-  const sa=document.getElementById('select-all-cb');
-  if(sa)sa.checked=false;
-  updateBatchBar();
-}
-function batchApprove(){
-  const checked=_activeApprovalPanel().querySelectorAll('.approval-cb:checked');
-  if(checked.length===0){toast('⚠️ 請先勾選要核准的案件');return;}
-  _showConfirmModal(
-    '✅ 批次核准確認',
-    '確定一次核准 <strong>'+checked.length+' 件</strong>案件？<br><span style="font-size:14px;color:#767B75">核准後申請人將分別收到通知，此操作無法撤銷。</span>',
-    '全部核准','var(--brand)',
-    async function(){
-      const ids=Array.from(_activeApprovalPanel().querySelectorAll('.approval-cb:checked')).map(cb=>cb.getAttribute('data-caseid'));
-      let success=0;
-      for(const caseId of ids){
-        const res=await callAPI('approve',{caseId,comment:'批次核准'});
-        if(res.ok)success++;
-      }
-      toast('✅ 已核准 '+success+'/'+ids.length+' 件');
-      if(success>0) _launchConfetti(document.querySelector('.view.active'));
-      _cacheClear();
-      clearSelection();
-      loadApprovals();loadDashboard();
-    }
-  );
-}
-
-function batchReject(){
-  const checked = _activeApprovalPanel().querySelectorAll('.approval-cb:checked');
-  if (checked.length === 0) { toast('⚠️ 請先勾選要退件的案件'); return; }
-  // 在開啟 modal 時就擷取 ID，避免使用者確認前清單已改變（TOCTOU）
-  const capturedIds = Array.from(checked).map(cb => cb.getAttribute('data-caseid'));
-  // 先請使用者填寫退件原因，再執行
-  let m = document.getElementById('_batch_reject_modal');
-  if (!m) {
-    m = document.createElement('div');
-    m.id = '_batch_reject_modal';
-    m.className = 'modal-bg';
-    document.body.appendChild(m);
-  }
-  m.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.18)">'
-    + '<div style="font-size:16px;font-weight:700;color:#2E332D;margin-bottom:6px">🔴 批次退件確認</div>'
-    + '<div style="font-size:14px;color:#767B75;margin-bottom:16px">共 <strong>' + checked.length + ' 件</strong>將被退件，退件後申請人將分別收到通知。</div>'
-    + '<div style="font-size:14px;font-weight:600;color:#4A4F49;margin-bottom:6px">退件原因 <span style="color:#dc2626">*</span>（適用所有選取案件）</div>'
-    + '<textarea id="_batch_reject_reason" class="inp" rows="3" placeholder="請填寫退件原因..." style="resize:vertical;margin-bottom:16px"></textarea>'
-    + '<div style="display:flex;gap:10px">'
-    + '<button class="btn btn-o" style="flex:1;justify-content:center" onclick="document.getElementById(\'_batch_reject_modal\').classList.remove(\'open\')">取消</button>'
-    + '<button class="btn btn-r" style="flex:1;justify-content:center" id="_batch_reject_ok">確認批次退件</button>'
-    + '</div></div>';
-  m.classList.add('open');
-  setTimeout(() => document.getElementById('_batch_reject_reason')?.focus(), 100);
-  document.getElementById('_batch_reject_ok').onclick = async function() {
-    const reason = (document.getElementById('_batch_reject_reason')?.value || '').trim();
-    if (!reason) { toast('⚠️ 請填寫退件原因'); return; }
-    m.classList.remove('open');
-    const ids = capturedIds; // 使用開啟 modal 時已擷取的清單
-    toast('⏳ 批次退件中...');
-    let success = 0;
-    for (const caseId of ids) {
-      const res = await callAPI('reject', { caseId, comment: reason });
-      if (res.ok) success++;
-    }
-    toast('🔴 已退件 ' + success + '/' + ids.length + ' 件');
-    _cacheClear();
-    clearSelection();
-    loadApprovals(); loadDashboard();
-  };
-  m.onclick = function(e) { if (e.target === m) m.classList.remove('open'); };
 }
 
 // ══════════════════════════════════════════
