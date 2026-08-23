@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260823221227';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260823222531';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11370,7 +11370,11 @@ async function loadAdminUsers() {
   });
   if (typeof _refreshDeptOptions === 'function') _refreshDeptOptions(users);
   // 建立全域生日表，供午茶日壽星自動帶入（單一來源：使用者管理）
-  window._BF_USER_BDAYS = users.map(function(u){
+  // 排除已停用/刪除帳號，避免離職/刪除的人仍出現在壽星（左孟平案）
+  window._BF_USER_BDAYS = users.filter(function(u){
+    var st = String((u && u.status) || '').trim();
+    return st !== 'disabled' && st !== '停用' && st !== '停用中' && st !== 'inactive' && st !== 'deleted';
+  }).map(function(u){
     var p = _bdayParse(u.birthday || u.birthDay || '');
     return p ? { name: u.name, m: p.m, d: p.d } : null;
   }).filter(Boolean);
