@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260823220805';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260823221227';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7379,6 +7379,8 @@ function _applyCasesData(allCases) {
   allCases = allCases || [];
   // 快取「完整」資料供切回管理者視角時使用
   window._allCasesCache = allCases;
+  // 站內通知：資料一到就重建通知面板（待我審核 + 我的單完成/退件），不必等進到審核頁
+  try { if (typeof _syncApprovalsToNotif==='function') _syncApprovalsToNotif(); } catch(e){}
   // 🎭 角色預覽（模擬一般福委）：以下顯示與計數只用自己發起的案件（快取仍保留完整）
   allCases = _scopeForView(allCases);
   // 記錄本次成功渲染的世代與時間，供上方 8 秒守門判斷
@@ -7654,6 +7656,8 @@ async function loadApprovals() {
   const res = await callAPI('list');
   if (!res.ok) { if(!res._authError) toast('❌ 載入失敗：' + res.error); return; }
   if (res.cases) window._allCasesCache = res.cases;
+  // 站內通知：先重建一次（即使下方因「沒有待審」提前 return，我的完成/退件通知也要更新）
+  try { if (typeof _syncApprovalsToNotif==='function') _syncApprovalsToNotif(); } catch(e){}
   // 一律只列出輪到自己那一關的案件（管理者不再特例列出全部待審；仍可從案件詳情代理簽核）
   // 待處理＝輪到我簽的 ＋ 我是該案當關的請假指定代理人（真正代理人才看得到，管理員不再萬能代簽）
   // 🎭 角色預覽（模擬一般福委，非簽核人）：待審清單為空，符合非簽核人實際情況
@@ -10508,19 +10512,42 @@ window._bdayConfettiRain = _bdayConfettiRain;
 function toggleNotif(e){e.stopPropagation();document.getElementById('notif-panel').classList.toggle('open');}
 function closeNotif(){document.getElementById('notif-panel').classList.remove('open');}
 
-// 將待審核案件同步為通知項目
-function _syncApprovalsToNotif(pendingCases) {
+// ── 站內通知「已讀」集合（依登入 email 存 localStorage）──
+// 首次進來把「現有」已完成/已退件的單全視為已讀，之後才「新」變成終態的單才會冒通知（避免一次湧出一堆舊單）。
+function _notifReadKey(){ return 'notif_read_' + String((window.currentUser||{}).email||'').trim().toLowerCase(); }
+function _getReadNotifsRaw(){ try{ var v=localStorage.getItem(_notifReadKey()); return v?JSON.parse(v):null; }catch(e){ return null; } }
+function _setReadNotifs(arr){ try{ localStorage.setItem(_notifReadKey(), JSON.stringify((arr||[]).slice(-800))); }catch(e){} }
+function _addReadNotif(key){ var a=_getReadNotifsRaw()||[]; if(a.indexOf(key)===-1){ a.push(key); _setReadNotifs(a); } }
+
+// 重建通知面板：①待我審核（含代理）②我的單已完成/已退件且未讀（站內通知申請人）
+// 參數保留相容（已改為一律讀 window._allCasesCache 自行計算，呼叫端可不帶參數）
+function _syncApprovalsToNotif(_ignored) {
   const list = document.getElementById('notif-list');
   if (!list) return;
-  if (!pendingCases || pendingCases.length === 0) {
-    list.innerHTML = '<div style="text-align:center;padding:30px;color:#767B75;font-size:14px">目前沒有通知</div>';
-    updateBadge(0);
-    return;
-  }
-  list.innerHTML = pendingCases.map(function(c) {
-    const subject = c.project || c.subject || '（無主旨）';
-    const amount  = 'NT$ ' + Number(c.total || 0).toLocaleString();
-    return '<div class="notif-item unread" onclick="notifClick(this,\'approvals\')" style="cursor:pointer">'
+  var me  = String((window.currentUser||{}).email||'').trim().toLowerCase();
+  var all = Array.isArray(window._allCasesCache) ? window._allCasesCache : [];
+  var previewOwn = (typeof _previewOwnOnly==='function' && _previewOwnOnly());
+  var byDate = function(a,b){ return String(b.lastActionAt||b.createdAt||'') > String(a.lastActionAt||a.createdAt||'') ? 1 : -1; };
+
+  // ① 待我審核（含代理）
+  var approverItems = (previewOwn ? [] : all.filter(function(c){
+    return (typeof isMyTurnToApprove==='function' && isMyTurnToApprove(c))
+        || (typeof _isActiveProxyForCase==='function' && _isActiveProxyForCase(c));
+  })).slice().sort(byDate);
+
+  // ② 我的單：已完成/已退件
+  var mineAll = all.filter(function(c){
+    return c && String(c.email||'').trim().toLowerCase()===me && (c.status==='已完成' || c.status==='已退件');
+  }).slice().sort(byDate);
+  var stored = _getReadNotifsRaw();
+  if (stored === null) { stored = mineAll.map(function(c){ return c.caseId+':'+c.status; }); _setReadNotifs(stored); }
+  var mineUnread = mineAll.filter(function(c){ return stored.indexOf(c.caseId+':'+c.status)===-1; });
+
+  var html = '';
+  approverItems.forEach(function(c) {
+    var subject = c.project || c.subject || '（無主旨）';
+    var amount  = 'NT$ ' + Number(c.total || 0).toLocaleString();
+    html += '<div class="notif-item unread" onclick="notifClick(this,\'approvals\')" style="cursor:pointer">'
       + '<div style="display:flex;align-items:center;gap:8px">'
       +   '<span style="font-size:18px">📋</span>'
       +   '<div style="flex:1;min-width:0">'
@@ -10528,10 +10555,44 @@ function _syncApprovalsToNotif(pendingCases) {
       +     '<div style="font-size:12px;color:#767B75;margin-top:2px">' + htEsc(localName(c.email, c.name)) + '・' + amount + '</div>'
       +     '<div style="font-size:12px;color:#767B75;margin-top:1px">' + fmtDate(c.lastActionAt || c.createdAt) + '</div>'
       +   '</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
-  updateBadge(pendingCases.length);
+      + '</div></div>';
+  });
+  mineUnread.forEach(function(c) {
+    var subject = c.project || c.subject || '（無主旨）';
+    var done = c.status==='已完成';
+    var icon = done ? '✅' : '🔴';
+    var label = done ? '已完成簽核' : '已被退件';
+    var labelColor = done ? '#1e9d6b' : '#dc2626';
+    var key = c.caseId + ':' + c.status;
+    html += '<div class="notif-item unread" data-notifkey="' + htEsc(key) + '" onclick="_notifClickMine(this,\'' + c.caseId + '\',\'' + key + '\')" style="cursor:pointer">'
+      + '<div style="display:flex;align-items:center;gap:8px">'
+      +   '<span style="font-size:18px">' + icon + '</span>'
+      +   '<div style="flex:1;min-width:0">'
+      +     '<div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + htEsc(subject) + '</div>'
+      +     '<div style="font-size:12px;color:' + labelColor + ';font-weight:600;margin-top:2px">' + label + '・' + htEsc(c.caseId) + '</div>'
+      +     '<div style="font-size:12px;color:#767B75;margin-top:1px">' + fmtDate(c.lastActionAt || c.createdAt) + '</div>'
+      +   '</div>'
+      + '</div></div>';
+  });
+
+  if (!html) {
+    list.innerHTML = '<div style="text-align:center;padding:30px;color:#767B75;font-size:14px">目前沒有通知</div>';
+    updateBadge(0);
+    return;
+  }
+  list.innerHTML = html;
+  updateBadge(approverItems.length + mineUnread.length);
+}
+
+// 點「我的結果通知」：記為已讀（持久化）→ 開該案詳情
+function _notifClickMine(el, caseId, key){
+  try{ _addReadNotif(key); }catch(e){}
+  el.classList.remove('unread');
+  var unread=document.querySelectorAll('.notif-item.unread').length;
+  var b=document.getElementById('bell-badge');
+  if(b){ if(unread===0)b.style.display='none'; else b.textContent=unread; }
+  closeNotif();
+  if (typeof loadDetail==='function') loadDetail(caseId);
 }
 // ══════════════════════════════════════════
 //  操作紀錄（Audit Log）
@@ -10615,7 +10676,11 @@ function renderAuditLog(c) {
 }
 
 function markAllRead(){
-  document.querySelectorAll('.notif-item.unread').forEach(el=>el.classList.remove('unread'));
+  document.querySelectorAll('.notif-item.unread').forEach(function(el){
+    var k = el.getAttribute('data-notifkey');   // 我的結果通知：持久化已讀，避免下次重建又冒出來
+    if (k) { try{ _addReadNotif(k); }catch(e){} }
+    el.classList.remove('unread');
+  });
   const bellBadge=document.getElementById('bell-badge');
   if(bellBadge)bellBadge.style.display='none';
   toast('✅ 全部通知已標為已讀');
