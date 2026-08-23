@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260823212724';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260823213851';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5170,8 +5170,15 @@ function isMyTurnToApprove(c) {
   var _cu = window.currentUser; if (!_cu) return false;
   if (!c.status || !c.status.includes('待')) return false;
   const stepIdx = (c.step || 1) - 1;
+  if (stepIdx < 0) return false;
   var _me = String(_cu.email || '').trim().toLowerCase();
-  return stepIdx >= 0 && stepIdx < APPROVER_EMAILS.length
+  // ★ #1 修復：優先用「這張單當初凍結的簽核鏈快照」(c.chainEmails)判斷輪到誰，
+  //   不受事後改流程影響；舊案沒有 chainEmails 時退回即時流程設定(best-effort，與後端同策略)。
+  if (c && Array.isArray(c.chainEmails)) {
+    return stepIdx < c.chainEmails.length
+        && String(c.chainEmails[stepIdx] || '').trim().toLowerCase() === _me;
+  }
+  return stepIdx < APPROVER_EMAILS.length
       && String(APPROVER_EMAILS[stepIdx] || '').trim().toLowerCase() === _me;
 }
 
@@ -5181,12 +5188,25 @@ function _isActiveProxyForCase(c) {
   var _cu = window.currentUser; if (!_cu) return false;
   if (!c || !c.status || !String(c.status).includes('待')) return false;
   var stepIdx = (c.step || 1) - 1;
-  var enabled = (typeof _flowApprovers !== 'undefined' ? _flowApprovers : [])
-                  .filter(function(a){ return a.enabled !== false; });
+  if (stepIdx < 0) return false;
+  var _me = String(_cu.email).trim().toLowerCase();
+  var _flow = (typeof _flowApprovers !== 'undefined' ? _flowApprovers : []);
+  // ★ #1 修復：先用案件快照找出「這關凍結的原簽核人 email」，再用該 email 到「現在的流程設定」
+  //   查他此刻是否請假、代理人是誰（與後端 _activeProxyEmail_ 同策略：以 email 查、看當下請假狀態）。
+  if (c && Array.isArray(c.chainEmails)) {
+    var frozenEmail = String(c.chainEmails[stepIdx] || '').trim().toLowerCase();
+    if (!frozenEmail) return false;
+    var entryByEmail = _flow.filter(function(a){ return String(a.email||'').trim().toLowerCase() === frozenEmail; })[0];
+    if (!entryByEmail) return false;
+    return entryByEmail.onLeave === true && entryByEmail.proxyEmail
+        && String(entryByEmail.proxyEmail).trim().toLowerCase() === _me;
+  }
+  // 舊案相容：沒有快照時退回用即時流程的「第 N 關」判斷（best-effort，行為同修復前）
+  var enabled = _flow.filter(function(a){ return a.enabled !== false; });
   var entry = enabled[stepIdx];
   if (!entry) return false;
   return entry.onLeave === true && entry.proxyEmail
-      && String(entry.proxyEmail).trim().toLowerCase() === String(_cu.email).trim().toLowerCase();
+      && String(entry.proxyEmail).trim().toLowerCase() === _me;
 }
 window._isActiveProxyForCase = _isActiveProxyForCase;
 
@@ -16354,7 +16374,9 @@ function htRenderCalendar() {
     if (_bd.length) {
       var _names = _bd.map(function(b){ return b.name; });
       var _txt = _names.length <= 2 ? _names.join('、') : (_names[0] + ' 等 ' + _names.length + ' 位');
-      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="font-size:12px;color:#C2456B;font-weight:600;margin-top:2px;line-height:1.3;padding:0 2px;text-align:center;white-space:normal;word-break:break-word">' + _bdayStamp(11) + ' ' + htEsc(_txt) + '</div>';
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15">'
+        + _bdayStamp(11)
+        + '<span style="font-size:12px;color:#C2456B;font-weight:600;white-space:nowrap">' + htEsc(_txt) + '</span></div>';
     }
 
     if (hasEvent) {
