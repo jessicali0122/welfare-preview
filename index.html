@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260824100923';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260824103255';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10554,11 +10554,12 @@ function _syncApprovalsToNotif(_ignored) {
     var subject = c.project || c.subject || '（無主旨）';
     var amount  = 'NT$ ' + Number(c.total || 0).toLocaleString();
     html += '<div class="notif-item unread" onclick="notifClick(this,\'approvals\')" style="cursor:pointer">'
-      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<div style="display:flex;align-items:flex-start;gap:8px">'
       +   '<span style="font-size:18px">📋</span>'
       +   '<div style="flex:1;min-width:0">'
-      +     '<div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + htEsc(subject) + '</div>'
-      +     '<div style="font-size:12px;color:#767B75;margin-top:2px">' + htEsc(localName(c.email, c.name)) + '・' + amount + '</div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#2E332D">請款申請單</div>'
+      +     '<div style="font-size:12px;color:#E0820A;font-weight:600;margin-top:2px">待你審核・' + htEsc(localName(c.email, c.name)) + '</div>'
+      +     '<div style="font-size:12px;color:#767B75;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">主旨：' + htEsc(subject) + '・' + amount + '</div>'
       +     '<div style="font-size:12px;color:#767B75;margin-top:1px">' + fmtDate(c.lastActionAt || c.createdAt) + '</div>'
       +   '</div>'
       + '</div></div>';
@@ -10571,11 +10572,12 @@ function _syncApprovalsToNotif(_ignored) {
     var labelColor = done ? '#1e9d6b' : '#dc2626';
     var key = c.caseId + ':' + c.status;
     html += '<div class="notif-item unread" data-notifkey="' + htEsc(key) + '" onclick="_notifClickMine(this,\'' + c.caseId + '\',\'' + key + '\')" style="cursor:pointer">'
-      + '<div style="display:flex;align-items:center;gap:8px">'
+      + '<div style="display:flex;align-items:flex-start;gap:8px">'
       +   '<span style="font-size:18px">' + icon + '</span>'
       +   '<div style="flex:1;min-width:0">'
-      +     '<div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + htEsc(subject) + '</div>'
+      +     '<div style="font-size:14px;font-weight:600;color:#2E332D">請款申請單</div>'
       +     '<div style="font-size:12px;color:' + labelColor + ';font-weight:600;margin-top:2px">' + label + '・' + htEsc(c.caseId) + '</div>'
+      +     '<div style="font-size:12px;color:#767B75;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">主旨：' + htEsc(subject) + '</div>'
       +     '<div style="font-size:12px;color:#767B75;margin-top:1px">' + fmtDate(c.lastActionAt || c.createdAt) + '</div>'
       +   '</div>'
       + '</div></div>';
