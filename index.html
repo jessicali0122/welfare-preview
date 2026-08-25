@@ -337,18 +337,20 @@ input[type=checkbox]{accent-color:#577B53}
   .ht-hero-top .btn{order:2}
 }
 
+/* 編輯＋刪除包一層：桌面用 display:contents 讓兩鈕仍在操作列內排（外觀不變） */
+.flow-actions-edit{display:contents}
 /* ── FLOW ROW MOBILE ── */
 @media(max-width:768px){
   /* 手機版：內層 4 欄格線拆成 [序號|職稱]／[審核人]／[操作]，避免全部擠在同一列互相重疊 */
-  .flow-grid{grid-template-columns:36px 1fr!important;grid-template-rows:auto auto auto!important;gap:8px 12px!important;padding:14px 14px!important}
+  .flow-grid{position:relative;grid-template-columns:36px 1fr!important;grid-template-rows:auto auto auto!important;gap:8px 12px!important;padding:14px 14px!important}
   .flow-grid>div:nth-child(1){grid-column:1;grid-row:1;align-self:center}   /* 序號 */
   .flow-grid>div:nth-child(2){grid-column:2;grid-row:1;align-self:center}   /* 職稱 */
   .flow-grid>div:nth-child(3){grid-column:1/-1;grid-row:2}                  /* 審核人 */
   .flow-grid>div:nth-child(4){grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center}  /* 操作：換行不重疊 */
   /* ↑↓ 排序鈕：固定正方形、觸控加大 */
   .flow-grid>div:nth-child(4)>.flow-order-btn{width:40px!important;height:40px!important;flex:0 0 40px!important}
-  /* 編輯鈕維持自身寬度、跟其他操作鈕同排換行，不獨佔一整列、不放大 */
-  .flow-grid>div:nth-child(4)>.flow-edit-btn{flex:0 0 auto;min-width:0}
+  /* 手機版：編輯＋刪除移到卡片右上角，不佔操作列空間 */
+  .flow-actions-edit{display:flex!important;position:absolute!important;top:14px;right:14px;gap:6px;z-index:2}
   /* 供應商表：編號欄收窄、名稱欄放寬（少斷行）；編輯/刪除鈕左右並排，減少列高 */
   .sup-col-code{width:80px!important;padding-left:4px!important;padding-right:4px!important;font-size:13px!important}
   .sup-col-name{padding-left:6px!important;padding-right:6px!important}
@@ -10998,8 +11000,7 @@ function renderFlowList(approvers) {
         ${toggleBtn}
         ${(isEnabled && admin) ? `<button onclick="toggleFlowLeaveCheck(${i}, ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i])) ? 'false' : 'true'})" title="開關：此關簽核人請假，由代理人代簽" style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border:1.5px solid ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#F3C05A':'#D2D7CD'};background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#FFF8EC':'#fff'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s"><span style="width:32px;height:18px;border-radius:20px;background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#E0820A':'#CBD0C7'};position:relative;flex-shrink:0;display:inline-block;transition:background .15s"><span style="position:absolute;top:2px;left:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'16px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s"></span></span><span style="font-size:12px;font-weight:700;color:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#C9760A':'#6B7069'}">🌴 代理</span></button>` : ''}
         ${orderBtns}
-        ${editBtn}
-        ${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}
+        <div class="flow-actions-edit">${editBtn}${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}</div>
       </div>
       </div>
       ${isEnabled && admin && (a.onLeave || (window._flowProxyOpen && window._flowProxyOpen[i])) ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:#FFFBF3;flex-wrap:wrap">
