@@ -346,15 +346,15 @@ input[type=checkbox]{accent-color:#577B53}
   .flow-grid>div:nth-child(3){grid-column:1/-1;grid-row:2}                  /* 審核人 */
   .flow-grid>div:nth-child(4){grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center}  /* 操作：換行不重疊 */
   /* ↑↓ 排序鈕：固定正方形、觸控加大 */
-  .flow-grid>div:nth-child(4)>.flow-order-btn{width:44px!important;height:44px!important;flex:0 0 44px!important}
-  /* 編輯鈕彈性延伸，填滿該列剩餘空間 */
-  .flow-grid>div:nth-child(4)>.flow-edit-btn{flex:1;justify-content:center;min-width:60px}
-  /* 供應商表：編號欄收窄、名稱欄放寬（少斷行）、編輯/刪除鈕改上下堆疊省寬 */
-  .sup-col-code{width:82px!important;padding-left:4px!important;padding-right:4px!important;font-size:13px!important}
+  .flow-grid>div:nth-child(4)>.flow-order-btn{width:40px!important;height:40px!important;flex:0 0 40px!important}
+  /* 編輯鈕維持自身寬度、跟其他操作鈕同排換行，不獨佔一整列、不放大 */
+  .flow-grid>div:nth-child(4)>.flow-edit-btn{flex:0 0 auto;min-width:0}
+  /* 供應商表：編號欄收窄、名稱欄放寬（少斷行）；編輯/刪除鈕左右並排，減少列高 */
+  .sup-col-code{width:80px!important;padding-left:4px!important;padding-right:4px!important;font-size:13px!important}
   .sup-col-name{padding-left:6px!important;padding-right:6px!important}
-  .sup-col-act{width:64px!important;padding-left:4px!important;padding-right:6px!important}
-  .sup-actions{display:flex!important;flex-direction:column!important;gap:6px!important;align-items:stretch!important}
-  .sup-actions>button{width:100%!important;padding:7px 6px!important;text-align:center}
+  .sup-col-act{width:118px!important;padding-left:4px!important;padding-right:6px!important}
+  .sup-actions{display:inline-flex!important;flex-direction:row!important;gap:6px!important}
+  .sup-actions>button{padding:6px 10px!important}
 }
 
 /* ── USER MENU ── */
@@ -16473,15 +16473,13 @@ function htRenderCalendar() {
     var _bd = (window._BF_USER_BDAYS || []).filter(function(b){ return b.m === m && b.d === d; });
     if (_bd.length) {
       var _names = _bd.map(function(b){ return b.name; });
-      // 每位壽星各自獨立一列（壽星圖示＋完整姓名），依序往下排，避免多人擠成一行互相遮住。
-      // 桌面版月曆佔面板半寬、格子偏窄，長姓名改為自動換行（不用 nowrap），配合格高 minmax(106px,auto) 撐開，名字完整不溢出。
+      // 單一壽星圖示 ＋ 每位完整姓名各自一行（不斷行、字體縮小為 11px），多位依序往下排，
+      // 姓名不擠成一行互相遮住、也不換行破格；桌面／手機格子偏窄時仍完整顯示。
       var _rows = _names.map(function(nm){
-        return '<div style="display:flex;align-items:flex-start;justify-content:center;gap:3px;line-height:1.2">'
-          + _bdayStamp(11)
-          + '<span style="font-size:12px;color:#C2456B;font-weight:600;white-space:normal;word-break:break-word;text-align:center">' + htEsc(nm) + '</span></div>';
+        return '<div style="font-size:11px;color:#C2456B;font-weight:600;white-space:nowrap;line-height:1.25;text-align:center">' + htEsc(nm) + '</div>';
       }).join('');
-      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:2px">'
-        + _rows + '</div>';
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:1px">'
+        + _bdayStamp(11) + _rows + '</div>';
     }
 
     if (hasEvent) {
