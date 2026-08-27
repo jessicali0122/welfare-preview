@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827154502';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827154755';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2256,6 +2256,10 @@ thead th{color:#767B75!important}
       <button id="home-logo-btn" onclick="sw('dashboard')" title="回到總覽" style="width:32px;height:32px;border:none;background:none!important;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s;border-radius:50%" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"/></svg>
         <span class="approval-badge" style="position:absolute;top:0;right:0;display:none;pointer-events:none"><svg width="11" height="11" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="#577B53" stroke-width="2.5" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="#577B53"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="#577B53"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="#577B53"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="#577B53"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="#577B53"/></svg></span>
+      </button>
+      <button id="notif-bell-btn" onclick="toggleNotif(event)" title="通知" style="width:32px;height:32px;border:none;background:none!important;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;transition:opacity .15s;border-radius:50%" onmouseenter="this.style.opacity='.7'" onmouseleave="this.style.opacity='1'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4A4F49" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="bell-badge" style="position:absolute;top:-2px;right:-2px;display:none;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;background:#dc2626;color:#fff;font-size:12px;font-weight:700;line-height:16px;text-align:center;border-radius:10px;pointer-events:none">0</span>
       </button>
       <span id="topbar-capsule-sep" style="width:1px;height:18px;background:rgba(46,51,45,.16);flex-shrink:0"></span>
       <div id="header-user-btn" onclick="toggleUserMenu()" title="帳號選項" style="display:flex;align-items:center;cursor:pointer;border-radius:50%;transition:opacity .15s;flex-shrink:0" onmouseenter="this.style.opacity='.8'" onmouseleave="this.style.opacity='1'">
@@ -10829,23 +10833,10 @@ function updateDetailFlow(c){
   var _zhName = function(s){ var t = String(s||'').replace(/\s*[A-Za-z][A-Za-z .]*$/, '').trim(); return t || String(s||''); };
   // 作廢橫幅：狀態為作廢時，於簽核進度最上方明確標示（否則下方各關會誤顯示為「待審核中」）
   if (isVoid) {
-    var _vBy = c.voidBy ? htEsc(_zhName(c.voidBy)) : '';
-    var _vAt = c.voidAt ? htEsc(c.voidAt) : '';
-    var _vRe = c.voidReason ? htEsc(c.voidReason) : '';
-    var _vDetail = '';
-    if (_vBy || _vAt || _vRe) {
-      if (_vBy) _vDetail += '<div style="margin-top:4px">作廢人：<strong>' + _vBy + '</strong></div>';
-      if (_vAt) _vDetail += '<div style="margin-top:2px">作廢時間：' + _vAt + '</div>';
-      if (_vRe) _vDetail += '<div style="margin-top:2px">作廢原因：' + _vRe + '</div>';
-    } else {
-      _vDetail = '<div style="margin-top:4px">作廢原因與操作人請見「系統管理 → 系統紀錄」。</div>';
-    }
-    html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+    // 頂端橫幅只放一句總述；作廢人／時間／原因顯示在「發生作廢的那一關」，不重複
+    html += '<div style="display:flex;gap:8px;align-items:center;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
       +   '<span style="flex-shrink:0;font-size:16px;line-height:1.6">🚫</span>'
-      +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#92400E">'
-      +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
-      +     _vDetail
-      +   '</div>'
+      +   '<strong style="min-width:0;font-size:14px;line-height:1.6;color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
       + '</div>';
   }
   APPROVERS.forEach(function(a, i) {
