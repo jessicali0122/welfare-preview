@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827130120';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827144430';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -301,6 +301,11 @@ input[type=radio]{accent-color:#577B53}
 /* 案件追蹤上層切換膠囊：同款立體陰影（inline 底色不動，只補陰影與按壓回饋） */
 #apps-tab-all,#apps-tab-analytics{box-shadow:0 1px 2px rgba(46,51,45,.06),0 4px 12px rgba(46,51,45,.10);transition:box-shadow .18s,transform .12s}
 #apps-tab-all:active,#apps-tab-analytics:active{transform:translateY(1px)}
+/* 類別用途說明 tooltip（申請單「⑧ 類別」旁的 ⓘ） */
+.cat-help{position:relative;display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#C3D4C0;color:#46633F;font-size:12px;font-weight:700;font-style:normal;cursor:help;vertical-align:middle;-webkit-user-select:none;user-select:none}
+.cat-help .cat-tip{visibility:hidden;opacity:0;position:absolute;left:0;top:calc(100% + 8px);width:280px;max-width:78vw;background:#2E332D;color:#fff;font-size:12px;font-weight:400;line-height:1.7;padding:10px 12px;border-radius:8px;box-shadow:0 6px 20px rgba(46,51,45,.28);z-index:60;transition:opacity .15s;text-align:left}
+.cat-help .cat-tip b{color:#B8D3A0;font-weight:700}
+.cat-help:hover .cat-tip,.cat-help:focus .cat-tip,.cat-help:focus-within .cat-tip{visibility:visible;opacity:1}
 /* ── 分段控制器 tabs：午茶日 & 按摩預約（與案件追蹤一致） ── */
 .seg-track{display:flex;background:#ECEEEA;border-radius:12px;padding:3px;gap:2px}
 .ht-tab-btn,.massage-tab,.ms-myseg,.ms-admseg{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:9px 10px;border:none;border-bottom:none!important;border-radius:10px;background:transparent;color:#767B75;font-size:14px;font-weight:500;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .18s;white-space:nowrap}
@@ -2851,9 +2856,9 @@ thead th{color:#767B75!important}
       <div style="flex-basis:100%;border-top:1px solid #D9DDD3;margin-top:2px;padding-top:12px">
         <div style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:700;color:#46633F;margin-bottom:8px">📌 送件須知</div>
         <ul style="margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:#5A5F58;line-height:1.6">
-          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>固定送件日：每月 <strong>10、20、30 日</strong>（如遇例假日則順延辦理）</span></li>
-          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>單張請款金額達 <strong>$3,000（含）以上</strong>，經核准後可不受送件日限制，隨時提出申請</span></li>
-          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>請款時須檢附憑證正本及影本各 1 份（統一編號：61409721）※ 如無法提供憑證，請於備註欄說明原因。</span></li>
+          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span><strong>兩週付款一次</strong>，每月第二週及第四週的週五付款（如遇例假日或特殊節日之付款日期依財會部公告為準）。</span></li>
+          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>請款時須檢附憑證正本及影本各 1 份（抬頭：騰勢股份有限公司職工福利委員會；統一編號：61409721）※ 如無法提供憑證，請於備註欄說明原因。</span></li>
+          <li style="display:flex;gap:8px"><span style="color:#577B53;flex-shrink:0">✓</span><span>送件審核通過後，印出申請單檢附憑證送至財會部。</span></li>
         </ul>
         <!-- 資訊安全提醒（個資保護警語）：融入送件須知卡片內，白底襯托更顯眼 -->
         <div style="margin-top:12px;width:fit-content;max-width:100%;border:1px solid #E7A9B8;background:#FDF1F4;border-radius:10px;padding:10px 14px;display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.7">
@@ -3304,7 +3309,7 @@ thead th{color:#767B75!important}
                   <input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer">
                 </div>
                 <div>
-                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#dc2626">*</span></label>
+                  <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#dc2626">*</span> <span class="cat-help" tabindex="0" role="img" aria-label="各類別用途說明">i<span class="cat-tip"><b>活動費</b>：員工旅遊、家庭日、尾牙春酒、社團活動<br><b>福利費</b>：三節禮金／禮品、婚喪喜慶、生育補助<br><b>餐飲費</b>：聚餐、午茶、活動便當、茶水點心<br><b>獎品費</b>：抽獎獎品、活動獎勵、競賽獎金<br><b>物資費</b>：團購物資、防疫用品、備品耗材<br><b>場地設備費</b>：場地租借、設備租賃、佈置道具<br><b>行政費</b>：郵資、文具、印刷、匯費<br><b>其他</b>：無法歸類者，請於「項目」欄註明</span></span></label>
                   <select class="inp"><option value="">請選擇</option><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select>
                 </div>
                 <div>
@@ -3390,7 +3395,7 @@ thead th{color:#767B75!important}
         </div>
         <div class="card" style="padding:20px">
           <div style="font-size:14px;font-weight:600;color:#2E332D;margin-bottom:10px">注意事項</div>
-          <div style="font-size:14px;color:#767B75;margin-bottom:14px;line-height:2">✓ 固定送件日：每月 10、20、30 日（如遇例假日則順延辦理）<br>✓ 單張請款金額達 $3,000(含)以上，經核准後可不受送件日限制，隨時提出申請<br>✓ 請款時須檢附憑證正本及影本各 1 份（統一編號：61409721）<br>　 ※ 如無法提供憑證，請於備註欄說明原因。</div>
+          <div style="font-size:14px;color:#767B75;margin-bottom:14px;line-height:2">✓ 兩週付款一次，每月第二週及第四週的週五付款（如遇例假日或特殊節日之付款日期依財會部公告為準）。<br>✓ 請款時須檢附憑證正本及影本各 1 份（抬頭：騰勢股份有限公司職工福利委員會；統一編號：61409721）<br>　 ※ 如無法提供憑證，請於備註欄說明原因。<br>✓ 送件審核通過後，印出申請單檢附憑證送至財會部。</div>
           <div id="form-desktop-btns" style="display:flex;flex-direction:column;gap:8px">
             <button type="button" class="btn btn-p btn-submit-keep" style="width:100%;justify-content:center;padding:11px" onclick="submitForm()">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>送出申請
@@ -9798,7 +9803,7 @@ function addItem(){
   <div class="item-card-body">
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px">
     <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑦ 憑證日期 <span style="color:#dc2626">*</span></label><input class="inp date-inp" type="text" placeholder="選擇日期" readonly style="cursor:pointer"></div>
-    <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#dc2626">*</span></label><select class="inp"><option value="">請選擇</option><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
+    <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑧ 類別 <span style="color:#dc2626">*</span> <span class="cat-help" tabindex="0" role="img" aria-label="各類別用途說明">i<span class="cat-tip"><b>活動費</b>：員工旅遊、家庭日、尾牙春酒、社團活動<br><b>福利費</b>：三節禮金／禮品、婚喪喜慶、生育補助<br><b>餐飲費</b>：聚餐、午茶、活動便當、茶水點心<br><b>獎品費</b>：抽獎獎品、活動獎勵、競賽獎金<br><b>物資費</b>：團購物資、防疫用品、備品耗材<br><b>場地設備費</b>：場地租借、設備租賃、佈置道具<br><b>行政費</b>：郵資、文具、印刷、匯費<br><b>其他</b>：無法歸類者，請於「項目」欄註明</span></span></label><select class="inp"><option value="">請選擇</option><option>活動費</option><option>福利費</option><option>餐飲費</option><option>獎品費</option><option>物資費</option><option>場地設備費</option><option>行政費</option><option>其他</option></select></div>
     <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">⑨ 項目 <span style="color:#dc2626">*</span></label><input class="inp desc-inp" placeholder="例：慶生聚餐費用"></div>
   </div>
   <div style="margin-bottom:10px">
