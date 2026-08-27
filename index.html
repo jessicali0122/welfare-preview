@@ -211,12 +211,12 @@ tr.tr[data-status="作廢"] .evx-id-pending{color:#9AA096}
 /* ── 案件清單樣式 B：綠標題列＋斑馬紋＋狀態色左邊條＋白底陰影，跟背景拉開對比 ── */
 .app-table{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(46,51,45,.09)}
 .app-table thead tr{border-bottom:none!important}
-.app-table thead th{background:#46633F!important;color:#fff!important;font-weight:700!important}
-.app-table thead th.sortable-th:hover{color:#DDE7DA!important}
+.app-table thead th{background:#363B3E!important;color:#fff!important;font-weight:700!important}
+.app-table thead th.sortable-th:hover{color:#C9CDD2!important}
 .app-table tbody tr{border-bottom:1px solid #EAECE7}
 .app-table tbody tr:not([data-status="作廢"]):nth-child(even) td{background:#FAFBF9}
-.app-table tbody tr:hover td{background:#EEF3EC!important}
-.app-table tbody tr[data-status="作廢"]:hover td{background:#E9EBE6!important}
+.app-table tbody tr:hover td{background:#E4EEF9!important}
+.app-table tbody tr[data-status="作廢"]:hover td{background:#DDE4EC!important}
 /* 狀態色左邊條（畫在單號欄＝第2格；checkbox 為第1格）*/
 .app-table tbody tr td:nth-child(2){border-left:4px solid #B4B8AE}
 .app-table tbody tr[data-status^="待"] td:nth-child(2){border-left-color:#E0820A}
@@ -3282,13 +3282,15 @@ thead th{color:#767B75!important}
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">① 主旨 <span style="color:#dc2626">*</span></label>
               <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用" oninput="updateFormProgress()">
             </div>
-            <div>
-              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span></label>
-              <select class="inp" id="apply-item" onchange="updateFormProgress()"><option value="一般請款">一般請款</option></select>
-            </div>
-            <div>
-              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">② 單號（自動產生）</label>
-              <input class="inp" value="" readonly style="background:#F7F8F6;color:#767B75;font-weight:700;font-family:'Noto Sans TC',sans-serif" placeholder="送出後自動產生">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+              <div>
+                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span></label>
+                <select class="inp" id="apply-item" onchange="updateFormProgress()" style="width:100%"><option value="一般請款">一般請款</option></select>
+              </div>
+              <div>
+                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">② 單號（自動產生）</label>
+                <input class="inp" value="" readonly style="width:100%;background:#F7F8F6;color:#767B75;font-weight:700;font-family:'Noto Sans TC',sans-serif" placeholder="送出後自動產生">
+              </div>
             </div>
           </div>
           <input type="hidden" id="apply-date">
@@ -7241,12 +7243,20 @@ function _renderCaseRow(c, opts) {
   opts = opts || {};
   const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : (c.status === '草稿' || c.status === '作廢') ? 'bd' : 'bp';
   const _stepInfo = getStepApproverInfo(c.step);
+  // ★ 待審中的當關簽核人：優先用「該案自己的簽核鏈快照」(chainEmails/chainNames，隨清單資料一起回傳，
+  //   不必等全域流程 _flowApprovers 載入，也對 HR 特殊案件正確)；全域流程只當後備。
+  const _pend  = !!(c.status && c.status.includes('待'));
+  const _cidx  = (Number(c.step) || 1) - 1;
+  const _chEmail = (_pend && Array.isArray(c.chainEmails)) ? (c.chainEmails[_cidx] || '') : '';
+  const _chName  = (_pend && Array.isArray(c.chainNames))  ? (c.chainNames[_cidx]  || '') : '';
+  const _pendName  = (_chEmail && LOCAL_EMAIL_TO_NAME[_chEmail]) || _chName || _stepInfo.name;
+  const _pendEmail = _chEmail || _stepInfo.email;
   const stepApproverName = c.status === '已退件'
     ? (c.rejectedBy ? (LOCAL_EMAIL_TO_NAME[c.rejectedBy] || c.rejectedBy) : _stepInfo.name)
-    : (c.status && c.status.includes('待') ? _stepInfo.name : '');
+    : (_pend ? _pendName : '');
   const stepApproverEmail = c.status === '已退件'
     ? (c.rejectedBy && c.rejectedBy.includes('@') ? c.rejectedBy : _stepInfo.email)
-    : (c.status && c.status.includes('待') ? _stepInfo.email : '');
+    : (_pend ? _pendEmail : '');
   // prefer LOCAL_USER_LIST email (same source as avatar storage) over flow-config email
   const _nameBasedEmail = stepApproverName
     ? ((LOCAL_USER_LIST.find(function(u){return u.name===stepApproverName;})||{}).email||'') : '';
