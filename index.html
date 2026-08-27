@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827151736';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827151925';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10827,11 +10827,22 @@ function updateDetailFlow(c){
   let html = '';
   // 作廢橫幅：狀態為作廢時，於簽核進度最上方明確標示（否則下方各關會誤顯示為「待審核中」）
   if (isVoid) {
+    var _vBy = c.voidBy ? htEsc(c.voidBy) : '';
+    var _vAt = c.voidAt ? htEsc(c.voidAt) : '';
+    var _vRe = c.voidReason ? htEsc(c.voidReason) : '';
+    var _vDetail = '';
+    if (_vBy || _vAt || _vRe) {
+      if (_vBy) _vDetail += '<div style="margin-top:4px">作廢人：<strong>' + _vBy + '</strong></div>';
+      if (_vAt) _vDetail += '<div style="margin-top:2px">作廢時間：' + _vAt + '</div>';
+      if (_vRe) _vDetail += '<div style="margin-top:2px">作廢原因：' + _vRe + '</div>';
+    } else {
+      _vDetail = '<div style="margin-top:4px">作廢原因與操作人請見「系統管理 → 系統紀錄」。</div>';
+    }
     html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
       +   '<span style="flex-shrink:0;font-size:16px;line-height:1.6">🚫</span>'
       +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#92400E">'
-      +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong><br>'
-      +     '作廢原因與操作人請見「系統管理 → 系統紀錄」。'
+      +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
+      +     _vDetail
       +   '</div>'
       + '</div>';
   }
