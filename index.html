@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827155338';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827155951';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10894,12 +10894,13 @@ function updateDetailFlow(c){
                  + emailHtml
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
-    } else if (isVoid && i === currentStep - 1) {
-      // 案件當時停在此關才被作廢 → 標「流程於此關作廢」，但只顯示這關「自己的簽核人」，
-      // 絕不把作廢人（可能是申請人等非審核人員）塞進來混淆角色；作廢人統一放頂端橫幅。
+    } else if (isVoid && i === currentStep - 1 && c.voidBy && _zhName(c.voidBy) === _zhName(actorName)) {
+      // 只有「作廢人正是這關的簽核人」時，才在他這關紅標「本人作廢」（例：主任委員在自己關作廢）。
+      // 若作廢人是申請人／管理者等非審核人員，則走下方通用「流程已中止」，不紅標任何人。
       iconSvg = leafSvg('#B45309', 28);
-      statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 流程於此關作廢</div>'
-                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + a.name + '</div>';
+      statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 本人作廢</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + '</div>'
+                 + (c.voidAt ? '<div class="flow-at" style="font-size:12px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + htEsc(c.voidAt) + '</div>' : '');
     } else if (isVoid) {
       // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
       iconSvg = leafSvg('#D2D6D0', 28);
