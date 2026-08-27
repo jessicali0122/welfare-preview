@@ -3516,7 +3516,7 @@ thead th{color:#767B75!important}
         <div class="card" style="padding:20px">
           <div class="section-title">申請資訊</div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px 20px;font-size:14px">
-            <div style="grid-column:1/-1"><div style="color:#767B75;font-size:12px;margin-bottom:3px">主旨</div><div id="detail-subject" style="font-weight:600;color:#2E332D">—</div></div>
+            <div style="grid-column:1/-1;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-start"><div style="flex:1;min-width:180px"><div style="color:#767B75;font-size:12px;margin-bottom:3px">主旨</div><div id="detail-subject" style="font-weight:600;color:#2E332D">—</div></div><div style="flex:0 0 auto;min-width:110px"><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請項目</div><div id="detail-apply-item" style="font-weight:600;color:#2E332D">—</div></div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請人</div><div id="detail-applicant-name" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">部門</div><div id="detail-department" style="font-weight:600;color:#2E332D">—</div></div>
             <div><div style="color:#767B75;font-size:12px;margin-bottom:3px">申請時間</div><div id="detail-apply-date" style="font-weight:600;color:#2E332D">—</div></div>
@@ -8378,6 +8378,7 @@ async function loadDetail(caseId, _fromPop) {
       var _sub0 = c0.subject || c0.project || '—';
       _setTxt('detail-subject', _sub0);
       _setTxt('detail-header-subject', _sub0);
+      _setTxt('detail-apply-item', c0.applyItem || '—');
       _setTxt('detail-apply-date', fmtDate(c0.applyDate || c0.createdAt));
       _setTxt('detail-payee', c0.payee || localName(c0.email, c0.name));
       // ⚠️ 簽核進度「不可」用列表底稿畫：列表沒有每一關的簽核紀錄（approvals），
@@ -8441,6 +8442,9 @@ async function loadDetail(caseId, _fromPop) {
   if (subjectEl) subjectEl.textContent = c.subject || c.project || '—';
   const headerSubjectEl = document.getElementById('detail-header-subject');
   if (headerSubjectEl) headerSubjectEl.textContent = c.subject || c.project || '—';
+  // 申請項目（getCase 有回傳就用；否則保留清單快取預填的值，不清空）
+  const applyItemEl = document.getElementById('detail-apply-item');
+  if (applyItemEl && c.applyItem) applyItemEl.textContent = c.applyItem;
   // 員工編號（有值直接用；空白時從本地清單補）
   // 付款方式：舊案件沒有這欄 → 視為薪轉戶（與過去顯示一致）
   const pmEl = document.getElementById('detail-pay-method');
