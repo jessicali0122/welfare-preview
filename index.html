@@ -364,14 +364,12 @@ input[type=checkbox]{accent-color:#577B53}
 
 /* 編輯＋刪除包一層：桌面用 display:contents 讓兩鈕仍在操作列內排（外觀不變） */
 .flow-actions-edit{display:contents}
-/* ── 簽核流程列：中等寬度（≤1024）就把操作鈕堆疊換行，避免縮視窗時按鈕互相重疊 ── */
-@media(max-width:1024px){
-  .flow-grid{position:relative;grid-template-columns:36px 1fr!important;grid-template-rows:auto auto auto!important;gap:8px 12px!important;padding:14px 14px!important}
-  .flow-grid>div:nth-child(1){grid-column:1;grid-row:1;align-self:center}
-  .flow-grid>div:nth-child(2){grid-column:2;grid-row:1;align-self:center}
-  .flow-grid>div:nth-child(3){grid-column:1/-1;grid-row:2}
-  .flow-grid>div:nth-child(4){grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-  .flow-actions-edit{display:flex!important;position:absolute!important;top:14px;right:14px;gap:6px;z-index:2}
+/* ── 簽核流程列：中等寬度（769–1024）改 flex 自動換行——空間夠就一排，不夠時「操作鈕」整組自然折到下一行，
+      不硬拆成高高的三排（手機 ≤768 走下方的堆疊版、桌面 >1024 維持原樣）── */
+@media(min-width:769px) and (max-width:1024px){
+  .flow-grid{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px 14px!important;padding:14px 18px!important}
+  .flow-grid>div:nth-child(3){flex:1 1 180px;min-width:0}
+  .flow-grid>div:nth-child(4){flex-wrap:wrap;gap:8px}
 }
 /* ── FLOW ROW MOBILE ── */
 @media(max-width:768px){
