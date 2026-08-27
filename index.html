@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827145521';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827150818';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10566,9 +10566,9 @@ function _syncApprovalsToNotif(_ignored) {
         || (typeof _isActiveProxyForCase==='function' && _isActiveProxyForCase(c));
   })).slice().sort(byDate);
 
-  // ② 我的單：已完成/已退件
+  // ② 我的單：已完成/已退件/作廢
   var mineAll = all.filter(function(c){
-    return c && String(c.email||'').trim().toLowerCase()===me && (c.status==='已完成' || c.status==='已退件');
+    return c && String(c.email||'').trim().toLowerCase()===me && (c.status==='已完成' || c.status==='已退件' || c.status==='作廢');
   }).slice().sort(byDate);
   var stored = _getReadNotifsRaw();
   if (stored === null) { stored = mineAll.map(function(c){ return c.caseId+':'+c.status; }); _setReadNotifs(stored); }
@@ -10591,10 +10591,9 @@ function _syncApprovalsToNotif(_ignored) {
   });
   mineUnread.forEach(function(c) {
     var subject = c.project || c.subject || '（無主旨）';
-    var done = c.status==='已完成';
-    var icon = done ? '✅' : '🔴';
-    var label = done ? '已完成簽核' : '已被退件';
-    var labelColor = done ? '#1e9d6b' : '#dc2626';
+    var icon = c.status==='已完成' ? '✅' : c.status==='已退件' ? '🔴' : '🚫';
+    var label = c.status==='已完成' ? '已完成簽核' : c.status==='已退件' ? '已被退件' : '已被作廢';
+    var labelColor = c.status==='已完成' ? '#1e9d6b' : c.status==='已退件' ? '#dc2626' : '#b45309';
     var key = c.caseId + ':' + c.status;
     html += '<div class="notif-item unread" data-notifkey="' + htEsc(key) + '" onclick="_notifClickMine(this,\'' + c.caseId + '\',\'' + key + '\')" style="cursor:pointer">'
       + '<div style="display:flex;align-items:flex-start;gap:8px">'
