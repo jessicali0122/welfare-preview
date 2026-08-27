@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827151925';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827154137';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10890,6 +10890,11 @@ function updateDetailFlow(c){
                  + emailHtml
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
+    } else if (isVoid) {
+      // 作廢：尚未簽核的關卡流程已中止，不再顯示「待審核中／等待前一關完成」（否則像還在等人審）
+      iconSvg = leafSvg('#D2D6D0', 28);
+      statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 流程已中止</div>'
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + a.name + '</div>';
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
@@ -10899,7 +10904,7 @@ function updateDetailFlow(c){
       statusHtml = '<div style="font-size:14px;color:#767B75;margin-top:2px">等待前一關完成</div>'
                  + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + a.name + '</div>';
     }
-    var isActive = result || (!isDone && !isRejected && i === currentStep-1);
+    var isActive = result || (!isVoid && !isDone && !isRejected && i === currentStep-1);
     var titleColor = isActive ? '#4A4F49' : '#767B75';
 
     // flex 雙欄：左欄（icon + 虛線）自動撐高，右欄（文字）
