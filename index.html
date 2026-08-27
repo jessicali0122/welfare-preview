@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827125535';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827125602';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -337,16 +337,26 @@ input[type=checkbox]{accent-color:#577B53}
   .ht-hero-top .btn{order:2}
 }
 
+/* 編輯＋刪除包一層：桌面用 display:contents 讓兩鈕仍在操作列內排（外觀不變） */
+.flow-actions-edit{display:contents}
 /* ── FLOW ROW MOBILE ── */
 @media(max-width:768px){
-  .flow-row{grid-template-columns:36px 1fr!important;grid-template-rows:auto auto!important;gap:10px!important}
-  .flow-row>div:nth-child(3){grid-column:2;margin-top:-4px}
-  .flow-row>div:nth-child(4){grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-  /* 「啟用中」badge 和「編輯」按鈕：彈性延伸；↑↓ 按鈕：固定正方形，觸控加大 */
-  .flow-row>div:nth-child(4)>.flow-order-btn{width:44px!important;height:44px!important;flex:0 0 44px!important;font-size:18px!important}
-  .flow-row>div:nth-child(4)>.flow-status-badge{flex:1;text-align:center}
-  .flow-status-badge{cursor:default!important;pointer-events:none!important}
-  .flow-row>div:nth-child(4)>.flow-edit-btn{flex:1;justify-content:center;min-width:60px}
+  /* 手機版：內層 4 欄格線拆成 [序號|職稱]／[審核人]／[操作]，避免全部擠在同一列互相重疊 */
+  .flow-grid{position:relative;grid-template-columns:36px 1fr!important;grid-template-rows:auto auto auto!important;gap:8px 12px!important;padding:14px 14px!important}
+  .flow-grid>div:nth-child(1){grid-column:1;grid-row:1;align-self:center}   /* 序號 */
+  .flow-grid>div:nth-child(2){grid-column:2;grid-row:1;align-self:center}   /* 職稱 */
+  .flow-grid>div:nth-child(3){grid-column:1/-1;grid-row:2}                  /* 審核人 */
+  .flow-grid>div:nth-child(4){grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center}  /* 操作：換行不重疊 */
+  /* ↑↓ 排序鈕：固定正方形、觸控加大 */
+  .flow-grid>div:nth-child(4)>.flow-order-btn{width:40px!important;height:40px!important;flex:0 0 40px!important}
+  /* 手機版：編輯＋刪除移到卡片右上角，不佔操作列空間 */
+  .flow-actions-edit{display:flex!important;position:absolute!important;top:14px;right:14px;gap:6px;z-index:2}
+  /* 供應商表：編號欄收窄、名稱欄放寬（少斷行）；編輯/刪除鈕左右並排，減少列高 */
+  .sup-col-code{width:80px!important;padding-left:4px!important;padding-right:4px!important;font-size:13px!important}
+  .sup-col-name{padding-left:6px!important;padding-right:6px!important}
+  .sup-col-act{width:118px!important;padding-left:4px!important;padding-right:6px!important}
+  .sup-actions{display:inline-flex!important;flex-direction:row!important;gap:6px!important}
+  .sup-actions>button{padding:6px 10px!important}
 }
 
 /* ── USER MENU ── */
@@ -585,7 +595,8 @@ input[type=checkbox]{accent-color:#577B53}
   /* 標題副標：手機用短版日期，避免 375px 斷行 */
   .ht-sub-full{display:none}
   .ht-sub-mini{display:inline}
-  /* 活動設定：每人預算獨佔一整列，讓欄位變成 [日期|人數]／[預算]／[主辦1|主辦2]，不再留半格空洞 */
+  /* 活動設定：活動名稱獨佔一列、每人預算獨佔一列 → [名稱]／[日期|人數]／[預算]／[主辦1|主辦2]，不再留半格空洞 */
+  .ht-field-title{grid-column:1/-1}
   .ht-field-budget{grid-column:1/-1}
 }
 
@@ -3918,7 +3929,7 @@ thead th{color:#767B75!important}
         <div id="ht-event-fields" style="display:none;margin-top:12px">
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px 14px">
             <div style="display:none"><div id="ht-event-month-display">—</div></div>
-            <div>
+            <div class="ht-field-title">
               <div style="font-size:12px;color:#767B75;margin-bottom:5px">活動名稱</div>
               <input id="ht-event-title" type="text" placeholder="未填寫時顯示「午茶日」" onchange="htSaveEventInfo()" style="width:100%;box-sizing:border-box;border:1px solid #C3D2BE;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;color:#363B35;font-weight:600;outline:none;background:#fff">
             </div>
@@ -10971,7 +10982,7 @@ function renderFlowList(approvers) {
     const rowShadow  = isEnabled ? 'box-shadow:0 1px 6px rgba(87,123,83,.08);' : '';
 
     return `<div class="flow-row" data-index="${i}" style="background:${rowBg};border-radius:10px;border:${rowBorder};${rowAccent}${rowShadow}${isEnabled ? '' : 'opacity:.6'};overflow:hidden">
-      <div style="display:grid;grid-template-columns:44px minmax(120px,200px) 1fr auto;gap:14px;align-items:center;padding:14px 18px">
+      <div class="flow-grid" style="display:grid;grid-template-columns:44px minmax(120px,200px) 1fr auto;gap:14px;align-items:center;padding:14px 18px">
       <!-- 序號 -->
       <div style="width:36px;height:36px;background:${numBg};color:${numColor};border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;flex-shrink:0">${isEnabled ? activeNum : '—'}</div>
       <!-- 職稱 -->
@@ -10989,8 +11000,7 @@ function renderFlowList(approvers) {
         ${toggleBtn}
         ${(isEnabled && admin) ? `<button onclick="toggleFlowLeaveCheck(${i}, ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i])) ? 'false' : 'true'})" title="開關：此關簽核人請假，由代理人代簽" style="display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border:1.5px solid ${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#F3C05A':'#D2D7CD'};background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#FFF8EC':'#fff'};border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:all .15s"><span style="width:32px;height:18px;border-radius:20px;background:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#E0820A':'#CBD0C7'};position:relative;flex-shrink:0;display:inline-block;transition:background .15s"><span style="position:absolute;top:2px;left:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'16px':'2px'};width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s"></span></span><span style="font-size:12px;font-weight:700;color:${(a.onLeave || (window._flowProxyOpen&&window._flowProxyOpen[i]))?'#C9760A':'#6B7069'}">🌴 代理</span></button>` : ''}
         ${orderBtns}
-        ${editBtn}
-        ${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}
+        <div class="flow-actions-edit">${editBtn}${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}</div>
       </div>
       </div>
       ${isEnabled && admin && (a.onLeave || (window._flowProxyOpen && window._flowProxyOpen[i])) ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:#FFFBF3;flex-wrap:wrap">
@@ -12343,12 +12353,13 @@ function _renderSupPage(page){
   var rows = slice.map(function(v){
     var c = htEsc(v.code), n = htEsc(v.name);
     return '<tr data-code="'+c+'" style="border-bottom:1px solid #EEF1EC;transition:background .12s" onmouseover="this.style.background=\'#F7FAF6\'" onmouseout="this.style.background=\'\'">'
-      + '<td style="padding:12px 8px;font-weight:700;color:#2E332D;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-align:center">'+c+'</td>'
-      + '<td style="padding:12px 8px;color:#4A4F49">'+n+'</td>'
-      + '<td style="padding:12px 8px;text-align:right;white-space:nowrap">'
-      + '<button class="btn btn-o" style="padding:5px 12px;font-size:13px" onclick="supplierEdit(this)">編輯</button> '
+      + '<td class="sup-col-code" style="padding:12px 8px;font-weight:700;color:#2E332D;font-variant-numeric:tabular-nums;letter-spacing:.02em;text-align:center;white-space:nowrap">'+c+'</td>'
+      + '<td class="sup-col-name" style="padding:12px 8px;color:#4A4F49">'+n+'</td>'
+      + '<td class="sup-col-act" style="padding:12px 8px;text-align:right;white-space:nowrap">'
+      + '<div class="sup-actions" style="display:inline-flex;gap:6px;justify-content:flex-end">'
+      + '<button class="btn btn-o" style="padding:5px 12px;font-size:13px" onclick="supplierEdit(this)">編輯</button>'
       + '<button style="padding:5px 12px;font-size:13px;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:600;transition:all .15s" onmouseover="this.style.background=\'#fde8e8\'" onmouseout="this.style.background=\'#fff5f5\'" onclick="supplierDelete(this)">刪除</button>'
-      + '</td></tr>';
+      + '</div></td></tr>';
   }).join('');
   // 頁碼：左右箭頭切換（‹ 目前頁 / 總頁數 ›），箭頭到底時停用
   var pagesHtml = '<button class="evx-pb" onclick="_renderSupPage('+(page-1)+')" '+(page===1?'disabled':'')+' aria-label="上一頁">‹</button>'
@@ -12357,7 +12368,7 @@ function _renderSupPage(page){
   var sizeOpts = ['15','30','50'].map(function(o){ return '<option value="'+o+'"'+(String(size)===o?' selected':'')+'>'+o+'</option>'; }).join('');
   box.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:14px">'
     + '<thead><tr style="border-bottom:2px solid #E1E8DD;color:#9AA096">'
-    + '<th style="text-align:center;padding:10px 8px;width:160px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商編號</th><th style="text-align:left;padding:10px 8px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商名稱</th><th style="width:130px"></th></tr></thead><tbody>'
+    + '<th class="sup-col-code" style="text-align:center;padding:10px 8px;width:118px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商編號</th><th class="sup-col-name" style="text-align:left;padding:10px 8px;font-size:13px;font-weight:700;letter-spacing:.04em">供應商名稱</th><th class="sup-col-act" style="width:150px"></th></tr></thead><tbody>'
     + rows
     + '</tbody></table>'
     // 整條分頁列靠右：每頁顯示 + 共 N 筆 + 左右切換，全部靠右對齊
@@ -16463,10 +16474,13 @@ function htRenderCalendar() {
     var _bd = (window._BF_USER_BDAYS || []).filter(function(b){ return b.m === m && b.d === d; });
     if (_bd.length) {
       var _names = _bd.map(function(b){ return b.name; });
-      var _txt = _names.length <= 2 ? _names.join('、') : (_names[0] + ' 等 ' + _names.length + ' 位');
-      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1.15">'
-        + _bdayStamp(11)
-        + '<span style="font-size:12px;color:#C2456B;font-weight:600;white-space:nowrap">' + htEsc(_txt) + '</span></div>';
+      // 單一壽星圖示 ＋ 每位完整姓名各自一行（不斷行、字體縮小為 11px），多位依序往下排，
+      // 姓名不擠成一行互相遮住、也不換行破格；桌面／手機格子偏窄時仍完整顯示。
+      var _rows = _names.map(function(nm){
+        return '<div style="font-size:11px;color:#C2456B;font-weight:600;white-space:nowrap;line-height:1.25;text-align:center">' + htEsc(nm) + '</div>';
+      }).join('');
+      bottomLabel += '<div title="' + htEsc(_names.join('、')) + '" style="margin-top:2px;display:flex;flex-direction:column;align-items:center;gap:1px">'
+        + _bdayStamp(11) + _rows + '</div>';
     }
 
     if (hasEvent) {
