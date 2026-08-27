@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827154755';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827155111';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10886,9 +10886,11 @@ function updateDetailFlow(c){
     } else if (isVoid && i === currentStep - 1) {
       // 作廢就發生在這一關（案件當時停在此關）→ 在這關註明由誰作廢，而非籠統「流程已中止」
       iconSvg = leafSvg('#B45309', 28);
-      var _vbName = c.voidBy ? htEsc(_zhName(c.voidBy)) : a.name;
+      // 作廢人一律用後端記錄的 voidBy；抓不到時「不可」拿這關簽核人頂替（會誤指他作廢），改標未紀錄
+      var _vbName = c.voidBy ? ('<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">作廢人：' + htEsc(_zhName(c.voidBy)) + '</div>')
+                             : '<div style="font-size:12px;color:#9AA096;margin-top:4px">作廢人未紀錄，請見「系統管理 → 系統紀錄」</div>';
       statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 已作廢</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + _vbName + '</div>'
+                 + _vbName
                  + (c.voidAt ? '<div class="flow-at" style="font-size:12px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + htEsc(c.voidAt) + '</div>' : '')
                  + (c.voidReason ? '<div style="font-size:12px;color:#B45309;margin-top:3px;line-height:1.4">作廢原因：' + htEsc(c.voidReason) + '</div>' : '');
     } else if (isVoid) {
