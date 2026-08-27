@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827155951';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827160055';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8277,7 +8277,11 @@ async function loadDetail(caseId, _fromPop) {
   const _reqId = (window._detailReqId = (window._detailReqId || 0) + 1);
   // 記住從哪個頁面進來，讓返回按鈕能回到正確頁面
   const currentView = document.querySelector('.view.active')?.id?.replace('view-','') || 'applications';
-  window._detailReturnView = (currentView === 'detail') ? (window._detailReturnView || 'applications') : currentView;
+  var _retView = (currentView === 'detail') ? (window._detailReturnView || 'applications') : currentView;
+  // 案件的「返回」不該落在主畫面（總覽）：從總覽/鈴鐺通知/首頁點進單據時，返回改回「費用申請」清單，
+  // 而不是跳回總覽（使用者實際回報的困惑點）。從審核頁等其他頁進來則維持回到原頁。
+  if (_retView === 'dashboard') _retView = 'applications';
+  window._detailReturnView = _retView;
   // ── 瀏覽器歷史紀錄：pushState 讓重整 / 上一頁正確還原 ──
   if (!_fromPop && window._appReady) {
     history.pushState({ view: 'detail', caseId: caseId }, '', '#detail/' + caseId);
