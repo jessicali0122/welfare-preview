@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827154137';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827154502';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10825,9 +10825,11 @@ function updateDetailFlow(c){
   const _dashedLine = 'repeating-linear-gradient(to bottom,#D2D6D0 0px,#D2D6D0 5px,transparent 5px,transparent 10px)';
 
   let html = '';
+  // 顯示用姓名去掉尾端英文（例：「李潔慧Jessica」→「李潔慧」），與其他關卡的中文名一致
+  var _zhName = function(s){ var t = String(s||'').replace(/\s*[A-Za-z][A-Za-z .]*$/, '').trim(); return t || String(s||''); };
   // 作廢橫幅：狀態為作廢時，於簽核進度最上方明確標示（否則下方各關會誤顯示為「待審核中」）
   if (isVoid) {
-    var _vBy = c.voidBy ? htEsc(c.voidBy) : '';
+    var _vBy = c.voidBy ? htEsc(_zhName(c.voidBy)) : '';
     var _vAt = c.voidAt ? htEsc(c.voidAt) : '';
     var _vRe = c.voidReason ? htEsc(c.voidReason) : '';
     var _vDetail = '';
@@ -10890,8 +10892,16 @@ function updateDetailFlow(c){
                  + emailHtml
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
+    } else if (isVoid && i === currentStep - 1) {
+      // 作廢就發生在這一關（案件當時停在此關）→ 在這關註明由誰作廢，而非籠統「流程已中止」
+      iconSvg = leafSvg('#B45309', 28);
+      var _vbName = c.voidBy ? htEsc(_zhName(c.voidBy)) : a.name;
+      statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 已作廢</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + _vbName + '</div>'
+                 + (c.voidAt ? '<div class="flow-at" style="font-size:12px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + htEsc(c.voidAt) + '</div>' : '')
+                 + (c.voidReason ? '<div style="font-size:12px;color:#B45309;margin-top:3px;line-height:1.4">作廢原因：' + htEsc(c.voidReason) + '</div>' : '');
     } else if (isVoid) {
-      // 作廢：尚未簽核的關卡流程已中止，不再顯示「待審核中／等待前一關完成」（否則像還在等人審）
+      // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 流程已中止</div>'
                  + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + a.name + '</div>';
