@@ -3082,7 +3082,7 @@ thead th{color:#767B75!important}
           <div class="section-title" style="margin:0">申請項目與 HR 審核</div>
           <button id="apply-items-add-btn" onclick="addApplyItemRow()" style="display:none;flex-shrink:0;background:#46633F;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(70,99,63,.25)">＋ 新增項目</button>
         </div>
-        <div style="font-size:12px;color:#767B75;margin-bottom:12px">送單時「申請項目」的選單來源。勾選「需 HR」的項目，送出時會在簽核流程最前自動加入 HR 關卡。</div>
+        <div id="apply-items-notice" style="display:none"></div>
         <div id="apply-items-list"><div style="text-align:center;padding:20px;color:#767B75">載入中…</div></div>
         <div id="apply-items-save-wrap" style="display:none;justify-content:flex-end;margin-top:14px">
           <button id="apply-items-save-btn" onclick="saveApplyItemsAdmin()" style="background:#46633F;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(70,99,63,.25)">儲存項目設定</button>
@@ -11059,12 +11059,39 @@ function renderApplyItemsAdmin() {
   const saveWrap = document.getElementById('apply-items-save-wrap');
   if (addBtn)  addBtn.style.display  = admin ? 'inline-flex' : 'none';
   if (saveWrap) saveWrap.style.display = admin ? 'flex' : 'none';
-  if (!_applyItemsWork.length) { box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">尚無項目</div>'; return; }
+  // ── 即時狀態提示：自動偵測流程裡有沒有「HR 關卡」（適用範圍＝僅特殊），把兩邊的關係講清楚 ──
+  var _hrStage = (typeof _flowApprovers !== 'undefined' ? _flowApprovers : [])
+    .filter(function (a) { return a && a.condition === 'special' && a.enabled !== false; })[0];
+  var _anyNeedsHR = _applyItemsWork.some(function (it) { return it.needsHR; });
+  var _noticeEl = document.getElementById('apply-items-notice');
+  if (_noticeEl) {
+    if (_hrStage) {
+      _noticeEl.style.cssText = 'display:block;background:#EAF2E8;border:1px solid #B7CDB3;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#3E5A3B;line-height:1.6';
+      _noticeEl.innerHTML = '✅ HR 關卡已設定：<b>' + htEsc(_hrStage.name || '') + '</b>。勾選「需 HR」的項目，送出時會自動在流程最前加入這一關。' +
+        (_hrStage.onLeave ? '（目前請假中，代理：' + htEsc(_hrStage.proxyName || _hrStage.proxyEmail || '未設定') + '）' : '　HR 代理人請到上方「簽核流程」該關的 🌴 代理 開關設定。');
+    } else if (_anyNeedsHR) {
+      _noticeEl.style.cssText = 'display:block;background:#FFF8EC;border:1px solid #F3C05A;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#C9760A;line-height:1.6;font-weight:600';
+      _noticeEl.innerHTML = '⚠️ 你勾了「需 HR」的項目，但流程裡<b>還沒有 HR 關卡</b>，目前不會生效。請到上方「簽核流程」→「＋新增關卡」→ 適用範圍選「僅特殊費用」、負責人選 HR，並移到最前面。HR 代理人也在那一關的 🌴 代理 設定。';
+    } else {
+      _noticeEl.style.cssText = 'display:block;background:#F3F5F1;border:1px solid #DCE0D7;border-radius:10px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#5A6157;line-height:1.6';
+      _noticeEl.innerHTML = '這裡管理「送單時可選的申請項目」。勾選「需 HR」代表該項目要多一關 HR 審核 —— HR 是誰、HR 代理人，都在上方「簽核流程」新增一關（適用範圍選「僅特殊費用」）來設定。';
+    }
+  }
+
+  if (!_applyItemsWork.length) { box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">尚無項目，點右上「＋新增項目」</div>'; return; }
   box.innerHTML = _applyItemsWork.map(function (it, i) {
-    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #D5DAD2;border-radius:10px;margin-bottom:8px;background:#fff">'
-      + '<input class="inp" style="flex:1" value="' + htEsc(it.name || '') + '" ' + (admin ? '' : 'readonly') + ' oninput="_applyItemsWork[' + i + '].name=this.value">'
-      + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:' + (it.needsHR ? '#C9760A' : '#767B75') + ';white-space:nowrap;cursor:' + (admin ? 'pointer' : 'default') + '"><input type="checkbox" ' + (it.needsHR ? 'checked' : '') + ' ' + (admin ? '' : 'disabled') + ' onchange="_applyItemsWork[' + i + '].needsHR=this.checked;renderApplyItemsAdmin()" style="width:16px;height:16px;accent-color:#E0820A">需 HR</label>'
-      + (admin ? ('<button onclick="_applyItemsWork.splice(' + i + ',1);renderApplyItemsAdmin()" title="刪除" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;flex-shrink:0">✕</button>') : '')
+    var on = !!it.needsHR;
+    var rowBorder = on ? '1px solid #F3C05A' : '1px solid #E2E5DE';
+    var rowBg = on ? '#FFFBF3' : '#fff';
+    var rowAccent = on ? 'border-left:4px solid #E0820A;' : 'border-left:4px solid #D2D6D0;';
+    // 需 HR：pill 開關（比照簽核流程的開關樣式），一眼看出開/關
+    var toggle = admin
+      ? '<button type="button" onclick="_applyItemsWork[' + i + '].needsHR=!_applyItemsWork[' + i + '].needsHR;renderApplyItemsAdmin()" title="' + (on ? '點擊取消需 HR' : '點擊設為需 HR') + '" style="display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px 0 9px;border:1.5px solid ' + (on ? '#E0820A' : '#D2D7CD') + ';background:' + (on ? '#FFF3E0' : '#fff') + ';border-radius:20px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0"><span style="width:32px;height:18px;border-radius:20px;background:' + (on ? '#E0820A' : '#CBD0C7') + ';position:relative;flex-shrink:0;display:inline-block;transition:background .15s"><span style="position:absolute;top:2px;left:' + (on ? '16px' : '2px') + ';width:14px;height:14px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .15s"></span></span><span style="font-size:12px;font-weight:700;color:' + (on ? '#C9760A' : '#6B7069') + '">需 HR</span></button>'
+      : '<span style="font-size:12px;font-weight:700;color:' + (on ? '#C9760A' : '#6B7069') + ';white-space:nowrap">' + (on ? '● 需 HR' : '○ 免 HR') + '</span>';
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border:' + rowBorder + ';' + rowAccent + 'border-radius:10px;margin-bottom:8px;background:' + rowBg + '">'
+      + '<input class="inp" style="flex:1;border:none;background:transparent;font-weight:600;padding-left:2px" placeholder="項目名稱" value="' + htEsc(it.name || '') + '" ' + (admin ? '' : 'readonly') + ' oninput="_applyItemsWork[' + i + '].name=this.value">'
+      + toggle
+      + (admin ? ('<button onclick="_applyItemsWork.splice(' + i + ',1);renderApplyItemsAdmin()" title="刪除項目" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;flex-shrink:0">✕</button>') : '')
       + '</div>';
   }).join('');
 }
