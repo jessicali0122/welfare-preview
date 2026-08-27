@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827150818';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827151048';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10763,6 +10763,7 @@ function updateDetailFlow(c){
   const approvals   = c.approvals || [];
   const isDone      = c.status === '已完成';
   const isRejected  = c.status === '已退件';
+  const isVoid      = c.status === '作廢';
   const currentStep = Number(c.step || 1); // 1-indexed，對應 APPROVERS（啟用清單）
 
   // 更新 badge
@@ -10777,7 +10778,8 @@ function updateDetailFlow(c){
   // 更新標題
   const titleEl = document.getElementById('flow-title');
   if (titleEl) {
-    if (isDone)     titleEl.textContent = '簽核進度（' + APPROVERS.length + ' / ' + APPROVERS.length + ' 關 · 已完成簽核）';
+    if (isVoid)     titleEl.textContent = '簽核進度（已作廢）';
+    else if (isDone)     titleEl.textContent = '簽核進度（' + APPROVERS.length + ' / ' + APPROVERS.length + ' 關 · 已完成簽核）';
     else if (isRejected) titleEl.textContent = '簽核進度（已退件）';
     else            titleEl.textContent = '簽核進度（' + (currentStep - 1) + ' / ' + APPROVERS.length + ' 關）';
   }
@@ -10810,6 +10812,16 @@ function updateDetailFlow(c){
   const _dashedLine = 'repeating-linear-gradient(to bottom,#D2D6D0 0px,#D2D6D0 5px,transparent 5px,transparent 10px)';
 
   let html = '';
+  // 作廢橫幅：狀態為作廢時，於簽核進度最上方明確標示（否則下方各關會誤顯示為「待審核中」）
+  if (isVoid) {
+    html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+      +   '<span style="flex-shrink:0;font-size:16px;line-height:1.6">🚫</span>'
+      +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#92400E">'
+      +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong><br>'
+      +     '作廢原因與操作人請見「系統管理 → 系統紀錄」。'
+      +   '</div>'
+      + '</div>';
+  }
   APPROVERS.forEach(function(a, i) {
     const apv    = approvals[i] || {};
     const result = String(apv.result || '').trim();
