@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827155111';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260827155338';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10833,10 +10833,21 @@ function updateDetailFlow(c){
   var _zhName = function(s){ var t = String(s||'').replace(/\s*[A-Za-z][A-Za-z .]*$/, '').trim(); return t || String(s||''); };
   // 作廢橫幅：狀態為作廢時，於簽核進度最上方明確標示（否則下方各關會誤顯示為「待審核中」）
   if (isVoid) {
-    // 頂端橫幅只放一句總述；作廢人／時間／原因顯示在「發生作廢的那一關」，不重複
-    html += '<div style="display:flex;gap:8px;align-items:center;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+    // 作廢人／時間／原因一律放頂端橫幅（角色中立）；下方關卡只標流程中止於哪關，不把作廢人塞進簽核人格子
+    var _vBy = c.voidBy ? htEsc(_zhName(c.voidBy)) : '';
+    var _vAt = c.voidAt ? htEsc(c.voidAt) : '';
+    var _vRe = c.voidReason ? htEsc(c.voidReason) : '';
+    var _vDetail = '';
+    if (_vBy) _vDetail += '<div style="margin-top:4px">作廢人：<strong>' + _vBy + '</strong></div>';
+    if (_vAt) _vDetail += '<div style="margin-top:2px">作廢時間：' + _vAt + '</div>';
+    if (_vRe) _vDetail += '<div style="margin-top:2px">作廢原因：' + _vRe + '</div>';
+    if (!_vBy && !_vAt && !_vRe) _vDetail = '<div style="margin-top:4px">作廢人與原因請見「系統管理 → 系統紀錄」。</div>';
+    html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#FEF3C7;border:1px solid #FCD9A6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
       +   '<span style="flex-shrink:0;font-size:16px;line-height:1.6">🚫</span>'
-      +   '<strong style="min-width:0;font-size:14px;line-height:1.6;color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
+      +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#92400E">'
+      +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
+      +     _vDetail
+      +   '</div>'
       + '</div>';
   }
   APPROVERS.forEach(function(a, i) {
@@ -10884,15 +10895,11 @@ function updateDetailFlow(c){
                  + at
                  + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
     } else if (isVoid && i === currentStep - 1) {
-      // 作廢就發生在這一關（案件當時停在此關）→ 在這關註明由誰作廢，而非籠統「流程已中止」
+      // 案件當時停在此關才被作廢 → 標「流程於此關作廢」，但只顯示這關「自己的簽核人」，
+      // 絕不把作廢人（可能是申請人等非審核人員）塞進來混淆角色；作廢人統一放頂端橫幅。
       iconSvg = leafSvg('#B45309', 28);
-      // 作廢人一律用後端記錄的 voidBy；抓不到時「不可」拿這關簽核人頂替（會誤指他作廢），改標未紀錄
-      var _vbName = c.voidBy ? ('<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">作廢人：' + htEsc(_zhName(c.voidBy)) + '</div>')
-                             : '<div style="font-size:12px;color:#9AA096;margin-top:4px">作廢人未紀錄，請見「系統管理 → 系統紀錄」</div>';
-      statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 已作廢</div>'
-                 + _vbName
-                 + (c.voidAt ? '<div class="flow-at" style="font-size:12px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + htEsc(c.voidAt) + '</div>' : '')
-                 + (c.voidReason ? '<div style="font-size:12px;color:#B45309;margin-top:3px;line-height:1.4">作廢原因：' + htEsc(c.voidReason) + '</div>' : '');
+      statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 流程於此關作廢</div>'
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + a.name + '</div>';
     } else if (isVoid) {
       // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
       iconSvg = leafSvg('#D2D6D0', 28);
