@@ -208,6 +208,26 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 tr.tr[data-status="作廢"] td{background:#F1F2EF;color:#9AA096!important}
 tr.tr[data-status="作廢"]:hover td{background:#E9EBE6!important}
 tr.tr[data-status="作廢"] .evx-id-pending{color:#9AA096}
+/* ── 案件清單樣式 B：綠標題列＋斑馬紋＋狀態色左邊條＋白底陰影，跟背景拉開對比 ── */
+.app-table{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(46,51,45,.09)}
+.app-table thead tr{border-bottom:none!important}
+.app-table thead th{background:#46633F!important;color:#fff!important;font-weight:700!important}
+.app-table thead th.sortable-th:hover{color:#DDE7DA!important}
+.app-table tbody tr{border-bottom:1px solid #EAECE7}
+.app-table tbody tr:not([data-status="作廢"]):nth-child(even) td{background:#FAFBF9}
+.app-table tbody tr:hover td{background:#EEF3EC!important}
+.app-table tbody tr[data-status="作廢"]:hover td{background:#E9EBE6!important}
+/* 狀態色左邊條（畫在單號欄＝第2格；checkbox 為第1格）*/
+.app-table tbody tr td:nth-child(2){border-left:4px solid #B4B8AE}
+.app-table tbody tr[data-status^="待"] td:nth-child(2){border-left-color:#E0820A}
+.app-table tbody tr[data-status="已完成"] td:nth-child(2){border-left-color:#577B53}
+.app-table tbody tr[data-status="已退件"] td:nth-child(2){border-left-color:#DC2626}
+/* 作廢：單號／主旨／金額加刪除線（申請項目插入後金額為第 9 欄）*/
+tr.tr[data-status="作廢"] td:nth-child(2) span,
+tr.tr[data-status="作廢"] td:nth-child(6),
+tr.tr[data-status="作廢"] td:nth-child(9){text-decoration:line-through}
+/* 狀態徽章符號版（作廢 ✕／完成 ✓）：隱藏原本的圓點 */
+.badge.badge-sym::before{display:none!important}
 /* 表頭：小字、灰色、大寫英文字母間距、無背景 */
 thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!important;border-bottom:1.5px solid #D9DDD3!important;padding:10px 16px;white-space:nowrap}
 /* 資料列：只有底部細線 */
@@ -344,6 +364,15 @@ input[type=checkbox]{accent-color:#577B53}
 
 /* 編輯＋刪除包一層：桌面用 display:contents 讓兩鈕仍在操作列內排（外觀不變） */
 .flow-actions-edit{display:contents}
+/* ── 簽核流程列：中等寬度（≤1024）就把操作鈕堆疊換行，避免縮視窗時按鈕互相重疊 ── */
+@media(max-width:1024px){
+  .flow-grid{position:relative;grid-template-columns:36px 1fr!important;grid-template-rows:auto auto auto!important;gap:8px 12px!important;padding:14px 14px!important}
+  .flow-grid>div:nth-child(1){grid-column:1;grid-row:1;align-self:center}
+  .flow-grid>div:nth-child(2){grid-column:2;grid-row:1;align-self:center}
+  .flow-grid>div:nth-child(3){grid-column:1/-1;grid-row:2}
+  .flow-grid>div:nth-child(4){grid-column:1/-1;grid-row:3;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .flow-actions-edit{display:flex!important;position:absolute!important;top:14px;right:14px;gap:6px;z-index:2}
+}
 /* ── FLOW ROW MOBILE ── */
 @media(max-width:768px){
   /* 手機版：內層 4 欄格線拆成 [序號|職稱]／[審核人]／[操作]，避免全部擠在同一列互相重疊 */
@@ -3175,6 +3204,7 @@ thead th{color:#767B75!important}
           <th>部門</th>
           <th style="min-width:200px">主旨</th>
           <th>分類</th>
+          <th>申請項目</th>
           <th class="sortable-th" onclick="sortAppTable(6)">金額<span class="sort-icon"></span></th>
           <th class="sortable-th" onclick="sortAppTable(7)">狀態<span class="sort-icon"></span></th>
           <th>簽核人</th>
@@ -3182,7 +3212,7 @@ thead th{color:#767B75!important}
           <th></th>
         </tr></thead>
         <tbody id="applications-tbody">
-          <tr><td colspan="12" style="text-align:center;padding:30px;color:#767B75">載入中…</td></tr>
+          <tr><td colspan="13" style="text-align:center;padding:30px;color:#767B75">載入中…</td></tr>
         </tbody>
       </table>
       </div>
@@ -7255,8 +7285,9 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${htEsc(c.department)||'—'}</td>
     <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${htEsc(c.project||c.subject)||'—'}</td>
     <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
+    <td style="padding:12px 14px;text-align:center;white-space:nowrap">${c.applyItem ? (c.applyItem==='一般請款' ? ('<span style="color:#8A908A">'+htEsc(c.applyItem)+'</span>') : ('<span style="display:inline-block;background:#EEF3EC;color:#3E5A3B;border:1px solid #CBDCC6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>')) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;font-weight:700;color:#4A4F49;white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-    <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}">${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
+    <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}${(c.status==='作廢'||c.status==='已完成')?' badge-sym':''}">${c.status==='作廢'?'✕ ':c.status==='已完成'?'✓ ':''}${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
     <td style="padding:12px 14px;white-space:nowrap">${stepApproverName ? nameChip(stepApproverName,24,_resolvedApproverEmail) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
     <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></td>
@@ -7408,6 +7439,7 @@ function renderDraftsTab() {
     + '<th style="min-width:200px">主旨</th>'
     + '<th>申請人</th>'
     + '<th>分類</th>'
+    + '<th>申請項目</th>'
     + '<th>金額</th>'
     + '<th>狀態</th>'
     + '<th>簽核人</th>'
