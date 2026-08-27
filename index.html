@@ -3077,6 +3077,17 @@ thead th{color:#767B75!important}
           <div style="text-align:center;padding:30px;color:#767B75">載入中…</div>
         </div>
       </div>
+      <div class="card" id="apply-items-card" style="padding:22px;margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
+          <div class="section-title" style="margin:0">申請項目與 HR 審核</div>
+          <button id="apply-items-add-btn" onclick="addApplyItemRow()" style="display:none;flex-shrink:0;background:#46633F;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(70,99,63,.25)">＋ 新增項目</button>
+        </div>
+        <div style="font-size:12px;color:#767B75;margin-bottom:12px">送單時「申請項目」的選單來源。勾選「需 HR」的項目，送出時會在簽核流程最前自動加入 HR 關卡。</div>
+        <div id="apply-items-list"><div style="text-align:center;padding:20px;color:#767B75">載入中…</div></div>
+        <div id="apply-items-save-wrap" style="display:none;justify-content:flex-end;margin-top:14px">
+          <button id="apply-items-save-btn" onclick="saveApplyItemsAdmin()" style="background:#46633F;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 2px 6px rgba(70,99,63,.25)">儲存項目設定</button>
+        </div>
+      </div>
       </div>
       <div id="sysset-pane-supplier" style="display:none">
       <!-- 供應商管理（管理者＋福委）：寫入 suppliers 分頁，供「付款方式＝其他」下拉選用 -->
@@ -3240,6 +3251,10 @@ thead th{color:#767B75!important}
             <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">① 主旨 <span style="color:#dc2626">*</span></label>
               <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用" oninput="updateFormProgress()">
+            </div>
+            <div>
+              <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span></label>
+              <select class="inp" id="apply-item" onchange="updateFormProgress()"><option value="一般請款">一般請款</option></select>
             </div>
             <div>
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">② 單號（自動產生）</label>
@@ -4733,6 +4748,14 @@ thead th{color:#767B75!important}
         <input class="inp" id="edit-flow-name" placeholder="例：總幹事審核">
       </div>
       <div>
+        <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">適用範圍</label>
+        <select class="inp" id="edit-flow-condition" onchange="_onFlowConditionChange()">
+          <option value="all">全部案件</option>
+          <option value="special">僅特殊費用（需 HR 的申請項目）</option>
+        </select>
+        <div style="font-size:12px;color:#767B75;margin-top:4px">選「僅特殊費用」時，此關只在需 HR 的申請項目出現，負責人請改選 HR。</div>
+      </div>
+      <div>
         <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">負責人 <span style="color:#dc2626">*</span></label>
         <select class="inp" id="edit-flow-person"></select>
       </div>
@@ -5790,6 +5813,8 @@ function showApp() {
     var _dAvatar  = _onHighTea ? 12000 : 4000; // 全體頭像（最重，最後）
     // 所有使用者都先載入流程資訊（讓 updateDetailFlow 知道正確關卡數）
     setTimeout(function(){ _preloadFlowInfo(); }, _dFlow);
+    // 載入送單表單的「申請項目」選單
+    setTimeout(function(){ _preloadApplyItems(); }, _dFlow);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
     // ── 背景預抓案件清單 ──
@@ -8771,6 +8796,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     applyDate:  _applyDateVal,
     employeeId: employeeIdEl?.value || '',
     payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
+    applyItem : (document.getElementById('apply-item') || {}).value || '一般請款',   // 申請項目：決定是否加 HR 關
     pretax, tax, total, items,
     // 草稿已上傳的附件 ＋ 選檔階段就傳到暫存區的附件（後端以 fileId 去重）
     files: (window._uploadedDraftFiles || []).concat(_currentTempFiles()),
@@ -9059,6 +9085,7 @@ async function saveDraftForm(silent = false) {
     department: deptEl2?.value      || '',
     employeeId: empIdEl2?.value     || '',
     payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
+    applyItem : (document.getElementById('apply-item') || {}).value || '一般請款',   // 申請項目（草稿也記住）
     applyDate:  applyDateEl2?.value || '',
     files: _currentTempFiles(),   // 選檔階段已傳好的附件，讓草稿也記得住
   };
@@ -10949,6 +10976,28 @@ function updateDetailFlow(c){
 let _flowApprovers = [];
 
 // 所有登入使用者都能呼叫：從後端拉取流程資訊，讓 updateDetailFlow 正確顯示關卡數
+// 載入「申請項目」選單（送單表單用）；失敗時保留 HTML 預設「一般請款」單一選項
+var _applyItemsCache = null;
+function _fillApplyItemSelect(items) {
+  var sel = document.getElementById('apply-item');
+  if (!sel || !Array.isArray(items) || !items.length) return;
+  var prev = sel.value || '一般請款';
+  sel.innerHTML = items.map(function (it) {
+    var n = String((it && it.name) || '').trim();
+    return n ? ('<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>') : '';
+  }).join('');
+  if ([].some.call(sel.options, function (o) { return o.value === prev; })) sel.value = prev;
+}
+async function _preloadApplyItems() {
+  try {
+    const res = await callAPI('getApplyItems');
+    if (res && res.ok && Array.isArray(res.items) && res.items.length) {
+      _applyItemsCache = res.items;
+      _fillApplyItemSelect(res.items);
+    }
+  } catch (e) { /* 靜默：保留預設選項 */ }
+}
+
 async function _preloadFlowInfo() {
   if (_flowApprovers && _flowApprovers.length > 0) return; // 已載入就跳過
   try {
@@ -10987,6 +11036,64 @@ async function loadAdminFlow() {
   APPROVER_EMAILS.length = 0;
   _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);  // 唯讀提示條由 renderFlowList 一併更新
+  loadApplyItemsAdmin();           // 一併載入「申請項目與 HR 審核」維護區
+}
+
+// ── 申請項目與 HR 審核：管理維護 ──────────────────────────────
+var _applyItemsWork = [];   // 編輯中的工作副本
+async function loadApplyItemsAdmin() {
+  const box = document.getElementById('apply-items-list');
+  if (!box) return;
+  box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  const res = await callAPI('getApplyItems');
+  _applyItemsWork = (res && res.ok && Array.isArray(res.items)) ? res.items.map(function (it) {
+    return { name: String((it && it.name) || ''), needsHR: it && it.needsHR === true };
+  }) : [];
+  renderApplyItemsAdmin();
+}
+function renderApplyItemsAdmin() {
+  const box = document.getElementById('apply-items-list');
+  if (!box) return;
+  const admin = isAdmin();
+  const addBtn = document.getElementById('apply-items-add-btn');
+  const saveWrap = document.getElementById('apply-items-save-wrap');
+  if (addBtn)  addBtn.style.display  = admin ? 'inline-flex' : 'none';
+  if (saveWrap) saveWrap.style.display = admin ? 'flex' : 'none';
+  if (!_applyItemsWork.length) { box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">尚無項目</div>'; return; }
+  box.innerHTML = _applyItemsWork.map(function (it, i) {
+    return '<div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #D5DAD2;border-radius:10px;margin-bottom:8px;background:#fff">'
+      + '<input class="inp" style="flex:1" value="' + htEsc(it.name || '') + '" ' + (admin ? '' : 'readonly') + ' oninput="_applyItemsWork[' + i + '].name=this.value">'
+      + '<label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:' + (it.needsHR ? '#C9760A' : '#767B75') + ';white-space:nowrap;cursor:' + (admin ? 'pointer' : 'default') + '"><input type="checkbox" ' + (it.needsHR ? 'checked' : '') + ' ' + (admin ? '' : 'disabled') + ' onchange="_applyItemsWork[' + i + '].needsHR=this.checked;renderApplyItemsAdmin()" style="width:16px;height:16px;accent-color:#E0820A">需 HR</label>'
+      + (admin ? ('<button onclick="_applyItemsWork.splice(' + i + ',1);renderApplyItemsAdmin()" title="刪除" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;flex-shrink:0">✕</button>') : '')
+      + '</div>';
+  }).join('');
+}
+function addApplyItemRow() {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
+  _applyItemsWork.push({ name: '', needsHR: false });
+  renderApplyItemsAdmin();
+}
+async function saveApplyItemsAdmin() {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
+  var items = _applyItemsWork.map(function (it) { return { name: String(it.name || '').trim(), needsHR: it.needsHR === true }; })
+    .filter(function (it) { return it.name; });
+  if (!items.length) { toast('⚠️ 至少需保留一個申請項目'); return; }
+  var names = {};
+  for (var i = 0; i < items.length; i++) { var k = items[i].name; if (names[k]) { toast('⚠️ 項目名稱重複：' + k); return; } names[k] = true; }
+  const btn = document.getElementById('apply-items-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '儲存中...'; }
+  const res = await callAPI('saveApplyItems', { items: items });
+  if (btn) { btn.disabled = false; btn.textContent = '儲存項目設定'; }
+  if (res && res.ok) {
+    _applyItemsWork = items.map(function (it) { return { name: it.name, needsHR: it.needsHR }; });
+    _applyItemsCache = items;
+    _fillApplyItemSelect(items);   // 送單表單選單同步
+    renderApplyItemsAdmin();
+    toast('✅ 申請項目已更新');
+    _cacheClear();
+  } else {
+    toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
+  }
 }
 
 // 渲染流程列表
@@ -11057,6 +11164,7 @@ function renderFlowList(approvers) {
       <!-- 職稱 -->
       <div>
         <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || a.name}</div>
+        ${a.condition === 'special' ? '<div style="display:inline-block;margin-top:3px;font-size:11px;font-weight:700;color:#C9760A;background:#FFF8EC;border:1px solid #F3C05A;border-radius:20px;padding:1px 8px">僅特殊費用・需 HR</div>' : ''}
         ${!isEnabled ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">⚠️ 已停用・不計入流程</div>' : ''}
       </div>
       <!-- 審核人（nameChip 已含姓名，不重複顯示） -->
@@ -11139,8 +11247,15 @@ function addFlowStep() {
   _editFlowIndex = -1;
   document.getElementById('edit-flow-subtitle').textContent = '新增關卡';
   document.getElementById('edit-flow-name').value = '';
-  document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions('');
+  var _cond = document.getElementById('edit-flow-condition'); if (_cond) _cond.value = 'all';
+  document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions('', 'welfare');
   document.getElementById('edit-flow-modal').classList.add('open');
+}
+// 適用範圍切換時，負責人下拉改列對應角色（全部→福委；僅特殊→HR）
+function _onFlowConditionChange() {
+  var cond = (document.getElementById('edit-flow-condition') || {}).value || 'all';
+  var sel = document.getElementById('edit-flow-person');
+  if (sel) sel.innerHTML = getFlowUserOptions(sel.value || '', cond === 'special' ? 'hr' : 'welfare');
 }
 
 // 上下移動關卡順序並儲存
@@ -11179,7 +11294,8 @@ async function moveFlowStep(index, direction) {
 }
 
 // 取得流程負責人下拉選項
-function getFlowUserOptions(selectedEmail) {
+function getFlowUserOptions(selectedEmail, roleKey) {
+  roleKey = roleKey || 'welfare';   // 一般關卡列福委；HR 關（roleKey='hr'）列 HR
   const users = LOCAL_USER_LIST.slice();
   // 若 admin 表格已載入，從表格補充
   const extra = [];
@@ -11191,12 +11307,12 @@ function getFlowUserOptions(selectedEmail) {
     if (name && email && !users.find(u => u.email === email)) extra.push({ name, email });
   });
   const all = users.concat(extra);
-  // 簽核人只列「福委」（有福委標籤的人）；但保留目前已選的人，避免編輯時消失
-  var _isWelfare = function(email){
+  // 依角色列出（一般＝福委、HR 關＝hr）；但保留目前已選的人，避免編輯時消失
+  var _hasRole = function(email){
     var r = USER_ROLES[email] || USER_ROLES[String(email||'').trim().toLowerCase()] || [];
-    return Array.isArray(r) && r.indexOf('welfare') >= 0;
+    return Array.isArray(r) && r.indexOf(roleKey) >= 0;
   };
-  return all.filter(function(u){ return _isWelfare(u.email) || u.email === selectedEmail; })
+  return all.filter(function(u){ return _hasRole(u.email) || u.email === selectedEmail; })
     .map(u =>
     `<option value="${u.email}" ${u.email === selectedEmail ? 'selected' : ''}>${u.name}（${u.email}）</option>`
   ).join('');
@@ -11214,17 +11330,23 @@ function _flowProxySelectOptions(index, selectedEmail) {
     var email = emailEl ? emailEl.textContent.trim() : '';
     if (name && email && !users.find(function(u){ return u.email === email; })) users.push({ name: name, email: email });
   });
-  // 合格代理人＝福委會幹部/委員（福委或管理者），與後端 _isEligibleProxy_ 同一把尺
+  // 合格代理人依「被代理關卡的角色」定（與後端 _isEligibleProxy_ 同一把尺）：
+  //   HR 關（該關簽核人具 hr 角色）→ 代理只能 hr；其餘（福委關）→ 福委或管理者。
+  var _stageApprover = (_flowApprovers && _flowApprovers[index]) ? _flowApprovers[index].email : '';
+  var _stageRoles = USER_ROLES[_stageApprover] || USER_ROLES[String(_stageApprover||'').trim().toLowerCase()] || [];
+  var _stageIsHr = Array.isArray(_stageRoles) && _stageRoles.indexOf('hr') >= 0;
   var _isEligible = function(email){
     var r = USER_ROLES[email] || USER_ROLES[String(email||'').trim().toLowerCase()] || [];
-    return Array.isArray(r) && (r.indexOf('welfare') >= 0 || r.indexOf('manager') >= 0);
+    if (!Array.isArray(r)) return false;
+    return _stageIsHr ? (r.indexOf('hr') >= 0)
+                      : (r.indexOf('welfare') >= 0 || r.indexOf('manager') >= 0);
   };
   var list = users.filter(function(u){
     var em = String(u.email||'').trim().toLowerCase();
-    return !signerEmails[em] && _isEligible(u.email);   // 只留福委/管理者、且非現有簽核人
+    return !signerEmails[em] && _isEligible(u.email);   // 依關卡角色過濾、且非現有簽核人
   });
   var opts = '<option value="" disabled' + (selectedEmail ? '' : ' selected') + '>請選擇代理人…</option>';
-  if (!list.length) opts += '<option value="" disabled>（沒有可當代理的福委——福委都已在簽核關卡內）</option>';
+  if (!list.length) opts += '<option value="" disabled>' + (_stageIsHr ? '（沒有可當代理的 HR）' : '（沒有可當代理的福委——福委都已在簽核關卡內）') + '</option>';
   list.forEach(function(u){
     opts += '<option value="' + u.email + '" data-name="' + htEsc(u.name) + '"' + (u.email === selectedEmail ? ' selected' : '') + '>' + htEsc(u.name) + '（' + u.email + '）</option>';
   });
@@ -11275,7 +11397,9 @@ function showEditFlowModal(index) {
     _editFlowIndex = index;
     document.getElementById('edit-flow-subtitle').textContent = '修改第' + (index + 1) + '關設定';
     document.getElementById('edit-flow-name').value = a.label || a.name || '';
-    document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email);
+    var _cond = document.getElementById('edit-flow-condition');
+    if (_cond) _cond.value = (a.condition === 'special') ? 'special' : 'all';
+    document.getElementById('edit-flow-person').innerHTML = getFlowUserOptions(a.email, (a.condition === 'special') ? 'hr' : 'welfare');
     document.getElementById('edit-flow-modal').classList.add('open');
   } catch(e) {
     toast('❌ 編輯視窗錯誤：' + e.message);
@@ -11297,8 +11421,9 @@ async function doSaveFlowStep() {
   const nameText = sel.selectedOptions[0] ? sel.selectedOptions[0].text.split('（')[0] : '';
   if (!label || !email) { toast('⚠️ 請填寫關卡名稱和負責人'); return; }
 
-  // 只改名稱/負責人；請假/代理由關卡列上的下拉直接設定（Object.assign 保留既有 onLeave/proxy）
-  const stageObj = { label, name: nameText, email };
+  // 只改名稱/負責人/適用範圍；請假/代理由關卡列上的下拉直接設定（Object.assign 保留既有 onLeave/proxy）
+  const condition = (document.getElementById('edit-flow-condition') || {}).value || 'all';
+  const stageObj = { label, name: nameText, email, condition };
   const _isAdd = _editFlowIndex === -1;
   const updated = _isAdd
     ? _flowApprovers.concat([stageObj])
@@ -12722,6 +12847,7 @@ function autoSaveDraft(){
     name:_applicantEl2?.value||'', payee:(typeof _currentPayee==='function' ? _currentPayee() : (_payeeEl2?.value||'')),
     department:_deptEl2?.value||'', employeeId:_empIdEl2?.value||'',
     applyDate:_applyDateEl2?.value||'',
+    applyItem:(document.getElementById('apply-item')||{}).value||'一般請款',
     owner:(currentUser&&currentUser.email)||'',   // 綁定草稿擁有者，避免共用電腦跨使用者還原
     caseId:_draftCaseId||null, clientDraftKey:window._clientDraftKey||null, uploadedFiles:window._uploadedDraftFiles||[]};
   localStorage.setItem('bf_draft',JSON.stringify(draft));
@@ -12781,6 +12907,8 @@ function restoreDraft(){
     // 不套用草稿存的員工編號：那是當下算出來的快照，收款人改了、或早期版本存錯（例如 T0066）
     // 就會一直被帶回來。改由下方 syncApplicantFields() 依「目前的收款人」重算。
     if(_applyDateREl&&d.applyDate)_applyDateREl.value=d.applyDate;
+    var _aiREl=document.getElementById('apply-item');
+    if(_aiREl&&d.applyItem){ if(![].some.call(_aiREl.options,function(o){return o.value===d.applyItem;}))_aiREl.add(new Option(d.applyItem,d.applyItem)); _aiREl.value=d.applyItem; }
     // F4 fix：還原明細資料
     if(Array.isArray(d.items)&&d.items.length>0){
       var _il=document.getElementById('items-list');
