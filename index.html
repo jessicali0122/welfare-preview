@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828214423';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828215213';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5073,8 +5073,8 @@ const ROLE_KEYS = ['employee','welfare','hr','manager'];
 
 // 能力 → 擁有該能力的角色清單（manager 自動全開，不必列）
 const CAPABILITY_MAP = {
-  'reimbursement.view':    ['welfare'],          // 案件追蹤：管理者＋福委（HR 若同時掛福委標籤仍可進）
-  'reimbursement.create':  ['welfare'],
+  'reimbursement.view':    ['employee','welfare','hr'],  // 案件追蹤入口：全公司帳號皆可見（案件層級可見範圍由後端 listCases 依「申請人＋簽核鏈＋管理者」把關）
+  'reimbursement.create':  ['employee','welfare','hr'],  // 送單：全公司帳號皆可申請（管理者自動全開）
   'reimbursement.approve': ['welfare'],          // 案件簽核：管理者＋福委
   'analytics.view':        ['welfare'],
   'hightea.view':          ['welfare'],          // 午茶日「點開」：管理者＋福委
