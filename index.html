@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828203103';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828203957';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -205,7 +205,7 @@ select.inp{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.
 /* 作廢單據：整列淡底＋文字轉灰，讓失效的單一眼可辨（狀態 badge 仍維持原色，才看得到「作廢」兩字）。
    背景設在 td 而非 tr —— 上面的 hover 規則是設在 td 且帶 !important，設在 tr 會被蓋掉。
    文字用 !important 是為了蓋過各欄的 inline color（主旨、金額都有寫死顏色）。 */
-tr.tr[data-status="作廢"] td{background:#E2E5DF;color:#9AA096!important}
+tr.tr[data-status="作廢"] td{background:#E8EAE4;color:#9AA096!important}
 tr.tr[data-status="作廢"]:hover td{background:#D7DBD1!important}
 tr.tr[data-status="作廢"] .evx-id-pending{color:#9AA096}
 /* ── 案件清單樣式 B：綠標題列＋斑馬紋＋狀態色左邊條＋白底陰影，跟背景拉開對比 ── */
@@ -3135,7 +3135,7 @@ thead th{color:#767B75!important}
     </div>
     <!-- 申請案件（現有內容） -->
     <div id="app-tab-cases">
-    <div class="card" id="app-filter-card" style="padding:14px 16px;margin-bottom:14px">
+    <div class="card" id="app-filter-card" style="padding:14px 16px;margin-bottom:14px;overflow:visible">
       <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
         <div style="position:relative;display:inline-flex;align-items:center">
           <input class="inp" id="app-search" style="width:190px;padding-right:28px" placeholder="搜尋單號或主旨..." oninput="_debouncedAppSearch()">
@@ -3191,7 +3191,12 @@ thead th{color:#767B75!important}
       <button onclick="resetAppFilter()" style="margin-left:auto;background:none;border:none;cursor:pointer;color:#577B53;font-size:12px;font-weight:600;padding:2px 6px">清除篩選</button>
     </div>
     <div class="card" style="overflow:hidden">
-      <div style="overflow-x:auto;max-width:100%">
+      <!-- 左右捲動箭頭（仿午茶日）：橫向捲這張寬表，比拉底部捲軸好按 -->
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:10px 12px 0">
+        <button type="button" title="向左捲動" onclick="var s=document.getElementById('apps-table-scroll');if(s)s.scrollBy({left:-Math.round(s.clientWidth*0.7),behavior:'smooth'})" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #D2D7CD;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#4A4F49" onmouseover="this.style.background='#f4f8f3'" onmouseout="this.style.background='#fff'">‹</button>
+        <button type="button" title="向右捲動" onclick="var s=document.getElementById('apps-table-scroll');if(s)s.scrollBy({left:Math.round(s.clientWidth*0.7),behavior:'smooth'})" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #D2D7CD;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#4A4F49" onmouseover="this.style.background='#f4f8f3'" onmouseout="this.style.background='#fff'">›</button>
+      </div>
+      <div id="apps-table-scroll" style="overflow-x:auto;max-width:100%">
       <table class="evx-table app-table">
         <thead><tr>
           <th style="width:36px;padding-left:16px"><input type="checkbox" id="app-select-all" onclick="appToggleSelectAll(this)" style="accent-color:#577B53;width:24px;height:24px;cursor:pointer"></th>
