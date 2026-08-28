@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828200030';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828200748';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2745,9 +2745,15 @@ thead th{color:#767B75!important}
           (document.getElementById('bnfsub-rel')||{}).value);
       }
       var el = document.getElementById('bnfsub-result'); if (!el) return;
-      el.innerHTML = (amount == null)
+      // 選了補助項目就顯示「應附文件」說明（與完整津貼頁一致）
+      var docNote = '';
+      if (kind === 'm') docNote = '📎 <strong>應附文件（擇一）</strong>：結婚登記證明／戶口名簿影本／戶口謄本　💡 本人在職期間限申請一次；結婚雙方皆為本公司員工時得各自申請。';
+      else if (kind === 'f') docNote = '📎 <strong>應附文件</strong>：死亡證明書（須另附與員工之親屬關係證明）或訃聞　💡 金額依「在職狀態」與「親屬關係」對照發放。';
+      var noteHtml = docNote ? '<div style="margin-top:8px;background:#F7F8F6;border-radius:10px;padding:8px 12px;font-size:12px;color:#767B75;line-height:1.7">' + docNote + '</div>' : '';
+      el.innerHTML = ((amount == null)
         ? '<div style="border:1.5px dashed #D5DAD2;border-radius:12px;padding:12px 16px;color:#767B75;font-size:14px">👆 選擇條件後顯示可申請金額</div>'
-        : '<div style="background:linear-gradient(135deg,#FFF9F0,#FFF1DD);border:1px solid #F6DFBC;border-radius:12px;padding:12px 18px;display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;color:#B0803A;font-weight:600">可申請補助金額</span><span style="font-size:24px;font-weight:800;color:#E0820A">NT$' + Number(amount).toLocaleString() + '</span></div>';
+        : '<div style="background:linear-gradient(135deg,#FFF9F0,#FFF1DD);border:1px solid #F6DFBC;border-radius:12px;padding:12px 18px;display:flex;align-items:baseline;gap:8px"><span style="font-size:12px;color:#B0803A;font-weight:600">可申請補助金額</span><span style="font-size:24px;font-weight:800;color:#E0820A">NT$' + Number(amount).toLocaleString() + '</span></div>')
+        + noteHtml;
     };
 
     // 初始化：預設正職、年資 0（新人視角，拉滑桿看逐步解鎖）
@@ -3827,7 +3833,7 @@ thead th{color:#767B75!important}
 
     <!-- 活動日曆 Tab -->
     <div id="ht-panel-calendar" style="display:none">
-      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch">
+      <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start">
         <!-- 左側：日曆（外層卡片＋內層灰底日曆本體，樣式與按摩日曆統一，只有印章圖案不同） -->
         <div id="ht-cal-card" style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);padding:16px 18px">
           <div style="background:#F7F8F6;border-radius:12px;padding:14px">
