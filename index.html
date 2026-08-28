@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828223217';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828225211';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11001,24 +11001,24 @@ function updateDetailFlow(c){
     if (result === '核准') {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#1e9d6b;font-weight:700;margin-top:2px">✓ 已核准</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + proxyTag + '</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + htEsc(actorName) + proxyTag + '</div>'
                  + proxyOrigHtml
                  + emailHtml
                  + at;
     } else if (result === '退件') {
       iconSvg = leafSvg('#dc2626', 28);
       statusHtml = '<div style="font-size:14px;color:#dc2626;font-weight:700;margin-top:2px">✗ 已退件</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + proxyTag + '</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + htEsc(actorName) + proxyTag + '</div>'
                  + proxyOrigHtml
                  + emailHtml
                  + at
-                 + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + displayComment + '</div>' : '');
+                 + (displayComment ? '<div style="font-size:12px;color:#dc2626;margin-top:3px;line-height:1.4">原因：' + htEsc(displayComment) + '</div>' : '');
     } else if (isVoid && i === currentStep - 1 && c.voidBy && _zhName(c.voidBy) === _zhName(actorName)) {
       // 只有「作廢人正是這關的簽核人」時，才在他這關紅標「本人作廢」（例：主任委員在自己關作廢）。
       // 若作廢人是申請人／管理者等非審核人員，則走下方通用「流程已中止」，不紅標任何人。
       iconSvg = leafSvg('#B45309', 28);
       statusHtml = '<div style="font-size:14px;color:#B45309;font-weight:700;margin-top:2px">🚫 本人作廢</div>'
-                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + actorName + '</div>'
+                 + '<div style="font-size:14px;color:#2E332D;font-weight:600;margin-top:4px">' + htEsc(actorName) + '</div>'
                  + (c.voidAt ? '<div class="flow-at" style="font-size:12px;color:#A8ADA6;margin-top:2px;white-space:nowrap">' + htEsc(c.voidAt) + '</div>' : '');
     } else if (isVoid) {
       // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
@@ -11497,6 +11497,9 @@ function _onFlowConditionChange() {
 async function moveFlowStep(index, direction) {
   try {
   if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  // ★ 併發防護：一次只允許一個「改流程順序」的存檔在途。否則快速連點會送出兩個各帶完整陣列的
+  //   saveFlow，先送的若後到會覆蓋後送的 → 存進後端的順序落後於畫面（使用者曾遇「順序跳回」）。
+  if (window._flowOrderSaving) { toast('⏳ 上一個順序調整還在儲存，請稍候'); return; }
   const newIndex = index + direction;
   if (newIndex < 0 || newIndex >= _flowApprovers.length) return;
 
@@ -11512,8 +11515,14 @@ async function moveFlowStep(index, direction) {
   _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);
 
-  // 同步儲存至後端
-  const res = await callAPI('saveFlow', { approvers: updated });
+  // 同步儲存至後端（上鎖，避免與另一次順序調整並行覆寫）
+  window._flowOrderSaving = true;
+  let res;
+  try {
+    res = await callAPI('saveFlow', { approvers: updated });
+  } finally {
+    window._flowOrderSaving = false;
+  }
   if (!res || !res.ok) {
     toast('❌ 順序儲存失敗：' + (res && res.error ? res.error : '請稍後再試'));
     // 儲存失敗就重新載入
@@ -11523,6 +11532,7 @@ async function moveFlowStep(index, direction) {
     _cacheClear();
   }
   } catch(e) {
+    window._flowOrderSaving = false;
     toast('❌ 移動關卡錯誤：' + e.message);
     console.error('[moveFlowStep]', e);
   }
