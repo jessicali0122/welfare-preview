@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828221553';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828223217';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3104,7 +3104,7 @@ thead th{color:#767B75!important}
           <div style="text-align:center;padding:30px;color:#767B75">載入中…</div>
         </div>
       </div>
-      <div class="card" id="apply-items-card" style="padding:22px;margin-top:14px">
+      <div class="card" id="apply-items-card" style="padding:22px;margin-top:14px;display:none">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px">
           <div class="section-title" style="margin:0">申請項目與 HR 審核</div>
           <button id="apply-items-add-btn" onclick="addApplyItemRow()" style="display:none;flex-shrink:0;background:#46633F;color:#fff;border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(70,99,63,.25)">＋ 新增項目</button>
@@ -11207,6 +11207,10 @@ function renderApplyItemsAdmin() {
       + (admin ? ('<button onclick="_applyItemsWork.splice(' + i + ',1);renderApplyItemsAdmin()" title="刪除項目" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;flex-shrink:0">✕</button>') : '')
       + '</div>';
   }).join('');
+  // 申請項目資料載入／變更後，同步刷新「掛在 HR 關卡上的標籤」（新版 UI）
+  if (typeof _flowApprovers !== 'undefined' && _flowApprovers.length && document.getElementById('flow-list')) {
+    try { renderFlowList(_flowApprovers); } catch (e) {}
+  }
 }
 function addApplyItemRow() {
   if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
@@ -11234,6 +11238,68 @@ async function saveApplyItemsAdmin() {
   } else {
     toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
   }
+}
+
+// ── HR 卡片上的「申請項目標籤」：點一下切換需／免 HR、右側 ✕ 刪除、＋新增，全部自動儲存 ──
+// （取代舊的獨立「申請項目與 HR 審核」區塊；資料仍走同一支 saveApplyItems / getApplyItems）
+function _hrItemsWork() {
+  if (typeof _applyItemsWork !== 'undefined' && _applyItemsWork.length) return _applyItemsWork;
+  _applyItemsWork = Array.isArray(_applyItemsCache)
+    ? _applyItemsCache.map(function (it) { return { name: (it && it.name) || '', needsHR: it && it.needsHR === true }; })
+    : [];
+  return _applyItemsWork;
+}
+async function _saveHrItems() {
+  var items = _hrItemsWork()
+    .map(function (it) { return { name: String(it.name || '').trim(), needsHR: it.needsHR === true }; })
+    .filter(function (it) { return it.name; });
+  if (!items.length) { toast('⚠️ 至少需保留一個申請項目'); return false; }
+  var names = {};
+  for (var i = 0; i < items.length; i++) { var k = items[i].name; if (names[k]) { toast('⚠️ 項目名稱重複：' + k); return false; } names[k] = true; }
+  var res = await callAPI('saveApplyItems', { items: items });
+  if (res && res.ok) {
+    _applyItemsWork = items.map(function (it) { return { name: it.name, needsHR: it.needsHR }; });
+    _applyItemsCache = items;
+    if (typeof _fillApplyItemSelect === 'function') _fillApplyItemSelect(items);
+    renderFlowList(_flowApprovers);
+    _cacheClear();
+    return true;
+  }
+  toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
+  // 失敗 → 重新載入權威資料，避免畫面停在未存的狀態
+  loadApplyItemsAdmin();
+  return false;
+}
+async function toggleHrItem(idx) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
+  var w = _hrItemsWork(); if (!w[idx]) return;
+  var nm = w[idx].name;
+  w[idx].needsHR = !w[idx].needsHR;
+  var now = w[idx].needsHR;
+  renderFlowList(_flowApprovers);   // 樂觀更新，先反映再存
+  var ok = await _saveHrItems();
+  if (ok) toast(now ? '✅ 「' + nm + '」改為需 HR' : '✅ 「' + nm + '」改為免 HR');
+}
+async function addHrItemInline() {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
+  var name = String((window.prompt('新增申請項目名稱：', '') || '')).trim();
+  if (!name) return;
+  var w = _hrItemsWork();
+  if (w.some(function (it) { return String(it.name || '').trim() === name; })) { toast('⚠️ 項目已存在：' + name); return; }
+  w.push({ name: name, needsHR: false });
+  renderFlowList(_flowApprovers);
+  var ok = await _saveHrItems();
+  if (ok) toast('✅ 已新增「' + name + '」（預設免 HR，點標籤可改）');
+}
+async function deleteHrItem(idx) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改'); return; }
+  var w = _hrItemsWork(); if (!w[idx]) return;
+  var nm = w[idx].name;
+  if (!confirm('確定刪除申請項目「' + nm + '」嗎？\n\n已送出的舊案件不受影響。')) return;
+  w.splice(idx, 1);
+  renderFlowList(_flowApprovers);
+  var ok = await _saveHrItems();
+  if (ok) toast('🗑️ 已刪除「' + nm + '」');
 }
 
 // 渲染流程列表
@@ -11297,6 +11363,34 @@ function renderFlowList(approvers) {
     const labelColor = isEnabled ? '#363B35' : '#767B75';
     const rowShadow  = isEnabled ? 'box-shadow:0 1px 6px rgba(87,123,83,.08);' : '';
 
+    // ── HR 關卡專屬：把「哪些申請項目需經 HR」做成標籤掛在這張卡片上（取代舊獨立區塊）──
+    // 亮橘＝需 HR、灰＝免 HR，點一下切換並自動儲存；右側小 ✕ 刪除項目；虛線框「＋ 項目」新增。
+    let hrItemsStrip = '';
+    if (a.condition === 'special' && isEnabled) {
+      const _items = (typeof _applyItemsWork !== 'undefined' && _applyItemsWork.length)
+        ? _applyItemsWork
+        : (Array.isArray(_applyItemsCache) ? _applyItemsCache.map(it => ({ name: (it && it.name) || '', needsHR: it && it.needsHR === true })) : []);
+      const chips = _items.map((it, ii) => {
+        const onHr = !!it.needsHR;
+        const nm = htEsc(it.name || '');
+        const bord = onHr ? '#E0820A' : '#D2D7CD';
+        const bg   = onHr ? '#FFF3E2' : '#fff';
+        const col  = onHr ? '#C9760A' : '#767B75';
+        if (!admin) {
+          return `<span style="display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:20px;border:1.5px solid ${onHr ? '#E0820A' : '#E2E5DE'};background:${bg};color:${onHr ? '#C9760A' : '#9AA096'};font-size:13px;font-weight:700">${onHr ? '✓ ' : ''}${nm}</span>`;
+        }
+        return `<span onclick="toggleHrItem(${ii})" title="${onHr ? '點一下改為免 HR' : '點一下改為需 HR'}" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 12px;border-radius:20px;border:1.5px solid ${bord};background:${bg};color:${col};font-size:13px;font-weight:700;cursor:pointer;transition:all .15s">${onHr ? '✓ ' : ''}${nm}<span onclick="event.stopPropagation();deleteHrItem(${ii})" title="刪除項目" style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;color:#B7A79B;font-size:11px;font-weight:700;cursor:pointer">✕</span></span>`;
+      }).join('');
+      const addChip = admin ? `<button type="button" onclick="addHrItemInline()" title="新增申請項目" style="display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 12px;border-radius:20px;border:1.5px dashed #B7C2AE;background:#fff;color:#5A6157;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">＋ 項目</button>` : '';
+      hrItemsStrip = `<div style="padding:11px 18px;border-top:1px dashed #F0D3A0;background:#FFFDF8">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">🏷️ 需經 HR 審核的項目</span>
+          ${chips}${addChip}
+        </div>
+        <div style="font-size:12px;color:#9AA096;margin-top:6px">亮橘＝這類申請要多經這關 HR；灰色＝免 HR。點標籤即可切換，會自動儲存。</div>
+      </div>`;
+    }
+
     return `<div class="flow-row" data-index="${i}" style="background:${rowBg};border-radius:10px;border:${rowBorder};${rowAccent}${rowShadow}${isEnabled ? '' : 'opacity:.6'};overflow:hidden">
       <div class="flow-grid" style="display:grid;grid-template-columns:44px minmax(120px,200px) 1fr auto;gap:14px;align-items:center;padding:14px 18px">
       <!-- 序號 -->
@@ -11304,7 +11398,7 @@ function renderFlowList(approvers) {
       <!-- 職稱 -->
       <div>
         <div style="font-size:14px;font-weight:600;color:${labelColor}">${a.label || a.name}</div>
-        ${a.condition === 'special' ? '<div style="display:inline-block;margin-top:3px;font-size:11px;font-weight:700;color:#C9760A;background:#FFF8EC;border:1px solid #F3C05A;border-radius:20px;padding:1px 8px">僅特殊費用・需 HR</div>' : ''}
+        ${a.condition === 'special' ? '<div style="display:inline-block;margin-top:3px;font-size:11px;font-weight:700;color:#C9760A;background:#FFF8EC;border:1px solid #F3C05A;border-radius:20px;padding:1px 8px">僅特殊費用</div>' : ''}
         ${!isEnabled ? '<div style="font-size:12px;color:#dc2626;margin-top:2px">⚠️ 已停用・不計入流程</div>' : ''}
       </div>
       <!-- 審核人（nameChip 已含姓名，不重複顯示） -->
@@ -11320,6 +11414,7 @@ function renderFlowList(approvers) {
         <div class="flow-actions-edit">${editBtn}${admin ? `<button class="flow-del-btn" onclick="deleteFlowStep(${i})" title="刪除此關" style="height:34px;width:34px;padding:0;border:1px solid #f0c8c8;background:#fff5f5;color:#dc2626;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>` : ''}</div>
       </div>
       </div>
+      ${hrItemsStrip}
       ${isEnabled && admin && (a.onLeave || (window._flowProxyOpen && window._flowProxyOpen[i])) ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:#FFFBF3;flex-wrap:wrap">
         <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">👤 由誰代簽</span>
         <select onchange="setFlowProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid #F3C05A;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:300px">${_flowProxySelectOptions(i, a.onLeave ? (a.proxyEmail||'') : '')}</select>
