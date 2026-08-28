@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260827160055';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828092928';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2995,18 +2995,8 @@ thead th{color:#767B75!important}
       </div>
     </div>
 
-    <!-- KPI 卡片 -->
-    <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
-      <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px">
-        <div style="font-size:12px;font-weight:600;color:#767B75;letter-spacing:.08em;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#577B53;flex-shrink:0"></span>已核准總金額</div>
-        <div id="analytics-approved" style="font-size:24px;font-weight:700;color:#2E332D;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
-        <div style="font-size:12px;color:#767B75;margin-top:auto;padding-top:8px;letter-spacing:.04em">已完成案件累計</div>
-      </div>
-      <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px">
-        <div style="font-size:12px;font-weight:600;color:#767B75;letter-spacing:.08em;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#738e41;flex-shrink:0"></span>已核准件數</div>
-        <div id="analytics-count" style="font-size:30px;font-weight:700;color:#2E332D;line-height:1;margin-top:10px">—</div>
-        <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#767B75;letter-spacing:.04em">已完成案件數</div></div>
-      </div>
+    <!-- KPI 卡片：總金額／件數已在上方「請款概況」與區間標籤呈現，此處只放區間專屬指標，避免重複 -->
+    <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
       <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px">
         <div style="font-size:12px;font-weight:600;color:#767B75;letter-spacing:.08em;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#E0820A;flex-shrink:0"></span>平均每件金額</div>
         <div id="analytics-avg-amount" style="font-size:24px;font-weight:700;color:#2E332D;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
@@ -11088,12 +11078,31 @@ var _applyItemsWork = [];   // 編輯中的工作副本
 async function loadApplyItemsAdmin() {
   const box = document.getElementById('apply-items-list');
   if (!box) return;
-  box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  // 先用快取即時渲染，避免「載入中…」卡頓（getFlow 之後再排一支 getApplyItems 會被 GAS 排隊放大）
+  if (Array.isArray(_applyItemsCache) && _applyItemsCache.length) {
+    _applyItemsWork = _applyItemsCache.map(function (it) {
+      return { name: String((it && it.name) || ''), needsHR: it && it.needsHR === true };
+    });
+    renderApplyItemsAdmin();
+  } else {
+    box.innerHTML = '<div style="text-align:center;padding:20px;color:#767B75">載入中…</div>';
+  }
+  // 背景刷新，回來若與目前顯示不同才更新（不擋畫面、避免無謂閃爍）
+  var _before = JSON.stringify(_applyItemsWork);
   const res = await callAPI('getApplyItems');
-  _applyItemsWork = (res && res.ok && Array.isArray(res.items)) ? res.items.map(function (it) {
-    return { name: String((it && it.name) || ''), needsHR: it && it.needsHR === true };
-  }) : [];
-  renderApplyItemsAdmin();
+  if (res && res.ok && Array.isArray(res.items)) {
+    _applyItemsCache = res.items;
+    var _next = res.items.map(function (it) {
+      return { name: String((it && it.name) || ''), needsHR: it && it.needsHR === true };
+    });
+    if (JSON.stringify(_next) !== _before) {
+      _applyItemsWork = _next;
+      renderApplyItemsAdmin();
+    }
+  } else if (!Array.isArray(_applyItemsCache) || !_applyItemsCache.length) {
+    _applyItemsWork = [];
+    renderApplyItemsAdmin();
+  }
 }
 function renderApplyItemsAdmin() {
   const box = document.getElementById('apply-items-list');
@@ -13221,10 +13230,11 @@ function renderAnalytics(startDate,endDate){
   var approvedFiltered=filtered.filter(function(c){return c.status==='已完成';});
   var lbl=document.getElementById('analytics-range-label');
   var isAllData=(startDate.getFullYear()<=2000&&endDate.getFullYear()>=2099);
-  if(lbl)lbl.textContent=(isAllData?'不限定區間':fmt(startDate)+' — '+fmt(endDate))+' · 已核准 '+approvedFiltered.length+' 件';
   var pendingFiltered=filtered.filter(function(c){return c.status&&c.status.includes('待');});
   var rejectedFiltered=filtered.filter(function(c){return c.status==='已退件';});
   var apv=approvedFiltered.reduce(function(s,c){return s+Number(c.total||0);},0);
+  // 區間標籤同時帶出「件數 + 總金額」，取代原本重複的兩張 KPI 卡
+  if(lbl)lbl.textContent=(isAllData?'不限定區間':fmt(startDate)+' — '+fmt(endDate))+' · 已核准 '+approvedFiltered.length+' 件 · NT$ '+apv.toLocaleString();
   var avgAmt=approvedFiltered.length>0?Math.round(apv/approvedFiltered.length):0;
   // 退件率：已結案的案件中，曾被退件過的比例（進行中案件不納入）
   var doneFiltered=filtered.filter(function(c){return c.status==='已完成'||c.status==='已退件';});
