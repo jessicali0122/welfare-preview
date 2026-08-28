@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828193935';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828195437';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2510,7 +2510,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div><div style="font-size:12px;color:#9AA096;margin-top:4px;letter-spacing:.04em">📅 資料更新日期：2026年5月</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div><div style="font-size:12px;color:#9AA096;margin-top:4px;letter-spacing:.04em">📅 資料更新日期：2026年8月</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap">
@@ -2615,13 +2615,18 @@ thead th{color:#767B75!important}
           if (c.id==='part' && c.m<3) return { unlocked:true, state:'每人補助 $500（半額）' };
           return { unlocked:true, state:'每人補助 $1,000' };
         } },
+      { icon:'🎁', name:'三節禮品／禮券', rule:function(){ return { unlocked:true, state:'調升為 $1,000', note:'農曆過年、端午節、中秋節' }; } },
+      { icon:'🎂', name:'生日禮金', rule:function(c){
+          if (c.m<3) return { unlocked:false, state:'滿 3 個月後享有' };
+          return { unlocked:true, state:'每人 $2,000（2026/8 起）', note:'併同當月薪資發放' };
+        } },
       { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號' }; } },
       { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'每月 2～4 次，線上預約' }; } },
       { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職迎新，每人 $150' }; } },
       { icon:'🏷️', name:'員購價', rule:function(c){ if (c.m<1) return { unlocked:false, state:'到職次月起，官網員購價' }; return { unlocked:true, state:'官網員購價' }; } },
       { icon:'🍽️', name:'部門季聚餐', rule:function(c){
           if (c.id==='part' && c.m<3) return { unlocked:false, state:'年資滿 3 個月後可參加' };
-          return { unlocked:true, state:'每季每人 $600' };
+          return { unlocked:true, state:'每季每人 $800', note:'2026/8 起限非上班時間、不限餐飲（唱歌／密室逃脫等亦可）' };
         } },
       { icon:'🏸', name:'社團補助', rule:function(){
           return { unlocked:true, state:'每人每月上限 $200', note:'每人限參加一社；活動費用實報實銷' };
