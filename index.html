@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828220444';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828221553';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10966,7 +10966,19 @@ function updateDetailFlow(c){
     let iconSvg = '', statusHtml = '';
     const isLast = i === APPROVERS.length - 1;
 
-    let actorName = (a.email && LOCAL_EMAIL_TO_NAME[a.email]) || a.name;
+    // ★ 稽核鐵則：已送出案件的每一關「簽核人姓名／關卡名」一律以「該案送出當下凍結的簽核鏈快照
+    //   (chainEmails/chainNames) ＋ 實際簽核紀錄(apv.signerEmail/signerName)」為準，絕不可用「現在的
+    //   流程設定(a)」去套；否則事後調整簽核流程（改人、加關、換順序）會讓已簽核舊案的姓名與 email 錯位。
+    var _snapEmail = (Array.isArray(c.chainEmails) && c.chainEmails[i]) ? String(c.chainEmails[i]).trim() : '';
+    var _snapName  = (Array.isArray(c.chainNames)  && c.chainNames[i])  ? String(c.chainNames[i]).trim()  : '';
+    var _sgEmail   = String(apv.signerEmail || _snapEmail || a.email || '').trim();
+    // 關卡名稱：快照未存 label → 用該關凍結簽核人 email 對應現行流程的關卡名(best-effort)，找不到才退回現行設定
+    var _stepLabel = a.label;
+    if (_snapEmail && Array.isArray(_flowApprovers)) {
+      var _lh = _flowApprovers.find(function(g){ return String(g.email||'').trim().toLowerCase() === _snapEmail.toLowerCase(); });
+      if (_lh && _lh.label) _stepLabel = _lh.label;
+    }
+    let actorName = (_sgEmail && LOCAL_EMAIL_TO_NAME[_sgEmail]) || apv.signerName || _snapName || a.name;
     let origApprover = actorName; // 代理前先記住「這關原本的簽核人」，供稽核附註
     let displayComment = comment;
     let isProxy = false;
@@ -10983,7 +10995,7 @@ function updateDetailFlow(c){
       ? '<div class="flow-proxyfor" style="font-size:12px;color:#767B75;margin-top:1px">原簽核人：' + htEsc(proxyFor || origApprover || '—') + '</div>'
       : '';
     // 簽核人 email（稽核用）：優先用後端記錄的實際操作者 email，舊案退回流程設定 email
-    const signerEmail = String(apv.signerEmail || a.email || '').trim();
+    const signerEmail = _sgEmail;
     const emailHtml = signerEmail ? '<div class="flow-email" style="font-size:12px;color:#9AA09A;margin-top:1px;word-break:break-all">' + htEsc(signerEmail) + '</div>' : '';
 
     if (result === '核准') {
@@ -11012,15 +11024,15 @@ function updateDetailFlow(c){
       // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 流程已中止</div>'
-                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + a.name + '</div>';
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapName || a.name) + '</div>';
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + a.name + '</div>';
+                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapName || a.name) + '</div>';
     } else {
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#767B75;margin-top:2px">等待前一關完成</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + a.name + '</div>';
+                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapName || a.name) + '</div>';
     }
     var isActive = result || (!isVoid && !isDone && !isRejected && i === currentStep-1);
     var titleColor = isActive ? '#4A4F49' : '#767B75';
@@ -11034,7 +11046,7 @@ function updateDetailFlow(c){
       + '</div>'
       // 右欄：文字，底部留間距（最後一關不留）
       + '<div style="flex:1;' + ((!isLast) ? 'padding-bottom:10px;' : '') + '">'
-      +   '<div style="font-size:14px;font-weight:700;color:' + titleColor + ';padding-top:4px">' + a.label + '</div>'
+      +   '<div style="font-size:14px;font-weight:700;color:' + titleColor + ';padding-top:4px">' + _stepLabel + '</div>'
       +   statusHtml
       + '</div>'
       + '</div>';
