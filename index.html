@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828092928';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260828093908';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -804,9 +804,9 @@ input[type=checkbox]{accent-color:#577B53}
   #analytics-approved-tbody td:nth-child(3){display:none!important}
   /* 主旨欄放寬，不截斷太早 */
   #analytics-approved-tbody td:nth-child(4){max-width:120px!important}
-  /* 費用分析標題列：手機版「標題一行、控制項換到下一行」，避免標題被篩選按鈕擠壓斷行 */
-  #analytics-header{flex-wrap:wrap;gap:8px}
-  #analytics-header .ana-rule{display:none}
+  /* 請款概況標題列（已併入區間篩選）：手機版「標題一行、控制項換到下一行」，避免標題被篩選按鈕擠壓斷行 */
+  #dash-reimburse-heading{flex-wrap:wrap;gap:8px}
+  #dash-reimburse-heading .ana-rule{display:none}
   #analytics-controls{width:100%}
 }
 /* ── 手機版詳情頁 ── */
@@ -2927,8 +2927,25 @@ thead th{color:#767B75!important}
     <!-- 4 張統計卡（請款統計，限有 reimbursement.view 權限）：桌面 4 欄一列，手機 2x2 -->
     <div id="dash-reimburse-heading" style="display:none;align-items:center;gap:10px;margin-bottom:14px">
       <div style="font-size:16px;font-weight:800;color:#2E332D;white-space:nowrap">📑 請款概況</div>
-      <div style="font-size:12px;color:#767B75;white-space:nowrap">全部案件・不受下方區間篩選影響</div>
-      <div style="flex:1;height:1px;background:#ECEEEA"></div>
+      <div class="ana-rule" style="flex:1;height:1px;background:#ECEEEA"></div>
+      <!-- 篩選區間（併入本標題；僅影響下方圖表與明細，上排 4 張總狀態卡為全部案件不受影響）-->
+      <div id="analytics-controls" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <button id="arange-month" onclick="setAnalyticsRange('month')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本月</button>
+        <button id="arange-quarter" onclick="setAnalyticsRange('quarter')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本季</button>
+        <button id="arange-year" onclick="setAnalyticsRange('year')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本年</button>
+        <button id="arange-custom" onclick="setAnalyticsRange('custom')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">自訂</button>
+        <div id="analytics-custom-range" style="display:none;align-items:center;gap:6px">
+          <input type="text" id="analytics-date-start" class="inp date-inp" placeholder="開始日期" style="width:130px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
+          <span style="font-size:12px;color:#767B75">至</span>
+          <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:130px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
+          <button id="analytics-apply-btn" class="btn" style="font-size:14px;padding:5px 14px;background:#ECEEEA;color:#767B75;border:1.5px solid #D2D7CD" onclick="applyCustomRange()">套用</button>
+        </div>
+        <div id="analytics-range-label" style="font-size:12px;color:#767B75;white-space:nowrap">載入中…</div>
+        <button onclick="exportCSV()" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          匯出 CSV
+        </button>
+      </div>
     </div>
     <div id="stats-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px">
 
@@ -2972,30 +2989,13 @@ thead th{color:#767B75!important}
       </div>
 
     </div>
-    <div id="analytics-header" style="display:flex;align-items:center;gap:10px;margin:24px 0 14px">
-      <div style="font-size:16px;font-weight:800;color:#2E332D;white-space:nowrap">費用分析</div>
-      <div class="ana-rule" style="flex:1;height:1px;background:#ECEEEA"></div>
-      <!-- 篩選區間 -->
-      <div id="analytics-controls" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        <button id="arange-month" onclick="setAnalyticsRange('month')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本月</button>
-        <button id="arange-quarter" onclick="setAnalyticsRange('quarter')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本季</button>
-        <button id="arange-year" onclick="setAnalyticsRange('year')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">本年</button>
-        <button id="arange-custom" onclick="setAnalyticsRange('custom')" style="font-size:14px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s">自訂</button>
-        <div id="analytics-custom-range" style="display:none;align-items:center;gap:6px">
-          <input type="text" id="analytics-date-start" class="inp date-inp" placeholder="開始日期" style="width:130px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
-          <span style="font-size:12px;color:#767B75">至</span>
-          <input type="text" id="analytics-date-end" class="inp date-inp" placeholder="結束日期" style="width:130px;font-size:14px;padding:5px 8px;cursor:pointer" readonly onchange="_syncAnalyticsApplyBtn()">
-          <button id="analytics-apply-btn" class="btn" style="font-size:14px;padding:5px 14px;background:#ECEEEA;color:#767B75;border:1.5px solid #D2D7CD" onclick="applyCustomRange()">套用</button>
-        </div>
-        <div id="analytics-range-label" style="font-size:12px;color:#767B75;white-space:nowrap">載入中…</div>
-        <button onclick="exportCSV()" style="font-size:12px;padding:5px 14px;border-radius:20px;border:1.5px solid #D2D7CD;background:#F7F8F6;color:#767B75;cursor:pointer;font-family:inherit;font-weight:500;transition:all .15s;display:inline-flex;align-items:center;gap:5px">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          匯出 CSV
-        </button>
-      </div>
+    <!-- 費用分析已併入「請款概況」：區間篩選移至上方標題，這裡直接接分析指標 -->
+    <div style="display:flex;align-items:center;gap:8px;margin:18px 0 12px">
+      <div style="font-size:12px;font-weight:700;color:#8a9182;letter-spacing:.06em">費用分析（依上方區間）</div>
+      <div style="flex:1;height:1px;background:#F1F3EF"></div>
     </div>
 
-    <!-- KPI 卡片：總金額／件數已在上方「請款概況」與區間標籤呈現，此處只放區間專屬指標，避免重複 -->
+    <!-- KPI 卡片：總金額／件數已在上方統計卡與區間標籤呈現，此處只放區間專屬指標，避免重複 -->
     <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
       <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px">
         <div style="font-size:12px;font-weight:600;color:#767B75;letter-spacing:.08em;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#E0820A;flex-shrink:0"></span>平均每件金額</div>
