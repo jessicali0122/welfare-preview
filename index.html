@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260831221740';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260831222827';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2004,33 +2004,17 @@ html,body{background:#F6F4EE}
 #main-content:has(#view-dashboard.active){background:#F6F4EE!important}
 #view-dashboard.active #dashboard-greeting{color:#46633F!important}
 #view-dashboard.active #tw-datetime{color:#5A6650!important}
-/* 毛玻璃時間卡：底層極光色暈（青綠＋橘）＋上層霧面玻璃＋邊緣反光 */
-#tw-datetime{position:relative;isolation:isolate;overflow:hidden;
-  display:inline-flex;flex-direction:column;align-items:center;gap:8px;
-  padding:14px 30px;border-radius:22px;
-  border:2px solid rgba(255,255,255,.55);
-  box-shadow:0 10px 30px rgba(50,80,70,.16),inset 0 2px 0 rgba(255,255,255,.7);
-  -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
-#tw-datetime::before{content:"";position:absolute;inset:-30%;z-index:-2;
-  background:
-    radial-gradient(38% 50% at 22% 28%,rgba(63,167,160,.85),transparent 70%),
-    radial-gradient(42% 52% at 82% 34%,rgba(90,160,120,.80),transparent 70%),
-    radial-gradient(46% 48% at 55% 100%,rgba(224,130,10,.55),transparent 70%);
-  filter:blur(14px);
-  animation:twdt-aurora 14s ease-in-out infinite alternate}
-#tw-datetime::after{content:"";position:absolute;inset:0;z-index:-1;
-  background:rgba(255,255,255,.40);
-  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
-#tw-datetime .twdt-date{font-size:12px;font-weight:700;letter-spacing:.24em;color:#4C5A4E;text-transform:uppercase}
-#tw-datetime .twdt-clock{position:relative;display:inline-flex;align-items:baseline;perspective:240px;font-variant-numeric:tabular-nums;font-weight:800;font-size:30px;letter-spacing:.02em;line-height:1;color:#243024;padding-bottom:8px;text-shadow:0 2px 6px rgba(255,255,255,.5)}
-#tw-datetime .twdt-clock::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:36px;height:2px;border-radius:2px;background:linear-gradient(90deg,#3FA7A0,#738e41)}
+/* 無框時間：排版層次＋單位翻牌，不做卡片/底色/陰影，融入問候區不突兀 */
+#tw-datetime{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:0}
+#tw-datetime .twdt-date{font-size:12px;font-weight:700;letter-spacing:.24em;color:#8A8F86;text-transform:uppercase}
+#tw-datetime .twdt-clock{position:relative;display:inline-flex;align-items:baseline;perspective:240px;font-variant-numeric:tabular-nums;font-weight:800;font-size:30px;letter-spacing:.02em;line-height:1;color:#3E463A;padding-bottom:8px}
+#tw-datetime .twdt-clock::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:32px;height:2px;border-radius:2px;background:linear-gradient(90deg,#3FA7A0,#738e41)}
 #tw-datetime .twdt-digit{display:inline-block;transform-origin:50% 50%;backface-visibility:hidden}
-#tw-datetime .twdt-colon{padding:0 2px;color:#6E8B84;font-weight:700}
-#tw-datetime .twdt-sec{font-size:16px;font-weight:700;color:#5E7A72}
+#tw-datetime .twdt-colon{padding:0 2px;color:#B7BCAF;font-weight:700}
+#tw-datetime .twdt-sec{font-size:16px;font-weight:700;color:#A2A79A}
 #tw-datetime .twdt-flip{animation:twdt-flip .42s cubic-bezier(.2,.7,.3,1)}
 @keyframes twdt-flip{0%{transform:rotateX(-90deg);opacity:.15}60%{opacity:1}100%{transform:rotateX(0);opacity:1}}
-@keyframes twdt-aurora{0%{transform:translate3d(-4%,-3%,0) scale(1.05)}100%{transform:translate3d(4%,3%,0) scale(1.16)}}
-@media (prefers-reduced-motion:reduce){#tw-datetime .twdt-flip,#tw-datetime::before{animation:none}}
+@media (prefers-reduced-motion:reduce){#tw-datetime .twdt-flip{animation:none}}
 #view-dashboard.active #dash-motto{color:#5A6650!important}
 /* 首頁採一般捲動（不再釘住問候區）；頂欄鈕已有毛玻璃底，內容從底下滑過不突兀 */
 /* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
