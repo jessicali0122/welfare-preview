@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260831210546';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260831211055';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2004,11 +2004,18 @@ html,body{background:#F6F4EE}
 #main-content:has(#view-dashboard.active){background:#F6F4EE!important}
 #view-dashboard.active #dashboard-greeting{color:#46633F!important}
 #view-dashboard.active #tw-datetime{color:#5A6650!important}
-#tw-datetime{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
-#tw-datetime .twdt-date{font-weight:600}
-#tw-datetime .twdt-time{display:inline-flex;align-items:baseline;padding:2px 12px;border-radius:999px;background:rgba(115,142,65,.10);color:#5A6650;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.06em;line-height:1.6}
-#tw-datetime .twdt-sec{font-size:12px;font-weight:600;opacity:.75;margin-left:2px;display:inline-block;animation:twdt-tick .45s ease}
-@keyframes twdt-tick{from{opacity:0;transform:translateY(-2px)}to{opacity:.75;transform:translateY(0)}}
+#tw-datetime{display:inline-flex;justify-content:center;padding:4px 16px;border-radius:999px;background:rgba(115,142,65,.08)}
+#tw-datetime .twdt-inner{
+  font-weight:700;letter-spacing:.04em;font-variant-numeric:tabular-nums;white-space:nowrap;
+  background:linear-gradient(100deg,#577B53 0%,#738e41 34%,#E0820A 50%,#738e41 66%,#577B53 100%);
+  background-size:240% 100%;
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+  animation:twdt-sheen 5s linear infinite;
+}
+#tw-datetime .twdt-sep{opacity:.5;padding:0 2px}
+@keyframes twdt-sheen{0%{background-position:150% 0}100%{background-position:-150% 0}}
+@media (prefers-reduced-motion:reduce){#tw-datetime .twdt-inner{animation:none}}
 #view-dashboard.active #dash-motto{color:#5A6650!important}
 /* 首頁採一般捲動（不再釘住問候區）；頂欄鈕已有毛玻璃底，內容從底下滑過不突兀 */
 /* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
@@ -12643,6 +12650,7 @@ window.addEventListener('resize',updateVH);
 window.addEventListener('orientationchange',function(){setTimeout(updateVH,150);});
 
 // ── REAL-TIME TAIWAN TIME ──
+var _twInner=null;   // 只建立一次的漸層容器；每秒僅更新文字，讓整段掃光動畫連續不重跳
 function updateTWTime(){
   // 分頁在背景、或時鐘（僅總覽頁顯示）不在畫面上時，跳過重寫，省下每秒的定時喚醒與 reflow
   if(document.hidden)return;
@@ -12656,8 +12664,12 @@ function updateTWTime(){
   const hh=String(tw.getHours()).padStart(2,'0');
   const mm=String(tw.getMinutes()).padStart(2,'0');
   const ss=String(tw.getSeconds()).padStart(2,'0');
-  el.innerHTML='<span class="twdt-date">'+y+'年'+m+'月'+d+'日 星期'+dow+'</span>'
-    +'<span class="twdt-time">'+hh+':'+mm+'<span class="twdt-sec">'+ss+'</span></span>';
+  // 首次建立結構後只改文字：整段（年月日＋時分秒）共用同一個持續運行的漸層掃光
+  if(!_twInner||_twInner.parentNode!==el){
+    el.innerHTML='<span class="twdt-inner"></span>';
+    _twInner=el.querySelector('.twdt-inner');
+  }
+  _twInner.textContent=y+'年'+m+'月'+d+'日 星期'+dow+'　'+hh+':'+mm+':'+ss;
 }
 updateTWTime();
 setInterval(updateTWTime,1000);
