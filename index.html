@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260831210057';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260831210546';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2006,11 +2006,9 @@ html,body{background:#F6F4EE}
 #view-dashboard.active #tw-datetime{color:#5A6650!important}
 #tw-datetime{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
 #tw-datetime .twdt-date{font-weight:600}
-#tw-datetime .twdt-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.04em}
-#tw-datetime .twdt-dot{width:6px;height:6px;border-radius:50%;background:#738e41;margin-right:8px;box-shadow:0 0 0 0 rgba(115,142,65,.5);animation:twdt-pulse 2s infinite}
-#tw-datetime .twdt-colon{animation:twdt-blink 1s steps(1,end) infinite}
-@keyframes twdt-blink{50%{opacity:.2}}
-@keyframes twdt-pulse{0%{box-shadow:0 0 0 0 rgba(115,142,65,.45)}70%{box-shadow:0 0 0 8px rgba(115,142,65,0)}100%{box-shadow:0 0 0 0 rgba(115,142,65,0)}}
+#tw-datetime .twdt-time{display:inline-flex;align-items:baseline;padding:2px 12px;border-radius:999px;background:rgba(115,142,65,.10);color:#5A6650;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.06em;line-height:1.6}
+#tw-datetime .twdt-sec{font-size:12px;font-weight:600;opacity:.75;margin-left:2px;display:inline-block;animation:twdt-tick .45s ease}
+@keyframes twdt-tick{from{opacity:0;transform:translateY(-2px)}to{opacity:.75;transform:translateY(0)}}
 #view-dashboard.active #dash-motto{color:#5A6650!important}
 /* 首頁採一般捲動（不再釘住問候區）；頂欄鈕已有毛玻璃底，內容從底下滑過不突兀 */
 /* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
@@ -6628,6 +6626,10 @@ var _retryNoticeAt = 0;
 function _retryNotice(action, retry, opts) {
   if (opts && opts.bg) return;   // 背景預抓（使用者沒在等）→ 安靜重試，不彈提示洗版
   if (!_PATIENT_ACTIONS.has(action)) return;
+  // Google 投遞單次成功率僅約 4~5 成，單次抖動很常見且第一次重試通常就成功。
+  // → 第一次重試安靜處理，只有連第二次重試（retry>=1，代表真的持續慢）才提示，
+  //   避免後端根本沒人用時仍不斷跳「伺服器回應較慢」嚇到使用者。
+  if (retry < 1) return;
   var _now = Date.now();
   if (_now - _retryNoticeAt < 12000) return;   // 距上次提示未滿 12 秒 → 安靜重試，不再洗版
   _retryNoticeAt = _now;
@@ -12655,8 +12657,7 @@ function updateTWTime(){
   const mm=String(tw.getMinutes()).padStart(2,'0');
   const ss=String(tw.getSeconds()).padStart(2,'0');
   el.innerHTML='<span class="twdt-date">'+y+'年'+m+'月'+d+'日 星期'+dow+'</span>'
-    +'<span class="twdt-time"><span class="twdt-dot"></span>'
-    +hh+'<span class="twdt-colon">:</span>'+mm+'<span class="twdt-colon">:</span>'+ss+'</span>';
+    +'<span class="twdt-time">'+hh+':'+mm+'<span class="twdt-sec">'+ss+'</span></span>';
 }
 updateTWTime();
 setInterval(updateTWTime,1000);
