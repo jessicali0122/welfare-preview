@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260828225211';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260831210057';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2003,7 +2003,14 @@ html,body{background:#F6F4EE}
 /* ── 首頁淺色畫布（2026-08 改版）：淺米微綠底、白卡浮起、畫布文字用深字 ── */
 #main-content:has(#view-dashboard.active){background:#F6F4EE!important}
 #view-dashboard.active #dashboard-greeting{color:#46633F!important}
-#view-dashboard.active #tw-datetime,#view-dashboard.active #dash-weather{color:#5A6650!important}
+#view-dashboard.active #tw-datetime{color:#5A6650!important}
+#tw-datetime{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
+#tw-datetime .twdt-date{font-weight:600}
+#tw-datetime .twdt-time{display:inline-flex;align-items:center;font-variant-numeric:tabular-nums;font-weight:700;letter-spacing:.04em}
+#tw-datetime .twdt-dot{width:6px;height:6px;border-radius:50%;background:#738e41;margin-right:8px;box-shadow:0 0 0 0 rgba(115,142,65,.5);animation:twdt-pulse 2s infinite}
+#tw-datetime .twdt-colon{animation:twdt-blink 1s steps(1,end) infinite}
+@keyframes twdt-blink{50%{opacity:.2}}
+@keyframes twdt-pulse{0%{box-shadow:0 0 0 0 rgba(115,142,65,.45)}70%{box-shadow:0 0 0 8px rgba(115,142,65,0)}100%{box-shadow:0 0 0 0 rgba(115,142,65,0)}}
 #view-dashboard.active #dash-motto{color:#5A6650!important}
 /* 首頁採一般捲動（不再釘住問候區）；頂欄鈕已有毛玻璃底，內容從底下滑過不突兀 */
 /* ── 首頁綠底水彩暈染（效果 2：左上深墨綠、右下亮灰綠，極慢呼吸漂移）── */
@@ -2330,7 +2337,6 @@ thead th{color:#767B75!important}
       <div id="dashboard-greeting" style="font-size:var(--fs-display);font-weight:800;color:#2E332D;letter-spacing:-.01em;line-height:1.2">你好</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
-        <div id="dash-weather" style="display:none;font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em"></div>
       </div>
       <div id="dash-motto" style="font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
       <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#FBE9EE;border:1px solid #F4C0CE;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.10)">
@@ -6935,7 +6941,6 @@ function applyDashboardBlocks() {
   if (typeof bulletinRender === 'function') bulletinRender();
 
   _renderFestivalMarquee();
-  _dashLoadWeather();
 }
 window.applyDashboardBlocks = applyDashboardBlocks;
 
@@ -6961,45 +6966,6 @@ function _renderFestivalMarquee() {
   var seg = '<span style="font-size:14px;color:#577B53;letter-spacing:.16em;padding:0 36px;font-weight:500">✦ ' + msgs.join('　・　') + '</span>';
   track.innerHTML = seg + seg; // 兩份內容無縫循環
   wrap.style.display = '';
-}
-
-// ── 首頁天氣：瀏覽器定位（拒絕授權則預設新莊總部）──
-var _dashWeatherLoaded = false;
-function _dashLoadWeather() {
-  var el = document.getElementById('dash-weather');
-  if (!el || _dashWeatherLoaded) return;
-  _dashWeatherLoaded = true;
-  var render = function(lat, lon, placeLabel) {
-    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon
-      + '&current=temperature_2m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FTaipei&forecast_days=1';
-    fetch(url).then(function(r){ return r.json(); }).then(function(j){
-      var cur = j && j.current, dd = j && j.daily;
-      if (!cur || cur.temperature_2m == null) return;
-      var w = (typeof _htWeatherEmoji === 'function') ? _htWeatherEmoji(cur.weather_code) : { e:'🌡️', t:'' };
-      var range = (dd && dd.temperature_2m_min && dd.temperature_2m_min[0] != null)
-        ? '　' + Math.round(dd.temperature_2m_min[0]) + '~' + Math.round(dd.temperature_2m_max[0]) + '°C' : '';
-      el.innerHTML = '<span>' + w.e + '</span> <span>' + Math.round(cur.temperature_2m) + '°C</span>'
-        + '<span style="color:#767B75;font-size:12px">' + range + '　目前・' + (placeLabel || '你的位置') + '</span>';
-      el.style.display = '';
-    }).catch(function(){ /* 靜默失敗，不影響首頁 */ });
-  };
-  var fallback = function(){ render(25.036, 121.45, '新莊'); };
-  // 座標快取 7 天：期間內不再呼叫定位（部分瀏覽器設「每次詢問」會反覆跳授權視窗）
-  var cached = null;
-  try { cached = JSON.parse(localStorage.getItem('bf_geo') || 'null'); } catch(e){}
-  if (cached && cached.t && Date.now() - cached.t < 7 * 24 * 60 * 60 * 1000) {
-    render(cached.lat, cached.lon, '');
-    return;
-  }
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      function(pos){
-        var lat = pos.coords.latitude.toFixed(3), lon = pos.coords.longitude.toFixed(3);
-        try { localStorage.setItem('bf_geo', JSON.stringify({ lat: lat, lon: lon, t: Date.now() })); } catch(e){}
-        render(lat, lon, '');
-      },
-      fallback, { timeout: 5000, maximumAge: 1800000 });
-  } else fallback();
 }
 
 async function loadDashboard() {
@@ -7061,10 +7027,18 @@ async function loadDashboard() {
     // 有輪到自己要審的案件 → 整張卡轉橘色凸顯；沒有就恢復一般樣式
     var _mtCard = document.getElementById('dstat-myturn-card');
     if (_mtCard) _mtCard.classList.toggle('has-todo', myTurnPending.length > 0);
-    // 下個送件日：每月 10/20/30，過了就跳下一個（月底跳次月 10）
-    var _tw = new Date(Date.now() + 8*3600000);
-    var _dd = _tw.getUTCDate(), _mo = _tw.getUTCMonth()+1, _nmo = _mo, _nd;
-    if (_dd <= 10) _nd = 10; else if (_dd <= 20) _nd = 20; else if (_dd <= 30) _nd = 30; else { _nd = 10; _nmo = _mo % 12 + 1; }
+    // 下個送件日＝付款日：每月第 2、4 週週五（過了跳下一個；第 4 週五過了跳次月第 2 週五）
+    // 註：如遇例假日或特殊節日，實際付款依財會部公告為準（此處僅顯示常規日期）
+    var _tw = new Date(Date.now() + 8*3600000); // 以 UTC 方法讀台北日期
+    var _nthFri = function(yr, moIdx, nth){ // 回傳該月第 nth 個週五是幾號
+      var first = new Date(Date.UTC(yr, moIdx, 1));
+      return 1 + ((5 - first.getUTCDay() + 7) % 7) + (nth - 1) * 7;
+    };
+    var _y = _tw.getUTCFullYear(), _m = _tw.getUTCMonth(), _dd = _tw.getUTCDate();
+    var _f2 = _nthFri(_y, _m, 2), _f4 = _nthFri(_y, _m, 4), _nmo, _nd;
+    if (_dd <= _f2)      { _nmo = _m + 1; _nd = _f2; }
+    else if (_dd <= _f4) { _nmo = _m + 1; _nd = _f4; }
+    else { var _nx = new Date(Date.UTC(_y, _m + 1, 1)); _nmo = _nx.getUTCMonth() + 1; _nd = _nthFri(_nx.getUTCFullYear(), _nx.getUTCMonth(), 2); }
     _set('dstat-nextdate', _nmo + '/' + _nd);
     // 午茶日：顯示今天之後最近的一場（當天過了就自動指向下一場）；
     // 已載完卻沒有未來場次 → Coming Soon（尚未安排），而不是空的「—」
@@ -12680,7 +12654,9 @@ function updateTWTime(){
   const hh=String(tw.getHours()).padStart(2,'0');
   const mm=String(tw.getMinutes()).padStart(2,'0');
   const ss=String(tw.getSeconds()).padStart(2,'0');
-  el.textContent=y+'年'+m+'月'+d+'日 星期'+dow+' '+hh+':'+mm+':'+ss;
+  el.innerHTML='<span class="twdt-date">'+y+'年'+m+'月'+d+'日 星期'+dow+'</span>'
+    +'<span class="twdt-time"><span class="twdt-dot"></span>'
+    +hh+'<span class="twdt-colon">:</span>'+mm+'<span class="twdt-colon">:</span>'+ss+'</span>';
 }
 updateTWTime();
 setInterval(updateTWTime,1000);
