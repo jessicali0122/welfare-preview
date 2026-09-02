@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260902160930';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260902161607';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6507,6 +6507,47 @@ function _refreshAppCounts() {
   _set('apps-tab-all-badge', cases);
   _set('tab-pending-count', pending);
   _set('app-count-label', '共 ' + cases + ' 件');
+  _paintPendingBadge();
+}
+
+// 「待我審核」紅點：有輪到自己的案件 → 徽章轉紅（非當前分頁時；當前分頁維持橘色），提醒有待辦。
+function _paintPendingBadge() {
+  var el = document.getElementById('tab-pending-count');
+  if (!el) return;
+  var all = Array.isArray(window._allCasesCache) ? window._allCasesCache : [];
+  if (typeof _previewOwnOnly === 'function' && _previewOwnOnly()) { el.style.background = (_currentAppTab === 'pending') ? '#E0820A' : '#767B75'; return; }
+  var pend = all.filter(function (c) { return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
+  el.style.background = (_currentAppTab === 'pending') ? '#E0820A' : (pend > 0 ? '#dc2626' : '#767B75');
+}
+
+// ── 待我審核背景輪詢：王鈞逸等人簽完、輪到你時「即時」跳提示＋紅點，不必重整。 ──
+// 每 2.5 分鐘、僅前景分頁、需審核權；用 noCache 抓最新並更新徽章/通知面板。
+var _pendPollTimer = null, _lastPendCount = null;
+function _startPendingPoll() {
+  if (_pendPollTimer) return;
+  if (typeof can === 'function' && !can('reimbursement.approve')) return;
+  _pendPollTimer = setInterval(_pollPending, 150000);
+}
+async function _pollPending() {
+  if (document.hidden) return;
+  if (typeof can === 'function' && !can('reimbursement.approve')) return;
+  try {
+    var res = await callAPI('list', {}, { noCache: true });
+    if (!res || !res.ok || !Array.isArray(res.cases)) return;
+    window._allCasesCache = res.cases;
+    if (typeof _refreshAppCounts === 'function') _refreshAppCounts();
+    try { if (typeof _syncApprovalsToNotif === 'function') _syncApprovalsToNotif(); } catch (e) {}
+    var pend = res.cases.filter(function (c) { return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
+    if (_lastPendCount !== null && pend > _lastPendCount && typeof toast === 'function') {
+      toast('🔴 有新的案件輪到你審核了（待我審核 ' + pend + ' 件）');
+    }
+    _lastPendCount = pend;
+    var _va = document.getElementById('view-applications');
+    if (_va && _va.classList.contains('active')) {
+      if (_currentAppTab === 'drafts') renderDraftsTab();
+      else if (_currentAppTab !== 'flow') renderApplications();
+    }
+  } catch (e) {}
 }
 
 // 從本地案件快取移除一筆（刪除用）；回傳被移除的那筆，失敗時可還原
@@ -7460,6 +7501,7 @@ function switchAppTab(tab) {
     var el = document.getElementById(_cntMap[k]);
     if (el) el.style.background = (k === tab) ? '#E0820A' : '#767B75';
   });
+  _paintPendingBadge();   // 待我審核非當前分頁時，有待辦仍保持紅點
   // 「共 N 件」計數與簽核流程分頁無關，切到流程時隱藏
   var countLabel = document.getElementById('app-count-label');
   if (countLabel && tab === 'flow') countLabel.style.display = 'none';
@@ -7567,6 +7609,9 @@ function _applyCasesData(allCases) {
   var pendingCount = allCases.filter(function(c){ return typeof isMyTurnToApprove === 'function' && isMyTurnToApprove(c); }).length;
   var pendingBadge = document.getElementById('tab-pending-count');
   if (pendingBadge) pendingBadge.textContent = pendingCount;
+  _paintPendingBadge();                                   // 有待辦→紅點
+  if (_lastPendCount === null) _lastPendCount = pendingCount;  // 首次載入設基準，之後只在「變多」才提示
+  _startPendingPoll();                                    // 啟動背景輪詢（idempotent）
   if (!tbody) return;
   // 隱藏卡片容器
   if (cardsContainer) cardsContainer.style.display = 'none';
