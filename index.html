@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260831222827';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260902155234';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5886,6 +5886,7 @@ function showApp() {
     // 所有使用者都先載入流程資訊（讓 updateDetailFlow 知道正確關卡數）
     setTimeout(function(){ _preloadFlowInfo(); }, _dFlow);
     // 載入送單表單的「申請項目」選單
+    _seedApplyItems();   // 立即用快取/預設把下拉填好（免等 GAS，新增申請馬上選得到）
     setTimeout(function(){ _preloadApplyItems(); }, _dFlow);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
@@ -11048,6 +11049,23 @@ let _flowApprovers = [];
 // 所有登入使用者都能呼叫：從後端拉取流程資訊，讓 updateDetailFlow 正確顯示關卡數
 // 載入「申請項目」選單（送單表單用）；失敗時保留 HTML 預設「一般請款」單一選項
 var _applyItemsCache = null;
+// 申請項目：前端內建預設（與後端 _DEFAULT_APPLY_ITEMS 對齊）＋ localStorage 持久化，
+// 讓「新增申請下拉」與「簽核流程籤條」秒顯示，不必空等很慢的 GAS（背景 SWR 回來再校正）。
+var _DEFAULT_APPLY_ITEMS_FE = [
+  { name: '一般請款', needsHR: false },
+  { name: '結婚補助', needsHR: true },
+  { name: '喪葬補助', needsHR: true },
+  { name: '員工聚餐', needsHR: true }
+];
+function _saveApplyItemsLS(items) { try { localStorage.setItem('bf_apply_items', JSON.stringify(items)); } catch (e) {} }
+function _loadApplyItemsLS() { try { var a = JSON.parse(localStorage.getItem('bf_apply_items') || 'null'); return (Array.isArray(a) && a.length) ? a : null; } catch (e) { return null; } }
+// 立即用「localStorage 上次結果 → 內建預設」把快取與下拉填好（純本機、不打後端）
+function _seedApplyItems() {
+  if (!Array.isArray(_applyItemsCache) || !_applyItemsCache.length) {
+    _applyItemsCache = _loadApplyItemsLS() || _DEFAULT_APPLY_ITEMS_FE.map(function (it) { return { name: it.name, needsHR: it.needsHR }; });
+  }
+  _fillApplyItemSelect(_applyItemsCache);
+}
 function _fillApplyItemSelect(items) {
   var sel = document.getElementById('apply-item');
   if (!sel || !Array.isArray(items) || !items.length) return;
@@ -11059,10 +11077,12 @@ function _fillApplyItemSelect(items) {
   if ([].some.call(sel.options, function (o) { return o.value === prev; })) sel.value = prev;
 }
 async function _preloadApplyItems() {
+  _seedApplyItems();   // 先用快取/預設秒填下拉，再背景刷新
   try {
     const res = await callAPI('getApplyItems');
     if (res && res.ok && Array.isArray(res.items) && res.items.length) {
       _applyItemsCache = res.items;
+      _saveApplyItemsLS(res.items);
       _fillApplyItemSelect(res.items);
     }
   } catch (e) { /* 靜默：保留預設選項 */ }
@@ -11114,6 +11134,8 @@ var _applyItemsWork = [];   // 編輯中的工作副本
 async function loadApplyItemsAdmin() {
   const box = document.getElementById('apply-items-list');
   if (!box) return;
+  // 快取為空時先用「localStorage/內建預設」墊上，讓籤條秒顯示、不卡「載入中…」
+  if (!Array.isArray(_applyItemsCache) || !_applyItemsCache.length) _seedApplyItems();
   // 先用快取即時渲染，避免「載入中…」卡頓（getFlow 之後再排一支 getApplyItems 會被 GAS 排隊放大）
   if (Array.isArray(_applyItemsCache) && _applyItemsCache.length) {
     _applyItemsWork = _applyItemsCache.map(function (it) {
@@ -11128,6 +11150,7 @@ async function loadApplyItemsAdmin() {
   const res = await callAPI('getApplyItems');
   if (res && res.ok && Array.isArray(res.items)) {
     _applyItemsCache = res.items;
+    _saveApplyItemsLS(res.items);
     var _next = res.items.map(function (it) {
       return { name: String((it && it.name) || ''), needsHR: it && it.needsHR === true };
     });
@@ -11213,6 +11236,7 @@ async function saveApplyItemsAdmin() {
   if (res && res.ok) {
     _applyItemsWork = items.map(function (it) { return { name: it.name, needsHR: it.needsHR }; });
     _applyItemsCache = items;
+    _saveApplyItemsLS(items);
     _fillApplyItemSelect(items);   // 送單表單選單同步
     renderApplyItemsAdmin();
     toast('✅ 申請項目已更新');
@@ -11242,6 +11266,7 @@ async function _saveHrItems() {
   if (res && res.ok) {
     _applyItemsWork = items.map(function (it) { return { name: it.name, needsHR: it.needsHR }; });
     _applyItemsCache = items;
+    _saveApplyItemsLS(items);
     if (typeof _fillApplyItemSelect === 'function') _fillApplyItemSelect(items);
     renderFlowList(_flowApprovers);
     _cacheClear();
