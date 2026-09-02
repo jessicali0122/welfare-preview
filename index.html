@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260902160041';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260902160930';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7399,6 +7399,33 @@ function updateBadge(count) {
 //  案件清單載入
 // ══════════════════════════════════════════
 var _currentAppTab = 'cases';
+// 切到「全部案件／待我審核」時，在背景節流地強制抓一次最新（免等 SWR）——剛收到通知的新單能即時出現。
+// 保留現有列表不閃骨架，只在標題顯示「更新中…」，資料回來再重畫。最多每 30 秒一次，避免塞爆很慢的 GAS。
+var _lastCasesRefresh = 0, _casesRefreshing = false;
+async function _refreshCasesThrottled() {
+  if (_casesRefreshing) return;
+  var now = Date.now();
+  if (now - _lastCasesRefresh < 30000) return;
+  _lastCasesRefresh = now; _casesRefreshing = true;
+  var lbl = document.getElementById('app-count-label');
+  var _prev = (lbl && _currentAppTab !== 'flow') ? lbl.textContent : '';
+  if (lbl && _currentAppTab !== 'flow') lbl.textContent = '更新中…';
+  try {
+    var res = await callAPI('list', {}, { noCache: true });
+    if (res && res.ok && Array.isArray(res.cases)) {
+      window._allCasesCache = res.cases;
+      if (typeof _refreshAppCounts === 'function') _refreshAppCounts();
+      if (_currentAppTab === 'drafts') renderDraftsTab();
+      else if (_currentAppTab !== 'flow') renderApplications();
+    } else if (lbl && _prev && _currentAppTab !== 'flow') {
+      lbl.textContent = _prev;   // 失敗 → 還原「共 N 件」，不要卡在「更新中…」
+    }
+  } catch (e) {
+    if (lbl && _prev && _currentAppTab !== 'flow') lbl.textContent = _prev;
+  } finally {
+    _casesRefreshing = false;
+  }
+}
 function switchAppTab(tab) {
   _currentAppTab = tab;
   // ★ 跟 appsSetTab 一樣把分頁寫進網址：在草稿匣按 F5／重整會掉回「全部案件」（使用者實際回報）。
@@ -7439,6 +7466,8 @@ function switchAppTab(tab) {
   if (tab === 'flow') { if (typeof loadAdminFlow === 'function') loadAdminFlow(); }
   else if (tab === 'drafts') renderDraftsTab();
   else renderApplications();
+  // 切到全部案件／待我審核 → 背景節流刷新最新清單（剛收到通知的新單即時出現）
+  if (tab === 'cases' || tab === 'pending') _refreshCasesThrottled();
 }
 
 function renderDraftsTab() {
