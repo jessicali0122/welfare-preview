@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260902161607';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260903103250';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2372,6 +2372,10 @@ thead th{color:#767B75!important}
       <a class="dash-stat" onclick="sw('applications')">
         <span class="ic" style="background:#FAEEE7;color:#C57A46"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>
         <span class="txt"><span class="lab">下個送件日</span><span class="numline"><span id="dstat-nextdate" class="num">—</span></span></span>
+      </a>
+      <a class="dash-stat" onclick="sw('applications')">
+        <span class="ic" style="background:#EEF3EC;color:#3E6E52"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
+        <span class="txt"><span class="lab">下個付款日</span><span class="numline"><span id="dstat-paydate" class="num">—</span></span></span>
       </a>
       <a class="dash-stat" onclick="sw('hightea')">
         <span class="ic" style="background:#EEF3EC;color:#577B53"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
@@ -7077,19 +7081,26 @@ async function loadDashboard() {
     // 有輪到自己要審的案件 → 整張卡轉橘色凸顯；沒有就恢復一般樣式
     var _mtCard = document.getElementById('dstat-myturn-card');
     if (_mtCard) _mtCard.classList.toggle('has-todo', myTurnPending.length > 0);
-    // 下個送件日＝付款日：每月第 2、4 週週五（過了跳下一個；第 4 週五過了跳次月第 2 週五）
-    // 註：如遇例假日或特殊節日，實際付款依財會部公告為準（此處僅顯示常規日期）
+    // 送件日＝每月第 1、3 週五；付款日＝每月第 2、4 週五（送件日＝付款日前一週的週五）。
+    // 各自取「今天(含)起最近的一個」；如遇例假日或特殊節日，實際依財會部公告為準。
     var _tw = new Date(Date.now() + 8*3600000); // 以 UTC 方法讀台北日期
     var _nthFri = function(yr, moIdx, nth){ // 回傳該月第 nth 個週五是幾號
       var first = new Date(Date.UTC(yr, moIdx, 1));
       return 1 + ((5 - first.getUTCDay() + 7) % 7) + (nth - 1) * 7;
     };
     var _y = _tw.getUTCFullYear(), _m = _tw.getUTCMonth(), _dd = _tw.getUTCDate();
-    var _f2 = _nthFri(_y, _m, 2), _f4 = _nthFri(_y, _m, 4), _nmo, _nd;
-    if (_dd <= _f2)      { _nmo = _m + 1; _nd = _f2; }
-    else if (_dd <= _f4) { _nmo = _m + 1; _nd = _f4; }
-    else { var _nx = new Date(Date.UTC(_y, _m + 1, 1)); _nmo = _nx.getUTCMonth() + 1; _nd = _nthFri(_nx.getUTCFullYear(), _nx.getUTCMonth(), 2); }
-    _set('dstat-nextdate', _nmo + '/' + _nd);
+    var _todayMid = Date.UTC(_y, _m, _dd);
+    var _nextFriOfSet = function(nths){  // nths=[1,3]送件日 / [2,4]付款日；回傳今天(含)起最近那個的 M/D
+      for (var k = 0; k < 4; k++){
+        var base = new Date(Date.UTC(_y, _m + k, 1));
+        var yy = base.getUTCFullYear(), mm = base.getUTCMonth();
+        var cands = nths.map(function(n){ return Date.UTC(yy, mm, _nthFri(yy, mm, n)); }).sort(function(a,b){ return a - b; });
+        for (var i = 0; i < cands.length; i++){ if (cands[i] >= _todayMid){ var d = new Date(cands[i]); return (d.getUTCMonth()+1) + '/' + d.getUTCDate(); } }
+      }
+      return '—';
+    };
+    _set('dstat-nextdate', _nextFriOfSet([1,3]));   // 下個送件日
+    _set('dstat-paydate',  _nextFriOfSet([2,4]));   // 下個付款日
     // 午茶日：顯示今天之後最近的一場（當天過了就自動指向下一場）；
     // 已載完卻沒有未來場次 → Coming Soon（尚未安排），而不是空的「—」
     var _teaLab = function(txt){
@@ -15549,6 +15560,16 @@ window.htPrefetchNextDate = async function() {
         try { var _hc2 = JSON.parse(localStorage.getItem('bf_ht_cache') || '{}'); _hc2.events = _htEvents; localStorage.setItem('bf_ht_cache', JSON.stringify(_hc2)); } catch(e){}
       }
     }
+    // 也要載入舊試算表場次：首頁沒進過午茶頁時 _htSheetSessions 是空的，否則會漏掉試算表上的下一場（如 9/18）→ 誤報 Coming Soon
+    try {
+      if (!_htSheetSessions || !_htSheetSessions.length) {
+        var _hc3 = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null');
+        if (_hc3 && Array.isArray(_hc3.sheets) && _hc3.sheets.length) _htSheetSessions = _hc3.sheets;
+      }
+      if ((!_htSheetSessions || !_htSheetSessions.length) && typeof _htLoadSheetHistory === 'function') {
+        await _htLoadSheetHistory();
+      }
+    } catch(e) {}
     return window.htGetNextEventDate();
   } catch(e) { return null; }
 };
