@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260903111916';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260903140002';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5847,7 +5847,11 @@ function showApp() {
       const _detailId = _initHash.slice(7);
       loadDashboard();
       setTimeout(function(){ loadDetail(_detailId, true); }, 400);
-      history.replaceState({ view: 'detail', caseId: _detailId }, '', '#' + _initHash);
+      // 深連結（如 Chat 通知）直接開詳情：底下先墊一層「全部案件」歷史，
+      // 讓瀏覽器「上一頁」/返回能回到清單，而不是卡在 detail 鬼打牆或跳離網站。
+      history.replaceState({ view: 'applications' }, '', '#applications');
+      history.pushState({ view: 'detail', caseId: _detailId }, '', '#' + _initHash);
+      window._detailReturnView = 'applications';
     } else if (_initHash.startsWith('hightea/')) {
       // 午茶日單據深連結：進午茶日頁時直接還原原本的單據（旗標交給 sw→hightea 分支處理，避免 timeout 競態）
       const _htId = decodeURIComponent(_initHash.slice(8));
@@ -8453,7 +8457,7 @@ async function loadDetail(caseId, _fromPop) {
   if (_retView === 'dashboard') _retView = 'applications';
   window._detailReturnView = _retView;
   // ── 瀏覽器歷史紀錄：pushState 讓重整 / 上一頁正確還原 ──
-  if (!_fromPop && window._appReady) {
+  if (!_fromPop && window._appReady && location.hash !== '#detail/' + caseId) {
     history.pushState({ view: 'detail', caseId: caseId }, '', '#detail/' + caseId);
   }
   sw('detail', null, true); // _fromPop=true 避免 sw 內部再次 pushState
