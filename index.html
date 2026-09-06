@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906202531';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906203444';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11692,17 +11692,16 @@ function _flowProxySelectOptions(index, selectedEmail) {
   var _stageRoles = USER_ROLES[_stageApprover] || USER_ROLES[String(_stageApprover||'').trim().toLowerCase()] || [];
   var _stageIsHr = Array.isArray(_stageRoles) && _stageRoles.indexOf('hr') >= 0;
   var _isEligible = function(email){
+    if (!_stageIsHr) return true;   // 其他三關：不限角色，任何人皆可（僅排除現有簽核人，見下方 filter）
     var r = USER_ROLES[email] || USER_ROLES[String(email||'').trim().toLowerCase()] || [];
-    if (!Array.isArray(r)) return false;
-    return _stageIsHr ? (r.indexOf('hr') >= 0)
-                      : (r.indexOf('welfare') >= 0 || r.indexOf('manager') >= 0);
+    return Array.isArray(r) && r.indexOf('hr') >= 0;   // HR 關：代理人也須具 HR
   };
   var list = users.filter(function(u){
     var em = String(u.email||'').trim().toLowerCase();
     return !signerEmails[em] && _isEligible(u.email);   // 依關卡角色過濾、且非現有簽核人
   });
   var opts = '<option value="" disabled' + (selectedEmail ? '' : ' selected') + '>請選擇代理人…</option>';
-  if (!list.length) opts += '<option value="" disabled>' + (_stageIsHr ? '（沒有可當代理的 HR）' : '（沒有可當代理的福委——福委都已在簽核關卡內）') + '</option>';
+  if (!list.length) opts += '<option value="" disabled>' + (_stageIsHr ? '（沒有可當代理的 HR）' : '（沒有可選的人——都已在簽核關卡內）') + '</option>';
   list.forEach(function(u){
     opts += '<option value="' + u.email + '" data-name="' + htEsc(u.name) + '"' + (u.email === selectedEmail ? ' selected' : '') + '>' + htEsc(u.name) + '（' + u.email + '）</option>';
   });
