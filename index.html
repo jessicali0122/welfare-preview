@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906214428';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906215147';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11764,24 +11764,13 @@ function toggleFlowLeaveCheck(index, checked) {
     else { renderFlowList(_flowApprovers); }
   }
 }
-// 直接在關卡列上設定/取消代理（email 空＝取消請假＝正常）；存檔後收合面板
-async function setFlowProxy(index, email, name) {
+// 直接在關卡列上設定/取消請假代理（email 空＝取消請假＝正常）。就地改 _flowApprovers，再串行存檔（與職務代理一致，避免同時編輯互相覆蓋）。
+function setFlowProxy(index, email, name) {
   if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   var onLeave = !!email;
-  var updated = _flowApprovers.map(function(a, i){
-    return i === index ? Object.assign({}, a, { onLeave: onLeave, proxyEmail: email || '', proxyName: onLeave ? (name || '') : '' }) : a;
-  });
-  var res = await callAPI('saveFlow', { approvers: updated });
+  _flowApprovers[index] = Object.assign({}, _flowApprovers[index], { onLeave: onLeave, proxyEmail: email || '', proxyName: onLeave ? (name || '') : '' });
   if (window._flowProxyOpen) delete window._flowProxyOpen[index];   // 收合面板
-  if (res && res.ok) {
-    _flowApprovers = updated;
-    renderFlowList(_flowApprovers);
-    toast(onLeave ? ('🌴 已設定代理：' + (name || email)) : '✅ 已取消請假／代理');
-    _cacheClear();
-  } else {
-    toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
-    renderFlowList(_flowApprovers);   // 還原下拉為實際值
-  }
+  _persistFlow_(onLeave ? ('🌴 已設定請假代理：' + (name || email)) : '✅ 已取消請假／代理');
 }
 
 // ── 職務代理人下拉（迴避申請人用）：資格同請假代理（_flowProxySelectOptions 那把尺），
