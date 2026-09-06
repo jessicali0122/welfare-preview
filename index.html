@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260903140826';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906202531';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11526,6 +11526,11 @@ function renderFlowList(approvers) {
         <select onchange="setFlowProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid #F3C05A;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:300px">${_flowProxySelectOptions(i, a.onLeave ? (a.proxyEmail||'') : '')}</select>
         <span style="font-size:12px;color:#9AA096">此關簽核人請假期間，改由這位代簽</span>
       </div>` : (isEnabled && !admin && a.onLeave ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#C9760A;font-weight:600">🌴 請假中 · 代理：${htEsc(a.proxyName || a.proxyEmail || '未設定')}</div>` : '')}
+      ${isEnabled && admin ? `<div style="display:flex;align-items:center;gap:10px;padding:11px 18px;border-top:1px dashed #CBD8C6;background:#F4FAF3;flex-wrap:wrap">
+        <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">🔁 職務代理人</span>
+        <select onchange="setFlowDutyProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid #B7C2AE;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:300px">${_flowDutySelectOptions(i, a.dutyProxyEmail || '')}</select>
+        <span style="font-size:12px;color:#9AA096">當本關審核人剛好是申請人時，自動改由這位代簽（迴避申請人；送出當下生效）</span>
+      </div>` : (isEnabled && !admin && a.dutyProxyEmail ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#5A6157;font-weight:600">🔁 職務代理：${htEsc(a.dutyProxyName || a.dutyProxyEmail)}</div>` : '')}
     </div>`;
   }).join('');
 }
@@ -11732,6 +11737,33 @@ async function setFlowProxy(index, email, name) {
     _flowApprovers = updated;
     renderFlowList(_flowApprovers);
     toast(onLeave ? ('🌴 已設定代理：' + (name || email)) : '✅ 已取消請假／代理');
+    _cacheClear();
+  } else {
+    toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
+    renderFlowList(_flowApprovers);   // 還原下拉為實際值
+  }
+}
+
+// ── 職務代理人下拉（迴避申請人用）：資格同請假代理（_flowProxySelectOptions 那把尺），
+//    但為常設欄位，另加一個可清除的「（不設定）」選項。 ──
+function _flowDutySelectOptions(index, selectedEmail) {
+  var head = '<option value=""' + (selectedEmail ? '' : ' selected') + '>（不設定職務代理）</option>';
+  // 借用請假代理的合格人選清單；把它的 placeholder 那一列拿掉，接在「不設定」之後
+  var body = _flowProxySelectOptions(index, selectedEmail)
+    .replace(/^<option value="" disabled[^>]*>[^<]*<\/option>/, '');
+  return head + body;
+}
+// 設定/清除某關的職務代理人（email 空＝清除）；存檔後重繪
+async function setFlowDutyProxy(index, email, name) {
+  if (!isAdmin()) { toast('⚠️ 僅管理員可修改流程設定'); return; }
+  var updated = _flowApprovers.map(function(a, i){
+    return i === index ? Object.assign({}, a, { dutyProxyEmail: email || '', dutyProxyName: email ? (name || '') : '' }) : a;
+  });
+  var res = await callAPI('saveFlow', { approvers: updated });
+  if (res && res.ok) {
+    _flowApprovers = updated;
+    renderFlowList(_flowApprovers);
+    toast(email ? ('🔁 已設定職務代理：' + (name || email)) : '✅ 已取消職務代理');
     _cacheClear();
   } else {
     toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
