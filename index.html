@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906212331';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906212737';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11548,9 +11548,7 @@ function renderFlowList(approvers) {
         <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">🔁 職務代理人</span>
         <select onchange="setFlowDutyProxy(${i}, this.value, this.selectedOptions[0] ? (this.selectedOptions[0].getAttribute('data-name')||'') : '')" style="border:1.5px solid #B7C2AE;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;cursor:pointer;outline:none;max-width:300px">${_flowDutySelectOptions(i, a.dutyProxyEmail || '')}</select>
         <input type="text" value="${htEsc(a.dutyProxyLabel || '')}" placeholder="職稱（例：代理${htEsc(a.label || a.name || '職稱')}）" maxlength="20" onchange="setFlowDutyLabel(${i}, this.value)" style="border:1.5px solid #B7C2AE;background:#fff;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;color:#363B35;outline:none;width:170px">
-        ${a.dutyProxyEmail
-          ? `<span style="font-size:12px;color:#1e9d6b;font-weight:700;white-space:nowrap">✓ 已儲存：${htEsc((a.dutyProxyLabel ? a.dutyProxyLabel + ' ' : '') + (a.dutyProxyName || (typeof LOCAL_EMAIL_TO_NAME!=='undefined' && LOCAL_EMAIL_TO_NAME[a.dutyProxyEmail]) || a.dutyProxyEmail))}</span>`
-          : `<span style="font-size:12px;color:#9AA096">當本關審核人剛好是申請人時，改由這位代簽並顯示其職稱（迴避申請人；送出當下生效）</span>`}
+        <span style="font-size:12px;color:#9AA096">當本關審核人剛好是申請人時，改由這位代簽並顯示其職稱（迴避申請人；送出當下生效）</span>
       </div>` : (isEnabled && !admin && a.dutyProxyEmail ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#5A6157;font-weight:600">🔁 職務代理：${htEsc((a.dutyProxyLabel ? a.dutyProxyLabel + ' ' : '') + (a.dutyProxyName || a.dutyProxyEmail))}</div>` : '')}
     </div>`;
   }).join('');
