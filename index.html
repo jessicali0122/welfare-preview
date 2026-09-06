@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906212737';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906213334';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -258,6 +258,7 @@ thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!imp
 input[type=radio]{accent-color:#577B53}
 .tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#363B35;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
+#toast.toast-strong{background:linear-gradient(135deg,#1e9d6b,#577B53);font-size:16px;font-weight:800;padding:16px 28px;border-radius:14px;box-shadow:0 14px 44px rgba(30,157,107,.48);letter-spacing:.02em}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
 /* Topbar gradient accent strip - desktop only */
@@ -10691,15 +10692,16 @@ async function uploadPendingFiles(caseId, files) {
 
 // ── TOAST（帶滑入動畫）──
 let _toastTimer = null;
-function toast(msg){
+function toast(msg, prominent){
   const t=document.getElementById('toast');
   if(_toastTimer){clearTimeout(_toastTimer);_toastTimer=null;}
   if(!msg){t.style.animation='toastSlideOut .3s ease forwards';return;}
   t.textContent=(msg||'').replace(/\n+/g,' ').trim();
+  t.classList.toggle('toast-strong', !!prominent);   // 明顯版：綠底放大、停久一點（只給明確要求的呼叫用）
   t.style.animation='none';
   t.offsetHeight; // reflow
   t.style.animation='toastSlideIn .35s cubic-bezier(.22,1,.36,1) forwards';
-  _toastTimer=setTimeout(()=>{t.style.animation='toastSlideOut .3s ease forwards';_toastTimer=null;},3000);
+  _toastTimer=setTimeout(()=>{t.style.animation='toastSlideOut .3s ease forwards';_toastTimer=null;}, prominent?4500:3000);
 }
 
 // ── 數字計數動畫 ──
@@ -11771,40 +11773,48 @@ function _flowDutySelectOptions(index, selectedEmail) {
     .replace(/^<option value="" disabled[^>]*>[^<]*<\/option>/, '');
   return head + body;
 }
-// 設定/清除某關的職務代理人（email 空＝清除）；存檔後重繪
-async function setFlowDutyProxy(index, email, name) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
-  var updated = _flowApprovers.map(function(a, i){
-    return i === index ? Object.assign({}, a, { dutyProxyEmail: email || '', dutyProxyName: email ? (name || '') : '' }) : a;
-  });
-  var res = await callAPI('saveFlow', { approvers: updated });
-  if (res && res.ok) {
-    _flowApprovers = updated;
+// ── 串行化存檔 ──────────────────────────────────────────────
+// 避免「幾乎同時」改多個欄位時，各自用舊 _flowApprovers 存整包而互相覆蓋（曾發生：同時改職稱＋代理人→職稱跳掉）。
+// 呼叫前務必先「就地」改好 _flowApprovers[index]；此函式一次只跑一個 saveFlow，期間若又有編輯，跑完再補存一次最新完整狀態。
+var _flowSaving = false, _flowSavePending = false, _flowSaveMsg = '';
+async function _persistFlow_(okMsg) {
+  if (okMsg) _flowSaveMsg = okMsg;
+  if (_flowSaving) { _flowSavePending = true; return; }   // 已有存檔在跑 → 標記待補存，跑完會再存一次最新的
+  _flowSaving = true;
+  var _ok = true, _err = '';
+  try {
+    do {
+      _flowSavePending = false;
+      var snap = JSON.parse(JSON.stringify(_flowApprovers));   // 存當下最新的完整狀態（含期間累積的所有欄位編輯）
+      var res = await callAPI('saveFlow', { approvers: snap });
+      if (!res || !res.ok) { _ok = false; _err = (res && res.error) || '請稍後再試'; break; }
+    } while (_flowSavePending);
+  } catch (e) { _ok = false; _err = (e && e.message) || '連線異常'; }
+  finally { _flowSaving = false; }
+  if (_ok) {
+    APPROVER_EMAILS.length = 0;
+    _flowApprovers.filter(function(a){ return a.enabled !== false; }).forEach(function(a){ APPROVER_EMAILS.push(a.email); });
     renderFlowList(_flowApprovers);
-    toast(email ? ('🔁 已設定職務代理：' + (name || email)) : '✅ 已取消職務代理');
+    if (_flowSaveMsg) { toast(_flowSaveMsg, true); _flowSaveMsg = ''; }   // 明顯版通知
     _cacheClear();
   } else {
-    toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
-    renderFlowList(_flowApprovers);   // 還原下拉為實際值
+    _flowSaveMsg = '';
+    toast('❌ 儲存失敗：' + _err);
+    if (typeof loadAdminFlow === 'function') loadAdminFlow();   // 失敗 → 從伺服器重載還原到真正狀態
   }
 }
-// 設定某關職務代理人的「職稱」（例：副主委）；空字串＝清除。存檔後重繪。
-async function setFlowDutyLabel(index, label) {
+// 設定/清除某關的職務代理人（email 空＝清除）。先就地改 _flowApprovers，再串行存檔。
+function setFlowDutyProxy(index, email, name) {
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
+  _flowApprovers[index] = Object.assign({}, _flowApprovers[index], { dutyProxyEmail: email || '', dutyProxyName: email ? (name || '') : '' });
+  _persistFlow_(email ? ('🔁 已設定職務代理：' + (name || email)) : '✅ 已取消職務代理');
+}
+// 設定某關職務代理人的「職稱」（例：副主委）；空字串＝清除。先就地改 _flowApprovers，再串行存檔。
+function setFlowDutyLabel(index, label) {
   if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   var _lbl = String(label || '').trim();
-  var updated = _flowApprovers.map(function(a, i){
-    return i === index ? Object.assign({}, a, { dutyProxyLabel: _lbl }) : a;
-  });
-  var res = await callAPI('saveFlow', { approvers: updated });
-  if (res && res.ok) {
-    _flowApprovers = updated;
-    renderFlowList(_flowApprovers);
-    toast(_lbl ? ('🔁 已設定職務代理職稱：' + _lbl) : '✅ 已清除職務代理職稱');
-    _cacheClear();
-  } else {
-    toast('❌ 儲存失敗：' + ((res && res.error) || '請稍後再試'));
-    renderFlowList(_flowApprovers);
-  }
+  _flowApprovers[index] = Object.assign({}, _flowApprovers[index], { dutyProxyLabel: _lbl });
+  _persistFlow_(_lbl ? ('🔁 已設定職務代理職稱：' + _lbl) : '✅ 已清除職務代理職稱');
 }
 
 // 顯示編輯 modal
