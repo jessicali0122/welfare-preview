@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906210637';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906212102';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11237,6 +11237,11 @@ async function loadAdminFlow() {
   // 同步更新 APPROVER_EMAILS（只包含啟用的關卡，讓 isMyTurnToApprove 用最新資料）
   APPROVER_EMAILS.length = 0;
   _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
+  // ★ 代理下拉的候選人來自 LOCAL_USER_LIST（getMembers 非同步載入）。名單還沒到就先等它，
+  //   否則職務／請假代理下拉會是空的、連已存好的代理人都顯示不出來（看起來像沒設定）。
+  if (typeof LOCAL_USER_LIST === 'undefined' || !LOCAL_USER_LIST.length) {
+    try { if (typeof _syncMembersFromServer === 'function') await _syncMembersFromServer(); } catch (e) {}
+  }
   renderFlowList(_flowApprovers);  // 唯讀提示條由 renderFlowList 一併更新
   loadApplyItemsAdmin();           // 一併載入「申請項目與 HR 審核」維護區
 }
