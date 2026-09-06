@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906215147';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906215500';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11587,20 +11587,10 @@ async function toggleFlowStep(index) {
     const enabledAfter = _flowApprovers.filter((a, i) => i !== index && a.enabled !== false).length;
     if (enabledAfter === 0) { toast('⚠️ 至少需要保留一個啟用的關卡'); return; }
   }
-  const updated = _flowApprovers.map((a, i) =>
+  _flowApprovers = _flowApprovers.map((a, i) =>
     i === index ? Object.assign({}, a, { enabled: newEnabled }) : a
   );
-  const res = await callAPI('saveFlow', { approvers: updated });
-  if (res.ok) {
-    _flowApprovers = updated;
-    // 同步更新 APPROVER_EMAILS（只包含啟用的關卡）
-    APPROVER_EMAILS.length = 0;
-    _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
-    renderFlowList(_flowApprovers);
-    toast((newEnabled ? '✅ 已啟用' : '🚫 已停用') + '第 ' + (index + 1) + ' 關（' + current.name + '）');
-  } else {
-    toast('❌ 儲存失敗：' + (res.error || ''));
-  }
+  _persistFlow_((newEnabled ? '✅ 已啟用' : '🚫 已停用') + '第 ' + (index + 1) + ' 關（' + current.name + '）');
 }
 
 // ── 刪除關卡 ──
@@ -11614,18 +11604,8 @@ async function deleteFlowStep(index) {
     if (enabledAfter === 0) { toast('⚠️ 至少需保留一個啟用的關卡，無法刪除'); return; }
   }
   if (!confirm('確定刪除「' + (cur.label || cur.name) + '（' + cur.name + '）」這一關嗎？\n\n已送出的舊案件不受影響（仍照送出當下的簽核鏈跑），只影響之後新送的單。')) return;
-  const updated = _flowApprovers.filter((a, i) => i !== index);
-  const res = await callAPI('saveFlow', { approvers: updated });
-  if (res && res.ok) {
-    _flowApprovers = updated;
-    APPROVER_EMAILS.length = 0;
-    _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
-    renderFlowList(_flowApprovers);
-    toast('🗑️ 已刪除關卡：' + (cur.label || cur.name));
-    _cacheClear();
-  } else {
-    toast('❌ 刪除失敗：' + ((res && res.error) || '請稍後再試'));
-  }
+  _flowApprovers = _flowApprovers.filter((a, i) => i !== index);
+  _persistFlow_('🗑️ 已刪除關卡：' + (cur.label || cur.name));
 }
 
 // ── 新增關卡（沿用編輯彈窗，_editFlowIndex=-1 代表新增）──
@@ -11646,45 +11626,20 @@ function _onFlowConditionChange() {
 }
 
 // 上下移動關卡順序並儲存
-async function moveFlowStep(index, direction) {
+function moveFlowStep(index, direction) {
   try {
   if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
-  // ★ 併發防護：一次只允許一個「改流程順序」的存檔在途。否則快速連點會送出兩個各帶完整陣列的
-  //   saveFlow，先送的若後到會覆蓋後送的 → 存進後端的順序落後於畫面（使用者曾遇「順序跳回」）。
-  if (window._flowOrderSaving) { toast('⏳ 上一個順序調整還在儲存，請稍候'); return; }
   const newIndex = index + direction;
   if (newIndex < 0 || newIndex >= _flowApprovers.length) return;
-
-  // 交換順序
+  // 交換順序 + 樂觀立即反映；存檔走 _persistFlow_（串行化，快速連點會合併成最後一次最新順序，不會跳回）
   const updated = _flowApprovers.slice();
   const tmp = updated[index];
   updated[index] = updated[newIndex];
   updated[newIndex] = tmp;
-
-  // 樂觀更新 UI（立即反映，不等後端）
   _flowApprovers = updated;
-  APPROVER_EMAILS.length = 0;
-  _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
   renderFlowList(_flowApprovers);
-
-  // 同步儲存至後端（上鎖，避免與另一次順序調整並行覆寫）
-  window._flowOrderSaving = true;
-  let res;
-  try {
-    res = await callAPI('saveFlow', { approvers: updated });
-  } finally {
-    window._flowOrderSaving = false;
-  }
-  if (!res || !res.ok) {
-    toast('❌ 順序儲存失敗：' + (res && res.error ? res.error : '請稍後再試'));
-    // 儲存失敗就重新載入
-    loadAdminFlow();
-  } else {
-    toast('✅ 已調整第' + (index+1) + '關與第' + (newIndex+1) + '關的順序');
-    _cacheClear();
-  }
+  _persistFlow_('✅ 已調整第' + (index+1) + '關與第' + (newIndex+1) + '關的順序');
   } catch(e) {
-    window._flowOrderSaving = false;
     toast('❌ 移動關卡錯誤：' + e.message);
     console.error('[moveFlowStep]', e);
   }
@@ -11872,30 +11827,13 @@ async function doSaveFlowStep() {
   const condition = (document.getElementById('edit-flow-condition') || {}).value || 'all';
   const stageObj = { label, name: nameText, email, condition };
   const _isAdd = _editFlowIndex === -1;
-  const updated = _isAdd
+  const savedIdx = _editFlowIndex; // 先存，因為 closeEditFlowModal 會重設為 -1
+  _flowApprovers = _isAdd
     ? _flowApprovers.concat([stageObj])
     : _flowApprovers.map((a, i) => (i === _editFlowIndex ? Object.assign({}, a, stageObj) : a));
-
-  const btn = document.querySelector('#edit-flow-modal .btn-p');
-  if (btn) { btn.disabled = true; btn.textContent = '儲存中...'; }
-
-  const res = await callAPI('saveFlow', { approvers: updated });
-
-  if (btn) { btn.disabled = false; btn.textContent = '儲存'; }
-
-  if (!res || !res.ok) {
-    toast('❌ 儲存失敗：' + (res && res.error ? res.error : '請稍後再試'));
-    return;
-  }
-
-  _flowApprovers = updated;
-  APPROVER_EMAILS.length = 0;
-  _flowApprovers.filter(a => a.enabled !== false).forEach(a => APPROVER_EMAILS.push(a.email));
-  renderFlowList(_flowApprovers);
-  const savedIdx = _editFlowIndex; // 先存，因為 closeEditFlowModal 會重設為 -1
   closeEditFlowModal();
-  toast(_isAdd ? ('✅ 已新增關卡：' + label) : ('✅ 第' + (savedIdx + 1) + '關已更新：' + label));
-  _cacheClear();
+  // 走串行化存檔（與其他流程編輯一致；失敗會自動從伺服器重載還原）
+  _persistFlow_(_isAdd ? ('✅ 已新增關卡：' + label) : ('✅ 第' + (savedIdx + 1) + '關已更新：' + label));
 }
 
 // ── ADMIN TABS ──
