@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260906210222';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260906210637';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11424,7 +11424,7 @@ async function deleteHrItem(idx) {
 // 渲染流程列表
 function renderFlowList(approvers) {
   const list = document.getElementById('flow-list');
-  const admin = canEditFlow();   // 簽核流程編輯：管理者＋福委（2026-09-06 開放）
+  const admin = canEditFlow();   // 簽核流程編輯：管理者＋目前主簽核鏈的簽核人（2026-09-06）
   // 唯讀提示條在這裡更新（而非只在 loadAdminFlow）：切換角色預覽時會重繪本函式，提示才跟得上
   const _notice = document.getElementById('flow-readonly-notice');
   if (_notice) _notice.style.display = admin ? 'none' : 'block';
@@ -11551,7 +11551,7 @@ function renderFlowList(approvers) {
 
 // ── 切換關卡啟用／停用 ──
 async function toggleFlowStep(index) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   const current = _flowApprovers[index];
   if (!current) return;
   const newEnabled = current.enabled === false; // false → true；其他（undefined/true）→ false
@@ -11578,7 +11578,7 @@ async function toggleFlowStep(index) {
 
 // ── 刪除關卡 ──
 async function deleteFlowStep(index) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   const cur = _flowApprovers[index];
   if (!cur) return;
   // 至少保留一個啟用的關卡（刪掉啟用中的關卡時檢查）
@@ -11603,7 +11603,7 @@ async function deleteFlowStep(index) {
 
 // ── 新增關卡（沿用編輯彈窗，_editFlowIndex=-1 代表新增）──
 function addFlowStep() {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   _editFlowIndex = -1;
   document.getElementById('edit-flow-subtitle').textContent = '新增關卡';
   document.getElementById('edit-flow-name').value = '';
@@ -11621,7 +11621,7 @@ function _onFlowConditionChange() {
 // 上下移動關卡順序並儲存
 async function moveFlowStep(index, direction) {
   try {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   // ★ 併發防護：一次只允許一個「改流程順序」的存檔在途。否則快速連點會送出兩個各帶完整陣列的
   //   saveFlow，先送的若後到會覆蓋後送的 → 存進後端的順序落後於畫面（使用者曾遇「順序跳回」）。
   if (window._flowOrderSaving) { toast('⏳ 上一個順序調整還在儲存，請稍候'); return; }
@@ -11723,7 +11723,7 @@ function _flowProxySelectOptions(index, selectedEmail) {
 }
 // 勾選「代理」＝此關簽核人請假：打勾→展開下拉選代理人（選了才生效）；取消勾→恢復正常
 function toggleFlowLeaveCheck(index, checked) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   window._flowProxyOpen = window._flowProxyOpen || {};
   var a = _flowApprovers[index] || {};
   if (checked) {
@@ -11739,7 +11739,7 @@ function toggleFlowLeaveCheck(index, checked) {
 }
 // 直接在關卡列上設定/取消代理（email 空＝取消請假＝正常）；存檔後收合面板
 async function setFlowProxy(index, email, name) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   var onLeave = !!email;
   var updated = _flowApprovers.map(function(a, i){
     return i === index ? Object.assign({}, a, { onLeave: onLeave, proxyEmail: email || '', proxyName: onLeave ? (name || '') : '' }) : a;
@@ -11768,7 +11768,7 @@ function _flowDutySelectOptions(index, selectedEmail) {
 }
 // 設定/清除某關的職務代理人（email 空＝清除）；存檔後重繪
 async function setFlowDutyProxy(index, email, name) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   var updated = _flowApprovers.map(function(a, i){
     return i === index ? Object.assign({}, a, { dutyProxyEmail: email || '', dutyProxyName: email ? (name || '') : '' }) : a;
   });
@@ -11785,7 +11785,7 @@ async function setFlowDutyProxy(index, email, name) {
 }
 // 設定某關職務代理人的「職稱」（例：副主委）；空字串＝清除。存檔後重繪。
 async function setFlowDutyLabel(index, label) {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   var _lbl = String(label || '').trim();
   var updated = _flowApprovers.map(function(a, i){
     return i === index ? Object.assign({}, a, { dutyProxyLabel: _lbl }) : a;
@@ -11805,7 +11805,7 @@ async function setFlowDutyLabel(index, label) {
 // 顯示編輯 modal
 function showEditFlowModal(index) {
   try {
-    if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+    if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
     const a = _flowApprovers[index];
     if (!a) { toast('❌ 找不到關卡資料，請重新整理頁面'); return; }
     _editFlowIndex = index;
@@ -11828,7 +11828,7 @@ function closeEditFlowModal() {
 
 // 儲存單一關卡變更
 async function doSaveFlowStep() {
-  if (!canEditFlow()) { toast('⚠️ 僅管理者或福委可修改流程設定'); return; }
+  if (!canEditFlow()) { toast('⚠️ 僅管理者或目前簽核鏈上的簽核人可修改流程設定'); return; }
   const label = document.getElementById('edit-flow-name').value.trim();
   const sel = document.getElementById('edit-flow-person');
   const email = sel.value;
