@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260907111130';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260907111551';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15137,6 +15137,10 @@ async function htApi(action, payload) {
       return _ls;
     }
   }
+  // AI／OCR 類呼叫（Gemini）較慢，逾時從預設 25 秒拉長到 60 秒，避免大 prompt 被前端提前中斷
+  if (action === 'htRecommendAI' || action === 'htRecommendPocket' || action === 'htOcrReceipt') {
+    return await _htFetchRaw(body, 60000);
+  }
   var _genBeforeFetch = _cacheGen;
   var json = await _htFetchDedup(ckey, body);
   // 讀取期間若有寫入（世代遞增）就不回寫，避免用舊資料蓋掉剛更新的快取
@@ -16652,7 +16656,7 @@ async function _htLoadPlanningData() {
         });
       });
     });
-    res.historyItems = res.historyItems.slice(0, 40);
+    res.historyItems = res.historyItems.slice(0, 25);
   } catch(e) {}
   return res;
 }
