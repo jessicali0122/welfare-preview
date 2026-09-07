@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260907105405';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260907110637';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -16632,6 +16632,36 @@ async function _htLoadExcludeItems() {
     return names;
   } catch(e) { return []; }
 }
+// 撈最近 3 場的完整品項（名稱／店家／單價／數量／類別）當「愛用清單＋行情參考」給 AI，讓它照公司實際訂過的來配。
+async function _htLoadHistoryDetail() {
+  if (!_htEvents || !_htEvents.length) return [];
+  var ids = _htEvents.slice(0, 3).map(function(e) { return e.eventId; });
+  try {
+    var results = await Promise.all(ids.map(function(id) { return htApi('htGetItems', { eventId: id }); }));
+    var out = [];
+    results.forEach(function(res) {
+      var items = Array.isArray(res) ? res : (res && res.items ? res.items : []);
+      items.forEach(function(it) {
+        if (it && it.name) out.push({
+          name: it.name, vendor: it.vendor || '',
+          price: Number(it.unitPrice || it.price) || 0,
+          qty: Number(it.qty) || 0, category: it.category || ''
+        });
+      });
+    });
+    return out.slice(0, 45);
+  } catch(e) { return []; }
+}
+// 公司常用店家：釘選店家(htGetSpots) ＋ 依訂購次數排序的熱門店(_htVendors)，去重取前 12。
+function _htFavoriteVendorNames() {
+  var seen = {}, out = [];
+  try { (htGetSpots() || []).forEach(function(s) { var n = s && s.name; if (n && !seen[n]) { seen[n] = 1; out.push(n); } }); } catch(e) {}
+  try {
+    (_htVendors || []).slice().sort(function(a, b) { return (b.totalOrders || 0) - (a.totalOrders || 0); })
+      .forEach(function(v) { var n = v && v.name; if (n && !seen[n] && (v.totalOrders || 0) > 0) { seen[n] = 1; out.push(n); } });
+  } catch(e) {}
+  return out.slice(0, 12);
+}
 function _htRenderModalStoreHints() {
   var sec = document.getElementById('ht-modal-store-section');
   if (!sec) return;
@@ -19641,6 +19671,9 @@ window.htAssistRun = async function() {
     };
     payload.styleHint = _styleHints[_htAssistRatioPreset] || _styleHints.balanced;
     payload.excludeItems = await _htLoadExcludeItems();
+    // ★ 讓 AI 有根據：公司常用店家 ＋ 過去實際訂過的品項(含店家/價格/數量)，避免它憑空編出訂不到的東西
+    payload.favoriteVendors = _htFavoriteVendorNames();
+    payload.historyItems = await _htLoadHistoryDetail();
   } else if (_htAssistMode === 'trend') {
     payload.type = 'trending';
     payload.context = '請推薦目前社群平台（Instagram、Facebook、Dcard、YouTube）上討論熱度最高的下午茶新品、網紅推薦品項、最夯的甜點飲品潮流，以及適合企業團體下午茶的人氣店家品類。考量目前季節與節慶因素。';
