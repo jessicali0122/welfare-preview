@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260907103605';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260907104003';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1604,6 +1604,7 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 /* Dashboard 和案件追蹤：隱藏 checkbox 欄 */
 .dashboard-table th:first-child,.dashboard-table td:first-child,
 .app-table th:first-child,.app-table td:first-child{display:none!important}
+.col-cat{display:none!important}   /* 案件清單「分類」欄隱藏（保留 DOM，排序索引不受影響）*/
 .ic-summary{font-size:14px;display:none;margin-left:10px;gap:10px;align-items:center}
 .item-card.ic-collapsed .ic-summary{display:inline-flex}
 .ic-sum-name{color:#2E332D;font-weight:500}
@@ -3247,7 +3248,7 @@ thead th{color:#767B75!important}
           <th>申請人</th>
           <th>部門</th>
           <th style="min-width:200px">主旨</th>
-          <th>分類</th>
+          <th class="col-cat">分類</th>
           <th>申請項目</th>
           <th class="sortable-th" onclick="sortAppTable(6)">金額<span class="sort-icon"></span></th>
           <th class="sortable-th" onclick="sortAppTable(7)">狀態<span class="sort-icon"></span></th>
@@ -7382,7 +7383,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;white-space:nowrap;color:#4A4F49">${nameChip(localName(c.email,c.name),24,c.email)}</td>
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${htEsc(c.department)||'—'}</td>
     <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${htEsc(c.project||c.subject)||'—'}</td>
-    <td style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
+    <td class="col-cat" style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;text-align:center;white-space:nowrap">${c.applyItem ? (c.applyItem==='一般請款' ? ('<span style="color:#8A908A">'+htEsc(c.applyItem)+'</span>') : ('<span style="display:inline-block;background:#EEF3EC;color:#3E5A3B;border:1px solid #CBDCC6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>')) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;font-weight:700;color:#4A4F49;white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
     <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}${(c.status==='作廢'||c.status==='已完成')?' badge-sym':''}">${c.status==='作廢'?'✕ ':c.status==='已完成'?'✓ ':''}${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
@@ -7566,7 +7567,7 @@ function renderDraftsTab() {
     + '<th>申請單號</th>'
     + '<th style="min-width:200px">主旨</th>'
     + '<th>申請人</th>'
-    + '<th>分類</th>'
+    + '<th class="col-cat">分類</th>'
     + '<th>申請項目</th>'
     + '<th>金額</th>'
     + '<th>狀態</th>'
@@ -11555,7 +11556,7 @@ function renderFlowList(approvers) {
       </div>` : (isEnabled && !admin && a.onLeave ? `<div style="padding:9px 18px;border-top:1px dashed #CBD8C6;font-size:13px;color:#C9760A;font-weight:600">🌴 請假中 · 代理：${htEsc(a.proxyName || a.proxyEmail || '未設定')}</div>` : '')}
       ${isEnabled && admin
         ? ((window._flowDutyOpen && window._flowDutyOpen[i])
-            ? `<div style="padding:11px 18px;border-top:1px dashed #E6E0E2;background:#F6F4F5">
+            ? `<div style="padding:11px 18px;border-top:1px dashed #F0D6DF;background:#FBEBF1">
                 <div style="font-size:12px;color:#8A6A74;margin-bottom:9px;line-height:1.55">🔁 <b>職務代理（迴避申請人）</b>：當這關的審核人<b>剛好就是申請人本人</b>時，自動改由下面這位代簽並顯示其職稱，避免自己審自己（送出當下生效）。</div>
                 <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
                   <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">由誰代簽</span>
@@ -11565,9 +11566,9 @@ function renderFlowList(approvers) {
                 </div>
               </div>`
             : (a.dutyProxyEmail
-                ? `<div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px dashed #E6E0E2;background:#F6F4F5;flex-wrap:wrap">
+                ? `<div style="display:flex;align-items:center;gap:10px;padding:12px 18px;border-top:1px dashed #F0D6DF;background:#FBEBF1;flex-wrap:wrap">
                     <span style="font-size:13px;color:#5A6157;font-weight:700;white-space:nowrap">🔁 迴避申請人時，改由</span>
-                    <span style="display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#C2185B;background:#FCE4EC;padding:5px 14px;border-radius:20px;border:1px solid #F4C2D0;white-space:nowrap">${htEsc((a.dutyProxyLabel ? a.dutyProxyLabel + ' ' : '') + (a.dutyProxyName || (typeof LOCAL_EMAIL_TO_NAME !== 'undefined' && LOCAL_EMAIL_TO_NAME[a.dutyProxyEmail]) || a.dutyProxyEmail))}</span>
+                    <span style="display:inline-flex;align-items:center;font-size:13px;font-weight:700;color:#C2185B;background:#fff;padding:5px 14px;border-radius:20px;border:1.5px solid #EBA9BE;white-space:nowrap">${htEsc((a.dutyProxyLabel ? a.dutyProxyLabel + ' ' : '') + (a.dutyProxyName || (typeof LOCAL_EMAIL_TO_NAME !== 'undefined' && LOCAL_EMAIL_TO_NAME[a.dutyProxyEmail]) || a.dutyProxyEmail))}</span>
                     <button onclick="toggleFlowDutyOpen(${i}, true)" style="height:30px;padding:0 12px;border:1.5px solid #B7C2AE;background:#fff;color:#5A6157;border-radius:20px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700">編輯</button>
                     <button onclick="setFlowDutyProxy(${i}, '', '')" style="height:30px;padding:0 12px;border:1px solid #E3C4C4;background:#fff;color:#c0392b;border-radius:20px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:700">清除</button>
                   </div>`
