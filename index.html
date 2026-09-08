@@ -462,8 +462,8 @@ input[type=checkbox]{accent-color:#0066CC}
   #bottom-nav{
     display:flex!important;
     position:fixed;bottom:0;left:0;right:0;
-    height:calc(50px + env(safe-area-inset-bottom,0px));
-    padding-bottom:env(safe-area-inset-bottom,0px);
+    height:calc(52px + max(env(safe-area-inset-bottom,0px) - 16px, 8px));
+    padding-bottom:max(env(safe-area-inset-bottom,0px) - 16px, 8px);
     background:rgba(255,255,255,.88);
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid rgba(0,0,0,.06);
@@ -7262,12 +7262,16 @@ async function loadDashboard() {
       _teaLab((v && v !== '今天' && Number(_m) !== (_twNow.getUTCMonth()+1)) ? '下次午茶日' : '本月午茶日');
     };
     var _tea = (typeof window.htGetNextEventDate === 'function') ? window.htGetNextEventDate() : null;
-    _teaSet(_tea || '—');
-    // 首頁還沒有午茶資料 → 背景預載（先讀快取、真沒有才發一支請求）補上日期
-    if (!_tea && typeof window.htPrefetchNextDate === 'function') {
+    _teaSet(_tea || '—');   // 先用現有資料即時上色（可能來自舊快取）
+    // 一律向後端重新驗證：localStorage 舊快取可能少了新加入的未來場次（如 9/18）或日期已過時，
+    // 只靠快取會永遠算不到新場次 → 每次都背景刷新，回來後同時修正 stat 與「本月狀態卡」。
+    if (typeof window.htPrefetchNextDate === 'function') {
       window.htPrefetchNextDate()
-        .then(function(d){ _teaSet(d || 'Coming Soon'); })
-        .catch(function(){ /* 載入失敗維持「—」，不要誤報成尚未安排 */ });
+        .then(function(d){
+          _teaSet(d || 'Coming Soon');
+          if (typeof _renderDashStatus === 'function') { try { _renderDashStatus(); } catch(e){} }
+        })
+        .catch(function(){ /* 載入失敗維持現值，不誤報成尚未安排 */ });
     }
   })();
   const myTurnEl = document.getElementById('stat-my-turn');
@@ -15835,7 +15839,9 @@ window.htPrefetchNextDate = async function() {
         var _hc3 = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null');
         if (_hc3 && Array.isArray(_hc3.sheets) && _hc3.sheets.length) _htSheetSessions = _hc3.sheets;
       }
-      if ((!_htSheetSessions || !_htSheetSessions.length) && typeof _htLoadSheetHistory === 'function') {
+      // ⚠️ 一定要向後端重新驗證：localStorage 舊快取可能是「新場次加入前」的版本（少了如 9/18 的未來場次），
+      //    若只因快取有長度就跳過重抓，就會永遠算不到新加入的下一場。快取僅供即時顯示，最新場次一律以後端為準。
+      if (typeof _htLoadSheetHistory === 'function') {
         await _htLoadSheetHistory();
       }
     } catch(e) {}
