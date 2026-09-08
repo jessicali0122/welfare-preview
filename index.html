@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908144346';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908145349';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2062,6 +2062,22 @@ html,body{background:#F4F2EC}
   .dash-stat{padding:13px 13px}
   .dash-stat .num{font-size:22px}
 }
+/* ── Hero 重點卡：問候＋時鐘＋關鍵數字合成一張，取代原本分離的問候區＋5 格漂浮 KPI（收斂視覺、去渙散） ── */
+.dash-hero-card{position:relative;overflow:hidden;background:linear-gradient(120deg,#EAF1E6 0%,#F5F3EC 62%);border:1px solid #E2E7DB;border-radius:20px;padding:22px 24px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 16px 34px rgba(46,51,45,.07);margin:14px 0 22px}
+.dash-hero-card::after{content:"🐾";position:absolute;right:-6px;bottom:-28px;font-size:148px;line-height:1;opacity:.05;transform:rotate(-12deg);pointer-events:none}
+.dash-hero-card #dash-hero{padding:2px 4px 0!important;margin:0!important}
+.dash-hero-card #dash-statline{position:relative;z-index:1;margin:18px 0 0!important;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);border-radius:14px;box-shadow:0 1px 2px rgba(46,51,45,.04);grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
+.dash-hero-card .dash-stat{border:none!important;border-radius:0!important;transform:none!important;padding:13px 16px}
+.dash-hero-card .dash-stat:not(.has-todo){background:transparent!important;box-shadow:none!important}
+.dash-hero-card .dash-stat.has-todo{box-shadow:none!important}
+.dash-hero-card .dash-stat:hover{transform:none!important;box-shadow:none!important}
+.dash-hero-card .dash-stat + .dash-stat{border-left:1px solid #EAE9DF!important}
+.dash-hero-card .dash-stat .num{font-size:22px}
+@media(max-width:640px){
+  .dash-hero-card #dash-statline{grid-template-columns:repeat(2,1fr)}
+  .dash-hero-card .dash-stat:nth-child(odd){border-left:none!important}
+  .dash-hero-card .dash-stat:nth-child(n+3){border-top:1px solid #EAE9DF!important}
+}
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
@@ -2090,10 +2106,14 @@ html,body{background:#F4F2EC}
 /* 入口卡標題：窄卡片維持 16px＋不換行（全頁區塊標題仍為 18px/.16em，兩者分開） */
 .dash-hub-card div[style*="align-items:baseline"]{font-size:16px!important;letter-spacing:.06em!important;flex-wrap:nowrap!important;white-space:nowrap}
 .dash-hub-card div[style*="align-items:baseline"]>span{letter-spacing:.08em!important}
-/* 服務卡：說明文字統一 1 行(超出省略號)＋卡片等高，避免 1行/2行造成高低不齊 */
+/* 服務卡：說明文字統一 1 行(超出省略號) */
 .dash-hub-card div[style*="color:#767B75"]{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#dash-hub{align-items:stretch}
-.dash-hub-card{height:100%!important;box-shadow:0 1px 1px rgba(46,51,45,.05),0 4px 10px rgba(46,51,45,.06),0 14px 30px rgba(46,51,45,.07)!important}
+/* 服務項目：6 張卡收進「一個白面板」，內部為清單列（去個別邊框/陰影，改 hover 底色）＝ 收斂視覺 */
+#dash-hub{background:#fff!important;border:1px solid #E7E4DB!important;border-radius:18px!important;box-shadow:0 1px 2px rgba(46,51,45,.05),0 12px 28px rgba(46,51,45,.06)!important;padding:8px!important;gap:2px!important;align-items:stretch}
+.dash-hub-card{background:transparent!important;border:none!important;box-shadow:none!important;border-radius:12px!important;height:100%!important;animation:none!important}
+.dash-hub-card:hover{background:#F7F6F1!important;transform:none!important;box-shadow:none!important}
+.dash-hub-card:hover .hub-icon-glow{transform:none!important;animation:none!important}
+@media(min-width:769px){#dash-hub{grid-template-columns:repeat(3,1fr)!important}}
 /* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
 @media(max-width:640px){.ht-src-tag .t{display:none}}
 /* ── 各分頁卡片沿用首頁的彩色識別條（與服務入口卡同色系）── */
@@ -2363,6 +2383,7 @@ thead th{color:#767B75!important}
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
     <!-- 問候區：不再包卡片（招呼語不是資料，不需要框），維持置中 -->
+    <div class="dash-hero-card">
     <div id="dash-hero" style="position:relative;padding:22px 4px 4px;margin-bottom:14px;text-align:center">
       <div id="dashboard-greeting" style="font-size:24px;font-weight:700;color:#2E332D;letter-spacing:-.01em;line-height:1.25">你好</div>
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
@@ -2408,6 +2429,7 @@ thead th{color:#767B75!important}
         <span class="txt"><span class="lab">本月午茶日</span><span class="numline"><span id="dstat-teaday" class="num">—</span></span></span>
       </a>
     </div>
+    </div><!-- /dash-hero-card -->
 
     <!-- 待你審核：只有輪到自己審的案件才顯示（一般員工或沒待辦時整塊隱藏，不佔版面）；點列直接進該案 -->
     <div id="dash-myturn-panel" style="display:none;margin:4px 0 22px">
@@ -2527,11 +2549,11 @@ thead th{color:#767B75!important}
     </div>
     <!-- 連結＝迷你服務磚（圓形 icon 底＋名稱＋↗），一排置中，與上方服務項目同一套視覺語言；不另外包框 -->
     <style>
-    .dash-link-tile{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:10px 18px 10px 12px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);transition:transform .18s,box-shadow .18s;position:relative;overflow:hidden;width:fit-content;max-width:86vw;box-sizing:border-box}
-    .dash-link-tile::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;background:linear-gradient(180deg,#F6CC62,#E38845);opacity:.85}
-    .dash-link-tile.committee::before{background:linear-gradient(180deg,#8FAE8B,#577B53)}
-    .dash-link-tile:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(46,51,45,.06),0 14px 30px rgba(87,123,83,.16)}
-    .dash-link-tile .dl-ic{width:38px;height:38px;border-radius:50%;background:#FCF1BE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+    /* 常用連結：改輕量 chip（原本白卡＋大陰影＋色條太重，跟服務面板搶戲） */
+    .dash-link-tile{display:inline-flex;align-items:center;gap:9px;background:#fff;border:1px solid #E7E4DB;border-radius:11px;padding:8px 14px;text-decoration:none;box-shadow:0 1px 2px rgba(46,51,45,.05);transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden;width:fit-content;max-width:86vw;box-sizing:border-box}
+    .dash-link-tile::before{display:none}
+    .dash-link-tile:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(46,51,45,.08)}
+    .dash-link-tile .dl-ic{width:26px;height:26px;border-radius:8px;background:#FCF1BE;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
     .dash-link-tile.committee .dl-ic{background:#EDF1EC}
     .dash-link-tile .dl-name{font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap}
     .dash-link-tile .dl-arrow{font-size:12px;color:#738e41;font-weight:600}
