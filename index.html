@@ -239,7 +239,7 @@ thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!imp
 /* ── 頁面內容最大寬度（超寬螢幕置中，僅螢幕，列印不受影響）──────────────
    閱讀／表單型頁面套用；案件追蹤與午茶日刻意不套用 —— 它們是很寬的表格，
    限制寬度反而會把欄位擠在一起。要調整寬度改 --page-max 一個數字即可。 */
-:root{--page-max:1500px}
+:root{--page-max:1500px;--sab:env(safe-area-inset-bottom,0px);--sat:env(safe-area-inset-top,0px)}
 @media screen and (min-width:769px){
   #view-detail,#view-new-form,#view-approvals,#view-admin,
   #view-feedback,#view-subsidy,#view-overview,#view-massage,
@@ -22056,6 +22056,36 @@ if (document.getElementById('bulletin-list')) {
 
 <script src="teaAIService.js"></script>
 <script src="teaAI.js"></script>
+<script>
+/* ===== TEMP 手機底部診斷條（確認後移除）===== */
+(function(){
+  function px(v){ return Math.round(parseFloat(v)||0); }
+  function run(){
+    try{
+      var cs=getComputedStyle(document.documentElement);
+      var sab=px(cs.getPropertyValue('--sab'));
+      var sat=px(cs.getPropertyValue('--sat'));
+      var ih=window.innerHeight;
+      var vv=window.visualViewport?Math.round(window.visualViewport.height):-1;
+      var nav=document.getElementById('bottom-nav');
+      var r=nav?nav.getBoundingClientRect():{top:-1,bottom:-1,height:-1};
+      var txt='SAB='+sab+' SAT='+sat+' | innerH='+ih+' visualH='+vv
+        +' | navTop='+Math.round(r.top)+' navBottom='+Math.round(r.bottom)+' navH='+Math.round(r.height)
+        +' | navBottom-innerH='+(Math.round(r.bottom)-ih);
+      var box=document.getElementById('__diagbar');
+      if(!box){ box=document.createElement('div'); box.id='__diagbar';
+        box.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99999;background:#111;color:#0f0;font:12px/1.5 monospace;padding:6px 8px;white-space:normal;word-break:break-all;text-align:left';
+        document.body.appendChild(box);
+      }
+      box.textContent=txt;
+      /* 在 navbar 底邊畫紅線、在 innerHeight 畫黃線，看有沒有貼齊 */
+      var rl=document.getElementById('__diagred'); if(!rl){rl=document.createElement('div');rl.id='__diagred';rl.style.cssText='position:fixed;left:0;right:0;height:2px;background:red;z-index:99998';document.body.appendChild(rl);} rl.style.top=(Math.round(r.bottom)-2)+'px';
+    }catch(e){}
+  }
+  window.addEventListener('load',function(){ run(); setTimeout(run,800); setTimeout(run,2000); });
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',run);
+})();
+</script>
 </body>
 </html>
 
