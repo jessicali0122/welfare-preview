@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908101224';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908102352';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -129,13 +129,14 @@ aside .sl-text{display:none}
   margin:2px auto;white-space:nowrap;font-family:'Noto Sans TC',sans-serif;font-weight:500;
   overflow:hidden;touch-action:manipulation;
 }
-.sl:hover{background:rgba(87,123,83,.07);color:#577B53;transform:translateY(-1px)}
-.sl:hover svg{transform:scale(1.1);transition:transform .2s cubic-bezier(.34,1.56,.64,1)}
+.sl:hover{background:rgba(87,123,83,.10);color:#577B53;transform:translateY(-2px)}
+.sl:hover svg{transform:scale(1.14);transition:transform .22s cubic-bezier(.34,1.56,.64,1)}
 .sl:active{transform:scale(.93)!important}
-.sl svg{transition:transform .2s ease,stroke .18s ease;flex-shrink:0;width:22px!important;height:22px!important}
+.sl svg{transition:transform .22s ease,stroke .18s ease;flex-shrink:0;width:22px!important;height:22px!important}
 
-/* active：實心綠膠囊 + 白字白圖示（明顯標示目前所在，取代原本太淡的 8% 底） */
-.sl.active{background:#577B53;color:#fff;box-shadow:0 2px 8px rgba(87,123,83,.28)}
+/* active：實心綠膠囊 + 白字白圖示 + 柔和呼吸光暈（明顯標示目前所在） */
+@keyframes slBreathe{0%,100%{box-shadow:0 2px 8px rgba(87,123,83,.28)}50%{box-shadow:0 3px 14px rgba(87,123,83,.42)}}
+.sl.active{background:#577B53;color:#fff;box-shadow:0 2px 8px rgba(87,123,83,.28);animation:slBreathe 2.8s ease-in-out infinite}
 .sl.active::before{display:none}
 .sl.active svg{stroke:#fff!important;transform:none;filter:none}
 .sl.active::after{color:#fff!important;font-weight:700!important}
@@ -2204,12 +2205,21 @@ header::after{display:none!important}
 #analytics-grid .stat:nth-child(3)::before{background:linear-gradient(180deg,#F6CC62,#E0820A,#F6CC62)!important}
 #analytics-grid .stat:nth-child(4)::before{background:linear-gradient(180deg,#B4B9B2,#767B75,#B4B9B2)!important}
 /* 右上玻璃膠囊（房子＋頭像合體）：內頁淺色毛玻璃，捲動重疊時柔和不突兀 */
-#topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12)}
+#topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12);transition:transform .18s ease,box-shadow .18s ease}
+#topbar-capsule:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(46,51,45,.18)}
+@media(prefers-reduced-motion:reduce){.sl.active{animation:none!important}}
 /* 首頁改淺色底後：膠囊、分隔線、房屋圖示比照其他頁的淺底樣式 */
 #main-wrapper:has(#view-dashboard.active) #topbar-capsule{background:rgba(247,248,246,.72);box-shadow:0 2px 10px rgba(46,51,45,.12)}
 #main-wrapper:has(#view-dashboard.active) #topbar-capsule-sep{background:#D5DAD2}
 #main-wrapper:has(#view-dashboard.active) #home-logo-btn svg,#main-wrapper:has(#view-dashboard.active) #notif-bell-btn svg{stroke:#577B53!important}
+/* 桌機：左側改「浮動玻璃 dock」——外框透明、內層圓角半透明面板＋柔和陰影、垂直置中懸浮；手機仍走底部導覽/抽屜，維持原本 F7F8F6 底色不動 */
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #D2D7CD!important}
+@media(min-width:769px){
+  #sidebar-wrapper{background:transparent!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
+  #sidebar-wrapper>#sidebar{position:static!important;height:auto!important;min-height:0!important;align-self:center;margin:auto 0!important;background:rgba(255,255,255,.62)!important;backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3);border:1px solid rgba(255,255,255,.85)!important;border-right:1px solid rgba(255,255,255,.85)!important;border-radius:22px!important;box-shadow:0 8px 26px rgba(40,48,38,.12),0 1px 2px rgba(40,48,38,.05)!important;padding:8px 0!important}
+  #sidebar-wrapper>#sidebar>div:first-child{display:none!important}
+  #sidebar-wrapper nav{flex:0 0 auto!important;padding:2px 0!important}
+}
 /* 頁面大標／區塊標題改墨棕 */
 #ptitle{color:#363B35!important}
 .section-title{color:#363B35!important}
