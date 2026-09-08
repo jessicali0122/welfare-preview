@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908095020';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908100336';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -213,7 +213,7 @@ tr.tr[data-status="作廢"] .evx-id-pending{color:#9AA096}
 .app-table tbody tr{border-bottom:1px solid #EAECE7}
 .app-table tbody tr:not([data-status="作廢"]):nth-child(even) td{background:#FAFBF9}
 /* 加 table. 前綴提高特異度：本表同時有 .evx-table，其 hover 規則（後定義的灰底）會蓋過 .app-table，故需勝過它 */
-table.app-table tbody tr:hover td{background:#F1F1EE!important}
+table.app-table tbody tr:hover td{background:#FCEEF3!important}
 table.app-table tbody tr[data-status="作廢"]:hover td{background:#D7DBD1!important}
 /* 狀態色左邊條（畫在單號欄＝第2格；checkbox 為第1格）*/
 .app-table tbody tr td:nth-child(2){border-left:4px solid #B4B8AE}
@@ -339,7 +339,7 @@ input[type=radio]{accent-color:#577B53}
 .ht-sec-head{display:flex;align-items:center;gap:8px;margin-bottom:14px}
 .ht-sec-ico{width:30px;height:30px;border-radius:10px;background:#EEF3ED;display:inline-flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
 .ht-sec-title{font-size:18px;font-weight:800;color:#2E332D;letter-spacing:.02em}
-.ht-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.12em}
+.ht-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.16em;text-transform:uppercase}
 .ht-sec-count{margin-left:auto;flex-shrink:0;font-size:12px;font-weight:600;color:#577B53;background:#EAF1E9;border:1px solid #C9DAC6;padding:4px 12px;border-radius:20px}
 .ht-year-chip{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #D2D7CD;background:#fff;border-radius:20px;padding:6px 14px;font-size:14px;font-weight:700;color:#767B75;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.15s}
 .ht-year-chip:hover{border-color:#B7CCB4;color:#577B53}
@@ -1827,9 +1827,9 @@ tbody td{font-size:var(--fs-base)!important}
   /* 活動日曆手機版：縮小外卡(18px)＋內層灰底面板(14px)左右 padding，讓 7 欄格子更寬、日期/節日/午茶日文字不擠 */
   #ht-cal-card{padding-left:8px!important;padding-right:8px!important}
   #ht-cal-card>div{padding-left:8px!important;padding-right:8px!important}
-  /* 年曆時間軸：手機版微縮，避免 12 個月份標籤過擠（仍維持可讀 12px） */
-  #ht-year-timeline span[style*="font-size:14px"]{font-size:12px!important}
-  #ht-year-timeline [style*="left:3%;right:3%;top:52px"]{left:1%!important;right:1%!important}
+  /* 年曆時間軸（月份膠囊列）：手機版換成 6 欄兩排，避免 12 個膠囊擠在一排 */
+  #ht-year-timeline>div{flex-wrap:wrap!important}
+  #ht-year-timeline>div>div{flex:1 1 14%!important;padding:7px 2px!important}
   /* 事件資訊列 flex-wrap */
   #ht-event-info-bar [style*="display:flex;gap:16px"]{flex-wrap:wrap!important;gap:8px!important}
   /* 月份總覽：4欄卡片 → 2欄（避免被截斷） */
@@ -2060,7 +2060,7 @@ html,body{background:#F6F4EE}
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#577B53;background:#E7EEE5}
 .dash-sec-title{font-size:18px;font-weight:800;color:#232A1E;white-space:nowrap;letter-spacing:-.01em}
-.dash-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.12em;text-transform:uppercase}
+.dash-sec-en{font-size:12px;font-weight:700;color:#738e41;letter-spacing:.16em;text-transform:uppercase}
 /* 服務入口卡：左側彩色識別條＋各自的暖色 icon 底，一眼分辨、畫面不再單調 */
 .dash-hub-card{position:relative}
 .dash-hub-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px;opacity:.85}
@@ -2227,11 +2227,8 @@ thead th{color:#767B75!important}
 <div id="sidebar-wrapper" style="width:76px;flex-shrink:0;position:relative;height:100%;background:#fff;box-shadow:2px 0 16px rgba(0,0,0,.06)">
 <aside id="sidebar" style="background:transparent;border-right:none;display:flex;flex-direction:column">
 
-  <!-- Header（桌面版只顯示 Logo；手機版顯示品牌 + 關閉按鈕）-->
-  <div style="padding:calc(14px + env(safe-area-inset-top,0px)) 0 14px;display:flex;align-items:center;justify-content:center;position:relative">
-    <div style="width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;background:transparent">
-      <svg width="34" height="34" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="leaf-grad" x1="21" y1="2" x2="6" y2="31" gradientUnits="userSpaceOnUse"><stop offset="0%" stop-color="#3dba84"/><stop offset="100%" stop-color="#157a50"/></linearGradient></defs><path d="M14 31 C14 27 15 20 16 14 C17 9 19 5 21 2" stroke="url(#leaf-grad)" stroke-width="1.8" stroke-linecap="round"/><path d="M16 26 C13 23 7 24 6 28 C10 30 15 28 16 26Z" fill="url(#leaf-grad)"/><path d="M16 20 C19 17 25 18 25 22 C21 23 17 21 16 20Z" fill="url(#leaf-grad)"/><path d="M17 14 C14 10 9 11 9 15 C13 16 16 14 17 14Z" fill="url(#leaf-grad)"/><path d="M19 9 C22 6 27 7 26 11 C22 12 19 10 19 9Z" fill="url(#leaf-grad)"/><path d="M21 4 C19 1 15 2 16 5 C18 6 20 5 21 4Z" fill="url(#leaf-grad)"/></svg>
-    </div>
+  <!-- Header（桌面版留白頂距；葉子 Logo 已移除，手機版保留關閉按鈕）-->
+  <div style="padding:calc(10px + env(safe-area-inset-top,0px)) 0 6px;display:flex;align-items:center;justify-content:center;position:relative">
     <!-- 手機版關閉按鈕 -->
     <button id="sidebar-close-btn" onclick="toggleSidebar()" style="display:none;position:absolute;right:12px;top:50%;transform:translateY(-50%);width:30px;height:30px;border:none;background:rgba(255,255,255,.12);border-radius:50%;color:#fff;font-size:18px;line-height:1;cursor:pointer;align-items:center;justify-content:center">×</button>
   </div>
@@ -2248,14 +2245,14 @@ thead th{color:#767B75!important}
     </div>
 
 
-    <div class="sl" data-view="hightea" data-label="午茶日" onclick="sw('hightea')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
-      <span class="sl-text">午茶日</span>
-    </div>
-
     <div class="sl" data-view="massage" data-label="按摩預約" onclick="sw('massage')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg>
       <span class="sl-text">按摩預約</span>
+    </div>
+
+    <div class="sl" data-view="hightea" data-label="午茶日" onclick="sw('hightea')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>
+      <span class="sl-text">午茶日</span>
     </div>
 
     <div class="sl" data-view="admin" data-label="系統管理" onclick="sw('admin')">
@@ -2410,37 +2407,37 @@ thead th{color:#767B75!important}
       <span class="dash-sec-en">SERVICES</span>
     </div>
     <div id="dash-hub" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-      <div class="dash-hub-card" onclick="hubNav(this,'applications')" style="order:3;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
+      <div class="dash-hub-card" onclick="hubNav(this,'applications')" style="order:1;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:14px;background:#E3F0EB;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F8F6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="費用申請"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">Expenses</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">Expenses</span></div>
             <div id="dash-hub-cases-sub" style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">查看與審核請款案件</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'hightea')" style="order:2;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
+      <div class="dash-hub-card" onclick="hubNav(this,'hightea')" style="order:5;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:14px;background:#FBEEDD;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D98324" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="午茶日"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><path d="M6 1v3M10 1v3M14 1v3"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">TEA DAY</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">TEA DAY</span></div>
             <div id="dash-hub-hightea-sub" style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">載入中…</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'massage')" style="order:1;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
+      <div class="dash-hub-card" onclick="hubNav(this,'massage')" style="order:2;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:14px;background:#ECE9FA;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#7A6BD4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="按摩預約"><circle cx="12" cy="7" r="3.2"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">MASSAGE</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">MASSAGE</span></div>
             <div id="dash-hub-massage-sub" style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">載入中…</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
@@ -2452,31 +2449,31 @@ thead th{color:#767B75!important}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4B7BC4" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="系統管理"><path d="M12 2 4 6v6c0 5 3.5 8 8 10 4.5-2 8-5 8-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">ADMIN</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">ADMIN</span></div>
             <div id="dash-hub-admin-sub" style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">使用者、角色與系統設定</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="hubNav(this,'overview')" style="order:4;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
+      <div class="dash-hub-card" onclick="hubNav(this,'overview')" style="order:3;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:14px;background:#FBE7F0;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#D65C8A" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="福利總覽"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M12 8v13M3 12h18M8 8a2.5 2.5 0 1 1 4-2c2-2 4-1 4 1"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">BENEFITS</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">BENEFITS</span></div>
             <div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">你現在享有的福利與資格，含津貼試算</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
         </div>
       </div>
-      <div class="dash-hub-card" onclick="fbOpenBoard()" style="order:5;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
+      <div class="dash-hub-card" onclick="fbOpenBoard()" style="order:4;cursor:pointer;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08);border:1px solid #D5DAD2;display:flex">
         <div style="flex:1;min-width:0;padding:22px 24px;display:flex;align-items:center;gap:16px">
           <div class="hub-icon-glow" style="width:52px;height:52px;border-radius:14px;background:#FCE9DF;display:flex;align-items:center;justify-content:center;flex-shrink:0">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#E07B4C" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="福委聽你說"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.08em;display:flex;align-items:baseline;gap:8px">福委聽你說<span style="font-size:12px;font-weight:400;letter-spacing:.08em;color:#738e41">YOUR VOICE</span></div>
+            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福委聽你說<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">YOUR VOICE</span></div>
             <div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">想法、建議、許願都歡迎，福委會看到 💛</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
@@ -2530,7 +2527,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div><div style="font-size:12px;color:#9AA096;margin-top:4px;letter-spacing:.04em">📅 資料更新日期：2026年8月</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div><div style="font-size:12px;color:#9AA096;margin-top:4px;letter-spacing:.04em">📅 資料更新日期：2026年8月</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap">
@@ -2786,7 +2783,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#FBE9D8;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="留言板管理">📣</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">留言板管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">YOUR VOICE</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">集中檢視同事的留言與附件，可刪除不當內容</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:14px 0 12px"></div>
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
@@ -2803,7 +2800,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAD2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#EDF1EC;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="津貼補助">💰</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">津貼補助<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">SUBSIDY</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇條件即可試算你符合的補助金額</div></div>
           <button onclick="sw('overview')" style="flex-shrink:0;background:#fff;border:1.5px solid #CDD8CB;color:#577B53;border-radius:20px;padding:8px 14px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap" onmouseover="this.style.background='#F3F7F2'" onmouseout="this.style.background='#fff'">← 福利總覽</button>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
@@ -2905,7 +2902,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="費用申請">📋</span>
       </div>
       <div style="flex:1;min-width:180px">
-        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">Expenses</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">Expenses</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">請款申請與簽核進度</div>
       </div>
       <button id="apps-add-btn" class="btn btn-p" onclick="openNewForm()" style="flex-shrink:0;white-space:nowrap">
@@ -3696,7 +3693,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="系統管理">🛡️</span>
       </div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">ADMIN</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">ADMIN</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者與角色管理（簽核流程請至「費用申請」）</div>
       </div>
       <button id="add-user-btn" class="btn btn-p" style="flex-shrink:0" onclick="showAddUserModal()">
@@ -3828,14 +3825,14 @@ thead th{color:#767B75!important}
           <span style="font-size:34px;line-height:1" role="img" aria-label="午茶日">🍿</span>
         </div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">TEA DAY</span></div>
+          <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">午茶日<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">TEA DAY</span></div>
           <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">每月一場，充電的下午茶時光</div>
         </div>
-        <!-- 資訊籤條列：下次午茶日／天氣，桌面併入標題列同排；手機用 media query 強制換行成獨立一排 -->
-        <div id="ht-hero-info-row" class="ht-hero-info-row" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div id="ht-hero-next-wrap" style="display:none;background:#FFF9F0;border:1px solid #F2A03D;color:#E0820A;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:700;letter-spacing:.04em;white-space:nowrap">📅 下次午茶日 <span id="ht-hero-next"></span></div>
-          <div id="ht-weather-tip" style="display:none;text-align:center"></div>
-          <div id="ht-hero-chip" style="display:none;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
+        <!-- 資訊籤條列（下次午茶日／天氣）已依需求移除；保留隱藏空殼避免 JS getElementById 取值報錯 -->
+        <div id="ht-hero-info-row" class="ht-hero-info-row" style="display:none">
+          <div id="ht-hero-next-wrap" style="display:none"><span id="ht-hero-next"></span></div>
+          <div id="ht-weather-tip" style="display:none"></div>
+          <div id="ht-hero-chip" style="display:none"></div>
         </div>
         <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap;flex-shrink:0">✨ 新增活動</button>
       </div>
@@ -4449,7 +4446,7 @@ thead th{color:#767B75!important}
         <span style="font-size:34px;line-height:1" role="img" aria-label="按摩預約">💆🏻</span>
       </div>
       <div style="flex:1;min-width:180px">
-        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41">MASSAGE</span></div>
+        <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">按摩預約<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">MASSAGE</span></div>
         <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">充飽電，再一起面對更多挑戰</div>
       </div>
       <div id="ms-quota-chip" style="display:none;flex-shrink:0;background:#EAF1E9;border:1px solid #C9DAC6;color:#577B53;border-radius:20px;padding:6px 14px;font-size:12px;font-weight:600;letter-spacing:.04em;white-space:nowrap"></div>
@@ -16988,38 +16985,25 @@ function htRenderYearTimeline() {
     var mm = _evMonth(e) || '';
     if (mm.indexOf(curYear + '-') === 0) eventMonths[parseInt(mm.slice(5,7),10)] = true;
   });
+  // 12 個月份膠囊：當月＝實心綠、有活動＝綠框＋圓點、其餘＝淡色；乾淨排列取代原本的飛行路徑動畫
   var months = '';
   for (var m = 1; m <= 12; m++) {
     var isCur = m === curMonth;
     var hasEv = !!eventMonths[m];
-    var size  = isCur ? 18 : 12;
-    var bg    = isCur ? '#577B53' : (hasEv ? '#A9C4A5' : '#D2D7CD');
-    var ring  = isCur ? 'box-shadow:0 0 0 4px #EEF3ED;' : '';
-    var labW  = isCur ? '800' : (hasEv ? '600' : '400');
-    var labC  = isCur ? '#46633F' : (hasEv ? '#6E8F6A' : '#D2D6D0');
-    months += '<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:10px">'
-      + '<div style="height:20px;display:flex;align-items:center;justify-content:center">'
-      +   '<div style="width:' + size + 'px;height:' + size + 'px;border-radius:50%;background:' + bg + ';' + ring + 'transition:all .4s"></div>'
-      + '</div>'
-      + '<span style="font-size:12px;font-weight:' + labW + ';color:' + labC + ';white-space:nowrap">' + m + '月</span>'
-      + '</div>';
+    var css, dot = '';
+    if (isCur) {
+      css = 'background:#577B53;color:#fff;border:1px solid #577B53;font-weight:700;box-shadow:0 2px 6px rgba(87,123,83,.28)';
+    } else if (hasEv) {
+      css = 'background:#EEF4ED;color:#46633F;border:1px solid #C4D8C0;font-weight:600';
+      dot = '<span style="width:5px;height:5px;border-radius:50%;background:#6E8F6A;flex-shrink:0"></span>';
+    } else {
+      css = 'background:transparent;color:#AEB4AB;border:1px solid #E4E8DE;font-weight:500';
+    }
+    months += '<div style="flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;'
+      + 'padding:8px 4px;border-radius:10px;font-size:12px;letter-spacing:.02em;white-space:nowrap;transition:all .25s;' + css + '">'
+      + dot + m + '月</div>';
   }
-  var pct = 3 + ((curMonth - 0.5) / 12) * 94;
-  el.innerHTML = '<div style="position:relative;height:98px;margin:2px 6px 0">'
-    // 虛線航道（尚未飛過的航段）
-    +   '<div style="position:absolute;left:3%;right:3%;top:60px;height:0;border-top:2px dashed #CDD8CB"></div>'
-    // 已飛航段（實線）
-    +   '<div id="ht-yt-progress" style="position:absolute;left:3%;width:0;top:59px;height:3px;background:linear-gradient(90deg,#8FAE8B,#577B53);border-radius:10px;transition:width 1.5s cubic-bezier(.34,1.2,.4,1)"></div>'
-    // 甜點小蛋糕走到目前月份（旅遊感保留虛線路徑，圖案改甜點）
-    +   '<div id="ht-yt-marker" style="position:absolute;left:3%;top:8px;transform:translateX(-50%) translateZ(0);will-change:left;backface-visibility:hidden;transition:left 1.5s cubic-bezier(.34,1.2,.4,1);z-index:3;font-size:26px;line-height:1;text-shadow:0 3px 4px rgba(87,123,83,.3)">🍿</div>'
-    +   '<div style="position:absolute;left:3%;right:3%;top:52px;display:flex;justify-content:space-between">' + months + '</div>'
-    + '</div>';
-  setTimeout(function(){
-    var mk = document.getElementById('ht-yt-marker');
-    var pg = document.getElementById('ht-yt-progress');
-    if (mk) mk.style.left = pct + '%';
-    if (pg) pg.style.width = (pct - 3) + '%';
-  }, 300);
+  el.innerHTML = '<div style="display:flex;gap:6px;margin:2px 2px 0">' + months + '</div>';
   // 年度場次籤條已移除（依需求隱藏；年曆進度條已能呈現當年進度）
   var heroChip = document.getElementById('ht-hero-chip');
   if (heroChip) heroChip.style.display = 'none';
