@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908145515';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908145725';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2063,20 +2063,21 @@ html,body{background:#F4F2EC}
   .dash-stat .num{font-size:22px}
 }
 /* ── Hero 重點卡：問候＋時鐘＋關鍵數字合成一張，取代原本分離的問候區＋5 格漂浮 KPI（收斂視覺、去渙散） ── */
-.dash-hero-card{position:relative;overflow:hidden;background:linear-gradient(120deg,#EAF1E6 0%,#F5F3EC 62%);border:1px solid #E2E7DB;border-radius:20px;padding:22px 24px 20px;box-shadow:0 1px 2px rgba(46,51,45,.05),0 16px 34px rgba(46,51,45,.07);margin:14px 0 22px}
+.dash-hero-card{position:relative;overflow:hidden;background:linear-gradient(120deg,#EAF1E6 0%,#F5F3EC 62%);border:none;border-radius:20px;padding:22px 24px 20px;box-shadow:0 8px 26px rgba(46,51,45,.05);margin:14px 0 22px}
 .dash-hero-card::after{content:"🐾";position:absolute;right:-6px;bottom:-28px;font-size:148px;line-height:1;opacity:.05;transform:rotate(-12deg);pointer-events:none}
 .dash-hero-card #dash-hero{padding:2px 4px 0!important;margin:0!important}
-.dash-hero-card #dash-statline{position:relative;z-index:1;margin:18px 0 0!important;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.7);border-radius:14px;box-shadow:0 1px 2px rgba(46,51,45,.04);grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0}
-.dash-hero-card .dash-stat{border:none!important;border-radius:0!important;transform:none!important;padding:13px 16px}
-.dash-hero-card .dash-stat:not(.has-todo){background:transparent!important;box-shadow:none!important}
-.dash-hero-card .dash-stat.has-todo{box-shadow:none!important}
+/* Hero 內的 5 項改「無盒子」輕量摘要列：拿掉白容器/邊框/分隔線，只留 圖示＋標籤＋數字 浮在漸層上 */
+.dash-hero-card #dash-statline{position:relative;z-index:1;margin:16px 0 2px!important;padding-top:14px;background:transparent!important;border:none!important;border-top:1px solid rgba(70,80,60,.10)!important;border-radius:0!important;box-shadow:none!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0}
+.dash-hero-card .dash-stat{background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;transform:none!important;padding:6px 14px}
 .dash-hero-card .dash-stat:hover{transform:none!important;box-shadow:none!important}
-.dash-hero-card .dash-stat + .dash-stat{border-left:1px solid #EAE9DF!important}
+.dash-hero-card .dash-stat + .dash-stat{border-left:none!important}
 .dash-hero-card .dash-stat .num{font-size:22px}
+/* 待你審核有件：改用橘色圖示＋橘色數字凸顯，不再是整塊橘方塊（維持無盒子一致） */
+.dash-hero-card .dash-stat.has-todo .ic{background:#FDECD9!important;color:#E0820A!important}
+.dash-hero-card .dash-stat.has-todo .num,.dash-hero-card .dash-stat.has-todo .unit{color:#E0820A!important}
+.dash-hero-card .dash-stat.has-todo .lab{color:#C9760A!important}
 @media(max-width:640px){
-  .dash-hero-card #dash-statline{grid-template-columns:repeat(2,1fr)}
-  .dash-hero-card .dash-stat:nth-child(odd){border-left:none!important}
-  .dash-hero-card .dash-stat:nth-child(n+3){border-top:1px solid #EAE9DF!important}
+  .dash-hero-card #dash-statline{grid-template-columns:repeat(2,1fr);gap:4px 0}
 }
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
