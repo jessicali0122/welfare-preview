@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908150429';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908150743';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1996,22 +1996,27 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 /* ── 空間層次系統（2026-07 去平面化改造）──
    底層 html/body 奶油色（下拉回彈不再露白線）→ 內容米白 → 卡片暖白，
    三層由深到淺，加上暖色點綴與微漸層，建立縱深。 */
-html,body{background:#F5F5F5}
-/* 內容區：暖紙感底色 #F5F5F5（純白卡片浮於其上更跳更精緻；全站與 body 同色零接縫） */
-#main-content{background:#F5F5F5!important}
+html,body{background:#FAFBFC}
+/* 內容區：暖紙感底色 #FAFBFC（純白卡片浮於其上更跳更精緻；全站與 body 同色零接縫） */
+#main-content{background:#FAFBFC!important}
 #view-dashboard{background:transparent!important}
 /* ── 首頁畫布：暖紙感＋極淡直向漸層，帶一點縱深、更高級（去綠色調，綠只當重點色） ── */
-#main-content:has(#view-dashboard.active){background:#F5F5F5!important}
+#main-content:has(#view-dashboard.active){background:#FAFBFC!important}
 #view-dashboard.active #dashboard-greeting{color:#46633F!important}
 #view-dashboard.active #tw-datetime{color:#5A6650!important}
 /* 無框時間：排版層次＋單位翻牌，不做卡片/底色/陰影，融入問候區不突兀 */
-#tw-datetime{display:inline-flex;flex-direction:column;align-items:center;gap:6px;background:none;border:none;padding:0}
-#tw-datetime .twdt-date{font-size:12px;font-weight:700;letter-spacing:.24em;color:#8A8F86;text-transform:uppercase}
-#tw-datetime .twdt-clock{position:relative;display:inline-flex;align-items:baseline;perspective:240px;font-variant-numeric:tabular-nums;font-weight:700;font-size:24px;letter-spacing:.02em;line-height:1;color:#3E463A;padding-bottom:8px}
-#tw-datetime .twdt-clock::after{content:"";position:absolute;left:50%;bottom:0;transform:translateX(-50%);width:32px;height:2px;border-radius:2px;background:linear-gradient(90deg,#3FA7A0,#738e41)}
+/* 時鐘（C＋D 融合）：細字大時間＋冒號呼吸閃爍＋秒數上標；日期一行帶小時鐘圖示、淡雅不搶 */
+#tw-datetime{display:inline-flex;flex-direction:column;align-items:center;gap:7px;background:none;border:none;padding:0}
+#tw-datetime .twdt-date{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;letter-spacing:.12em;color:#9AA096;text-transform:none}
+#tw-datetime .twdt-dico{display:inline-flex;color:#8FAE8B}
+#tw-datetime .twdt-clock{position:relative;display:inline-flex;align-items:baseline;perspective:240px;font-variant-numeric:tabular-nums;font-weight:300;font-size:44px;letter-spacing:.01em;line-height:1;color:#3A4038;padding-bottom:0}
 #tw-datetime .twdt-digit{display:inline-block;transform-origin:50% 50%;backface-visibility:hidden}
-#tw-datetime .twdt-colon{padding:0 2px;color:#B7BCAF;font-weight:700}
-#tw-datetime .twdt-sec{font-size:14px;font-weight:700;color:#A2A79A}
+#tw-datetime .twdt-colon{padding:0 3px;color:#8FAE8B;font-weight:300;animation:twdt-blink 1.5s steps(1) infinite}
+@keyframes twdt-blink{50%{opacity:.28}}
+#tw-datetime .twdt-sec{font-size:17px;font-weight:400;color:#A9AEA2;align-self:flex-start;margin-top:2px}
+#tw-datetime .twdt-colon-sec{font-size:17px;font-weight:400;color:#C4C9BC;align-self:flex-start;margin-top:2px;padding:0 1px 0 3px;animation:none}
+@media(max-width:640px){#tw-datetime .twdt-clock{font-size:36px}#tw-datetime .twdt-sec{font-size:15px}}
+@media(prefers-reduced-motion:reduce){#tw-datetime .twdt-colon{animation:none}}
 #tw-datetime .twdt-flip{animation:twdt-flip .42s cubic-bezier(.2,.7,.3,1)}
 @keyframes twdt-flip{0%{transform:rotateX(-90deg);opacity:.15}60%{opacity:1}100%{transform:rotateX(0);opacity:1}}
 @media (prefers-reduced-motion:reduce){#tw-datetime .twdt-flip{animation:none}}
@@ -2240,7 +2245,7 @@ header::after{display:none!important}
 /* 桌機：左側「浮動 dock」——底板透明融入背景，每顆圖示是獨立白底小方塊浮起、選中綠色；垂直置中。手機仍走底部導覽/抽屜，維持原本 F7F8F6 底色不動 */
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #D2D7CD!important}
 @media(min-width:769px){
-  #sidebar-wrapper{background:#F5F5F5!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
+  #sidebar-wrapper{background:#FAFBFC!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
   /* 列表面板＝一整片白色圓角，浮在透明外底上；按鈕在白面板內（選中綠膠囊、其餘透明） */
   #sidebar-wrapper>#sidebar{position:static!important;height:auto!important;min-height:0!important;align-self:center;margin:auto 0!important;background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:1px solid rgba(40,48,38,.06)!important;border-right:1px solid rgba(40,48,38,.06)!important;border-radius:22px!important;box-shadow:0 8px 26px rgba(40,48,38,.10),0 1px 2px rgba(40,48,38,.04)!important;padding:8px 7px!important}
   #sidebar-wrapper>#sidebar>div:first-child{display:none!important}
@@ -12935,20 +12940,21 @@ function updateTWTime(){
   const dow=days[tw.getDay()];
   const hh=p2(tw.getHours()),mm=p2(tw.getMinutes()),ss=p2(tw.getSeconds());
   // 首次建立結構：日期一排、時鐘一排（6 個數字位 + 2 個冒號）；之後只更新有變動的位
-  if(!_twClock||_twClock.dateEl.parentNode!==el){
+  if(!_twClock||!_twClock.clockEl||!el.contains(_twClock.clockEl)){
     el.innerHTML='';
     const dEl=document.createElement('span'); dEl.className='twdt-date';
+    dEl.innerHTML='<span class="twdt-dico"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="twdt-dtext"></span>';
     const cEl=document.createElement('span'); cEl.className='twdt-clock';
     el.appendChild(dEl); el.appendChild(cEl);
-    const layout=['d','d',':','d','d',':','s','s']; // d=時/分數字, s=秒數字（淡化）, :=固定冒號
-    const digits=[];
+    const layout=['d','d',':','d','d',':','s','s']; // d=時/分數字, s=秒數字（上標淡化）, :=冒號
+    const digits=[]; let colonIdx=0;
     layout.forEach(function(t){
       const sp=document.createElement('span');
-      if(t===':'){ sp.className='twdt-colon'; sp.textContent=':'; }
+      if(t===':'){ colonIdx++; sp.className='twdt-colon'+(colonIdx===2?' twdt-colon-sec':''); sp.textContent=':'; }
       else { sp.className='twdt-digit'+(t==='s'?' twdt-sec':''); digits.push(sp); }
       cEl.appendChild(sp);
     });
-    _twClock={dateEl:dEl, digits:digits};
+    _twClock={dateEl:dEl.querySelector('.twdt-dtext'), clockEl:cEl, digits:digits};
   }
   _twClock.dateEl.textContent=y+'.'+p2(m)+'.'+p2(d)+'　星期'+dow;
   const chars=hh+mm+ss; // 6 位
