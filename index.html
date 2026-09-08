@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908100336';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908101224';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2035,26 +2035,31 @@ html,body{background:#F6F4EE}
 #bulletin-section,.dash-hub-card{background:#FFFFFF!important}
 #bulletin-section{position:relative;overflow:hidden}
 /* 首頁快覽數字（方向 A）：圖示＋標籤＋數字，收進「單一淺色細框條」＋細分隔線（不是四個框、也非大面積上色）。 */
-#dash-statline{display:flex;flex-wrap:wrap;background:#fff;border:1px solid #E6E7E1;border-radius:14px;margin:16px 0 22px;box-shadow:0 1px 2px rgba(34,38,30,.05)}
-.dash-stat{flex:1 1 150px;display:flex;align-items:center;justify-content:center;gap:12px;padding:14px 18px;background:transparent;border:none;text-decoration:none;cursor:pointer;transition:background .15s}
-.dash-stat + .dash-stat{border-left:1px solid #EFEBE0}
-.dash-stat:hover{background:#FAFBF8}
-.dash-stat .ic{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
+/* KPI 焦點卡：由單一白長條 → 分離的圓角磚（grid＋gap），首頁更有重點、不平 */
+#dash-statline{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:16px 0 22px}
+.dash-stat{display:flex;align-items:center;gap:12px;padding:16px 16px;background:#fff;border:1px solid #E4E8DE;border-radius:14px;box-shadow:0 1px 2px rgba(40,48,38,.04),0 3px 12px rgba(40,48,38,.05);text-decoration:none;cursor:pointer;transition:transform .15s,box-shadow .15s,border-color .15s}
+.dash-stat:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(40,48,38,.06),0 8px 22px rgba(40,48,38,.10);border-color:#D5DAD2}
+.dash-stat .ic{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s,color .15s}
 .dash-stat .txt{display:flex;flex-direction:column;min-width:0}
 .dash-stat .lab{font-size:12px;color:#767B75;font-weight:600;letter-spacing:.06em;white-space:nowrap;line-height:1.4}
-.dash-stat .numline{display:flex;align-items:baseline;gap:6px;margin-top:4px}
-.dash-stat .num{font-size:24px;font-weight:900;color:#33502F;line-height:1.1;letter-spacing:0;font-variant-numeric:tabular-nums}
+.dash-stat .numline{display:flex;align-items:baseline;gap:5px;margin-top:3px}
+.dash-stat .num{font-size:26px;font-weight:900;color:#2E3A2B;line-height:1.05;letter-spacing:0;font-variant-numeric:tabular-nums}
 /* 文字型數值（Coming Soon 這種）：比數字小一階、字距放寬，才不會比日期還搶眼 */
 .dash-stat .num.is-text{font-size:16px;font-weight:800;letter-spacing:.06em}
 .dash-stat .unit{font-size:12px;font-weight:600;color:#A9A69B;letter-spacing:.04em}
-/* 有待辦時圖示底轉橘＋數字轉橘凸顯 */
-.dash-stat.has-todo .ic{background:#FDECD9!important;color:#E0820A!important}
-.dash-stat.has-todo .num{color:#E0820A}
-.dash-stat.has-todo .lab{color:#C9760A}
+/* 焦點卡：待你審核有件 → 整張橘色實心，全頁最搶眼的重點 */
+.dash-stat.has-todo{background:linear-gradient(135deg,#F59B34,#E0820A);border-color:transparent;box-shadow:0 4px 14px rgba(224,130,10,.30)}
+.dash-stat.has-todo:hover{box-shadow:0 6px 20px rgba(224,130,10,.38)}
+.dash-stat.has-todo .ic{background:rgba(255,255,255,.22)!important;color:#fff!important}
+.dash-stat.has-todo .lab{color:#FFF3E2}
+.dash-stat.has-todo .num,.dash-stat.has-todo .unit{color:#fff}
+/* 午茶日：淡綠強調磚，帶出節奏但不搶橘色焦點 */
+.dash-stat.is-tea{background:#F3F7F1;border-color:#D8E4D4}
+.dash-stat.is-tea .num{color:#3E6E52}
 @media(max-width:640px){
-  .dash-stat{flex:1 1 45%;padding:11px 14px}
-  .dash-stat:nth-child(odd){border-left:none}
-  .dash-stat:nth-child(n+3){border-top:1px solid #EFEBE0}
+  #dash-statline{grid-template-columns:repeat(2,1fr);gap:10px}
+  .dash-stat{padding:13px 13px}
+  .dash-stat .num{font-size:22px}
 }
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
@@ -2081,6 +2086,9 @@ html,body{background:#F6F4EE}
 .dash-hub-card[onclick*="subsidy"] .hub-icon-glow{background:#FBE9D8!important}
 .dash-hub-card[onclick*="overview"] .hub-icon-glow{background:#E7EEE5!important}
 .dash-hub-card .hub-icon-glow{box-shadow:inset 0 0 0 1px rgba(87,123,83,.08)}
+/* 入口卡標題：窄卡片維持 16px＋不換行（全頁區塊標題仍為 18px/.16em，兩者分開） */
+.dash-hub-card div[style*="align-items:baseline"]{font-size:16px!important;letter-spacing:.06em!important;flex-wrap:nowrap!important;white-space:nowrap}
+.dash-hub-card div[style*="align-items:baseline"]>span{letter-spacing:.08em!important}
 /* 試算表來源標籤：窄螢幕只顯示 📋 圖示，避免被標題截字 */
 @media(max-width:640px){.ht-src-tag .t{display:none}}
 /* ── 各分頁卡片沿用首頁的彩色識別條（與服務入口卡同色系）── */
@@ -2234,7 +2242,7 @@ thead th{color:#767B75!important}
   </div>
 
   <!-- Nav -->
-  <nav style="flex:1;padding:10px 0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center">
+  <nav style="flex:1;padding:10px 0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center">
     <div class="sl active" data-view="dashboard" data-label="總覽" onclick="sw('dashboard')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
       <span class="sl-text">總覽</span>
@@ -2378,8 +2386,8 @@ thead th{color:#767B75!important}
         <span class="ic" style="background:#EEF3EC;color:#3E6E52"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>
         <span class="txt"><span class="lab">下個付款日</span><span class="numline"><span id="dstat-paydate" class="num">—</span></span></span>
       </a>
-      <a class="dash-stat" onclick="sw('hightea')">
-        <span class="ic" style="background:#EEF3EC;color:#577B53"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
+      <a class="dash-stat is-tea" onclick="sw('hightea')">
+        <span class="ic" style="background:#E1EEDD;color:#3E6E52"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
         <span class="txt"><span class="lab">本月午茶日</span><span class="numline"><span id="dstat-teaday" class="num">—</span></span></span>
       </a>
     </div>
@@ -2413,7 +2421,7 @@ thead th{color:#767B75!important}
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2F8F6B" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-label="費用申請"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></svg>
           </div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">Expenses</span></div>
+            <div style="font-size:16px;font-weight:600;color:#2E332D;letter-spacing:.06em;display:flex;align-items:baseline;gap:8px;white-space:nowrap">費用申請<span style="font-size:12px;font-weight:400;letter-spacing:.16em;color:#738e41;text-transform:uppercase">Expenses</span></div>
             <div id="dash-hub-cases-sub" style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">查看與審核請款案件</div>
           </div>
           <div class="hub-perf" style="flex-shrink:0;color:#577B53;font-size:16px">→</div>
