@@ -2156,13 +2156,18 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
    否則暈染在 view 圓角邊界被裁切，與外圍純色留白形成一圈可見的色差外框 */
 #main-content:has(#view-dashboard.active){padding:0!important}
 #view-dashboard.active{border-radius:0!important;padding:calc(26px + env(safe-area-inset-top,0px)) 40px 40px!important;min-height:100vh!important}
-/* 手機：頂部留出膠囊高度，問候文字不會貼著膠囊；左右留白加大不貼邊 */
-@media(max-width:768px){#view-dashboard.active{padding:calc(48px + env(safe-area-inset-top,0px)) 20px calc(80px + env(safe-area-inset-bottom,0px))!important}}
+/* 手機：內容已在固定 header（含 safe-area-inset-top）底下，view 頂部不可再加 safe-area（會重複算、多塞一截空白）；
+   收緊頂部讓問候＋重點區上移。底部保留導覽列高度＋安全區。 */
+@media(max-width:768px){#view-dashboard.active{padding:16px 20px calc(72px + env(safe-area-inset-bottom,0px))!important}}
 /* 首頁「服務項目」暫時隱藏（導覽已在側欄／底部列，入口重複）；要恢復刪掉此規則即可 */
 #dash-services-label,#dash-hub{display:none!important}
 /* 手機：隱藏底部裝飾品牌頁尾——短內容時它的標語會被底部導覽列蓋住、只露出一條分隔線，
    看起來像一截詭異空白＋線。桌面保留（頁尾在寬版看起來是刻意的品牌收尾）。 */
 @media(max-width:768px){#dash-brand{display:none!important}}
+/* 手機：問候區收緊，重點快覽數字上移 */
+@media(max-width:768px){#dash-hero{padding-top:6px!important;margin-bottom:8px!important}#dash-motto{margin-top:4px!important}}
+/* 手機：內容短於畫面時上下置中吃掉留白；內容長時 margin:auto 自動歸零、貼頂正常捲動不裁切 */
+@media(max-width:768px){#view-dashboard.active{display:flex;flex-direction:column}#view-dashboard.active #dash-wrap{margin-top:auto!important;margin-bottom:auto!important}}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
