@@ -2171,6 +2171,13 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
 @media(max-width:768px){#dash-hero{padding-top:6px!important;margin-bottom:8px!important}#dash-motto{margin-top:4px!important}}
 /* 手機：內容短於畫面時上下置中吃掉留白；內容長時 margin:auto 自動歸零、貼頂正常捲動不裁切 */
 @media(max-width:768px){#view-dashboard.active{display:flex;flex-direction:column}#view-dashboard.active #dash-wrap{margin-top:auto!important;margin-bottom:auto!important}}
+/* 桌面：待你審核／本月狀態 兩卡等高對齊、欄寬更平衡；空狀態內容置中不鬆散 */
+@media(min-width:769px){
+  #dash-2col{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)!important;align-items:stretch!important}
+  #dash-myturn-panel,#dash-status-panel{display:flex;flex-direction:column}
+  #dash-myturn-list,#dash-status-list{flex:1 1 auto}
+  #dash-myturn-list{display:flex;flex-direction:column}
+}
 /* 貓狗趴趴探頭動畫：輪流輕輕上下＋偶爾眨眼 */
 @keyframes wfBob{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
 @keyframes wfBlink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.12)}98%{transform:scaleY(1)}}
@@ -7584,7 +7591,7 @@ function _renderDashMyTurn(list){
   var box = document.getElementById('dash-myturn-list');
   if (!panel || !box) return;
   list = Array.isArray(list) ? list : [];
-  if (!list.length){ box.innerHTML = '<div style="text-align:center;padding:30px 16px"><div style="font-size:28px;margin-bottom:6px">🎉</div><div style="font-size:14px;font-weight:600;color:#4A4F49">目前沒有待你審核的案件</div><div style="font-size:12px;color:#8A96A6;margin-top:3px">有新案件輪到你時會出現在這裡</div></div>'; return; }
+  if (!list.length){ box.innerHTML = '<div style="text-align:center;padding:20px 16px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:28px;margin-bottom:6px">🎉</div><div style="font-size:14px;font-weight:600;color:#4A4F49">目前沒有待你審核的案件</div><div style="font-size:12px;color:#8A96A6;margin-top:3px">有新案件輪到你時會出現在這裡</div></div>'; return; }
   var show = list.slice(0, 5);
   var rows = show.map(function(c, i){
     var subj = (typeof htEsc === 'function' ? htEsc(c.project || c.subject || '') : (c.project || c.subject || '')) || '（無主旨）';
