@@ -2397,6 +2397,12 @@ thead th{color:#767B75!important}
       <span class="sl-text">系統管理</span>
     </div>
 
+    <!-- 常用連結：桌面版收進側邊欄底部（點擊開 popover 清單）；手機版隱藏，改由總覽頁尾顯示 -->
+    <div id="side-links-btn" class="sl" data-label="常用連結" onclick="toggleSideLinks(event)" style="display:none">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>
+      <span class="sl-text">常用連結</span>
+    </div>
+
     <!-- 手機版登出按鈕（只在手機顯示，直接在 nav 內，確保可點擊）-->
     <div id="mobile-nav-logout" class="sl" data-label="登出" onclick="logout()" style="display:none;color:#dc2626">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -2418,6 +2424,21 @@ thead th{color:#767B75!important}
   <span class="svb-lb">福委聽你說</span>
 </button>
 </div>
+
+<!-- 常用連結 popover（桌面版側邊欄入口點開）：清單於開啟時從總覽連結即時複製 -->
+<div id="side-links-backdrop" onclick="toggleSideLinks(event,false)" style="display:none;position:fixed;inset:0;z-index:210;background:transparent"></div>
+<div id="side-links-pop" style="display:none;position:fixed;z-index:211;left:84px;bottom:16px;min-width:220px;max-width:280px;background:#fff;border:1px solid #E4E2D9;border-radius:14px;box-shadow:0 8px 30px rgba(46,51,45,.16);padding:12px;animation:slkPop .16s ease">
+  <div style="font-size:11px;font-weight:700;letter-spacing:.14em;color:#9AA6B4;padding:2px 4px 9px">常用連結 LINKS</div>
+  <div id="side-links-list" style="display:flex;flex-direction:column;gap:8px"></div>
+</div>
+<style>
+@keyframes slkPop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+/* 桌面：顯示側邊欄入口、隱藏總覽頁尾的常用連結區；手機相反 */
+@media(min-width:769px){ #side-links-btn{display:flex!important} #dash-links-label,#dash-links-row{display:none!important} }
+@media(max-width:768px){ #side-links-btn{display:none!important} #side-links-pop,#side-links-backdrop{display:none!important} }
+/* popover 內連結：直式、佔滿寬 */
+#side-links-list .dash-link-tile{width:100%!important;max-width:none!important;justify-content:flex-start}
+</style>
 
 <!-- MAIN -->
 <div id="main-wrapper" style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
@@ -2638,7 +2659,7 @@ thead th{color:#767B75!important}
     .dash-link-tile .dl-arrow{font-size:12px;color:#2E7BD6;font-weight:600}
     @media(prefers-reduced-motion:reduce){.dash-link-tile:hover{transform:none}}
     </style>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:center;margin-bottom:8px">
+    <div id="dash-links-row" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;justify-content:center;margin-bottom:8px">
       <div id="dash-links" style="display:contents"></div>
       <a class="dash-link-tile committee" data-cap="meeting.view" href="javascript:void(0)" onclick="return openMeetingNotes(event)" title="僅福委／HR／管理者可開啟">
         <span class="dl-ic">📋</span>
@@ -22064,6 +22085,35 @@ if (document.getElementById('bulletin-list')) {
 
 <script src="teaAIService.js"></script>
 <script src="teaAI.js"></script>
+<script>
+/* 常用連結側邊欄 popover（樣式3）：開啟時即時從總覽連結列複製（跳過無權限 .cap-hidden） */
+window.toggleSideLinks = function(e, force){
+  try{ if(e && e.stopPropagation) e.stopPropagation(); }catch(_){}
+  var pop=document.getElementById('side-links-pop');
+  var bd=document.getElementById('side-links-backdrop');
+  if(!pop||!bd) return;
+  var isOpen = pop.style.display==='block';
+  var open = (force===undefined)? !isOpen : !!force;
+  if(open){
+    var list=document.getElementById('side-links-list');
+    var row=document.getElementById('dash-links-row');
+    list.innerHTML='';
+    if(row){
+      row.querySelectorAll('a.dash-link-tile').forEach(function(a){
+        if(a.classList.contains('cap-hidden')) return;
+        list.appendChild(a.cloneNode(true));
+      });
+    }
+    if(!list.children.length){ list.innerHTML='<div style="font-size:13px;color:#9AA6B4;padding:6px 4px">目前沒有連結</div>'; }
+    pop.style.display='block'; bd.style.display='block';
+    var btn=document.getElementById('side-links-btn');
+    if(btn){ var r=btn.getBoundingClientRect(); pop.style.left=(r.right+8)+'px'; pop.style.bottom='auto';
+      var top=Math.min(r.top-6, window.innerHeight-pop.offsetHeight-12); pop.style.top=Math.max(12, top)+'px'; }
+  } else {
+    pop.style.display='none'; bd.style.display='none';
+  }
+};
+</script>
 </body>
 </html>
 
