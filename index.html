@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908141808';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908142044';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2403,6 +2403,18 @@ thead th{color:#767B75!important}
         <span class="ic" style="background:#E1EEDD;color:#3E6E52"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></span>
         <span class="txt"><span class="lab">本月午茶日</span><span class="numline"><span id="dstat-teaday" class="num">—</span></span></span>
       </a>
+    </div>
+
+    <!-- 待你審核：只有輪到自己審的案件才顯示（一般員工或沒待辦時整塊隱藏，不佔版面）；點列直接進該案 -->
+    <div id="dash-myturn-panel" style="display:none;margin:4px 0 22px">
+      <div class="dash-sec-label">
+        <span class="dash-sec-ico" style="color:#E0820A"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span class="dash-sec-title">待你審核</span>
+        <span class="dash-sec-en">TO REVIEW</span>
+        <div style="flex:1"></div>
+        <a onclick="sw('applications')" style="cursor:pointer;font-size:12px;font-weight:600;color:#E0820A;letter-spacing:.04em;white-space:nowrap">全部案件 →</a>
+      </div>
+      <div id="dash-myturn-list" style="background:#fff;border:1px solid #F0E0C9;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.06);overflow:hidden"></div>
     </div>
 
     <!-- 公佈欄：標題置於卡片外，與服務項目／常用連結同一種區塊標題語彙 -->
@@ -7120,6 +7132,8 @@ async function loadDashboard() {
     // 有輪到自己要審的案件 → 整張卡轉橘色凸顯；沒有就恢復一般樣式
     var _mtCard = document.getElementById('dstat-myturn-card');
     if (_mtCard) _mtCard.classList.toggle('has-todo', myTurnPending.length > 0);
+    // 儀表板「待你審核」清單面板：有輪到自己審的案件才顯示，點列直接進該案
+    try { _renderDashMyTurn(myTurnPending); } catch (e) { /* 清單渲染失敗不影響其餘首頁 */ }
     // 送件日＝每月第 1、3 週五；付款日＝每月第 2、4 週五（送件日＝付款日前一週的週五）。
     // 各自取「今天(含)起最近的一個」；如遇例假日或特殊節日，實際依財會部公告為準。
     var _tw = new Date(Date.now() + 8*3600000); // 以 UTC 方法讀台北日期
@@ -7466,6 +7480,34 @@ function _showRowMenu(btn, caseId, type, status, isOwn) {
   menu.style.right = (window.innerWidth - rect.right) + 'px';
   document.body.appendChild(menu);
   setTimeout(() => document.addEventListener('click', function h(){ menu.remove(); document.removeEventListener('click',h); }), 10);
+}
+
+// 儀表板「待你審核」清單：把輪到自己審的案件列出來（最多 5 筆，可點進案件）；沒有就整塊隱藏
+function _renderDashMyTurn(list){
+  var panel = document.getElementById('dash-myturn-panel');
+  var box = document.getElementById('dash-myturn-list');
+  if (!panel || !box) return;
+  list = Array.isArray(list) ? list : [];
+  if (!list.length){ panel.style.display = 'none'; box.innerHTML = ''; return; }
+  var show = list.slice(0, 5);
+  var rows = show.map(function(c, i){
+    var subj = (typeof htEsc === 'function' ? htEsc(c.project || c.subject || '') : (c.project || c.subject || '')) || '（無主旨）';
+    var who  = (typeof localName === 'function') ? localName(c.email, c.name) : (c.name || '');
+    var amt  = 'NT$ ' + Number(c.total || 0).toLocaleString();
+    var cid  = String(c.caseId || '').replace(/'/g, "\\'");
+    var last = (i === show.length - 1);
+    return '<div onclick="loadDetail(\'' + cid + '\')" style="display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;' + (last ? '' : 'border-bottom:1px solid #F4EFE7;') + 'transition:background .15s" onmouseover="this.style.background=\'#FCF7EF\'" onmouseout="this.style.background=\'\'">'
+      + '<span style="width:34px;height:34px;border-radius:10px;background:#FDECD9;color:#E0820A;display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>'
+      + '<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + subj + '</div>'
+      + '<div style="font-size:12px;color:#767B75;margin-top:2px">' + who + '　·　' + amt + '</div></div>'
+      + '<span style="font-size:12px;font-weight:700;color:#E0820A;white-space:nowrap">去審核 →</span>'
+      + '</div>';
+  }).join('');
+  if (list.length > show.length){
+    rows += '<div onclick="sw(\'applications\')" style="text-align:center;padding:11px;font-size:12px;font-weight:600;color:#767B75;cursor:pointer;border-top:1px solid #F4EFE7">還有 ' + (list.length - show.length) + ' 件待審　查看全部 →</div>';
+  }
+  box.innerHTML = rows;
+  panel.style.display = '';
 }
 
 function renderDashboardTable(cases) {
