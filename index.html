@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908160934';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908161457';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2086,6 +2086,9 @@ html,body{background:#FAFBFC}
 @media(max-width:640px){
   .dash-hero-card #dash-statline{grid-template-columns:repeat(2,1fr);gap:4px 0}
 }
+/* 待審＋本月狀態兩欄：手機收合成單欄 */
+@media(max-width:768px){#dash-2col{grid-template-columns:1fr!important;gap:8px!important}}
+#dash-2col .dash-sec-label{margin:4px 2px 12px}
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#0066CC;background:#E7F0FB}
@@ -2467,16 +2470,28 @@ thead th{color:#767B75!important}
     </div>
     </div><!-- /dash-hero-card -->
 
-    <!-- 待你審核：只有輪到自己審的案件才顯示（一般員工或沒待辦時整塊隱藏，不佔版面）；點列直接進該案 -->
-    <div id="dash-myturn-panel" style="display:none;margin:4px 0 22px">
-      <div class="dash-sec-label">
-        <span class="dash-sec-ico" style="color:#EC4F7D"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
-        <span class="dash-sec-title">待你審核</span>
-        <span class="dash-sec-en">TO REVIEW</span>
-        <div style="flex:1"></div>
-        <a onclick="sw('applications')" style="cursor:pointer;font-size:12px;font-weight:600;color:#EC4F7D;letter-spacing:.04em;white-space:nowrap">全部案件 →</a>
+    <!-- 待審＋本月狀態 兩欄（內容導向首頁重點區） -->
+    <div id="dash-2col" style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:18px;margin:4px 0 24px;align-items:start">
+      <!-- 左：待你審核（點列直接進該案；沒待辦顯示正向空狀態） -->
+      <div id="dash-myturn-panel">
+        <div class="dash-sec-label">
+          <span class="dash-sec-ico" style="color:#EC4F7D"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+          <span class="dash-sec-title">待你審核</span>
+          <span class="dash-sec-en">TO REVIEW</span>
+          <div style="flex:1"></div>
+          <a onclick="sw('applications')" style="cursor:pointer;font-size:12px;font-weight:600;color:#EC4F7D;letter-spacing:.04em;white-space:nowrap">全部案件 →</a>
+        </div>
+        <div id="dash-myturn-list" style="background:#fff;border:1px solid #E6EAF0;border-radius:16px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 6px 20px rgba(31,41,51,.06);overflow:hidden"></div>
       </div>
-      <div id="dash-myturn-list" style="background:#fff;border:1px solid #F0E0C9;border-radius:16px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.06);overflow:hidden"></div>
+      <!-- 右：本月狀態（午茶倒數／按摩剩餘／最新公佈欄） -->
+      <div id="dash-status-panel">
+        <div class="dash-sec-label">
+          <span class="dash-sec-ico" style="color:#0066CC"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>
+          <span class="dash-sec-title">本月狀態</span>
+          <span class="dash-sec-en">STATUS</span>
+        </div>
+        <div id="dash-status-list" style="background:#fff;border:1px solid #E6EAF0;border-radius:16px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 6px 20px rgba(31,41,51,.06);overflow:hidden"></div>
+      </div>
     </div>
 
     <!-- 公佈欄：標題置於卡片外，與服務項目／常用連結同一種區塊標題語彙 -->
@@ -7197,6 +7212,7 @@ async function loadDashboard() {
     if (_mtCard) _mtCard.classList.toggle('has-todo', myTurnPending.length > 0);
     // 儀表板「待你審核」清單面板：有輪到自己審的案件才顯示，點列直接進該案
     try { _renderDashMyTurn(myTurnPending); } catch (e) { /* 清單渲染失敗不影響其餘首頁 */ }
+    try { _renderDashStatus(); } catch (e) { /* 本月狀態卡渲染失敗不影響其餘首頁 */ }
     // 送件日＝每月第 1、3 週五；付款日＝每月第 2、4 週五（送件日＝付款日前一週的週五）。
     // 各自取「今天(含)起最近的一個」；如遇例假日或特殊節日，實際依財會部公告為準。
     var _tw = new Date(Date.now() + 8*3600000); // 以 UTC 方法讀台北日期
@@ -7551,7 +7567,7 @@ function _renderDashMyTurn(list){
   var box = document.getElementById('dash-myturn-list');
   if (!panel || !box) return;
   list = Array.isArray(list) ? list : [];
-  if (!list.length){ panel.style.display = 'none'; box.innerHTML = ''; return; }
+  if (!list.length){ box.innerHTML = '<div style="text-align:center;padding:30px 16px"><div style="font-size:28px;margin-bottom:6px">🎉</div><div style="font-size:14px;font-weight:600;color:#4A4F49">目前沒有待你審核的案件</div><div style="font-size:12px;color:#8A96A6;margin-top:3px">有新案件輪到你時會出現在這裡</div></div>'; return; }
   var show = list.slice(0, 5);
   var rows = show.map(function(c, i){
     var subj = (typeof htEsc === 'function' ? htEsc(c.project || c.subject || '') : (c.project || c.subject || '')) || '（無主旨）';
@@ -7571,6 +7587,47 @@ function _renderDashMyTurn(list){
   }
   box.innerHTML = rows;
   panel.style.display = '';
+}
+
+// 本月狀態卡：下次午茶倒數／本月按摩剩餘／最新公佈欄（重用既有 hint 函式與 _bulletinPosts）
+function _renderDashStatus(){
+  var box = document.getElementById('dash-status-list');
+  if (!box) return;
+  function row(bg, col, svg, label, value, sub, onclick, last){
+    return '<div ' + (onclick ? ('onclick="'+onclick+'" style="cursor:pointer;') : 'style="') + 'display:flex;align-items:center;gap:12px;padding:14px 16px;' + (last ? '' : 'border-bottom:1px solid #EEF1F5;') + 'transition:background .15s"' + (onclick ? ' onmouseover="this.style.background=\'#F7FAFD\'" onmouseout="this.style.background=\'\'"' : '') + '>'
+      + '<span style="width:38px;height:38px;border-radius:11px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+svg+'</span>'
+      + '<div style="flex:1;min-width:0"><div style="font-size:12px;color:#767B75;font-weight:600">'+label+'</div>'
+      + '<div style="font-size:15px;font-weight:700;color:#2E332D;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+value+'</div>'
+      + (sub ? '<div style="font-size:12px;color:#8A96A6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>' : '')
+      + '</div>'
+      + (onclick ? '<span style="color:#C2C7D0;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>' : '')
+      + '</div>';
+  }
+  var teaSvg='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M17 8h1a4 4 0 0 1 0 8h-1"/><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z"/><line x1="6" y1="2" x2="6" y2="4"/><line x1="10" y1="2" x2="10" y2="4"/><line x1="14" y1="2" x2="14" y2="4"/></svg>';
+  var msSvg='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3.2"/><path d="M5.5 21a6.5 6.5 0 0 1 13 0"/></svg>';
+  var bellSvg='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a1 1 0 0 0 1 1h2l4 4V6L6 10H4a1 1 0 0 0-1 1Z"/><path d="M15 8a4 4 0 0 1 0 8"/></svg>';
+  var esc = (typeof htEsc === 'function') ? htEsc : function(s){ return s; };
+  var rows = '';
+  // 下次午茶日
+  var teaDate = (typeof window.htGetNextEventDate === 'function') ? window.htGetNextEventDate() : null;
+  var teaHint = (typeof window.htGetNextEventHint === 'function') ? window.htGetNextEventHint() : null;
+  rows += row('#E7F0FB','#0066CC',teaSvg,'下次午茶日', teaDate || teaHint || '尚未安排', (teaDate && teaHint) ? teaHint : '', "sw('hightea')", false);
+  // 本月按摩剩餘
+  var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
+  rows += row('#E6E9FB','#5B6BD6',msSvg,'按摩預約', msHint || '每月可預約 2 次', '', "sw('massage')", false);
+  // 最新公佈欄
+  var latest = null;
+  try {
+    if (typeof _bulletinPosts !== 'undefined' && Array.isArray(_bulletinPosts)) {
+      var gen = _bulletinPosts.filter(function(p){ return p && p.scope !== 'hightea'; }).sort(function(a,b){
+        if (a.pinned && !b.pinned) return -1; if (!a.pinned && b.pinned) return 1;
+        return String(b.createdAt||'').localeCompare(String(a.createdAt||''));
+      });
+      latest = gen[0] || null;
+    }
+  } catch (e) {}
+  rows += row('#FCE4EC','#EC4F7D',bellSvg,'最新公佈欄', latest ? esc(latest.title) : '目前無公告', latest && latest.author ? ('— ' + esc(latest.author)) : '', '', true);
+  box.innerHTML = rows;
 }
 
 function renderDashboardTable(cases) {
