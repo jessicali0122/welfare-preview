@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908145725';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908150429';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1996,12 +1996,12 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 /* ── 空間層次系統（2026-07 去平面化改造）──
    底層 html/body 奶油色（下拉回彈不再露白線）→ 內容米白 → 卡片暖白，
    三層由深到淺，加上暖色點綴與微漸層，建立縱深。 */
-html,body{background:#F4F2EC}
-/* 內容區：暖紙感底色 #F4F2EC（純白卡片浮於其上更跳更精緻；全站與 body 同色零接縫） */
-#main-content{background:#F4F2EC!important}
+html,body{background:#F5F5F5}
+/* 內容區：暖紙感底色 #F5F5F5（純白卡片浮於其上更跳更精緻；全站與 body 同色零接縫） */
+#main-content{background:#F5F5F5!important}
 #view-dashboard{background:transparent!important}
 /* ── 首頁畫布：暖紙感＋極淡直向漸層，帶一點縱深、更高級（去綠色調，綠只當重點色） ── */
-#main-content:has(#view-dashboard.active){background:linear-gradient(180deg,#F6F4EF 0%,#F1EFE7 100%)!important}
+#main-content:has(#view-dashboard.active){background:#F5F5F5!important}
 #view-dashboard.active #dashboard-greeting{color:#46633F!important}
 #view-dashboard.active #tw-datetime{color:#5A6650!important}
 /* 無框時間：排版層次＋單位翻牌，不做卡片/底色/陰影，融入問候區不突兀 */
@@ -2063,8 +2063,8 @@ html,body{background:#F4F2EC}
   .dash-stat .num{font-size:22px}
 }
 /* ── Hero 重點卡：問候＋時鐘＋關鍵數字合成一張，取代原本分離的問候區＋5 格漂浮 KPI（收斂視覺、去渙散） ── */
-.dash-hero-card{position:relative;overflow:hidden;background:linear-gradient(120deg,#EAF1E6 0%,#F5F3EC 62%);border:none;border-radius:20px;padding:22px 24px 20px;box-shadow:0 8px 26px rgba(46,51,45,.05);margin:14px 0 22px}
-.dash-hero-card::after{content:"🐾";position:absolute;right:-6px;bottom:-28px;font-size:148px;line-height:1;opacity:.05;transform:rotate(-12deg);pointer-events:none}
+.dash-hero-card{position:relative;background:transparent;border:none;border-radius:0;padding:8px 4px 0;box-shadow:none;margin:6px 0 18px}
+.dash-hero-card::after{display:none}
 .dash-hero-card #dash-hero{padding:2px 4px 0!important;margin:0!important}
 /* Hero 內的 5 項改「無盒子」輕量摘要列：拿掉白容器/邊框/分隔線，只留 圖示＋標籤＋數字 浮在漸層上 */
 .dash-hero-card #dash-statline{position:relative;z-index:1;margin:16px 0 2px!important;padding-top:14px;background:transparent!important;border:none!important;border-top:1px solid rgba(70,80,60,.10)!important;border-radius:0!important;box-shadow:none!important;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0}
@@ -2240,7 +2240,7 @@ header::after{display:none!important}
 /* 桌機：左側「浮動 dock」——底板透明融入背景，每顆圖示是獨立白底小方塊浮起、選中綠色；垂直置中。手機仍走底部導覽/抽屜，維持原本 F7F8F6 底色不動 */
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #D2D7CD!important}
 @media(min-width:769px){
-  #sidebar-wrapper{background:#F4F2EC!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
+  #sidebar-wrapper{background:#F5F5F5!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
   /* 列表面板＝一整片白色圓角，浮在透明外底上；按鈕在白面板內（選中綠膠囊、其餘透明） */
   #sidebar-wrapper>#sidebar{position:static!important;height:auto!important;min-height:0!important;align-self:center;margin:auto 0!important;background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:1px solid rgba(40,48,38,.06)!important;border-right:1px solid rgba(40,48,38,.06)!important;border-radius:22px!important;box-shadow:0 8px 26px rgba(40,48,38,.10),0 1px 2px rgba(40,48,38,.04)!important;padding:8px 7px!important}
   #sidebar-wrapper>#sidebar>div:first-child{display:none!important}
@@ -2294,6 +2294,16 @@ thead th{color:#767B75!important}
     <div class="sl" data-view="massage" data-label="按摩預約" onclick="sw('massage')">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg>
       <span class="sl-text">按摩預約</span>
+    </div>
+
+    <div class="sl" data-view="overview" data-label="福利總覽" onclick="sw('overview')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1.5"/><path d="M12 8v13M3 12h18M8 8a2.5 2.5 0 1 1 4-2c2-2 4-1 4 1"/></svg>
+      <span class="sl-text">福利總覽</span>
+    </div>
+
+    <div class="sl" data-label="福委聽你說" onclick="fbOpenBoard()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="sl-text">聽你說</span>
     </div>
 
     <div class="sl" data-view="hightea" data-label="午茶日" onclick="sw('hightea')">
