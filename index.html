@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260908153646';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260908153928';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7960,13 +7960,34 @@ function _renderAppPage(page) {
   // 渲染本頁列
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
+  var _thead = document.querySelector('#apps-table-scroll thead');
+  var _filterCard = document.getElementById('app-filter-card');
   if (slice.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
-      <p style="font-size:16px;font-weight:600;color:#4A4F49;margin-bottom:6px">沒有符合條件的申請紀錄</p>
-      <small>試試調整篩選條件</small>
-    </div></td></tr>`;
+    if (allCases.length === 0) {
+      // 完全沒案件 → 比照草稿匣：收起篩選列與表頭，顯示對應分頁的乾淨空狀態（不留孤兒表頭）
+      if (_thead) _thead.style.display = 'none';
+      if (_filterCard) _filterCard.style.display = 'none';
+      var _em = _currentAppTab === 'pending'
+        ? { t: '目前沒有待你審核的案件 🎉', s: '有新案件輪到你審核時，這裡會出現' }
+        : { t: '目前沒有申請紀錄', s: '按「新增申請」開始建立第一筆' };
+      tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state" style="padding:44px 20px">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+        <p style="font-size:16px;font-weight:600;color:#4A4F49;margin-bottom:6px">${_em.t}</p>
+        <small>${_em.s}</small>
+      </div></td></tr>`;
+    } else {
+      // 有案件但被篩選條件排除 → 保留篩選列與表頭，提示調整篩選
+      if (_thead) _thead.style.display = '';
+      if (_filterCard) _filterCard.style.display = '';
+      tbody.innerHTML = `<tr><td colspan="13"><div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>
+        <p style="font-size:16px;font-weight:600;color:#4A4F49;margin-bottom:6px">沒有符合條件的申請紀錄</p>
+        <small>試試調整篩選條件</small>
+      </div></td></tr>`;
+    }
   } else {
+    if (_thead) _thead.style.display = '';
+    if (_filterCard) _filterCard.style.display = '';
     tbody.innerHTML = slice.map(c => {
       const rowDate = c.applyDate || c.createdAt || '';
       return _renderCaseRow(c).replace('<tr class="tr"', `<tr class="tr" data-dept="${c.department||''}" data-date="${rowDate}"`);
