@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909120138';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909141046';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2157,14 +2157,16 @@ html,body{background:#FAFBFC}
 header{background:transparent!important;border-bottom:none!important;box-shadow:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
 /* 全寬白 header 例外：上面那條舊全域 header 規則會把它變透明，這裡用 id 專屬規則蓋回白底＋分隔線＋陰影 */
 #app-header{background:#fff!important;border-bottom:1px solid #DDE3EA!important;box-shadow:0 2px 10px rgba(31,41,51,.07)!important;height:calc(60px + env(safe-area-inset-top,0px))!important;padding-top:env(safe-area-inset-top,0px)!important;box-sizing:border-box!important}
-#main-content{padding-top:calc(60px + env(safe-area-inset-top,0px))!important}
+/* header 是 app-shell 內的 flex 子元素(static，非固定)，main-content 已自然接在其下方；
+   不可再補 60px 頂距，否則每個非首頁 view 上方會多一截空白(重複計算 header 高度)。 */
+#main-content{padding-top:0!important}
 /* 首頁滿版：main-content 不留 padding，改由 view 自己補內距——
    否則暈染在 view 圓角邊界被裁切，與外圍純色留白形成一圈可見的色差外框 */
 #main-content:has(#view-dashboard.active){padding:0!important}
 #view-dashboard.active{border-radius:0!important;padding:calc(26px + env(safe-area-inset-top,0px)) 40px 40px!important;min-height:100dvh!important}
 /* 手機：內容已在固定 header（含 safe-area-inset-top）底下，view 頂部不可再加 safe-area（會重複算、多塞一截空白）；
    收緊頂部讓問候＋重點區上移。底部保留導覽列高度＋安全區。 */
-@media(max-width:768px){#view-dashboard.active{padding:16px 20px calc(72px + env(safe-area-inset-bottom,0px))!important}}
+@media(max-width:768px){#view-dashboard.active{padding:16px 20px calc(96px + env(safe-area-inset-bottom,0px))!important;min-height:auto!important}}
 /* 首頁「服務項目」暫時隱藏（導覽已在側欄／底部列，入口重複）；要恢復刪掉此規則即可 */
 #dash-services-label,#dash-hub{display:none!important}
 /* 手機：隱藏底部裝飾品牌頁尾——短內容時它的標語會被底部導覽列蓋住、只露出一條分隔線，
