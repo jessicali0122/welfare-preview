@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909155707';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909155838';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7827,6 +7827,8 @@ function _dshCurYM(){var n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1
 function _dshBdayMonthCount(mNum){if(!Array.isArray(window._BF_USER_BDAYS))return 0;var seen={},c=0;window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===mNum&&b.name&&!seen[b.name]){seen[b.name]=1;c++;}});return c;}
 function _dshStatusClass(st){st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0)return['退件','dsh-b-rej'];if(st==='已完成')return['完成','dsh-b-done'];if(st==='作廢')return['作廢','dsh-b-done'];if(st.indexOf('待')>=0)return['待審','dsh-b-wait'];return['進行中','dsh-b-prog'];}
 function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0){col='#DC2626';bg='#FEE2E2';}else if(st==='已完成'){col='#22826A';bg='#E4EFE1';}return '<span class="ci" style="background:'+bg+';color:'+col+'">'+_dshIc('file',16)+'</span>';}
+// 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
+function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
 function _dshDutyTea(){
   var all=[];try{all=((typeof _htEvents!=='undefined'&&_htEvents)?_htEvents:[]).concat((typeof _htSheetAsEvents==='function')?(_htSheetAsEvents()||[]):[]);}catch(e){}
   var curYM=_dshCurYM();
@@ -7847,7 +7849,7 @@ function _dshDutyTea(){
 }
 function _dshDutyMassage(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
-  var d=(typeof _msData!=='undefined'&&_msData)?_msData:null;
+  var d=_dshMs();
   var cta='<button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">進按摩管理 →</button>';
   var pend=(d&&Array.isArray(d.pendingRequests))?d.pendingRequests.length:((typeof _msPendingRequests!=='undefined'&&_msPendingRequests)?_msPendingRequests.length:0);
   var now=new Date(),monthBk=0;
@@ -7879,7 +7881,7 @@ function _dshFuli(){
   var hint=(typeof htGetNextEventHint==='function')?htGetNextEventHint():'';
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var used='—',limit=2;
-  try{if(typeof _msData!=='undefined'&&_msData){limit=(_msData.settings&&_msData.settings.monthlyLimit)||2;var now=new Date();used=(_msData.myBookings||[]).filter(function(b){if(!b||!b.date)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
+  try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
   return '<div class="dsh-panel dsh-duty"><div class="dt"><span style="color:#0E9AA7;display:inline-flex">'+_dshIc('gift')+'</span>我的福利</div>'
     +'<div class="grid" style="grid-template-columns:1fr">'
     +'<div class="cell" style="cursor:pointer" onclick="sw(\'hightea\')"><div class="n">'+_dshEsc(dateStr||'尚未安排')+'</div><div class="k">下次午茶日'+(hint?(' · '+_dshEsc(hint)):'')+'</div></div>'
