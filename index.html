@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909090453';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909093845';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -464,23 +464,17 @@ input[type=checkbox]{accent-color:#0066CC}
   #bottom-nav{
     display:flex!important;
     position:fixed;left:0;right:0;bottom:0;
-    /* 本體停在可視區底（innerH），圖示+文字留在可視範圍內不被切；
-       安全區(innerH→實體底)由下方 ::after 用白色補滿，蓋住 body 不露餡。 */
+    /* 內容區 54px 停在 home-indicator 之上（好按），下方 padding=安全區高度讓白色背景
+       直接延伸填滿 home-indicator 區（box-sizing:content-box 讓 padding 加在 54 之外）。 */
     height:54px;
-    padding-bottom:0;
+    box-sizing:content-box;
+    padding-bottom:env(safe-area-inset-bottom,0px);
     background:#FFFFFF;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid rgba(0,0,0,.06);
     z-index:200;
     box-shadow:0 -4px 20px rgba(0,0,0,.07);
     align-items:stretch;
-  }
-  /* 安全區補片：把 navbar 底邊(可視區底)到實體螢幕底的 home-indicator 區用白色蓋滿，
-     避免此 App webview 露出下方 body；本體 bottom:0 保證圖示/文字都在可視區內。 */
-  #bottom-nav::after{
-    content:'';position:absolute;left:0;right:0;top:100%;
-    height:env(safe-area-inset-bottom,0px);
-    background:#FFFFFF;
   }
   .bn-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -9791,12 +9785,10 @@ function sw(name,elOrName,_fromPop){
   const v=document.getElementById('view-'+name);
   if(v)v.classList.add('active');
   document.getElementById('ptitle').textContent=titles[name]||name;
-  // header 左側：首頁放品牌列；其他頁一律留白。
-  // ⚠️ 不要在這裡顯示 #ptitle：header 是透明浮層（無實體 bar），其他頁面的內容會從它底下
-  //    滑過去，頁名會直接疊在內容上（2026-08-13 實際踩過）。要顯示頁名就得先讓 header 有底。
+  // header 左側：品牌列每頁都顯示（#app-header 已改實體白 bar，不再是透明浮層，
+  //    所以品牌常駐不會疊到內容；使用者要求標題列每頁都在）。
   (function(){
-    var _isHome = (name === 'dashboard');
-    var _tb = document.getElementById('topbar-brand'); if (_tb) _tb.style.display = _isHome ? 'flex' : 'none';
+    var _tb = document.getElementById('topbar-brand'); if (_tb) _tb.style.display = 'flex';
     var _pt = document.getElementById('ptitle');       if (_pt) _pt.style.display = 'none';
   })();
   // determine which nav entry to highlight
