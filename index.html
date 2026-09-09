@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909113631';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909114027';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2205,6 +2205,7 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
 .wf-pet-dog .wf-eye{animation-delay:2.2s}
 /* 節慶跑馬燈：文字緩緩滑過 */
 @keyframes wf-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes wf-fade{from{opacity:0}to{opacity:1}}
 /* 生日祝賀：彈跳出場＋蛋糕搖擺 */
 .ms-paw{position:relative;width:70%;height:54%;display:flex;align-items:center;justify-content:center;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;background:var(--paw);font-size:14px}
 .ms-paw::before{content:'';position:absolute;top:-28%;left:2%;right:2%;height:34%;background:radial-gradient(ellipse 14% 46% at 16% 66%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 50% 32%,var(--paw) 96%,transparent 100%),radial-gradient(ellipse 14% 46% at 84% 66%,var(--paw) 96%,transparent 100%)}
@@ -7665,15 +7666,47 @@ function _renderDashStatus(){
   if (bdayNames.length) {
     var _show = bdayNames.slice(0, 2).map(function(x){ return esc(x.name); }).join('、');
     bdayVal = _show + (bdayNames.length > 2 ? ' 等 ' + bdayNames.length + ' 位' : '');
-    bdaySub = '午茶日壽星加碼：全體每人 +NT$40';
+    bdaySub = '一起為壽星們慶生 🎂';
   } else {
     bdayVal = '本月暫無壽星';
     bdaySub = '';
   }
-  rows += row('#FDE7EF','#EC4F7D',cakeSvg,'本月壽星', bdayVal, bdaySub, bdayNames.length ? "sw('hightea')" : '', true);
+  // 點擊改為開啟「本月壽星名單」小視窗（全員皆可看，不進只有福委能看的午茶日）
+  window._dashBdayNames = bdayNames;
+  rows += row('#FDE7EF','#EC4F7D',cakeSvg,'本月壽星', bdayVal, bdaySub, bdayNames.length ? "_dashShowBdayList()" : '', true);
   // (最新公佈欄行已移除：與下方完整公佈欄區塊重複)
   box.innerHTML = rows;
 }
+
+// 本月壽星名單小視窗（全員可看；不進只有福委能看的午茶日）
+window._dashShowBdayList = function(){
+  var list = window._dashBdayNames || [];
+  if (!list.length) return;
+  var old = document.getElementById('dash-bday-modal'); if (old) old.remove();
+  var esc = (typeof htEsc === 'function') ? htEsc : function(s){ return s; };
+  var _m = (new Date()).getMonth() + 1;
+  var items = list.map(function(x){
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 4px;border-bottom:1px solid #F1F4F7">'
+      + '<span style="width:34px;height:34px;border-radius:10px;background:#FDE7EF;color:#EC4F7D;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">🎂</span>'
+      + '<div style="flex:1;font-size:15px;font-weight:700;color:#2E332D">' + esc(x.name) + '</div>'
+      + (x.d ? '<div style="font-size:13px;font-weight:700;color:#EC4F7D">' + _m + '/' + x.d + '</div>' : '')
+      + '</div>';
+  }).join('');
+  var ov = document.createElement('div');
+  ov.id = 'dash-bday-modal';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(31,41,51,.42);display:flex;align-items:center;justify-content:center;padding:20px;animation:wf-fade .18s ease';
+  ov.onclick = function(e){ if (e.target === ov) ov.remove(); };
+  ov.innerHTML = '<div style="background:#fff;border-radius:18px;max-width:360px;width:100%;max-height:76vh;overflow:hidden;box-shadow:0 20px 60px rgba(31,41,51,.28);display:flex;flex-direction:column">'
+    + '<div style="padding:18px 20px 14px;background:linear-gradient(120deg,#FFF4F8,#FFEAF2);border-bottom:1px solid #F6CBD9;display:flex;align-items:center;gap:11px">'
+    +   '<span style="font-size:22px">🎂</span>'
+    +   '<div style="flex:1"><div style="font-size:16px;font-weight:800;color:#2E332D">' + _m + ' 月壽星</div>'
+    +   '<div style="font-size:12px;color:#C63968;font-weight:600;margin-top:1px">共 ' + list.length + ' 位　一起說聲生日快樂 🎉</div></div>'
+    +   '<span onclick="document.getElementById(\'dash-bday-modal\').remove()" style="cursor:pointer;color:#B78CA0;font-size:20px;line-height:1;padding:2px 4px">×</span>'
+    + '</div>'
+    + '<div style="padding:8px 20px 16px;overflow-y:auto">' + items + '</div>'
+    + '</div>';
+  document.body.appendChild(ov);
+};
 
 function renderDashboardTable(cases) {
   const tbody = document.getElementById('dashboard-tbody');
