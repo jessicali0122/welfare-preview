@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909112232';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909112446';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2472,7 +2472,7 @@ thead th{color:#767B75!important}
       <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
       </div>
-      <div id="dash-motto" style="font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
+      <div id="dash-motto" style="display:none;font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
       <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#DCF2F4;border:1px solid #A9DCE0;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.10)">
         <span class="wf-bday-cake" style="font-size:18px">🎂</span>
         <span style="font-size:14px;font-weight:600;color:#0E9AA7;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
@@ -4039,7 +4039,7 @@ thead th{color:#767B75!important}
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
               <button onclick="htCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #C6D4E4;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#0066CC" onmouseover="this.style.background='#EBF2FB'" onmouseout="this.style.background='#fff'">‹</button>
               <div style="text-align:center">
-                <div id="ht-cal-title" style="font-size:16px;font-weight:800;color:#1F2933"></div>
+                <div id="ht-cal-title" style="display:flex;align-items:baseline;gap:7px"></div>
                 <div id="ht-cal-subtitle" style="font-size:12px;color:#767B75;margin-top:2px"></div>
               </div>
               <button onclick="htCalNext()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #C6D4E4;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#0066CC" onmouseover="this.style.background='#EBF2FB'" onmouseout="this.style.background='#fff'">›</button>
@@ -4692,7 +4692,7 @@ thead th{color:#767B75!important}
           <div style="background:#fff;border:1.5px solid #B8D0EC;border-radius:14px;padding:14px 16px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 6px 20px rgba(31,41,51,.06)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
               <button onclick="msCalPrev()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #C6D4E4;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#0066CC" onmouseover="this.style.background='#EBF2FB'" onmouseout="this.style.background='#fff'">‹</button>
-              <div id="ms-cal-title" style="font-size:16px;font-weight:800;color:#1F2933"></div>
+              <div id="ms-cal-title" style="display:flex;align-items:baseline;gap:7px"></div>
               <button onclick="msCalNext()" style="width:34px;height:34px;border-radius:50%;border:1.5px solid #C6D4E4;background:#fff;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:#0066CC" onmouseover="this.style.background='#EBF2FB'" onmouseout="this.style.background='#fff'">›</button>
             </div>
             <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px">
@@ -17272,7 +17272,10 @@ function htRenderCalendar() {
   var evEl    = document.getElementById('ht-cal-events');
   if (!gridEl) return;
 
-  titleEl.textContent = y + ' 年 ' + m + ' 月';   // 阿拉伯數字月（與按摩日曆一致），不用中文數字
+  var _engM = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  titleEl.innerHTML = '<span style="font-size:13px;font-weight:700;color:#8A96A6;letter-spacing:.06em">'+y+'</span>'
+    + '<span style="font-size:21px;font-weight:800;color:#0066CC;line-height:1">'+m+'<span style="font-size:13px;margin-left:1px">月</span></span>'
+    + '<span style="font-size:11px;font-weight:800;color:#2E7BD6;letter-spacing:.12em">'+_engM[m-1]+'</span>';
 
   // 當月活動：平台場次＋舊試算表場次（唯讀）都納入，避免試算表已建的月份（如 11507）看不到
   var ym = y + '-' + (m < 10 ? '0' : '') + m;
@@ -20234,8 +20237,10 @@ window.msCalNext = function() { _msMonth++; if (_msMonth > 11) { _msMonth = 0; _
 
 // ── 日曆渲染（只顯示管理員開放的日期） ──
 function msRenderCal() {
-  var months = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
-  document.getElementById('ms-cal-title').textContent = _msYear + ' 年 ' + months[_msMonth];
+  var _msEngM = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  document.getElementById('ms-cal-title').innerHTML = '<span style="font-size:13px;font-weight:700;color:#8A96A6;letter-spacing:.06em">'+_msYear+'</span>'
+    + '<span style="font-size:21px;font-weight:800;color:#0066CC;line-height:1">'+(_msMonth+1)+'<span style="font-size:13px;margin-left:1px">月</span></span>'
+    + '<span style="font-size:11px;font-weight:800;color:#2E7BD6;letter-spacing:.12em">'+_msEngM[_msMonth]+'</span>';
   var grid = document.getElementById('ms-cal-grid');
   // 首次載入中：顯示 loading，避免先畫出空/暫時的開放日，資料回來又跳一次
   if (_msData && _msData._loading) {
