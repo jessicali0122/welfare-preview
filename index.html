@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909114639';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909115029';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2475,14 +2475,25 @@ thead th{color:#767B75!important}
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
       </div>
       <div id="dash-motto" style="display:none;font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
-      <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#FDE7EF;border:1px solid #F6CBD9;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(236,79,125,.12)">
-        <span class="wf-bday-cake" style="font-size:18px">🎂</span>
-        <span style="font-size:14px;font-weight:600;color:#EC4F7D;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
-        <span class="wf-bday-party" style="font-size:16px">🎉</span>
+      <!-- 生日祝賀橫幅（精緻版 A：粉白玻璃＋彩色紙屑；當天才顯示） -->
+      <div id="dash-birthday-chip" class="wf-bday" style="display:none;position:relative;overflow:hidden;align-items:center;gap:15px;max-width:540px;margin:18px auto 0;border-radius:18px;padding:16px 20px;background:linear-gradient(120deg,#FFF4F8 0%,#FFEAF2 55%,#FDF2E9 100%);border:1px solid #F8D3E0;box-shadow:0 1px 2px rgba(31,41,51,.05),0 10px 30px rgba(31,41,51,.07)">
+        <span style="position:absolute;width:120px;height:120px;border-radius:50%;filter:blur(26px);opacity:.55;background:#F9C6D9;right:-20px;top:-40px"></span>
+        <span aria-hidden="true" style="position:absolute;inset:0;z-index:0;pointer-events:none"><i style="position:absolute;left:40%;top:22%;width:7px;height:7px;border-radius:2px;background:#EC4F7D;opacity:.8;transform:rotate(20deg)"></i><i style="position:absolute;left:55%;top:62%;width:7px;height:7px;border-radius:2px;background:#F6CC62;opacity:.8;transform:rotate(-15deg)"></i><i style="position:absolute;left:72%;top:30%;width:7px;height:7px;border-radius:50%;background:#5B6BD6;opacity:.8"></i><i style="position:absolute;left:86%;top:66%;width:7px;height:7px;border-radius:2px;background:#0E9AA7;opacity:.8;transform:rotate(30deg)"></i></span>
+        <span class="wf-bday-cake" style="position:relative;z-index:1;width:52px;height:52px;border-radius:16px;background:#fff;box-shadow:0 6px 16px rgba(236,79,125,.20);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🎂</span>
+        <div style="position:relative;z-index:1;flex:1;min-width:0;text-align:left">
+          <div style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#EC4F7D">Happy Birthday</div>
+          <div style="font-size:17px;font-weight:800;color:#2E332D;margin-top:3px">生日快樂！🎉</div>
+          <div style="font-size:12.5px;margin-top:3px;color:#8A96A6;font-weight:500">福委會祝你新的一歲順心如意</div>
+        </div>
       </div>
-      <!-- 節慶祝賀跑馬燈：無邊框、淡沙色漸層底，文字緩緩滑過（低調不搶生日風頭） -->
-      <div id="dash-festival-marquee" style="display:none;margin:14px auto 0;max-width:520px;overflow:hidden;border-radius:20px;background:linear-gradient(90deg,rgba(245,240,232,0) 0%,#E7F0FB 18%,#E7F0FB 82%,rgba(245,240,232,0) 100%);padding:7px 0;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)">
-        <div id="dash-festival-track" style="display:inline-flex;white-space:nowrap;will-change:transform;animation:wf-marquee 26s linear infinite"></div>
+      <!-- 節慶祝賀橫幅（精緻版 A：琥珀暖金；當天＋提前預祝才顯示） -->
+      <div id="dash-festival-marquee" style="display:none;position:relative;overflow:hidden;align-items:center;gap:15px;max-width:540px;margin:12px auto 0;border-radius:18px;padding:16px 20px;background:linear-gradient(120deg,#FFF8EC 0%,#FEF1DA 100%);border:1px solid #F3DCAE;box-shadow:0 1px 2px rgba(31,41,51,.05),0 10px 30px rgba(31,41,51,.07)">
+        <span style="position:absolute;width:120px;height:120px;border-radius:50%;filter:blur(26px);opacity:.55;background:#F7DDA6;right:-24px;top:-46px"></span>
+        <span id="dash-festival-emoji" style="position:relative;z-index:1;width:52px;height:52px;border-radius:16px;background:#fff;box-shadow:0 6px 16px rgba(217,131,36,.18);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0">🎉</span>
+        <div style="position:relative;z-index:1;flex:1;min-width:0;text-align:left">
+          <div id="dash-festival-eyebrow" style="font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#D98324">Festival</div>
+          <div id="dash-festival-track" style="font-size:17px;font-weight:800;color:#2E332D;margin-top:3px"></div>
+        </div>
       </div>
       <button class="btn btn-p" onclick="window._newFormReturnView='dashboard';openNewForm()" style="gap:6px;padding:10px 16px;font-size:14px;flex-shrink:0;display:none">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增申請
@@ -7166,21 +7177,28 @@ function _renderFestivalMarquee() {
   if (!wrap || !track) return;
   if (typeof _htHolidayForDate !== 'function') { wrap.style.display = 'none'; return; }
   var now = new Date();
-  var msgs = [];
+  var firstHol = null, firstMsg = '', firstDays = -1;
   for (var i = 0; i <= 5; i++) {
     var d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
     var hol = _htHolidayForDate(d.getFullYear(), d.getMonth() + 1, d.getDate());
     if (!hol) continue;
     var lead = hol.name === '春節' ? 5 : 3;
     if (i > lead) continue;
-    if (i === 0)      msgs.push('今天是' + hol.name + '，' + hol.name + '快樂 🎉');
-    else if (i === 1) msgs.push('明天就是' + hol.name + '囉');
-    else              msgs.push('再 ' + i + ' 天就是' + hol.name);
+    // 只取最近一個節日當橫幅標題
+    firstHol = hol; firstDays = i;
+    if (i === 0)      firstMsg = hol.name + '快樂！' + (hol.name === '中秋節' ? '闔家團圓 🌕' : '🎉');
+    else if (i === 1) firstMsg = '明天就是' + hol.name + '囉 🎉';
+    else              firstMsg = '再 ' + i + ' 天就是' + hol.name;
+    break;
   }
-  if (!msgs.length) { wrap.style.display = 'none'; return; }
-  var seg = '<span style="font-size:14px;color:#0066CC;letter-spacing:.16em;padding:0 36px;font-weight:500">✦ ' + msgs.join('　・　') + '</span>';
-  track.innerHTML = seg + seg; // 兩份內容無縫循環
-  wrap.style.display = '';
+  if (!firstHol) { wrap.style.display = 'none'; return; }
+  var _emojiMap = { '中秋節':'🥮','春節':'🧧','端午節':'🎏','元旦':'🎊','國慶日':'🎉','聖誕節':'🎄','教師節':'🍎','勞動節':'🎉','清明節':'🌿','兒童節':'🎈' };
+  var emEl = document.getElementById('dash-festival-emoji');
+  var ebEl = document.getElementById('dash-festival-eyebrow');
+  if (emEl) emEl.textContent = _emojiMap[firstHol.name] || '🎉';
+  if (ebEl) ebEl.textContent = firstHol.name;
+  track.textContent = firstMsg;
+  wrap.style.display = 'flex';
 }
 
 async function loadDashboard() {
@@ -15746,6 +15764,12 @@ function _htStubColor(s) {
   if (s === '規劃中') return '#8367B0';   // 紫
   return '#0066CC';
 }
+// 日期徽章底色（與籤條同規則：當月/進行中＝藍、歷史/已完成＝深灰、規劃中＝紫）
+function _htDateBadge(s) {
+  if (s === '已完成') return { bg:'linear-gradient(150deg,#EEF0F3,#DCE0E6)', col:'#5A6472' };
+  if (s === '規劃中') return { bg:'linear-gradient(150deg,#F0EAF8,#E2D8F0)', col:'#8367B0' };
+  return { bg:'linear-gradient(150deg,#EAF1F9,#D6E4F5)', col:'#0066CC' };
+}
 // 顯示用狀態：以「活動月份」對比本月，得到三段式狀態（與逐日無關）
 //   ・活動月份 < 本月 → 已完成（下個月 1 號起自動歸為完成，並落入歷史回顧）
 //   ・活動月份 = 本月 → 進行中（整個當月都是此狀態）
@@ -16474,7 +16498,7 @@ function htRenderEvents() {
       var srcTag = isSheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#0066CC;background:#E7F0FB;border:1px solid #D5DAE2;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       html += '<div onclick="'+ clickFn +'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
         + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
-        +   '<div style="background:linear-gradient(150deg,#EAF1F9,#dce4ee);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#0066CC;flex-shrink:0">'
+        +   '<div style="background:'+_htDateBadge(_htDisplayStatus(ev)).bg+';border-radius:12px;padding:8px 0;width:52px;text-align:center;color:'+_htDateBadge(_htDisplayStatus(ev)).col+';flex-shrink:0">'
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
         +   '</div>'
@@ -17474,7 +17498,7 @@ function htRenderCalendar() {
       var srcTag = e._sheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#C63968;background:#FFF1DB;border:1px solid #FBE6C8;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       return '<div onclick="'+listClick+'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(236,79,125,.18)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
         + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
-        +   '<div style="background:linear-gradient(150deg,#FFF1DB,#FFDFB0);border-radius:12px;padding:8px 0;width:52px;text-align:center;color:#C63968;flex-shrink:0">'
+        +   '<div style="background:'+_htDateBadge(dispStatus).bg+';border-radius:12px;padding:8px 0;width:52px;text-align:center;color:'+_htDateBadge(dispStatus).col+';flex-shrink:0">'
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+dayNum+'</div>'
         +   '</div>'
