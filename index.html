@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909155132';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909155707';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2110,8 +2110,9 @@ html,body{background:#FAFBFC}
 .dsh-a-pink{--ac:#EC4F7D}
 .dsh-a-green{--ac:#22826A}
 .dsh-a-green .go{display:none}
-#dsh-duty:not(:empty){display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
-#dsh-duty>.dsh-panel{height:100%}
+#dsh-duty:not(:empty){display:flex;flex-wrap:wrap;gap:14px;align-items:stretch}
+#dsh-duty>.dsh-panel{flex:1 1 300px}
+#dsh-duty>.dsh-panel.dsh-full{flex:0 0 100%}
 .dsh-duty{padding:16px 17px}
 .dsh-duty .dt{font-size:17px;font-weight:800;color:#1F2933;display:flex;align-items:center;gap:9px}
 .dsh-duty .dsub{font-size:12px;color:#8A96A6;margin-top:2px;font-weight:600}
@@ -2339,7 +2340,7 @@ header::after{display:none!important}
 #analytics-grid .stat:nth-child(3)::before{background:linear-gradient(180deg,#F6CC62,#EC4F7D,#F6CC62)!important}
 #analytics-grid .stat:nth-child(4)::before{background:linear-gradient(180deg,#B4B9B2,#767B75,#B4B9B2)!important}
 /* 右上玻璃膠囊（房子＋頭像合體）：內頁淺色毛玻璃，捲動重疊時柔和不突兀 */
-#topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12);transition:transform .18s ease,box-shadow .18s ease}
+#topbar-capsule{background:rgba(247,248,246,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);box-shadow:0 2px 10px rgba(46,51,45,.12);border-radius:24px;padding:3px 6px;transition:transform .18s ease,box-shadow .18s ease}
 #topbar-capsule:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(46,51,45,.18)}
 @media(prefers-reduced-motion:reduce){.sl.active{animation:none!important}}
 /* 首頁改淺色底後：膠囊、分隔線、房屋圖示比照其他頁的淺底樣式 */
@@ -7865,7 +7866,7 @@ function _dshDutyAdmin(cases){
   var rej=cases.filter(function(c){return c.status==='已退件';}).length;
   var done=cases.filter(function(c){return c.status==='已完成';}).length;
   var prog=cases.filter(function(c){var s=String(c.status||'');return s.indexOf('待')<0&&s!=='已完成'&&s!=='已退件'&&s!=='作廢'&&s!=='草稿';}).length;
-  return '<div class="dsh-panel dsh-duty" style="grid-column:1/-1"><div class="dhead"><div><div class="dt"><span style="color:#4B7BC4;display:inline-flex">'+_dshIc('grid')+'</span>全站案件概況</div><div class="dsub">管理者專屬 · 全體視角</div></div><button class="dcta" style="background:#4B7BC4" onclick="sw(\'admin\')">進系統管理 →</button></div>'
+  return '<div class="dsh-panel dsh-duty dsh-full"><div class="dhead"><div><div class="dt"><span style="color:#4B7BC4;display:inline-flex">'+_dshIc('grid')+'</span>全站案件概況</div><div class="dsub">管理者專屬 · 全體視角</div></div><button class="dcta" style="background:#4B7BC4" onclick="sw(\'admin\')">進系統管理 →</button></div>'
     +'<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">'
     +'<div class="cell"><div class="n" style="color:#C63968">'+pend+'</div><div class="k">待審核</div></div>'
     +'<div class="cell"><div class="n">'+prog+'</div><div class="k">進行中</div></div>'
