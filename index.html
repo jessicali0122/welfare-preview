@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909113055';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909113631';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2474,9 +2474,9 @@ thead th{color:#767B75!important}
         <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
       </div>
       <div id="dash-motto" style="display:none;font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
-      <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#DCF2F4;border:1px solid #A9DCE0;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(225,107,140,.10)">
+      <div id="dash-birthday-chip" class="wf-bday" style="display:none;align-items:center;gap:8px;margin-top:16px;background:#FDE7EF;border:1px solid #F6CBD9;border-radius:20px;padding:8px 20px;width:fit-content;margin-left:auto;margin-right:auto;box-shadow:0 4px 14px rgba(236,79,125,.12)">
         <span class="wf-bday-cake" style="font-size:18px">🎂</span>
-        <span style="font-size:14px;font-weight:600;color:#0E9AA7;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
+        <span style="font-size:14px;font-weight:600;color:#EC4F7D;letter-spacing:.08em;white-space:nowrap">生日快樂！祝你今天特別幸福</span>
         <span class="wf-bday-party" style="font-size:16px">🎉</span>
       </div>
       <!-- 節慶祝賀跑馬燈：無邊框、淡沙色漸層底，文字緩緩滑過（低調不搶生日風頭） -->
@@ -7649,7 +7649,28 @@ function _renderDashStatus(){
   rows += row('#E7F0FB','#0066CC',teaSvg,'下次午茶日', teaDate || teaHint || '尚未安排', (teaDate && teaHint) ? teaHint : '', "sw('hightea')", false);
   // 本月按摩剩餘
   var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
-  rows += row('#E6E9FB','#5B6BD6',msSvg,'按摩預約', msHint || '每月可預約 2 次', '', "sw('massage')", true);
+  rows += row('#E6E9FB','#5B6BD6',msSvg,'按摩預約', msHint || '每月可預約 2 次', '', "sw('massage')", false);
+  // 本月壽星（吃「月」的邏輯：比對 _BF_USER_BDAYS 當月生日者）
+  var cakeSvg='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 1 4 1 2.5-1 4-1 2.5 1 4 1 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v2M12 8v2M17 8v2"/><path d="M7 4h.01M12 4h.01M17 4h.01"/></svg>';
+  var bdayNames = [];
+  if (Array.isArray(window._BF_USER_BDAYS)) {
+    var _bm = (new Date()).getMonth() + 1;
+    var _seen = {};
+    window._BF_USER_BDAYS.forEach(function(b){
+      if (b && b.m === _bm && b.name && !_seen[b.name]) { _seen[b.name] = 1; bdayNames.push({ name: b.name, d: b.d }); }
+    });
+    bdayNames.sort(function(a,b){ return (a.d||0) - (b.d||0); });
+  }
+  var bdayVal, bdaySub;
+  if (bdayNames.length) {
+    var _show = bdayNames.slice(0, 2).map(function(x){ return esc(x.name); }).join('、');
+    bdayVal = _show + (bdayNames.length > 2 ? ' 等 ' + bdayNames.length + ' 位' : '');
+    bdaySub = '午茶日壽星加碼：全體每人 +NT$40';
+  } else {
+    bdayVal = '本月暫無壽星';
+    bdaySub = '';
+  }
+  rows += row('#FDE7EF','#EC4F7D',cakeSvg,'本月壽星', bdayVal, bdaySub, bdayNames.length ? "sw('hightea')" : '', true);
   // (最新公佈欄行已移除：與下方完整公佈欄區塊重複)
   box.innerHTML = rows;
 }
