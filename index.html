@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909102038';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260909105229';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2057,7 +2057,7 @@ html,body{background:#FAFBFC}
 .dash-stat .txt{display:flex;flex-direction:column;min-width:0}
 .dash-stat .lab{font-size:12px;color:#767B75;font-weight:600;letter-spacing:.06em;white-space:nowrap;line-height:1.4}
 .dash-stat .numline{display:flex;align-items:baseline;gap:5px;margin-top:3px}
-.dash-stat .num{font-size:26px;font-weight:900;color:#2e333a;line-height:1.05;letter-spacing:0;font-variant-numeric:tabular-nums}
+.dash-stat .num{font-size:22px;font-weight:800;color:#2e333a;line-height:1.05;letter-spacing:0;font-variant-numeric:tabular-nums}
 /* 文字型數值（Coming Soon 這種）：比數字小一階、字距放寬，才不會比日期還搶眼 */
 .dash-stat .num.is-text{font-size:16px;font-weight:800;letter-spacing:.06em}
 .dash-stat .unit{font-size:12px;font-weight:600;color:#A9A69B;letter-spacing:.04em}
@@ -2084,7 +2084,7 @@ html,body{background:#FAFBFC}
 .dash-hero-card .dash-stat{background:transparent!important;border:none!important;border-radius:0!important;box-shadow:none!important;transform:none!important;padding:6px 14px}
 .dash-hero-card .dash-stat:hover{transform:none!important;box-shadow:none!important}
 .dash-hero-card .dash-stat + .dash-stat{border-left:none!important}
-.dash-hero-card .dash-stat .num{font-size:22px}
+.dash-hero-card .dash-stat .num{font-size:20px}
 /* 待你審核有件：改用橘色圖示＋橘色數字凸顯，不再是整塊橘方塊（維持無盒子一致） */
 .dash-hero-card .dash-stat.has-todo .ic{background:#FCE4EC!important;color:#EC4F7D!important}
 .dash-hero-card .dash-stat.has-todo .num,.dash-hero-card .dash-stat.has-todo .unit{color:#EC4F7D!important}
@@ -2098,7 +2098,7 @@ html,body{background:#FAFBFC}
 /* 首頁區塊標題：一律置於卡片外（公佈欄／服務項目／常用連結同一語彙） */
 .dash-sec-label{display:flex;align-items:center;gap:11px;margin:32px 2px 14px}
 .dash-sec-ico{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;color:#0066CC;background:#E7F0FB}
-.dash-sec-title{font-size:18px;font-weight:800;color:#232A1E;white-space:nowrap;letter-spacing:-.01em}
+.dash-sec-title{font-size:16px;font-weight:700;color:#232A1E;white-space:nowrap;letter-spacing:-.01em}
 .dash-sec-en{font-size:12px;font-weight:700;color:#2E7BD6;letter-spacing:.16em;text-transform:uppercase}
 /* 服務入口卡：左側彩色識別條＋各自的暖色 icon 底，一眼分辨、畫面不再單調 */
 .dash-hub-card{position:relative}
@@ -2391,15 +2391,16 @@ thead th{color:#767B75!important}
       <span class="sl-text">聽你說</span>
     </div>
 
-    <div class="sl" data-view="admin" data-label="系統管理" onclick="sw('admin')">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
-      <span class="sl-text">系統管理</span>
-    </div>
-
     <!-- 常用連結：桌面版收進側邊欄底部（點擊開 popover 清單）；手機版隱藏，改由總覽頁尾顯示 -->
     <div id="side-links-btn" class="sl" data-label="常用連結" onclick="toggleSideLinks(event)" style="display:none">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 17H7A5 5 0 0 1 7 7h2M15 7h2a5 5 0 0 1 0 10h-2M8 12h8"/></svg>
       <span class="sl-text">常用連結</span>
+    </div>
+
+    <!-- 系統管理：管理者專用，移到最下面（依使用者要求） -->
+    <div class="sl" data-view="admin" data-label="系統管理" onclick="sw('admin')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg>
+      <span class="sl-text">系統管理</span>
     </div>
 
     <!-- 手機版登出按鈕（只在手機顯示，直接在 nav 內，確保可點擊）-->
@@ -7642,7 +7643,7 @@ function _renderDashStatus(){
     return '<div ' + (onclick ? ('onclick="'+onclick+'" style="cursor:pointer;') : 'style="') + 'display:flex;align-items:center;gap:12px;padding:14px 16px;' + (last ? '' : 'border-bottom:1px solid #EEF1F5;') + 'transition:background .15s"' + (onclick ? ' onmouseover="this.style.background=\'#F7FAFD\'" onmouseout="this.style.background=\'\'"' : '') + '>'
       + '<span style="width:38px;height:38px;border-radius:11px;background:'+bg+';color:'+col+';display:flex;align-items:center;justify-content:center;flex-shrink:0">'+svg+'</span>'
       + '<div style="flex:1;min-width:0"><div style="font-size:12px;color:#767B75;font-weight:600">'+label+'</div>'
-      + '<div style="font-size:15px;font-weight:700;color:#2E332D;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+value+'</div>'
+      + '<div style="font-size:14px;font-weight:700;color:#2E332D;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+value+'</div>'
       + (sub ? '<div style="font-size:12px;color:#8A96A6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+sub+'</div>' : '')
       + '</div>'
       + (onclick ? '<span style="color:#C2C7D0;flex-shrink:0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></span>' : '')
