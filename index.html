@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910092944';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910093043';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7913,9 +7913,10 @@ function _dshCases(myCases){
 }
 function _dshSocial(){
   var m=(new Date()).getMonth()+1;var names=[],seen={};
-  if(Array.isArray(window._BF_USER_BDAYS)){window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===m&&b.name&&!seen[b.name]){seen[b.name]=1;names.push(b.name);}});}
+  if(Array.isArray(window._BF_USER_BDAYS)){window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===m&&b.name&&!seen[b.name]){seen[b.name]=1;names.push({name:b.name,d:b.d});}});}
   if(!names.length)return '';
-  var show=names.slice(0,2).map(_dshEsc).join('、')+(names.length>2?(' 等 '+names.length+' 位'):'');
+  names.sort(function(a,b){return (a.d||0)-(b.d||0);});
+  var show=names.slice(0,2).map(function(x){return _dshEsc(x.name)+(x.d?(' <span style="font-weight:600;color:#EC4F7D">'+m+'/'+x.d+'</span>'):'');}).join('　')+(names.length>2?(' 等 '+names.length+' 位'):'');
   return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E6EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 5px 16px rgba(31,41,51,.05);padding:12px 16px">'
     +'<span style="width:36px;height:36px;border-radius:11px;background:#FDE7EF;color:#EC4F7D;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('cake',20)+'</span>'
     +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">本月同事生日　<span style="color:#4A4F58">'+show+'</span></div>'
