@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910100929';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910101359';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7854,6 +7854,17 @@ function _dshDutyTea(){
   if(!ev&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
   var m=ev?(parseInt(_evMonth(ev).slice(5,7),10)||0):((new Date()).getMonth()+1);var bd=_dshBdayMonthCount(m);
   var hc=ev?(ev.headcount||0):0,it=ev?(ev.itemCount||0):0,bud=ev?(ev.totalBudget||ev.budgetTotal||0):0;
+  // 人數／品項／預算要載入該場「明細」才有(htGetItems 回 event＋items)。抓一次快取起來、再重畫補上格子。
+  var _evId=ev&&ev.eventId;
+  if(_evId){
+    window._dshTeaCache=window._dshTeaCache||{};
+    var _cd=window._dshTeaCache[_evId];
+    if(_cd){ hc=_cd.hc||hc; it=_cd.it||it; bud=_cd.bud||bud; }
+    else if(typeof htApi==='function'&&window._dshTeaFetching!==_evId){
+      window._dshTeaFetching=_evId;
+      try{ htApi('htGetItems',{eventId:_evId}).then(function(r){ window._dshTeaFetching=null; if(r&&r.ok){ var _e=r.event||{},_it=r.items||[]; window._dshTeaCache[_evId]={hc:_e.headcount||0,it:_it.length,bud:_e.totalBudget||_e.budgetTotal||0}; try{_renderRoleDash();}catch(e){} } }).catch(function(){window._dshTeaFetching=null;}); }catch(e){window._dshTeaFetching=null;}
+    }
+  }
   var hint=(typeof htGetNextEventHint==='function')?(htGetNextEventHint()||''):'';
   var cd='—';var _cm=hint.match(/(\d+)\s*天/);if(hint.indexOf('今天')>=0)cd='就是今天';else if(_cm)cd='還有 '+_cm[1]+' 天';
   var st=(ev&&typeof _htDisplayStatus==='function')?_htDisplayStatus(ev):'進行中';
