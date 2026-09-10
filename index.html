@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910095726';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910100120';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7833,6 +7833,12 @@ function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st
 // 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
 function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
 function _dshDutyTea(){
+  // 強制跟後端重抓一次完整活動清單(每 session 一次)：localStorage 快取可能是「新場次加入前」的舊版，
+  // 導致總覽只抓得到試算表薄場次(只有日期)→ 人數/品項/預算顯示 0。抓回後更新 _htEvents＋快取並重畫。
+  if(!window._dshTeaFullLoaded && typeof htApi==='function'){
+    window._dshTeaFullLoaded=true;
+    try{ htApi('htList').then(function(r){ if(r&&r.ok&&Array.isArray(r.events)){ try{ if(typeof _htEvents!=='undefined') _htEvents=r.events; var _c=JSON.parse(localStorage.getItem('bf_ht_cache')||'{}'); _c.events=r.events; localStorage.setItem('bf_ht_cache',JSON.stringify(_c)); }catch(e){} try{_renderRoleDash();}catch(e){} } }).catch(function(){}); }catch(e){}
+  }
   var all=[];
   // 一律把三個來源都併進來(_htEvents 完整活動 / localStorage 快取 / 試算表薄場次)，同月可能同時有薄+完整版
   try{ if(typeof _htEvents!=='undefined'&&Array.isArray(_htEvents)) all=all.concat(_htEvents); }catch(e){}
@@ -7877,12 +7883,14 @@ function _dshDutyAdmin(cases){
   var rej=cases.filter(function(c){return c.status==='已退件';}).length;
   var done=cases.filter(function(c){return c.status==='已完成';}).length;
   var prog=cases.filter(function(c){var s=String(c.status||'');return s.indexOf('待')<0&&s!=='已完成'&&s!=='已退件'&&s!=='作廢'&&s!=='草稿';}).length;
+  var voidN=cases.filter(function(c){return c.status==='作廢';}).length;
   return '<div class="dsh-panel dsh-duty dsh-full"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#E7EFFB;color:#4B7BC4;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('grid',17)+'</span>全站案件概況</div><div class="dsub">管理者專屬 · 全體視角</div></div><button class="dcta" style="background:#4B7BC4" onclick="sw(\'admin\')">進系統管理 →</button></div>'
-    +'<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr))">'
+    +'<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">'
     +'<div class="cell"><div class="n" style="color:#C63968">'+pend+'</div><div class="k">待審核</div></div>'
     +'<div class="cell"><div class="n">'+prog+'</div><div class="k">進行中</div></div>'
     +'<div class="cell"><div class="n"'+(rej?' style="color:#DC2626"':'')+'>'+rej+'</div><div class="k">退件中</div></div>'
     +'<div class="cell"><div class="n">'+done+'</div><div class="k">已完成</div></div>'
+    +'<div class="cell"><div class="n" style="color:#7A828E">'+voidN+'</div><div class="k">作廢</div></div>'
     +'</div></div>';
 }
 function _dshFuli(){
