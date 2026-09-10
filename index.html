@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260909161530';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910090845';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2119,7 +2119,8 @@ html,body{background:#FAFBFC}
 .dsh-duty .dt{font-size:17px;font-weight:800;color:#1F2933;display:flex;align-items:center;gap:9px}
 .dsh-duty .dsub{font-size:12px;color:#8A96A6;margin-top:2px;font-weight:600}
 .dsh-duty .dhead{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.dsh-duty .dcta{display:inline-block;font-size:13px;font-weight:700;color:#fff;padding:8px 15px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;flex-shrink:0;white-space:nowrap}
+.dsh-duty .dcta,.dsh-cardhd .dcta{display:inline-block;font-size:13px;font-weight:700;color:#fff;padding:8px 15px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;flex-shrink:0;white-space:nowrap}
+.dsh-cardhd .dcta{margin-left:auto}
 .dsh-duty .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-top:13px}
 .dsh-duty .cell{background:#F6F9FD;border:1px solid #E9EEF5;border-radius:10px;padding:10px 12px}
 .dsh-duty .cell .n{font-size:18px;font-weight:800;color:#2E332D}
@@ -7884,12 +7885,11 @@ function _dshFuli(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var used='—',limit=2;
   try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
-  return '<div class="dsh-panel dsh-duty"><div class="dt"><span style="color:#0E9AA7;display:inline-flex">'+_dshIc('gift')+'</span>我的福利</div>'
-    +'<div class="grid" style="grid-template-columns:1fr">'
+  return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="color:#0E9AA7;display:inline-flex">'+_dshIc('gift')+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
+    +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
     +'<div class="cell" style="cursor:pointer" onclick="sw(\'hightea\')"><div class="n">'+_dshEsc(dateStr||'尚未安排')+'</div><div class="k">下次午茶日'+(hint?(' · '+_dshEsc(hint)):'')+'</div></div>'
     +'<div class="cell" style="cursor:pointer" onclick="sw(\'massage\')"><div class="n">'+(used==='—'?'—':(used+' / '+limit))+'<small> 次</small></div><div class="k">本月按摩已預約</div></div>'
-    +'</div>'
-    +'<button class="dcta" style="background:#5B6BD6;margin-top:12px" onclick="sw(\'massage\')">立即預約按摩 →</button></div>';
+    +'</div></div>';
 }
 function _dshCases(myCases){
   var rows='';
@@ -7903,7 +7903,7 @@ function _dshCases(myCases){
     var title=_dshEsc(c.subject||c.project||'費用申請')+(c.caseId?(' · '+_dshEsc(c.caseId)):'');
     rows+='<div class="dsh-crow" onclick="'+(c.caseId?('loadDetail(\''+_dshEsc(c.caseId)+'\')'):'sw(\'applications\')')+'">'+_dshCaseIcon(c.status)+'<div style="flex:1;min-width:0"><div class="cl">'+title+'</div><div class="cs">'+sub+'</div></div><span class="cb '+sc[1]+'">'+sc[0]+'</span></div>';
   });}
-  return '<div class="dsh-panel"><div class="dsh-cardhd"><span style="color:#0066CC;display:inline-flex">'+_dshIc('clipboard')+'</span><span class="ht">我的申請進度</span><span class="more" onclick="sw(\'applications\')">我的案件 →</span></div>'+rows+'</div>';
+  return '<div class="dsh-panel"><div class="dsh-cardhd"><span style="color:#0066CC;display:inline-flex">'+_dshIc('clipboard')+'</span><span class="ht">我的申請進度</span><button class="dcta" style="background:#0066CC" onclick="sw(\'applications\')">我的案件 →</button></div>'+rows+'</div>';
 }
 function _dshSocial(){
   var m=(new Date()).getMonth()+1;var names=[],seen={};
