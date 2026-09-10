@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910100120';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910100929';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7854,13 +7854,17 @@ function _dshDutyTea(){
   if(!ev&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
   var m=ev?(parseInt(_evMonth(ev).slice(5,7),10)||0):((new Date()).getMonth()+1);var bd=_dshBdayMonthCount(m);
   var hc=ev?(ev.headcount||0):0,it=ev?(ev.itemCount||0):0,bud=ev?(ev.totalBudget||ev.budgetTotal||0):0;
+  var hint=(typeof htGetNextEventHint==='function')?(htGetNextEventHint()||''):'';
+  var cd='—';var _cm=hint.match(/(\d+)\s*天/);if(hint.indexOf('今天')>=0)cd='就是今天';else if(_cm)cd='還有 '+_cm[1]+' 天';
+  var st=(ev&&typeof _htDisplayStatus==='function')?_htDisplayStatus(ev):'進行中';
+  var _cell=function(n,k,col){return '<div class="cell"><div class="n"'+(col?(' style="color:'+col+'"'):'')+'>'+n+'</div><div class="k">'+k+'</div></div>';};
+  var cells=_cell(cd,'距下場','#D98324')+_cell(bd+'<small> 位</small>','本月壽星')+_cell(st,'籌備狀態');
+  // 人數／品項／預算：只有真的抓得到(>0)才顯示，避免顯示誤導的 0
+  if(hc)cells+=_cell(hc+'<small> 人</small>','參加人數');
+  if(it)cells+=_cell(it,'品項');
+  if(bud)cells+=_cell('$'+Number(bud).toLocaleString(),'預算');
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">'+_dshEsc(dateStr?('下場 '+dateStr):'')+'</div></div>'+cta+'</div>'
-    +'<div class="grid">'
-    +'<div class="cell"><div class="n">'+hc+'<small> 人</small></div><div class="k">參加人數</div></div>'
-    +'<div class="cell"><div class="n">'+bd+'<small> 位</small></div><div class="k">本月壽星</div></div>'
-    +'<div class="cell"><div class="n">'+it+'</div><div class="k">品項</div></div>'
-    +'<div class="cell"><div class="n">'+(bud?('$'+Number(bud).toLocaleString()):'—')+'</div><div class="k">預算</div></div>'
-    +'</div></div>';
+    +'<div class="grid">'+cells+'</div></div>';
 }
 function _dshDutyMassage(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
