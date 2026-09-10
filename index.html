@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910093616';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910095726';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7834,13 +7834,15 @@ function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st
 function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
 function _dshDutyTea(){
   var all=[];
+  // 一律把三個來源都併進來(_htEvents 完整活動 / localStorage 快取 / 試算表薄場次)，同月可能同時有薄+完整版
   try{ if(typeof _htEvents!=='undefined'&&Array.isArray(_htEvents)) all=all.concat(_htEvents); }catch(e){}
-  // 總覽頁 _htEvents 常為空(只有進午茶日頁才載入)→ 讀午茶日的 localStorage 快取拿完整活動物件
-  if(!all.length){ try{ var _hc=JSON.parse(localStorage.getItem('bf_ht_cache')||'null'); if(_hc&&Array.isArray(_hc.events)) all=all.concat(_hc.events); }catch(e){} }
+  try{ var _hc=JSON.parse(localStorage.getItem('bf_ht_cache')||'null'); if(_hc&&Array.isArray(_hc.events)) all=all.concat(_hc.events); }catch(e){}
   try{ if(typeof _htSheetAsEvents==='function'){ var _s=_htSheetAsEvents(); if(Array.isArray(_s)) all=all.concat(_s); } }catch(e){}
   var curYM=_dshCurYM();
   var up=all.filter(function(e){try{return _evMonth(e)>=curYM;}catch(_){return false;}}).sort(function(a,b){return _evMonth(a)<_evMonth(b)?-1:1;});
   var ev=up[0];
+  // 同月可能有多筆(薄場次+完整活動)→ 取「資料最完整」那筆，避免抓到只有日期的薄場次顯示 0
+  if(ev){ var ym0=_evMonth(ev); var _rich=function(e){return (e.headcount||0)+(e.itemCount||0)+((e.totalBudget||e.budgetTotal||0)?1:0)+((e.birthdays&&e.birthdays.length)||0);}; up.forEach(function(e){ if(_evMonth(e)===ym0 && _rich(e)>_rich(ev)) ev=e; }); }
   var dateStr=(typeof htGetNextEventDate==='function')?htGetNextEventDate():'';
   var cta='<button class="dcta" style="background:#D98324" onclick="sw(\'hightea\')">前往午茶日 →</button>';
   if(!ev&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
@@ -7892,13 +7894,14 @@ function _dshFuli(){
   // 午茶日剩餘天數做成琥珀膠囊凸顯，緊貼大日期
   var teaDays='';var _dm=(hint||'').match(/(\d+)\s*天/);
   if((hint||'').indexOf('今天')>=0)teaDays='就是今天';else if(_dm)teaDays='還有 '+_dm[1]+' 天';
-  var teaPill=teaDays?(' <span style="font-size:12px;font-weight:700;color:#D98324;background:#FBEEDD;border-radius:8px;padding:2px 9px;margin-left:7px;vertical-align:3px;white-space:nowrap">'+teaDays+'</span>'):'';
+  var teaPill=teaDays?('<span style="font-size:12px;font-weight:700;color:#D98324;background:#FBEEDD;border-radius:8px;padding:2px 9px;white-space:nowrap">'+teaDays+'</span>'):'';
   var msMain=(used==='—')?'—':(used+' / '+limit);
-  var msRem=(used==='—')?'':(' <span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;margin-left:7px;vertical-align:3px;white-space:nowrap">剩 '+Math.max(0,limit-used)+' 次</span>');
+  var msRem=(used==='—')?'':('<span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;white-space:nowrap">剩 '+Math.max(0,limit-used)+' 次</span>');
+  var _lab='font-size:13px;font-weight:600;color:#8A96A6;flex-shrink:0';var _val='font-size:16px;font-weight:800;color:#2E332D';
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#DCF2F4;color:#0E9AA7;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('gift',17)+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
     +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
-    +'<div class="cell" style="cursor:pointer" onclick="sw(\'hightea\')"><div class="n">'+_dshEsc(dateStr||'尚未安排')+teaPill+'</div><div class="k">下次午茶日</div></div>'
-    +'<div class="cell" style="cursor:pointer" onclick="sw(\'massage\')"><div class="n">'+msMain+msRem+'</div><div class="k">本月按摩已預約</div></div>'
+    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">下次午茶日</span><span style="'+_val+'">'+_dshEsc(dateStr||'尚未安排')+'</span>'+teaPill+'</div>'
+    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'massage\')"><span style="'+_lab+'">本月按摩</span><span style="'+_val+'">'+msMain+'</span>'+msRem+'</div>'
     +'</div></div>';
 }
 function _dshCases(myCases){
@@ -7923,8 +7926,11 @@ function _dshSocial(){
   var show=names.slice(0,3).map(function(x){return '<span style="white-space:nowrap">'+_dshEsc(x.name)+(x.d?('<span style="font-size:11px;font-weight:700;color:#EC4F7D;background:#FDE7EF;border-radius:6px;padding:1px 7px;margin-left:5px;vertical-align:1px">'+m+'/'+x.d+'</span>'):'')+'</span>';}).join('<span style="color:#D5DAE2;margin:0 8px">·</span>')+(names.length>3?('<span style="color:#8A96A6;margin-left:8px;font-weight:600">等 '+names.length+' 位</span>'):'');
   return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E6EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 5px 16px rgba(31,41,51,.05);padding:12px 16px">'
     +'<span style="width:36px;height:36px;border-radius:11px;background:#FDE7EF;color:#EC4F7D;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('cake',20)+'</span>'
-    +'<div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:800;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">本月同事生日　<span style="color:#4A4F58">'+show+'</span></div>'
-    +'<div style="font-size:12px;font-weight:600;color:#8A96A6;margin-top:2px">記得說聲生日快樂 🎂</div></div></div>';
+    +'<div style="flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
+    +'<b style="font-weight:800;color:#2E332D">本月同事生日</b>'
+    +'<span style="color:#4A4F58;margin-left:9px">'+show+'</span>'
+    +'<span style="font-size:12px;font-weight:600;color:#B0B8C4;margin-left:10px">記得說聲生日快樂 🎂</span>'
+    +'</div></div>';
 }
 function _renderRoleDash(){
   if(!document.getElementById('dsh-action'))return;
