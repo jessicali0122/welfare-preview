@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260910092237';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260910092944';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2136,7 +2136,7 @@ html,body{background:#FAFBFC}
 .dsh-crow .cl{font-size:13px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsh-crow .cs{font-size:11.5px;color:#8A96A6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsh-crow .cb{margin-left:auto;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
-.dsh-b-rej,.dsh-b-wait{background:#FDE7EF;color:#C63968}.dsh-b-prog{background:#E7F0FB;color:#0066CC}.dsh-b-done{background:#E4EFE1;color:#22826A}
+.dsh-b-rej,.dsh-b-wait{background:#FDE7EF;color:#C63968}.dsh-b-prog{background:#E7F0FB;color:#0066CC}.dsh-b-done{background:#E4EFE1;color:#16a34a}.dsh-b-void{background:#F1F3F6;color:#7A828E}
 .dsh-empty{padding:24px 16px;text-align:center;color:#8A96A6;font-size:12.5px;line-height:1.7}
 @media(max-width:768px){#dsh-two{grid-template-columns:1fr!important}}
 /* ── Hero 重點卡：問候＋時鐘＋關鍵數字合成一張，取代原本分離的問候區＋5 格漂浮 KPI（收斂視覺、去渙散） ── */
@@ -7828,20 +7828,22 @@ function _dshEsc(s){return (typeof htEsc==='function')?htEsc(s):String(s==null?'
 function _dshMe(){return String((((typeof currentUser!=='undefined')&&currentUser)||window.currentUser||{}).email||'').trim().toLowerCase();}
 function _dshCurYM(){var n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1<10?'0':'')+(n.getMonth()+1);}
 function _dshBdayMonthCount(mNum){if(!Array.isArray(window._BF_USER_BDAYS))return 0;var seen={},c=0;window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===mNum&&b.name&&!seen[b.name]){seen[b.name]=1;c++;}});return c;}
-function _dshStatusClass(st){st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0)return['退件','dsh-b-rej'];if(st==='已完成')return['完成','dsh-b-done'];if(st==='作廢')return['作廢','dsh-b-done'];if(st.indexOf('待')>=0)return['待審','dsh-b-wait'];return['進行中','dsh-b-prog'];}
+function _dshStatusClass(st){st=String(st||'').trim();if(st==='已退件'||st.indexOf('退')>=0)return[st||'已退件','dsh-b-rej'];if(st==='已完成')return['已完成','dsh-b-done'];if(st==='作廢')return['作廢','dsh-b-void'];if(st.indexOf('待')>=0)return[st,'dsh-b-wait'];return[st||'進行中','dsh-b-prog'];}
 function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0){col='#DC2626';bg='#FEE2E2';}else if(st==='已完成'){col='#22826A';bg='#E4EFE1';}return '<span class="ci" style="background:'+bg+';color:'+col+'">'+_dshIc('file',16)+'</span>';}
 // 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
 function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
 function _dshDutyTea(){
-  var all=[];try{all=((typeof _htEvents!=='undefined'&&_htEvents)?_htEvents:[]).concat((typeof _htSheetAsEvents==='function')?(_htSheetAsEvents()||[]):[]);}catch(e){}
+  var all=[];
+  try{ if(typeof _htEvents!=='undefined'&&Array.isArray(_htEvents)) all=all.concat(_htEvents); }catch(e){}
+  try{ if(typeof _htSheetAsEvents==='function'){ var _s=_htSheetAsEvents(); if(Array.isArray(_s)) all=all.concat(_s); } }catch(e){}
   var curYM=_dshCurYM();
   var up=all.filter(function(e){try{return _evMonth(e)>=curYM;}catch(_){return false;}}).sort(function(a,b){return _evMonth(a)<_evMonth(b)?-1:1;});
   var ev=up[0];
   var dateStr=(typeof htGetNextEventDate==='function')?htGetNextEventDate():'';
   var cta='<button class="dcta" style="background:#D98324" onclick="sw(\'hightea\')">前往午茶日 →</button>';
-  if(!ev){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
-  var m=parseInt(_evMonth(ev).slice(5,7),10)||0;var bd=_dshBdayMonthCount(m);
-  var hc=ev.headcount||0,it=ev.itemCount||0,bud=ev.totalBudget||ev.budgetTotal||0;
+  if(!ev&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
+  var m=ev?(parseInt(_evMonth(ev).slice(5,7),10)||0):((new Date()).getMonth()+1);var bd=_dshBdayMonthCount(m);
+  var hc=ev?(ev.headcount||0):0,it=ev?(ev.itemCount||0):0,bud=ev?(ev.totalBudget||ev.budgetTotal||0):0;
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">'+_dshEsc(dateStr?('下場 '+dateStr):'')+'</div></div>'+cta+'</div>'
     +'<div class="grid">'
     +'<div class="cell"><div class="n">'+hc+'<small> 人</small></div><div class="k">參加人數</div></div>'
@@ -7885,10 +7887,14 @@ function _dshFuli(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var used='—',limit=2;
   try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
+  // 午茶日副標：從 hint 只取「還有 N 天／今天」，避免重複「午茶日」字樣
+  var teaK='下次午茶日';var _dm=(hint||'').match(/(\d+)\s*天/);
+  if((hint||'').indexOf('今天')>=0)teaK='下次午茶日 · 就是今天 🎉';else if(_dm)teaK='下次午茶日 · 還有 '+_dm[1]+' 天';
+  var msN=(used==='—')?'—':(used+' / '+limit+' 次');
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#DCF2F4;color:#0E9AA7;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('gift',17)+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
     +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
-    +'<div class="cell" style="cursor:pointer" onclick="sw(\'hightea\')"><div class="n">'+_dshEsc(dateStr||'尚未安排')+'</div><div class="k">下次午茶日'+(hint?(' · '+_dshEsc(hint)):'')+'</div></div>'
-    +'<div class="cell" style="cursor:pointer" onclick="sw(\'massage\')"><div class="n">'+(used==='—'?'—':(used+' / '+limit))+'<small> 次</small></div><div class="k">本月按摩已預約</div></div>'
+    +'<div class="cell" style="cursor:pointer" onclick="sw(\'hightea\')"><div class="n">'+_dshEsc(dateStr||'尚未安排')+'</div><div class="k">'+teaK+'</div></div>'
+    +'<div class="cell" style="cursor:pointer" onclick="sw(\'massage\')"><div class="n">'+msN+'</div><div class="k">本月按摩已預約</div></div>'
     +'</div></div>';
 }
 function _dshCases(myCases){
@@ -7899,9 +7905,9 @@ function _dshCases(myCases){
   if(!show.length){rows='<div class="dsh-empty">目前沒有申請中的案件<br><span style="color:#B0B8C4">新增費用申請後會顯示在這裡</span></div>';}
   else{show.forEach(function(c){
     var sc=_dshStatusClass(c.status);var sub='';var st=String(c.status||'');
-    if(st.indexOf('退')>=0)sub='被退件，請補件後重送';else if(st.indexOf('待')>=0)sub='簽核中 · 第 '+(c.step||1)+' 關';else if(c.status==='已完成')sub='已完成';else sub=_dshEsc(st);
+    if(st.indexOf('退')>=0)sub='被退件，請補件後重送';else if(st.indexOf('待')>=0)sub='簽核中 · 第 '+(c.step||1)+' 關';else sub='';
     var title=_dshEsc(c.subject||c.project||'費用申請')+(c.caseId?(' · '+_dshEsc(c.caseId)):'');
-    rows+='<div class="dsh-crow" onclick="'+(c.caseId?('loadDetail(\''+_dshEsc(c.caseId)+'\')'):'sw(\'applications\')')+'">'+_dshCaseIcon(c.status)+'<div style="flex:1;min-width:0"><div class="cl">'+title+'</div><div class="cs">'+sub+'</div></div><span class="cb '+sc[1]+'">'+sc[0]+'</span></div>';
+    rows+='<div class="dsh-crow" onclick="'+(c.caseId?('loadDetail(\''+_dshEsc(c.caseId)+'\')'):'sw(\'applications\')')+'">'+_dshCaseIcon(c.status)+'<div style="flex:1;min-width:0"><div class="cl">'+title+'</div>'+(sub?('<div class="cs">'+sub+'</div>'):'')+'</div><span class="cb '+sc[1]+'">'+sc[0]+'</span></div>';
   });}
   return '<div class="dsh-panel"><div class="dsh-cardhd"><span style="width:30px;height:30px;border-radius:9px;background:#E7F0FB;color:#0066CC;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('clipboard',17)+'</span><span class="ht">我的申請進度</span><button class="dcta" style="background:#0066CC" onclick="sw(\'applications\')">我的案件 →</button></div>'+rows+'</div>';
 }
