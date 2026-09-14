@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914203258';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914204145';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15723,6 +15723,14 @@ var _HT_SWR_REFRESH = 90000;   // 快取超過 90 秒才在背景更新；90 秒
 // 寫入 action：成功後清空快取，下次讀取抓最新（沿用全域 _cacheClear，會一併遞增世代序號讓進行中的背景更新作廢）
 var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUpsertItems|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
+// ★ 會改變資料的 action：逾時後「絕對不能叫使用者重試」。
+//   後端可能已經寫入成功、只是回應在半路掉了（GAS 很常這樣）。此時叫人重按：
+//   ・按摩預約 → 後端有「同一天只能約一次」擋著，不會變兩筆，但使用者會看到
+//     「同一天只能預約一次按摩」而誤以為自己根本沒約到 → 真的跑去現場才發現有／沒有。
+//   ・午茶／公佈欄寫入 → 可能產生重複資料。
+//   與請款那條路徑的 _NO_RETRY_ACTIONS 同一個原則（見 001/002/003 重複單事故的註解）。
+var _HT_WRITE_NO_RETRY = /^(massageBook|massageCancel|massageJoinWaitlist|massageLeaveWaitlist|massageCheckIn|massageCheckInQR|massageModifyBooking|massageRequestCancel|massageRequestDelete|htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUpsertItems|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+
 // 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
 function _htFetchRaw(body, timeoutMs) {
   var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
@@ -15743,7 +15751,17 @@ function _htFetchRaw(body, timeoutMs) {
       }
       return json;
     })
-    .catch(function(err){ return { ok:false, error: (err && err.name === 'AbortError') ? '載入逾時，伺服器回應太慢，請重試' : '網路連線失敗' }; })
+    .catch(function(err){
+      if (err && err.name === 'AbortError') {
+        // 寫入類逾時：後端可能已經成功，指示必須是「去確認」而不是「再按一次」
+        if (_HT_WRITE_NO_RETRY.test(String((body && body.action) || ''))) {
+          return { ok:false, _maybeSucceeded:true,
+                   error:'連線逾時，但這個動作很可能已經完成。請重新整理確認結果，不要直接再按一次' };
+        }
+        return { ok:false, error:'載入逾時，伺服器回應太慢，請重試' };
+      }
+      return { ok:false, error:'網路連線失敗' };
+    })
     .then(function(r){ if (to) clearTimeout(to); return r; });
 }
 
