@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914215013';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914215304';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -728,6 +728,17 @@ input[type=checkbox]{accent-color:#0066CC}
     /* 只限 #app 和 #app-inner，避免 #mobile-form-actions 等兄弟元素被撐高 */
     #app,#app-inner{height:100dvh!important}
   }
+}
+/* ── iOS PWA 從休眠恢復：dvh 也會是過期值 ──────────────────────────────
+   症狀：加到主畫面的 App 隔很久再打開，底部出現一條空白；完全關掉重開就好。
+   成因：100dvh 在「恢復」時拿到的是休眠前的舊高度 → #app 比畫面矮 →
+        下面露出 html 的底色（所以那條的顏色會跟著 html 背景變）。
+        上面那段註解寫的「底部留白、要重開好幾次」就是這件事，當時改用 dvh 仍沒解決。
+   解法：手機上讓 #app 直接 position:fixed; inset:0 —— 固定定位是對著「實際可視範圍」
+        排版，恢復時由合成器重算，不吃過期的 dvh／innerHeight。 */
+@media(max-width:768px){
+  #app{position:fixed!important;inset:0!important;height:auto!important}
+  #app-shell{height:100%!important}
 }
 /* iOS Safari 100vh 後備：只有「不支援 dvh」的舊瀏覽器才用 JS --vh。
    支援 dvh 者一律用上方穩定的 100dvh，避免載入時 --vh 取到不穩的 innerHeight → 底部留白、要重開好幾次。 */
@@ -13935,6 +13946,60 @@ function _fixBottomNavGap() {
   } catch (e) {}
 }
 // 恢復當下量到的值可能還是過期的 → 隔幾個時間點再量幾次，直到穩定
+// ── 底部留白診斷（手機用）──────────────────────────────────────────────
+// 連點標題列 5 下顯示實際數值。這個 bug 只在真機 PWA 從休眠恢復時出現，
+// 開發者工具重現不了，只能請使用者在現場把數字拍下來。
+window._bnDiag = function() {
+  try {
+    var nav = document.getElementById('bottom-nav');
+    var app = document.getElementById('app');
+    var vv = window.visualViewport;
+    var cs = getComputedStyle(document.documentElement);
+    var probe = document.createElement('div');
+    probe.style.cssText = 'position:fixed;bottom:0;height:env(safe-area-inset-bottom,0px);width:1px;';
+    document.body.appendChild(probe);
+    var safeB = Math.round(probe.getBoundingClientRect().height);
+    probe.remove();
+    var L = [
+      'innerHeight       ' + window.innerHeight,
+      'documentEl.client ' + document.documentElement.clientHeight,
+      'visualViewport.h  ' + (vv ? Math.round(vv.height) : '-'),
+      'vv.offsetTop      ' + (vv ? Math.round(vv.offsetTop) : '-'),
+      'vv.pageTop        ' + (vv ? Math.round(vv.pageTop) : '-'),
+      'vv.scale          ' + (vv ? vv.scale : '-'),
+      'screen.height     ' + (screen && screen.height),
+      'safe-area-bottom  ' + safeB,
+      '--bn-gap          ' + (cs.getPropertyValue('--bn-gap').trim() || '(未設)'),
+      'app.rect.bottom   ' + (app ? Math.round(app.getBoundingClientRect().bottom) : '-'),
+      'app.rect.height   ' + (app ? Math.round(app.getBoundingClientRect().height) : '-'),
+      'nav.rect.bottom   ' + (nav ? Math.round(nav.getBoundingClientRect().bottom) : '-'),
+      'nav.rect.height   ' + (nav ? Math.round(nav.getBoundingClientRect().height) : '-'),
+      'standalone        ' + (window.navigator.standalone === true || matchMedia('(display-mode:standalone)').matches),
+      'version           ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '-')
+    ].join('\n');
+    var box = document.getElementById('_bn_diag');
+    if (box) box.remove();
+    box = document.createElement('div');
+    box.id = '_bn_diag';
+    box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:rgba(20,22,26,.96);color:#9EE8B5;'
+      + 'font:12px/1.55 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:12px;white-space:pre;overflow:auto;max-height:70vh';
+    box.textContent = L;
+    box.onclick = function(){ box.remove(); };
+    document.body.appendChild(box);
+  } catch (e) { alert('診斷失敗：' + e.message); }
+};
+(function(){
+  var n = 0, t = 0;
+  document.addEventListener('click', function(e){
+    var h = e.target && e.target.closest && e.target.closest('#app-header');
+    if (!h) { n = 0; return; }
+    var now = Date.now();
+    n = (now - t < 800) ? n + 1 : 1;
+    t = now;
+    if (n >= 5) { n = 0; window._bnDiag(); }
+  }, true);
+})();
+
 function _fixBottomNavGapSoon() {
   _fixBottomNavGap();
   [80, 300, 800, 1600].forEach(function(d){ setTimeout(_fixBottomNavGap, d); });
