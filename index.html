@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914221151';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914221332';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -13962,6 +13962,14 @@ window._bnDiag = function() {
     document.body.appendChild(probe);
     var safeB = Math.round(probe.getBoundingClientRect().height);
     probe.remove();
+    // ★ 頂部 safe-area：用來判斷「網頁視窗有沒有延伸到狀態列底下」——
+    //   >0 代表有延伸(全螢幕)，0 代表視窗是從狀態列下方才開始。少了這個數字就分不出
+    //   那 62pt 的缺口在上面還是下面（先前就是漏了它才判斷不出來）。
+    var probeT = document.createElement('div');
+    probeT.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top,0px);width:1px;';
+    document.body.appendChild(probeT);
+    var safeT = Math.round(probeT.getBoundingClientRect().height);
+    probeT.remove();
     var L = [
       'innerHeight       ' + window.innerHeight,
       'documentEl.client ' + document.documentElement.clientHeight,
@@ -13970,7 +13978,9 @@ window._bnDiag = function() {
       'vv.pageTop        ' + (vv ? Math.round(vv.pageTop) : '-'),
       'vv.scale          ' + (vv ? vv.scale : '-'),
       'screen.height     ' + (screen && screen.height),
+      'safe-area-top     ' + safeT,
       'safe-area-bottom  ' + safeB,
+      'screen-innerH     ' + ((screen && screen.height ? screen.height : 0) - window.innerHeight),
       '--bn-gap          ' + (cs.getPropertyValue('--bn-gap').trim() || '(未設)'),
       'app.rect.bottom   ' + (app ? Math.round(app.getBoundingClientRect().bottom) : '-'),
       'app.rect.height   ' + (app ? Math.round(app.getBoundingClientRect().height) : '-'),
