@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914141733';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914143334';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9427,6 +9427,13 @@ async function submitForm() {
   // 只有「手動存草稿的上傳正在進行」時才擋，避免那批檔還沒寫進草稿就送出而漏檔。
   if (window._draftUploadInProgress) {
     toast('⏳ 草稿附件還在上傳，請稍候幾秒再送出，以免遺漏');
+    return;
+  }
+  // 附件保險：選檔即傳的附件若還在上傳中（尚未顯示「已上傳」）就先擋住送出，
+  // 等檔案確實傳到 Drive 再送 → 避免「檔案還沒到就送出」而漏附件。
+  // 與後端「送出後用資料夾實際檔案對帳」形成雙保險。
+  if (typeof _tempUploadingCount === 'function' && _tempUploadingCount() > 0) {
+    toast('⏳ 附件上傳中，請等附件顯示「已上傳」再送出');
     return;
   }
   _submitLock = true;
