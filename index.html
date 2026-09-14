@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914205831';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914210519';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7366,6 +7366,29 @@ function _releaseSlot() {
   else _inflightCount = Math.max(0, _inflightCount - 1);
 }
 
+// ── 附件預覽的獨立名額（B）────────────────────────────────────────────
+// 問題：全域在途上限是 3，一張單有 3 張以上收據時，縮圖會「一次把 3 個名額佔滿」。
+//   此時使用者點下一張單，那個 get 只能排隊等縮圖跑完（每個最多 10 秒）——
+//   於是「我想看的金額，卡在我根本還沒點開的收據圖後面」。
+//   _BG_ACTIONS 只調整了排隊順序，擋不住「已經佔住名額」這件事。
+// 解法：附件預覽自己再過一道閘，最多同時 1 個 → 3 個名額永遠至少留 2 個給主資料。
+//   縮圖只是晚幾秒浮出來，金額與簽核狀態先到。
+var _ATTACH_ACTIONS = new Set(['getThumb', 'getFileB64']);
+var _ATTACH_MAX = 1;
+var _attachInflight = 0;
+var _attachQueue = [];
+function _acquireAttach(action) {
+  if (!_ATTACH_ACTIONS.has(action)) return Promise.resolve();
+  if (_attachInflight < _ATTACH_MAX) { _attachInflight++; return Promise.resolve(); }
+  return new Promise(function(resume){ _attachQueue.push(resume); });
+}
+function _releaseAttach(action) {
+  if (!_ATTACH_ACTIONS.has(action)) return;
+  var next = _attachQueue.shift();
+  if (next) next();            // 名額交棒，不遞減（與 _releaseSlot 同一套做法）
+  else _attachInflight = Math.max(0, _attachInflight - 1);
+}
+
 async function _fetchAPI(action, data = {}, _retry = 0, opts = {}) {
   if (_retry === 0 && _breakerBlocked(action)) {
     const _wait = Math.ceil((_apiBreaker.openUntil - Date.now()) / 1000);
@@ -7375,6 +7398,8 @@ async function _fetchAPI(action, data = {}, _retry = 0, opts = {}) {
     const body = { action, token: currentUser?.token, ...data };
     // 佔一個在途名額再打；名額在拿到回應後立刻釋放（退避等待不佔名額）
     // 註：不用 data 上的旗標區分前景/背景，否則會改變 _cacheKey 而破壞與其他呼叫點的去重
+    // 附件預覽先過自己的閘，再去搶全域名額（不會死鎖：占用全域名額的主資料不需要這道閘）
+    await _acquireAttach(action);
     await _acquireSlot(action, false);
     let res, _txt;
     const _ac = new AbortController();
@@ -7394,6 +7419,7 @@ async function _fetchAPI(action, data = {}, _retry = 0, opts = {}) {
     } finally {
       clearTimeout(_toId);
       _releaseSlot();
+      _releaseAttach(action);
     }
     let json;
     try {
@@ -11351,12 +11377,22 @@ window._tempUploading = window._tempUploading || {};   // uid -> true
 // 只取「屬於當前這張表單」的暫存附件。用 clientDraftKey 綁定：開新表單時 key 會換掉，
 // 就算殘留了上一張單的紀錄也不可能被帶進新單。
 function _currentTempFiles() {
-  var k = (typeof _getClientDraftKey === 'function') ? _getClientDraftKey() : null;
-  if (!k) return [];
+  // ★ 以「畫面上還掛著的檔案」(_pendingFiles) 為準，不再用 clientDraftKey 比對。
+  //   原本是 filter(f.key === 目前的 key)：只要 key 在上傳之後變動過
+  //   （_resetClientDraftKey、改從 localStorage 的 bf_draft 讀回、開草稿編輯…），
+  //   已經上傳成功的檔案就會被「靜默剔除」，送出的 files 變空 —— 檔案在 Drive、案件沒有。
+  //   使用者刪掉的檔案本來就會同步從 _tempUploaded 移除（見 removePendingFile），
+  //   所以用 _pendingFiles 當真相源更準確，也跟送出前的必填驗證同一個依據。
   var m = window._tempUploaded || {};
-  return Object.keys(m).map(function(u){ return m[u]; })
-    .filter(function(f){ return f && f.key === k && f.url; })
-    .map(function(f){ return { name: f.name, url: f.url, fileId: f.fileId }; });
+  var out = [], seen = {};
+  (window._pendingFiles || []).forEach(function(pf) {
+    var f = pf && m[pf._uid];
+    if (f && f.url && !seen[f.fileId || f.url]) {
+      seen[f.fileId || f.url] = 1;
+      out.push({ name: f.name, url: f.url, fileId: f.fileId });
+    }
+  });
+  return out;
 }
 // 還有檔案在傳嗎？送出前用來提示使用者稍等（不強制擋）
 function _tempUploadingCount() {
