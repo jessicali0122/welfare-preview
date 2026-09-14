@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914205044';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914205404';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7143,6 +7143,41 @@ function _bootJustPrimed(action) {
   return _BOOT_ACTIONS.has(action) && _bootPrimedAt && (Date.now() - _bootPrimedAt) < 90000;
 }
 
+// ── 寫入後「就地更新」──────────────────────────────────────────────
+// 原本核准／退件成功後是 _cacheClear() + 重新 loadDetail/loadDashboard，
+// 等於再打一趟 GAS（3～5 秒）才看得到新狀態 —— 這就是「按了核准還要再等」的來源。
+// 後端現在會把簽核後的 status/step 一起回傳，這裡直接套用到本地資料並重畫，畫面即時更新；
+// 真正的重抓交給背景，使用者不必等。
+function _patchCaseLocal(caseId, patch) {
+  if (!caseId || !patch) return false;
+  var hit = false;
+  function _apply(arr) {
+    if (!Array.isArray(arr)) return;
+    arr.forEach(function(c) {
+      if (c && c.caseId === caseId) { Object.keys(patch).forEach(function(k){ c[k] = patch[k]; }); hit = true; }
+    });
+  }
+  _apply(window._allCasesCache);
+  // list 的快取本身也要更新，否則切走再切回來又看到舊狀態
+  try {
+    var k = _cacheKey('list', {});
+    var cached = _apiCache[k] && _apiCache[k].data;
+    if (cached && Array.isArray(cached.cases)) { _apply(cached.cases); _cacheSet(k, cached); }
+  } catch (e) {}
+  if (!hit) return false;
+  // 立刻重畫目前這一頁（沿用背景更新那條路徑，頁碼會保留）
+  try { _onFreshData('list', { ok: true, cases: window._allCasesCache || [] }); } catch (e) {}
+  return true;
+}
+// 就地更新後仍要跟後端對一次帳（別人可能同時也改了），但不擋畫面
+function _reconcileCasesSoon() {
+  setTimeout(function() {
+    callAPI('list', {}, { noCache: true, bg: true }).then(function(r) {
+      if (r && r.ok && Array.isArray(r.cases)) _onFreshData('list', r);
+    }).catch(function(){});
+  }, 1200);
+}
+
 // 背景更新拿到「跟畫面上不一樣」的資料時，把目前這一頁重畫。
 // 只處理 list（案件清單）—— 它是唯一會被別人改動、又同時顯示在總覽與案件追蹤的資料。
 // 注意不要無限循環：重畫後快取＝最新，下一次背景更新比對結果相同就不會再觸發。
@@ -8964,7 +8999,7 @@ function quickApprove(caseId) {
       toast('⏳ 處理中...');
       const res = await callAPI('approve', { caseId, comment: '核准' });
       window._actionLock = false;
-      if (res.ok) { _cacheClear(); toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadApprovals(); loadDashboard(); }
+      if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadApprovals(); loadDashboard(); }
       else toast('❌ 錯誤：' + res.error);
     }
   );
@@ -8981,7 +9016,7 @@ async function _doQuickReject(caseId, comment) {
   toast('⏳ 處理中...');
   const res = await callAPI('reject', { caseId, comment });
   window._actionLock = false;
-  if (res.ok) { _cacheClear(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
+  if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
   else toast('❌ 錯誤：' + res.error);
 }
 
@@ -9698,7 +9733,7 @@ function doApprove() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('approve', { caseId, comment });
-        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
+        if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
@@ -9720,7 +9755,7 @@ function doReject() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('reject', { caseId, comment });
-        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
+        if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
