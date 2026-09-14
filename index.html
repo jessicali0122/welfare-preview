@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914202247';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914203018';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7137,7 +7137,9 @@ var _apiBreaker = { fails: 0, openUntil: 0 };
 // 單次請求成功率只有 4~5 成，而且新舊部署都一樣（換部署實測無效）。
 // 既然每次嘗試都有近半機率成功，對「使用者正盯著看」的讀取就該更有耐心：
 // 試 5 次的話成功率約 97%，慢一點但至少打得開；背景工作維持 2 次不浪費額度。
-const _PATIENT_ACTIONS = new Set(['get', 'list']);
+// listUsers：純唯讀查詢，重試沒有副作用；GAS 冷啟動實測要 26 秒（暖的 7.5 秒），
+// 屬於「本來就會慢、值得等」的那一類 → 納入耐心清單，慢的時候給提示而不是直接判失敗。
+const _PATIENT_ACTIONS = new Set(['get', 'list', 'listUsers']);
 // ★ 絕不重試的動作：每執行一次就會「產生一筆新資料 / 吃掉一個單號」。
 //   今天 Google 的回應投遞很不穩 —— 後端明明已經建好案件、單號也發了，回應卻在半路
 //   掉了，前端誤判失敗。若此時自動重試，就會再建一張新單、再吃一個單號，稽核上變成
@@ -7203,7 +7205,10 @@ const _MAX_INFLIGHT = 3;
 // bootstrap 一趟要做 7 件事（list/getMembers/getFlowInfo/getApplyItems/getAvatar/getSuppliers/getFlow），
 // 實測 3.8～4.9 秒，但 GAS 忙起來單發就可能 15 秒 → 給它 30 秒，別讓預設的 10 秒把它砍掉
 // （被砍掉不會壞，只是退回原本 7 發慢路徑，合併就白做了）。
-const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000, bootstrap:30000 };
+const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000, bootstrap:30000,
+  // listUsers 實測冷啟動 26.4 秒 / 暖 7.5 秒，回應才 9.5KB（53 人）——慢的是 GAS 本身不是資料量。
+  // 原本沿用預設的 10 秒 → 系統管理頁冷啟動必定「載入失敗：signal is aborted without reason」。
+  listUsers:40000 };
 function _timeoutFor(action){ return _API_TIMEOUT_MS[action] || 10000; }
 // 背景性質的 action：使用者沒有盯著它們看，可以讓路
 // 附件預覽（getThumb/getFileB64）也列為背景：使用者要先看到金額與簽核狀態，
@@ -7329,9 +7334,13 @@ async function _fetchAPI(action, data = {}, _retry = 0, opts = {}) {
       return { ok: false, _maybeSucceeded: true,
         error: '連線中斷，但這筆很可能已經送出成功。請先到「費用申請」確認，不要直接重送（重送會多產生一個單號）' };
     }
-    const friendlyMsg = err.message && err.message.includes('Failed to fetch')
-      ? '網路連線失敗，請檢查網路後重試'
-      : err.message;
+    // 逾時被 AbortController 中斷時，err.message 是瀏覽器的
+    // 「signal is aborted without reason」——使用者完全看不懂，要換成人話。
+    const friendlyMsg = _isTimeout
+      ? '伺服器回應太慢（已等 ' + Math.round(_timeoutFor(action) / 1000) + ' 秒），請稍後再試一次'
+      : (err.message && err.message.includes('Failed to fetch')
+        ? '網路連線失敗，請檢查網路後重試'
+        : err.message);
     return { ok: false, error: friendlyMsg };
   }
 }
