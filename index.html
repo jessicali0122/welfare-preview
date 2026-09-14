@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914151624';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914152114';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5993,6 +5993,8 @@ async function handleGoogleLogin(response) {
     }
   } catch(e) {}
   currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || (payload.email || '').split('@')[0] || '使用者', token: sessionToken, tokenExpiry, sessionExpiry };
+  // 記住 Google 帳號大頭貼網址（沒自訂頭貼時當預設）；存進 bf_user 一併持久化，快取登入也讀得到
+  if (payload && payload.picture) currentUser.googlePhoto = String(payload.picture);
   if (_prevCachedRoles) {
     currentUser.cachedRoles = _prevCachedRoles;
     USER_ROLES[currentUser.email] = _prevCachedRoles;
@@ -6071,22 +6073,37 @@ function showApp() {
     const initial = displayName.charAt(0);
     document.querySelectorAll('.user-avatar-initial').forEach(el => el.textContent = initial);
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = displayName);
-    // 套用已儲存的大頭貼（若有）
+    // 套用大頭貼：優先「已儲存（自訂/先前存的）」，否則退回 Google 帳號大頭貼；都沒有才顯示名字首字
+    var _isGoogleAv = function(u){ return typeof u === 'string' && u.indexOf('googleusercontent.com') >= 0; };
     const _savedAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
     if (_savedAvatar) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
+    else if (currentUser.googlePhoto) setTimeout(function(){ applyAvatar(currentUser.googlePhoto); }, 0);
     // 從伺服器同步大頭貼（跨裝置）— 延後 2.5 秒，別在登入當下和 getMembers／list（角色與案件）
     // 搶同一條又擠又會排隊的 GAS 通道；本機已先套用快取頭像（上方），延後同步不影響觀感。
     setTimeout(function(){
+    var _gp = currentUser.googlePhoto;
     _fetchAPI('getAvatar', {}).then(function(r) {
       var localAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
-      if (r && r.ok) {
-        if (r.avatar && r.avatar !== localAvatar) {
-          // 伺服器有且比本機新 → 更新本機
+      if (!r || !r.ok) return;
+      if (r.avatar) {
+        // 伺服器存的是「Google 照片」且使用者已換 Google 大頭貼 → 更新成新的（保持同步）
+        if (_isGoogleAv(r.avatar) && _gp && r.avatar !== _gp) {
+          localStorage.setItem('bf_avatar_' + currentUser.email, _gp);
+          applyAvatar(_gp);
+          _fetchAPI('saveAvatar', { avatar: _gp }).catch(function(){});
+        } else if (r.avatar !== localAvatar) {
+          // 其餘（自訂頭貼或既有值）以伺服器為準
           localStorage.setItem('bf_avatar_' + currentUser.email, r.avatar);
           applyAvatar(r.avatar);
-        } else if (!r.avatar && localAvatar) {
-          // 伺服器沒有、但本機有 → 幫忙推上伺服器（補救舊版上傳）
+        }
+      } else {
+        // 伺服器沒有頭貼：本機有「自訂」(非 Google)→ 推上去補救；否則用 Google 照片當預設並存回（讓其他人也看得到）
+        if (localAvatar && !_isGoogleAv(localAvatar)) {
           _fetchAPI('saveAvatar', { avatar: localAvatar }).catch(function(){});
+        } else if (_gp) {
+          localStorage.setItem('bf_avatar_' + currentUser.email, _gp);
+          applyAvatar(_gp);
+          _fetchAPI('saveAvatar', { avatar: _gp }).catch(function(){});
         }
       }
     }).catch(function(){});  // 同步失敗不影響登入
@@ -6592,8 +6609,11 @@ function confirmAvatarCrop() {
 
 // ── 大頭貼：套用到所有頭像元素 ──
 function applyAvatar(dataUrl) {
-  // ★ Fix：改用 createElement 避免 XSS（dataUrl 若被竄改可注入任意 HTML）
-  if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) return;
+  // ★ Fix：改用 createElement 避免 XSS（值只進 img.src，不進 innerHTML，故放網址也安全）
+  // 允許：自訂上傳的 data:image base64，或 Google 帳號大頭貼（googleusercontent.com https 網址）
+  if (!dataUrl || typeof dataUrl !== 'string') return;
+  var _okAvatar = dataUrl.startsWith('data:image/') || /^https:\/\/([a-z0-9-]+\.)*googleusercontent\.com\//i.test(dataUrl);
+  if (!_okAvatar) return;
   document.querySelectorAll('.user-avatar-wrap').forEach(function(wrap) {
     wrap.style.background = 'transparent';
     var img = document.createElement('img');
