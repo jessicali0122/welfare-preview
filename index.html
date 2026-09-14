@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914204145';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914204821';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7083,6 +7083,29 @@ function _bootJustPrimed(action) {
   return _BOOT_ACTIONS.has(action) && _bootPrimedAt && (Date.now() - _bootPrimedAt) < 90000;
 }
 
+// 背景更新拿到「跟畫面上不一樣」的資料時，把目前這一頁重畫。
+// 只處理 list（案件清單）—— 它是唯一會被別人改動、又同時顯示在總覽與案件追蹤的資料。
+// 注意不要無限循環：重畫後快取＝最新，下一次背景更新比對結果相同就不會再觸發。
+function _onFreshData(action, fresh) {
+  try {
+    if (action !== 'list' || !fresh || !Array.isArray(fresh.cases)) return;
+    var apps = document.getElementById('view-applications');
+    var dash = document.getElementById('view-dashboard');
+    if (apps && apps.classList.contains('active')) {
+      // 停在第幾頁要保留，不能把正在看第 3 頁的人踹回第 1 頁
+      var _page = window._appCurrentPage || 1;
+      _applyCasesData(fresh.cases);
+      if (typeof _renderAppPage === 'function') _renderAppPage(_page);
+      if (typeof toast === 'function') toast('🔄 已更新為最新資料');
+    } else if (dash && dash.classList.contains('active')) {
+      if (typeof loadDashboard === 'function') loadDashboard();
+    } else {
+      // 不在這兩頁 → 只更新底稿，等使用者切過去時自然就是新的
+      window._allCasesCache = fresh.cases;
+    }
+  } catch (e) {}
+}
+
 async function _callAPI(action, data = {}, opts = {}) {
   // bootstrap 還在路上 → 屬於它涵蓋範圍的讀取先等它，等到了就會命中快取（而不是各自送一發）
   if (_BOOT_ACTIONS.has(action) && window._bootstrapPromise && !_bootPrimedAt && !opts.noCache) {
@@ -7098,7 +7121,15 @@ async function _callAPI(action, data = {}, opts = {}) {
       if (_bootJustPrimed(action)) return cached;   // 剛由 bootstrap 帶回來，本來就是最新的
       const _genAtFetch = _cacheGen;
       _fetchAPIDedup(action, data, opts).then(fresh => {
-        if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(cacheKey, fresh);
+        if (fresh && fresh.ok && _cacheGen === _genAtFetch) {
+          // ★ 背景更新回來後，只寫快取是不夠的 —— 畫面不會自己變，使用者得手動重新整理
+          //   才看得到別人剛送出／剛核准的案件（這正是「要重新整理才會更新」的成因）。
+          //   這裡比對內容，真的有變才重畫，避免每次背景更新都白重繪一次 DOM。
+          var _changed = false;
+          try { _changed = JSON.stringify(fresh) !== JSON.stringify(cached); } catch (e) { _changed = true; }
+          _cacheSet(cacheKey, fresh);
+          if (_changed) _onFreshData(action, fresh);
+        }
       }).catch(function(){});
       return cached;
     }
