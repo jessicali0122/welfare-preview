@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914205404';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914205831';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7265,7 +7265,7 @@ var _apiBreaker = { fails: 0, openUntil: 0 };
 // 試 5 次的話成功率約 97%，慢一點但至少打得開；背景工作維持 2 次不浪費額度。
 // listUsers：純唯讀查詢，重試沒有副作用；GAS 冷啟動實測要 26 秒（暖的 7.5 秒），
 // 屬於「本來就會慢、值得等」的那一類 → 納入耐心清單，慢的時候給提示而不是直接判失敗。
-const _PATIENT_ACTIONS = new Set(['get', 'list', 'listUsers']);
+const _PATIENT_ACTIONS = new Set(['get', 'list', 'listUsers', 'uploadTempFile']);
 // ★ 絕不重試的動作：每執行一次就會「產生一筆新資料 / 吃掉一個單號」。
 //   今天 Google 的回應投遞很不穩 —— 後端明明已經建好案件、單號也發了，回應卻在半路
 //   掉了，前端誤判失敗。若此時自動重試，就會再建一張新單、再吃一個單號，稽核上變成
@@ -7277,7 +7277,11 @@ const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft',
   'bootstrap',
   // 這些重試不會產生新單號，但一樣有副作用：核准/退件/作廢重送可能讓案件多跳一關，
   // 附件重送會在同一張單留下兩份一樣的檔案。稽核上都不能接受 → 一律只送一次。
-  'approve', 'reject', 'voidCase', 'uploadFile', 'uploadTempFile']);
+  // ★ uploadTempFile 不在此列：它只把檔案寫進「暫存資料夾」並回傳網址，完全不碰案件
+  //   （見後端 uploadTempFile：createFile 到 _tmp_<key> 資料夾就回傳）。重試最壞只是
+  //   多一個沒人引用的暫存檔，案件上永遠只會掛 _tempUploaded[uid] 記錄的那一個網址。
+  //   反過來說，不重試才是真正的災難 —— GAS 抖一下附件就永久消失。
+  'approve', 'reject', 'voidCase', 'uploadFile']);
 function _maxRetry(action) {
   if (_NO_RETRY_ACTIONS.has(action)) return -1;   // -1 → 連第一次的重試都不做
   return _PATIENT_ACTIONS.has(action) ? 4 : 1;
@@ -7331,7 +7335,7 @@ const _MAX_INFLIGHT = 3;
 // bootstrap 一趟要做 7 件事（list/getMembers/getFlowInfo/getApplyItems/getAvatar/getSuppliers/getFlow），
 // 實測 3.8～4.9 秒，但 GAS 忙起來單發就可能 15 秒 → 給它 30 秒，別讓預設的 10 秒把它砍掉
 // （被砍掉不會壞，只是退回原本 7 發慢路徑，合併就白做了）。
-const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000, bootstrap:30000,
+const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000, uploadTempFile:90000, bootstrap:30000,
   // listUsers 實測冷啟動 26.4 秒 / 暖 7.5 秒，回應才 9.5KB（53 人）——慢的是 GAS 本身不是資料量。
   // 原本沿用預設的 10 秒 → 系統管理頁冷啟動必定「載入失敗：signal is aborted without reason」。
   listUsers:40000 };
@@ -9910,6 +9914,21 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     var _p = function(n){ return String(n).padStart(2,'0'); };
     _applyDateVal = _applyStr.substring(0,10).replace(/-/g,'/') + ' ' + _p(_tw.getUTCHours()) + ':' + _p(_tw.getUTCMinutes());
   }
+  // ★ 附件把關：所有檔案都拿到暫存網址才建立案件。
+  //   傳不上去就中止送出 —— 寧可讓使用者重按一次，也不要產生一張缺附件的單。
+  var _att = await _ensureAttachmentsUploaded();
+  if (!_att.ok) {
+    _submitLock = false;
+    _showConfirmModal(
+      '⚠️ 附件尚未上傳成功',
+      '這些附件目前傳不上去：<br><strong>' + _att.names.join('、') + '</strong><br><br>'
+      + '為了避免產生「沒有附件的申請單」，這次送出已經停下來，<strong>案件尚未建立</strong>。<br><br>'
+      + '請檢查網路後再按一次送出；若持續失敗，可以先「儲存草稿」保住已填的內容。',
+      '我知道了', 'var(--brand)', function(){}
+    );
+    return;
+  }
+
   const res = await callAPI('submit', {
     ...( _draftCaseId ? { caseId: _draftCaseId } : {}), // 草稿轉送出
     clientDraftKey: _getClientDraftKey(),   // ★ 冪等鍵：同一張表單重複送出只會產生一個單號
@@ -11365,17 +11384,77 @@ async function _tempUploadFile(file, itemEl) {
     });
     if (res && res.ok && res.url) {
       window._tempUploaded[uid] = { key: key, name: res.name || file.name, url: res.url, fileId: res.fileId };
+      if (window._tempFailed) delete window._tempFailed[uid];
       badge.textContent = '已上傳';
       badge.style.color = '#0066CC';
       badge.style.background = '#E7F0FB';
     } else {
-      try { badge.remove(); } catch(e) {}   // 失敗不吵使用者：送出時會照原路徑補傳
+      // ★ 失敗一定要留下痕跡。原本是「靜默移除徽章，送出時再補傳」——
+      //   但補傳走的是送出後的背景上傳，失敗就永久遺失且沒人知道（今天的事故）。
+      //   現在標紅留著，送出前的把關會再傳一次，真的傳不上去就擋住送出。
+      window._tempFailed = window._tempFailed || {};
+      window._tempFailed[uid] = true;
+      badge.textContent = '未上傳';
+      badge.style.color = '#B4232A';
+      badge.style.background = '#FDECEC';
     }
   } catch (e) {
-    try { badge.remove(); } catch(_e) {}
+    window._tempFailed = window._tempFailed || {};
+    window._tempFailed[uid] = true;
+    try { badge.textContent = '未上傳'; badge.style.color = '#B4232A'; badge.style.background = '#FDECEC'; } catch(_e) {}
   } finally {
     delete window._tempUploading[uid];
   }
+}
+
+// ── 送出前的附件把關 ─────────────────────────────────────────────────
+// 事故：使用者選了附件、送出後案件裡卻沒有附件。
+// 成因：沒趕上暫存上傳的檔案會改走「送出之後才在背景上傳」，那段不但沒有被 await
+//       （使用者已被導去案件清單，手機把分頁凍結就直接中斷），uploadFile 又在
+//       「絕不重試」名單裡，GAS 抖一下就永久遺失，而且畫面不會顯示任何失敗。
+// 對策：把附件上傳搬到「建立案件之前」。全部檔案都拿到暫存網址才真的呼叫 submit，
+//       附件網址隨 payload 一起進案件 —— 送出後不再有任何空窗。
+//       傳不上去就擋住送出：寧可讓使用者重按，也不要產生一張沒有附件的單。
+async function _ensureAttachmentsUploaded() {
+  var pending = (window._pendingFiles || []).slice();
+  if (!pending.length) return { ok: true };
+  // 還有檔案正在傳 → 等它們結束（最多 60 秒），避免重複送同一個檔
+  var waited = 0;
+  while (_tempUploadingCount() > 0 && waited < 60000) {
+    await new Promise(function(r){ setTimeout(r, 250); });
+    waited += 250;
+  }
+  var missing = pending.filter(function(f){ return !(window._tempUploaded && window._tempUploaded[f._uid]); });
+  if (!missing.length) return { ok: true };
+  // ★ 遮罩只能開一次、關一次：_busyShow/_busyHide 是計數式的，
+  //   在迴圈裡重複 show 會讓計數永遠歸不了零、遮罩收不掉。
+  _setSubmitBusy(true, '上傳附件中（0/' + missing.length + '）…');
+  var done = 0;
+  try {
+    for (var i = 0; i < missing.length; i++) {
+      var f = missing[i];
+      var itemEl = document.querySelector('#file-list [data-uid="' + f._uid + '"]');
+      await _tempUploadFile(f, itemEl);       // 內含 callAPI 重試
+      if (window._tempUploaded && window._tempUploaded[f._uid]) done++;
+      _setBusyText('上傳附件中（' + done + '/' + missing.length + '）…');
+    }
+  } finally {
+    _setSubmitBusy(false);
+  }
+  var stillMissing = pending.filter(function(f){ return !(window._tempUploaded && window._tempUploaded[f._uid]); });
+  if (stillMissing.length) {
+    return { ok: false, names: stillMissing.map(function(f){ return f.name; }) };
+  }
+  return { ok: true };
+}
+function _setBusyText(text) {
+  try { var el = document.getElementById('global-busy-msg'); if (el) el.textContent = text; } catch (e) {}
+}
+function _setSubmitBusy(on, text) {
+  try {
+    if (on) { if (typeof _busyShow === 'function') _busyShow(text || '處理中…'); }
+    else    { if (typeof _busyHide === 'function') _busyHide(); }
+  } catch (e) {}
 }
 
 function removePendingFile(uid) {
