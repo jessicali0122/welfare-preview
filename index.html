@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914220214';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914220606';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -495,7 +495,13 @@ input[type=checkbox]{accent-color:#0066CC}
        iOS PWA 從休眠恢復時，版面視窗高度／safe-area 可能是過期值，fixed bottom:0 的導覽列
        會停在畫面底部上方一點，下面露出一條空白。純 CSS 量不到這個誤差，改由 JS 量測後補進來，
        讓導覽列自己長高蓋滿（帶著自己的底色與陰影，視覺上連續），而不是另外塗一塊白色。 */
-    padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--bn-gap, 0px));
+    /* ★ 用 max() 給一個「地板值」(--bn-safe-floor)：
+       iOS 在 PWA 有時把 safe-area-inset-bottom 回報成 0，有時 34 —— 同一支手機、同一版程式，
+       結果就是「有時候底部有一條空白、有時候沒有」（使用者回報的主要困擾其實是這個不一致）。
+       回報 0 的那次看起來比較「貼底」，但那是錯的：按鈕文字會壓在 iPhone 的 home indicator 上。
+       所以改成一律保留該保留的高度，讓外觀每次一致、觸控也安全。
+       --bn-safe-floor 由 JS 依裝置設定（有 home indicator 的機型才給 34px）。 */
+    padding-bottom:calc(max(env(safe-area-inset-bottom,0px), var(--bn-safe-floor, 0px)) + var(--bn-gap, 0px));
     background:#FFFFFF;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid rgba(0,0,0,.06);
@@ -14016,6 +14022,21 @@ window._bnDiag = function() {
     t = now;
     if (n >= 5) { n = 0; window._bnDiag(); }
   }, true);
+})();
+
+// 依裝置決定底部保留高度的「地板值」：
+// 只有 standalone(加到主畫面) 的現代 iPhone（全螢幕、有 home indicator）才需要。
+// 有實體 Home 鍵的舊機型與一般瀏覽器分頁不套用，以免白白吃掉 34px。
+(function _setSafeFloor(){
+  try {
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+             || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var standalone = window.navigator.standalone === true
+                  || (window.matchMedia && matchMedia('(display-mode:standalone)').matches);
+    var hasIndicator = Math.max(screen.width || 0, screen.height || 0) >= 812;  // Face ID 世代起
+    document.documentElement.style.setProperty(
+      '--bn-safe-floor', (isIOS && standalone && hasIndicator) ? '34px' : '0px');
+  } catch (e) {}
 })();
 
 function _fixBottomNavGapSoon() {
