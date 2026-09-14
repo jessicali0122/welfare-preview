@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914215754';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914220214';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -545,6 +545,11 @@ input[type=checkbox]{accent-color:#0066CC}
   .bn-item.active::before{
     transform:translate(-50%,-50%) scale(1);
     opacity:1;
+  }
+  /* 診斷用：把導覽列底部的 safe-area 區塊染紅（只有打開診斷面板時才生效） */
+  html._bn-mark #bottom-nav{
+    box-shadow:inset 0 calc(-1 * (env(safe-area-inset-bottom,0px) + var(--bn-gap,0px))) 0 rgba(220,38,38,.55),
+               0 -4px 20px rgba(0,0,0,.07);
   }
   .bn-badge{position:absolute;top:4px;left:50%;margin-left:9px;width:7px;height:7px;border-radius:50%;background:#0066CC;border:1.5px solid #fff;z-index:3}
 }
@@ -13980,6 +13985,9 @@ window._bnDiag = function() {
       'app.rect.height   ' + (app ? Math.round(app.getBoundingClientRect().height) : '-'),
       'nav.rect.bottom   ' + (nav ? Math.round(nav.getBoundingClientRect().bottom) : '-'),
       'nav.rect.height   ' + (nav ? Math.round(nav.getBoundingClientRect().height) : '-'),
+      'nav.paddingBottom ' + (nav ? getComputedStyle(nav).paddingBottom : '-'),
+      'nav.rect.top      ' + (nav ? Math.round(nav.getBoundingClientRect().top) : '-'),
+      '★ 底部紅色區＝導覽列的 safe-area',
       'standalone        ' + (window.navigator.standalone === true || matchMedia('(display-mode:standalone)').matches),
       'version           ' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '-')
     ].join('\n');
@@ -13987,11 +13995,15 @@ window._bnDiag = function() {
     if (box) box.remove();
     box = document.createElement('div');
     box.id = '_bn_diag';
-    box.style.cssText = 'position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:rgba(20,22,26,.96);color:#9EE8B5;'
+    box.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:rgba(20,22,26,.96);color:#9EE8B5;'
       + 'font:12px/1.55 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:12px;white-space:pre;overflow:auto;max-height:70vh';
     box.textContent = L;
-    box.onclick = function(){ box.remove(); };
+    box.onclick = function(){ box.remove(); document.documentElement.classList.remove('_bn-mark'); };
     document.body.appendChild(box);
+    // ★ 把導覽列「safe-area 那一段」染紅：
+    //   如果使用者看到的白條變成紅色 → 那條就是導覽列自己的 safe-area（設計如此，只是看起來空）。
+    //   如果紅色之外「下面還有白色」→ 代表真的有導覽列以外的區域，另當別論。
+    document.documentElement.classList.add('_bn-mark');
   } catch (e) { alert('診斷失敗：' + e.message); }
 };
 (function(){
