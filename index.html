@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914194415';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914194747';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6074,6 +6074,7 @@ function parseJwt(token) {
 
 function showApp() {
   window._appShown = true;
+  _bootstrapStart();   // ★ 最先送出：登入必抓的資料合成一次往返，後面各呼叫點直接吃快取
   // let 宣告的 currentUser 不會自動掛上 window；統一補掛，
   // 供跨 script 區塊（按摩快取 key、投票等）以 window.currentUser 讀取
   window.currentUser = currentUser;
@@ -6097,8 +6098,9 @@ function showApp() {
     // 從伺服器同步大頭貼（跨裝置）— 延後 2.5 秒，別在登入當下和 getMembers／list（角色與案件）
     // 搶同一條又擠又會排隊的 GAS 通道；本機已先套用快取頭像（上方），延後同步不影響觀感。
     setTimeout(function(){
+    if (!currentUser) return;   // 這支延後 2.5 秒才跑，期間可能已登出／憑證過期 → 不要炸
     var _gp = currentUser.googlePhoto;
-    _fetchAPI('getAvatar', {}).then(function(r) {
+    callAPI('getAvatar', {}).then(function(r) {
       var localAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
       if (!r || !r.ok) return;
       if (r.avatar) {
@@ -6214,7 +6216,7 @@ function showApp() {
     // 角色權威資料來自 getMembers；提早觸發（150ms，僅讓主資料 list 稍先出手），
     // 讓「案件追蹤／系統管理」等入口卡最快 ~1s 到位，不必等 2.5 秒才冒出來
     setTimeout(function(){ _syncMembersFromServer(); }, 150);
-    setTimeout(function(){ callAPI('logLogin', {}).catch(function(){}); }, 3000);
+    // logLogin 已併入 bootstrap（後端順道寫入），不再單獨打一發
     // 全體頭像延遲載入：頭像是 base64，不放進 getMembers（會讓每次登入背著好幾 MB），
     // 拿到後寫進 localStorage 供名字標籤顯示他人頭像
     setTimeout(function(){ _syncAvatarsFromServer(); }, _dAvatar);
@@ -6433,7 +6435,7 @@ function removeAvatar() {
     });
     // 有 Google 照片就改用它（沒有就維持名字首字）
     if (cu.googlePhoto) applyAvatar(cu.googlePhoto);
-    _fetchAPI('removeAvatar', {}).catch(function(){});
+    _fetchAPI('removeAvatar', {}).catch(function(){}); _avatarCacheClear();
     if (typeof toast === 'function') toast('✅ 已移除大頭貼' + (cu.googlePhoto ? '，改用 Google 帳號照片' : ''));
   };
   if (typeof _showConfirmModal === 'function') {
@@ -6639,7 +6641,7 @@ function confirmAvatarCrop() {
   toast('✅ 大頭貼已更新！');
   // 背景靜默同步到伺服器（不卡 UI）
   setTimeout(function() {
-    _fetchAPI('saveAvatar', { avatar: dataUrl }).catch(function(){});
+    _fetchAPI('saveAvatar', { avatar: dataUrl }).catch(function(){}); _avatarCacheClear();
     window._avatarCropLock = false;
   }, 300);
 }
@@ -6690,7 +6692,7 @@ const _CACHE_TTL = 300000; // 5 分鐘（記憶體 SWR：這段時間內直接�
 // 唯讀 action 快取。getThumb / getFileB64 是附件預覽用的：每個附件各打一次後端，
 // 一張有 5 個附件的單就多 5 次執行，而且原本沒快取 → 每次重看同一張單都重抓一遍。
 // 兩者都不在 _API_LS_ACTIONS 裡，所以只存在記憶體（base64 檔案很大，不可寫進 localStorage）。
-const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow', 'listUsers', 'getThumb', 'getFileB64']);
+const _CACHEABLE = new Set(['list', 'get', 'getFlowInfo', 'getMembers', 'getFlow', 'listUsers', 'getThumb', 'getFileB64', 'getApplyItems', 'getAvatar', 'getSuppliers']);
 // ── 離線快取（localStorage）：把上次成功的讀取結果留到下次開頁 ──
 // GAS 冷啟動 1～3 秒，全新載入時首頁會空等。改成先秒開上次資料、背景再更新（樂觀顯示）。
 // 只存會擋首屏的幾支查詢；get（單筆案件）key 太多、易塞爆，只留記憶體快取。
@@ -6752,6 +6754,10 @@ function _cacheGetStale(key) {
     const o = JSON.parse(raw);
     return (o && o.data != null) ? o.data : null;   // 刻意忽略 TTL
   } catch (e) { return null; }
+}
+// 頭像寫入後讓 getAvatar 快取立刻失效（bootstrap 會把它預熱，不清會讀到舊的）
+function _avatarCacheClear() {
+  try { delete _apiCache[_cacheKey('getAvatar', {})]; } catch (e) {}
 }
 function _cacheSet(key, data) {
   _apiCache[key] = { ts: Date.now(), data };
@@ -6942,7 +6948,42 @@ async function callAPI(action, data = {}, opts = {}) {
   return _callAPI(action, data, opts);
 }
 
+// ── 登入合併請求（bootstrap）────────────────────────────────────────
+// GAS 對同一位使用者是排隊處理的：登入後這 7 支唯讀 API 各打一次＝排 7 輪，
+// 每輪 1～15 秒，使用者就看著畫面一格一格慢慢冒。改成登入時打一發 bootstrap，
+// 回來後把每一段結果寫進既有快取，下面 _callAPI 的呼叫點就直接命中、完全不出網路。
+// 好處是「呼叫點一個都不用改」：_preloadFlowInfo / _syncMembersFromServer 等照原樣寫。
+const _BOOT_ACTIONS = new Set(['list', 'getMembers', 'getFlowInfo', 'getApplyItems', 'getAvatar', 'getSuppliers', 'getFlow']);
+window._bootstrapPromise = null;
+let _bootPrimedAt = 0;
+
+function _bootstrapStart() {
+  if (window._bootstrapPromise) return window._bootstrapPromise;
+  window._bootstrapPromise = _fetchAPI('bootstrap', {}).then(function(r) {
+    if (!r || !r.ok) return null;
+    _BOOT_ACTIONS.forEach(function(a) {
+      const part = r[a];
+      if (part && part.ok) _cacheSet(_cacheKey(a, {}), part);
+    });
+    // list 另外餵給「點案件秒開」用的底稿，行為與原本的背景預抓一致
+    if (r.list && r.list.ok && r.list.cases && !window._allCasesCache) window._allCasesCache = r.list.cases;
+    _bootPrimedAt = Date.now();
+    return r;
+  }).catch(function() { return null; });   // 失敗就當沒這回事，各呼叫點退回原本的單支 API
+  return window._bootstrapPromise;
+}
+
+// bootstrap 剛回來的這段時間內，快取命中不要再觸發「背景靜默更新」——
+// 否則那 7 支又會各自補打一次網路，等於白合併。
+function _bootJustPrimed(action) {
+  return _BOOT_ACTIONS.has(action) && _bootPrimedAt && (Date.now() - _bootPrimedAt) < 90000;
+}
+
 async function _callAPI(action, data = {}, opts = {}) {
+  // bootstrap 還在路上 → 屬於它涵蓋範圍的讀取先等它，等到了就會命中快取（而不是各自送一發）
+  if (_BOOT_ACTIONS.has(action) && window._bootstrapPromise && !_bootPrimedAt && !opts.noCache) {
+    try { await window._bootstrapPromise; } catch (e) {}
+  }
   const cacheKey = _cacheKey(action, data);
   // 可快取的 action：先回傳快取，背景同時更新
   if (_CACHEABLE.has(action) && !opts.noCache) {
@@ -6950,6 +6991,7 @@ async function _callAPI(action, data = {}, opts = {}) {
     if (cached) {
       // 背景靜默更新（不 await）；記錄當下世代，若期間發生 _cacheClear（有寫入操作）就丟棄，
       // 避免用「寫入前」的舊資料回寫快取，蓋掉剛送出/核准的最新狀態
+      if (_bootJustPrimed(action)) return cached;   // 剛由 bootstrap 帶回來，本來就是最新的
       const _genAtFetch = _cacheGen;
       _fetchAPIDedup(action, data, opts).then(fresh => {
         if (fresh && fresh.ok && _cacheGen === _genAtFetch) _cacheSet(cacheKey, fresh);
