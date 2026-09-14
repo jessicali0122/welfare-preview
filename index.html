@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914210519';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914214016';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -480,24 +480,24 @@ input[type=checkbox]{accent-color:#0066CC}
 @media(max-width:768px){
   #bottom-nav{
     display:flex!important;
-    position:fixed;left:0;right:0;bottom:0;
+    /* ★ bottom 用「負的縫隙」把整條導覽列往下延伸蓋住空白。
+       只加 padding 沒有用 —— bottom:0 錨定的是下緣，padding 只會讓盒子往上長。 */
+    position:fixed;left:0;right:0;bottom:calc(-1 * var(--bn-gap, 0px));
     /* 內容區 54px 停在 home-indicator 之上（好按），下方 padding=安全區高度讓白色背景
        直接延伸填滿 home-indicator 區（box-sizing:content-box 讓 padding 加在 54 之外）。 */
     height:54px;
     box-sizing:content-box;
-    padding-bottom:env(safe-area-inset-bottom,0px);
+    /* safe-area ＋「實際量到的縫隙」(--bn-gap)：
+       iOS PWA 從休眠恢復時，版面視窗高度／safe-area 可能是過期值，fixed bottom:0 的導覽列
+       會停在畫面底部上方一點，下面露出一條空白。純 CSS 量不到這個誤差，改由 JS 量測後補進來，
+       讓導覽列自己長高蓋滿（帶著自己的底色與陰影，視覺上連續），而不是另外塗一塊白色。 */
+    padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--bn-gap, 0px));
     background:#FFFFFF;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid rgba(0,0,0,.06);
     z-index:200;
     box-shadow:0 -4px 20px rgba(0,0,0,.07);
     align-items:stretch;
-  }
-  /* 手機瀏覽器工具列收合／safe-area 尚未解析時，fixed bottom:0 下方會露出一條空白。
-     用向下延伸的白色填充塊把那條縫永遠蓋住（貼底時看不見、不可點）。 */
-  #bottom-nav::after{
-    content:'';position:absolute;left:0;right:0;top:100%;height:160px;
-    background:#FFFFFF;pointer-events:none;
   }
   .bn-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -13907,6 +13907,47 @@ function updateVH(){document.documentElement.style.setProperty('--vh',window.inn
 updateVH();
 window.addEventListener('resize',updateVH);
 window.addEventListener('orientationchange',function(){setTimeout(updateVH,150);});
+
+// ── 底部導覽「貼底」自我校正（手機／PWA）──────────────────────────────
+// 症狀：加到主畫面的 App 隔一段時間再打開，底部導覽下方露出一條空白；重開幾次又好了。
+// 成因：iOS 從休眠恢復時，版面視窗高度與 safe-area 可能仍是過期值，position:fixed;bottom:0
+//       會停在「畫面底部上方一點」。純 CSS 量不到這個誤差（env() 給的就是那個過期值），
+//       上面那個 --vh 也只在 resize/轉向時更新，完全沒有涵蓋「從休眠恢復」。
+// 作法：直接量「導覽列底緣」和「視窗底緣」差多少，把差值餵給 --bn-gap，
+//       讓導覽列自己長高補滿（保有自己的底色與陰影，視覺上連續）。
+//       量到 0 就自然是 0，不會在正常情況下多出東西。
+function _fixBottomNavGap() {
+  try {
+    var nav = document.getElementById('bottom-nav');
+    // ★ 不可以用 offsetParent 判斷：position:fixed 的元素 offsetParent 永遠是 null，
+    //   會讓這支函式每次都直接 return（等於沒作用）。改看 computed display。
+    if (!nav || getComputedStyle(nav).display === 'none') return;   // 桌機隱藏時不處理
+    var prev = document.documentElement.style.getPropertyValue('--bn-gap');
+    document.documentElement.style.setProperty('--bn-gap', '0px');   // 先歸零才量得到真實縫隙
+    var r = nav.getBoundingClientRect();
+    // 視窗底緣以 visualViewport 為準（PWA 恢復時它比 innerHeight 可靠）
+    var vv = window.visualViewport;
+    var bottom = vv ? (vv.height + vv.offsetTop) : window.innerHeight;
+    var gap = Math.round(bottom - r.bottom);
+    if (!(gap > 0) || gap > 200) gap = 0;                // 負值或離譜值一律當 0，不要亂加高度
+    document.documentElement.style.setProperty('--bn-gap', gap + 'px');
+    if (prev !== gap + 'px') updateVH();
+  } catch (e) {}
+}
+// 恢復當下量到的值可能還是過期的 → 隔幾個時間點再量幾次，直到穩定
+function _fixBottomNavGapSoon() {
+  _fixBottomNavGap();
+  [80, 300, 800, 1600].forEach(function(d){ setTimeout(_fixBottomNavGap, d); });
+}
+window.addEventListener('resize', _fixBottomNavGapSoon);
+window.addEventListener('orientationchange', function(){ setTimeout(_fixBottomNavGapSoon, 200); });
+window.addEventListener('pageshow', _fixBottomNavGapSoon);        // 含 bfcache 恢復
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) _fixBottomNavGapSoon(); });
+if (window.visualViewport) {
+  window.visualViewport.addEventListener('resize', _fixBottomNavGap);
+  window.visualViewport.addEventListener('scroll', _fixBottomNavGap);
+}
+_fixBottomNavGapSoon();
 
 // ── REAL-TIME TAIWAN TIME ──
 // 設計：上排小字日期（寬字距）＋下排大字等寬時鐘（秒數縮小淡化）＋漸層細線收尾；
