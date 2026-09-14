@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914152114';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914153640';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7876,24 +7876,22 @@ function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st
 // 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
 function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
 function _dshDutyTea(){
-  var all=[];
-  // 一律把三個來源都併進來(_htEvents 完整活動 / localStorage 快取 / 試算表薄場次)，同月可能同時有薄+完整版
-  try{ if(typeof _htEvents!=='undefined'&&Array.isArray(_htEvents)) all=all.concat(_htEvents); }catch(e){}
-  try{ var _hc=JSON.parse(localStorage.getItem('bf_ht_cache')||'null'); if(_hc&&Array.isArray(_hc.events)) all=all.concat(_hc.events); }catch(e){}
-  try{ if(typeof _htSheetAsEvents==='function'){ var _s=_htSheetAsEvents(); if(Array.isArray(_s)) all=all.concat(_s); } }catch(e){}
-  var curYM=_dshCurYM();
-  var up=all.filter(function(e){try{return _evMonth(e)>=curYM;}catch(_){return false;}}).sort(function(a,b){return _evMonth(a)<_evMonth(b)?-1:1;});
-  var ev=up[0];
-  // 同月可能有多筆(薄場次+完整活動)→ 取「資料最完整」那筆，避免抓到只有日期的薄場次顯示 0
-  if(ev){ var ym0=_evMonth(ev); var _rich=function(e){return (e.headcount||0)+(e.itemCount||0)+((e.totalBudget||e.budgetTotal||0)?1:0)+((e.birthdays&&e.birthdays.length)||0);}; up.forEach(function(e){ if(_evMonth(e)===ym0 && _rich(e)>_rich(ev)) ev=e; }); }
+  // 資料來源改走 window.htDashSummary()：_dshDutyTea 在總覽作用域讀不到午茶 IIFE 的 _htEvents／_htSheetAsEvents，
+  // 交給住在該作用域、掛在 window 的 htDashSummary 算好人數/品項/預算/狀態再回傳（根治「顯示—」）。
+  var _sum=(typeof window.htDashSummary==='function')?window.htDashSummary():null;
   var dateStr=(typeof htGetNextEventDate==='function')?htGetNextEventDate():'';
   var cta='<button class="dcta" style="background:#D98324" onclick="sw(\'hightea\')">前往午茶日 →</button>';
-  if(!ev&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
-  var m=ev?(parseInt(_evMonth(ev).slice(5,7),10)||0):((new Date()).getMonth()+1);var bd=_dshBdayMonthCount(m);
-  var hc=ev?(ev.headcount||0):0,it=ev?(ev.itemCount||0):0,bud=ev?(ev.totalBudget||ev.budgetTotal||0):0;
-  // 人數／品項／預算要載入該場「明細」才有(htGetItems 回 event＋items)。抓一次快取起來、再重畫補上格子。
-  var _evId=ev&&ev.eventId;
-  if(_evId){
+  // 資料尚未載入（沒進過午茶頁）→ 用官方安全預抓補全一次，再重畫（只在真的沒摘要時）
+  if(!_sum && typeof window.htPrefetchNextDate==='function' && !window._dshTeaPrefetched){
+    window._dshTeaPrefetched=true;
+    try{ window.htPrefetchNextDate().then(function(){ try{_renderRoleDash();}catch(e){} }).catch(function(){}); }catch(e){}
+  }
+  if(!_sum&&!dateStr){return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div><div class="dsub">尚未安排下場午茶日</div></div>'+cta+'</div><div class="dsh-empty" style="text-align:left;padding:14px 2px 2px">點右上前往午茶日，建立下一場活動。</div></div>';}
+  var m=(_sum&&_sum.date)?(parseInt(String(_sum.date).replace(/\//g,'-').slice(5,7),10)||0):((new Date()).getMonth()+1);var bd=_dshBdayMonthCount(m);
+  var hc=_sum?(_sum.headcount||0):0,it=_sum?(_sum.itemCount||0):0,bud=_sum?(_sum.budget||0):0;
+  // 平台場在清單是薄的(人數/品項=0)→ 用 htGetItems 補；試算表場(sheet: 假 id、且本身已帶數字)不打 htGetItems
+  var _evId=_sum&&_sum.eventId;
+  if(_evId && !_sum.isSheet && (!hc||!it)){
     window._dshTeaCache=window._dshTeaCache||{};
     var _cd=window._dshTeaCache[_evId];
     if(_cd){ hc=_cd.hc||hc; it=_cd.it||it; bud=_cd.bud||bud; }
@@ -7904,12 +7902,8 @@ function _dshDutyTea(){
   }
   var hint=(typeof htGetNextEventHint==='function')?(htGetNextEventHint()||''):'';
   var cd='';var _cm=hint.match(/(\d+)\s*天/);if(hint.indexOf('今天')>=0)cd='就是今天';else if(hint.indexOf('明天')>=0)cd='就是明天';else if(_cm)cd='還有 '+_cm[1]+' 天';
-  var st=(ev&&typeof _htDisplayStatus==='function')?_htDisplayStatus(ev):'進行中';
+  var st=(_sum&&_sum.status)?_sum.status:'進行中';
   // 選到的場次沒有 eventId（_htEvents 未載，只吃到試算表薄場次）→ 用官方安全預抓補全 _htEvents 一次（只在空時填、不覆寫），再重畫補上人數/品項
-  if(!_evId && typeof window.htPrefetchNextDate==='function' && !window._dshTeaPrefetched){
-    window._dshTeaPrefetched=true;
-    try{ window.htPrefetchNextDate().then(function(){ try{_renderRoleDash();}catch(e){} }).catch(function(){}); }catch(e){}
-  }
   var _cell=function(n,k,col){return '<div class="cell"><div class="n"'+(col?(' style="color:'+col+'"'):'')+'>'+n+'</div><div class="k">'+k+'</div></div>';};
   // 參加人數／品項數：一律顯示；抓不到明細時顯示「—」（未知），不假造 0
   var hcTxt=hc?(hc+'<small> 人</small>'):'—', itTxt=it?(it+'<small> 項</small>'):'—';
@@ -16254,6 +16248,25 @@ window.htGetNextEventDate = function() {
     if (!up.length) return null;
     // 下一場就是今天 → 直接顯示「今天」，比日期更直覺
     return up[0].getTime() === now.getTime() ? '今天' : ((up[0].getMonth()+1) + '/' + up[0].getDate());
+  } catch(e) { return null; }
+};
+// ── 給總覽「午茶日籌備」職責卡用：回傳下一場的摘要（人數/品項/預算/壽星/eventId）──
+// 為何獨立在此：_dshDutyTea 在總覽作用域，讀不到本 IIFE 的 _htEvents／_htSheetAsEvents，
+// 只能靠這個掛在 window 的函式在「看得到資料的作用域」裡算好再回傳。
+window.htDashSummary = function() {
+  try {
+    var src = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
+    var now = new Date(); now.setHours(0,0,0,0);
+    var up = src.map(function(e){ var ds = String(e.date||'').replace(/\//g,'-'); if(!ds) return null; var d = new Date(ds); d.setHours(0,0,0,0); return (isNaN(d.getTime())||d<now) ? null : { e:e, t:d.getTime() }; }).filter(Boolean).sort(function(a,b){ return a.t-b.t; });
+    if (!up.length) return null;
+    // 最近一天可能同時有「薄平台場＋完整試算表場」→ 取資料最完整那筆
+    var day0 = up[0].t;
+    var cands = up.filter(function(x){ return x.t === day0; }).map(function(x){ return x.e; });
+    var rich = function(e){ return (e.headcount||0) + (e.itemCount||0) + ((e.totalBudget||e.budgetTotal||0)?1:0) + ((e.birthdays&&e.birthdays.length)||0); };
+    var ev = cands[0]; cands.forEach(function(e){ if (rich(e) > rich(ev)) ev = e; });
+    return { eventId: ev.eventId||'', date: ev.date||'', headcount: ev.headcount||0, itemCount: ev.itemCount||0,
+             budget: ev.totalBudget||ev.budgetTotal||0, birthdays: (ev.birthdays&&ev.birthdays.length)||0, isSheet: !!ev._sheet,
+             status: (typeof _htDisplayStatus==='function') ? _htDisplayStatus(ev) : '進行中' };
   } catch(e) { return null; }
 };
 // 首頁預載午茶日：先用 localStorage 快取（免請求），真的沒有才背景抓一次；回傳下一場 M/D
