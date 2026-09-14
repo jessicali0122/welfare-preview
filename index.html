@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914095856';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914100315';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5942,14 +5942,26 @@ async function handleGoogleLogin(response) {
   // ── 安全修復（2026-06）：用 Google id_token 向後端換取「無法偽造」的自家 session token ──
   // 後端 verifyUser 已不再接受未驗章的 Google id_token，必須先呼叫 login 交換。
   let ex;
+  // 單支 login POST：冷啟動／排隊時可能卡很久，過去沒逾時就變成「登入中」乾等。
+  // 加逾時＋重試一次：第一次逾時就中止改打第二次（通常打到已暖機的實例，秒回），
+  // 把「乾等數十秒」壓成「逾時→重試」。login 是冪等的（僅驗章發 token），重打無副作用。
+  async function _loginPost(timeoutMs) {
+    var ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = ctrl ? setTimeout(function(){ try { ctrl.abort(); } catch(_){} }, timeoutMs) : null;
+    try {
+      const _res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'login', idToken: response.credential }),
+        redirect: 'follow',
+        signal: ctrl ? ctrl.signal : undefined,
+      });
+      return await _res.json();
+    } finally { if (timer) clearTimeout(timer); }
+  }
   try {
-    const _res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ action: 'login', idToken: response.credential }),
-      redirect: 'follow',
-    });
-    ex = await _res.json();
+    try { ex = await _loginPost(15000); }
+    catch (e1) { ex = await _loginPost(20000); }   // 第一次逾時／失敗 → 重試一次（給暖機後的實例更長容忍）
   } catch (e) {
     return _loginErr('無法連線伺服器完成登入，請檢查網路後重試。(' + e.message + ')');
   }
@@ -6058,7 +6070,9 @@ function showApp() {
     // 套用已儲存的大頭貼（若有）
     const _savedAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
     if (_savedAvatar) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
-    // 從伺服器同步大頭貼（跨裝置）
+    // 從伺服器同步大頭貼（跨裝置）— 延後 2.5 秒，別在登入當下和 getMembers／list（角色與案件）
+    // 搶同一條又擠又會排隊的 GAS 通道；本機已先套用快取頭像（上方），延後同步不影響觀感。
+    setTimeout(function(){
     _fetchAPI('getAvatar', {}).then(function(r) {
       var localAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
       if (r && r.ok) {
@@ -6072,6 +6086,7 @@ function showApp() {
         }
       }
     }).catch(function(){});  // 同步失敗不影響登入
+    }, 2500);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
     if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+givenName(displayName)+' <img src="assets/icons/pill.png?v=3" alt="" style="width:24px;height:24px;vertical-align:-2px">';}
