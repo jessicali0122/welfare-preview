@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914153640';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914154112';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6400,6 +6400,29 @@ function triggerAvatarUpload() {
   if (inp) inp.click();
   var m = document.getElementById('user-menu');
   if (m) m.style.display = 'none';
+}
+
+// 移除自訂大頭貼：清本機＋後端，畫面改回 Google 帳號照片（若無則名字首字）
+function removeAvatar() {
+  var m = document.getElementById('user-menu'); if (m) m.style.display = 'none';
+  if (typeof closeMobileUserSheet === 'function') { try { closeMobileUserSheet(); } catch(e){} }
+  var cu = currentUser || window.currentUser; if (!cu || !cu.email) return;
+  var _doRemove = function(){
+    try { localStorage.removeItem('bf_avatar_' + cu.email); } catch(e){}
+    // 先還原成名字首字
+    var dn = (LOCAL_EMAIL_TO_NAME[cu.email] || cu.name || '');
+    document.querySelectorAll('.user-avatar-wrap').forEach(function(w){
+      w.style.background = '#0066CC';
+      w.innerHTML = '<span class="user-avatar-initial">' + ((dn.charAt(0)) || '👤') + '</span>';
+    });
+    // 有 Google 照片就改用它（沒有就維持名字首字）
+    if (cu.googlePhoto) applyAvatar(cu.googlePhoto);
+    _fetchAPI('removeAvatar', {}).catch(function(){});
+    if (typeof toast === 'function') toast('✅ 已移除大頭貼' + (cu.googlePhoto ? '，改用 Google 帳號照片' : ''));
+  };
+  if (typeof _showConfirmModal === 'function') {
+    _showConfirmModal('移除大頭貼', '確定移除自訂大頭貼嗎？' + (cu.googlePhoto ? '將改回 Google 帳號照片。' : '將改回名字首字。'), '移除', '#dc2626', _doRemove);
+  } else if (confirm('確定移除自訂大頭貼嗎？')) { _doRemove(); }
 }
 
 // ── 大頭貼：裁切 Modal 狀態 ──
@@ -22279,6 +22302,10 @@ if (document.getElementById('bulletin-list')) {
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
     更換大頭貼
   </button>
+  <button onclick="removeAvatar()" style="width:100%;text-align:left;padding:11px 16px;border:none;background:none;cursor:pointer;font-size:14px;color:#4A4F49;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:8px;border-bottom:1px solid #D9DDD3" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='none'">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    移除大頭貼
+  </button>
   <input type="file" id="avatar-upload-input" accept="image/*" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="handleAvatarUpload(this)">
   <div id="role-preview-block" style="display:none"></div>
   <button onclick="logout()" style="width:100%;text-align:left;padding:11px 16px;border:none;background:none;cursor:pointer;font-size:14px;color:#dc2626;font-weight:500;font-family:inherit;display:flex;align-items:center;gap:8px;border-top:1px solid #D9DDD3" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='none'">
@@ -22301,6 +22328,10 @@ if (document.getElementById('bulletin-list')) {
     <button onclick="triggerAvatarUpload();closeMobileUserSheet();" style="width:100%;padding:8px 14px;border:1px solid #D5DAE2;background:#fff;color:#4A4F49;font-size:14px;font-weight:500;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-bottom:8px;transition:background .15s" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='#fff'">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
       更換大頭貼
+    </button>
+    <button onclick="removeAvatar()" style="width:100%;padding:8px 14px;border:1px solid #D5DAE2;background:#fff;color:#4A4F49;font-size:14px;font-weight:500;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:8px;margin-bottom:8px;transition:background .15s" onmouseover="this.style.background='#F7F8F6'" onmouseout="this.style.background='#fff'">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      移除大頭貼
     </button>
     <div id="role-preview-block-m" style="display:none;margin-bottom:8px"></div>
     <button onclick="logout()" style="width:100%;padding:8px 14px;border:1px solid #fecaca;background:#fff;color:#dc2626;font-size:14px;font-weight:500;border-radius:8px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:8px;transition:background .15s" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='#fff'">
