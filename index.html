@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914193751';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914194415';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2381,6 +2381,15 @@ header::after{display:none!important}
   #sidebar-wrapper nav{flex:0 0 auto!important;padding:0!important}
   /* 按鈕縮窄，選中綠膠囊四周留白、不頂到白面板邊 */
   #sidebar-wrapper .sl{width:72px!important;height:58px!important;margin:1px auto!important}
+}
+/* ── iOS 自動放大防治（手機）──
+   iOS Safari 只要聚焦的 input/select/textarea 字級 < 16px，就會自動把「整頁」放大，
+   而且失焦後不會縮回去 → 表現為「跑版、右邊被切掉、下方露出一條空白，重開才好」。
+   （viewport 的 user-scalable=no 從 iOS 10 起已被忽略，擋不住這個行為。）
+   解法只有一個：手機上把表單控制項的字級提到 16px。 */
+@media(max-width:768px){
+  input,select,textarea,
+  .inp,input.inp,select.inp,textarea.inp{font-size:16px!important}
 }
 /* 頁面大標／區塊標題改墨棕 */
 #ptitle{color:#363B35!important}
