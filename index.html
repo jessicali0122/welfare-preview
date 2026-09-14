@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914202009';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914202247';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7144,6 +7144,9 @@ const _PATIENT_ACTIONS = new Set(['get', 'list']);
 //   跳號＋重複單（2026-08-18 的 001/002/003 就是這樣來的，使用者今天又差點按到第三張）。
 //   → 寧可讓使用者自己去案件追蹤確認，也絕不自動重送。
 const _NO_RETRY_ACTIONS = new Set(['submit', 'resubmit', 'draft', 'saveDraft',
+  // bootstrap 內含 logLogin（寫入），重試會多記一筆登入紀錄；而且它失敗本來就會
+  // 自動退回各支單獨的 API，不需要靠重試補救 → 一律只送一次。
+  'bootstrap',
   // 這些重試不會產生新單號，但一樣有副作用：核准/退件/作廢重送可能讓案件多跳一關，
   // 附件重送會在同一張單留下兩份一樣的檔案。稽核上都不能接受 → 一律只送一次。
   'approve', 'reject', 'voidCase', 'uploadFile', 'uploadTempFile']);
@@ -7197,7 +7200,10 @@ const _MAX_INFLIGHT = 3;
 // → 讀取類 10 秒沒回應就中止改重試（成功遠快於此，10 秒很寬鬆）；寫入類給足 30 秒，
 //   且已有 clientDraftKey 冪等保護，即使逾時後由使用者重送也只會有一個單號。
 // uploadFile 檔案大，給 90 秒。
-const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000 };
+// bootstrap 一趟要做 7 件事（list/getMembers/getFlowInfo/getApplyItems/getAvatar/getSuppliers/getFlow），
+// 實測 3.8～4.9 秒，但 GAS 忙起來單發就可能 15 秒 → 給它 30 秒，別讓預設的 10 秒把它砍掉
+// （被砍掉不會壞，只是退回原本 7 發慢路徑，合併就白做了）。
+const _API_TIMEOUT_MS = { submit:30000, draft:30000, resubmit:30000, approve:30000, reject:30000, voidCase:30000, deleteFile:30000, deleteCase:30000, uploadFile:90000, bootstrap:30000 };
 function _timeoutFor(action){ return _API_TIMEOUT_MS[action] || 10000; }
 // 背景性質的 action：使用者沒有盯著它們看，可以讓路
 // 附件預覽（getThumb/getFileB64）也列為背景：使用者要先看到金額與簽核狀態，
