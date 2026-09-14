@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914154729';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914193751';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -492,6 +492,12 @@ input[type=checkbox]{accent-color:#0066CC}
     z-index:200;
     box-shadow:0 -4px 20px rgba(0,0,0,.07);
     align-items:stretch;
+  }
+  /* 手機瀏覽器工具列收合／safe-area 尚未解析時，fixed bottom:0 下方會露出一條空白。
+     用向下延伸的白色填充塊把那條縫永遠蓋住（貼底時看不見、不可點）。 */
+  #bottom-nav::after{
+    content:'';position:absolute;left:0;right:0;top:100%;height:160px;
+    background:#FFFFFF;pointer-events:none;
   }
   .bn-item{
     flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -2368,13 +2374,13 @@ header::after{display:none!important}
 /* 桌機：左側「浮動 dock」——底板透明融入背景，每顆圖示是獨立白底小方塊浮起、選中綠色；垂直置中。手機仍走底部導覽/抽屜，維持原本 F7F8F6 底色不動 */
 #sidebar-wrapper{background:#F7F8F6!important;box-shadow:1px 0 0 #D2D7CD!important}
 @media(min-width:769px){
-  #sidebar-wrapper{background:#FAFBFC!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:84px!important;padding:16px 0 16px 12px}
+  #sidebar-wrapper{background:#FAFBFC!important;box-shadow:none!important;display:flex!important;align-items:center;justify-content:center;width:100px!important;padding:16px 0 16px 12px}
   /* 列表面板＝一整片白色圓角，浮在透明外底上；按鈕在白面板內（選中綠膠囊、其餘透明） */
   #sidebar-wrapper>#sidebar{position:static!important;height:auto!important;min-height:0!important;align-self:center;margin:auto 0!important;background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;border:1px solid rgba(40,48,38,.08)!important;border-right:1px solid rgba(40,48,38,.08)!important;border-radius:22px!important;box-shadow:0 10px 30px rgba(40,48,38,.14),0 2px 6px rgba(40,48,38,.06)!important;padding:8px 7px!important}
   #sidebar-wrapper>#sidebar>div:first-child{display:none!important}
   #sidebar-wrapper nav{flex:0 0 auto!important;padding:0!important}
   /* 按鈕縮窄，選中綠膠囊四周留白、不頂到白面板邊 */
-  #sidebar-wrapper .sl{width:56px!important;height:58px!important;margin:1px auto!important}
+  #sidebar-wrapper .sl{width:72px!important;height:58px!important;margin:1px auto!important}
 }
 /* 頁面大標／區塊標題改墨棕 */
 #ptitle{color:#363B35!important}
@@ -7964,9 +7970,9 @@ function _dshDutyAdmin(cases){
     +'<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">'
     +'<div class="cell"><div class="n" style="color:#C63968">'+pend+'</div><div class="k">待審核</div></div>'
     +'<div class="cell"><div class="n">'+prog+'</div><div class="k">進行中</div></div>'
-    +'<div class="cell"><div class="n"'+(rej?' style="color:#DC2626"':'')+'>'+rej+'</div><div class="k">退件中</div></div>'
+    +'<div class="cell"><div class="n"'+(rej?' style="color:#DC2626"':'')+'>'+rej+'</div><div class="k">已退件</div></div>'
     +'<div class="cell"><div class="n">'+done+'</div><div class="k">已完成</div></div>'
-    +'<div class="cell"><div class="n" style="color:#7A828E">'+voidN+'</div><div class="k">作廢</div></div>'
+    +'<div class="cell"><div class="n" style="color:#7A828E">'+voidN+'</div><div class="k">已作廢</div></div>'
     +'</div></div>';
 }
 function _dshFuli(){
