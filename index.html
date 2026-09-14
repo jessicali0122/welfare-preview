@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914100315';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914141733';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9123,6 +9123,7 @@ async function loadDetail(caseId, _fromPop) {
     var _emF = document.getElementById('detail-employee-id'); if (_emF) _emF.textContent = '—';
     return;
   }
+  try {
   const c = res.case;
   // 已拿到權威資料 → 解除「底稿不可用」標記
   if (window._staleCaseIds) delete window._staleCaseIds[caseId];
@@ -9272,6 +9273,16 @@ async function loadDetail(caseId, _fromPop) {
   }
 
   toast('');
+  } catch (_rerr) {
+    // 渲染任一步驟丟例外都不可讓畫面卡在「載入中…」骨架（簽核後最常見）→ 顯示可重試的失敗態，避免「要重整才正常」
+    try { console.warn('[BeneFlow] 詳情渲染失敗：', _rerr); } catch(_){}
+    var _rfHtml = '<div style="padding:14px;text-align:center;color:#dc2626;font-size:14px">畫面載入未完成，請重試<div style="margin-top:10px"><button class="btn btn-o" style="padding:6px 14px" onclick="loadDetail(\'' + caseId + '\')">重新載入</button></div></div>';
+    var _rf1 = document.getElementById('flow-timeline'); if (_rf1 && /載入中/.test(_rf1.textContent || '')) _rf1.innerHTML = _rfHtml;
+    var _rf2 = document.getElementById('detail-items-tbody'); if (_rf2 && /skeleton/.test(_rf2.innerHTML || '')) _rf2.innerHTML = '<tr><td colspan="9">' + _rfHtml + '</td></tr>';
+    var _rf3 = document.getElementById('detail-files-list'); if (_rf3 && /載入中/.test(_rf3.textContent || '')) _rf3.innerHTML = '<div style="text-align:center;padding:16px;color:#767B75;font-size:14px">—</div>';
+    var _rf4 = document.getElementById('detail-employee-id'); if (_rf4 && /載入中/.test(_rf4.textContent || '')) _rf4.textContent = '—';
+    toast('');
+  }
 }
 
 function renderDetailItems(items) {
@@ -9359,7 +9370,7 @@ function doApprove() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('approve', { caseId, comment });
-        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadDetail(caseId); loadDashboard(); }
+        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
@@ -9381,7 +9392,7 @@ function doReject() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('reject', { caseId, comment });
-        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); loadDetail(caseId); loadDashboard(); }
+        if (res.ok) { _cacheClear(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
