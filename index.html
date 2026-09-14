@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914220606';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914221151';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -484,24 +484,12 @@ input[type=checkbox]{accent-color:#0066CC}
 @media(max-width:768px){
   #bottom-nav{
     display:flex!important;
-    /* ★ bottom 用「負的縫隙」把整條導覽列往下延伸蓋住空白。
-       只加 padding 沒有用 —— bottom:0 錨定的是下緣，padding 只會讓盒子往上長。 */
-    position:fixed;left:0;right:0;bottom:calc(-1 * var(--bn-gap, 0px));
+    position:fixed;left:0;right:0;bottom:0;
     /* 內容區 54px 停在 home-indicator 之上（好按），下方 padding=安全區高度讓白色背景
        直接延伸填滿 home-indicator 區（box-sizing:content-box 讓 padding 加在 54 之外）。 */
-    height:54px;
+    height:52px;
     box-sizing:content-box;
-    /* safe-area ＋「實際量到的縫隙」(--bn-gap)：
-       iOS PWA 從休眠恢復時，版面視窗高度／safe-area 可能是過期值，fixed bottom:0 的導覽列
-       會停在畫面底部上方一點，下面露出一條空白。純 CSS 量不到這個誤差，改由 JS 量測後補進來，
-       讓導覽列自己長高蓋滿（帶著自己的底色與陰影，視覺上連續），而不是另外塗一塊白色。 */
-    /* ★ 用 max() 給一個「地板值」(--bn-safe-floor)：
-       iOS 在 PWA 有時把 safe-area-inset-bottom 回報成 0，有時 34 —— 同一支手機、同一版程式，
-       結果就是「有時候底部有一條空白、有時候沒有」（使用者回報的主要困擾其實是這個不一致）。
-       回報 0 的那次看起來比較「貼底」，但那是錯的：按鈕文字會壓在 iPhone 的 home indicator 上。
-       所以改成一律保留該保留的高度，讓外觀每次一致、觸控也安全。
-       --bn-safe-floor 由 JS 依裝置設定（有 home indicator 的機型才給 34px）。 */
-    padding-bottom:calc(max(env(safe-area-inset-bottom,0px), var(--bn-safe-floor, 0px)) + var(--bn-gap, 0px));
+    padding-bottom:min(env(safe-area-inset-bottom,0px), 18px);
     background:#FFFFFF;
     backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
     border-top:1px solid rgba(0,0,0,.06);
@@ -751,10 +739,7 @@ input[type=checkbox]{accent-color:#0066CC}
         上面那段註解寫的「底部留白、要重開好幾次」就是這件事，當時改用 dvh 仍沒解決。
    解法：手機上讓 #app 直接 position:fixed; inset:0 —— 固定定位是對著「實際可視範圍」
         排版，恢復時由合成器重算，不吃過期的 dvh／innerHeight。 */
-@media(max-width:768px){
-  #app{position:fixed!important;inset:0!important;height:auto!important}
-  #app-shell{height:100%!important}
-}
+
 /* iOS Safari 100vh 後備：只有「不支援 dvh」的舊瀏覽器才用 JS --vh。
    支援 dvh 者一律用上方穩定的 100dvh，避免載入時 --vh 取到不穩的 innerHeight → 底部留白、要重開好幾次。 */
 @supports not (height: 100dvh){
@@ -14009,7 +13994,7 @@ window._bnDiag = function() {
     // ★ 把導覽列「safe-area 那一段」染紅：
     //   如果使用者看到的白條變成紅色 → 那條就是導覽列自己的 safe-area（設計如此，只是看起來空）。
     //   如果紅色之外「下面還有白色」→ 代表真的有導覽列以外的區域，另當別論。
-    document.documentElement.classList.add('_bn-mark');
+
   } catch (e) { alert('診斷失敗：' + e.message); }
 };
 (function(){
