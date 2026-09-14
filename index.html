@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914203018';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914203258';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7665,7 +7665,9 @@ async function loadDashboard() {
 let _auditAllLogs = [];
 let _auditCurrentLogs = [];
 let _auditPage = 1;
-const _auditPageSize = 15;
+// 每頁筆數：預設 15，使用者可改 15/30/50（與費用申請清單一致）。
+// 原本是 const 寫死，導致系統紀錄有分頁卻不能調整每頁筆數。
+let _auditPageSize = 15;
 
 const _auditActionLabel = {
   'login'      : { label:'登入',     color:'#0369a1', bg:'#f0f9ff' },
@@ -7789,7 +7791,15 @@ function renderAuditLogTable(logs) {
 function renderAuditPagination(totalPages) {
   const el = document.getElementById('audit-log-pagination');
   if (!el) return;
-  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  // 每頁筆數下拉：即使只有 1 頁也要留著，否則使用者調成 50 之後就再也找不到入口調回來
+  const sizeSel = '<span style="font-size:12px;color:#767B75;white-space:nowrap">每頁顯示 '
+    + '<select onchange="setAuditPageSize(+this.value)" style="font-family:inherit;font-size:12px;padding:3px 6px;border:1px solid #D5DAE2;border-radius:6px;background:#fff;color:#4A4F49;cursor:pointer">'
+    + [15, 30, 50].map(function(n){ return '<option value="' + n + '"' + (n === _auditPageSize ? ' selected' : '') + '>' + n + '</option>'; }).join('')
+    + '</select> 筆</span>';
+  if (totalPages <= 1) {
+    el.innerHTML = sizeSel + '<span style="font-size:12px;color:#767B75;white-space:nowrap">共 ' + ((_auditCurrentLogs || []).length) + ' 筆</span>';
+    return;
+  }
   const btn = function(label, page, disabled, active) {
     const base = 'display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;font-size:14px;font-weight:600;border:1px solid #D5DAE2;background:#fff;color:#4A4F49;transition:all .15s;flex-shrink:0;';
     const activeStyle = active ? 'background:#363B35;color:#fff;border-color:#363B35;' : '';
@@ -7810,10 +7820,17 @@ function renderAuditPagination(totalPages) {
   pageBtns += btn('→', _auditPage + 1, _auditPage === totalPages, false);
   // 資訊文字左、按鈕右，兩端固定不跳動
   el.innerHTML =
-    '<span style="font-size:12px;color:#767B75;white-space:nowrap">第 '+_auditPage+' / '+totalPages+' 頁，共 '+_auditCurrentLogs.length+' 筆</span>'
+    sizeSel
+    + '<span style="font-size:12px;color:#767B75;white-space:nowrap">第 '+_auditPage+' / '+totalPages+' 頁，共 '+_auditCurrentLogs.length+' 筆</span>'
     + '<div style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap">'+pageBtns+'</div>';
 }
 
+// 改每頁筆數：一律跳回第 1 頁，避免停在「換算後已不存在」的頁碼上看到空白
+window.setAuditPageSize = function(n) {
+  _auditPageSize = n;
+  _auditPage = 1;
+  renderAuditLogTable(_auditCurrentLogs);
+};
 function goAuditPage(page) {
   _auditPage = page;
   renderAuditLogTable(_auditCurrentLogs);
