@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914201429';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914202009';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5038,9 +5038,11 @@ thead th{color:#767B75!important}
     <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9S3 16.97 3 12 7.03 3 12 3s9 4.03 9 9z"/><path d="M12 8v4l3 3"/></svg></div>
     <span class="bn-label">按摩預約</span>
   </button>
-  <button class="bn-item" data-view="admin" onclick="sw('admin')">
-    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/></svg></div>
-    <span class="bn-label">系統管理</span>
+  <!-- 第 5 格＝「更多」：底部只有 5 格放不下全部功能，福利總覽／福委聽你說／常用連結／系統管理
+       收進這張 sheet，手機上才不會有桌機才進得去的功能。 -->
+  <button class="bn-item" id="bn-more" onclick="openMoreSheet()">
+    <div class="bn-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></div>
+    <span class="bn-label">更多</span>
   </button>
 </nav>
 
@@ -5581,6 +5583,84 @@ function canEditFlow() {
 }
 
 // 依角色能力動態顯示/隱藏元素（導覽項、按鈕等任何 [data-cap]）
+// ── 手機「更多」選單 ───────────────────────────────────────────────
+// 底部導覽只有 5 格，福利總覽／福委聽你說／常用連結／系統管理放不下，收進這張 sheet。
+// ★ 每一列都是去讀「側邊欄對應項目」的實際可見狀態來決定要不要顯示 ——
+//   權限規則只有側邊欄那一份，這裡不重寫，才不會兩邊判斷不一致。
+var _MORE_ITEMS = [
+  { label: '福利總覽',   sel: '.sl[data-view="overview"]', run: function(){ sw('overview'); },
+    icon: '<path d="M20 12v10H4V12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>' },
+  { label: '福委聽你說', sel: '.sl[data-label="福委聽你說"]', run: function(){ fbOpenBoard(); },
+    icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+  // 常用連結在手機上是以總覽頁的 #dash-links-row 呈現（#side-links-btn 被 CSS 強制隱藏），
+  // 所以要看「實際有沒有連結」來決定顯不顯示，不能拿那顆側邊按鈕判斷。
+  { label: '常用連結',   sel: '#dash-links-row', hasLinks: true, run: function(){ _moreShowLinks(); },
+    icon: '<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>' },
+  { label: '系統管理',   sel: '.sl[data-view="admin"]', run: function(){ sw('admin'); },
+    icon: '<circle cx="12" cy="8" r="4"/><path d="M20 21a8 8 0 1 0-16 0"/><circle cx="19" cy="19" r="3"/><path d="M19 16v3l2 1"/>' }
+];
+function _moreItemVisible(sel, it) {
+  if (it && it.hasLinks) {
+    var row = document.getElementById('dash-links-row');
+    return !!(row && row.querySelectorAll('a.dash-link-tile:not(.cap-hidden)').length);
+  }
+  var el = document.querySelector(sel);
+  if (!el) return false;
+  if (el.classList.contains('cap-hidden')) return false;
+  // 側邊欄在手機是隱藏的，不能用 offsetParent 判斷；直接看該項目自己的 display
+  if ((el.style.display || '') === 'none') return false;
+  return true;
+}
+window.openMoreSheet = function() {
+  var body = document.getElementById('more-sheet-body');
+  var sheet = document.getElementById('mobile-more-sheet');
+  if (!body || !sheet) return;
+  var html = '';
+  _MORE_ITEMS.forEach(function(it, i) {
+    if (!_moreItemVisible(it.sel, it)) return;
+    html += '<button onclick="_moreGo(' + i + ')" style="width:100%;padding:13px 14px;border:1px solid #D5DAE2;background:#fff;color:#2E332D;font-size:15px;font-weight:600;border-radius:10px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:flex-start;gap:11px;margin-bottom:8px">'
+      + '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4B7BC4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + it.icon + '</svg>'
+      + it.label + '</button>';
+  });
+  if (!html) html = '<div style="text-align:center;color:#767B75;padding:18px 0;font-size:14px">目前沒有其他可用功能</div>';
+  body.innerHTML = html;
+  sheet.style.display = 'block';
+};
+window.closeMoreSheet = function() {
+  var sheet = document.getElementById('mobile-more-sheet');
+  if (sheet) sheet.style.display = 'none';
+};
+// 常用連結：不能沿用 toggleSideLinks()——它會把彈窗定位到側邊欄那顆按鈕旁，
+// 而該按鈕在手機是隱藏的（rect 全 0），彈窗會跑到畫面左上角。
+// 改成把連結直接列在同一張 sheet 裡（來源同樣是 #dash-links-row，權限 gate 也一致）。
+function _moreShowLinks() {
+  var body = document.getElementById('more-sheet-body');
+  var sheet = document.getElementById('mobile-more-sheet');
+  if (!body || !sheet) return;
+  var row = document.getElementById('dash-links-row');
+  var tiles = row ? [].slice.call(row.querySelectorAll('a.dash-link-tile')).filter(function(a){ return !a.classList.contains('cap-hidden'); }) : [];
+  body.innerHTML = '<button onclick="openMoreSheet()" style="background:none;border:none;padding:0 0 10px;color:#4B7BC4;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">← 返回</button>';
+  if (!tiles.length) {
+    body.insertAdjacentHTML('beforeend', '<div style="text-align:center;color:#767B75;padding:18px 0;font-size:14px">目前沒有連結</div>');
+  } else {
+    // ★ 必須用 cloneNode 複製整個節點，不能自己用 href 重建：
+    //   「福委會會議紀錄」的 href 是 javascript:void(0)，真正網址藏在 onclick 的權限檢查裡
+    //   （刻意不寫進 DOM，見 openMeetingNotes）。只抄 href 會變成點了沒反應、而且繞過權限 gate。
+    tiles.forEach(function(a) {
+      var c = a.cloneNode(true);   // inline onclick 屬性會一起複製，行為與權限檢查完全沿用
+      c.style.cssText = 'width:100%;box-sizing:border-box;padding:13px 14px;border:1px solid #D5DAE2;background:#fff;border-radius:10px;text-decoration:none;display:flex;align-items:center;gap:11px;margin-bottom:8px;max-width:none';
+      c.addEventListener('click', function(){ setTimeout(closeMoreSheet, 0); });
+      body.appendChild(c);
+    });
+  }
+  sheet.style.display = 'block';
+}
+window._moreGo = function(i) {
+  closeMoreSheet();
+  var it = _MORE_ITEMS[i];
+  if (it && typeof it.run === 'function') { try { it.run(); } catch (e) {} }
+};
+
 function applyNavVisibility() {
   document.querySelectorAll('[data-cap]').forEach(function(el){
     var cap = el.getAttribute('data-cap');
@@ -22397,6 +22477,15 @@ if (document.getElementById('bulletin-list')) {
 </div>
 
 <!-- 手機版用戶底部抽屜（取代浮動選單）-->
+<!-- 手機「更多」選單：內容由 openMoreSheet() 依側邊欄實際可見項目動態產生，
+     權限判斷完全沿用側邊欄既有的 gate，不另外複製一份規則（避免兩邊走鐘）。 -->
+<div id="mobile-more-sheet" style="display:none;position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.45)" onclick="closeMoreSheet()">
+  <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:12px 16px calc(env(safe-area-inset-bottom,0px)+12px);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
+    <div style="width:32px;height:4px;background:#D2D6D0;border-radius:10px;margin:0 auto 12px"></div>
+    <div id="more-sheet-body"></div>
+  </div>
+</div>
+
 <div id="mobile-user-sheet" style="display:none;position:fixed;inset:0;z-index:350;background:rgba(0,0,0,.45)" onclick="closeMobileUserSheet()">
   <div onclick="event.stopPropagation()" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:16px 16px 0 0;padding:12px 16px calc(env(safe-area-inset-bottom,0px)+12px);box-shadow:0 -4px 24px rgba(0,0,0,.12)">
     <div style="width:32px;height:4px;background:#D2D6D0;border-radius:10px;margin:0 auto 12px"></div>
