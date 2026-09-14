@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914194747';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914195551';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2381,6 +2381,18 @@ header::after{display:none!important}
   #sidebar-wrapper nav{flex:0 0 auto!important;padding:0!important}
   /* 按鈕縮窄，選中綠膠囊四周留白、不頂到白面板邊 */
   #sidebar-wrapper .sl{width:72px!important;height:58px!important;margin:1px auto!important}
+}
+/* ── 手機橫向溢出防治（跑版根因）──
+   `.view` 是 display:flex，它的子元素預設 min-width:auto ——「不能縮到比內容窄」。
+   只要 view 裡有一列縮不下去（實際案例：#dsh-social 本月同事生日，nowrap 的姓名列
+   min-content 就有 504px），整個 #dash-wrap 就被撐成 504px 塞進 500px 的視窗，
+   所有卡片跟著超出畫面被切掉（「進系統管理」「已完成」「前往午茶日」都看不到右半）。
+   連帶讓 iOS 的 fixed 底部導覽定位在「版面視窗」底部而非畫面底部 → 下方露出一條白白的。
+   min-width:0 解除這個限制，讓 flex 子元素可以正常縮。實測溢出元素 54 → 0。
+   ★ 需要 !important：#dash-wrap 這類 id 選擇器特異度高於 .view>*。 */
+@media(max-width:768px){
+  .view{min-width:0!important}
+  .view>*{min-width:0!important;max-width:100%!important}
 }
 /* ── iOS 自動放大防治（手機）──
    iOS Safari 只要聚焦的 input/select/textarea 字級 < 16px，就會自動把「整頁」放大，
