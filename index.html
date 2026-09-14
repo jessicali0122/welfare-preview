@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914143334';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914145843';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11579,12 +11579,14 @@ function updateDetailFlow(c){
   const isDone      = c.status === '已完成';
   const isRejected  = c.status === '已退件';
   const isVoid      = c.status === '作廢';
+  const isDraft     = c.status === '草稿';   // 草稿：尚未送出，不可顯示成簽核中
   const currentStep = Number(c.step || 1); // 1-indexed，對應 APPROVERS（啟用清單）
 
   // 更新 badge
   const badge = document.getElementById('detail-status-badge');
   if (badge) {
     if (c.status === '作廢') { badge.className='badge bd'; badge.textContent='作廢'; }
+    else if (isDraft)    { badge.className='badge bd'; badge.textContent='草稿'; }
     else if (isDone)     { badge.className='badge bg'; badge.textContent='已完成'; }
     else if (isRejected){ badge.className='badge br'; badge.textContent='已退件'; }
     else            { badge.className='badge bp'; badge.textContent='簽核中'; }
@@ -11594,6 +11596,7 @@ function updateDetailFlow(c){
   const titleEl = document.getElementById('flow-title');
   if (titleEl) {
     if (isVoid)     titleEl.textContent = '簽核進度（已作廢）';
+    else if (isDraft)    titleEl.textContent = '簽核進度（尚未送出）';
     else if (isDone)     titleEl.textContent = '簽核進度（' + APPROVERS.length + ' / ' + APPROVERS.length + ' 關 · 已完成簽核）';
     else if (isRejected) titleEl.textContent = '簽核進度（已退件）';
     else            titleEl.textContent = '簽核進度（' + (currentStep - 1) + ' / ' + APPROVERS.length + ' 關）';
@@ -11645,6 +11648,16 @@ function updateDetailFlow(c){
       +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#92400E">'
       +     '<strong style="color:#B45309">本單據已作廢，簽核流程已中止。</strong>'
       +     _vDetail
+      +   '</div>'
+      + '</div>';
+  }
+  // 草稿橫幅：草稿尚未送出，明確標示，避免下方各關被誤顯示為「待審核中」
+  if (isDraft) {
+    html += '<div style="display:flex;gap:8px;align-items:flex-start;background:#F1F3F6;border:1px solid #DCE0E6;border-radius:10px;padding:10px 12px;margin-bottom:12px">'
+      +   '<span style="flex-shrink:0;font-size:16px;line-height:1.6">📝</span>'
+      +   '<div style="min-width:0;font-size:14px;line-height:1.6;color:#5A616B">'
+      +     '<strong style="color:#3F454E">此為草稿，尚未送出簽核。</strong>'
+      +     '<div style="margin-top:4px">送出後才會進入下列簽核流程。</div>'
       +   '</div>'
       + '</div>';
   }
@@ -11716,6 +11729,11 @@ function updateDetailFlow(c){
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 流程已中止</div>'
                  + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapName || a.name) + '</div>';
+    } else if (isDraft) {
+      // 草稿：尚未送出，所有關卡一律顯示「尚未送出」，不標任何關為待審核中
+      iconSvg = leafSvg('#D2D6D0', 28);
+      statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 尚未送出</div>'
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapName || a.name) + '</div>';
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
@@ -11725,7 +11743,7 @@ function updateDetailFlow(c){
       statusHtml = '<div style="font-size:14px;color:#767B75;margin-top:2px">等待前一關完成</div>'
                  + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapName || a.name) + '</div>';
     }
-    var isActive = result || (!isVoid && !isDone && !isRejected && i === currentStep-1);
+    var isActive = result || (!isVoid && !isDraft && !isDone && !isRejected && i === currentStep-1);
     var titleColor = isActive ? '#4A4F49' : '#767B75';
 
     // flex 雙欄：左欄（icon + 虛線）自動撐高，右欄（文字）
