@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260914215304';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260914215754';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -55,7 +55,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="騰勢福委會">
-<meta name="theme-color" content="#F6F4EE">
+<!-- ★ 必須與底部導覽同色(#FFFFFF)：加到主畫面後，若 iOS 給的網頁視窗比螢幕矮
+     （實測 innerHeight 894 vs screen.height 956，差 62pt，從休眠恢復時會發生），
+     螢幕下緣那段「不在網頁範圍內」的區域由 iOS 用 theme-color／網頁底色填滿。
+     顏色一致就看不出來；設成米色就會變成使用者回報的「下面那條」。 -->
+<meta name="theme-color" content="#FFFFFF">
 <meta name="description" content="騰勢福委會員工福利平台：費用申請、午茶日、按摩預約與福利總覽，一站搞定。">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="騰勢福委會">
@@ -2445,7 +2449,9 @@ header::after{display:none!important}
    手機上把 root 背景改成與導覽列同色，那條帶子就融進導覽列、看不見了。
    ★ 需要 !important：showApp() 是用 inline style 設的，一般規則蓋不掉。 */
 @media(max-width:768px){
-  html{background:#FFFFFF!important}
+  /* html 與 body 都要白：iOS 可能取其中任一個當作「網頁範圍外」那塊的底色。
+     #app 是 position:fixed inset:0 且自帶白底，所以 body 變白不影響任何畫面。 */
+  html,body{background:#FFFFFF!important}
 }
 /* ── 手機橫向溢出防治（跑版根因）──
    `.view` 是 display:flex，它的子元素預設 min-width:auto ——「不能縮到比內容窄」。
