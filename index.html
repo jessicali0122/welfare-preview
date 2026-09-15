@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915102130';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915103104';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6377,7 +6377,8 @@ function showApp() {
     setTimeout(function(){ _preloadFlowInfo(); }, _dFlow);
     // 載入送單表單的「申請項目」選單
     _seedApplyItems();   // 立即用快取/預設把下拉填好（免等 GAS，新增申請馬上選得到）
-    setTimeout(function(){ _preloadApplyItems(); }, _dFlow);
+    // 申請項目的網路刷新：下拉已用快取填好，這發往後延，避免和 flowInfo 在同一刻擠爆 GAS 通道（減少重試風暴）
+    setTimeout(function(){ _preloadApplyItems(); }, _onHighTea ? 9000 : 2600);
     // Admin 才額外載入完整流程設定 UI
     setTimeout(function(){ if(isAdmin()) loadAdminFlow(); }, 1500);
     // ── 背景預抓案件清單 ──
@@ -6387,7 +6388,12 @@ function showApp() {
     // ★ 標記 bg:true：這是「使用者沒在等」的背景預抓，慢就安靜重試，不要彈「伺服器回應較慢」提示。
     setTimeout(function(){
       callAPI('list', {}, { bg: true }).then(function(r){
-        if (r && r.ok && r.cases && !window._allCasesCache) window._allCasesCache = r.cases;
+        // 一律用最新結果覆蓋（開頁時可能已先用舊快取墊著）；更新後重畫儀表板讓數字跟上
+        if (r && r.ok && Array.isArray(r.cases)) {
+          window._allCasesCache = r.cases;
+          try { if (typeof _renderRoleDash === 'function' && document.getElementById('dsh-action')) _renderRoleDash(); } catch(e) {}
+          try { if (typeof _refreshAppCounts === 'function') _refreshAppCounts(); } catch(e) {}
+        }
       }).catch(function(){});
     }, _dList);
     // 角色權威資料來自 getMembers；提早觸發（150ms，僅讓主資料 list 稍先出手），
@@ -8382,6 +8388,8 @@ function _renderRoleDash(){
   if(!document.getElementById('dsh-action'))return;
   var can_=(typeof can==='function')?can:function(){return false;};
   var me=_dshMe();
+  // 開頁即用「上次抓到的案件」立刻顯示，避免後端慢/抖時一片 0；背景 list 回來會覆蓋 _allCasesCache 再重畫
+  if(!window._allCasesCache){ try{ var _lc=(typeof _cacheGetStale==='function')?_cacheGetStale('list:{}'):null; if(_lc&&Array.isArray(_lc.cases)) window._allCasesCache=_lc.cases; }catch(e){} }
   var cases=window._allCasesCache||[];
   var myCases=cases.filter(function(c){return String(c.email||'').trim().toLowerCase()===me;});
   var myRej=myCases.filter(function(c){return c.status==='已退件'||String(c.status||'').indexOf('退')>=0;});
