@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915114210';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915114731';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8355,7 +8355,7 @@ function _dshFuli(){
   var hint=(typeof htGetNextEventHint==='function')?htGetNextEventHint():'';
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var used='—',limit=2;
-  try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
+  try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;if(String(b.bookingId||'').indexOf('WL')===0)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
   // 午茶日剩餘天數做成琥珀膠囊凸顯，緊貼大日期
   var teaDays='';var _dm=(hint||'').match(/(\d+)\s*天/);
   if((hint||'').indexOf('今天')>=0)teaDays='就是今天';else if(_dm)teaDays='還有 '+_dm[1]+' 天';
@@ -21279,7 +21279,7 @@ window.msGetNextBookingHint = function() {
   var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   var upcoming = (data.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date + 'T00:00:00') >= today; })
     .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && new Date(b.date+'T00:00:00')>=monthStart;}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
+  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && String(b.bookingId||'').indexOf('WL')!==0 && new Date(b.date+'T00:00:00')>=monthStart;}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
   var nd = upcoming[0].date || '';
   var parts = nd.split('-');
   var wd = ['日','一','二','三','四','五','六'][new Date(nd + 'T00:00:00').getDay()];
@@ -21567,6 +21567,7 @@ function msShowSlots(dateStr) {
   var viewMonthEnd   = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
   var monthBookCnt = myBookings.filter(function(b){
     if (b.status !== 'booked') return false;
+    if (String(b.bookingId||'').indexOf('WL') === 0) return false;   // 候補遞補不計入當月上限
     var bd = new Date(b.date + 'T00:00:00');
     return bd >= viewMonthStart && bd < viewMonthEnd;
   }).length;
@@ -21585,7 +21586,8 @@ function msShowSlots(dateStr) {
     var bg, border, timeColor, labelHtml, onclick = '', cursor = 'default', dim = false;
     if (isMySlot) {
       // 我的預約：實心綠（報到＝亮綠），點擊進管理彈窗
-      var reqTxt = myBook.deleteRequested ? '🗑 申請刪除中' : (myBook.cancelRequested ? '⏳ 申請取消中' : (attended ? '✓ 已報到' : '💆 我的預約'));
+      var _isWL = String(myBook.bookingId||'').indexOf('WL') === 0;   // 候補遞補來的預約
+      var reqTxt = myBook.deleteRequested ? '🗑 申請刪除中' : (myBook.cancelRequested ? '⏳ 申請取消中' : (attended ? '✓ 已報到' : (_isWL ? '🎯 候補遞補' : '💆 我的預約')));
       bg = attended ? 'linear-gradient(135deg,#22c55e,#16a34a)' : 'linear-gradient(135deg,#4a7bc0,#084C99)';
       border = 'transparent'; timeColor = '#fff';
       labelHtml = '<span style="color:rgba(255,255,255,.92);font-weight:700">' + reqTxt + '</span>';
