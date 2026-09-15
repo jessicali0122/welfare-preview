@@ -629,9 +629,15 @@
     if (r.__error) return { ok: false, error: r.__error };
     return { ok: true, cases: (r.__data || []) };
   }
+  // 影子比對有差異時，把報告寫進 shadow_log（僅管理者可讀），供切換前集中檢視。
+  async function logShadow(p) {
+    var r = await _sb('rpc/log_shadow', { method: 'POST', body: { p_report: (p && p.report) || {} } });
+    return { ok: !r.__error, error: r.__error };
+  }
 
   var HANDLERS = {
     getMyCases: getMyCases,
+    logShadow: logShadow,
     htList: htList,
     htGetItems: htGetItems,
     htCreate: htCreate,

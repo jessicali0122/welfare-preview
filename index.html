@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915114914';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915115523';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6417,6 +6417,12 @@ function showApp() {
     // 供應商清單背景預載：使用者切到「付款方式＝其他」時下拉即刻有選項，不必等當下才抓
     setTimeout(function(){ if (typeof _loadSuppliers === 'function') _loadSuppliers().catch(function(){}); }, _onHighTea ? 13000 : 4500);
     setTimeout(() => { window._appReady = true; }, 1500);
+    // 案件搬遷 Stage 2（影子比對）：登入後默默跑一次，比對「舊路 GAS vs 新路 Supabase」看資料一致；
+    // 只讀、不改畫面，有差異才寫 shadow_log（僅管理者可讀）。切換前用它確認各角色都無誤。
+    setTimeout(function(){
+      if (window._shadowRan) return; window._shadowRan = true;
+      try { if (typeof window._shadowCompareCases === 'function') window._shadowCompareCases(); } catch(e) {}
+    }, 9000);
     // 延遲一tick確保DOM已渲染完再套用權限
     setTimeout(applyRolePermissions, 100);
     setTimeout(applyNavVisibility, 100);
@@ -16910,6 +16916,8 @@ window._shadowCompareCases = async function() {
     if (onlyS.length) console.error('[影子比對] 🔴 資安警訊：Supabase 多給了案件（GAS 看不到卻回傳）', onlyS);
     else if (!rep.identical) console.warn('[影子比對] ⚠️ 有差異（但無外洩）', rep);
     else console.log('[影子比對] ✅ 完全一致', rep);
+    // 有任何差異（含外洩/少看/狀態不符）就寫進 shadow_log，供切換前集中檢視；完全一致不寫，避免灌爆。
+    if (!rep.identical) { try { await htApi('logShadow', { report: rep }); } catch(e) {} }
   } catch (e) { rep.error = String(e); }
   window._shadowReport = rep;
   return rep;
@@ -21696,7 +21704,8 @@ window.msCancel = function(bookingId, date) {
       try { var cr = await htApi('massageCancel', { bookingId }); ok = cr && cr.ok; } catch(e) {}
       if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
       _msUpdateBookingStatus(bookingId, 'cancelled');
-      toast('預約已取消'); msRenderQuota(); msRenderCal(); msRenderMyBookings();
+      toast('✅ 已取消 · 名額已釋出，麻煩幫忙找同事來遞補，別讓師傅空等 🙏', true);
+      msRenderQuota(); msRenderCal(); msRenderMyBookings();
     }
   );
 };
