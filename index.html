@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915114132';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915114210';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -16884,6 +16884,36 @@ window.htGoVote = function() {
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
 // 首頁快覽用：回傳下一場午茶日的 M/D（含試算表場次），無場次回 null
+// 影子比對（Stage 2）：同一人同時打「舊路 GAS listCases」與「新路 Supabase get_my_cases」，
+// 比對「看得到的案件集合＋狀態」是否一致。重點：Supabase【不可多給】(onlyInSupabase 必須為空，否則是資安外洩)。
+// 只讀、只記錄，不改任何畫面。結果放 window._shadowReport，並在 console 標示。
+window._shadowCompareCases = async function() {
+  var rep = { at: new Date().toISOString() };
+  try {
+    var g = await callAPI('list', {}, { noCache: true, bg: true });
+    var gcases = (g && g.ok && Array.isArray(g.cases)) ? g.cases : [];
+    var s = (typeof htApi === 'function') ? await htApi('getMyCases') : null;
+    var scases = (s && s.ok && Array.isArray(s.cases)) ? s.cases : [];
+    var gids = {}; gcases.forEach(function(c){ gids[c.caseId] = c.status; });
+    var sids = {}; scases.forEach(function(c){ sids[c.caseId] = c.status; });
+    var onlyG = Object.keys(gids).filter(function(id){ return !(id in sids); }); // GAS有、Supabase無（多半是「生效代理人」暫未實作 → 少看，非資安問題）
+    var onlyS = Object.keys(sids).filter(function(id){ return !(id in gids); }); // Supabase有、GAS無 ← 這才是資安警訊（多給了）
+    var statusMismatch = Object.keys(sids).filter(function(id){ return (id in gids) && gids[id] !== sids[id]; })
+                               .map(function(id){ return id + ':GAS「' + gids[id] + '」≠SB「' + sids[id] + '」'; });
+    rep.gasCount = gcases.length;
+    rep.sbCount = scases.length;
+    rep.onlyInGAS_underShow = onlyG;
+    rep.onlyInSupabase_LEAK = onlyS;                 // 必須為 []，否則資安外洩
+    rep.statusMismatch = statusMismatch;
+    rep.securityOK = (onlyS.length === 0);           // 資安：Supabase 從不多給
+    rep.identical = (onlyG.length === 0 && onlyS.length === 0 && statusMismatch.length === 0);
+    if (onlyS.length) console.error('[影子比對] 🔴 資安警訊：Supabase 多給了案件（GAS 看不到卻回傳）', onlyS);
+    else if (!rep.identical) console.warn('[影子比對] ⚠️ 有差異（但無外洩）', rep);
+    else console.log('[影子比對] ✅ 完全一致', rep);
+  } catch (e) { rep.error = String(e); }
+  window._shadowReport = rep;
+  return rep;
+};
 // 「立即同步試算表」按鈕：呼叫後端手動同步（gsheet→Supabase），清掉午茶清單快取後重新整理，讓剛在試算表新增/改的午茶日馬上出現。
 window.htSyncSheetsNow = async function(btn) {
   var _t = btn ? btn.textContent : '';

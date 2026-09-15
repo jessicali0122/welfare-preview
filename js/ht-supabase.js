@@ -622,7 +622,16 @@
   window.htBulletinSyncFromGas = bulletinSyncFromGas;
 
   // ── 路由表 ──
+  // ── 案件讀取搬遷（Stage 2）：透過帶授權的 rpc/get_my_cases 取「我有權看的案件」──
+  // 回傳格式與 GAS listCases 相同（{ok, cases:[...]}），可直接拿去比對／日後切換。
+  async function getMyCases() {
+    var r = await _sb('rpc/get_my_cases', { method: 'POST', body: {} });
+    if (r.__error) return { ok: false, error: r.__error };
+    return { ok: true, cases: (r.__data || []) };
+  }
+
   var HANDLERS = {
+    getMyCases: getMyCases,
     htList: htList,
     htGetItems: htGetItems,
     htCreate: htCreate,
