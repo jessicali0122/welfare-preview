@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915112615';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915113629';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4815,7 +4815,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">↩️</span>
-            <span>臨時無法參與，<strong>時段前 1 小時皆可自行取消</strong>；<span style="color:#B0701F;font-weight:700">未取消且缺席 3 次將暫停預約</span>。</span>
+            <span>臨時無法參與，<strong>時段前 30 分鐘皆可自行取消</strong>；<span style="color:#B0701F;font-weight:700">未取消且缺席 3 次將暫停預約</span>。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">⏰</span>
@@ -21114,7 +21114,7 @@ window.massageLoad = async function() {
       isAdmin: (typeof can === 'function' ? can('massage.manage') : false),
       isMgr: (typeof can === 'function' ? can('massage.manage') : false),
       isHR: (typeof can === 'function' ? can('massage.manage') : false), suspended: false, violationCount: 0, monthlyCancelCount: 0,
-      settings: { monthlyLimit: 2, cancelDeadlineHours: 1, violationPenaltyCount: 3,
+      settings: { monthlyLimit: 2, cancelDeadlineHours: 0.5, violationPenaltyCount: 3,
         slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: [],
       _loading: !_isDemo   // 真實使用者：預設載入中；下方若有本地快取則立即秒開
@@ -21606,7 +21606,7 @@ window.msBookConfirm = function(date, timeSlot) {
   var _label = isNaN(_dt) ? date : (date + '（週' + _wd[_dt.getDay()] + '）');
   _showConfirmModal(
     '確定要預約嗎？',
-    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>時段前 1 小時皆可自行取消（免審核）；未取消且缺席會計入違規次數。',
+    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>時段前 30 分鐘皆可自行取消（免審核）；未取消且缺席會計入違規次數。',
     '確定預約', '#0066CC',
     function() { return msBook(date, timeSlot); }
   );
@@ -21766,7 +21766,8 @@ window.msOpenBookingDetail = function(bookingId) {
   var now = new Date();
   var settings = (_msData && _msData.settings) || {};
   var appointmentTime = new Date(b.date + 'T' + (b.timeSlot || '00:00') + ':00');
-  var _cancelHrs = settings.cancelDeadlineHours || 1;
+  var _cancelHrs = settings.cancelDeadlineHours || 0.5;
+  var _cancelLabel = (_cancelHrs < 1) ? (Math.round(_cancelHrs * 60) + ' 分鐘') : (_cancelHrs + ' 小時');
   var canCancelNormal = s === 'booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime - now) > _cancelHrs * 3600000;
   var canCheckIn = s === 'booked' && isToday && !b.deleteRequested && !b.cancelRequested;
   var canModify = s === 'booked' && !b.deleteRequested && !b.cancelRequested;
@@ -21813,7 +21814,7 @@ window.msOpenBookingDetail = function(bookingId) {
     + '</div>'
     + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
     +   acts
-    +   '<div style="font-size:12px;color:#767B75;text-align:center;margin-top:2px">取消免審核，期限：時段前 ' + _cancelHrs + ' 小時</div>'
+    +   '<div style="font-size:12px;color:#767B75;text-align:center;margin-top:2px">取消免審核，期限：時段前 ' + _cancelLabel + '</div>'
     + '</div>';
   document.getElementById('ms-detail-modal').classList.add('open');
 };
