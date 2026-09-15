@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915152249';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915152925';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7159,14 +7159,20 @@ async function callAPI(action, data = {}, opts = {}) {
       && !(opts && opts.gasOnly)
       && typeof htApi === 'function'
       && !(typeof window !== 'undefined' && window._casesFreshUntil && Date.now() < window._casesFreshUntil)) {
-    try {
-      var _sbr = await htApi('getMyCases');
-      if (_sbr && _sbr.ok && Array.isArray(_sbr.cases)) {
-        var _res = { ok: true, cases: _sbr.cases };
-        try { var _k = _cacheKey('list', data || {}); _apiCache[_k] = { ts: Date.now(), data: _res }; if (typeof _apiLsSet === 'function') _apiLsSet(_k, _res); } catch (e) {}
-        return _res;
-      }
-    } catch (e) { /* 失敗 → 往下走 GAS */ }
+    // ★ 閘門：只有「此刻已握有可立即使用的憑證」才走 Supabase；否則直接走 GAS，
+    //   同時在背景暖身憑證（不 await），下次清單就能秒開——徹底避免卡著等換證（最壞約 20 秒）。
+    if (typeof _htSbTokenReadyNow === 'function' && _htSbTokenReadyNow()) {
+      try {
+        var _sbr = await htApi('getMyCases');
+        if (_sbr && _sbr.ok && Array.isArray(_sbr.cases)) {
+          var _res = { ok: true, cases: _sbr.cases };
+          try { var _k = _cacheKey('list', data || {}); _apiCache[_k] = { ts: Date.now(), data: _res }; if (typeof _apiLsSet === 'function') _apiLsSet(_k, _res); } catch (e) {}
+          return _res;
+        }
+      } catch (e) { /* 失敗 → 往下走 GAS */ }
+    } else if (typeof _htEnsureSbToken === 'function') {
+      try { _htEnsureSbToken(); } catch (e) {}   // 背景暖身，不阻塞本次清單
+    }
   }
   // 寫入型 action → 蓋遮罩擋住重複點擊（讀取型不擋，才不會妨礙瀏覽）
   if (_BLOCKING_ACTIONS[action]) {
@@ -16302,6 +16308,19 @@ function _htSbTokenSave(token, exp) {
   } catch (e) {}
 }
 
+// 同步判斷：此刻是否已握有「可立即使用、且 2 分鐘內不會過期」的 Supabase 憑證。
+//   ★ 只讀記憶體／localStorage，絕不觸發任何 GAS 換證（不阻塞）。
+//   用途：案件清單路由的閘門——沒有現成好證時，寧可直接走 GAS，也不要卡著等換證（避免最壞卡約 20 秒）。
+function _htSbTokenReadyNow() {
+  try {
+    if (currentUser && currentUser.token === 'demo') return false;
+    var now = Math.floor(Date.now() / 1000);
+    if (!window.HT_SB_TOKEN || String(window.HT_SB_TOKEN).split('.').length !== 3) _htSbTokenLoad();
+    return !!(window.HT_SB_TOKEN && String(window.HT_SB_TOKEN).split('.').length === 3 && (_htSbTokenExp - now) > 120);
+  } catch (e) { return false; }
+}
+if (typeof window !== 'undefined') window._htSbTokenReadyNow = _htSbTokenReadyNow;
+
 async function _htEnsureSbToken() {
   if (currentUser && currentUser.token === 'demo') return null;
   var now = Math.floor(Date.now() / 1000);
@@ -16449,6 +16468,14 @@ async function htApi(action, payload) {
   // AI／OCR 類呼叫（Gemini）較慢，逾時從預設 25 秒拉長到 60 秒，避免大 prompt 被前端提前中斷
   if (action === 'htRecommendAI' || action === 'htRecommendPocket' || action === 'htOcrReceipt') {
     return await _htFetchRaw(body, 60000);
+  }
+  // 按摩讀取（massageGetData）：非快取讀取，原本只打一次、零重試。
+  //   GAS 這陣子間歇回 Google 安全攔截頁（回 HTML 而非 JSON）→ 單打一次很容易撲空，
+  //   整頁按摩資料就一片空（近期尚無開放日期／管理清單 0）。讀取冪等、可安全重試 →
+  //   走退避重試（1s→3s→3s，最多 4 次），把命中率從 ~5 成拉到 9 成以上。
+  //   ★ 只放「讀取」；massageBook/Cancel… 等寫入在 _HT_WRITE_NO_RETRY 內，絕不走此路。
+  if (action === 'massageGetData') {
+    return await _htFetchWithRetry(body, 3);
   }
   var _genBeforeFetch = _cacheGen;
   var json = await _htFetchDedup(ckey, body);
