@@ -62,6 +62,11 @@ create or replace function get_my_cases() returns setof jsonb
    where ((auth.jwt() -> 'app_roles') ? 'manager')                                  -- 管理者：全部
       or applicant_email = lower(coalesce(auth.jwt() ->> 'email', ''))              -- 申請人本人
       or lower(coalesce(auth.jwt() ->> 'email', '')) = any(chain_emails)            -- 在簽核鏈上的人
+      or chain_emails && (                                                          -- 生效代理人：代理的關卡有在此案鏈上
+           select coalesce(array_agg(lower(x)), '{}'::text[])
+             from jsonb_array_elements_text(
+                    case when jsonb_typeof(auth.jwt() -> 'proxy_for') = 'array'
+                         then auth.jwt() -> 'proxy_for' else '[]'::jsonb end) as x)
    order by (data ->> 'createdAt') desc;
 $$;
 -- 只給已登入者執行；明確收回 public/anon，避免未授權呼叫。
