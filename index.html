@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915103104';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915110437';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4181,6 +4181,7 @@ thead th{color:#767B75!important}
           <div id="ht-weather-tip" style="display:none"></div>
           <div id="ht-hero-chip" style="display:none"></div>
         </div>
+        <button data-cap="hightea.manage" onclick="htSyncSheetsNow(this)" class="btn" title="把 Google 試算表上新建／修改的午茶日立即同步進系統" style="white-space:nowrap;flex-shrink:0;background:#fff;border:1.5px solid #cdd3db;color:#0066CC">🔄 立即同步試算表</button>
         <button data-cap="hightea.manage" onclick="htOpenCreate()" class="btn btn-p" style="white-space:nowrap;flex-shrink:0">✨ 新增活動</button>
       </div>
       <div id="ht-year-timeline" style="margin-top:14px"></div>
@@ -16871,6 +16872,26 @@ window.htGoVote = function() {
 
 // ── 給總覽入口卡片用：回傳「下次午茶日」提示文字，尚無資料則回傳 null（不會另外打 API）──
 // 首頁快覽用：回傳下一場午茶日的 M/D（含試算表場次），無場次回 null
+// 「立即同步試算表」按鈕：呼叫後端手動同步（gsheet→Supabase），清掉午茶清單快取後重新整理，讓剛在試算表新增/改的午茶日馬上出現。
+window.htSyncSheetsNow = async function(btn) {
+  var _t = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = '同步中…'; }
+  try {
+    var r = await callAPI('htSyncSheets', {});
+    if (r && r.ok) {
+      // 清掉午茶清單/試算表場次的前端快取（記憶體＋localStorage），確保重整後讀到剛同步的資料
+      try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf('htSheetList') >= 0 || k.indexOf('htList') >= 0) localStorage.removeItem(k); }); } catch(e) {}
+      if (typeof toast === 'function') toast('✅ 已同步試算表（' + (r.sent || 0) + ' 場），重新整理中…');
+      setTimeout(function(){ location.reload(); }, 700);
+      return;
+    }
+    if (typeof toast === 'function') toast('⚠️ 同步失敗：' + ((r && r.error) || '請稍後再試'));
+  } catch (e) {
+    if (typeof toast === 'function') toast('⚠️ 同步失敗，請稍後再試');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = _t || '🔄 立即同步試算表'; }
+  }
+};
 window.htGetNextEventDate = function() {
   try {
     var src = (_htEvents || []).concat(typeof _htSheetAsEvents === 'function' ? _htSheetAsEvents() : []);
