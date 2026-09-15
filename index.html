@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915115720';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915151908';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5384,6 +5384,12 @@ var _debouncedAppSearch   = _debounce(function(){ applyAppFilter(); }, 280);
 const API_URL = 'https://script.google.com/macros/s/AKfycbxqmXRfqubdjDRpYQhBOomC9BUM9_US7Wugal-UJ_CbpNp1MbLKq4YocjVRdGuWQ9cA/exec';
 const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.googleusercontent.com';
 
+// ══ 案件「清單讀取」搬 Supabase 開關（Stage 3）══
+// true＝callAPI('list') 改讀 Supabase get_my_cases（快、繞過 GAS 安全頁），失敗自動退回 GAS；
+// 剛寫入後 25 秒內或帶 {gasOnly:true} 仍走 GAS（保新鮮/保影子比對正確）。詳情('get')維持 GAS。
+// 可見範圍已全員 50/50 驗證一致、零外洩。出問題把此值改 false 即整段退回 GAS。
+var HT_USE_SB_CASES = true;
+
 // ══ 午茶 Supabase 遷移總開關 ══
 // true＝午茶走 Supabase（現況，見 js/ht-supabase.js）；false＝退回原本的 GAS。
 // 2026-08-03 已切為 true 並實測通過（GAS 端 htSbToken 簽發 JWT 上線）。
@@ -7141,6 +7147,27 @@ function _busyHide() {
 }
 
 async function callAPI(action, data = {}, opts = {}) {
+  // 案件寫入（送出/簽核/退件/重送/作廢）後，開 25 秒「新鮮窗」：這段時間清單改走 GAS，
+  // 確保剛送/剛簽的單即時反映（鏡像最慢 1 分鐘才同步，靠這個補上即時性）。
+  if (action === 'submit' || action === 'approve' || action === 'reject'
+      || action === 'resubmit' || action === 'voidCase') {
+    try { window._casesFreshUntil = Date.now() + 25000; } catch (e) {}
+  }
+  // ── 案件清單讀取搬 Supabase（Stage 3）：快、繞過 GAS 安全頁；任何失敗自動退回 GAS ──
+  // 剛寫入後 25 秒內（_casesFreshUntil）或明確 {gasOnly:true}（影子比對）→ 仍走 GAS，確保剛送/剛簽的單即時、比對正確。
+  if (action === 'list' && typeof HT_USE_SB_CASES !== 'undefined' && HT_USE_SB_CASES
+      && !(opts && opts.gasOnly)
+      && typeof htApi === 'function' && typeof window !== 'undefined' && window.HT_SB_TOKEN
+      && !(window._casesFreshUntil && Date.now() < window._casesFreshUntil)) {
+    try {
+      var _sbr = await htApi('getMyCases');
+      if (_sbr && _sbr.ok && Array.isArray(_sbr.cases)) {
+        var _res = { ok: true, cases: _sbr.cases };
+        try { var _k = _cacheKey('list', data || {}); _apiCache[_k] = { ts: Date.now(), data: _res }; if (typeof _apiLsSet === 'function') _apiLsSet(_k, _res); } catch (e) {}
+        return _res;
+      }
+    } catch (e) { /* 失敗 → 往下走 GAS */ }
+  }
   // 寫入型 action → 蓋遮罩擋住重複點擊（讀取型不擋，才不會妨礙瀏覽）
   if (_BLOCKING_ACTIONS[action]) {
     _busyShow(_BLOCKING_ACTIONS[action]);
@@ -16896,7 +16923,7 @@ window.htGoVote = function() {
 window._shadowCompareCases = async function() {
   var rep = { at: new Date().toISOString() };
   try {
-    var g = await callAPI('list', {}, { noCache: true, bg: true });
+    var g = await callAPI('list', {}, { noCache: true, bg: true, gasOnly: true });   // 影子比對一定要拿 GAS 舊路，不能被 Supabase 攔截
     var gcases = (g && g.ok && Array.isArray(g.cases)) ? g.cases : [];
     var s = (typeof htApi === 'function') ? await htApi('getMyCases') : null;
     var scases = (s && s.ok && Array.isArray(s.cases)) ? s.cases : [];
