@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915110437';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260915111248';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6188,7 +6188,7 @@ async function handleGoogleLogin(response) {
   } catch(e) {}
   currentUser = { email: ex.email || payload.email, name: ex.name || payload.name || (payload.email || '').split('@')[0] || '使用者', token: sessionToken, tokenExpiry, sessionExpiry };
   // 記住 Google 帳號大頭貼網址（沒自訂頭貼時當預設）；存進 bf_user 一併持久化，快取登入也讀得到
-  if (payload && payload.picture) currentUser.googlePhoto = String(payload.picture);
+  if (payload && payload.picture) { currentUser.googlePhoto = String(payload.picture); try { localStorage.setItem('bf_gphoto_' + currentUser.email, currentUser.googlePhoto); } catch(e){} }
   if (_prevCachedRoles) {
     currentUser.cachedRoles = _prevCachedRoles;
     USER_ROLES[currentUser.email] = _prevCachedRoles;
@@ -6270,6 +6270,8 @@ function showApp() {
     document.querySelectorAll('.user-name-display').forEach(el => el.textContent = displayName);
     // 套用大頭貼：優先「已儲存（自訂/先前存的）」，否則退回 Google 帳號大頭貼；都沒有才顯示名字首字
     var _isGoogleAv = function(u){ return typeof u === 'string' && u.indexOf('googleusercontent.com') >= 0; };
+    // 把 Google 照片另存一份（供「移除大頭貼」還原用；快取登入也留得住，不必重登）
+    if (currentUser.googlePhoto) { try { localStorage.setItem('bf_gphoto_' + currentUser.email, currentUser.googlePhoto); } catch(e){} }
     const _savedAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
     if (_savedAvatar) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
     else if (currentUser.googlePhoto) setTimeout(function(){ applyAvatar(currentUser.googlePhoto); }, 0);
@@ -6609,6 +6611,8 @@ function removeAvatar() {
   var m = document.getElementById('user-menu'); if (m) m.style.display = 'none';
   if (typeof closeMobileUserSheet === 'function') { try { closeMobileUserSheet(); } catch(e){} }
   var cu = currentUser || window.currentUser; if (!cu || !cu.email) return;
+  // Google 照片來源：本次登入抓到的 → 否則登入時另存的 bf_gphoto_（快取登入也回得去，不必重登）
+  var gp = cu.googlePhoto || (function(){ try { return localStorage.getItem('bf_gphoto_' + cu.email) || ''; } catch(e){ return ''; } })();
   var _doRemove = function(){
     try { localStorage.removeItem('bf_avatar_' + cu.email); } catch(e){}
     // 先還原成名字首字
@@ -6618,12 +6622,12 @@ function removeAvatar() {
       w.innerHTML = '<span class="user-avatar-initial">' + ((dn.charAt(0)) || '👤') + '</span>';
     });
     // 有 Google 照片就改用它（沒有就維持名字首字）
-    if (cu.googlePhoto) applyAvatar(cu.googlePhoto);
+    if (gp) applyAvatar(gp);
     _fetchAPI('removeAvatar', {}).catch(function(){}); _avatarCacheClear();
-    if (typeof toast === 'function') toast('✅ 已移除大頭貼' + (cu.googlePhoto ? '，改用 Google 帳號照片' : ''));
+    if (typeof toast === 'function') toast('✅ 已移除大頭貼' + (gp ? '，改用 Google 帳號照片' : ''));
   };
   if (typeof _showConfirmModal === 'function') {
-    _showConfirmModal('移除大頭貼', '確定移除自訂大頭貼嗎？' + (cu.googlePhoto ? '將改回 Google 帳號照片。' : '將改回名字首字。'), '移除', '#dc2626', _doRemove);
+    _showConfirmModal('移除大頭貼', '確定移除自訂大頭貼嗎？' + (gp ? '將改回 Google 帳號照片。' : '將改回名字首字。'), '移除', '#dc2626', _doRemove);
   } else if (confirm('確定移除自訂大頭貼嗎？')) { _doRemove(); }
 }
 
