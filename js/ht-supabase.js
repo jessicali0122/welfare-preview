@@ -639,6 +639,19 @@
     if (!r.__data) return { ok: false, error: '鏡像無此案件或無權限' };   // 退回 GAS 再判
     return { ok: true, case: r.__data };
   }
+  // ── 成員名單（Stage 5）：從 members_mirror 讀「全體在職成員」──
+  // 回傳格式與 GAS getMembers 相同（{ok, members:[...]}）。
+  // 資安：members_mirror 的 RLS 是「已登入者皆可讀」，與 GAS getMembers 現況等價
+  //   （那支後端函式的 user 參數完全沒使用＝本來就對所有登入者回傳同一份完整名單），
+  //   故改讀鏡像不會多給任何資料。未登入沒有 JWT → _sb 直接擋下（fail-closed）。
+  // 停用／刪除的帳號由 members_sync 的清理邏輯從鏡像移除（見 11_members_sync_cleanup.sql）。
+  async function getMembers() {
+    var r = await _sb('members_mirror?select=data', { method: 'GET' });
+    if (r.__error) return { ok: false, error: r.__error };
+    var rows = r.__data || [];
+    if (!rows.length) return { ok: false, error: '成員鏡像無資料' };   // 空的視為異常 → 讓上層退回 GAS
+    return { ok: true, members: rows.map(function (x) { return x && x.data; }).filter(Boolean) };
+  }
   // 影子比對有差異時，把報告寫進 shadow_log（僅管理者可讀），供切換前集中檢視。
   async function logShadow(p) {
     var r = await _sb('rpc/log_shadow', { method: 'POST', body: { p_report: (p && p.report) || {} } });
@@ -648,6 +661,7 @@
   var HANDLERS = {
     getMyCases: getMyCases,
     getMyCase: getMyCase,
+    getMembers: getMembers,
     logShadow: logShadow,
     htList: htList,
     htGetItems: htGetItems,

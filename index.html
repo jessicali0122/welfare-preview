@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916113730';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916114553';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5394,6 +5394,14 @@ const GOOGLE_CLIENT_ID = '840553019041-je3tflgd7vd3htoan77p8ej370gmul8v.apps.goo
 // 可見範圍已全員 50/50 驗證一致、零外洩。出問題把此值改 false 即整段退回 GAS。
 var HT_USE_SB_CASES = true;
 
+// ══ 成員名單「讀取」搬 Supabase 開關（Stage 5）══
+// true＝callAPI('getMembers') 改讀 members_mirror（全站姓名/部門/生日/下拉都靠它），失敗自動退回 GAS；
+// 成員寫入（新增/編輯/停用/啟用/刪除使用者）後 6 分鐘內仍走 GAS（等鏡像同步追上，見 _membersFreshUntil）。
+// 資安：鏡像 RLS 為「已登入者皆可讀」，與 GAS getMembers 現況等價（該函式的 user 參數未使用＝
+//   本來就對所有登入者回同一份完整名單），故不會多給資料；寫入仍只走 GAS。
+// 上線前已逐筆逐欄比對：50=50 筆、0 欄差異、無殘留已停用帳號。出問題把此值改 false 即退回 GAS。
+var HT_USE_SB_MEMBERS = true;
+
 // ══ 午茶 Supabase 遷移總開關 ══
 // true＝午茶走 Supabase（現況，見 js/ht-supabase.js）；false＝退回原本的 GAS。
 // 2026-08-03 已切為 true 並實測通過（GAS 端 htSbToken 簽發 JWT 上線）。
@@ -7190,6 +7198,15 @@ async function callAPI(action, data = {}, opts = {}) {
       || action === 'deleteFile') {
     try { window._casesFreshUntil = Date.now() + 25000; } catch (e) {}
   }
+  // 成員寫入（新增/編輯/停用/啟用/刪除使用者）後，開 6 分鐘「成員新鮮窗」：這段時間成員名單改走 GAS。
+  // ★ 為什麼是 6 分鐘而不是 25 秒：成員鏡像是「每 5 分鐘」同步一次，若只擋 25 秒，
+  //   管理者改完某人的角色／部門後，接下來幾分鐘全站（姓名、部門、下拉、權限標籤）都還是舊值，
+  //   會讓人以為改了沒生效。擋滿一個同步週期＋餘裕，確保鏡像一定追上後才改讀鏡像。
+  //   成員管理是低頻操作，這段時間走 GAS 完全不影響日常效能。
+  if (action === 'addUser' || action === 'editUser' || action === 'deleteUser'
+      || action === 'disableUser' || action === 'enableUser') {
+    try { window._membersFreshUntil = Date.now() + 360000; } catch (e) {}
+  }
   // ── 案件清單讀取搬 Supabase（Stage 3）：快、繞過 GAS 安全頁；任何失敗自動退回 GAS ──
   // 剛寫入後 25 秒內（_casesFreshUntil）或明確 {gasOnly:true}（影子比對）→ 仍走 GAS，確保剛送/剛簽的單即時、比對正確。
   if (action === 'list' && typeof HT_USE_SB_CASES !== 'undefined' && HT_USE_SB_CASES
@@ -7225,6 +7242,29 @@ async function callAPI(action, data = {}, opts = {}) {
           var _resg = { ok: true, case: _sbg.case };
           try { var _kg = _cacheKey('get', data || {}); _apiCache[_kg] = { ts: Date.now(), data: _resg }; if (typeof _apiLsSet === 'function') _apiLsSet(_kg, _resg); } catch (e) {}
           return _resg;
+        }
+      } catch (e) { /* 失敗 → 往下走 GAS */ }
+    } else if (typeof _htEnsureSbToken === 'function') {
+      try { _htEnsureSbToken(); } catch (e) {}   // 背景暖身
+    }
+  }
+  // ── 成員名單讀取搬 Supabase（Stage 5）：全站姓名／部門／生日／下拉都靠它，搬掉最有感 ──
+  //   資安：members_mirror 的 RLS 是「已登入者皆可讀」，與 GAS getMembers 等價
+  //     （後端那支的 user 參數完全沒用到＝本來就對所有登入者回同一份），故不會多給資料。
+  //   權限授權仍以後端為準：前端的 USER_ROLES/can() 只是 UI 收斂，實際權限後端每次都會再驗。
+  //   同樣受「憑證就緒閘門」「成員新鮮窗」「{gasOnly}」把關，任何失敗自動退回 GAS。
+  if (action === 'getMembers'
+      && typeof HT_USE_SB_MEMBERS !== 'undefined' && HT_USE_SB_MEMBERS
+      && !(opts && opts.gasOnly)
+      && typeof htApi === 'function'
+      && !(typeof window !== 'undefined' && window._membersFreshUntil && Date.now() < window._membersFreshUntil)) {
+    if (typeof _htSbTokenReadyNow === 'function' && _htSbTokenReadyNow()) {
+      try {
+        var _sbm = await htApi('getMembers');
+        if (_sbm && _sbm.ok && Array.isArray(_sbm.members) && _sbm.members.length) {
+          var _resm = { ok: true, members: _sbm.members };
+          try { var _km = _cacheKey('getMembers', data || {}); _apiCache[_km] = { ts: Date.now(), data: _resm }; if (typeof _apiLsSet === 'function') _apiLsSet(_km, _resm); } catch (e) {}
+          return _resm;
         }
       } catch (e) { /* 失敗 → 往下走 GAS */ }
     } else if (typeof _htEnsureSbToken === 'function') {
