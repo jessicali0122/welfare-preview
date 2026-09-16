@@ -618,6 +618,60 @@
   };
 
   // ══════════════════════════════════════════════════════════
+  // 費用申請（案件）Realtime
+  // ------------------------------------------------------------
+  // cases_mirror 原本「直接讀一律擋」，新增了一條與 get_my_cases() 逐字一致的
+  // SELECT policy（p_cases_mirror_realtime_select，已跑過零外洩驗證）才讓這裡能訂閱。
+  // 一樣是「加速器」，實際資料仍以 get_my_cases() RPC／callAPI('list') 為準；
+  // 收到事件只整批重抓＋重畫，不逐列 patch。
+  // ══════════════════════════════════════════════════════════
+  var _csRtChannel = null, _csRtStatus = 'idle', _csRtSubscribing = false;
+
+  window.casesRealtime = {
+    status: function () { return _csRtStatus; },
+
+    subscribe: async function (onChange) {
+      var tok = _validToken();
+      if (!tok) return false;
+      if (_csRtChannel) return true;
+      if (_csRtSubscribing) return true;
+      _csRtSubscribing = true;
+
+      var lib;
+      try { lib = await _loadRtLib(); }
+      catch (e) { _csRtSubscribing = false; _csRtStatus = 'unavailable'; return false; }
+
+      try {
+        if (!_rtClient) {
+          _rtClient = lib.createClient(SB_URL, SB_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+            realtime: { params: { eventsPerSecond: 10 } }
+          });
+        }
+        _rtClient.realtime.setAuth(tok);
+
+        var _fire = function () { try { onChange && onChange(); } catch (e) {} };
+
+        _csRtChannel = _rtClient
+          .channel('cases-live')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'cases_mirror' }, _fire)
+          .subscribe(function (status) { _csRtStatus = status; });
+        _csRtSubscribing = false;
+        return true;
+      } catch (e) {
+        _csRtSubscribing = false;
+        _csRtStatus = 'unavailable';
+        return false;
+      }
+    },
+
+    unsubscribe: function () {
+      try { if (_csRtChannel && _rtClient) _rtClient.removeChannel(_csRtChannel); } catch (e) {}
+      _csRtChannel = null; _csRtStatus = 'idle'; _csRtSubscribing = false;
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════
   // 公佈欄（首頁／午茶日／按摩共用一張表，以 scope 區分）
   // ----------------------------------------------------------
   // 搬家動機：GAS 端不穩，實際造成「公告明明有卻不見」「刪掉重整又回來」。

@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916174645';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916175248';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -14210,6 +14210,22 @@ window.sw = function(view, ...args) {
     if (typeof window.msStopPolling === 'function') window.msStopPolling();
     if (window.msRealtime) window.msRealtime.unsubscribe();
   }
+  // 費用申請（案件）：待在清單頁時訂閱，別人送出/核准/退件幾百毫秒內反映；離開頁面就退訂
+  if (view === 'applications') {
+    if (window.casesRealtime) window.casesRealtime.subscribe(window.casesRealtimeRefresh);
+  } else {
+    if (window.casesRealtime) window.casesRealtime.unsubscribe();
+  }
+};
+
+// Realtime 收到案件異動時呼叫；短時間多次事件合併成一次重抓，避免洗版（跟按摩同款節流）
+var _csRtRefreshTimer = null;
+window.casesRealtimeRefresh = function() {
+  if (_csRtRefreshTimer) return;
+  _csRtRefreshTimer = setTimeout(function() {
+    _csRtRefreshTimer = null;
+    if (typeof loadApplications === 'function') loadApplications(true);
+  }, 400);
 };
 
 // 初始同步
