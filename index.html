@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916104047';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916104933';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6925,7 +6925,10 @@ const _API_LS_TTL     = 24 * 60 * 60 * 1000; // 逾一天的舊資料寧可等�
 //   （並提示資料非最新）而非整頁失敗，重整也能秒開。安全：後端 listUsers 僅回管理者，非管理者
 //   根本拿不到資料可存；LS key 綁 email（_apiLsUser）→ 換人登入讀不到別人的名單；與 list/get/
 //   getMembers（已存金額/生日）同一敏感等級、同一套已驗證的使用者隔離快取。
-const _API_LS_ACTIONS = new Set(['list', 'get', 'getMembers', 'getFlow', 'getFlowInfo', 'listUsers', 'htList', 'htVendors']);
+// getApplyItems（新增申請的項目清單）、getSuppliers（供應商清單）：牆來時原本無退回、只重試1次 →
+//   整頁失敗。加進 LS 白名單 → 牆期間退回稍早資料、重整秒開。均為非個資參考資料，敏感度低於
+//   list/get；編輯後會自動更新 LS（getSuppliers 走 noCache 重抓、saveApplyItems 呼叫 _cacheClear）。
+const _API_LS_ACTIONS = new Set(['list', 'get', 'getMembers', 'getFlow', 'getFlowInfo', 'listUsers', 'getApplyItems', 'getSuppliers', 'htList', 'htVendors']);
 // 使用者隔離：把帳號綁進 LS key，避免換人登入時讀到別人的清單/名單
 function _apiLsUser() { try { return (currentUser && currentUser.email) || ''; } catch (e) { return ''; } }
 function _apiLsGet(key) {
@@ -7377,7 +7380,7 @@ var _apiBreaker = { fails: 0, openUntil: 0 };
 // 試 5 次的話成功率約 97%，慢一點但至少打得開；背景工作維持 2 次不浪費額度。
 // listUsers：純唯讀查詢，重試沒有副作用；GAS 冷啟動實測要 26 秒（暖的 7.5 秒），
 // 屬於「本來就會慢、值得等」的那一類 → 納入耐心清單，慢的時候給提示而不是直接判失敗。
-const _PATIENT_ACTIONS = new Set(['get', 'list', 'listUsers', 'uploadTempFile']);
+const _PATIENT_ACTIONS = new Set(['get', 'list', 'listUsers', 'getApplyItems', 'getSuppliers', 'uploadTempFile']);
 // ★ 絕不重試的動作：每執行一次就會「產生一筆新資料 / 吃掉一個單號」。
 //   今天 Google 的回應投遞很不穩 —— 後端明明已經建好案件、單號也發了，回應卻在半路
 //   掉了，前端誤判失敗。若此時自動重試，就會再建一張新單、再吃一個單號，稽核上變成
