@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916143449';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916143829';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -20437,9 +20437,12 @@ function _htSyncTopScrollbar(){   // 沿用原函式名（htRenderItems 呼叫�
   var grid = document.getElementById('ht-detail-grid');
   var cols = grid ? grid.children : null;
   var rightCol = (cols && cols.length >= 2) ? cols[cols.length - 1] : null;
-  // 單欄（手機）時 grid 會疊成一欄 → 兩欄的 top 幾乎相同，不套用對齊
-  var singleCol = rightCol && Math.abs(rightCol.getBoundingClientRect().top - (cols[0].getBoundingClientRect().top)) < 4
-                  && rightCol.getBoundingClientRect().left <= cols[0].getBoundingClientRect().left + 4;
+  // 單欄（手機）判斷：★ 改用瀏覽器原生的媒體查詢（跟 CSS 斷點 max-width:768px 完全一致），
+  //   不再用「比對兩欄座標」這種容易受版面尚未 reflow 完成、字型/圖片延遲載入等時機影響的判斷法。
+  //   舊寫法一旦誤判成「不是手機」，就會在小螢幕上硬塞一個 px 高度，跟 CSS 的
+  //   #ht-items-scroll{height:auto!important}（手機版讓高度隨內容、由整頁捲動）互相打架，
+  //   使用者會覺得捲動卡住、拉不到最下面。
+  var singleCol = !!(window.matchMedia && window.matchMedia('(max-width:768px)').matches);
   if (rightCol && !singleCol) {
     var boxTop = main.getBoundingClientRect().top;
     var rightBottom = rightCol.getBoundingClientRect().bottom;
