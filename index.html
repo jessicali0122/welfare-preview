@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916142647';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916143449';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11449,6 +11449,13 @@ function _renderPdfFirstPage(wrap, fileId, href) {
       fr.setAttribute('title', 'PDF 預覽');
       fr.style.cssText = 'width:100%;height:320px;border:0;display:block;background:#EDEFF2;border-radius:6px';
       wrap.appendChild(fr);
+      // ★ 這是 Google Drive 自己的內嵌預覽畫面（非我方後端），若原始檔案本身有加密碼保護
+      //   （常見於部分廠商電子發票，如好市多/蝦皮），Drive 會在框內顯示「請輸入密碼」；
+      //   加一行提示，避免使用者誤以為系統故障，並提供直接開 Drive 的捷徑。
+      var hint = document.createElement('div');
+      hint.style.cssText = 'text-align:center;font-size:12px;color:#8A96A6;padding:6px 4px 0';
+      hint.innerHTML = '若上方顯示「需要密碼」，代表原始檔案本身有加密保護（如部分電子發票），請<a href="' + href + '" target="_blank" rel="noopener" style="color:#0066CC;font-weight:600">點此在 Drive 開啟</a>並輸入密碼查看';
+      wrap.appendChild(hint);
       _appendPdfExpandBtn(wrap, fileId, href);
     });
 }
