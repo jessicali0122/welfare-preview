@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916171223';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916173246';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -21524,8 +21524,8 @@ async function msFetchData() {
   try {
     var r = await htApi('massageGetData', {});
     if (r && r.ok) {
-      // 合併保留本地 mock 的 openDates（若 GAS 無資料時維持 UI）
-      if (!r.openDates || !Object.keys(r.openDates).length) r.openDates = _msData && _msData.openDates || {};
+      // ★ 後端已改走 Supabase（真實來源），r.ok 為 true 時 openDates 即使是空物件也是正確狀態
+      //   （代表目前沒有開放任何日期），不可再拿舊快取蓋回去，否則已關閉/清空的日期永遠洗不掉。
       _msData = r;
       _msData.isAdmin = (typeof can === 'function' ? can('massage.manage') : false); // HR＋管理者：按摩所有管理功能（開放日/限制/補登/結算/QR/名單）
       _msData.isMgr   = _msData.isAdmin; // 按摩管理權＝HR＋管理者（沒有單獨的「僅管理者」動作）
