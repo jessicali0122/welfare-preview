@@ -652,6 +652,32 @@
     if (!rows.length) return { ok: false, error: '成員鏡像無資料' };   // 空的視為異常 → 讓上層退回 GAS
     return { ok: true, members: rows.map(function (x) { return x && x.data; }).filter(Boolean) };
   }
+  // ── 共用設定（Stage 6）：申請項目／供應商／簽核關卡設定，都存在 config_mirror ──
+  // 可見範圍與 GAS 現況等價（三支在後端都是「登入後即可取得同一份」，無角色過濾）。
+  // 空值視為異常 → 回 ok:false 讓上層退回 GAS（設定為空會讓下拉全空，寧可慢也不能錯）。
+  async function _cfgGet(key) {
+    var r = await _sb('config_mirror?select=value&key=eq.' + encodeURIComponent(key), { method: 'GET' });
+    if (r.__error) return { err: r.__error };
+    var rows = r.__data || [];
+    var v = rows.length ? rows[0].value : null;
+    if (!Array.isArray(v) || !v.length) return { err: '設定鏡像無資料（' + key + '）' };
+    return { val: v };
+  }
+  async function getApplyItems() {
+    var r = await _cfgGet('apply_items');
+    return r.err ? { ok: false, error: r.err } : { ok: true, items: r.val };
+  }
+  async function getSuppliers() {
+    var r = await _cfgGet('suppliers');
+    return r.err ? { ok: false, error: r.err } : { ok: true, suppliers: r.val };
+  }
+  // 簽核關卡設定。★ 刻意維持「所有登入者可讀」＝與 GAS getFlowInfo 相同：
+  //   代理人（可能不是福委角色）必須讀得到它，才知道自己正在代班（前端會比對 onLeave/proxyEmail），
+  //   若照 getFlow 的嚴格規則收緊，代理人的簽核按鈕會消失。
+  async function getFlowInfo() {
+    var r = await _cfgGet('flow_approvers');
+    return r.err ? { ok: false, error: r.err } : { ok: true, approvers: r.val };
+  }
   // 影子比對有差異時，把報告寫進 shadow_log（僅管理者可讀），供切換前集中檢視。
   async function logShadow(p) {
     var r = await _sb('rpc/log_shadow', { method: 'POST', body: { p_report: (p && p.report) || {} } });
@@ -662,6 +688,9 @@
     getMyCases: getMyCases,
     getMyCase: getMyCase,
     getMembers: getMembers,
+    getApplyItems: getApplyItems,
+    getSuppliers: getSuppliers,
+    getFlowInfo: getFlowInfo,
     logShadow: logShadow,
     htList: htList,
     htGetItems: htGetItems,

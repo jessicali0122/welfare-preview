@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916114553';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916120448';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5402,6 +5402,16 @@ var HT_USE_SB_CASES = true;
 // 上線前已逐筆逐欄比對：50=50 筆、0 欄差異、無殘留已停用帳號。出問題把此值改 false 即退回 GAS。
 var HT_USE_SB_MEMBERS = true;
 
+// ══ 共用設定「讀取」搬 Supabase 開關（Stage 6）══
+// 涵蓋 getApplyItems（申請項目）／getSuppliers（供應商）／getFlowInfo（簽核關卡設定）三支，
+// 都是登入 bootstrap 必抓的讀取，搬掉可減少登入撞 Google 安全頁的機會；失敗自動退回 GAS。
+// 設定寫入（saveApplyItems/供應商增修刪/saveFlow）後 6 分鐘內走 GAS（見 _configFreshUntil）。
+// 資安：三支在 GAS 端都是「登入後即可取得同一份」（doPost 先 verifyUser，仍需公司帳號），
+//   故鏡像 RLS「已登入者可讀」完全等價。getFlowInfo 刻意不收緊——代理人可能不具福委角色，
+//   收緊會讓代理人讀不到流程、簽核按鈕消失。管理者編輯流程用的 getFlow 不搬，維持 GAS always fresh。
+// 出問題把此值改 false 即整段退回 GAS。
+var HT_USE_SB_CONFIG = true;
+
 // ══ 午茶 Supabase 遷移總開關 ══
 // true＝午茶走 Supabase（現況，見 js/ht-supabase.js）；false＝退回原本的 GAS。
 // 2026-08-03 已切為 true 並實測通過（GAS 端 htSbToken 簽發 JWT 上線）。
@@ -7207,6 +7217,12 @@ async function callAPI(action, data = {}, opts = {}) {
       || action === 'disableUser' || action === 'enableUser') {
     try { window._membersFreshUntil = Date.now() + 360000; } catch (e) {}
   }
+  // 設定寫入（申請項目／供應商／簽核流程）後，同樣開 6 分鐘「設定新鮮窗」：這段時間設定讀取改走 GAS，
+  // 等鏡像（每 5 分鐘同步）確實追上，避免管理者改完設定後幾分鐘仍看到舊的下拉選項／舊關卡人員。
+  if (action === 'saveApplyItems' || action === 'addSupplier' || action === 'updateSupplier'
+      || action === 'deleteSupplier' || action === 'saveFlow') {
+    try { window._configFreshUntil = Date.now() + 360000; } catch (e) {}
+  }
   // ── 案件清單讀取搬 Supabase（Stage 3）：快、繞過 GAS 安全頁；任何失敗自動退回 GAS ──
   // 剛寫入後 25 秒內（_casesFreshUntil）或明確 {gasOnly:true}（影子比對）→ 仍走 GAS，確保剛送/剛簽的單即時、比對正確。
   if (action === 'list' && typeof HT_USE_SB_CASES !== 'undefined' && HT_USE_SB_CASES
@@ -7265,6 +7281,33 @@ async function callAPI(action, data = {}, opts = {}) {
           var _resm = { ok: true, members: _sbm.members };
           try { var _km = _cacheKey('getMembers', data || {}); _apiCache[_km] = { ts: Date.now(), data: _resm }; if (typeof _apiLsSet === 'function') _apiLsSet(_km, _resm); } catch (e) {}
           return _resm;
+        }
+      } catch (e) { /* 失敗 → 往下走 GAS */ }
+    } else if (typeof _htEnsureSbToken === 'function') {
+      try { _htEnsureSbToken(); } catch (e) {}   // 背景暖身
+    }
+  }
+  // ── 共用設定讀取搬 Supabase（Stage 6）：申請項目／供應商／簽核關卡設定 ──
+  //   這三支是登入 bootstrap 必抓的，搬掉可減少登入撞 Google 安全頁的機會。
+  //   資安：三支在 GAS 端都是「登入後即可取得同一份」（後端 doPost 會先 verifyUser，故仍需公司帳號），
+  //     config_mirror 的 RLS 用「已登入者可讀」＝完全等價，不放寬也不收緊。
+  //   ★ getFlowInfo 刻意不收緊：代理人（可能不具福委角色）必須讀得到才知道自己正在代班，
+  //     收緊會讓代理人的簽核按鈕消失。管理者編輯流程用的 getFlow 不搬，維持走 GAS always fresh。
+  //   ★ 鏡像回空值一律視為異常並退回 GAS（設定為空會讓下拉全空，寧可慢也不能錯）。
+  if ((action === 'getApplyItems' || action === 'getSuppliers' || action === 'getFlowInfo')
+      && typeof HT_USE_SB_CONFIG !== 'undefined' && HT_USE_SB_CONFIG
+      && !(opts && opts.gasOnly)
+      && typeof htApi === 'function'
+      && !(typeof window !== 'undefined' && window._configFreshUntil && Date.now() < window._configFreshUntil)) {
+    if (typeof _htSbTokenReadyNow === 'function' && _htSbTokenReadyNow()) {
+      try {
+        var _cfgField = (action === 'getApplyItems') ? 'items' : (action === 'getSuppliers') ? 'suppliers' : 'approvers';
+        var _sbc = await htApi(action);
+        if (_sbc && _sbc.ok && Array.isArray(_sbc[_cfgField]) && _sbc[_cfgField].length) {
+          var _resc = { ok: true };
+          _resc[_cfgField] = _sbc[_cfgField];
+          try { var _kc = _cacheKey(action, data || {}); _apiCache[_kc] = { ts: Date.now(), data: _resc }; if (typeof _apiLsSet === 'function') _apiLsSet(_kc, _resc); } catch (e) {}
+          return _resc;
         }
       } catch (e) { /* 失敗 → 往下走 GAS */ }
     } else if (typeof _htEnsureSbToken === 'function') {
