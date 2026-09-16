@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916112321';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916112848';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2871,7 +2871,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAE2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#E7F0FB;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:700;letter-spacing:.16em;color:#2E7BD6;text-transform:uppercase">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:4px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利<span style="color:#C7CCC3;margin:0 6px">．</span><span style="color:#9AA096">📅 資料更新日期：2026年8月</span></div><div style="font-size:12px;color:#B4670E;margin-top:4px;letter-spacing:.04em">💡 部分福利需通過試用期後始生效，實際適用條件依各福利規定為準。</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:700;letter-spacing:.16em;color:#2E7BD6;text-transform:uppercase">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:5px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利</div><div style="font-size:12px;color:#9AA096;margin-top:4px;letter-spacing:.02em">📅 2026年8月更新<span style="color:#D9DDD3;margin:0 7px">|</span>💡 部分福利需通過試用期後始生效，實際適用條件依各福利規定為準</div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap">
@@ -8549,9 +8549,12 @@ function _renderRoleDash(){
   // 「本月同事生日／本月壽星」獨立卡：福委在午茶日籌備卡的「本月壽星」欄位已直接看得到姓名+日期，
   //   這裡不重複顯示；但福委若同時是管理者，管理者一律都要看到（不受此收斂影響）。
   //   其他角色（HR／一般員工）看不到午茶日籌備卡（無 hightea.manage 權限），故仍保留這張獨立卡。
+  // ★ 交疊角色＝各角色可見範圍的聯集：福委+HR 兩個身分，HR 那邊本來就看得到獨立卡片，
+  //   不能因為同時也是福委就蓋掉——只有「純福委」（沒有 HR，也不是管理者）才隱藏。
   try{
-    var _hideSocialForWelfare = (typeof hasRole==='function' && hasRole('welfare') && !(typeof isAdmin==='function' && isAdmin()));
-    document.getElementById('dsh-social').innerHTML = _hideSocialForWelfare ? '' : _dshSocial();
+    var _pureWelfareNoHr = (typeof hasRole==='function' && hasRole('welfare') && !hasRole('hr')
+      && !(typeof isAdmin==='function' && isAdmin()));
+    document.getElementById('dsh-social').innerHTML = _pureWelfareNoHr ? '' : _dshSocial();
   }catch(e){}
 }
 window._renderRoleDash=_renderRoleDash;
