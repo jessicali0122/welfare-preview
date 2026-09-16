@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260915153005';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916092500';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7181,6 +7181,26 @@ async function callAPI(action, data = {}, opts = {}) {
       } catch (e) { /* 失敗 → 往下走 GAS */ }
     } else if (typeof _htEnsureSbToken === 'function') {
       try { _htEnsureSbToken(); } catch (e) {}   // 背景暖身，不阻塞本次清單
+    }
+  }
+  // ── 單一案件詳情讀取搬 Supabase（Stage 4）：點開案件秒開；任何失敗／鏡像沒有→自動退回 GAS ──
+  //   同樣受「憑證就緒閘門」「25 秒新鮮窗」「{gasOnly}」把關；鏡像回 ok:false（無此案/無權）就往下走 GAS 再判。
+  if (action === 'get' && data && data.caseId
+      && typeof HT_USE_SB_CASES !== 'undefined' && HT_USE_SB_CASES
+      && !(opts && opts.gasOnly)
+      && typeof htApi === 'function'
+      && !(typeof window !== 'undefined' && window._casesFreshUntil && Date.now() < window._casesFreshUntil)) {
+    if (typeof _htSbTokenReadyNow === 'function' && _htSbTokenReadyNow()) {
+      try {
+        var _sbg = await htApi('getMyCase', { caseId: data.caseId });
+        if (_sbg && _sbg.ok && _sbg.case) {
+          var _resg = { ok: true, case: _sbg.case };
+          try { var _kg = _cacheKey('get', data || {}); _apiCache[_kg] = { ts: Date.now(), data: _resg }; if (typeof _apiLsSet === 'function') _apiLsSet(_kg, _resg); } catch (e) {}
+          return _resg;
+        }
+      } catch (e) { /* 失敗 → 往下走 GAS */ }
+    } else if (typeof _htEnsureSbToken === 'function') {
+      try { _htEnsureSbToken(); } catch (e) {}   // 背景暖身
     }
   }
   // 寫入型 action → 蓋遮罩擋住重複點擊（讀取型不擋，才不會妨礙瀏覽）

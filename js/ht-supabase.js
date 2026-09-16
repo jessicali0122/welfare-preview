@@ -629,6 +629,16 @@
     if (r.__error) return { ok: false, error: r.__error };
     return { ok: true, cases: (r.__data || []) };
   }
+  // ── 單一案件詳情（Stage 4）：透過帶授權的 rpc/get_my_case 取「我有權看的那張單」──
+  // 回傳格式與 GAS getCase 相同（{ok, case:{...}}）。無權／不存在 → RPC 回 NULL → 這裡回 ok:false 讓上層退回 GAS。
+  async function getMyCase(p) {
+    var cid = (p && (p.caseId || p.case_id)) || '';
+    if (!cid) return { ok: false, error: '缺少 caseId' };
+    var r = await _sb('rpc/get_my_case', { method: 'POST', body: { p_case_id: String(cid) } });
+    if (r.__error) return { ok: false, error: r.__error };
+    if (!r.__data) return { ok: false, error: '鏡像無此案件或無權限' };   // 退回 GAS 再判
+    return { ok: true, case: r.__data };
+  }
   // 影子比對有差異時，把報告寫進 shadow_log（僅管理者可讀），供切換前集中檢視。
   async function logShadow(p) {
     var r = await _sb('rpc/log_shadow', { method: 'POST', body: { p_report: (p && p.report) || {} } });
@@ -637,6 +647,7 @@
 
   var HANDLERS = {
     getMyCases: getMyCases,
+    getMyCase: getMyCase,
     logShadow: logShadow,
     htList: htList,
     htGetItems: htGetItems,
