@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916142409';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916142647';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2874,7 +2874,7 @@ thead th{color:#767B75!important}
       <div style="background:#fff;border:1px solid #D5DAE2;border-radius:16px;padding:16px 20px;margin-bottom:18px;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.08)">
         <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
           <div style="width:56px;height:56px;border-radius:50%;background:#E7F0FB;display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:32px" role="img" aria-label="福利總覽">🎁</span></div>
-          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:700;letter-spacing:.16em;color:#2E7BD6;text-transform:uppercase">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:5px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利<span style="color:#C7CCC3;margin:0 6px">．</span><span style="color:#9AA096">📅 2026年8月更新</span></div><div style="font-size:12px;color:#B4670E;font-weight:700;margin-top:5px;letter-spacing:.02em">💡 部分福利需通過試用期後始生效，實際適用條件依各福利規定為準。</div></div>
+          <div style="flex:1;min-width:180px"><div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px">福利總覽<span style="font-size:12px;font-weight:700;letter-spacing:.16em;color:#2E7BD6;text-transform:uppercase">BENEFITS</span></div><div style="font-size:12px;color:#767B75;margin-top:5px;letter-spacing:.04em">選擇身分與年資，看看你現在享有哪些福利<span style="color:#C7CCC3;margin:0 6px">．</span><span style="color:#9AA096">📅 2026年8月更新</span></div></div>
         </div>
         <div style="border-top:1px solid #D9DDD3;margin:16px 0 14px"></div>
         <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:nowrap">
@@ -2935,6 +2935,7 @@ thead th{color:#767B75!important}
 
       <!-- 免責說明（單行、低調） -->
       <div style="margin-top:20px;text-align:center;font-size:12px;color:#767B75;letter-spacing:.04em">福利內容每年依公司營運狀況調整，實際以 HR 公告為準（資料版本 2026/08）</div>
+      <div style="margin-top:6px;text-align:center;font-size:12px;color:#B4670E;font-weight:700;letter-spacing:.02em">💡 部分福利需通過試用期後始生效，實際適用條件依各福利規定為準。</div>
     </div>
   </div>
   <style>
@@ -4819,7 +4820,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">↩️</span>
-            <span>臨時無法參與，<strong>時段前 30 分鐘皆可自行取消</strong>（免審核）；不足 30 分鐘請聯絡福委。</span>
+            <span>臨時無法參與，<strong>時段前 30 分鐘皆可自行取消</strong>（免審核）；不足 30 分鐘請聯絡 HR。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">🕒</span>
@@ -4827,7 +4828,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">⚠️</span>
-            <span><span style="color:#B0701F;font-weight:700">違規＝預約卻缺席（未報到）</span>；由福委標記，<strong>累計 3 次暫停預約</strong>。遲到不算違規，但仍請準時。</span>
+            <span><span style="color:#B0701F;font-weight:700">違規＝預約卻缺席（未報到）</span>；由 HR 標記，<strong>累計 3 次暫停預約</strong>。遲到不算違規，但仍請準時。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">⏰</span>
@@ -5565,9 +5566,11 @@ function getCurrentRoles() {
   const cu = currentUser || window.currentUser;
   if (!cu) return ['employee'];
   // 🎭 角色預覽（僅真正的管理者可用）：直接回傳模擬角色，方便預覽各角色所見畫面
+  //   支援複合角色（例：'hr+welfare'）：用 + 分隔，同時模擬多個角色的聯集視角。
   if (window._rolePreview && _isRealManager()) {
-    const pv = window._rolePreview === 'employee' ? ['employee'] : [window._rolePreview, 'employee'];
-    return [...new Set(pv)];
+    const parts = String(window._rolePreview).split('+').filter(Boolean);
+    const pv = parts.includes('employee') || !parts.length ? parts : parts.concat('employee');
+    return [...new Set(pv.length ? pv : ['employee'])];
   }
   // 以 USER_ROLES 為權威來源（同步/編輯時會更新）；cu.roles 僅作為尚未同步前的快取後備，
   // 否則首次同步寫入 cu.roles 後會遮蔽 USER_ROLES 的後續更新，導致角色變更/自我降級到重載才生效
@@ -5603,7 +5606,7 @@ window.setRolePreview = function(role) {
       renderFlowList(_flowApprovers);
     }
   } catch(e) {}
-  var _labels = { manager:'管理者', hr:'HR', welfare:'福委', employee:'沒標籤（一般員工）' };
+  var _labels = { manager:'管理者', hr:'HR', welfare:'福委', employee:'沒標籤（一般員工）', 'hr+welfare':'HR+福委' };
   if (typeof toast === 'function') toast('🎭 已切換為「' + (_labels[role] || role) + '」視角');
 };
 
@@ -5611,7 +5614,7 @@ window.setRolePreview = function(role) {
 window._renderRolePreviewUI = function() {
   var show = _isRealManager();
   var active = window._rolePreview || 'manager';
-  var ROLES = [['manager','🛡️ 管理者'],['hr','🧑‍💼 HR'],['welfare','🤝 福委'],['employee','👤 沒標籤']];
+  var ROLES = [['manager','🛡️ 管理者'],['hr','🧑‍💼 HR'],['welfare','🤝 福委'],['hr+welfare','🧑‍💼🤝 HR+福委'],['employee','👤 沒標籤']];
   ['role-preview-block','role-preview-block-m'].forEach(function(id){
     var block = document.getElementById(id);
     if (!block) return;
@@ -5629,7 +5632,7 @@ window._renderRolePreviewUI = function() {
   var banner = document.getElementById('role-preview-banner');
   if (banner) {
     if (show && window._rolePreview && window._rolePreview !== 'manager') {
-      var lab = { hr:'HR', welfare:'福委', employee:'沒標籤（一般員工）' }[window._rolePreview] || window._rolePreview;
+      var lab = { hr:'HR', welfare:'福委', employee:'沒標籤（一般員工）', 'hr+welfare':'HR+福委' }[window._rolePreview] || window._rolePreview;
       banner.innerHTML = '🎭 目前預覽「' + lab + '」視角 · <span style="text-decoration:underline">點此還原管理者</span>';
       banner.style.display = 'block';
     } else {
@@ -17809,7 +17812,7 @@ function htRenderEvents() {
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
         +   '</div>'
         +   '<div style="flex:1;min-width:0">'
-        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ ((ev.title && ev.title.trim()) ? htEsc(ev.title.trim()) : (mNum+'月午茶日')) + srcTag +'</div>'
+        +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ ((ev.title && ev.title.trim()) ? htEsc(ev.title.trim()) : '午茶日') + srcTag +'</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
         +       (ev.headcount ? '<span>👥 '+ev.headcount+' 人</span>' : '')
         +       ((ev.birthdays && ev.birthdays.length) ? '<span>🎂 '+ev.birthdays.length+' 位壽星</span>' : '')
