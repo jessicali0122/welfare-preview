@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916112043';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916112321';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6267,6 +6267,15 @@ function parseJwt(token) {
 
 function showApp() {
   window._appShown = true;
+  // 「立即同步試算表」成功後會馬上整頁重整，原本的成功 toast 來不及看清楚就被蓋掉了
+  // （曾反映「按了之後不知道有沒有更新成功」）→ 重整完成、畫面穩定後在這裡補顯示一次結果。
+  try {
+    var _syncedN = sessionStorage.getItem('bf_ht_sync_ok');
+    if (_syncedN !== null) {
+      sessionStorage.removeItem('bf_ht_sync_ok');
+      setTimeout(function(){ if (typeof toast === 'function') toast('✅ 試算表已同步完成（' + _syncedN + ' 場）'); }, 900);
+    }
+  } catch (e) {}
   _bootstrapStart();   // ★ 最先送出：登入必抓的資料合成一次往返，後面各呼叫點直接吃快取
   // ★ 背景暖身 Supabase 憑證：等 bootstrap 收工後再要（避免和它爭用同一條擁擠的 GAS 通道），
   //   之後案件清單就能直接走鏡像秒開；失敗也無妨（清單自動退回 GAS）。手上已有效證則秒回不打 GAS。
@@ -8360,6 +8369,14 @@ function _dshEsc(s){return (typeof htEsc==='function')?htEsc(s):String(s==null?'
 function _dshMe(){return String((((typeof currentUser!=='undefined')&&currentUser)||window.currentUser||{}).email||'').trim().toLowerCase();}
 function _dshCurYM(){var n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1<10?'0':'')+(n.getMonth()+1);}
 function _dshBdayMonthCount(mNum){if(!Array.isArray(window._BF_USER_BDAYS))return 0;var seen={},c=0;window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===mNum&&b.name&&!seen[b.name]){seen[b.name]=1;c++;}});return c;}
+// 本月壽星名單（去重＋依日期排序）：給午茶卡「本月壽星」欄位直接畫姓名+日期徽章用
+function _dshBdayMonthList(mNum){
+  if(!Array.isArray(window._BF_USER_BDAYS))return [];
+  var seen={},list=[];
+  window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===mNum&&b.name&&!seen[b.name]){seen[b.name]=1;list.push({name:b.name,d:b.d});}});
+  list.sort(function(a,b){return (a.d||0)-(b.d||0);});
+  return list;
+}
 function _dshStatusClass(st){st=String(st||'').trim();if(st==='已退件'||st.indexOf('退')>=0)return[st||'已退件','dsh-b-rej'];if(st==='已完成')return['已完成','dsh-b-done'];if(st==='作廢')return['已作廢','dsh-b-void'];if(st.indexOf('待')>=0)return[st,'dsh-b-wait'];return[st||'進行中','dsh-b-prog'];}
 function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0){col='#DC2626';bg='#FEE2E2';}else if(st==='已完成'){col='#22826A';bg='#E4EFE1';}return '<span class="ci" style="background:'+bg+';color:'+col+'">'+_dshIc('file',16)+'</span>';}
 // 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
@@ -8399,7 +8416,19 @@ function _dshDutyTea(){
   var _cell=function(n,k,col){return '<div class="cell"><div class="n"'+(col?(' style="color:'+col+'"'):'')+'>'+n+'</div><div class="k">'+k+'</div></div>';};
   // 參加人數／品項數：一律顯示；抓不到明細時顯示「—」（未知），不假造 0
   var hcTxt=hc?(hc+'<small> 人</small>'):'—', itTxt=it?(it+'<small> 項</small>'):'—';
-  var cells=_cell(hcTxt,'參加人數')+_cell(itTxt,'品項數')+_cell(bd+'<small> 位</small>','本月壽星');
+  // 本月壽星：有壽星時直接畫「姓名+日期」徽章（不再只顯示人數），一眼看到是誰、哪天
+  var _bdList=(typeof _dshBdayMonthList==='function')?_dshBdayMonthList(m):[];
+  var _bdCell;
+  if(_bdList.length){
+    var _bdShow=_bdList.slice(0,3).map(function(x){
+      return '<span style="display:inline-flex;align-items:center;gap:3px;background:#FDE7EF;color:#C63968;border-radius:20px;padding:2px 8px;font-size:11px;font-weight:700;white-space:nowrap">🎂 '+_dshEsc(x.name)+(x.d?(' '+m+'/'+x.d):'')+'</span>';
+    }).join('');
+    var _bdMore=_bdList.length>3?('<span style="font-size:11px;color:#8A96A6;font-weight:600">等 '+_bdList.length+' 位</span>'):'';
+    _bdCell='<div class="cell"><div class="k" style="margin-bottom:5px">本月壽星</div><div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">'+_bdShow+_bdMore+'</div></div>';
+  } else {
+    _bdCell=_cell('0<small> 位</small>','本月壽星');
+  }
+  var cells=_cell(hcTxt,'參加人數')+_cell(itTxt,'品項數')+_bdCell;
   if(bud)cells+=_cell('$'+Number(bud).toLocaleString(),'預算');
   // 卡片右上角直接顯示下次日期（漂亮樣式），倒數天數當作下方小字輔助說明；沒有日期就顯示 Coming Soon
   var badge=dateStr
@@ -8485,7 +8514,7 @@ function _dshSocial(){
   return '<div style="display:flex;align-items:center;gap:12px;background:#fff;border:1px solid #E6EAF0;border-radius:14px;box-shadow:0 1px 2px rgba(31,41,51,.05),0 5px 16px rgba(31,41,51,.05);padding:12px 16px">'
     +'<span style="width:36px;height:36px;border-radius:11px;background:#FDE7EF;color:#EC4F7D;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('cake',20)+'</span>'
     +'<div style="flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
-    +'<b style="font-weight:800;color:#2E332D">本月同事生日</b>'
+    +'<b style="font-weight:800;color:#2E332D">本月壽星</b>'
     +'<span style="color:#4A4F58;margin-left:9px">'+show+'</span>'
     +'</div></div>';
 }
@@ -8517,7 +8546,13 @@ function _renderRoleDash(){
   document.getElementById('dsh-duty').innerHTML=duties.join('');
   try{document.getElementById('dsh-fuli').innerHTML=_dshFuli();}catch(e){}
   try{document.getElementById('dsh-cases').innerHTML=_dshCases(myCases);}catch(e){}
-  try{document.getElementById('dsh-social').innerHTML=_dshSocial();}catch(e){}
+  // 「本月同事生日／本月壽星」獨立卡：福委在午茶日籌備卡的「本月壽星」欄位已直接看得到姓名+日期，
+  //   這裡不重複顯示；但福委若同時是管理者，管理者一律都要看到（不受此收斂影響）。
+  //   其他角色（HR／一般員工）看不到午茶日籌備卡（無 hightea.manage 權限），故仍保留這張獨立卡。
+  try{
+    var _hideSocialForWelfare = (typeof hasRole==='function' && hasRole('welfare') && !(typeof isAdmin==='function' && isAdmin()));
+    document.getElementById('dsh-social').innerHTML = _hideSocialForWelfare ? '' : _dshSocial();
+  }catch(e){}
 }
 window._renderRoleDash=_renderRoleDash;
 
@@ -17032,12 +17067,17 @@ window._shadowCompareCases = async function() {
 // 「立即同步試算表」按鈕：呼叫後端手動同步（gsheet→Supabase），清掉午茶清單快取後重新整理，讓剛在試算表新增/改的午茶日馬上出現。
 window.htSyncSheetsNow = async function(btn) {
   var _t = btn ? btn.textContent : '';
-  if (btn) { btn.disabled = true; btn.textContent = '同步中…'; }
+  // GAS 偶爾會被 Google 安全頁攔截、觸發前端重試，一次同步可能要等 10~20 秒才有結果；
+  // 只顯示「同步中…」容易讓人以為卡住了，加上提示字讓等待有個底。
+  if (btn) { btn.disabled = true; btn.textContent = '同步中…（可能需 10~20 秒）'; }
   try {
     var r = await callAPI('htSyncSheets', {});
     if (r && r.ok) {
       // 清掉午茶清單/試算表場次的前端快取（記憶體＋localStorage），確保重整後讀到剛同步的資料
       try { Object.keys(localStorage).forEach(function(k){ if (k.indexOf('htSheetList') >= 0 || k.indexOf('htList') >= 0) localStorage.removeItem(k); }); } catch(e) {}
+      // ★ 700ms 後整頁重整，這則 toast 使用者根本來不及看清楚就被蓋掉了（曾反映「不知道有沒有更新成功」）。
+      //   存一個旗標，重整完成後（見 showApp）再補顯示一次成功訊息，確保使用者真的看得到結果。
+      try { sessionStorage.setItem('bf_ht_sync_ok', String(r.sent || 0)); } catch(e) {}
       if (typeof toast === 'function') toast('✅ 已同步試算表（' + (r.sent || 0) + ' 場），重新整理中…');
       setTimeout(function(){ location.reload(); }, 700);
       return;
