@@ -560,6 +560,61 @@
   };
 
   // ══════════════════════════════════════════════════════════
+  // 按摩預約 Realtime（沿用上面同一套 supabase-js client／載入邏輯）
+  // massage_bookings／massage_waitlist 任一列變動 → 直接整批重抓＋重畫，
+  // 不逐列 patch（按摩畫面是日曆＋清單彙總，不像午茶單品項表格需要逐列更新）。
+  // 一樣「加速器、不是唯一來源」：輪詢（20 秒）留著當安全網，連不上就退回輪詢。
+  // ══════════════════════════════════════════════════════════
+  var _msRtChannel = null, _msRtStatus = 'idle', _msRtSubscribing = false;
+
+  window.msRealtime = {
+    status: function () { return _msRtStatus; },
+    setAuth: function (token) { try { if (_rtClient && token) _rtClient.realtime.setAuth(token); } catch (e) {} },
+
+    // onChange: 任一列異動時呼叫（不帶明細，由呼叫端自行重抓）
+    subscribe: async function (onChange) {
+      var tok = _validToken();
+      if (!tok) return false;
+      if (_msRtChannel) return true;
+      if (_msRtSubscribing) return true;
+      _msRtSubscribing = true;
+
+      var lib;
+      try { lib = await _loadRtLib(); }
+      catch (e) { _msRtSubscribing = false; _msRtStatus = 'unavailable'; return false; }
+
+      try {
+        if (!_rtClient) {
+          _rtClient = lib.createClient(SB_URL, SB_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+            realtime: { params: { eventsPerSecond: 10 } }
+          });
+        }
+        _rtClient.realtime.setAuth(tok);
+
+        var _fire = function () { try { onChange && onChange(); } catch (e) {} };
+
+        _msRtChannel = _rtClient
+          .channel('massage-live')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'massage_bookings' }, _fire)
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'massage_waitlist' }, _fire)
+          .subscribe(function (status) { _msRtStatus = status; });
+        _msRtSubscribing = false;
+        return true;
+      } catch (e) {
+        _msRtSubscribing = false;
+        _msRtStatus = 'unavailable';
+        return false;
+      }
+    },
+
+    unsubscribe: function () {
+      try { if (_msRtChannel && _rtClient) _rtClient.removeChannel(_msRtChannel); } catch (e) {}
+      _msRtChannel = null; _msRtStatus = 'idle'; _msRtSubscribing = false;
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════
   // 公佈欄（首頁／午茶日／按摩共用一張表，以 scope 區分）
   // ----------------------------------------------------------
   // 搬家動機：GAS 端不穩，實際造成「公告明明有卻不見」「刪掉重整又回來」。

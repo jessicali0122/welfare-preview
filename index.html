@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916173532';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916174105';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -14199,8 +14199,13 @@ window.sw = function(view, ...args) {
     setTimeout(syncApplicantFilter, 50);
   }
   if (typeof updateVH === 'function') setTimeout(updateVH, 50);
-  if (view === 'massage') { if (typeof window.msStartPolling === 'function') window.msStartPolling(); }
-  else if (typeof window.msStopPolling === 'function') window.msStopPolling();
+  if (view === 'massage') {
+    if (typeof window.msStartPolling === 'function') window.msStartPolling();
+    if (window.msRealtime) window.msRealtime.subscribe(function(){ if (typeof msRealtimeRefresh === 'function') msRealtimeRefresh(); });
+  } else {
+    if (typeof window.msStopPolling === 'function') window.msStopPolling();
+    if (window.msRealtime) window.msRealtime.unsubscribe();
+  }
 };
 
 // 初始同步
@@ -22943,23 +22948,32 @@ function pad2(n){ return n<10?'0'+n:''+n; }
 function fmtDateStr(d){ return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate()); }
 var _allBookings = [];
 
-// ── 即時同步：待在按摩預約頁時，定期向後端拉取最新資料 ──
+// ── 即時同步：待在按摩預約頁時，定期向後端拉取最新資料（輪詢），加上 Realtime 推播加速 ──
 // 只重繪日曆/名額/我的預約/待審清單，不動管理員正在編輯中的開放日期草稿表單，避免蓋掉輸入到一半的內容
 var _msPollTimer = null;
+function msRefreshFromServer() {
+  return msFetchData().then(function() {
+    // 管理者正在右欄編輯開放時段時，暫停重繪（避免輪詢/推播關掉編輯器/蓋掉草稿）
+    var _edw2 = document.getElementById('ms-open-editor-wrap');
+    if (_edw2 && _edw2.style.display !== 'none') return;
+    msRenderCal(); msRenderQuota(); msRenderMyBookings();
+    if (_msSelectedDate) msShowSlots(_msSelectedDate);
+    // 進階管理展開時，同步刷新開放日期清單、待審清單與所有預約紀錄表
+    var advPanel = document.getElementById('ms-panel-admin');
+    if (advPanel && advPanel.style.display !== 'none') { msRenderPendingRequests(); msRenderOpenDates(); msRenderAdminTable(); }
+  }).catch(function(){});
+}
+// Realtime 收到事件時呼叫；短時間內多次事件（例如取消+候補轉正幾乎同時寫入）合併成一次重抓，避免洗版
+var _msRtRefreshTimer = null;
+window.msRealtimeRefresh = function() {
+  if (_msRtRefreshTimer) return;
+  _msRtRefreshTimer = setTimeout(function() { _msRtRefreshTimer = null; msRefreshFromServer(); }, 400);
+};
 window.msStartPolling = function() {
   if (_msPollTimer) return;
   _msPollTimer = setInterval(function() {
     if (document.hidden) return;
-    msFetchData().then(function() {
-      // 管理者正在右欄編輯開放時段時，暫停重繪（避免輪詢關掉編輯器/蓋掉草稿）
-      var _edw2 = document.getElementById('ms-open-editor-wrap');
-      if (_edw2 && _edw2.style.display !== 'none') return;
-      msRenderCal(); msRenderQuota(); msRenderMyBookings();
-      if (_msSelectedDate) msShowSlots(_msSelectedDate);
-      // 進階管理展開時，同步刷新開放日期清單、待審清單與所有預約紀錄表
-      var advPanel = document.getElementById('ms-panel-admin');
-      if (advPanel && advPanel.style.display !== 'none') { msRenderPendingRequests(); msRenderOpenDates(); msRenderAdminTable(); }
-    }).catch(function(){});
+    msRefreshFromServer();
   }, 20000);
 };
 window.msStopPolling = function() {
