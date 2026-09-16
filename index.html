@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916145030';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916152237';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -12433,13 +12433,27 @@ function updateDetailFlow(c){
     var _snapEmail = (Array.isArray(c.chainEmails) && c.chainEmails[i]) ? String(c.chainEmails[i]).trim() : '';
     var _snapName  = (Array.isArray(c.chainNames)  && c.chainNames[i])  ? String(c.chainNames[i]).trim()  : '';
     var _sgEmail   = String(apv.signerEmail || _snapEmail || a.email || '').trim();
-    // 關卡名稱：快照未存 label → 用該關凍結簽核人 email 對應現行流程的關卡名(best-effort)，找不到才退回現行設定
+    // ★ 職務代理（迴避申請人自己審自己）時，後端 _applyDutyRecusal_ 把這關存成「職稱 姓名」
+    //   組合字串（例："副主任委員 邱湘芬"）——因為代理人不是簽核設定裡的獨立一筆，只是躲在
+    //   被迴避者那筆的 dutyProxy 欄位裡，用 email 反查「現在的職稱」一定查不到，會誤借用
+    //   現在坐在這個位置的人的職稱（人員異動後就會錯位）。偵測到這種組合字串就直接拆開：
+    //   前半段＝這張單當時記錄的真職稱、後半段＝純姓名，兩邊都用「單子原本記錄的」，不再猜測現況。
+    var _snapLabel = '';
+    var _snapPlainName = _snapName;
+    if (_snapName && / /.test(_snapName)) {
+      var _spIdx = _snapName.indexOf(' ');
+      _snapLabel = _snapName.slice(0, _spIdx);
+      _snapPlainName = _snapName.slice(_spIdx + 1).trim();
+    }
+    // 關卡名稱：快照存了組合字串 → 直接用拆出來的職稱；否則才嘗試用 email 反查現行流程(best-effort)，找不到退回現行設定
     var _stepLabel = a.label;
-    if (_snapEmail && Array.isArray(_flowApprovers)) {
+    if (_snapLabel) {
+      _stepLabel = _snapLabel;
+    } else if (_snapEmail && Array.isArray(_flowApprovers)) {
       var _lh = _flowApprovers.find(function(g){ return String(g.email||'').trim().toLowerCase() === _snapEmail.toLowerCase(); });
       if (_lh && _lh.label) _stepLabel = _lh.label;
     }
-    let actorName = (_sgEmail && LOCAL_EMAIL_TO_NAME[_sgEmail]) || apv.signerName || _snapName || a.name;
+    let actorName = (_sgEmail && LOCAL_EMAIL_TO_NAME[_sgEmail]) || apv.signerName || _snapPlainName || a.name;
     let origApprover = actorName; // 代理前先記住「這關原本的簽核人」，供稽核附註
     let displayComment = comment;
     let isProxy = false;
@@ -12485,20 +12499,20 @@ function updateDetailFlow(c){
       // 作廢後、尚未輪到的關卡：流程已中止，不再顯示「待審核中／等待前一關完成」
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 流程已中止</div>'
-                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapName || a.name) + '</div>';
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapPlainName || a.name) + '</div>';
     } else if (isDraft) {
       // 草稿：尚未送出，所有關卡一律顯示「尚未送出」，不標任何關為待審核中
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#9AA096;margin-top:2px">— 尚未送出</div>'
-                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapName || a.name) + '</div>';
+                 + '<div style="font-size:12px;color:#9AA096;margin-top:3px">' + (_snapPlainName || a.name) + '</div>';
     } else if (!isDone && !isRejected && i === currentStep - 1) {
       iconSvg = leafSvg(stepColor, 28);
       statusHtml = '<div style="font-size:14px;color:#4A4F49;font-weight:600;margin-top:2px">⏳ 待審核中</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapName || a.name) + '</div>';
+                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapPlainName || a.name) + '</div>';
     } else {
       iconSvg = leafSvg('#D2D6D0', 28);
       statusHtml = '<div style="font-size:14px;color:#767B75;margin-top:2px">等待前一關完成</div>'
-                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapName || a.name) + '</div>';
+                 + '<div style="font-size:12px;color:#767B75;margin-top:3px">' + (_snapPlainName || a.name) + '</div>';
     }
     var isActive = result || (!isVoid && !isDraft && !isDone && !isRejected && i === currentStep-1);
     var titleColor = isActive ? '#4A4F49' : '#767B75';
