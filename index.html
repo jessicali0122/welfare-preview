@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916103630';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916104047';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7164,10 +7164,14 @@ function _busyHide() {
 }
 
 async function callAPI(action, data = {}, opts = {}) {
-  // 案件寫入（送出/簽核/退件/重送/作廢）後，開 25 秒「新鮮窗」：這段時間清單改走 GAS，
-  // 確保剛送/剛簽的單即時反映（鏡像最慢 1 分鐘才同步，靠這個補上即時性）。
+  // 案件寫入（送出/簽核/退件/重送/作廢/存草稿/刪單/上傳附件/刪附件）後，開 25 秒「新鮮窗」：
+  // 這段時間清單/詳情改走 GAS，確保剛寫入的內容即時反映（鏡像最慢 5 分鐘才同步，靠這個補上即時性）。
+  // ★ 草稿/附件動作務必涵蓋在內——否則存完草稿或剛傳完附件，馬上點開會從 Supabase 鏡像讀到
+  //   「還沒同步進去」的舊版，看起來像剛編輯的東西消失／附件沒上傳成功（曾踩過的坑，勿再犯）。
   if (action === 'submit' || action === 'approve' || action === 'reject'
-      || action === 'resubmit' || action === 'voidCase') {
+      || action === 'resubmit' || action === 'voidCase' || action === 'draft'
+      || action === 'deleteCase' || action === 'uploadFile' || action === 'uploadTempFile'
+      || action === 'deleteFile') {
     try { window._casesFreshUntil = Date.now() + 25000; } catch (e) {}
   }
   // ── 案件清單讀取搬 Supabase（Stage 3）：快、繞過 GAS 安全頁；任何失敗自動退回 GAS ──
