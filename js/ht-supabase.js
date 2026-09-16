@@ -598,6 +598,9 @@
           .channel('massage-live')
           .on('postgres_changes', { event: '*', schema: 'public', table: 'massage_bookings' }, _fire)
           .on('postgres_changes', { event: '*', schema: 'public', table: 'massage_waitlist' }, _fire)
+          // 開放日期／限制設定變動（管理者剛開放新日期、關閉日期、改設定）也要即時反映，
+          // 否則員工要等 20 秒輪詢才看得到新開放的日期，搶時段時會不公平。
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'massage_settings' }, _fire)
           .subscribe(function (status) { _msRtStatus = status; });
         _msRtSubscribing = false;
         return true;
