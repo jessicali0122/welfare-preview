@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916160041';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916160645';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2283,9 +2283,9 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
   /* 手機 hero：問候語縮一級且不折行（避免孤字），垂直間距拉開呼吸感 */
   #dash-hero{padding:16px 12px 10px!important;margin-bottom:16px!important}
   #dashboard-greeting{font-size:22px;letter-spacing:.04em;white-space:nowrap}
-  #dash-mascot{width:48px!important;height:48px!important;top:10px!important;right:10px!important}
-  #dash-hero>div:nth-of-type(2){margin-top:14px!important}
-  #dash-hero>div:nth-of-type(3){margin-top:12px!important}
+  #dash-mascot{width:44px!important;height:44px!important}
+  #dash-datetime-row{margin-top:14px!important}
+  #dash-motto{margin-top:12px!important}
   /* 手機頁首：56px 放不下完整品牌列 → 收掉英文小標，只留圖示＋中文 */
   #topbar-brand-en{display:none}#topbar-brand .dash-sec-title{font-size:16px}
   #bulletin-section{padding:4px 14px!important}#bulletin-en{display:none}#dash-birthday-chip{padding:8px 14px!important;gap:6px!important}}
@@ -2635,17 +2635,21 @@ thead th{color:#767B75!important}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100dvh - 152px);background:#F7F8F6;border-radius:20px;padding:0 28px 28px;box-sizing:border-box;overflow:hidden">
-    <!-- 吉祥物裝飾：漂浮在右上角，純點綴不影響互動 -->
-    <img id="dash-mascot" src="assets/icons/da.png?v=1" alt="" style="position:absolute;top:4px;right:110px;width:96px;height:96px;object-fit:contain;pointer-events:none;z-index:2;-webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent 96%);mask-image:linear-gradient(to bottom,#000 55%,transparent 96%)">
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
     <!-- 問候區：不再包卡片（招呼語不是資料，不需要框），維持置中 -->
     <div class="dash-hero-card">
     <div id="dash-hero" style="position:relative;padding:22px 4px 4px;margin-bottom:14px;text-align:center">
-      <div id="dashboard-greeting" style="font-size:24px;font-weight:700;color:#2E332D;letter-spacing:-.01em;line-height:1.25">你好</div>
-      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
-        <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap">
+        <div>
+          <div id="dashboard-greeting" style="font-size:24px;font-weight:700;color:#2E332D;letter-spacing:-.01em;line-height:1.25">你好</div>
+          <div id="dash-datetime-row" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:10px;flex-wrap:wrap">
+            <div id="tw-datetime" style="font-size:14px;color:#767B75;font-weight:500;letter-spacing:.02em">載入中…</div>
+          </div>
+        </div>
+        <!-- 吉祥物裝飾：掛在姓名＋時鐘區塊右側，純點綴不影響互動 -->
+        <img id="dash-mascot" src="assets/icons/da.png?v=1" alt="" style="width:72px;height:72px;object-fit:contain;pointer-events:none;flex-shrink:0;-webkit-mask-image:linear-gradient(to bottom,#000 62%,transparent 100%);mask-image:linear-gradient(to bottom,#000 62%,transparent 100%)">
       </div>
       <div id="dash-motto" style="display:none;font-size:14px;color:#8A8A80;margin-top:8px;letter-spacing:.02em">認真工作的你，值得被好好照顧</div>
       <!-- 生日祝賀橫幅（精緻版 A：粉白玻璃＋彩色紙屑；當天才顯示） -->
@@ -8337,9 +8341,16 @@ function _showRowMenu(btn, caseId, type, status, isOwn) {
     menu.appendChild(div);
   });
   const rect = btn.getBoundingClientRect();
-  menu.style.top = (rect.bottom + 4) + 'px';
   menu.style.right = (window.innerWidth - rect.right) + 'px';
+  menu.style.visibility = 'hidden';
+  menu.style.top = (rect.bottom + 4) + 'px';
   document.body.appendChild(menu);
+  // 選單往下開會超出視窗底部時（按鈕本身就在畫面下緣，例如捲到最後一列）→ 改往上開，避免被截斷點不到
+  const menuH = menu.offsetHeight;
+  let top = rect.bottom + 4;
+  if (top + menuH > window.innerHeight - 8) top = Math.max(8, rect.top - menuH - 4);
+  menu.style.top = top + 'px';
+  menu.style.visibility = '';
   setTimeout(() => document.addEventListener('click', function h(){ menu.remove(); document.removeEventListener('click',h); }), 10);
 }
 
