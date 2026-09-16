@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916105852';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916110748';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -183,6 +183,7 @@ aside .sl-text{display:none}
 .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
 .badge::before{content:'';display:inline-block;width:6px;height:6px;border-radius:50%;flex-shrink:0}
 .bd{background:#F1F3F6;color:#7A828E;border:1px solid #D5DAE2}.bd::before{background:#9AA0AA}
+.bv{background:#E6E8EB;color:#3F444B;border:1px solid #C7CBD1}.bv::before{background:#5B6169}
 .bp{background:#EC4F7D;color:#fff;border:1px solid #C63968}.bp::before{background:#fff}
 .bg{background:#16a34a;color:#fff;border:1px solid #15803d}.bg::before{background:#fff}
 .br{background:#DC2626;color:#fff;border:1px solid #C11F1F}.br::before{background:#fff}
@@ -2158,7 +2159,7 @@ html,body{background:#FAFBFC}
 .dsh-crow .cl{font-size:13px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsh-crow .cs{font-size:11.5px;color:#8A96A6;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsh-crow .cb{margin-left:auto;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0}
-.dsh-b-rej,.dsh-b-wait{background:#FDE7EF;color:#C63968}.dsh-b-prog{background:#E7F0FB;color:#0066CC}.dsh-b-done{background:#E4EFE1;color:#16a34a}.dsh-b-void{background:#F1F3F6;color:#7A828E}
+.dsh-b-rej,.dsh-b-wait{background:#FDE7EF;color:#C63968}.dsh-b-prog{background:#E7F0FB;color:#0066CC}.dsh-b-done{background:#E4EFE1;color:#16a34a}.dsh-b-void{background:#E6E8EB;color:#3F444B}
 .dsh-empty{padding:24px 16px;text-align:center;color:#8A96A6;font-size:12.5px;line-height:1.7}
 @media(max-width:768px){#dsh-two{grid-template-columns:1fr!important}}
 /* ── Hero 重點卡：問候＋時鐘＋關鍵數字合成一張，取代原本分離的問候區＋5 格漂浮 KPI（收斂視覺、去渙散） ── */
@@ -8110,7 +8111,7 @@ function goAuditPage(page) {
 // ── 共用：渲染單一案件列（總覽 + 案件追蹤 共用，確保完全一致）──
 function _renderCaseRow(c, opts) {
   opts = opts || {};
-  const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : (c.status === '草稿' || c.status === '作廢') ? 'bd' : 'bp';
+  const statusClass  = c.status === '已完成' ? 'bg' : c.status === '已退件' ? 'br' : c.status === '作廢' ? 'bv' : c.status === '草稿' ? 'bd' : 'bp';
   const _stepInfo = getStepApproverInfo(c.step);
   // ★ 待審中的當關簽核人：優先用「該案自己的簽核鏈快照」(chainEmails/chainNames，隨清單資料一起回傳，
   //   不必等全域流程 _flowApprovers 載入，也對 HR 特殊案件正確)；全域流程只當後備。
@@ -8166,7 +8167,7 @@ function _renderCaseRow(c, opts) {
     <td class="col-cat" style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;text-align:center;white-space:nowrap">${c.applyItem ? (c.applyItem==='一般請款' ? ('<span style="display:inline-block;background:#F1F3F6;color:#5A616B;border:1px solid #DCE0E6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>') : ('<span style="display:inline-block;background:#E9F1FC;color:#22406A;border:1px solid #C6D4E6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>')) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;font-weight:700;color:#4A4F49;white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
-    <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}${(c.status==='作廢'||c.status==='已完成')?' badge-sym':''}">${c.status==='作廢'?'✕ ':c.status==='已完成'?'✓ ':''}${c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
+    <td style="padding:12px 14px;text-align:center"><div style="display:inline-flex;flex-direction:column;align-items:center;gap:5px"><span class="badge ${statusClass}${(c.status==='作廢'||c.status==='已完成')?' badge-sym':''}">${c.status==='作廢'?'✕ 已作廢':c.status==='已完成'?'✓ '+c.status:c.status}</span>${(c.resubmitCount||0)>0?'<span style="display:inline-flex;align-items:center;gap:4px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:500;white-space:nowrap"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 .49-4.44"/></svg>重送</span>':''}</div></td>
     <td style="padding:12px 14px;white-space:nowrap">${stepApproverName ? nameChip(stepApproverName,24,_resolvedApproverEmail) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${c.lastActionAt ? fmtDate(c.lastActionAt) : '—'}</td>
     <td style="padding:12px 16px 12px 8px;text-align:right"><button class="evx-dot-btn" ${dotMenu} title="操作"><svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button></td>
@@ -8359,7 +8360,7 @@ function _dshEsc(s){return (typeof htEsc==='function')?htEsc(s):String(s==null?'
 function _dshMe(){return String((((typeof currentUser!=='undefined')&&currentUser)||window.currentUser||{}).email||'').trim().toLowerCase();}
 function _dshCurYM(){var n=new Date();return n.getFullYear()+'-'+(n.getMonth()+1<10?'0':'')+(n.getMonth()+1);}
 function _dshBdayMonthCount(mNum){if(!Array.isArray(window._BF_USER_BDAYS))return 0;var seen={},c=0;window._BF_USER_BDAYS.forEach(function(b){if(b&&b.m===mNum&&b.name&&!seen[b.name]){seen[b.name]=1;c++;}});return c;}
-function _dshStatusClass(st){st=String(st||'').trim();if(st==='已退件'||st.indexOf('退')>=0)return[st||'已退件','dsh-b-rej'];if(st==='已完成')return['已完成','dsh-b-done'];if(st==='作廢')return['作廢','dsh-b-void'];if(st.indexOf('待')>=0)return[st,'dsh-b-wait'];return[st||'進行中','dsh-b-prog'];}
+function _dshStatusClass(st){st=String(st||'').trim();if(st==='已退件'||st.indexOf('退')>=0)return[st||'已退件','dsh-b-rej'];if(st==='已完成')return['已完成','dsh-b-done'];if(st==='作廢')return['已作廢','dsh-b-void'];if(st.indexOf('待')>=0)return[st,'dsh-b-wait'];return[st||'進行中','dsh-b-prog'];}
 function _dshCaseIcon(st){var col='#0066CC',bg='#E7F0FB';st=String(st||'');if(st==='已退件'||st.indexOf('退')>=0){col='#DC2626';bg='#FEE2E2';}else if(st==='已完成'){col='#22826A';bg='#E4EFE1';}return '<span class="ci" style="background:'+bg+';color:'+col+'">'+_dshIc('file',16)+'</span>';}
 // 按摩資料：優先用記憶體 _msData，否則讀 localStorage 快取（msPrefetchHubData 命中快取時不會設 _msData）
 function _dshMs(){ if(typeof _msData!=='undefined'&&_msData)return _msData; try{ if(typeof _msLoadLocal==='function')return _msLoadLocal(); }catch(e){} return null; }
@@ -8477,7 +8478,6 @@ function _dshSocial(){
     +'<div style="flex:1;min-width:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'
     +'<b style="font-weight:800;color:#2E332D">本月同事生日</b>'
     +'<span style="color:#4A4F58;margin-left:9px">'+show+'</span>'
-    +'<span style="font-size:12px;font-weight:600;color:#B0B8C4;margin-left:10px">記得說聲生日快樂 🎂</span>'
     +'</div></div>';
 }
 function _renderRoleDash(){
@@ -12180,7 +12180,7 @@ function updateDetailFlow(c){
   // 更新 badge
   const badge = document.getElementById('detail-status-badge');
   if (badge) {
-    if (c.status === '作廢') { badge.className='badge bd'; badge.textContent='作廢'; }
+    if (c.status === '作廢') { badge.className='badge bv'; badge.textContent='已作廢'; }
     else if (isDraft)    { badge.className='badge bd'; badge.textContent='草稿'; }
     else if (isDone)     { badge.className='badge bg'; badge.textContent='已完成'; }
     else if (isRejected){ badge.className='badge br'; badge.textContent='已退件'; }
