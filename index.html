@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260916155401';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260916155705';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2283,7 +2283,7 @@ header{background:transparent!important;border-bottom:none!important;box-shadow:
   /* 手機 hero：問候語縮一級且不折行（避免孤字），垂直間距拉開呼吸感 */
   #dash-hero{padding:16px 12px 10px!important;margin-bottom:16px!important}
   #dashboard-greeting{font-size:22px;letter-spacing:.04em;white-space:nowrap}
-  #dashboard-greeting img{width:20px!important;height:20px!important}
+  #dash-mascot{width:48px!important;height:48px!important;top:10px!important;right:10px!important}
   #dash-hero>div:nth-of-type(2){margin-top:14px!important}
   #dash-hero>div:nth-of-type(3){margin-top:12px!important}
   /* 手機頁首：56px 放不下完整品牌列 → 收掉英文小標，只留圖示＋中文 */
@@ -2635,6 +2635,8 @@ thead th{color:#767B75!important}
 
   <!-- ===== DASHBOARD ===== -->
   <div class="view active" id="view-dashboard" style="position:relative;min-height:calc(100dvh - 152px);background:#F7F8F6;border-radius:20px;padding:0 28px 28px;box-sizing:border-box;overflow:hidden">
+    <!-- 吉祥物裝飾：漂浮在右上角，純點綴不影響互動 -->
+    <img id="dash-mascot" src="assets/icons/da.png?v=1" alt="" style="position:absolute;top:16px;right:22px;width:84px;height:84px;object-fit:contain;pointer-events:none;z-index:2">
     <!-- 腳丫圖案裝飾（呼應寵物保健品牌質感，純點綴不影響互動）-->
     <div id="dash-wrap" style="max-width:960px;margin:0 auto;position:relative;z-index:1">
     <!-- 品牌列已移到頂端 header（#topbar-brand），與 home／頭像同一排、捲動時固定不動 -->
@@ -6364,7 +6366,7 @@ function showApp() {
     }, 2500);
     document.getElementById('ptitle').textContent = '總覽';
     const greeting=document.getElementById('dashboard-greeting');
-    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+givenName(displayName)+' <img src="assets/icons/da.png?v=1" alt="" style="width:24px;height:24px;vertical-align:-4px;object-fit:contain">';}
+    if(greeting){var _h=new Date().getHours();var _gw=_h<5?'晚安':_h<11?'早安':_h<18?'午安':'晚安';greeting.innerHTML=_gw+'！'+givenName(displayName);}
     // hero 左側頭像：取名字首字（新版左對齊 header）
     var _av=document.getElementById('dash-avatar');
     if(_av){var _gn=givenName(displayName)||displayName||'';_av.textContent=(_gn||'').trim().charAt(0)||'👤';}
