@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260917092902';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260917094448';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -16671,7 +16671,47 @@ async function _htSbTokenFetch(blocking) {
   return window.HT_SB_TOKEN;
 }
 
+// ★ 按摩預約：action → Supabase RPC 的參數對映（與 GAS 端 _msSbCall_ 逐支一致）
+// GAS 在 MS_USE_SB 開啟後，這些 action 的第一行就是轉呼叫同一支 RPC、不做其他事，
+// 所以前端直接打 RPC 與繞 GAS 的結果完全相同，只是少一層 Google。
+const _MS_RPC = {
+  massageGetData        : function(d){ return ['massage_get_data', {}]; },
+  massageBook           : function(d){ return ['massage_book', { p_date:d.date, p_time_slot:d.timeSlot, p_user_name:(currentUser&&currentUser.name)||'' }]; },
+  massageCancel         : function(d){ return ['massage_cancel', { p_booking_id:d.bookingId }]; },
+  massageRequestCancel  : function(d){ return ['massage_request_cancel', { p_booking_id:d.bookingId, p_reason:d.reason||'' }]; },
+  massageRequestDelete  : function(d){ return ['massage_request_delete', { p_booking_id:d.bookingId }]; },
+  massageApproveRequest : function(d){ return ['massage_approve_request', { p_booking_id:d.bookingId }]; },
+  massageRejectRequest  : function(d){ return ['massage_reject_request', { p_booking_id:d.bookingId }]; },
+  massageCheckIn        : function(d){ return ['massage_checkin', { p_booking_id:d.bookingId }]; },
+  massageForceCheckIn   : function(d){ return ['massage_force_checkin', { p_booking_id:d.bookingId }]; },
+  massageCheckInQR      : function(d){ return ['massage_checkin_qr', { p_token:d.token }]; },
+  massageJoinWaitlist   : function(d){ return ['massage_join_waitlist', { p_date:d.date, p_time_slot:d.timeSlot, p_user_name:(currentUser&&currentUser.name)||'' }]; },
+  massageLeaveWaitlist  : function(d){ return ['massage_leave_waitlist', { p_waitlist_id:d.waitlistId }]; },
+  massageMarkNoshow     : function(d){ return ['massage_mark_noshow', { p_date:d.date }]; },
+  massageModifyBooking  : function(d){ return ['massage_modify_booking', { p_booking_id:d.bookingId, p_new_date:d.newDate, p_new_time_slot:d.newTimeSlot }]; },
+  massageOpenDate       : function(d){ return ['massage_open_date', { p_date:d.date, p_slots:d.slots }]; },
+  massageCloseDate      : function(d){ return ['massage_close_date', { p_date:d.date }]; },
+  massageEditDate       : function(d){ return ['massage_edit_date', { p_date:d.date, p_slots:d.slots }]; },
+  massageSaveSettings   : function(d){ return ['massage_save_settings', { p_settings:d }]; },
+  massageGenerateQRToken: function(d){ return ['massage_generate_qr_token', { p_date:d.date }]; },
+  massageAdminDelete    : function(d){ return ['massage_admin_delete', { p_booking_id:d.bookingId }]; }
+};
+
 async function htApi(action, payload) {
+  // ★ 按摩預約直連 Supabase（繞過 GAS）→ 不再受 Google 間歇性安全牆影響
+  // 拿不到 JWT 或 Supabase 本身失敗時，才退回原本的 GAS 路徑（保底不讓功能中斷）。
+  if (_MS_RPC[action] && window.msSbDirect && !(currentUser && currentUser.token === 'demo')) {
+    try {
+      var _m = _MS_RPC[action](payload || {});
+      var _p = window.msSbDirect(_m[0], _m[1]);
+      if (_p) {
+        var _r = await _p;
+        if (_r && !_r.__sbFailed) return _r;
+        console.warn('[massage] Supabase 直連失敗，退回 GAS：', action, _r && _r.error);
+      }
+    } catch (e) { console.warn('[massage] Supabase 直連異常，退回 GAS：', action, e); }
+  }
+
   // ★ Supabase 路由：總開關開 + 該 action 已支援 + 模組已載入 + 非 demo → 改走 Supabase（回傳格式與 GAS 相同）
   // 模組可能還在載入中（深連結會很早就打 API）→ 等它一下，別急著掉回 GAS
   if (HT_USE_SUPABASE && !window.htSupabase) { try { await _htSbReady; } catch(e){} }
@@ -22654,7 +22694,7 @@ window.msApproveRequest = function(reqId) {
   msRenderPendingRequests(); msRenderAdminTable();
   msRenderCal(); msRenderMyBookings();
   _msSaveLocal();
-  htApi('massageApproveRequest', { reqId }).catch(function(){});
+  htApi('massageApproveRequest', { bookingId: req.bookingId }).catch(function(){});
 };
 
 window.msRejectRequest = function(reqId) {
@@ -22665,7 +22705,7 @@ window.msRejectRequest = function(reqId) {
   if (mb) { mb.cancelRequested = false; mb.deleteRequested = false; }
   msRenderPendingRequests(); toast('已拒絕申請');
   _msSaveLocal();
-  htApi('massageRejectRequest', { reqId }).catch(function(){});
+  htApi('massageRejectRequest', { bookingId: req.bookingId }).catch(function(){});
 };
 
 // ── 開放日期管理 ──

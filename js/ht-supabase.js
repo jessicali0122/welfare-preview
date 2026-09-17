@@ -733,6 +733,20 @@
   }
   window.htBulletinSyncFromGas = bulletinSyncFromGas;
 
+  // ── 按摩預約：前端直連 Supabase ──
+  // 按摩的業務規則 100% 都在 SECURITY DEFINER RPC 裡（與 GAS 呼叫的是同一批函式），
+  // 所以前端直接打 RPC 的把關強度與繞 GAS 完全相同，但不再經過 Google，
+  // 因此不會再撞到間歇性安全牆（那些 CORS／AbortError）也不必退回舊快取。
+  // 沒有有效 JWT 時回 null，讓呼叫端自己決定要不要退回 GAS。
+  window.msSbDirect = function (rpc, params) {
+    if (!_validToken()) return null;
+    return _sb('rpc/' + rpc, { method: 'POST', body: params || {} }).then(function (r) {
+      if (r.__error) return { ok: false, error: r.__error, __sbFailed: true, __status: r.__status };
+      var d = r.__data;
+      return (d && typeof d === 'object') ? d : { ok: false, error: '按摩服務回應異常', __sbFailed: true };
+    });
+  };
+
   // ── 路由表 ──
   // ── 案件讀取搬遷（Stage 2）：透過帶授權的 rpc/get_my_cases 取「我有權看的案件」──
   // 回傳格式與 GAS listCases 相同（{ok, cases:[...]}），可直接拿去比對／日後切換。
