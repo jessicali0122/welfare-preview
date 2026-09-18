@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918173809';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918174238';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8728,44 +8728,48 @@ function _dshVoteStrip(){
     }
     return '';
   }
-  // 已投過就不再打擾：先用本機記錄擋掉（免等網路），下面再向後端覆核
+  // 已投過就不再打擾（本機記錄先擋，免等網路）
   var iso = _dshTodayISO();
   try { if (localStorage.getItem('bf_ht_voted_HTD-' + iso)) return ''; } catch(e) {}
-  return '<div class="dsh-action dsh-a-tea" id="dsh-vote-strip">'
-    + '<div class="em">' + _dshIc('coffee', 18) + '</div>'
-    + '<div class="tx"><div class="t1">今天的午茶日好吃嗎？</div>'
-    +   '<div class="t2">花 30 秒評分，選出你的心頭好 🍀</div></div>'
-    + '<button class="go" onclick="dshGoVote()">開始投票 →</button>'
-    + '</div>';
+  return 'PENDING';   // 其餘條件要問後端 → 交給 _dshVoteStripMaybe 非同步決定
 }
-// 後端覆核：已投過／福委已結束投票 → 收掉這條，不要留著誤導
-function _dshVoteStripVerify(){
-  var el = document.getElementById('dsh-vote-strip');
-  if (!el || typeof htApi !== 'function') return;
-  var iso = _dshTodayISO();
-  htApi('htVoteGet', { eventId: 'HTD-' + iso }).then(function(r){
-    if (!r || !r.ok) return;
-    if (r.voted || r.closed) { var n = document.getElementById('dsh-vote-strip'); if (n) n.remove(); }
+// ★ 非同步把關：只有「福委已開放投票」才把這條放出來。
+//   為什麼不先畫再收掉：福委還沒開放時先閃一條「開始投票」再消失，等於叫大家去投一個還沒開的票。
+//   一併擋掉「我已投過」與「福委已結束投票」。
+function _dshVoteStripMaybe(){
+  if (_dshVoteStrip() !== 'PENDING' || typeof htApi !== 'function') return;
+  var iso = _dshTodayISO(), evId = 'HTD-' + iso;
+  Promise.all([
+    htApi('htVoteItemsGet', { eventId: evId }).catch(function(){ return null; }),
+    htApi('htVoteGet',      { eventId: evId }).catch(function(){ return null; })
+  ]).then(function(res){
+    var cfg = res[0], got = res[1];
+    var opened = !!(cfg && cfg.ok && cfg.configured && (cfg.items || []).length);
+    if (!opened) return;                                   // 福委還沒開放 → 不顯示
+    if (got && got.ok && (got.voted || got.closed)) return; // 已投過／已結束 → 不顯示
+    var host = document.getElementById('dsh-action');
+    if (!host || document.getElementById('dsh-vote-strip')) return;
+    var box = document.createElement('div');
+    box.className = 'dsh-action dsh-a-tea';
+    box.id = 'dsh-vote-strip';
+    box.innerHTML = '<div class="em">' + _dshIc('coffee', 18) + '</div>'
+      + '<div class="tx"><div class="t1">今天的午茶日好吃嗎？</div>'
+      +   '<div class="t2">花 30 秒評分，選出你的心頭好 🍀</div></div>'
+      + '<button class="go" onclick="dshGoVote()">開始投票 →</button>';
+    host.insertBefore(box, host.firstChild);
   }).catch(function(){});
 }
 // 點「開始投票」：切到午茶日頁把該場資料載起來，再走既有的投票流程（不複製第二份邏輯）。
 // ★ 等的是「資料」而不是橫幅：橫幅要等整頁重繪才出現，比資料本身晚很多，
 //   等橫幅會在資料都好了的情況下還逾時，結果點了沒反應。
-window.dshGoVote = async function(){
+window.dshGoVote = function(){
   var iso = _dshTodayISO();
-  if (typeof toast === 'function') toast('⏳ 載入投票中…');
   try { sw('hightea'); } catch(e) {}
-  // 投票品項要取自當天那一場的品項，沒載到會變成空表單 → 等到名單裡真的有今天這場再開
-  var hasToday = function(){
-    var hit = function(list){
-      return (list || []).some(function(e){
-        return String((e && e.date) || '').replace(/\//g, '-').slice(0, 10) === iso;
-      });
-    };
-    return hit(window._htEvents) || hit(window._htSheetSessions);
-  };
-  for (var i = 0; i < 80 && !hasToday(); i++) await new Promise(function(r){ setTimeout(r, 250); });
-  if (typeof htVoteOpenInline === 'function') htVoteOpenInline(iso);
+  // 不必等午茶日頁把品項載完：這條只在「福委已開放投票」時才出現，
+  // 這時投票品項已經存在後端（福委勾好的名單），投票面板直接用那份，不需要當天那場的原始品項。
+  setTimeout(function(){
+    if (typeof htVoteOpenInline === 'function') htVoteOpenInline(iso);
+  }, 300);
 };
 
 function _renderRoleDash(){
@@ -8788,9 +8792,9 @@ function _renderRoleDash(){
   }else{
     act='<div class="dsh-action dsh-a-green"><div class="em">'+_dshIc('check',18)+'</div><div class="tx"><div class="t1">目前沒有待你處理的案件</div><div class="t2">有退件或輪到你審核時會出現在這裡</div></div></div>';
   }
-  // 投票提醒條排在案件提醒條上方（午茶日當天 16:30 起才有內容，其餘時間為空字串）
-  document.getElementById('dsh-action').innerHTML=_dshVoteStrip()+act;
-  try{_dshVoteStripVerify();}catch(e){}
+  document.getElementById('dsh-action').innerHTML=act;
+  // 投票提醒條（若條件成立）會非同步插到案件提醒條「上方」
+  try{_dshVoteStripMaybe();}catch(e){}
   var duties=[];
   try{if(can_('hightea.manage'))duties.push(_dshDutyTea());}catch(e){}
   try{if(can_('massage.manage'))duties.push(_dshDutyMassage());}catch(e){}
@@ -17389,12 +17393,45 @@ function _htUpdateCountdown() {
       if (_bnrTitle) _bnrTitle.textContent = '今天是午茶日！吃飽喝足了嗎？';
       if (_bnrSub) _bnrSub.textContent = '花 30 秒評分，選出你的心頭好 🍀';
       if (_bnrBtn) _bnrBtn.textContent = '開始投票 →';
+      // ★ 依「福委是否已開放投票」調整：福委看到的是開放入口，員工在開放前不顯示。
+      //   不能對員工掛「開始投票」卻點進去被擋，那是騙人點擊。
+      _htVoteBannerGate(_vBanner.getAttribute('data-vote-date'));
     } else _vBanner.style.display = 'none';
   }
   if (!upcoming.length) { if (wtip) wtip.style.display = 'none'; return; }
   // 倒數重點已融入頁首 Hero（ht-hero-next-wrap），僅保留天氣提示
   _htLoadWeather(String(upcoming[0].ev.date || '').replace(/\//g, '-'));
 };
+
+// 投票開放狀態把關（午茶日頁的當天橫幅）：
+//   福委／管理者 → 一律看得到；未開放時文案改成「開放投票」，點進去就是勾選品項那一步。
+//   一般員工     → 福委開放前不顯示；開放後才出現「開始投票」。
+//   為什麼要這樣：品項清單可能有 20 項但只該開放其中 15 項當選項（餐具／器材等不是選項），
+//   一定要福委先篩過。開放前掛「開始投票」給員工，點進去只會被擋，等於騙人點擊。
+async function _htVoteBannerGate(dkey) {
+  var b = document.getElementById('ht-today-vote-banner');
+  if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(String(dkey || ''))) return;
+  var isMgr = (typeof can === 'function') && can('hightea.manage');
+  var opened = false;
+  try {
+    var cfg = await htApi('htVoteItemsGet', { eventId: 'HTD-' + dkey });
+    opened = !!(cfg && cfg.ok && cfg.configured && (cfg.items || []).length);
+  } catch (e) { if (!isMgr) return; }   // 問不到狀態時：員工維持現狀不動，福委照樣給入口
+  if (b.getAttribute('data-vote-date') !== dkey) return;   // 期間換了場次 → 放棄這次結果
+  var t = b.querySelector('[data-vb="title"]'), s = b.querySelector('[data-vb="sub"]'), btn = b.querySelector('[data-vb="btn"]');
+  if (isMgr && !opened) {
+    b.style.display = '';
+    if (t) t.textContent = '今天是午茶日！還沒開放投票';
+    if (s) s.textContent = '先挑出要讓大家評分的品項，再開放投票';
+    if (btn) btn.textContent = '開放投票 →';
+    return;
+  }
+  if (!opened) { b.style.display = 'none'; return; }        // 員工：未開放 → 不顯示
+  b.style.display = '';
+  if (t) t.textContent = '今天是午茶日！吃飽喝足了嗎？';
+  if (s) s.textContent = '花 30 秒評分，選出你的心頭好 🍀';
+  if (btn) btn.textContent = isMgr ? '查看投票 →' : '開始投票 →';
+}
 
 // 橫幅點擊：一律在午茶日主頁就地展開「獨立投票面板」——投票是給全員的，
 // 不帶大家進活動管理表單（品項/預算等僅福委使用）
@@ -19747,8 +19784,22 @@ window.htVoteOpenInline = async function(dateStr, kioskMode) {
       wrap.style.display = 'none';
       return;
     }
-    // 用福委存好的名單；未設定則以關鍵字過濾為預設
-    _htvBuildForm(savedItems || names, configured);
+    // ★ 福委還沒確認「可投票品項」→ 一律不給表單。
+    //   原因：該場品項清單裡會有餐具／器材等不該被評分的東西，必須由福委先篩過才開放，
+    //   不可用關鍵字自動過濾當預設（會把不是選項的品項放進去讓大家投）。
+    if (!configured) {
+      _clrLoad();
+      var nopen = document.createElement('div');
+      nopen.id = 'htv-closed-note';
+      nopen.style.cssText = 'background:#fff;border-radius:16px;padding:40px 20px;text-align:center;color:#767B75;font-size:16px;box-shadow:0 1px 3px rgba(46,51,45,.08)';
+      nopen.innerHTML = '<div style="font-size:40px;margin-bottom:10px">🕒</div>'
+        + '投票還沒開放<br><span style="font-size:14px">福委正在確認這場可以投票的品項，開放後再回來投吧 🍀</span>';
+      wrap.parentElement.appendChild(nopen);
+      wrap.style.display = 'none';
+      return;
+    }
+    // 一律使用福委存好的名單（不再回退到未經篩選的全部品項）
+    _htvBuildForm(savedItems, true);
     document.getElementById('ht-vote-form').style.display = '';
   }
   var pg = document.getElementById('ht-vote-page'); if (pg) pg.scrollTop = 0;
