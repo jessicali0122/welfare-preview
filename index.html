@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918173542';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918173809';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8748,18 +8748,24 @@ function _dshVoteStripVerify(){
     if (r.voted || r.closed) { var n = document.getElementById('dsh-vote-strip'); if (n) n.remove(); }
   }).catch(function(){});
 }
-// 點「開始投票」：切到午茶日頁把該場資料載起來（投票品項要從該場品項來，沒載到會是空表單），
-// 等頁面把橫幅的日期算好後，走既有的同一條投票流程，不另外複製一份邏輯。
+// 點「開始投票」：切到午茶日頁把該場資料載起來，再走既有的投票流程（不複製第二份邏輯）。
+// ★ 等的是「資料」而不是橫幅：橫幅要等整頁重繪才出現，比資料本身晚很多，
+//   等橫幅會在資料都好了的情況下還逾時，結果點了沒反應。
 window.dshGoVote = async function(){
+  var iso = _dshTodayISO();
+  if (typeof toast === 'function') toast('⏳ 載入投票中…');
   try { sw('hightea'); } catch(e) {}
-  var b = null;
-  for (var i = 0; i < 25; i++) {
-    b = document.getElementById('ht-today-vote-banner');
-    if (b && b.style.display !== 'none' && b.getAttribute('data-vote-date')) break;
-    await new Promise(function(r){ setTimeout(r, 200); });
-  }
-  var d = b && b.getAttribute('data-vote-date');
-  if (d && typeof htVoteOpenInline === 'function') htVoteOpenInline(d);
+  // 投票品項要取自當天那一場的品項，沒載到會變成空表單 → 等到名單裡真的有今天這場再開
+  var hasToday = function(){
+    var hit = function(list){
+      return (list || []).some(function(e){
+        return String((e && e.date) || '').replace(/\//g, '-').slice(0, 10) === iso;
+      });
+    };
+    return hit(window._htEvents) || hit(window._htSheetSessions);
+  };
+  for (var i = 0; i < 80 && !hasToday(); i++) await new Promise(function(r){ setTimeout(r, 250); });
+  if (typeof htVoteOpenInline === 'function') htVoteOpenInline(iso);
 };
 
 function _renderRoleDash(){
