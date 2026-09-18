@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918174238';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918174555';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -17377,11 +17377,21 @@ function _htUpdateCountdown() {
   // ── 🗳️ 活動當天：顯示投票入口橫幅（系統場次→全員投票入口；試算表唯讀場次→福委看到「先轉為系統活動」提醒）──
   var _vBanner = document.getElementById('ht-today-vote-banner');
   if (_vBanner) {
+    // 今天是不是午茶日：改用 htGetNextEventDate()（首頁也是用這支，已證實可靠），
+    // 不再從 upcoming 逐筆比日期差 —— 那份清單在「從其他分頁切進午茶日」時可能還沒載好，
+    // 造成橫幅那一輪被判成「今天沒場次」而整天不再出現。
+    var _isTodayTea = (typeof htGetNextEventDate === 'function')
+      && String(htGetNextEventDate() || '').trim() === '今天';
     var _todayEv = null, _todaySheetEv = null;
     for (var _vi = 0; _vi < upcoming.length; _vi++) {
       if (Math.round((upcoming[_vi].d - now) / 86400000) !== 0) continue;
       if (!upcoming[_vi].ev._sheet) { _todayEv = upcoming[_vi].ev; break; }
       if (!_todaySheetEv) _todaySheetEv = upcoming[_vi].ev;
+    }
+    // upcoming 沒比到、但今天確實是午茶日 → 以「今天」補上，日期用當天（台灣時間）
+    if (!_todayEv && !_todaySheetEv && _isTodayTea) {
+      var _tw = new Date(Date.now() + 8 * 3600000), _p2 = function(n){ return (n < 10 ? '0' : '') + n; };
+      _todaySheetEv = { date: _tw.getUTCFullYear() + '-' + _p2(_tw.getUTCMonth() + 1) + '-' + _p2(_tw.getUTCDate()) };
     }
     var _bnrTitle = _vBanner.querySelector('[data-vb="title"]');
     var _bnrSub = _vBanner.querySelector('[data-vb="sub"]');
