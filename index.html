@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918174911';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918175327';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -17971,6 +17971,9 @@ window.htOpenSheetDetail = function (eventId, _fromRoute) {
 async function _htRenderSheetVoteSlot(sess) {
   var slot = document.getElementById('ht-sheet-vote-slot');
   if (!slot) return;
+  // ★ 投票結果只開放福委／管理者：一般員工連「投票詳情」這一段都不顯示。
+  //   （不能只回空清單了事——那會顯示「目前尚無投票資料」，讓人誤以為沒人投過。）
+  if (!((typeof can === 'function') && can('hightea.manage'))) { slot.innerHTML = ''; return; }
   var dkey = String(sess.date || '').replace(/\//g, '-').slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dkey)) return;
   var evId = 'HTD-' + dkey;
@@ -20072,6 +20075,25 @@ window.htVoteSubmitNow = async function(btn) {
   setTimeout(function() {
     form.style.display = 'none';
     document.getElementById('ht-vote-wrap').style.display = '';
+    // ★ 投票結果只開放福委／管理者看：一般員工送出後到此為止，給致謝卡、不顯示結果。
+    //   （後端 ht_vote_get 也已把 votes 鎖成只回給福委，這裡只是畫面；
+    //     就算有人繞過畫面直接呼叫 API 也拿不到別人的分數與留言。）
+    if (!((typeof can === 'function') && can('hightea.manage'))) {
+      document.getElementById('ht-vote-results').style.display = 'none';
+      var done = document.getElementById('htv-thanks');
+      if (!done) {
+        done = document.createElement('div');
+        done.id = 'htv-thanks';
+        done.style.cssText = 'background:#fff;border-radius:16px;padding:40px 20px;text-align:center;color:#4A4F49;font-size:16px;box-shadow:0 1px 3px rgba(46,51,45,.08)';
+        done.innerHTML = '<div style="font-size:40px;margin-bottom:10px">🎉</div>'
+          + '<div style="font-weight:800;color:#2E332D">感謝你的回饋！</div>'
+          + '<div style="font-size:14px;color:#767B75;margin-top:6px">投票結果由福委彙整，會在下次午茶日參考大家的喜好 🍀</div>';
+        document.getElementById('ht-vote-wrap').parentElement.appendChild(done);
+      }
+      done.style.display = '';
+      document.getElementById('ht-vote-wrap').style.display = 'none';
+      return;
+    }
     htVoteRenderResults();
   }, 900);
 };
