@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918171834';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918173542';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2132,6 +2132,10 @@ html,body{background:#FAFBFC}
 .dsh-action .t2{font-size:12px;font-weight:600;margin-top:2px;color:#8A96A6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .dsh-action .go{font-size:13px;font-weight:700;padding:8px 15px;border-radius:10px;white-space:nowrap;cursor:pointer;background:var(--ac);color:#fff;display:inline-flex;align-items:center;gap:4px;border:none;font-family:inherit}
 .dsh-a-pink{--ac:#EC4F7D;--acbg:#FDE7EF}
+/* 午茶日投票提醒條：橘為凸顯色（白字搭深橘 #E0820A）。
+   底色只用一道很淡的左→右琥珀漸層，維持「邊線明顯、避免大面積上色」的調性。 */
+.dsh-a-tea{--ac:#E0820A;--acbg:#FBEEDD;background:linear-gradient(90deg,#FFFBF4,#fff 42%);border-color:#F0DFC4}
+.dsh-action+.dsh-action{margin-top:10px}
 .dsh-a-green{--ac:#B8C0CC;--acbg:#E4EFE1;background:#F6F8FB;border-color:#E7EBF1;box-shadow:none}
 .dsh-a-green .t1{color:#5A6472;font-size:14px}
 .dsh-a-green .em{color:#22826A}
@@ -8698,6 +8702,66 @@ function _dshSocial(){
     +'<span style="color:#4A4F58;margin-left:9px">'+show+'</span>'
     +'</div></div>';
 }
+// ── 🗳️ 午茶日投票提醒條（總覽首頁）──
+// 只在「午茶日當天、台灣時間 16:30 起」出現。
+// 為什麼卡 16:30：午茶日多在下午舉行，太早推提醒等於叫大家對還沒吃到的東西評分。
+// （午茶日分頁的橫幅維持整天顯示——那是自己點進去找的人；首頁這條是推給全員的，所以要挑對時間。）
+var _DSH_VOTE_SHOW_MIN = 16 * 60 + 30;
+var _dshVoteTimer = null;
+function _dshTwNow(){ return new Date(Date.now() + 8 * 3600000); }   // 台灣時間（UTC+8）
+function _dshTodayISO(){
+  var t = _dshTwNow(), p = function(n){ return (n < 10 ? '0' : '') + n; };
+  return t.getUTCFullYear() + '-' + p(t.getUTCMonth() + 1) + '-' + p(t.getUTCDate());
+}
+function _dshVoteStrip(){
+  var dateStr = (typeof htGetNextEventDate === 'function') ? htGetNextEventDate() : '';
+  if (String(dateStr || '').trim() !== '今天') return '';   // 今天不是午茶日 → 不顯示
+  var tw = _dshTwNow();
+  var nowMin = tw.getUTCHours() * 60 + tw.getUTCMinutes();
+  if (nowMin < _DSH_VOTE_SHOW_MIN) {
+    // 還沒到 16:30：安排一次到點重畫，讓整天開著頁面的人也會看到（只排一次，不重複堆計時器）
+    if (!_dshVoteTimer) {
+      _dshVoteTimer = setTimeout(function(){
+        _dshVoteTimer = null;
+        try { _renderRoleDash(); } catch(e) {}
+      }, (_DSH_VOTE_SHOW_MIN - nowMin) * 60000 + 2000);
+    }
+    return '';
+  }
+  // 已投過就不再打擾：先用本機記錄擋掉（免等網路），下面再向後端覆核
+  var iso = _dshTodayISO();
+  try { if (localStorage.getItem('bf_ht_voted_HTD-' + iso)) return ''; } catch(e) {}
+  return '<div class="dsh-action dsh-a-tea" id="dsh-vote-strip">'
+    + '<div class="em">' + _dshIc('coffee', 18) + '</div>'
+    + '<div class="tx"><div class="t1">今天的午茶日好吃嗎？</div>'
+    +   '<div class="t2">花 30 秒評分，選出你的心頭好 🍀</div></div>'
+    + '<button class="go" onclick="dshGoVote()">開始投票 →</button>'
+    + '</div>';
+}
+// 後端覆核：已投過／福委已結束投票 → 收掉這條，不要留著誤導
+function _dshVoteStripVerify(){
+  var el = document.getElementById('dsh-vote-strip');
+  if (!el || typeof htApi !== 'function') return;
+  var iso = _dshTodayISO();
+  htApi('htVoteGet', { eventId: 'HTD-' + iso }).then(function(r){
+    if (!r || !r.ok) return;
+    if (r.voted || r.closed) { var n = document.getElementById('dsh-vote-strip'); if (n) n.remove(); }
+  }).catch(function(){});
+}
+// 點「開始投票」：切到午茶日頁把該場資料載起來（投票品項要從該場品項來，沒載到會是空表單），
+// 等頁面把橫幅的日期算好後，走既有的同一條投票流程，不另外複製一份邏輯。
+window.dshGoVote = async function(){
+  try { sw('hightea'); } catch(e) {}
+  var b = null;
+  for (var i = 0; i < 25; i++) {
+    b = document.getElementById('ht-today-vote-banner');
+    if (b && b.style.display !== 'none' && b.getAttribute('data-vote-date')) break;
+    await new Promise(function(r){ setTimeout(r, 200); });
+  }
+  var d = b && b.getAttribute('data-vote-date');
+  if (d && typeof htVoteOpenInline === 'function') htVoteOpenInline(d);
+};
+
 function _renderRoleDash(){
   if(!document.getElementById('dsh-action'))return;
   var can_=(typeof can==='function')?can:function(){return false;};
@@ -8718,7 +8782,9 @@ function _renderRoleDash(){
   }else{
     act='<div class="dsh-action dsh-a-green"><div class="em">'+_dshIc('check',18)+'</div><div class="tx"><div class="t1">目前沒有待你處理的案件</div><div class="t2">有退件或輪到你審核時會出現在這裡</div></div></div>';
   }
-  document.getElementById('dsh-action').innerHTML=act;
+  // 投票提醒條排在案件提醒條上方（午茶日當天 16:30 起才有內容，其餘時間為空字串）
+  document.getElementById('dsh-action').innerHTML=_dshVoteStrip()+act;
+  try{_dshVoteStripVerify();}catch(e){}
   var duties=[];
   try{if(can_('hightea.manage'))duties.push(_dshDutyTea());}catch(e){}
   try{if(can_('massage.manage'))duties.push(_dshDutyMassage());}catch(e){}
