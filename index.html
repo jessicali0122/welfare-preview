@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918150515';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918151048';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4954,10 +4954,12 @@ thead th{color:#767B75!important}
               <div style="margin:0 0 7px">
                 <span style="font-size:12px;color:#767B75">開放時段與名額</span>
               </div>
-              <!-- 一鍵套用標準按摩日班表（每節15分鐘、每時段1人、自動跳過11:00/13:00師傅休息） -->
-              <div style="display:flex;gap:8px;margin-bottom:8px">
-                <button onclick="msDraftApplyMDay('half')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 半天班表<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
-                <button onclick="msDraftApplyMDay('full')" title="09:00–15:15，每15分鐘一節、每節1人，跳過11:00與13:00師傅休息（共24節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天班表<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
+              <!-- 一鍵套用標準按摩日班表：四種長度對應實際 M-Day 預約表；每節15分鐘、每節1人，自動跳過師傅休息 -->
+              <div style="display:flex;gap:6px;margin-bottom:8px">
+                <button onclick="msDraftApplyMDay('2h')" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 二小時<br><span style="font-weight:500;opacity:.8">09:00–10:45</span></button>
+                <button onclick="msDraftApplyMDay('4h')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 四小時<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
+                <button onclick="msDraftApplyMDay('6h')" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 六小時<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
+                <button onclick="msDraftApplyMDay('day')" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天<br><span style="font-weight:500;opacity:.8">09:00–17:30</span></button>
               </div>
               <div id="ms-draft-slots"></div>
               <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #cdd3db;color:#0066CC;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
@@ -8599,9 +8601,9 @@ function _dshDutyTea(){
   // （原本是「下次 今天 · 就是今天」，同一件事說三次；卡片標題已有「午茶日」，這裡不必再重複。）
   var _teaNow=/^(今天|明天)$/.test(String(dateStr||'').trim());
   var badge=dateStr
-    ? ('<div style="display:flex;flex-direction:row;align-items:baseline;gap:6px;background:#FBEEDD;border-radius:14px;padding:8px 14px;line-height:1.2">'
+    ? ('<div style="display:flex;flex-direction:row;align-items:baseline;gap:6px;background:#FBEEDD;border-radius:10px;padding:'+(_teaNow?'4px 10px':'8px 14px')+';line-height:1.2">'
         +(_teaNow
-          ? '<span style="font-size:16px;font-weight:800;color:#B4670E;letter-spacing:.02em;white-space:nowrap">就在'+_dshEsc(dateStr)+'</span>'
+          ? '<span style="font-size:12px;font-weight:700;color:#B4670E;letter-spacing:.02em;white-space:nowrap">就在'+_dshEsc(dateStr)+'</span>'
           : '<span style="font-size:12px;font-weight:700;color:#C98A4B;white-space:nowrap">下次</span>'
             +'<span style="font-size:16px;font-weight:800;color:#B4670E;letter-spacing:.02em;white-space:nowrap">'+_dshEsc(dateStr)+'</span>'
             +(cd?('<span style="font-size:12px;font-weight:700;color:#E0B98C;white-space:nowrap">·</span><span style="font-size:12px;font-weight:700;color:#D98324;white-space:nowrap">'+_dshEsc(cd)+'</span>'):''))
@@ -8655,7 +8657,7 @@ function _dshFuli(){
   if(!_teaIsNow&&_dm)teaDays='還有 '+_dm[1]+' 天';
   var teaPill=teaDays?('<span style="font-size:12px;font-weight:700;color:#D98324;background:#FBEEDD;border-radius:8px;padding:2px 9px;white-space:nowrap">'+teaDays+'</span>'):'';
   var teaVal=_teaIsNow
-    ?('<span style="font-size:16px;font-weight:800;color:#B4670E;background:#FBEEDD;border-radius:8px;padding:2px 10px;white-space:nowrap">'+_dshEsc(dateStr)+'</span>')
+    ?('<span style="font-size:12px;font-weight:700;color:#B4670E;background:#FBEEDD;border-radius:8px;padding:2px 8px;white-space:nowrap">'+_dshEsc(dateStr)+'</span>')
     :('<span style="font-size:16px;font-weight:800;color:#2E332D">'+_dshEsc(dateStr||'尚未安排')+'</span>');
   var msMain=(used==='—')?'—':(used+' / '+limit);
   var msRem=(used==='—')?'':('<span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;white-space:nowrap">剩 '+Math.max(0,limit-used)+' 次</span>');
@@ -22882,18 +22884,32 @@ window.msDraftAddSlot = function() {
 };
 // 一鍵套用標準 M-Day 班表：每節 15 分鐘、每節 1 人；11:00 與 13:00 為師傅休息時間自動跳過
 // half＝09:00–12:45（15 節）；full＝09:00–15:15（24 節）
+// 快選班表：依 2026/08、2026/09 兩個月的實際「TSA M-Day 預約表」歸納出四種形狀。
+// 共同規則：一律 09:00 開始、每 15 分鐘一節、每節 1 人（一位按摩師）。
+// 師傅休息時間（表上標「休息／下班」的格子）不開放：
+//   11:00 一節；午休 13:00＋13:15 兩節（下午固定從 13:30 開始）；下午場 15:15 一節。
+//   ★ 13:15 原本被當成可預約（舊版只跳 13:00），但表上午休是兩節 —— 已修正。
+var _MS_SHIFTS = {
+  '2h' : { end: '10:45', label: '二小時' },   // 例：9/4
+  '4h' : { end: '12:45', label: '四小時' },   // 例：8/5、8/19、8/26、9/2、9/16（最常用）
+  '6h' : { end: '15:15', label: '六小時' },   // 例：9/11、9/23
+  'day': { end: '17:30', label: '全天'   }    // 例：8/12
+};
 window.msDraftApplyMDay = function(mode) {
-  var BREAKS = { '11:00': 1, '13:00': 1 };
-  var endMin = (mode === 'full') ? (15 * 60 + 15) : (12 * 60 + 45);
+  var BREAKS = { '11:00': 1, '13:00': 1, '13:15': 1, '15:15': 1 };
+  var cfg = _MS_SHIFTS[mode] || _MS_SHIFTS['4h'];
+  var _toMin = function(hhmm){ var p = hhmm.split(':'); return (+p[0]) * 60 + (+p[1]); };
+  var endMin = _toMin(cfg.end);
   var slots = [];
   for (var m = 9 * 60; m <= endMin; m += 15) {
     var t = ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
-    if (BREAKS[t]) continue; // 師傅休息時間
+    // 六小時班表結束在 15:15：那一節在全天班是休息，但在六小時班是最後一節 → 不可跳過
+    if (BREAKS[t] && !(mode === '6h' && t === '15:15')) continue;
     slots.push({ time: t, capacity: 1 });
   }
   _msDraftSlots = slots;
   msRenderDraftSlots();
-  toast('⚡ 已套用' + (mode === 'full' ? '全天' : '半天') + '班表：' + slots.length + ' 節（跳過師傅休息時間）');
+  toast('⚡ 已套用' + cfg.label + '班表：09:00–' + cfg.end + '，共 ' + slots.length + ' 節（已跳過師傅休息時間）');
 };
 window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
 window.msDraftSlotChange = function(i, f, v) {
