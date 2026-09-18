@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918140209';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918143306';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8572,7 +8572,9 @@ function _dshDutyTea(){
     }
   }
   var hint=(typeof htGetNextEventHint==='function')?(htGetNextEventHint()||''):'';
-  var cd='';var _cm=hint.match(/(\d+)\s*天/);if(hint.indexOf('今天')>=0)cd='就是今天';else if(hint.indexOf('明天')>=0)cd='就是明天';else if(_cm)cd='還有 '+_cm[1]+' 天';
+  // 倒數小字只在「有補充資訊」時才掛：大日期本身已經是今天／明天時，再寫「就是今天」是同一件事說兩次
+  var cd='';var _cm=hint.match(/(\d+)\s*天/);
+  if(!/今天|明天/.test(dateStr||'')&&_cm)cd='還有 '+_cm[1]+' 天';
   var st=(_sum&&_sum.status)?_sum.status:'進行中';
   // 選到的場次沒有 eventId（_htEvents 未載，只吃到試算表薄場次）→ 用官方安全預抓補全 _htEvents 一次（只在空時填、不覆寫），再重畫補上人數/品項
   var _cell=function(n,k,col){return '<div class="cell"><div class="n"'+(col?(' style="color:'+col+'"'):'')+'>'+n+'</div><div class="k">'+k+'</div></div>';};
@@ -8642,14 +8644,20 @@ function _dshFuli(){
   try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;if(String(b.bookingId||'').indexOf('WL')===0)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
   // 午茶日剩餘天數做成琥珀膠囊凸顯，緊貼大日期
   var teaDays='';var _dm=(hint||'').match(/(\d+)\s*天/);
-  if((hint||'').indexOf('今天')>=0)teaDays='就是今天';else if(_dm)teaDays='還有 '+_dm[1]+' 天';
+  // 「今天／明天」本身就是最強的提示，不再另外掛「就是今天」（同一件事說兩次）；
+  // 改成讓日期本身變琥珀膠囊，維持凸顯又不重複。只有真實日期才配「還有 N 天」。
+  var _teaIsNow=/今天|明天/.test(dateStr||'');
+  if(!_teaIsNow&&_dm)teaDays='還有 '+_dm[1]+' 天';
   var teaPill=teaDays?('<span style="font-size:12px;font-weight:700;color:#D98324;background:#FBEEDD;border-radius:8px;padding:2px 9px;white-space:nowrap">'+teaDays+'</span>'):'';
+  var teaVal=_teaIsNow
+    ?('<span style="font-size:16px;font-weight:800;color:#B4670E;background:#FBEEDD;border-radius:8px;padding:2px 10px;white-space:nowrap">'+_dshEsc(dateStr)+'</span>')
+    :('<span style="font-size:16px;font-weight:800;color:#2E332D">'+_dshEsc(dateStr||'尚未安排')+'</span>');
   var msMain=(used==='—')?'—':(used+' / '+limit);
   var msRem=(used==='—')?'':('<span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;white-space:nowrap">剩 '+Math.max(0,limit-used)+' 次</span>');
   var _lab='font-size:13px;font-weight:600;color:#8A96A6;flex-shrink:0';var _val='font-size:16px;font-weight:800;color:#2E332D';
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#DCF2F4;color:#0E9AA7;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('gift',17)+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
     +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
-    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">下次午茶日</span><span style="'+_val+'">'+_dshEsc(dateStr||'尚未安排')+'</span>'+teaPill+'</div>'
+    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">下次午茶日</span>'+teaVal+teaPill+'</div>'
     +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'massage\')"><span style="'+_lab+'">本月按摩</span><span style="'+_val+'">'+msMain+'</span>'+msRem+'</div>'
     +'</div></div>';
 }
