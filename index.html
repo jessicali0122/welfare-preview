@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918175327';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918175448';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11016,8 +11016,13 @@ function sw(name,elOrName,_fromPop){
     // 深連結還原：有待還原的單據 id → 直接開該單據（htLoadList 已在背景載列表，供返回用）
     if (window._htRestoreId) {
       var _rid = window._htRestoreId; window._htRestoreId = null;
+      // 投票連結(vote-yyyy-MM-dd) → 直接開投票面板（福委「複製連結」分享到 LINE 用的就是這種）
+      if (/^vote-\d{4}-\d{2}-\d{2}$/.test(_rid)) {
+        var _vd = _rid.slice(5);
+        setTimeout(function(){ if (typeof htVoteOpenInline === 'function') htVoteOpenInline(_vd); }, 300);
+      }
       // 試算表唯讀場次(sheet:) 走 modal；系統活動走詳情頁
-      if (/^sheet:/.test(_rid)) { if (typeof htOpenSheetDetail === 'function') htOpenSheetDetail(_rid, true); }
+      else if (/^sheet:/.test(_rid)) { if (typeof htOpenSheetDetail === 'function') htOpenSheetDetail(_rid, true); }
       else if (typeof htOpenDetail === 'function') { htOpenDetail(_rid, true); }
     }
   }
@@ -19931,9 +19936,12 @@ window.htVoteClosePage = function() {
 // 全程不顯示結果（結果由福委在活動詳情頁查看／活動後公開），送出改用隨機鑰匙不受單人限一票約束
 // 🔗 複製這場的投票連結（月份路由），一鍵貼到 LINE 群組給大家；當天大家點進去登入即見投票橫幅
 window.htVoteCopyLink = function(btn) {
-  var m = String(_htvEventId || '').replace(/^HTD-/, '').slice(0, 7);  // yyyy-MM
-  if (!/^\d{4}-\d{2}$/.test(m)) { toast('找不到這場活動編號'); return; }
-  var url = location.origin + location.pathname + '#hightea/HT-' + m;
+  // ★ 產生「直接進投票」的連結（#hightea/vote-yyyy-MM-dd）。
+  //   舊版給的是 #hightea/HT-yyyy-MM，會被深連結還原當成「活動單據 id」去開詳情頁：
+  //   試算表場次根本沒有那個 id，等於貼出去開不到投票；就算開到也只是停在午茶日分頁。
+  var d = String(_htvEventId || '').replace(/^HTD-/, '').slice(0, 10);  // yyyy-MM-dd
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) { toast('找不到這場活動日期'); return; }
+  var url = location.origin + location.pathname + '#hightea/vote-' + d;
   var done = function(){ if (btn) { var o = btn.textContent; btn.textContent = '✓ 已複製'; setTimeout(function(){ btn.textContent = o; }, 1600); } toast('🔗 投票連結已複製，貼到 LINE 群組即可'); };
   var fallback = function(){
     try { var ta = document.createElement('textarea'); ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); done(); }
