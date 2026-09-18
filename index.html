@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260917094448';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918140209';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4881,6 +4881,8 @@ thead th{color:#767B75!important}
           <button class="ms-myseg" id="ms-myseg-history" onclick="msSwitchMyTab('history')">歷史紀錄</button>
         </div>
       </div>
+      <!-- 同事轉讓邀請收件匣（有邀請才顯示） -->
+      <div id="ms-transfer-inbox" style="display:none;flex-direction:column;gap:8px;margin-bottom:12px"></div>
       <div id="ms-my-upcoming-wrap">
         <div id="ms-my-upcoming" style="display:flex;flex-direction:column;gap:10px"></div>
         <div id="ms-my-upcoming-empty" style="display:none;text-align:center;padding:14px;color:#767B75;font-size:14px;background:#F7F8F6;border-radius:12px">
@@ -5082,6 +5084,33 @@ thead th{color:#767B75!important}
     <div style="padding:14px 20px;border-top:1px solid #D9DDD3;display:flex;gap:8px;justify-content:flex-end">
       <button class="btn btn-o" onclick="msCloseModify()">取消</button>
       <button class="btn btn-p" onclick="msConfirmModify()">確認修改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 轉讓預約給同事 Modal -->
+<div id="ms-transfer-modal" class="modal-bg" onclick="if(event.target===this)msCloseTransfer()">
+  <div onclick="event.stopPropagation()" style="background:#fff;border-radius:16px;width:380px;max-width:92vw;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)">
+    <div style="padding:18px 20px;border-bottom:1px solid #D9DDD3;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:16px;font-weight:700;color:#2E332D">🤝 轉讓給同事</div>
+      <button onclick="msCloseTransfer()" style="background:none;border:none;color:#767B75;cursor:pointer;font-size:20px;line-height:1">×</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div style="font-size:14px;color:#767B75">要轉讓的預約：<span id="ms-transfer-slot" style="font-weight:700;color:#2E332D"></span></div>
+      <div>
+        <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:6px">轉讓給</label>
+        <input id="ms-transfer-search" class="inp" placeholder="輸入姓名搜尋同事" oninput="msTransferFilter()" autocomplete="off" style="margin-bottom:6px">
+        <select id="ms-transfer-to" class="inp" size="6" style="height:auto"></select>
+      </div>
+      <div style="background:#FDF1F5;border:1px solid #F5D9E3;border-radius:12px;padding:12px 14px;font-size:12px;color:#8A4A62;line-height:1.7">
+        送出後對方會在按摩預約頁看到邀請，<b>要等對方按「接受」才算完成</b>。<br>
+        對方接受前你仍是預約人；對方一直沒回應，系統會在時段開始後自動退回給你。<br>
+        該時段已有人候補時不能轉讓（要讓給候補的人）。
+      </div>
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid #D9DDD3;display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-o" onclick="msCloseTransfer()">取消</button>
+      <button class="btn btn-p" onclick="msConfirmTransfer()">送出邀請</button>
     </div>
   </div>
 </div>
@@ -21566,6 +21595,8 @@ window.massageLoad = async function() {
     if (_adv0) _adv0.style.display = _msData.isAdmin ? '' : 'none';
   }
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  // 轉讓邀請獨立抓（不阻擋主資料渲染）；demo 模式沒有憑證，不打
+  if (!_isDemo) msFetchTransfers().then(msRenderTransferInbox).catch(function(){});
   msFetchData().then(function(){
     if (_msData) _msData._loading = false;
     msRenderCal(); msRenderQuota(); msRenderMyBookings();
@@ -22223,6 +22254,15 @@ window.msOpenBookingDetail = function(bookingId) {
         ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消預約</button>'
         : '<span style="flex:1;background:#F7F8F6;color:#B0B6AD;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;text-align:center;box-sizing:border-box">已過取消期限</span>')
       + '</div>';
+  }
+  // 轉讓給同事：已送出邀請 → 顯示等待狀態＋收回；否則提供轉讓入口
+  if (s === 'booked' && !b.deleteRequested && !b.cancelRequested) {
+    if (b.transferStatus === 'pending') {
+      acts += '<div style="background:#FDF1F5;border:1.5px solid #EC4F7D;border-radius:12px;padding:12px 14px;font-size:14px;color:#B03A60;font-weight:700;text-align:center;line-height:1.6">🤝 已邀請 ' + htEsc(b.transferToName || b.transferToEmail || '同事') + ' 接手<br><span style="font-size:12px;font-weight:600">對方接受前，這個預約仍然是你的</span></div>'
+        + '<button onclick="msWithdrawTransfer(\'' + b.bookingId + '\')" style="background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">收回轉讓邀請</button>';
+    } else {
+      acts += '<button onclick="msCloseBookingDetail();msOpenTransfer(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="background:#FDF1F5;color:#B03A60;border:1.5px solid #F5D9E3;border-radius:12px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🤝 轉讓給同事</button>';
+    }
   }
   if (!acts) acts = '<div style="text-align:center;color:#767B75;font-size:14px;padding:4px 0 2px">此預約目前沒有可執行的操作</div>';
   body.innerHTML =
@@ -23019,12 +23059,120 @@ var _allBookings = [];
 // ── 即時同步：待在按摩預約頁時，定期向後端拉取最新資料（輪詢），加上 Realtime 推播加速 ──
 // 只重繪日曆/名額/我的預約/待審清單，不動管理員正在編輯中的開放日期草稿表單，避免蓋掉輸入到一半的內容
 var _msPollTimer = null;
+// ══════════════════════════════════════════
+// 同事互轉預約
+// ══════════════════════════════════════════
+// 規則全部在 Supabase RPC 內（該時段有人候補不可轉讓／對方被停權不可接受／須時段前 30 分鐘），
+// 前端只負責送出並顯示後端回傳的訊息，不重複實作規則 —— 避免兩邊規則走鐘。
+// 逾時未回應的邀請由 pg_cron 每 5 分鐘呼叫 massage_expire_transfers() 自動退回原預約人。
+var _msTransfers = { incoming: [], outgoing: [] };
+var _msTransferBookingId = null;
+
+async function _msTx(rpc, params) {
+  if (!window.msSbDirect) return { ok: false, error: '模組尚未載入完成，請重新整理頁面' };
+  var p = window.msSbDirect(rpc, params);
+  if (!p) return { ok: false, error: '尚未取得存取憑證，請重新整理頁面' };
+  try { return await p; } catch (e) { return { ok: false, error: (e && e.message) || '連線失敗' }; }
+}
+
+function msFetchTransfers() {
+  return _msTx('massage_get_transfers', {}).then(function(r) {
+    if (r && r.ok) _msTransfers = { incoming: r.incoming || [], outgoing: r.outgoing || [] };
+  }).catch(function(){});
+}
+
+function _msTransferSlotLabel(t) {
+  var parts = String(t.date || '').split('-');
+  var wd = ['日','一','二','三','四','五','六'];
+  var w = parts.length === 3 ? wd[new Date(t.date + 'T00:00:00').getDay()] : '';
+  return parseInt(parts[1] || 0) + ' 月 ' + parseInt(parts[2] || 0) + ' 日（' + w + '）' + (t.timeSlot || '');
+}
+
+function msRenderTransferInbox() {
+  var el = document.getElementById('ms-transfer-inbox');
+  if (!el) return;
+  var list = _msTransfers.incoming || [];
+  if (!list.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  el.innerHTML = list.map(function(t) {
+    var bid = String(t.bookingId || '').replace(/'/g, '');
+    return '<div style="background:#FDF1F5;border:1.5px solid #EC4F7D;border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:10px">'
+      + '<div style="font-size:14px;color:#2E332D;line-height:1.7">'
+      +   '<b>' + htEsc(t.fromName || t.fromEmail || '同事') + '</b> 想把按摩預約轉讓給你<br>'
+      +   '<span style="color:#B03A60;font-weight:700">' + htEsc(_msTransferSlotLabel(t)) + '</span>'
+      + '</div>'
+      + '<div style="display:flex;gap:8px">'
+      +   '<button onclick="msAcceptTransfer(\'' + bid + '\')" style="flex:1;background:#EC4F7D;color:#fff;border:none;border-radius:12px;padding:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">接受</button>'
+      +   '<button onclick="msDeclineTransfer(\'' + bid + '\')" style="flex:1;background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">拒絕</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+window.msOpenTransfer = function(bookingId, dateStr, timeSlot) {
+  _msTransferBookingId = bookingId;
+  var slotEl = document.getElementById('ms-transfer-slot');
+  if (slotEl) slotEl.textContent = dateStr + ' ' + (timeSlot || '');
+  var s = document.getElementById('ms-transfer-search'); if (s) s.value = '';
+  msTransferFilter();
+  var m = document.getElementById('ms-transfer-modal'); if (m) m.classList.add('open');
+};
+window.msCloseTransfer = function() {
+  var m = document.getElementById('ms-transfer-modal'); if (m) m.classList.remove('open');
+  _msTransferBookingId = null;
+};
+window.msTransferFilter = function() {
+  var q = ((document.getElementById('ms-transfer-search') || {}).value || '').trim().toLowerCase();
+  var sel = document.getElementById('ms-transfer-to');
+  if (!sel) return;
+  var me = (currentUser && currentUser.email) || '';
+  var src = (typeof LOCAL_USER_LIST !== 'undefined' && LOCAL_USER_LIST) ? LOCAL_USER_LIST : [];
+  var list = src.filter(function(u) {
+      return u && u.email && u.name && u.email !== me;
+    }).filter(function(u) {
+      return !q || (u.name + ' ' + u.email + ' ' + (u.dept || '')).toLowerCase().indexOf(q) >= 0;
+    }).sort(function(a, b) { return String(a.name).localeCompare(String(b.name), 'zh-Hant'); })
+    .slice(0, 60);
+  sel.innerHTML = list.length
+    ? list.map(function(u) {
+        return '<option value="' + htEsc(u.email) + '" data-name="' + htEsc(u.name) + '">'
+          + htEsc(u.name) + (u.dept ? '（' + htEsc(u.dept) + '）' : '') + '</option>';
+      }).join('')
+    : '<option value="" disabled>找不到符合的同事</option>';
+};
+window.msConfirmTransfer = async function() {
+  var sel = document.getElementById('ms-transfer-to');
+  var email = sel && sel.value;
+  if (!_msTransferBookingId || !email) { toast('請先選擇要轉讓的同事'); return; }
+  var opt = sel.options[sel.selectedIndex];
+  var name = opt ? (opt.getAttribute('data-name') || '') : '';
+  var r = await _msTx('massage_offer_transfer', { p_booking_id: _msTransferBookingId, p_to_email: email, p_to_name: name });
+  if (r && r.ok) { toast('✅ 已送出轉讓邀請給 ' + name + '，等對方接受'); msCloseTransfer(); msRefreshFromServer(); }
+  else toast('⚠️ ' + ((r && r.error) || '轉讓邀請送出失敗'));
+};
+window.msWithdrawTransfer = async function(bookingId) {
+  if (!confirm('要收回這個轉讓邀請嗎？收回後預約仍是你的。')) return;
+  var r = await _msTx('massage_withdraw_transfer', { p_booking_id: bookingId });
+  if (r && r.ok) { toast('已收回轉讓邀請'); msCloseBookingDetail(); msRefreshFromServer(); }
+  else toast('⚠️ ' + ((r && r.error) || '收回失敗'));
+};
+window.msAcceptTransfer = async function(bookingId) {
+  var r = await _msTx('massage_accept_transfer', { p_booking_id: bookingId });
+  if (r && r.ok) { toast('✅ 已接受，這個時段現在是你的了'); msRefreshFromServer(); }
+  else toast('⚠️ ' + ((r && r.error) || '接受失敗'));
+};
+window.msDeclineTransfer = async function(bookingId) {
+  var r = await _msTx('massage_decline_transfer', { p_booking_id: bookingId });
+  if (r && r.ok) { toast('已拒絕轉讓邀請'); msRefreshFromServer(); }
+  else toast('⚠️ ' + ((r && r.error) || '拒絕失敗'));
+};
+
 function msRefreshFromServer() {
-  return msFetchData().then(function() {
+  return Promise.all([msFetchData(), msFetchTransfers()]).then(function() {
     // 管理者正在右欄編輯開放時段時，暫停重繪（避免輪詢/推播關掉編輯器/蓋掉草稿）
     var _edw2 = document.getElementById('ms-open-editor-wrap');
     if (_edw2 && _edw2.style.display !== 'none') return;
-    msRenderCal(); msRenderQuota(); msRenderMyBookings();
+    msRenderCal(); msRenderQuota(); msRenderMyBookings(); msRenderTransferInbox();
     if (_msSelectedDate) msShowSlots(_msSelectedDate);
     // 進階管理展開時，同步刷新開放日期清單、待審清單與所有預約紀錄表
     var advPanel = document.getElementById('ms-panel-admin');
