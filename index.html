@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918143306';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918144653';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10261,6 +10261,10 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
   const tax    = items.reduce((s,i)=>s+i.tax,0);
   const total  = items.reduce((s,i)=>s+i.total,0);
   const applyDateEl = document.getElementById('apply-date');
+  // ★ 送出前最後一道把關：員編必須對應「收款人」本人（請款是匯進收款人的帳戶，
+  //   帶錯編號會計與稽核會對不上人）。各條開單路徑（新開／複製／草稿／重新申請）都曾漏掉重算，
+  //   這裡統一補算一次，讓正確性不再依賴各路徑的呼叫紀律。查不到收款人時不動（見函式內註解）。
+  try { _ensureEmployeeIdMatchesPayee(); } catch(e) {}
   const employeeIdEl = document.getElementById('employee-id');
   const applicantEl = document.getElementById('applicant-select');
   // 若 applyDate 只有日期（無時間）或時間為 00:00，補上當下台灣時間
@@ -11321,6 +11325,25 @@ function syncApplicantFields(){
 
 // 向下相容舊呼叫
 function syncEmployeeId(){ syncApplicantFields(); }
+
+// ★ 員編一律以「收款人」為準的安全重算（給各開單路徑與送出前統一補算用）
+//   與 syncApplicantFields 的差別：這支「絕不清空」。
+//   syncApplicantFields 查不到人就留空白（開單時是對的：寧可空白也不要填錯的人），
+//   但用在「送出前補算」時，名單剛好沒載到就會把本來正確的員編清掉 → 反而弄壞資料。
+//   所以這支只在「查得到收款人」時覆寫，其餘情況一律不動：
+//     - 付款方式「其他」→ 這格是手填的供應商編號，不可覆寫
+//     - 名單還沒載入 → 不動（保留原值）
+//     - 收款人不在員工名單（例：外部機構，填的是統編）→ 不動
+function _ensureEmployeeIdMatchesPayee(){
+  var pmEl = document.getElementById('pay-method');
+  if (pmEl && pmEl.value === '其他') return;
+  if (!Array.isArray(LOCAL_USER_LIST) || !LOCAL_USER_LIST.length) return;
+  var paySel = document.getElementById('payee-select');
+  var empEl  = document.getElementById('employee-id');
+  if (!paySel || !empEl) return;
+  var u = LOCAL_USER_LIST.find(function(x){ return x.name === paySel.value; });
+  if (u && u.employeeId) empEl.value = u.employeeId;
+}
 
 // ── 把「全體員工」填進申請人／收款人下拉（原本只帶登入者一人）──
 // 資料來自 LOCAL_USER_LIST（登入後由 _syncMembersFromServer 從後端 getMembers 建立）。
@@ -15500,6 +15523,12 @@ async function copyAndReapply(caseId) {
     if (!found2) { payeeSel.prepend(new Option(c.payee, c.payee, true, true)); }
     payeeSel.value = c.payee;
   }
+  // ★ 收款人設定完後一定要重算員編。
+  //   上面那次 syncApplicantFields() 是在收款人「還沒設定」時跑的，算出來是申請人的編號；
+  //   而 payeeSel.value=... 用程式設定不會觸發下拉的 onchange，所以也不會自己重算。
+  //   （實例：EWC-260918-0002 收款人鄒馨瑩，員編卻存成申請人黃如華的 T0051；
+  //     退件前的原始單是正確的 T0012，錯誤只發生在這條「重新申請」路徑。）
+  _ensureEmployeeIdMatchesPayee();
   // 重建費用明細
   const itemsList = document.getElementById('items-list');
   if (itemsList && Array.isArray(c.items) && c.items.length > 0) {
