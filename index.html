@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918175448';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918175711';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -11019,7 +11019,17 @@ function sw(name,elOrName,_fromPop){
       // 投票連結(vote-yyyy-MM-dd) → 直接開投票面板（福委「複製連結」分享到 LINE 用的就是這種）
       if (/^vote-\d{4}-\d{2}-\d{2}$/.test(_rid)) {
         var _vd = _rid.slice(5);
-        setTimeout(function(){ if (typeof htVoteOpenInline === 'function') htVoteOpenInline(_vd); }, 300);
+        // 要等午茶日頁跑完一輪渲染才開投票面板：在開頁最初期就開，會被後續的頁面初始化關掉
+        //（實測：貼連結進來時面板確實被開了又被收掉，直接手動呼叫同一支函式卻正常）。
+        // 以「橫幅已拿到日期」當作資料與渲染都就緒的訊號，再多給 600ms 讓開頁流程收尾。
+        (function _waitVote(n){
+          var _vb = document.getElementById('ht-today-vote-banner');
+          if ((_vb && _vb.getAttribute('data-vote-date')) || n > 60) {
+            setTimeout(function(){ if (typeof htVoteOpenInline === 'function') htVoteOpenInline(_vd); }, 600);
+            return;
+          }
+          setTimeout(function(){ _waitVote(n + 1); }, 250);
+        })(0);
       }
       // 試算表唯讀場次(sheet:) 走 modal；系統活動走詳情頁
       else if (/^sheet:/.test(_rid)) { if (typeof htOpenSheetDetail === 'function') htOpenSheetDetail(_rid, true); }
