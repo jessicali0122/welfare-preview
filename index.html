@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918174555';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918174911';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -17306,6 +17306,13 @@ window.htLoadList = async function() {
   if (_htListTab === 'events') {
     try { _htMergeLayout(); htRenderYearTimeline(); htRenderCalendar(); } catch (e) {}
   }
+  // ★ 每次進頁都重算頁首倒數與「今天是午茶日」投票橫幅。
+  //   下面那句「資料沒異動就不重畫」的最佳化只該用在活動清單（重畫會閃），
+  //   但橫幅狀態還取決於「今天是幾號、福委開放投票了沒」，跟活動資料有沒有變無關。
+  //   不在這裡重算的話：從其他分頁切進午茶日時（資料早被首頁載好、清單判定無異動）
+  //   整輪都不會算橫幅，橫幅就停在預設的隱藏狀態 —— 症狀正是「點進午茶日沒有投票橫幅，
+  //   重新整理才出現」。
+  try { _htUpdateCountdown(); } catch (e) {}
   // ⚡ 先用上次的快取立即渲染（秒開），背景再抓最新資料刷新
   try {
     var _hc = JSON.parse(localStorage.getItem('bf_ht_cache') || 'null');
@@ -17332,7 +17339,9 @@ window.htLoadList = async function() {
   // 從後端同步公告（非阻塞）
   _bulletinSync();
   // 快取已先渲染過且資料無異動 → 不再重畫，避免頁面看起來「載入兩次」的閃動
-  if (JSON.stringify(_htEvents) !== _prevEventsJson) { htRenderList(); _htUpdateCountdown(); }
+  if (JSON.stringify(_htEvents) !== _prevEventsJson) { htRenderList(); }
+  // 倒數／投票橫幅一律重算（不受「清單無異動」影響，理由見上方進頁處註解）
+  try { _htUpdateCountdown(); } catch (e) {}
   // 預載廠商（共用 promise 防止重複呼叫）
   if (!_htVendors.length && !_htVendorsLoading) {
     _htVendorsLoading = htApi('htVendors').then(function(rv){
