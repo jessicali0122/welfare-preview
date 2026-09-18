@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918144653';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918150515';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8595,11 +8595,16 @@ function _dshDutyTea(){
   var cells=_cell(hcTxt,'參加人數')+_cell(itTxt,'品項數')+_bdCell;
   if(bud)cells+=_cell('$'+Number(bud).toLocaleString(),'預算');
   // 卡片右上角直接顯示下次日期（漂亮樣式），倒數天數當作下方小字輔助說明；沒有日期就顯示 Coming Soon
+  // 當天／隔天：整顆膠囊改成「就在今天／就在明天」。
+  // （原本是「下次 今天 · 就是今天」，同一件事說三次；卡片標題已有「午茶日」，這裡不必再重複。）
+  var _teaNow=/^(今天|明天)$/.test(String(dateStr||'').trim());
   var badge=dateStr
-    ? ('<div style="display:flex;flex-direction:row;align-items:baseline;gap:6px;background:#FBEEDD;border-radius:14px;padding:7px 14px;line-height:1.2">'
-        +'<span style="font-size:11px;font-weight:700;color:#C98A4B;white-space:nowrap">下次</span>'
-        +'<span style="font-size:17px;font-weight:800;color:#B4670E;letter-spacing:.02em;white-space:nowrap">'+_dshEsc(dateStr)+'</span>'
-        +(cd?('<span style="font-size:12px;font-weight:700;color:#E0B98C;white-space:nowrap">·</span><span style="font-size:12px;font-weight:700;color:#D98324;white-space:nowrap">'+_dshEsc(cd)+'</span>'):'')
+    ? ('<div style="display:flex;flex-direction:row;align-items:baseline;gap:6px;background:#FBEEDD;border-radius:14px;padding:8px 14px;line-height:1.2">'
+        +(_teaNow
+          ? '<span style="font-size:16px;font-weight:800;color:#B4670E;letter-spacing:.02em;white-space:nowrap">就在'+_dshEsc(dateStr)+'</span>'
+          : '<span style="font-size:12px;font-weight:700;color:#C98A4B;white-space:nowrap">下次</span>'
+            +'<span style="font-size:16px;font-weight:800;color:#B4670E;letter-spacing:.02em;white-space:nowrap">'+_dshEsc(dateStr)+'</span>'
+            +(cd?('<span style="font-size:12px;font-weight:700;color:#E0B98C;white-space:nowrap">·</span><span style="font-size:12px;font-weight:700;color:#D98324;white-space:nowrap">'+_dshEsc(cd)+'</span>'):''))
         +'</div>')
     : '<span style="display:inline-flex;align-items:center;background:#F1F3F6;color:#8A96A6;font-size:13px;font-weight:800;padding:7px 14px;border-radius:14px;letter-spacing:.04em;white-space:nowrap">Coming Soon</span>';
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+badge+cta+'</div></div>'
@@ -8657,7 +8662,7 @@ function _dshFuli(){
   var _lab='font-size:13px;font-weight:600;color:#8A96A6;flex-shrink:0';var _val='font-size:16px;font-weight:800;color:#2E332D';
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#DCF2F4;color:#0E9AA7;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('gift',17)+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
     +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
-    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">下次午茶日</span>'+teaVal+teaPill+'</div>'
+    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">午茶日</span>'+teaVal+teaPill+'</div>'
     +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'massage\')"><span style="'+_lab+'">本月按摩</span><span style="'+_val+'">'+msMain+'</span>'+msRem+'</div>'
     +'</div></div>';
 }
