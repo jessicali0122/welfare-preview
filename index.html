@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918151048';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260918171834';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4954,12 +4954,15 @@ thead th{color:#767B75!important}
               <div style="margin:0 0 7px">
                 <span style="font-size:12px;color:#767B75">開放時段與名額</span>
               </div>
-              <!-- 一鍵套用標準按摩日班表：四種長度對應實際 M-Day 預約表；每節15分鐘、每節1人，自動跳過師傅休息 -->
+              <!-- 一鍵套用標準按摩日班表：四種長度對應實際 M-Day 預約表；每節15分鐘、每節1人，自動跳過師傅休息
+                   ★ 排列順序照「實際使用頻率」而非時間長短（2026/06–09 共 17 個開放日統計）：
+                     四小時 9 天 ＞ 六小時 6 天 ＞ 二小時 1 天 ＝ 全天 1 天
+                     → 九成情況第一顆就按到，不必每次掃過整排 -->
               <div style="display:flex;gap:6px;margin-bottom:8px">
+                <button onclick="msDraftApplyMDay('4h')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 四小時<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
+                <button onclick="msDraftApplyMDay('6h')" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 六小時<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
                 <button onclick="msDraftApplyMDay('2h')" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 二小時<br><span style="font-weight:500;opacity:.8">09:00–10:45</span></button>
-                <button onclick="msDraftApplyMDay('4h')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 四小時<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
-                <button onclick="msDraftApplyMDay('6h')" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 六小時<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
-                <button onclick="msDraftApplyMDay('day')" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天<br><span style="font-weight:500;opacity:.8">09:00–17:30</span></button>
+                <button onclick="msDraftApplyMDay('day')" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天<br><span style="font-weight:500;opacity:.8">09:00–17:30</span></button>
               </div>
               <div id="ms-draft-slots"></div>
               <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #cdd3db;color:#0066CC;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
