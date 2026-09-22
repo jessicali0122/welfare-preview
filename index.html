@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260922163511';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260922164250';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -21810,7 +21810,8 @@ window.massageLoad = async function() {
         if (_saved0.openDates) _msData.openDates = _saved0.openDates;
         if (_saved0.myBookings) _msData.myBookings = _saved0.myBookings;
         if (_saved0.allBookings) _msData.allBookings = _saved0.allBookings;
-        if (_saved0.pendingRequests) { _msData.pendingRequests = _saved0.pendingRequests; _msPendingRequests = _saved0.pendingRequests; }
+        // 舊版快取可能存的是未正規化的原始預約列 → 一律過一次正規化（見 _msNormalizePending）
+        if (_saved0.pendingRequests) { _msData.pendingRequests = _msNormalizePending(_saved0.pendingRequests); _msPendingRequests = _msData.pendingRequests; }
         if (_saved0.settings) { _msData.settings = _saved0.settings; _msSlotTemplates = _saved0.settings.slotTemplates || []; }
         _msData._loading = false; // 有快取→直接畫，不顯示載入中
       }
@@ -21853,6 +21854,34 @@ window.massageLoad = async function() {
   }).catch(function(){});
 };
 
+// ★ 待審申請正規化：後端（Supabase RPC 與 GAS 都一樣）回的是「原始預約列」，
+//   欄位只有 bookingId / date / timeSlot / userEmail / userName / cancelReason，
+//   沒有 reqId、沒有 type、也沒有 status。
+//   但畫面端是用 status === 'pending' 過濾、用 reqId 當按鈕參數、用 type 判斷取消或刪除
+//   （那是「同一次操作中本機自己組出來的物件」的形狀）。
+//   → 只要重新整理或換一台電腦開，待審清單就永遠是 0 筆、申請永遠沒人審，
+//     申請人那邊的預約則卡在「申請取消中」無法操作。這裡把後端形狀補成畫面要的形狀。
+//   reqId 直接用 bookingId：一筆預約同時最多只會有一個待審申請，天生唯一。
+function _msNormalizePending(list) {
+  return (list || []).map(function(r) {
+    if (!r) return null;
+    if (r.status === 'pending' && r.reqId) return r;   // 本機剛組的物件，已是目標形狀
+    var cr = String(r.cancelReason || '');
+    var isDel = (cr === 'delete_requested');
+    return {
+      reqId     : r.reqId || r.bookingId,
+      bookingId : r.bookingId,
+      type      : isDel ? 'delete' : 'cancel',
+      status    : 'pending',
+      reason    : isDel ? '' : cr.split('|').slice(1).join('|'),   // 'cancel_requested|原因'
+      date      : r.date,
+      timeSlot  : r.timeSlot,
+      userEmail : r.userEmail,
+      userName  : r.userName
+    };
+  }).filter(Boolean);
+}
+
 var _msOfflineNotified = false; // 離線提醒防洗版：同一次斷線只提示一次，恢復連線後才重置
 async function msFetchData() {
   try {
@@ -21865,7 +21894,8 @@ async function msFetchData() {
       _msData.isMgr   = _msData.isAdmin; // 按摩管理權＝HR＋管理者（沒有單獨的「僅管理者」動作）
       _msData.isHR    = _msData.isAdmin; // 相容舊名
       _msSlotTemplates = (r.settings && r.settings.slotTemplates) || [];
-      _msPendingRequests = r.pendingRequests || [];
+      _msData.pendingRequests = _msNormalizePending(r.pendingRequests);
+      _msPendingRequests = _msData.pendingRequests;
       // 管理者／HR：顯示折疊「進階管理」入口（開放日期管理可直接從日曆點選）
       var advWrap = document.getElementById('ms-adv-wrap');
       if (advWrap) advWrap.style.display = (_msData.isAdmin || _msData.isHR) ? '' : 'none';
@@ -21885,7 +21915,7 @@ function _msApplyLocalFallback() {
   if (_saved.openDates) _msData.openDates = _saved.openDates;
   if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
   if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
-  if (_saved.pendingRequests) _msData.pendingRequests = _saved.pendingRequests;
+  if (_saved.pendingRequests) _msData.pendingRequests = _msNormalizePending(_saved.pendingRequests);
   if (_saved.settings) { _msData.settings = _saved.settings; _msSlotTemplates = _saved.settings.slotTemplates || []; }
   _msPendingRequests = _msData.pendingRequests || [];
   if (window.toast && !_msOfflineNotified) { toast('⚠️ 暫時連不上伺服器，顯示上次的按摩資料（可能非最新）'); _msOfflineNotified = true; }
@@ -22964,7 +22994,12 @@ window.msApproveRequest = function(reqId) {
   msRenderPendingRequests(); msRenderAdminTable();
   msRenderCal(); msRenderMyBookings();
   _msSaveLocal();
-  htApi('massageApproveRequest', { bookingId: req.bookingId }).catch(function(){});
+  // ★ 一定要看回傳：原本用 .catch(){} 吞掉，伺服器拒絕（無權限／該預約已被改動）時
+  //   畫面仍顯示「已批准」、預約列消失，而且上面的 _msSaveLocal() 會把這個錯狀態寫進本機快取，
+  //   之後每次連不上後端都會再讀回這份錯資料。失敗就重抓伺服器真實狀態蓋回來。
+  htApi('massageApproveRequest', { bookingId: req.bookingId }).then(function(r){
+    if (!r || !r.ok) { toast('⚠️ 批准未生效：' + ((r && r.error) || '伺服器沒有回應') + '，已重新載入'); msRefreshFromServer(); }
+  }).catch(function(){ toast('⚠️ 批准未生效（連線失敗），已重新載入'); msRefreshFromServer(); });
 };
 
 window.msRejectRequest = function(reqId) {
@@ -22975,7 +23010,9 @@ window.msRejectRequest = function(reqId) {
   if (mb) { mb.cancelRequested = false; mb.deleteRequested = false; }
   msRenderPendingRequests(); toast('已拒絕申請');
   _msSaveLocal();
-  htApi('massageRejectRequest', { bookingId: req.bookingId }).catch(function(){});
+  htApi('massageRejectRequest', { bookingId: req.bookingId }).then(function(r){
+    if (!r || !r.ok) { toast('⚠️ 拒絕未生效：' + ((r && r.error) || '伺服器沒有回應') + '，已重新載入'); msRefreshFromServer(); }
+  }).catch(function(){ toast('⚠️ 拒絕未生效（連線失敗），已重新載入'); msRefreshFromServer(); });
 };
 
 // ── 開放日期管理 ──
