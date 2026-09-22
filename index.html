@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260918175711';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260922163511';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7277,20 +7277,21 @@ async function callAPI(action, data = {}, opts = {}) {
       || action === 'deleteFile') {
     try { window._casesFreshUntil = Date.now() + 25000; } catch (e) {}
   }
-  // 成員寫入（新增/編輯/停用/啟用/刪除使用者）後，開 6 分鐘「成員新鮮窗」：這段時間成員名單改走 GAS。
-  // ★ 為什麼是 6 分鐘而不是 25 秒：成員鏡像是「每 5 分鐘」同步一次，若只擋 25 秒，
-  //   管理者改完某人的角色／部門後，接下來幾分鐘全站（姓名、部門、下拉、權限標籤）都還是舊值，
-  //   會讓人以為改了沒生效。擋滿一個同步週期＋餘裕，確保鏡像一定追上後才改讀鏡像。
-  //   成員管理是低頻操作，這段時間走 GAS 完全不影響日常效能。
+  // 成員寫入（新增/編輯/停用/啟用/刪除使用者）後，開 2 分鐘「成員新鮮窗」：這段時間成員名單改走 GAS。
+  // ★ 為什麼要擋、又為什麼是 2 分鐘：成員鏡像是「每 1 分鐘」同步一次（cases-sync.js 的
+  //   syncCasesToSupabase 觸發器，一次同步案件＋成員＋案件詳情）。若只擋 25 秒，
+  //   管理者改完某人的角色／部門後，全站（姓名、部門、下拉、權限標籤）可能還是舊值，
+  //   會讓人以為改了沒生效。擋滿一個同步週期＋餘裕即可 → 1 分鐘週期取 2 分鐘。
+  //   （原本設 6 分鐘，是照「每 5 分鐘同步」這個過期說法算的；實際是 1 分鐘，等 6 分鐘純屬多等。）
   if (action === 'addUser' || action === 'editUser' || action === 'deleteUser'
       || action === 'disableUser' || action === 'enableUser') {
-    try { window._membersFreshUntil = Date.now() + 360000; } catch (e) {}
+    try { window._membersFreshUntil = Date.now() + 120000; } catch (e) {}
   }
-  // 設定寫入（申請項目／供應商／簽核流程）後，同樣開 6 分鐘「設定新鮮窗」：這段時間設定讀取改走 GAS，
-  // 等鏡像（每 5 分鐘同步）確實追上，避免管理者改完設定後幾分鐘仍看到舊的下拉選項／舊關卡人員。
+  // 設定寫入（申請項目／供應商／簽核流程）後，同樣開 2 分鐘「設定新鮮窗」：這段時間設定讀取改走 GAS，
+  // 等鏡像（每 1 分鐘同步）確實追上，避免管理者改完設定後仍看到舊的下拉選項／舊關卡人員。
   if (action === 'saveApplyItems' || action === 'addSupplier' || action === 'updateSupplier'
       || action === 'deleteSupplier' || action === 'saveFlow') {
-    try { window._configFreshUntil = Date.now() + 360000; } catch (e) {}
+    try { window._configFreshUntil = Date.now() + 120000; } catch (e) {}
   }
   // ── 案件清單讀取搬 Supabase（Stage 3）：快、繞過 GAS 安全頁；任何失敗自動退回 GAS ──
   // 剛寫入後 25 秒內（_casesFreshUntil）或明確 {gasOnly:true}（影子比對）→ 仍走 GAS，確保剛送/剛簽的單即時、比對正確。
