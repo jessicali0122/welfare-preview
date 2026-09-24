@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260924090826';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260924094920';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1653,6 +1653,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 /* Dashboard 和案件追蹤：隱藏 checkbox 欄 */
 .dashboard-table th:first-child,.dashboard-table td:first-child,
 .app-table th:first-child,.app-table td:first-child{display:none!important}
+/* ★ 空狀態列是 <td colspan> 單格，剛好也是 first-child → 會被上面規則一起藏掉（整片空白）。合併格不是 checkbox 欄，放行 */
+.dashboard-table td[colspan]:first-child,.app-table td[colspan]:first-child{display:table-cell!important}
 .col-cat{display:none!important}   /* 案件清單「分類」欄隱藏（保留 DOM，排序索引不受影響）*/
 .ic-summary{font-size:14px;display:none;margin-left:10px;gap:10px;align-items:center}
 .item-card.ic-collapsed .ic-summary{display:inline-flex}
