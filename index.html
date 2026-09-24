@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260923102857';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260924090826';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8881,6 +8881,13 @@ async function _refreshCasesThrottled() {
   }
 }
 function switchAppTab(tab) {
+  // ★ 「待我審核」按鈕有 data-cap 藏起來，但直接開 #applications/pending 會繞過 →
+  //   停在按鈕看不見、內容空白的分頁（看起來像壞掉）。比照 appsSetTab 的子分頁守門：
+  //   角色還沒同步回來先記下（_resolvePermPending 到位後經 appsSetTab('pending') 補開），確定沒權限就退回全部案件。
+  if (tab === 'pending' && typeof can === 'function' && !can('reimbursement.approve')) {
+    if (!window._rolesSyncedOnce) window._appsTabPending = 'pending';
+    tab = 'cases';
+  }
   _currentAppTab = tab;
   // ★ 跟 appsSetTab 一樣把分頁寫進網址：在草稿匣按 F5／重整會掉回「全部案件」（使用者實際回報）。
   //   只處理 drafts/pending —— flow 由 appsSetTab 自己管，cases 是預設值寫回 #applications。
@@ -10827,7 +10834,7 @@ const VIEW_CAP = { applications:'reimbursement.view', approvals:'reimbursement.a
 // 案件追蹤底下的子分頁能力（必須與各分頁按鈕的 data-cap 一致）。
 // ★ 沒有這張表時，按鈕雖被 cap-hidden 藏起來，但直接貼網址 #applications/supplier
 //   仍會被 appsSetTab 打開面板 —— 造成「福委貼網址看得到、切角色預覽看不到」的權限不一致。
-const APPS_TAB_CAP = { flow:'reimbursement.approve', supplier:'supplier.manage' };
+const APPS_TAB_CAP = { flow:'reimbursement.approve', supplier:'supplier.manage', pending:'reimbursement.approve' };
 // 角色變動後重新驗證「目前開著的子分頁」：無權限就交給 appsSetTab 的守門收起面板。
 // 少了這步，切換角色預覽（或角色被伺服器降級）時，先前開著的供應商管理面板會繼續留在畫面上。
 function _revalidateAppsTab(){
@@ -19529,9 +19536,8 @@ window.htOpenDetail = async function(eventId, _fromRoute) {
     if (mNum) {
       var autoBdays = _htBdaysForMonth(mNum).map(function(p){ return p.name; });
       if (autoBdays.length) {
-        _htEvent.birthdays = autoBdays;
-        _htEvent.birthdayBudget = (autoBdays.length > 0 ? (_htEvent.headcount || 0) : 0) * 40;
-        htApi('htUpdate', { eventId: _htEvent.eventId, birthdays: autoBdays });
+        _htApplyBdayBudget(_htEvent, autoBdays);
+        htApi('htUpdate', _htBdayPayload(_htEvent, autoBdays));
       }
     }
   }
@@ -21603,6 +21609,20 @@ function htRenderBirthday() {
 }
 
 // 從 DB 建議清單中加入／移除壽星
+// ★ 壽星增減會改變總預算（有壽星→全體每人 +40）。只存名單不存總預算，
+//   清單頁（讀後端 totalBudget）就會跟詳情頁差「人數 × 40」→ 兩者一起存。
+function _htBdayTotal(ev, list) {
+  var hc = ev.headcount || 0, bp = ev.budgetPerPerson || 0;
+  return hc * bp + (list.length > 0 ? hc : 0) * 40;
+}
+function _htBdayPayload(ev, list) {
+  return { eventId: ev.eventId, birthdays: list, totalBudget: _htBdayTotal(ev, list) };
+}
+function _htApplyBdayBudget(ev, list) {
+  ev.birthdays = list;
+  ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
+  ev.totalBudget = _htBdayTotal(ev, list);
+}
 window.htAddBirthdayByName = async function(name) {
   var ev = _htEvent;
   var list = (ev.birthdays || []).slice();
@@ -21613,10 +21633,10 @@ window.htAddBirthdayByName = async function(name) {
   } else {
     list.push(name);     // 不在清單 → 加入
   }
-  var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+  var r = await htApi('htUpdate', _htBdayPayload(ev, list));
   if (!r.ok) { toast('儲存失敗'); return; }
   ev.birthdays = list;
-  ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
+  _htApplyBdayBudget(ev, list);
   htRenderBirthday();
   htUpdateCalcBudget();
   htRenderDetailHeader();
@@ -21627,10 +21647,10 @@ window.htAddBirthday = function() {
     var ev = _htEvent;
     var list = (ev.birthdays || []).slice();
     list.push(name);
-    var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+    var r = await htApi('htUpdate', _htBdayPayload(ev, list));
     if (!r.ok) { toast('新增失敗'); return; }
     ev.birthdays = list;
-    ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
+    _htApplyBdayBudget(ev, list);
     htRenderBirthday();
     htUpdateCalcBudget();
     htRenderDetailHeader();
@@ -21641,10 +21661,10 @@ window.htDeleteBirthday = async function(idx) {
   var ev = _htEvent;
   var list = (ev.birthdays || []).slice();
   list.splice(idx, 1);
-  var r = await htApi('htUpdate', { eventId: ev.eventId, birthdays: list });
+  var r = await htApi('htUpdate', _htBdayPayload(ev, list));
   if (!r.ok) { toast('刪除失敗'); return; }
   ev.birthdays = list;
-  ev.birthdayBudget = (list.length > 0 ? (ev.headcount || 0) : 0) * 40;
+  _htApplyBdayBudget(ev, list);
   htRenderBirthday();
   htUpdateCalcBudget();
   htRenderDetailHeader();
