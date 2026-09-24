@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260924094920';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260924095131';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9041,6 +9041,9 @@ function _applyCasesData(allCases) {
   if (cardsContainer) cardsContainer.style.display = 'none';
   // 清除舊的篩選快取（新資料載入時重置）
   window._appFilteredCases = null;
+  // ★ 停在「待我審核」時，背景刷新（進頁、切分頁節流刷新、Realtime）回來不能直接畫全部案件——
+  //   否則頁籤是待我審核、清單卻變成全部案件。交給 renderApplications 依分頁篩選（它也會處理空狀態）。
+  if (_currentAppTab === 'pending') { renderApplications(); return; }
   if (cases.length === 0) {
     tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
