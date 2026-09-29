@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260929110742';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260929113503';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1632,6 +1632,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .fp-line{flex:1;height:2px;background:#D2D7CD;margin:0 6px;transition:background .25s;min-width:12px;max-width:48px}
 .fp-line.fp-done{background:#0066CC}
 @media(max-width:480px){.fp-step .fp-label{display:none}.fp-step{gap:0}.fp-line{max-width:18px;min-width:8px}}
+/* 按摩月曆：手機格子太窄，「可預約」會被切成「可預／約」→ 只留彩色肉球（顏色意義見下方圖例） */
+@media(max-width:520px){.ms-paw-label{display:none}}
 
 /* ── 2. 送出前預覽 modal ── */
 #submit-preview-modal .preview-row{display:flex;gap:8px;margin-bottom:8px;font-size:14px}
@@ -22189,7 +22191,7 @@ function msRenderCal() {
       + '<div style="width:24px;height:24px;background:' + bgColor + ';border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:flex;align-items:center;justify-content:center">'
       +   '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><ellipse cx="12" cy="15.5" rx="5.2" ry="4.2" fill="#fff"/><circle cx="5" cy="10.5" r="2.3" fill="#fff"/><circle cx="9.4" cy="7" r="2.3" fill="#fff"/><circle cx="14.6" cy="7" r="2.3" fill="#fff"/><circle cx="19" cy="10.5" r="2.3" fill="#fff"/></svg>'
       + '</div>'
-      + '<div style="font-size:12px;color:' + labelColor + ';font-weight:600;line-height:1">' + label + '</div></div>';
+      + '<div class="ms-paw-label" style="font-size:12px;color:' + labelColor + ';font-weight:600;line-height:1;white-space:nowrap">' + label + '</div></div>';
   };
   var html = '';
   var cellIdx = 0;
