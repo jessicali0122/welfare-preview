@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260929104105';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260929110435';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -22415,6 +22415,11 @@ function msShowSlots(dateStr) {
       if (!suspended && isFuture) { onclick = 'msJoinWaitlist(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
         labelHtml += '<span style="color:#0066CC;font-weight:700">🕐 候補</span>'; }
     }
+    // 已預約的同事姓名（自己的時段已標「我的預約」不重複列）
+    if (!isMySlot && s.names && s.names.length) {
+      labelHtml += '<span title="' + htEsc(s.names.join('、')) + '" style="color:#4A4F49;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">'
+        + htEsc(s.names.join('、')) + '</span>';
+    }
 
     return '<div' + (onclick ? ' onclick="' + onclick + '"' : '') + ' style="background:' + bg + ';border:1.5px solid ' + border
       + ';border-radius:14px;padding:12px 8px;text-align:center;cursor:' + cursor + ';box-shadow:0 1px 3px rgba(46,51,45,.06)'
@@ -22429,8 +22434,11 @@ function msSlotsForDate(dateStr, slotTemplates) {
   var tmpl = slotTemplates || _msSlotTemplates;
   var allBk = (_msData && _msData.allBookings) || [];
   return tmpl.map(function(t){
-    var booked = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && (b.status==='booked' || b.status==='attended'); }).length;
-    return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked) };
+    var bookedList = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && (b.status==='booked' || b.status==='attended'); });
+    var booked = bookedList.length;
+    // 預約人姓名：員工要能看到誰訂了哪個時段（缺席時叫下一位、想換時段知道找誰）
+    var names = bookedList.map(function(b){ return (typeof zhName === 'function' ? zhName(b.userName) : '') || b.userName || ''; }).filter(Boolean);
+    return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked), names: names };
   }).sort(function(a,b){ return a.time.localeCompare(b.time); });
 }
 
