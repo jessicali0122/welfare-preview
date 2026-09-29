@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260929110435';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260929110742';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -22398,7 +22398,7 @@ function msShowSlots(dateStr) {
     } else if (hasRoom && !suspended && !overMonthLimit && isFuture) {
       // 可預約：綠色外框、點擊直接預約
       bg = 'linear-gradient(135deg,#F4F7FB,#E7EEF7)'; border = '#96bae4'; timeColor = '#2E332D';
-      labelHtml = '<span style="color:#0066CC;font-weight:800">可預約</span>';
+      labelHtml = '<span style="color:#0066CC;font-weight:800">可預約 · 剩 ' + s.remaining + ' 位</span>';
       onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
     } else if (hasRoom && overMonthLimit) {
       // 本月已達上限：綠但淡化、不可點
@@ -22416,9 +22416,14 @@ function msShowSlots(dateStr) {
         labelHtml += '<span style="color:#0066CC;font-weight:700">🕐 候補</span>'; }
     }
     // 已預約的同事姓名（自己的時段已標「我的預約」不重複列）
-    if (!isMySlot && s.names && s.names.length) {
-      labelHtml += '<span title="' + htEsc(s.names.join('、')) + '" style="color:#4A4F49;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%">'
-        + htEsc(s.names.join('、')) + '</span>';
+    //   每人一個小標籤；已報到加綠色 ✓ → 福委叫下一位時一眼看出誰還沒到
+    if (!isMySlot && s.people && s.people.length) {
+      labelHtml += '<div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:4px">'
+        + s.people.map(function(p){
+            return '<span title="' + htEsc(p.name + (p.attended ? '（已報到）' : '')) + '" style="background:#fff;border:1px solid #DCE3EC;border-radius:6px;padding:2px 6px;color:#2E332D;font-weight:600;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis">'
+              + htEsc(p.name) + (p.attended ? ' <span style="color:#16a34a;font-weight:800">✓</span>' : '') + '</span>';
+          }).join('')
+        + '</div>';
     }
 
     return '<div' + (onclick ? ' onclick="' + onclick + '"' : '') + ' style="background:' + bg + ';border:1.5px solid ' + border
@@ -22437,8 +22442,10 @@ function msSlotsForDate(dateStr, slotTemplates) {
     var bookedList = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && (b.status==='booked' || b.status==='attended'); });
     var booked = bookedList.length;
     // 預約人姓名：員工要能看到誰訂了哪個時段（缺席時叫下一位、想換時段知道找誰）
-    var names = bookedList.map(function(b){ return (typeof zhName === 'function' ? zhName(b.userName) : '') || b.userName || ''; }).filter(Boolean);
-    return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked), names: names };
+    var people = bookedList.map(function(b){
+      return { name: (typeof zhName === 'function' ? zhName(b.userName) : '') || b.userName || '', attended: b.status === 'attended' };
+    }).filter(function(p){ return p.name; });
+    return { time: t.time, capacity: t.capacity, remaining: Math.max(0, t.capacity - booked), people: people };
   }).sort(function(a,b){ return a.time.localeCompare(b.time); });
 }
 
