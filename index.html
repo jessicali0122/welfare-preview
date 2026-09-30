@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930112651';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930114034';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4107,11 +4107,11 @@ thead th{color:#767B75!important}
         <table style="width:100%;min-width:780px;border-collapse:collapse;font-size:14px">
           <thead><tr>
             <th style="padding:11px 16px;width:36px;text-align:center"><input type="checkbox" id="select-all" onchange="adminToggleSelectAll(this)"></th>
-            <th style="text-align:center">使用者</th>
+            <th style="text-align:center">姓名</th>
             <th style="text-align:center">員工編號</th><th style="text-align:center">部門</th>
             <th style="text-align:center">Email</th>
             <th style="text-align:center">標籤</th>
-            <th style="text-align:center">加入時間</th>
+            <th style="text-align:center">到職日</th>
             <th style="text-align:center">生日</th>
             <th style="text-align:center">操作</th>
           </tr></thead>
@@ -5219,6 +5219,10 @@ thead th{color:#767B75!important}
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">生日</label>
           <input class="inp" id="add-bday" placeholder="例：01-22（MM-DD）" maxlength="5">
         </div>
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">到職日</label>
+          <input class="inp" id="add-hiredate" type="date">
+        </div>
       </div>
 
     </div>
@@ -5298,6 +5302,11 @@ thead th{color:#767B75!important}
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">生日</label>
           <input class="inp" id="edit-birthday" type="text" placeholder="例：01-22（MM-DD）">
           <div style="font-size:12px;color:#767B75;margin-top:4px">用於午茶日壽星自動帶入</div>
+        </div>
+        <div>
+          <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">到職日</label>
+          <input class="inp" id="edit-hiredate" type="date">
+          <div style="font-size:12px;color:#767B75;margin-top:4px">用於結婚／喪葬補助年資比對</div>
         </div>
       </div>
       <div>
@@ -6396,8 +6405,9 @@ function showApp() {
     // 把 Google 照片另存一份（供「移除大頭貼」還原用；快取登入也留得住，不必重登）
     if (currentUser.googlePhoto) { try { localStorage.setItem('bf_gphoto_' + currentUser.email, currentUser.googlePhoto); } catch(e){} }
     const _savedAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
-    if (_savedAvatar) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
-    else if (currentUser.googlePhoto) setTimeout(function(){ applyAvatar(currentUser.googlePhoto); }, 0);
+    const _avRemoved = localStorage.getItem('bf_avrm_' + currentUser.email) === '1';   // 本人移除過頭貼 → 顯示名字首字，不補 Google 照片
+    if (_savedAvatar && !_avRemoved) setTimeout(function(){ applyAvatar(_savedAvatar); }, 0);
+    else if (currentUser.googlePhoto && !_avRemoved) setTimeout(function(){ applyAvatar(currentUser.googlePhoto); }, 0);
     // 從伺服器同步大頭貼（跨裝置）— 延後 2.5 秒，別在登入當下和 getMembers／list（角色與案件）
     // 搶同一條又擠又會排隊的 GAS 通道；本機已先套用快取頭像（上方），延後同步不影響觀感。
     setTimeout(function(){
@@ -6406,6 +6416,14 @@ function showApp() {
     callAPI('getAvatar', {}).then(function(r) {
       var localAvatar = localStorage.getItem('bf_avatar_' + currentUser.email);
       if (!r || !r.ok) return;
+      // ★ 本人移除過頭貼（伺服器留有「已移除」標記）：這台裝置的本機舊照片一併清掉、顯示名字首字，
+      //   絕不再把本機殘留或 Google 照片推回去（舊做法會讓「在 A 電腦移除、B 電腦又補回」一再發生）。
+      if (r.removed) {
+        try { localStorage.removeItem('bf_avatar_' + currentUser.email); localStorage.setItem('bf_avrm_' + currentUser.email, '1'); } catch(e){}
+        _renderAvatarInitial(currentUser);
+        return;
+      }
+      try { localStorage.removeItem('bf_avrm_' + currentUser.email); } catch(e){}   // 伺服器沒有移除標記 → 清掉舊旗標
       if (r.avatar) {
         // 伺服器存的是「Google 照片」且使用者已換 Google 大頭貼 → 更新成新的（保持同步）
         if (_isGoogleAv(r.avatar) && _gp && r.avatar !== _gp) {
@@ -6736,6 +6754,14 @@ function triggerAvatarUpload() {
 }
 
 // 移除自訂大頭貼：清本機＋後端，畫面改回 Google 帳號照片（若無則名字首字）
+// 頭像改回名字首字（移除大頭貼／伺服器標記已移除時共用）
+function _renderAvatarInitial(cu) {
+  var dn = (cu && (LOCAL_EMAIL_TO_NAME[cu.email] || cu.name)) || '';
+  document.querySelectorAll('.user-avatar-wrap').forEach(function(w){
+    w.style.background = '#0066CC';
+    w.innerHTML = '<span class="user-avatar-initial">' + ((dn.charAt(0)) || '👤') + '</span>';
+  });
+}
 function removeAvatar() {
   var m = document.getElementById('user-menu'); if (m) m.style.display = 'none';
   if (typeof closeMobileUserSheet === 'function') { try { closeMobileUserSheet(); } catch(e){} }
@@ -6743,15 +6769,9 @@ function removeAvatar() {
   // Google 照片來源：本次登入抓到的 → 否則登入時另存的 bf_gphoto_（快取登入也回得去，不必重登）
   var gp = cu.googlePhoto || (function(){ try { return localStorage.getItem('bf_gphoto_' + cu.email) || ''; } catch(e){ return ''; } })();
   var _doRemove = function(){
-    try { localStorage.removeItem('bf_avatar_' + cu.email); } catch(e){}
-    // 先還原成名字首字
-    var dn = (LOCAL_EMAIL_TO_NAME[cu.email] || cu.name || '');
-    document.querySelectorAll('.user-avatar-wrap').forEach(function(w){
-      w.style.background = '#0066CC';
-      w.innerHTML = '<span class="user-avatar-initial">' + ((dn.charAt(0)) || '👤') + '</span>';
-    });
-    // 有 Google 照片就改用它（沒有就維持名字首字）
-    if (gp) applyAvatar(gp);
+    try { localStorage.removeItem('bf_avatar_' + cu.email); localStorage.setItem('bf_avrm_' + cu.email, '1'); } catch(e){}
+    // 移除＝回到名字首字（不再自動改用 Google 帳號照片：使用者要的是「不要照片」）
+    _renderAvatarInitial(cu);
     _avatarCacheClear();
     // ★ 後端清除「射後不理」曾造成「昨天移除、今天又跑回來」：GAS 偶爾被 Google 安全頁擋下、
     //   這裡完全不管結果，伺服器那格其實沒清掉；下次登入的「跟伺服器同步」邏輯就會把舊照片拉回來蓋掉。
@@ -6762,7 +6782,7 @@ function removeAvatar() {
         try {
           var _rr = await _fetchAPI('removeAvatar', {});
           if (_rr && _rr.ok) {
-            if (typeof toast === 'function') toast('✅ 已移除大頭貼' + (gp ? '，改用 Google 帳號照片' : ''));
+            if (typeof toast === 'function') toast('✅ 已移除大頭貼');
             return;
           }
         } catch (e) {}
@@ -6771,7 +6791,7 @@ function removeAvatar() {
     })();
   };
   if (typeof _showConfirmModal === 'function') {
-    _showConfirmModal('移除大頭貼', '確定移除自訂大頭貼嗎？' + (gp ? '將改回 Google 帳號照片。' : '將改回名字首字。'), '移除', '#dc2626', _doRemove);
+    _showConfirmModal('移除大頭貼', '確定移除大頭貼嗎？將改回名字首字，所有裝置都會同步。', '移除', '#dc2626', _doRemove);
   } else if (confirm('確定移除自訂大頭貼嗎？')) { _doRemove(); }
 }
 
@@ -6968,12 +6988,13 @@ function confirmAvatarCrop() {
   // 存 localStorage
   if (currentUser && currentUser.email) {
     localStorage.setItem('bf_avatar_' + currentUser.email, dataUrl);
+    try { localStorage.removeItem('bf_avrm_' + currentUser.email); } catch(e){}
   }
   applyAvatar(dataUrl);
   toast('✅ 大頭貼已更新！');
   // 背景靜默同步到伺服器（不卡 UI）
   setTimeout(function() {
-    _fetchAPI('saveAvatar', { avatar: dataUrl }).catch(function(){}); _avatarCacheClear();
+    _fetchAPI('saveAvatar', { avatar: dataUrl, explicit: true }).catch(function(){}); _avatarCacheClear();   // explicit：本人主動上傳，可覆蓋「已移除」標記
     window._avatarCropLock = false;
   }, 300);
 }
@@ -11242,6 +11263,17 @@ async function _syncAvatarsFromServer() {
         if (localStorage.getItem(key) !== u.avatar) { localStorage.setItem(key, u.avatar); changed++; }
       } catch (e) { /* 配額滿：略過這張，不中斷其他人 */ }
     });
+    // ★ 伺服器清單是「目前有頭貼的全部成員」→ 本機快取裡不在清單上的人（已移除頭貼／已停用）一併清掉，
+    //   否則同事移除頭貼後，其他人的電腦會一直顯示那張舊照片（原本只會新增、從不刪除）。
+    try {
+      var _have = {};
+      res.avatars.forEach(function(u){ if (u && u.email) _have['bf_avatar_' + u.email] = 1; });
+      var _selfKey = currentUser ? 'bf_avatar_' + currentUser.email : '';
+      for (var _i = localStorage.length - 1; _i >= 0; _i--) {
+        var _k = localStorage.key(_i);
+        if (_k && _k.indexOf('bf_avatar_') === 0 && _k !== _selfKey && !_have[_k]) { localStorage.removeItem(_k); changed++; }
+      }
+    } catch (e) {}
     // 有更新才重繪，讓已經畫好的名字標籤補上頭像
     if (changed) {
       try {
@@ -13560,14 +13592,14 @@ function buildAdminUserRow(u) {
   const statusBadge = isDisabled
     ? `<span style="font-size:12px;font-weight:700;color:#f97316;background:#fff7ed;border:1px solid #fed7aa;border-radius:20px;padding:2px 8px;margin-left:6px;white-space:nowrap">已停用</span>`
     : '';
-  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-name="${u.name||''}" data-empid="${u.employeeId||''}" data-joinedat="${u.joinedAt||''}" data-roles="${roles.join(',')}" data-birthday="${_bday}" data-status="${isDisabled?'disabled':''}" style="border-bottom:1px solid #F7F8F6;${rowOpacity}">
+  return `<tr data-dept="${u.department||''}" data-email="${u.email||''}" data-name="${u.name||''}" data-empid="${u.employeeId||''}" data-joinedat="${u.joinedAt||''}" data-hiredate="${u.hireDate||''}" data-roles="${roles.join(',')}" data-birthday="${_bday}" data-status="${isDisabled?'disabled':''}" style="border-bottom:1px solid #F7F8F6;${rowOpacity}">
     <td style="padding:10px 12px;white-space:nowrap;text-align:center"><input type="checkbox" class="user-cb"></td>
     <td style="padding:10px 12px;white-space:nowrap;text-align:center"><div style="display:flex;align-items:center;justify-content:center">${nameChip(u.name||'—', 28, u.email)}${statusBadge}</div></td>
     <td style="padding:12px 16px;font-size:14px;font-weight:600;color:#6e736d;font-family:'Noto Sans TC',sans-serif;letter-spacing:.05em;white-space:nowrap;text-align:center">${u.employeeId||'—'}</td>
     <td style="padding:12px 16px;font-size:14px;color:#4A4F49;white-space:nowrap;text-align:center">${u.department||'—'}</td>
     <td style="padding:12px 16px;color:#767B75;white-space:nowrap;text-align:center">${u.email||'—'}</td>
     <td style="padding:10px 12px;text-align:center"><div style="display:flex;gap:4px;flex-wrap:wrap;min-width:60px;justify-content:center">${roleBadges}</div></td>
-    <td style="padding:12px 16px;color:#767B75;white-space:nowrap;text-align:center">${u.joinedAt ? fmtDateOnly(u.joinedAt) : '—'}</td>
+    <td style="padding:12px 16px;color:#4A4F49;white-space:nowrap;text-align:center">${u.hireDate || '—'}</td>
     <td style="padding:12px 16px;color:#6e736d;white-space:nowrap;text-align:center">${_bdayShow || '—'}</td>
     <td style="padding:10px 12px;white-space:nowrap;text-align:center"><div style="display:flex;gap:6px;align-items:center;flex-wrap:nowrap;justify-content:center">
       <button class="btn btn-o" style="padding:5px 10px;font-size:14px" onclick="showEditUserModal(this)">編輯</button>
@@ -13637,6 +13669,7 @@ function closeAddUserModal(){
   document.getElementById('add-email').value='';
   document.getElementById('add-dept').value='';
   document.getElementById('add-bday').value='';
+  const _ah=document.getElementById('add-hiredate'); if(_ah) _ah.value='';
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
@@ -13644,6 +13677,7 @@ function doAddUser(){
   const email=document.getElementById('add-email').value.trim();
   const dept=document.getElementById('add-dept').value;
   const bday=document.getElementById('add-bday').value.trim();
+  const hireDate=(document.getElementById('add-hiredate')||{}).value||'';
   if(!name){toast('⚠️ 請填寫姓名');return;}
   if(!empId){toast('⚠️ 請填寫員工編號');return;}
   if(!email){toast('⚠️ 請填寫 Email');return;}
@@ -13651,7 +13685,7 @@ function doAddUser(){
   if(!dept){toast('⚠️ 請選擇部門');return;}
   closeAddUserModal();
   toast('⏳ 新增中...');
-  callAPI('addUser',{name,employeeId:empId,email,department:dept,birthday:bday}).then(res=>{
+  callAPI('addUser',{name,employeeId:empId,email,department:dept,birthday:bday,hireDate}).then(res=>{
     if(res.ok){
       toast('✅ 已新增 '+name);
       loadAdminUsers();
@@ -13675,9 +13709,16 @@ function showEditUserModal(btn){
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
   if(bdayEl){ bdayEl.value=row.dataset.birthday||''; }
+  const hireEl=document.getElementById('edit-hiredate');
+  if(hireEl){ hireEl.value=row.dataset.hiredate||''; }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
-  if(editDept&&deptVal){editDept.value=deptVal;}
+  // ★ 部門不在下拉清單內（清單是寫死的 8 個，實際部門更多，如總經理室／寵物部）→ 先補一個選項再選，
+  //   否則下拉選不到、變成空白，一按儲存就把此人的部門清掉（2026-09-30 發現）
+  if(editDept&&deptVal){
+    if(![].some.call(editDept.options,function(o){return o.value===deptVal;})) editDept.add(new Option(deptVal,deptVal));
+    editDept.value=deptVal;
+  }
   document.getElementById('edit-user-name-display').textContent=name;
   document.getElementById('edit-user-email-display').textContent=email;
   const avatarEl=document.getElementById('edit-user-avatar');
@@ -13708,6 +13749,7 @@ function doEditUser(){
   const newEmpId = document.getElementById('edit-empid')?.value.trim()||'';
   const newDept  = document.getElementById('edit-dept')?.value||'';
   const newBday  = document.getElementById('edit-birthday')?.value||'';
+  const newHire  = document.getElementById('edit-hiredate')?.value||'';
   const email    = _editRow.dataset.email || _editRow.querySelector('td:nth-child(5)')?.textContent.trim()||'';
   if (_editRow) _editRow.dataset.birthday = newBday; // 本地即時反映
   // 後端相容：role 存代表角色（manager 優先，否則第一個非員工角色），roles 存完整清單
@@ -13721,7 +13763,7 @@ function doEditUser(){
   if (currentUser && currentUser.email===email) { currentUser.roles = getRealRolesForCache(); applyNavVisibility(); }
   closeEditUserModal();
   toast('⏳ 儲存中...');
-  callAPI('editUser',{email,employeeId:newEmpId,department:newDept,birthday:newBday,role:primary,roles:rolesLabels.join(',')}).then(res=>{
+  callAPI('editUser',{email,employeeId:newEmpId,department:(newDept||undefined),birthday:newBday,hireDate:newHire,role:primary,roles:rolesLabels.join(',')}).then(res=>{
     if(res.ok){
       toast('✅ 已儲存變更');
       loadAdminUsers();
@@ -13884,7 +13926,7 @@ async function removeTag(roleKey){
 function exportUsers(){
   const checked = document.querySelectorAll('.user-cb:checked');
   if(checked.length === 0){ toast('⚠️ 請先勾選要匯出的使用者'); return; }
-  const header = ['姓名','員工編號','部門','Email','標籤','加入時間','生日','狀態'].join(',');
+  const header = ['姓名','員工編號','部門','Email','標籤','到職日','加入時間','生日','狀態'].join(',');
   const rows = Array.from(checked).map(cb => {
     const tr = cb.closest('tr');
     const name = tr.dataset.name || '';
@@ -13894,9 +13936,10 @@ function exportUsers(){
     const roleKeys = (tr.dataset.roles||'').split(',').filter(function(r){ return r && r!=='employee'; });
     const roleLabel = roleKeys.map(k=>ROLE_KEY_TO_LABEL[k]||k).join('/');
     const joinedAt = tr.dataset.joinedat || '';
+    const hireDate = tr.dataset.hiredate || '';
     const birthday = tr.dataset.birthday || '';
     const status = tr.dataset.status === 'disabled' ? '停用' : '啟用';
-    return [name, empId, dept, email, roleLabel, joinedAt, birthday, status]
+    return [name, empId, dept, email, roleLabel, hireDate, joinedAt, birthday, status]
       .map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',');
   });
   const csv = '﻿' + header + '\n' + rows.join('\n');
@@ -13947,7 +13990,8 @@ async function doImport(){
     department: header.findIndex(h=>/部門/.test(h)),
     email: header.findIndex(h=>/email/i.test(h)),
     roles: header.findIndex(h=>/標籤/.test(h)),
-    birthday: header.findIndex(h=>/生日/.test(h))
+    birthday: header.findIndex(h=>/生日/.test(h)),
+    hireDate: header.findIndex(h=>/到職日|進用日期/.test(h))
   };
   if(col.name<0||col.email<0){toast('❌ CSV 缺少必填欄位（姓名、Email）');return;}
   const dataRows=rows.slice(1).filter(r=>r.some(c=>c));
@@ -13963,6 +14007,7 @@ async function doImport(){
       employeeId: col.employeeId>=0?r[col.employeeId]||'':'',
       department: col.department>=0?r[col.department]||'':'',
       birthday: col.birthday>=0?r[col.birthday]||'':'',
+      hireDate: col.hireDate>=0?r[col.hireDate]||'':'',
       roles: rolesRaw||'employee'
     };
     if(!payload.name||!payload.email){fail++;failList.push(payload.email||payload.name||'?');continue;}
