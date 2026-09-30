@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930141421';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930143102';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2911,7 +2911,7 @@ thead th{color:#767B75!important}
       </div>
 
       <!-- 福利卡片格 -->
-      <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px"></div>
+      <div id="bnf-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px"></div>
 
       <!-- 津貼補助 inline 試算：點上方「津貼補助」卡展開，不切頁；規則與津貼頁共用 window.subsidyAmount -->
       <div id="bnf-subsidy-panel" style="display:none;margin-top:12px;border:1.5px dashed #E8B27A;border-radius:14px;padding:16px 18px;background:#FFFDF8">
@@ -15899,7 +15899,13 @@ function _subLoadHireDate() {
   var tries = 0;
   (function attempt() {
     tries++;
-    Promise.resolve(typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null)
+    // 先問 Supabase（get_my_hire_date，只回本人；約 0.1 秒）；拿不到或是空值（可能是剛新增、尚未同步）才問 GAS
+    var _sbP = (typeof window.msSbDirect === 'function') ? window.msSbDirect('get_my_hire_date', {}) : null;
+    Promise.resolve(_sbP)
+      .then(function (sr) {
+        if (sr && sr.ok && sr.hireDate) return sr;
+        return typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null;
+      }, function () { return typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null; })
       .then(function (r) {
         if (r && r.ok) {
           var v = r.hireDate || '';
