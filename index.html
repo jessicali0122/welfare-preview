@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930115218';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930120522';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10369,9 +10369,9 @@ async function submitForm() {
     if (document.querySelectorAll('#items-list .item-card:not([data-subsidy="1"])').length) { _failValidation('⚠️ 申請' + _SUB_LABEL[_subK] + '時只能有試算帶入的那一筆明細，請刪除其他明細'); return; }
     const _sbox = document.getElementById('sub-calc-form'), _sa = _sbox && _sbox._applied;
     const _srow = document.querySelector('#items-list .item-card[data-subsidy="1"] .withtax');
-    const _scur = { type: (document.getElementById('sf-type')||{}).value||'', tenure: (document.getElementById('sf-tenure')||{}).value||'', stage: (document.getElementById('sf-stage')||{}).value||'', rel: (document.getElementById('sf-rel')||{}).value||'' };
+    const _scur = { type: (document.getElementById('sf-type')||{}).value||'', eventDate: (document.getElementById('sf-date')||{}).value||'', rel: (document.getElementById('sf-rel')||{}).value||'' };
     if (!_sa || _sa.kind !== _subK || Math.round(Number(_srow && _srow.value) || 0) !== _sa.amt
-        || _scur.type !== _sa.type || _scur.tenure !== _sa.tenure || _scur.stage !== _sa.stage || _scur.rel !== _sa.rel) {
+        || _scur.type !== _sa.type || _scur.eventDate !== _sa.eventDate || _scur.rel !== _sa.rel) {
       _failValidation('⚠️ 試算條件已變更或尚未確認，請在申請項目下方重新選擇條件並按「帶入明細」'); return;
     }
     needsReceipt = true;
@@ -15854,32 +15854,75 @@ function _subField(label, html) {
   return '<div style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">' + label + '</div>' + html + '</div>';
 }
 function _subFormHtml(k) {
-  var f = _subField('身分', _subSel('sf-type', [['full', '正職'], ['part', '工讀生']]));
-  if (k === 'm') f += _subField('在職年資', _subSel('sf-tenure', [['0', '未滿 1 年'], ['1', '1~2 年'], ['2', '2~3 年'], ['3', '3 年以上']]));
-  else f += _subField('在職狀態', _subSel('sf-stage', [['pass', '已通過試用期考核'], ['trial', '試用期間']]))
-          + _subField('親屬關係', _subSel('sf-rel', [['本人', '員工本人'], ['父母配偶子女', '父母／配偶／子女'], ['岳父母公婆', '岳父母／公婆'], ['祖父母兄弟姊妹', '祖父母／兄弟姊妹']]));
+  var dateLabel = k === 'm' ? '結婚登記日' : '過世日期';
+  var f = _subField('身分', _subSel('sf-type', [['full', '正職'], ['part', '工讀生']]))
+        + _subField(dateLabel, '<input id="sf-date" type="date" class="inp" onchange="_subFormCalc()" oninput="_subFormCalc()" style="width:100%">');
+  if (k === 'f') f += _subField('親屬關係', _subSel('sf-rel', [['本人', '員工本人'], ['父母配偶子女', '父母／配偶／子女'], ['岳父母公婆', '岳父母／公婆'], ['祖父母兄弟姊妹', '祖父母／兄弟姊妹']]));
   var doc = k === 'm' ? '結婚登記證明／戶口名簿影本／戶口謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞';
   return '<div style="margin-top:10px;border:1px solid #F0D9B0;background:#FFFBF4;border-radius:12px;padding:14px 16px">'
     + '<div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:10px">💰 ' + _SUB_LABEL[k] + '試算</div>'
     + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">' + f + '</div>'
+    + '<div id="sf-auto" style="font-size:12px;color:#767B75;margin-bottom:8px"></div>'
     + '<div id="sf-result" style="font-size:14px;color:#767B75">選擇上方條件後會顯示補助金額</div>'
-    + '<div style="margin-top:10px;font-size:12px;color:#7A5A12;line-height:1.7">📎 <strong>必附文件</strong>：' + doc + '（未上傳附件無法送出）</div>'
+    + '<div style="margin-top:10px;font-size:12px;color:#7A5A12;line-height:1.7">📎 <strong>必附文件</strong>：' + doc + '（未上傳附件無法送出）<br>'
+    + '📅 <strong>請領條件</strong>：事件須發生於在職期間，並於發生日起六個月內提出；年資以事件發生日計算。</div>'
     + '</div>';
 }
+// ── 年資／試用期計算（與後端 _fullYears_／_addMonthsYmd_ 同一套：純年月日整數比較，不經時區）──
+function _subYmd(s) { var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? { y: +m[1], m: +m[2], d: +m[3] } : null; }
+function _subYmdNum(o) { return o.y * 10000 + o.m * 100 + o.d; }
+function _subAddMonths(o, n) { var t = o.m - 1 + n, y = o.y + Math.floor(t / 12), m = ((t % 12) + 12) % 12 + 1; var last = new Date(Date.UTC(y, m, 0)).getUTCDate(); return { y: y, m: m, d: Math.min(o.d, last) }; }
+function _subFullYears(h, e) { var y = e.y - h.y; if (e.m < h.m || (e.m === h.m && e.d < h.d)) y--; return y; }
+function _subToday() { return _subYmd(new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10)); }
+var _SUB_TENURE_TXT = ['未滿 1 年', '1~2 年', '2~3 年', '3 年以上'];
+// 依到職日＋事實發生日算出級距；有問題回 { err }
+function _subDateCalc(k, hireStr, evStr) {
+  var hire = _subYmd(hireStr), ev = _subYmd(evStr), today = _subToday();
+  if (!hire) return { err: '系統查無您的到職日，無法計算補助，請聯絡福委補登到職日' };
+  if (!ev) return { err: '' };
+  if (_subYmdNum(ev) > _subYmdNum(today)) return { err: '事實發生日不可晚於今天' };
+  if (_subYmdNum(ev) < _subYmdNum(hire)) return { err: '事實發生日早於您的到職日（' + hireStr + '），依規定須為在職期間發生' };
+  if (_subYmdNum(today) > _subYmdNum(_subAddMonths(ev, 6))) return { err: '已超過申請期限（須於事實發生日起六個月內提出）' };
+  if (k === 'm') { var idx = Math.min(3, Math.max(0, _subFullYears(hire, ev))); return { tenure: String(idx), text: '年資 ' + _SUB_TENURE_TXT[idx] }; }
+  var pass = _subYmdNum(ev) >= _subYmdNum(_subAddMonths(hire, 3));
+  return { stage: pass ? 'pass' : 'trial', text: pass ? '已通過試用期（到職滿 3 個月）' : '試用期間（到職未滿 3 個月）' };
+}
+// 本人到職日：只抓自己的（後端 getMyHireDate），抓一次快取
+function _subLoadHireDate() {
+  if (window._myHireDate !== undefined || window._myHireDateLoading) return;
+  window._myHireDateLoading = true;
+  Promise.resolve(typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null)
+    .then(function (r) { window._myHireDate = (r && r.ok) ? (r.hireDate || '') : undefined; })
+    .catch(function () {})
+    .then(function () { window._myHireDateLoading = false; if (window._myHireDate !== undefined) { try { _subFormCalc(); } catch (e) {} } });
+}
 function _subCondText(k) {
+  var a = (document.getElementById('sub-calc-form') || {})._applied || {};
   var t = function (id) { var el = document.getElementById(id); return el && el.selectedIndex > 0 ? el.options[el.selectedIndex].text : ''; };
-  return k === 'm' ? [t('sf-type'), '年資 ' + t('sf-tenure')].join('／') : [t('sf-type'), t('sf-stage'), t('sf-rel')].join('／');
+  var parts = [t('sf-type'), (k === 'm' ? '結婚登記日 ' : '過世日期 ') + (a.eventDate || '')];
+  if (k === 'f') parts.push(t('sf-rel'));
+  parts.push('到職日 ' + (window._myHireDate || '') + '→' + (a.text || ''));
+  return parts.join('／');
 }
 window._subFormCalc = function () {
-  var k = _subKind(), box = document.getElementById('sub-calc-form'), res = document.getElementById('sf-result');
+  var k = _subKind(), box = document.getElementById('sub-calc-form'), res = document.getElementById('sf-result'), auto = document.getElementById('sf-auto');
   if (!k || !box || !res) return;
   var v = function (id) { return (document.getElementById(id) || {}).value || ''; };
-  var ty = v('sf-type'), amt = null;
-  if (ty && typeof window.subsidyAmount === 'function') {
-    amt = k === 'm' ? window.subsidyAmount('m', ty, v('sf-tenure')) : window.subsidyAmount('f', ty, null, v('sf-stage'), v('sf-rel'));
+  box._amt = null; box._calc = null;
+  if (window._myHireDate === undefined) {
+    if (auto) auto.textContent = window._myHireDateLoading ? '讀取您的到職日中…' : '讀取到職日失敗，請重新整理後再試';
+    res.innerHTML = '選擇上方條件後會顯示補助金額';
+    _subLoadHireDate(); return;
   }
-  box._amt = amt;
+  var dc = _subDateCalc(k, window._myHireDate, v('sf-date'));
+  if (auto) auto.textContent = window._myHireDate ? ('您的到職日：' + window._myHireDate + (dc.text ? '　→ ' + dc.text : '')) : '';
+  if (dc.err) { res.innerHTML = '<span style="color:#dc2626;font-weight:600">⚠️ ' + htEsc(dc.err) + '</span>'; return; }
+  var ty = v('sf-type'), amt = null;
+  if (ty && (dc.tenure || dc.stage) && typeof window.subsidyAmount === 'function') {
+    amt = k === 'm' ? window.subsidyAmount('m', ty, dc.tenure) : window.subsidyAmount('f', ty, null, dc.stage, v('sf-rel'));
+  }
   if (amt == null) { res.innerHTML = '選擇上方條件後會顯示補助金額'; return; }
+  box._amt = amt; box._calc = dc;
   res.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
     + '<span style="color:#4A4F49">可申請補助</span><span style="font-size:22px;font-weight:800;color:#EC4F7D">NT$ ' + Number(amt).toLocaleString() + '</span>'
     + '<button type="button" onclick="_subApply()" class="btn btn-p" style="min-height:36px;padding:6px 16px">帶入明細</button></div>';
@@ -15921,7 +15964,8 @@ window._subApply = function () {
   _subLockCard(card, true);
   // 送出時交給後端重算用的條件快照（以「按下帶入那一刻」為準；之後改了條件沒重按帶入，送出會被擋）
   var _v = function (id) { return (document.getElementById(id) || {}).value || ''; };
-  box._applied = { kind: k, type: _v('sf-type'), tenure: _v('sf-tenure'), stage: _v('sf-stage'), rel: _v('sf-rel'), amt: amt };
+  var _dc = box._calc || {};
+  box._applied = { kind: k, type: _v('sf-type'), eventDate: _v('sf-date'), rel: _v('sf-rel'), tenure: _dc.tenure || '', stage: _dc.stage || '', text: _dc.text || '', amt: amt };
   // ② 試算條件寫進備註（取代舊的試算行，不動申請人自己寫的內容）
   var r = document.querySelector('#view-new-form textarea');
   if (r) {
@@ -15937,7 +15981,7 @@ window._subApply = function () {
 window._subCalcPayload = function () {
   var box = document.getElementById('sub-calc-form'), a = box && box._applied;
   if (!_subKind() || !a) return null;
-  return { kind: a.kind, type: a.type, tenure: a.tenure, stage: a.stage, rel: a.rel };
+  return { kind: a.kind, type: a.type, eventDate: a.eventDate, rel: a.rel, tenure: a.tenure, stage: a.stage };
 };
 window._subFormToggle = function () {
   var box = document.getElementById('sub-calc-form'); if (!box) return;
