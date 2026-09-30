@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930101556';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930105642';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10873,10 +10873,17 @@ function _showNoPerm(name, pending){
       + '<div style="font-size:14px;color:#767B75;font-weight:600">正在載入…</div>'
       + '</div>';
   } else {
+  // 「福委聽你說」（含留言板管理）尚未開放：不是權限問題，改顯示「尚未開放」而非「沒有權限」
+  var _notOpen = (name === '福委聽你說' || name === 'feedback');
+  if (_notOpen) featTitle = '福委聽你說';
   v.innerHTML = '<div style="max-width:520px;margin:56px auto;padding:40px 28px;text-align:center;background:#fff;border-radius:20px;border:1px solid #D2D7CD;box-shadow:0 6px 24px rgba(46,51,45,.06)">'
-    + '<div style="font-size:52px;margin-bottom:14px">🔒</div>'
-    + '<div style="font-size:20px;font-weight:800;color:#2E332D;margin-bottom:10px">你沒有使用此功能的權限</div>'
-    + '<div style="font-size:14px;color:#767B75;line-height:1.7;margin-bottom:24px">「' + featTitle + '」僅開放給特定角色使用。<br>如需開通，請洽福委會或系統管理者。</div>'
+    + '<div style="font-size:52px;margin-bottom:14px">' + (_notOpen ? '🌱' : '🔒') + '</div>'
+    + '<div style="font-size:20px;font-weight:800;color:#2E332D;margin-bottom:10px">' + (_notOpen ? '「福委聽你說」尚未開放' : '你沒有使用此功能的權限') + '</div>'
+    + '<div style="font-size:14px;color:#767B75;line-height:1.7;margin-bottom:24px">'
+    + (_notOpen ? '這個功能還在準備中，開放後會再通知大家，敬請期待！'
+       : ({ admin: '「系統管理」僅開放給系統管理者使用。',     // 各頁專屬說明：不開通給其他人的頁面不寫「如需開通」
+            hightea: '「午茶日」僅開放給福委使用。' })[name]
+         || ('「' + featTitle + '」僅開放給特定角色使用。<br>如需開通，請洽福委會或系統管理者。')) + '</div>'
     + '<button onclick="sw(\'dashboard\')" class="btn btn-p" style="min-height:44px;padding:10px 28px;justify-content:center">回總覽</button>'
     + '</div>';
   }
