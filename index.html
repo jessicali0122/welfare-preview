@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930110051';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930111538';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3695,6 +3695,7 @@ thead th{color:#767B75!important}
                   <span style="flex-shrink:0">💡</span>
                   <span>請確認<strong>申請項目與內容相符</strong>，系統將依項目進入對應的審核流程。</span>
                 </div>
+                <div id="sub-calc-form" style="display:none"></div>
               </div>
               <div>
                 <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">單號（自動產生）</label>
@@ -3841,7 +3842,7 @@ thead th{color:#767B75!important}
           <div class="section-title">附件上傳（Google Drive）</div>
           <!-- 資訊安全提醒（個資保護警語） -->
           <div style="border:1px solid #E7A9B8;background:#FDF1F4;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:14px;line-height:1.7">
-            <div style="display:flex;align-items:center;gap:7px;font-weight:700;color:#C24A63;margin-bottom:6px">📎 附件上傳須知</div>
+            <div style="display:flex;align-items:center;gap:7px;font-weight:700;color:#4A4F49;margin-bottom:6px">📎 附件上傳須知</div>
             <div style="min-width:0;color:#8A5A66"><strong style="color:#C24A63">請僅上傳申請所需之必要文件</strong>，如有其他需檢附之資料，請以紙本方式提供。為避免個人資料或非必要文件留存於系統，請確認附件內容後再行上傳。</div>
           </div>
           <input type="file" id="file-upload-input" multiple accept=".pdf,.jpg,.jpeg,.png,.xlsx,.xls" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0" onchange="handleFileUpload(this.files)">
@@ -10336,7 +10337,15 @@ async function submitForm() {
 
   // 是否有任何一筆明細需要憑證。全部選「無憑證」時就沒有憑證可附，
   // 不該再強制上傳附件（只要有任一筆是發票／收據，附件仍為必填）。
-  const needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
+  let needsReceipt = items.some(i => i.receiptType && i.receiptType !== '無憑證');
+  // 結婚／喪葬補助：必須先試算並帶入明細；且一定要附件（證明文件），不看單據類型（使用者 2026-09-30 決定）
+  const _subK = (typeof _subKind === 'function') ? _subKind() : '';
+  if (_subK) {
+    if (!document.querySelector('#items-list .item-card[data-subsidy="1"]')) { _failValidation('⚠️ 請先在「申請項目」下方完成' + _SUB_LABEL[_subK] + '試算，並按「帶入明細」'); return; }
+    // 金額鎖住才有意義：補助單只能有「試算帶入的那一筆」，其他手填明細一律擋（否則可另外加列多報）
+    if (document.querySelectorAll('#items-list .item-card:not([data-subsidy="1"])').length) { _failValidation('⚠️ 申請' + _SUB_LABEL[_subK] + '時只能有試算帶入的那一筆明細，請刪除其他明細'); return; }
+    needsReceipt = true;
+  }
 
   // 附件必填驗證（含草稿已上傳的檔案）
   const _hasPending = window._pendingFiles && window._pendingFiles.length > 0;
@@ -10344,7 +10353,7 @@ async function submitForm() {
   if (needsReceipt && !_hasPending && !_hasDraftFiles) {
     const dz = document.getElementById('upload-drop-zone');
     if (dz) { dz.style.borderColor='#dc2626'; dz.style.background='#fff5f5'; setTimeout(()=>{dz.style.borderColor='#D2D6D0';dz.style.background='#F7F8F6';},2500); }
-    _failValidation('⚠️ 請上傳至少一張附件圖片或憑證'); return;
+    _failValidation(_subK ? ('⚠️ ' + _SUB_LABEL[_subK] + '須上傳證明文件（' + (_subK === 'm' ? '結婚登記證明／戶口名簿／戶口謄本' : '死亡證明書或訃聞') + '）') : '⚠️ 請上傳至少一張附件圖片或憑證'); return;
   }
 
   // 直接進預覽（收據提醒已整合進摘要 modal）
@@ -15767,6 +15776,124 @@ function sortAppTable(colIdx) {
 // ══════════════════════════════════════════
 //  5. 稅率快速切換
 // ══════════════════════════════════════════
+// ══ 費用申請：結婚／喪葬補助 試算（2026-09-30）══
+// 申請項目選「結婚補助／喪葬補助」→ 項目下方展開試算；金額規則共用 window.subsidyAmount（津貼頁那一份，只維護一處）。
+// 使用者決定：① 帶入的金額鎖住（要改就重新試算） ② 試算條件寫進備註給簽核人看 ③ 一定要附件（不看單據類型）。
+var _SUB_KIND = { '結婚補助': 'm', '喪葬補助': 'f' };
+var _SUB_LABEL = { m: '結婚補助', f: '喪葬補助' };
+var _SUB_NOTE_TAG = '【補助試算】';
+function _subKind() { var el = document.getElementById('apply-item'); return _SUB_KIND[(el && el.value) || ''] || ''; }
+function _subSel(id, opts) {
+  return '<select id="' + id + '" class="inp" onchange="_subFormCalc()" style="width:100%"><option value="">請選擇</option>'
+    + opts.map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join('') + '</select>';
+}
+function _subField(label, html) {
+  return '<div style="flex:1;min-width:130px"><div style="font-size:12px;color:#767B75;margin-bottom:4px">' + label + '</div>' + html + '</div>';
+}
+function _subFormHtml(k) {
+  var f = _subField('身分', _subSel('sf-type', [['full', '正職'], ['part', '工讀生']]));
+  if (k === 'm') f += _subField('在職年資', _subSel('sf-tenure', [['0', '未滿 1 年'], ['1', '1~2 年'], ['2', '2~3 年'], ['3', '3 年以上']]));
+  else f += _subField('在職狀態', _subSel('sf-stage', [['pass', '已通過試用期考核'], ['trial', '試用期間']]))
+          + _subField('親屬關係', _subSel('sf-rel', [['本人', '員工本人'], ['父母配偶子女', '父母／配偶／子女'], ['岳父母公婆', '岳父母／公婆'], ['祖父母兄弟姊妹', '祖父母／兄弟姊妹']]));
+  var doc = k === 'm' ? '結婚登記證明／戶口名簿影本／戶口謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞';
+  return '<div style="margin-top:10px;border:1px solid #F0D9B0;background:#FFFBF4;border-radius:12px;padding:14px 16px">'
+    + '<div style="font-size:14px;font-weight:700;color:#2E332D;margin-bottom:10px">💰 ' + _SUB_LABEL[k] + '試算</div>'
+    + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px">' + f + '</div>'
+    + '<div id="sf-result" style="font-size:14px;color:#767B75">選擇上方條件後會顯示補助金額</div>'
+    + '<div style="margin-top:10px;font-size:12px;color:#7A5A12;line-height:1.7">📎 <strong>必附文件</strong>：' + doc + '（未上傳附件無法送出）</div>'
+    + '</div>';
+}
+function _subCondText(k) {
+  var t = function (id) { var el = document.getElementById(id); return el && el.selectedIndex > 0 ? el.options[el.selectedIndex].text : ''; };
+  return k === 'm' ? [t('sf-type'), '年資 ' + t('sf-tenure')].join('／') : [t('sf-type'), t('sf-stage'), t('sf-rel')].join('／');
+}
+window._subFormCalc = function () {
+  var k = _subKind(), box = document.getElementById('sub-calc-form'), res = document.getElementById('sf-result');
+  if (!k || !box || !res) return;
+  var v = function (id) { return (document.getElementById(id) || {}).value || ''; };
+  var ty = v('sf-type'), amt = null;
+  if (ty && typeof window.subsidyAmount === 'function') {
+    amt = k === 'm' ? window.subsidyAmount('m', ty, v('sf-tenure')) : window.subsidyAmount('f', ty, null, v('sf-stage'), v('sf-rel'));
+  }
+  box._amt = amt;
+  if (amt == null) { res.innerHTML = '選擇上方條件後會顯示補助金額'; return; }
+  res.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'
+    + '<span style="color:#4A4F49">可申請補助</span><span style="font-size:22px;font-weight:800;color:#EC4F7D">NT$ ' + Number(amt).toLocaleString() + '</span>'
+    + '<button type="button" onclick="_subApply()" class="btn btn-p" style="min-height:36px;padding:6px 16px">帶入明細</button></div>';
+};
+function _subLockCard(card, lock) {
+  var w = card.querySelector('.withtax'), d = card.querySelector('.desc-inp');
+  [w, d].forEach(function (el) {
+    if (!el) return;
+    el.readOnly = lock;
+    el.style.background = lock ? '#F7F8F6' : '';
+    el.title = lock ? '補助金額依試算結果帶入；要修改請重新選擇上方試算條件' : '';
+  });
+  card.querySelectorAll('.tax-btn').forEach(function (b) { b.disabled = lock; b.style.opacity = lock ? '.5' : ''; });
+  if (lock) card.dataset.subsidy = '1'; else delete card.dataset.subsidy;
+}
+window._subApply = function () {
+  var k = _subKind(), box = document.getElementById('sub-calc-form');
+  var amt = box && box._amt;
+  if (!k || amt == null) return;
+  var list = document.getElementById('items-list'); if (!list) return;
+  var card = list.querySelector('.item-card[data-subsidy="1"]')
+    || [].find.call(list.querySelectorAll('.item-card'), function (c) {
+         return !((c.querySelector('.desc-inp') || {}).value || '').trim() && !(c.querySelector('.withtax') || {}).value;
+       });
+  if (!card) { addItem(); var all = list.querySelectorAll('.item-card'); card = all[all.length - 1]; }
+  var sels = card.querySelectorAll('select.inp');   // [類別, 單據類型]
+  var dateInp = card.querySelector('.date-inp');
+  if (dateInp && !dateInp.value) {
+    var today = new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
+    dateInp.value = today; if (dateInp._flatpickr) dateInp._flatpickr.setDate(today);
+  }
+  if (sels[0]) sels[0].value = '福利費';
+  if (sels[1]) sels[1].value = '無憑證';
+  var desc = card.querySelector('.desc-inp'); if (desc) desc.value = _SUB_LABEL[k];
+  _subLockCard(card, false);
+  var free = [].find.call(card.querySelectorAll('.tax-btn'), function (b) { return /,\s*0\)/.test(b.getAttribute('onclick') || ''); });
+  if (free) setTaxRate(free, 0);
+  var w = card.querySelector('.withtax'); if (w) { w.value = amt; calcRowFromTotal(w); }
+  _subLockCard(card, true);
+  // ② 試算條件寫進備註（取代舊的試算行，不動申請人自己寫的內容）
+  var r = document.querySelector('#view-new-form textarea');
+  if (r) {
+    var line = _SUB_NOTE_TAG + _SUB_LABEL[k] + '：' + _subCondText(k) + ' → NT$' + Number(amt).toLocaleString();
+    var rest = String(r.value || '').split('\n').filter(function (l) { return l.indexOf(_SUB_NOTE_TAG) !== 0; }).join('\n').replace(/^\n+/, '');
+    r.value = line + (rest ? '\n' + rest : '');
+  }
+  calcTotal();
+  if (typeof updateFormProgress === 'function') updateFormProgress();
+  if (typeof toast === 'function') toast('✅ 已帶入' + _SUB_LABEL[k] + ' NT$' + Number(amt).toLocaleString());
+};
+window._subFormToggle = function () {
+  var box = document.getElementById('sub-calc-form'); if (!box) return;
+  var k = _subKind(), list = document.getElementById('items-list');
+  if (!k) {
+    if (box.dataset.kind) { box.style.display = 'none'; box.innerHTML = ''; box.dataset.kind = ''; box._amt = null; }
+    if (list) list.querySelectorAll('.item-card[data-subsidy="1"]').forEach(function (c) { _subLockCard(c, false); });
+    return;
+  }
+  if (box.dataset.kind !== k) { box.dataset.kind = k; box.innerHTML = _subFormHtml(k); box.style.display = ''; box._amt = null; }
+  // 換了補助種類 → 另一種的舊明細解鎖；草稿重開 → 品名相符的那一列重新鎖住
+  if (list) list.querySelectorAll('.item-card').forEach(function (c) {
+    var d = ((c.querySelector('.desc-inp') || {}).value || '').trim();
+    if (d === _SUB_LABEL[k]) { if (!c.dataset.subsidy) _subLockCard(c, true); }
+    else if (c.dataset.subsidy) _subLockCard(c, false);
+  });
+};
+// 掛在 updateFormProgress 之後：新表單、切換申請項目、草稿還原、改明細都會經過這裡（只在種類改變時重畫）
+(function () {
+  var _orig = window.updateFormProgress;
+  if (typeof _orig !== 'function') return;
+  window.updateFormProgress = function () {
+    var r = _orig.apply(this, arguments);
+    try { window._subFormToggle(); } catch (e) {}
+    return r;
+  };
+})();
+
 function setTaxRate(btn, rate) {
   const card = btn.closest('.item-card');
   if (!card) return;
