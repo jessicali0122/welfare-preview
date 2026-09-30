@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930153837';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930154912';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10335,7 +10335,10 @@ async function submitForm() {
   };
 
   if (!subjectEl?.value) { _failValidation('⚠️ 請填寫主旨', subjectEl); return; }
-  if (items.length === 0) { _failValidation('⚠️ 請至少新增一筆明細'); return; }
+  if (items.length === 0) {
+    const _k0 = (typeof _subKind === 'function') ? _subKind() : '';
+    _failValidation(_k0 ? ('⚠️ 請先在「申請項目」下方完成' + _SUB_LABEL[_k0] + '試算，並按「帶入明細」') : '⚠️ 請至少新增一筆明細'); return;
+  }
 
   // 每筆明細的含稅金額必須 > 0
   const hasZeroAmount = items.some(i => !(i.total > 0));
@@ -10385,7 +10388,7 @@ async function submitForm() {
   if (needsReceipt && !_hasPending && !_hasDraftFiles) {
     const dz = document.getElementById('upload-drop-zone');
     if (dz) { dz.style.borderColor='#dc2626'; dz.style.background='#fff5f5'; setTimeout(()=>{dz.style.borderColor='#D2D6D0';dz.style.background='#F7F8F6';},2500); }
-    _failValidation(_subK ? ('⚠️ ' + _SUB_LABEL[_subK] + '須上傳證明文件（' + (_subK === 'm' ? '結婚登記證明／戶口名簿／戶口謄本' : '死亡證明書或訃聞') + '）') : '⚠️ 請上傳至少一張附件圖片或憑證'); return;
+    _failValidation(_subK ? ('⚠️ ' + _SUB_LABEL[_subK] + '須上傳證明文件：' + (_subK === 'm' ? '結婚登記證明／戶口名簿影本／戶口謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞')) : '⚠️ 請上傳至少一張附件圖片或憑證'); return;
   }
 
   // 直接進預覽（收據提醒已整合進摘要 modal）
@@ -15972,6 +15975,13 @@ function _subLockCard(card, lock) {
     el.title = lock ? '補助金額依試算結果帶入；要修改請重新選擇上方試算條件' : '';
   });
   card.querySelectorAll('.tax-btn').forEach(function (b) { b.disabled = lock; b.style.opacity = lock ? '.5' : ''; });
+  var rs = card.querySelectorAll('select')[1];   // 單據類型：補助固定「證明文件」
+  if (rs) {
+    if (lock) rs.value = '證明文件';
+    rs.disabled = lock;
+    rs.style.background = lock ? '#F7F8F6' : '';
+    rs.title = lock ? '結婚／喪葬補助的單據類型固定為「證明文件」' : '';
+  }
   if (lock) card.dataset.subsidy = '1'; else delete card.dataset.subsidy;
 }
 window._subApply = function () {
@@ -16025,7 +16035,7 @@ window._subFormToggle = function () {
   var ah = document.getElementById('sub-attach-hint');   // 附件區提示：補助要上傳哪些證明文件
   if (ah) {
     ah.style.display = k ? '' : 'none';
-    ah.innerHTML = k ? '📄 <strong>' + _SUB_LABEL[k] + '請上傳證明文件</strong>：' + (k === 'm' ? '結婚證書、結婚登記證明或戶籍謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞') : '';
+    ah.innerHTML = k ? '📄 <strong>' + _SUB_LABEL[k] + '請上傳證明文件</strong>：' + (k === 'm' ? '結婚登記證明／戶口名簿影本／戶口謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞') : '';
   }
   if (!k) {
     if (box.dataset.kind) { box.style.display = 'none'; box.innerHTML = ''; box.dataset.kind = ''; box._amt = null; box._applied = null; }
