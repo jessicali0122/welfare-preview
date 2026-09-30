@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930120522';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930135226';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -19010,6 +19010,10 @@ function _htBudgetForMonth(ym) {
 }
 // 新增活動時的人數預設：抓「前一個月」的參與人數；查無則退回最近一場有人數的歷史場次，再退回全體成員數
 function _htPrevMonthHeadcount(ym) {
+  // ★ 預設人數＝目前「啟用中」的成員數（使用者 2026-09-30：新增活動要抓啟用人數，不是沿用上一場）。
+  //   LOCAL_USER_LIST 由 getMembers 同步，只含啟用中成員（已停用／刪除者不在內）。
+  //   成員清單還沒載到時，才退回下方「最新一場的人數」。
+  if (Array.isArray(LOCAL_USER_LIST) && LOCAL_USER_LIST.length) return LOCAL_USER_LIST.length;
   var parts = (ym || '').split('-');
   var y = parseInt(parts[0], 10), m = parseInt(parts[1], 10);
   if (!y || !m) return LOCAL_USER_LIST.length || '';
@@ -19439,7 +19443,7 @@ function htRenderCalendar() {
         + '<div style="width:24px;height:24px;background:#F2A03D;border-radius:46% 46% 50% 50%/58% 58% 42% 42%;display:flex;align-items:center;justify-content:center">'
         +   '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M6.5 8h11l-1.2 11.4a1.2 1.2 0 0 1-1.2 1.1H8.9a1.2 1.2 0 0 1-1.2-1.1z" fill="#fff"/><rect x="5.4" y="6.4" width="13.2" height="2.2" rx="1.1" fill="#fff"/><rect x="13.2" y="1.8" width="1.8" height="7" rx=".9" transform="rotate(14 14 5)" fill="#fff"/></svg>'
         + '</div>'
-        + '<div style="font-size:12px;color:#EC4F7D;font-weight:600;line-height:1">午茶日</div></div>';
+        + '<div style="font-size:12px;color:#E0820A;font-weight:600;line-height:1">午茶日</div></div>';   // 橘色：與午茶日圖示同色系（凸顯色深橘）
     } else {
       bottomLabel = '<div style="height:16px"></div>';
     }
