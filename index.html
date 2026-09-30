@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930140039';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930140645';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -3691,7 +3691,7 @@ thead th{color:#767B75!important}
             </div>
             <div class="ai-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
               <div>
-                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span> <span id="apply-item-hint" style="font-size:12px;font-weight:500;color:#767B75"></span></label>
+                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span> <span id="apply-item-hint" style="font-size:12px;font-weight:600;color:#738e41"></span></label>
                 <select class="inp" id="apply-item" onchange="updateFormProgress()" style="width:100%"><option value="一般請款">一般請款</option></select>
                 <div style="display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:12px;line-height:1.6;color:#7A5A12;background:#FBF3E6;border:1px solid #F0D9B0;border-radius:8px;padding:6px 10px">
                   <span style="flex-shrink:0">💡</span>
@@ -12858,7 +12858,7 @@ function _updateApplyItemHint() {
   var sel = document.getElementById('apply-item'), el = document.getElementById('apply-item-hint');
   if (!sel || !el) return;
   var names = [].map.call(sel.options, function (o) { return o.value; }).filter(Boolean);
-  el.textContent = names.length ? '（可選：' + names.join('／') + '）' : '';
+  el.textContent = names.length ? '（' + names.join('／') + '）' : '';
 }
 async function _preloadApplyItems() {
   _seedApplyItems();   // 先用快取/預設秒填下拉，再背景刷新
@@ -15856,7 +15856,7 @@ function _subField(label, html) {
 function _subFormHtml(k) {
   var dateLabel = k === 'm' ? '結婚登記日' : '過世日期';
   var f = _subField('身分', _subSel('sf-type', [['full', '正職'], ['part', '工讀生']]))
-        + _subField(dateLabel, '<input id="sf-date" type="date" class="inp" onchange="_subFormCalc()" oninput="_subFormCalc()" style="width:100%">');
+        + _subField(dateLabel, '<input id="sf-date" type="text" class="inp" placeholder="選擇日期" readonly style="width:100%;cursor:pointer">');
   if (k === 'f') f += _subField('親屬關係', _subSel('sf-rel', [['本人', '員工本人'], ['父母配偶子女', '父母／配偶／子女'], ['岳父母公婆', '岳父母／公婆'], ['祖父母兄弟姊妹', '祖父母／兄弟姊妹']]));
   var doc = k === 'm' ? '結婚登記證明／戶口名簿影本／戶口謄本（擇一）' : '死亡證明書（另附親屬關係證明）或訃聞';
   return '<div style="margin-top:10px;border:1px solid #F0D9B0;background:#FFFBF4;border-radius:12px;padding:14px 16px">'
@@ -15888,13 +15888,36 @@ function _subDateCalc(k, hireStr, evStr) {
   return { stage: pass ? 'pass' : 'trial', text: pass ? '已通過試用期（到職滿 3 個月）' : '試用期間（到職未滿 3 個月）' };
 }
 // 本人到職日：只抓自己的（後端 getMyHireDate），抓一次快取
+function _subHireKey() { var cu = window.currentUser || (typeof currentUser !== 'undefined' ? currentUser : null); return cu && cu.email ? 'bf_hire_' + cu.email : ''; }
 function _subLoadHireDate() {
   if (window._myHireDate !== undefined || window._myHireDateLoading) return;
+  // 先用本機快取（只存自己的到職日），畫面立即可算；背景再向伺服器確認最新值
+  var key = _subHireKey(), cached = null;
+  try { cached = key ? localStorage.getItem(key) : null; } catch (e) {}
+  if (cached !== null) { window._myHireDate = cached; setTimeout(function () { try { _subFormCalc(); } catch (e) {} }, 0); }
   window._myHireDateLoading = true;
-  Promise.resolve(typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null)
-    .then(function (r) { window._myHireDate = (r && r.ok) ? (r.hireDate || '') : undefined; })
-    .catch(function () {})
-    .then(function () { window._myHireDateLoading = false; if (window._myHireDate !== undefined) { try { _subFormCalc(); } catch (e) {} } });
+  var tries = 0;
+  (function attempt() {
+    tries++;
+    Promise.resolve(typeof callAPI === 'function' ? callAPI('getMyHireDate', {}, { gasOnly: true, noCache: true }) : null)
+      .then(function (r) {
+        if (r && r.ok) {
+          var v = r.hireDate || '';
+          try { if (key) localStorage.setItem(key, v); } catch (e) {}
+          var changed = window._myHireDate !== v;
+          window._myHireDate = v; window._myHireDateLoading = false;
+          if (changed) { try { _subFormCalc(); } catch (e) {} }
+          return;
+        }
+        throw new Error((r && r.error) || 'fail');
+      })
+      .catch(function () {
+        if (tries < 3) { setTimeout(attempt, 1500 * tries); return; }   // 1.5 秒、3 秒後再試
+        window._myHireDateLoading = false;
+        window._myHireDateFailed = true;   // 3 次都失敗：停止自動重試（避免無限重打 GAS），等使用者按「重新讀取」
+        try { _subFormCalc(); } catch (e) {}
+      });
+  })();
 }
 function _subCondText(k) {
   var a = (document.getElementById('sub-calc-form') || {})._applied || {};
@@ -15910,9 +15933,14 @@ window._subFormCalc = function () {
   var v = function (id) { return (document.getElementById(id) || {}).value || ''; };
   box._amt = null; box._calc = null;
   if (window._myHireDate === undefined) {
-    if (auto) auto.textContent = window._myHireDateLoading ? '讀取您的到職日中…' : '讀取到職日失敗，請重新整理後再試';
-    res.innerHTML = '選擇上方條件後會顯示補助金額';
-    _subLoadHireDate(); return;
+    if (!window._myHireDateLoading && !window._myHireDateFailed) _subLoadHireDate();   // 先開始讀（有本機快取會立刻有值）
+    if (window._myHireDate === undefined) {
+      if (auto) auto.innerHTML = window._myHireDateFailed
+        ? '<span style="color:#dc2626">伺服器回應較慢，暫時讀不到您的到職日</span>　<a href="javascript:void(0)" onclick="window._myHireDateFailed=false;_subFormCalc()" style="color:#0066CC;font-weight:600">重新讀取</a>'
+        : '讀取您的到職日中…';
+      res.innerHTML = '選擇上方條件後會顯示補助金額';
+      return;
+    }
   }
   var dc = _subDateCalc(k, window._myHireDate, v('sf-date'));
   if (auto) auto.textContent = window._myHireDate ? ('您的到職日：' + window._myHireDate + (dc.text ? '　→ ' + dc.text : '')) : '';
@@ -15991,7 +16019,12 @@ window._subFormToggle = function () {
     if (list) list.querySelectorAll('.item-card[data-subsidy="1"]').forEach(function (c) { _subLockCard(c, false); });
     return;
   }
-  if (box.dataset.kind !== k) { box.dataset.kind = k; box.innerHTML = _subFormHtml(k); box.style.display = ''; box._amt = null; box._applied = null; }
+  if (box.dataset.kind !== k) {
+    box.dataset.kind = k; box.innerHTML = _subFormHtml(k); box.style.display = ''; box._amt = null; box._applied = null;
+    var _sd = document.getElementById('sf-date');
+    if (_sd && typeof initFlatpickr === 'function') initFlatpickr(_sd, { maxDate: 'today', onChange: function () { try { _subFormCalc(); } catch (e) {} } });
+    _subFormCalc();   // 立即開始讀取本人到職日（不必等使用者先動欄位）
+  }
   // 換了補助種類 → 另一種的舊明細解鎖；草稿重開 → 品名相符的那一列重新鎖住
   if (list) list.querySelectorAll('.item-card').forEach(function (c) {
     var d = ((c.querySelector('.desc-inp') || {}).value || '').trim();
