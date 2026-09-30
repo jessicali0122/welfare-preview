@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930135226';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930140039';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -5699,11 +5699,11 @@ window._renderRolePreviewUI = function() {
     block.style.display = '';
     var btns = ROLES.map(function(r){
       var on = active === r[0];
-      return '<button onclick="setRolePreview(\'' + r[0] + '\')" style="flex:1;min-width:80px;padding:7px 6px;border-radius:9px;border:1.5px solid ' + (on ? '#EC4F7D' : '#D2D7CD') + ';background:' + (on ? '#FFF4E4' : '#fff') + ';color:' + (on ? '#C63968' : '#4A4F49') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">' + r[1] + '</button>';
+      return '<button onclick="setRolePreview(\'' + r[0] + '\')" style="min-width:0;padding:7px 4px;border-radius:9px;border:1.5px solid ' + (on ? '#EC4F7D' : '#D2D7CD') + ';background:' + (on ? '#FFF4E4' : '#fff') + ';color:' + (on ? '#C63968' : '#4A4F49') + ';font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">' + r[1] + '</button>';
     }).join('');
     block.innerHTML = '<div style="padding:10px 16px 8px;border-top:1px solid #D9DDD3">'
       + '<div style="font-size:12px;color:#767B75;font-weight:700;margin-bottom:7px">🎭 角色預覽（僅你看得到，用來確認各角色畫面）</div>'
-      + '<div style="display:flex;flex-wrap:wrap;gap:6px">' + btns + '</div></div>';
+      + '<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">' + btns + '</div></div>';   // 3 欄→5 個角色排成兩排，選單不再被撐寬
   });
   // 常駐提示條：預覽非管理者角色時提醒（避免忘記自己在預覽）
   var banner = document.getElementById('role-preview-banner');
@@ -24203,7 +24203,7 @@ if (document.getElementById('bulletin-list')) {
 </div>
 
 <!-- USER MENU DROPDOWN -->
-<div id="user-menu" style="display:none;position:fixed;background:#fff;border:1px solid #D5DAE2;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;min-width:210px;overflow:hidden">
+<div id="user-menu" style="display:none;position:fixed;background:#fff;border:1px solid #D5DAE2;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.15);z-index:300;min-width:210px;max-width:300px;overflow:hidden">
   <div style="padding:14px 16px;border-bottom:1px solid #D9DDD3;display:flex;align-items:center;gap:10px">
     <div class="user-avatar-wrap" style="width:40px;height:40px;border-radius:50%;background:#0066CC;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden">
       <span class="user-avatar-initial">潔</span>
