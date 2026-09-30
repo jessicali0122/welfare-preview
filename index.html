@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930111538';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930112651';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -10344,6 +10344,13 @@ async function submitForm() {
     if (!document.querySelector('#items-list .item-card[data-subsidy="1"]')) { _failValidation('⚠️ 請先在「申請項目」下方完成' + _SUB_LABEL[_subK] + '試算，並按「帶入明細」'); return; }
     // 金額鎖住才有意義：補助單只能有「試算帶入的那一筆」，其他手填明細一律擋（否則可另外加列多報）
     if (document.querySelectorAll('#items-list .item-card:not([data-subsidy="1"])').length) { _failValidation('⚠️ 申請' + _SUB_LABEL[_subK] + '時只能有試算帶入的那一筆明細，請刪除其他明細'); return; }
+    const _sbox = document.getElementById('sub-calc-form'), _sa = _sbox && _sbox._applied;
+    const _srow = document.querySelector('#items-list .item-card[data-subsidy="1"] .withtax');
+    const _scur = { type: (document.getElementById('sf-type')||{}).value||'', tenure: (document.getElementById('sf-tenure')||{}).value||'', stage: (document.getElementById('sf-stage')||{}).value||'', rel: (document.getElementById('sf-rel')||{}).value||'' };
+    if (!_sa || _sa.kind !== _subK || Math.round(Number(_srow && _srow.value) || 0) !== _sa.amt
+        || _scur.type !== _sa.type || _scur.tenure !== _sa.tenure || _scur.stage !== _sa.stage || _scur.rel !== _sa.rel) {
+      _failValidation('⚠️ 試算條件已變更或尚未確認，請在申請項目下方重新選擇條件並按「帶入明細」'); return;
+    }
     needsReceipt = true;
   }
 
@@ -10426,6 +10433,7 @@ async function doSubmitForm(subjectEl, reasonEl, departmentEl, payeeEl, items) {
     employeeId: employeeIdEl?.value || '',
     payMethod : (document.getElementById('pay-method') || {}).value || '匯款（公司薪轉戶）',
     applyItem : (document.getElementById('apply-item') || {}).value || '一般請款',   // 申請項目：決定是否加 HR 關
+    subsidyCalc: (typeof _subCalcPayload === 'function') ? _subCalcPayload() : null,   // 結婚／喪葬補助：後端依此重算金額
     pretax, tax, total, items,
     // 草稿已上傳的附件 ＋ 選檔階段就傳到暫存區的附件（後端以 fileId 去重）
     files: (window._uploadedDraftFiles || []).concat(_currentTempFiles()),
@@ -15856,6 +15864,9 @@ window._subApply = function () {
   if (free) setTaxRate(free, 0);
   var w = card.querySelector('.withtax'); if (w) { w.value = amt; calcRowFromTotal(w); }
   _subLockCard(card, true);
+  // 送出時交給後端重算用的條件快照（以「按下帶入那一刻」為準；之後改了條件沒重按帶入，送出會被擋）
+  var _v = function (id) { return (document.getElementById(id) || {}).value || ''; };
+  box._applied = { kind: k, type: _v('sf-type'), tenure: _v('sf-tenure'), stage: _v('sf-stage'), rel: _v('sf-rel'), amt: amt };
   // ② 試算條件寫進備註（取代舊的試算行，不動申請人自己寫的內容）
   var r = document.querySelector('#view-new-form textarea');
   if (r) {
@@ -15867,15 +15878,21 @@ window._subApply = function () {
   if (typeof updateFormProgress === 'function') updateFormProgress();
   if (typeof toast === 'function') toast('✅ 已帶入' + _SUB_LABEL[k] + ' NT$' + Number(amt).toLocaleString());
 };
+// 送出時帶給後端的試算條件（後端依此重算金額；非補助項目回 null）
+window._subCalcPayload = function () {
+  var box = document.getElementById('sub-calc-form'), a = box && box._applied;
+  if (!_subKind() || !a) return null;
+  return { kind: a.kind, type: a.type, tenure: a.tenure, stage: a.stage, rel: a.rel };
+};
 window._subFormToggle = function () {
   var box = document.getElementById('sub-calc-form'); if (!box) return;
   var k = _subKind(), list = document.getElementById('items-list');
   if (!k) {
-    if (box.dataset.kind) { box.style.display = 'none'; box.innerHTML = ''; box.dataset.kind = ''; box._amt = null; }
+    if (box.dataset.kind) { box.style.display = 'none'; box.innerHTML = ''; box.dataset.kind = ''; box._amt = null; box._applied = null; }
     if (list) list.querySelectorAll('.item-card[data-subsidy="1"]').forEach(function (c) { _subLockCard(c, false); });
     return;
   }
-  if (box.dataset.kind !== k) { box.dataset.kind = k; box.innerHTML = _subFormHtml(k); box.style.display = ''; box._amt = null; }
+  if (box.dataset.kind !== k) { box.dataset.kind = k; box.innerHTML = _subFormHtml(k); box.style.display = ''; box._amt = null; box._applied = null; }
   // 換了補助種類 → 另一種的舊明細解鎖；草稿重開 → 品名相符的那一列重新鎖住
   if (list) list.querySelectorAll('.item-card').forEach(function (c) {
     var d = ((c.querySelector('.desc-inp') || {}).value || '').trim();
