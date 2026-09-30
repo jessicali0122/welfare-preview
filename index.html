@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20260930114034';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20260930115218';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1632,6 +1632,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .fp-line{flex:1;height:2px;background:#D2D7CD;margin:0 6px;transition:background .25s;min-width:12px;max-width:48px}
 .fp-line.fp-done{background:#0066CC}
 @media(max-width:480px){.fp-step .fp-label{display:none}.fp-step{gap:0}.fp-line{max-width:18px;min-width:8px}}
+/* 申請項目＋單號：提示文字折行時，右邊單號欄跟著對齊（subgrid：兩欄共用同一組列軌道，純 CSS、不依賴 JS 時機） */
+.ai-row > div{display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;align-content:start}   /* 4 列：標籤／欄位／提示／補助試算框 */
 /* 按摩月曆：手機格子太窄，「可預約」會被切成「可預／約」→ 只留彩色肉球（顏色意義見下方圖例） */
 @media(max-width:520px){.ms-paw-label{display:none}}
 
@@ -3687,9 +3689,9 @@ thead th{color:#767B75!important}
               <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">主旨 <span style="color:#dc2626">*</span></label>
               <input class="inp" placeholder="請輸入申請主旨，例：5月份員工慶生活動費用" oninput="updateFormProgress()">
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
+            <div class="ai-row" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
               <div>
-                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span></label>
+                <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">申請項目 <span style="color:#dc2626">*</span> <span id="apply-item-hint" style="font-size:12px;font-weight:500;color:#767B75"></span></label>
                 <select class="inp" id="apply-item" onchange="updateFormProgress()" style="width:100%"><option value="一般請款">一般請款</option></select>
                 <div style="display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:12px;line-height:1.6;color:#7A5A12;background:#FBF3E6;border:1px solid #F0D9B0;border-radius:8px;padding:6px 10px">
                   <span style="flex-shrink:0">💡</span>
@@ -12849,6 +12851,14 @@ function _fillApplyItemSelect(items) {
     return n ? ('<option value="' + htEsc(n) + '">' + htEsc(n) + '</option>') : '';
   }).join('');
   if ([].some.call(sel.options, function (o) { return o.value === prev; })) sel.value = prev;
+  _updateApplyItemHint();
+}
+// 申請項目旁的選項提示（跟著系統設定的申請項目自動更新）
+function _updateApplyItemHint() {
+  var sel = document.getElementById('apply-item'), el = document.getElementById('apply-item-hint');
+  if (!sel || !el) return;
+  var names = [].map.call(sel.options, function (o) { return o.value; }).filter(Boolean);
+  el.textContent = names.length ? '（可選：' + names.join('／') + '）' : '';
 }
 async function _preloadApplyItems() {
   _seedApplyItems();   // 先用快取/預設秒填下拉，再背景刷新
