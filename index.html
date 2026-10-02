@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261002152953';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261002155419';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -13629,10 +13629,25 @@ async function loadAdminUsers() {
   const tbody = document.getElementById('admin-users-tbody');
   if (!tbody) return;
   // 已經有名單就別清空成「載入中」（切回系統管理會閃一下空白）；只有首次載入才顯示
+  // 先秀上次的名單（本機暫存，過期也照用），背景再向 GAS 拿最新的；拿到後自動換上
+  // （名單走 GAS 讀試算表約 3 秒，暫存超過 24 小時就會整段等 → 使用者 2026-10-02 反映開系統管理要 loading）
+  var _shownStale = false;
   if (!tbody.querySelector('tr[data-email]')) {
-    tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏳ 載入中…</td></tr>';
+    var _stale = null;
+    try { _stale = (typeof _cacheGetStale === 'function') ? _cacheGetStale(_cacheKey('listUsers', {})) : null; } catch (e) {}
+    if (_stale && _stale.ok && Array.isArray(_stale.users) && _stale.users.length) {
+      _renderAdminUsers(_stale, tbody); _shownStale = true;
+    } else {
+      tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏳ 載入中…</td></tr>';
+    }
   }
   const res = await callAPI('listUsers');
+  if (!res.ok && (_shownStale || tbody.querySelector('tr[data-email]'))) {
+    // 已經顯示著名單 → 不要整張換成錯誤畫面，提示一下即可
+    if (res._authError) toast('⏰ 登入已過期，請重新整理頁面');
+    else toast('⚠️ 使用者名單暫時無法更新，目前顯示的是稍早的資料');
+    return;
+  }
   if (!res.ok) {
     if (res._authError) {
       tbody.innerHTML = '<tr><td colspan="9" style="padding:24px;text-align:center;color:#767B75;font-size:14px">⏰ 登入已過期，請重新整理頁面</td></tr>';
@@ -13643,6 +13658,9 @@ async function loadAdminUsers() {
     }
     return;
   }
+  _renderAdminUsers(res, tbody);
+}
+function _renderAdminUsers(res, tbody) {
   const users = (res.users || []).slice().sort(function(a, b){
     // 依員工編號由小到大（取編號中的數字比較，例：T0028 < T0033 < T0076）；無編號者排最後
     var na = parseInt(String((a && a.employeeId) || '').replace(/\D/g, ''), 10);
