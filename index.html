@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261002122612';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261002152953';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -18298,6 +18298,10 @@ window.htOpenSheetDetail = function (eventId, _fromRoute) {
       + '<td style="padding:9px 10px;font-size:12px;color:#767B75;min-width:90px">' + (it.note || '') + '</td>'
       + '</tr>';
   }).join('');
+  // 沒有品項時的說明：真的解析失敗（後端回 parseError）才說「格式較舊」；否則就是還沒填
+  var _htEmptyItemsMsg = s.parseError
+    ? '此分頁無法解析品項（格式較舊），請直接開啟試算表查看'
+    : '此分頁尚未填寫品項，請開啟試算表填寫';
   var d = document.createElement('div');
   d.id = 'ht-sheet-modal';
   // 外層用 dvh 撐滿可視高度並可捲動；padding 讓卡片不貼安全區（瀏海/底部列）
@@ -18328,7 +18332,7 @@ window.htOpenSheetDetail = function (eventId, _fromRoute) {
     + '</div>'
     + '<div style="flex:1;min-height:0;overflow-y:auto;overflow-x:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding:8px ' + (isMobile ? '18px' : '24px') + ' 4px">'
     +   (isMobile
-        ? (rows || '<div style="padding:24px;text-align:center;color:#767B75;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</div>')
+        ? (rows || '<div style="padding:24px;text-align:center;color:#767B75;font-size:14px">' + _htEmptyItemsMsg + '</div>')
         : '<table style="width:100%;border-collapse:collapse;min-width:760px;table-layout:fixed">'
         +   '<colgroup>'
         +     '<col style="width:24%"><col style="width:15%"><col style="width:9%"><col style="width:7%">'
@@ -18343,7 +18347,7 @@ window.htOpenSheetDetail = function (eventId, _fromRoute) {
         +     '<th style="padding:10px;font-size:12px;color:#084C99;text-align:left;font-weight:700;letter-spacing:.04em">負責人</th>'
         +     '<th style="padding:10px;font-size:12px;color:#084C99;text-align:center;font-weight:700;letter-spacing:.04em">是否訂購</th>'
         +     '<th style="padding:10px;font-size:12px;color:#084C99;text-align:left;font-weight:700;letter-spacing:.04em">備註</th>'
-        +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="padding:24px;text-align:center;color:#767B75;font-size:14px">此分頁無法解析品項（格式較舊），請直接開啟試算表查看</td></tr>') + '</tbody></table>')
+        +   '</tr></thead><tbody>' + (rows || '<tr><td colspan="8" style="padding:24px;text-align:center;color:#767B75;font-size:14px">' + _htEmptyItemsMsg + '</td></tr>') + '</tbody></table>')
     +   '<div id="ht-sheet-vote-slot" style="margin-top:4px"></div>'
     + '</div>'
     + '<div style="padding:14px 24px 18px;border-top:1px solid #D9DDD3;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
