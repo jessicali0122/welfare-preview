@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006164350';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006172853';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1699,6 +1699,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 /* 全站：中文只在標點／空白處換行（避免「不算違／規」「職工福利委／員會」這種把詞拆開的斷行）；真的太長才允許任意斷，不會超出畫面 */
 body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-role-opt{flex-wrap:wrap;row-gap:2px}
+/* 午茶活動卡（手機）：複製鈕只留圖示、縮內距，讓人數／壽星／品項有空間不被擠斷 */
+@media(max-width:520px){.ht-evmain{padding:12px!important;gap:10px!important}.ht-dupbtn{padding:4px 8px!important;margin-right:6px!important}.ht-dupbtn .t{display:none}}
 /* 修改預約／轉讓彈窗 */
 .ms-mlbl{font-size:14px;font-weight:700;color:#4A4F49;margin-bottom:8px}
 .ms-mdates{display:flex;flex-wrap:wrap;gap:8px}
@@ -3511,7 +3513,7 @@ thead th{color:#767B75!important}
     <div id="analytics-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px">
       <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px">
         <div style="font-size:12px;font-weight:600;color:#767B75;letter-spacing:.08em;display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:#EC4F7D;flex-shrink:0"></span>平均每件金額</div>
-        <div id="analytics-avg-amount" style="font-size:24px;font-weight:700;color:#2E332D;line-height:1.2;word-break:break-word;margin-top:10px">—</div>
+        <div id="analytics-avg-amount" style="font-size:24px;font-weight:700;color:#2E332D;line-height:1.2;word-break:keep-all;overflow-wrap:anywhere;margin-top:10px">—</div>
         <div style="margin-top:auto;padding-top:8px"><div style="font-size:12px;color:#767B75;letter-spacing:.04em">核准案件平均值</div></div>
       </div>
       <div class="stat" style="border-radius:14px;background:#fff;border:1px solid #CFD5CB;box-shadow:0 1px 2px rgba(46,51,45,.04);padding:16px 18px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;box-sizing:border-box;min-height:118px" title="曾被退件的案件（含退件重送後核准）÷ 所有已結案案件">
@@ -4187,7 +4189,7 @@ thead th{color:#767B75!important}
       </div>
       <div style="flex:1;min-width:0">
         <div style="font-size:var(--fs-section);font-weight:600;color:#2E332D;letter-spacing:.16em;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">系統管理<span style="font-size:12px;font-weight:700;letter-spacing:.16em;color:#2E7BD6;text-transform:uppercase">ADMIN</span></div>
-        <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者與角色管理（簽核流程請至「費用申請」）</div>
+        <div style="font-size:12px;color:#767B75;margin-top:3px;letter-spacing:.04em">使用者與角色管理<wbr>（簽核流程請至<wbr>「費用申請」）</div>
       </div>
       <button id="add-user-btn" class="btn btn-p" style="flex-shrink:0" onclick="showAddUserModal()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增人員
@@ -4961,7 +4963,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">↩️</span>
-            <span>臨時無法參與，<strong>時段前&nbsp;30&nbsp;分鐘皆可自行取消</strong>（免審核）；不足 30&nbsp;分鐘<strong>須等 HR 審核</strong>。</span>
+            <span>臨時無法參與，<strong>時段前&nbsp;30&nbsp;分鐘皆可自行取消</strong>（免審核）；不足&nbsp;30&nbsp;分鐘<strong>須等 HR 審核</strong>。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">🕒</span>
@@ -8505,7 +8507,7 @@ function _renderCaseRow(c, opts) {
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${fmtDate(c.applyDate||c.createdAt)}</td>
     <td style="padding:12px 14px;white-space:nowrap;color:#4A4F49">${nameChip(localName(c.email,c.name),24,c.email)}</td>
     <td style="padding:12px 14px;color:#767B75;white-space:nowrap">${htEsc(c.department)||'—'}</td>
-    <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:break-word;line-height:1.4">${htEsc(c.project||c.subject)||'—'}</td>
+    <td style="padding:12px 14px;min-width:180px;max-width:320px;font-weight:600;color:#2E332D;text-align:left;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;line-height:1.4">${htEsc(c.project||c.subject)||'—'}</td>
     <td class="col-cat" style="padding:12px 14px;text-align:center"><div class="app-cat-cell" style="display:inline-flex;flex-direction:column;gap:2px;align-items:center">${catCell}</div></td>
     <td style="padding:12px 14px;text-align:center;white-space:nowrap">${c.applyItem ? (c.applyItem==='一般請款' ? ('<span style="display:inline-block;background:#F1F3F6;color:#5A616B;border:1px solid #DCE0E6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>') : ('<span style="display:inline-block;background:#E9F1FC;color:#22406A;border:1px solid #C6D4E6;border-radius:6px;padding:2px 9px;font-size:12px;font-weight:600">'+htEsc(c.applyItem)+'</span>')) : '<span style="color:#D2D6D0">—</span>'}</td>
     <td style="padding:12px 14px;font-weight:700;color:#4A4F49;white-space:nowrap">NT$ ${Number(c.total||0).toLocaleString()}</td>
@@ -17582,7 +17584,7 @@ window.fbRenderList = async function() {
       imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
         + '<img src="' + htEsc(src) + '" alt="附件圖檔" loading="lazy" decoding="async" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
     }
-    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word">' + _fbLinkify(it.text) + '</div>' : '';
+    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere">' + _fbLinkify(it.text) + '</div>' : '';
     return '<div style="background:#fff;border:1px solid #D9DDD3;border-radius:12px;padding:11px 14px;margin-bottom:10px;box-shadow:0 1px 2px rgba(46,51,45,.04)">'
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">'
       +   '<span style="font-size:14px;font-weight:700;color:#22406A">💬 ' + htEsc(who) + '</span>'
@@ -17617,7 +17619,7 @@ window.fbRenderAdmin = async function() {
       imgHtml = '<a href="' + htEsc(it.imageUrl) + '" target="_blank" rel="noopener" style="display:block;margin-top:8px">'
         + '<img src="' + htEsc(src) + '" alt="附件圖檔" loading="lazy" decoding="async" style="max-width:100%;max-height:320px;border-radius:10px;border:1px solid #D2D7CD" onerror="this.style.opacity=.5;this.alt=\'圖檔載入失敗，點此開啟\'"></a>';
     }
-    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin-top:2px">' + _fbLinkify(it.text) + '</div>' : '<div style="font-size:12px;color:#B0B6AD;font-style:italic;margin-top:2px">（僅附圖，無文字）</div>';
+    var textHtml = it.text ? '<div style="font-size:14px;color:#2E332D;line-height:1.6;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;margin-top:2px">' + _fbLinkify(it.text) + '</div>' : '<div style="font-size:12px;color:#B0B6AD;font-style:italic;margin-top:2px">（僅附圖，無文字）</div>';
     return '<div style="background:#fff;border:1px solid #E4E1D6;border-left:4px solid #EC4F7D;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 2px rgba(46,51,45,.05)">'
       + '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:6px">'
       +   '<div style="display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:14px;font-weight:700;color:#22406A">👤 ' + htEsc(who) + '</span>' + email + '</div>'
@@ -18438,8 +18440,8 @@ window.htOpenSheetDetail = function (eventId, _fromRoute) {
     }
     // 桌面版：欄位與原試算表完全一致（品名/廠商/單價/數量/小計/負責人/是否訂購/備註）
     return '<tr style="border-bottom:1px solid #D9DDD3">'
-      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D;word-break:break-word;overflow-wrap:anywhere">' + htEsc(it.name) + '</td>'
-      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;word-break:break-word;overflow-wrap:anywhere">' + htEsc(it.vendor || '—') + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#2E332D;word-break:keep-all;overflow-wrap:anywhere;overflow-wrap:anywhere">' + htEsc(it.name) + '</td>'
+      + '<td style="padding:9px 10px;font-size:14px;color:#767B75;word-break:keep-all;overflow-wrap:anywhere;overflow-wrap:anywhere">' + htEsc(it.vendor || '—') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right;white-space:nowrap">' + (it.price ? it.price.toLocaleString() : '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;color:#767B75;text-align:right">' + (it.qty || '') + '</td>'
       + '<td style="padding:9px 10px;font-size:14px;font-weight:600;color:#2E332D;text-align:right;white-space:nowrap">' + (it.subtotal ? it.subtotal.toLocaleString() : '') + '</td>'
@@ -18687,7 +18689,7 @@ function htRenderEvents() {
       var clickFn = isSheet ? 'htOpenSheetDetail(\''+ ev.eventId +'\')' : 'htOpenDetail(\''+ ev.eventId +'\')';
       var srcTag = isSheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#0066CC;background:#E7F0FB;border:1px solid #D5DAE2;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       html += '<div onclick="'+ clickFn +'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(87,123,83,.14)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
-        + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
+        + '<div class="ht-evmain" style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
         +   '<div style="background:'+_htDateBadge(_htDisplayStatus(ev)).bg+';border-radius:12px;padding:8px 0;width:52px;text-align:center;color:'+_htDateBadge(_htDisplayStatus(ev)).col+';flex-shrink:0">'
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+ mAbbr +'</div>'
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+ (dNum||mNum) +'</div>'
@@ -18695,13 +18697,13 @@ function htRenderEvents() {
         +   '<div style="flex:1;min-width:0">'
         +     '<div style="font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ ((ev.title && ev.title.trim()) ? htEsc(ev.title.trim()) : '午茶日') + srcTag +'</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
-        +       (ev.headcount ? '<span>👥 '+ev.headcount+' 人</span>' : '')
-        +       ((ev.birthdays && ev.birthdays.length) ? '<span>🎂 '+ev.birthdays.length+' 位壽星</span>' : '')
-        +       (ev.itemCount ? '<span>🍽️ '+ev.itemCount+' 品項</span>' : '')
-        +       (ev.totalBudget ? '<span>💰 預算 NT$'+Number(ev.totalBudget).toLocaleString()+'</span>' : '')
+        +       (ev.headcount ? '<span style="white-space:nowrap">👥 '+ev.headcount+' 人</span>' : '')
+        +       ((ev.birthdays && ev.birthdays.length) ? '<span style="white-space:nowrap">🎂 '+ev.birthdays.length+' 位壽星</span>' : '')
+        +       (ev.itemCount ? '<span style="white-space:nowrap">🍽️ '+ev.itemCount+' 品項</span>' : '')
+        +       (ev.totalBudget ? '<span>💰 預算 <span style="white-space:nowrap">NT$'+Number(ev.totalBudget).toLocaleString()+'</span></span>' : '')
         +     '</div>'
         +   '</div>'
-        +   (!isSheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ ev.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;margin-right:8px;background:#F4F7FB;color:#0066CC;border:1px solid #cdd3db;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
+        +   (!isSheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ ev.eventId +'\',this)" title="複製此活動" class="ht-dupbtn" style="flex-shrink:0;margin-right:8px;background:#F4F7FB;color:#0066CC;border:1px solid #cdd3db;border-radius:8px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉<span class="t"> 複製</span></button>' : '')
         +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#EDEFF2 4px,#EDEFF2 9px)"></div>'
         + '</div>'
         + '<div style="width:78px;flex-shrink:0;background:'+ stubColor +';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative;padding:10px 6px">'
@@ -19721,7 +19723,7 @@ function htRenderCalendar() {
       var expVal = e.actualExpense > 0 ? fmtMoney(e.actualExpense) : '—';
       var srcTag = e._sheet ? ' <span class="ht-src-tag" style="font-size:12px;font-weight:600;color:#C63968;background:#FFF1DB;border:1px solid #FBE6C8;border-radius:20px;padding:1px 8px;vertical-align:2px;letter-spacing:.04em">📋<span class="t"> 試算表</span></span>' : '';
       return '<div onclick="'+listClick+'" style="display:flex;cursor:pointer;border-radius:16px;overflow:hidden;margin-bottom:10px;box-shadow:0 1px 3px rgba(46,51,45,.06);transition:box-shadow .18s,transform .18s" onmouseover="this.style.boxShadow=\'0 4px 16px rgba(236,79,125,.18)\';this.style.transform=\'translateY(-1px)\'" onmouseout="this.style.boxShadow=\'0 1px 6px rgba(0,0,0,.06)\';this.style.transform=\'\'">'
-        + '<div style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
+        + '<div class="ht-evmain" style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:center;gap:14px;position:relative">'
         +   '<div style="background:'+_htDateBadge(dispStatus).bg+';border-radius:12px;padding:8px 0;width:52px;text-align:center;color:'+_htDateBadge(dispStatus).col+';flex-shrink:0">'
         +     '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
         +     '<div style="font-size:22px;font-weight:900;line-height:1.1">'+dayNum+'</div>'
@@ -19729,13 +19731,13 @@ function htRenderCalendar() {
         +   '<div style="flex:1;min-width:0">'
         +     '<div style="display:flex;align-items:center;gap:8px">'
         +       '<div style="flex:1;min-width:0;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+htEsc((e.title && e.title.trim()) ? e.title.trim() : '午茶日')+srcTag+'</div>'
-        +       (!e._sheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ e.eventId +'\',this)" title="複製此活動" style="flex-shrink:0;background:#FFF6EA;color:#C63968;border:1px solid #FBE6C8;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉ 複製</button>' : '')
+        +       (!e._sheet && (typeof can!=='function' || can('hightea.manage')) ? '<button onclick="event.stopPropagation();htDuplicateEvent(\''+ e.eventId +'\',this)" title="複製此活動" class="ht-dupbtn" style="flex-shrink:0;background:#FFF6EA;color:#C63968;border:1px solid #FBE6C8;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">⧉<span class="t"> 複製</span></button>' : '')
         +     '</div>'
         +     '<div style="font-size:14px;color:#8A8F88;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 12px">'
-        +       (e.headcount ? '<span>👥 '+e.headcount+' 人</span>' : '')
-        +       ((e.birthdays && e.birthdays.length) ? '<span>🎂 '+e.birthdays.length+' 位壽星</span>' : '')
-        +       (e.itemCount ? '<span>🍽️ '+e.itemCount+' 品項</span>' : '')
-        +       (e.totalBudget ? '<span>💰 預算 NT$'+Number(e.totalBudget).toLocaleString()+'</span>' : '')
+        +       (e.headcount ? '<span style="white-space:nowrap">👥 '+e.headcount+' 人</span>' : '')
+        +       ((e.birthdays && e.birthdays.length) ? '<span style="white-space:nowrap">🎂 '+e.birthdays.length+' 位壽星</span>' : '')
+        +       (e.itemCount ? '<span style="white-space:nowrap">🍽️ '+e.itemCount+' 品項</span>' : '')
+        +       (e.totalBudget ? '<span>💰 預算 <span style="white-space:nowrap">NT$'+Number(e.totalBudget).toLocaleString()+'</span></span>' : '')
         +     '</div>'
         +   '</div>'
         +   '<div style="position:absolute;right:-1px;top:0;bottom:0;width:14px;background:repeating-linear-gradient(180deg,transparent,transparent 4px,#EDEFF2 4px,#EDEFF2 9px)"></div>'
