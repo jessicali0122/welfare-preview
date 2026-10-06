@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006110710';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006111157';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -22893,14 +22893,14 @@ window.msLeaveWaitlist = function(waitlistId) {
 // ── 申請取消（超過限額或已過截止時間，需管理員審核） ──
 window.msRequestCancel = function(bookingId, date) {
   var _bk0 = (_msData && _msData.myBookings || []).find(function(x){return x.bookingId===bookingId;});
-  if (_bk0 && _bk0.cancelRequested) { toast('已申請取消，等待管理員審核中', 'warning'); return; }
+  if (_bk0 && _bk0.cancelRequested) { toast('已申請取消，等待 HR 審核中', 'warning'); return; }
   _showPromptModal(
     '申請取消預約', '原因（選填）', '送出申請', '#0066CC',
     async function(reason) {
       var req = { reqId:'REQ'+Date.now(), type:'cancel', bookingId, date, reason:reason||'', userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
       _msPendingRequests.push(req);
       if (_msData) { _msData.pendingRequests = _msPendingRequests; if(_bk0) _bk0.cancelRequested = true; }
-      toast('✅ 已提交取消申請，等待管理員審核');
+      toast('✅ 已提交取消申請，等待 HR 審核');
       msRenderCal(); msRenderMyBookings();
       // ★ 一定要看回傳：原本 try/catch 吞掉又不檢查 r.ok，伺服器失敗時使用者看到「✅ 已提交」，
       //   該預約還被鎖成「已申請取消，等待審核」（上方的擋門），但後端根本沒收到申請，
@@ -22914,7 +22914,7 @@ window.msRequestCancel = function(bookingId, date) {
         msRenderCal(); msRenderMyBookings(); msRenderPendingRequests();
       }
     },
-    { allowEmpty:true, desc:'超過免費取消次數或已過截止時間，取消需管理員審核。' }
+    { allowEmpty:true, desc:'距離時段已不足 30 分鐘，無法自行取消；送出後由 HR 審核，審核通過才算取消。' }
   );
 };
 
@@ -22922,7 +22922,7 @@ window.msRequestCancel = function(bookingId, date) {
 window.msRequestDelete = function(bookingId, date) {
   _showConfirmModal(
     '確定要申請刪除嗎？',
-    '刪除申請送出後需等待管理員審核，審核通過才會移除這筆紀錄。',
+    '刪除申請送出後需等待 HR 審核，審核通過才會移除這筆紀錄。',
     '送出申請', '#dc2626',
     async function() {
       var bk = (_msData&&_msData.myBookings||[]).find(function(x){return x.bookingId===bookingId;});
@@ -22931,7 +22931,7 @@ window.msRequestDelete = function(bookingId, date) {
       var req = { reqId:'REQ'+Date.now(), type:'delete', bookingId, date, userName:(window.currentUser&&window.currentUser.name)||'', userEmail:(_msData&&_msData.userEmail)||'', createdAt:new Date().toISOString(), status:'pending' };
       _msPendingRequests.push(req);
       if (_msData) _msData.pendingRequests = _msPendingRequests;
-      toast('✅ 已提交刪除申請，等待管理員審核');
+      toast('✅ 已提交刪除申請，等待 HR 審核');
       msRenderCal(); msRenderMyBookings();
       // 同上：失敗就回滾，不要讓使用者看到「已提交」卻什麼都沒送出
       var _rd = null; try { _rd = await htApi('massageRequestDelete', { bookingId }); } catch(e) {}
@@ -23007,7 +23007,10 @@ window.msOpenBookingDetail = function(bookingId) {
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#E7F0FB;color:#0066CC;border:1.5px solid #cdd3db;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
       + (canCancelNormal
         ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消預約</button>'
-        : '<span style="flex:1;background:#F7F8F6;color:#B0B6AD;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;text-align:center;box-sizing:border-box">已過取消期限</span>')
+        // 不足取消期限（30 分鐘）但時段還沒開始 → 改提供「申請取消」，送 HR 審核（與注意事項一致）
+        : ((appointmentTime - now) > 0
+          ? '<button onclick="msCloseBookingDetail();msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#FFF9F0;color:#B0701F;border:1.5px solid #F2C48A;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">申請取消（HR 審核）</button>'
+          : '<span style="flex:1;background:#F7F8F6;color:#B0B6AD;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;text-align:center;box-sizing:border-box">時段已開始</span>'))
       + '</div>';
   }
   // 轉讓給同事：已送出邀請 → 顯示等待狀態＋收回；否則提供轉讓入口
