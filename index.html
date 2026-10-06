@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006115735';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006120037';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1675,9 +1675,15 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-sgrp:not(:first-child){margin-top:6px}
 .ms-sgrp span{font-weight:700;color:#C63968;background:#FDF0F4;border:1px solid #F6D3DF;border-radius:20px;padding:1px 8px;letter-spacing:0}
 .ms-sgrp span.none{color:#8A8F88;background:#F1F3F6;border-color:#E2E5EA}
-.ms-stile{border:1.5px solid #E2E5EA;border-radius:12px;padding:8px 6px;text-align:center;transition:transform .12s,box-shadow .12s,border-color .12s;outline:none}
+.ms-slegend{grid-column:1/-1;display:flex;align-items:center;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:#8A8F88;padding:0 2px 2px}
+.ms-slegend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:-6px;vertical-align:-1px}
+.ms-slegend i.o{background:#fff;border:1.5px solid #EC4F7D}
+.ms-slegend i.f{background:#F3F4F6;border:1.5px solid #E2E5EA}
+.ms-slegend i.m{background:#084C99}
+.ms-stile{display:flex;flex-direction:column;justify-content:center;min-height:56px;border:1.5px solid #E2E5EA;border-radius:12px;padding:8px 6px;text-align:center;transition:transform .12s,box-shadow .12s,border-color .12s;outline:none}
 .ms-stile.click:hover,.ms-stile.click:focus-visible{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,102,204,.12)}
-.ms-stile.open:hover,.ms-stile.open:focus-visible{border-color:#0066CC!important}
+.ms-stile.open:hover,.ms-stile.open:focus-visible{border-color:#EC4F7D!important;background:#FDF0F4!important;box-shadow:0 6px 14px rgba(236,79,125,.16)}
+.ms-stile.open:hover .ms-stime{color:#C63968!important}
 .ms-stime{font-size:18px;font-weight:800;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums}
 .ms-slbl{margin-top:4px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;line-height:1.3}
 .ms-pill{display:inline-flex;align-items:center;gap:4px;color:#C63968;font-weight:700}
@@ -22787,9 +22793,9 @@ function msShowSlots(dateStr) {
       onclick = 'msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')'; cursor = 'pointer';
     } else if (hasRoom && !suspended && !overMonthLimit && isFuture) {
       // 可預約：綠色外框、點擊直接預約
-      bg = '#fff'; border = '#B9D2EE'; timeColor = '#2E332D';
-      // 一個時段只有 1 個位子時不寫「剩 1 位」（多餘）；多人時段才顯示剩幾位
-      labelHtml = '<span class="ms-pill">可預約' + (s.capacity > 1 ? ' · 剩 ' + s.remaining + ' 位' : '') + '</span>';
+      bg = '#fff'; border = '#F2BCD0'; timeColor = '#2E332D';
+      // 可預約不再每格寫字（使用者 2026-10-06：太重複）→ 靠粉紅框＋上方圖例表達；多人時段才寫剩幾位
+      labelHtml = s.capacity > 1 ? '<span class="ms-pill">剩 ' + s.remaining + ' 位</span>' : '';
       onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
     } else if (hasRoom && overMonthLimit) {
       // 本月已達上限：綠但淡化、不可點
@@ -22821,19 +22827,13 @@ function msShowSlots(dateStr) {
       + (onclick ? ' onclick="' + onclick + '" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}"' : '')
       + ' style="background:' + bg + ';border-color:' + border + ';cursor:' + cursor + (dim ? ';opacity:.6' : '') + '">'
       + '<div class="ms-stime" style="color:' + timeColor + '">' + s.time + '</div>'
-      + '<div class="ms-slbl">' + labelHtml + '</div>'
+      + (labelHtml ? '<div class="ms-slbl">' + labelHtml + '</div>' : '')
       + '</div>';
     return { time: s.time, html: _tile, open: (onclick && onclick.indexOf('msBookConfirm') === 0) };
   });
-  // 分「上午／下午」兩組（13:00 前為上午），每組標題顯示可預約數
-  var _groups = [['上午', function(t){ return t < '13:00'; }], ['下午', function(t){ return t >= '13:00'; }]];
-  list.innerHTML = _groups.map(function(g){
-    var items = _tiles.filter(function(x){ return g[1](x.time); });
-    if (!items.length) return '';
-    var openCnt = items.filter(function(x){ return x.open; }).length;
-    return '<div class="ms-sgrp">' + g[0] + '<span' + (openCnt ? '' : ' class="none"') + '>' + (openCnt ? openCnt + ' 個可預約' : '已無空位') + '</span></div>'
-      + items.map(function(x){ return x.html; }).join('');
-  }).join('');
+  // 圖例只出現一次（取代每格「可預約」字樣）
+  list.innerHTML = '<div class="ms-slegend"><i class="o"></i>可預約（點時間即可預約）<i class="f"></i>額滿<i class="m"></i>我的預約</div>'
+    + _tiles.map(function(x){ return x.html; }).join('');
 }
 
 function msSlotsForDate(dateStr, slotTemplates) {
