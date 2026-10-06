@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006113324';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006114247';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1635,6 +1635,34 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 /* 申請項目＋單號：提示文字折行時，右邊單號欄跟著對齊（subgrid：兩欄共用同一組列軌道，純 CSS、不依賴 JS 時機） */
 .ai-row > div{display:grid;grid-row:span 4;grid-template-rows:subgrid;row-gap:0;align-content:start}   /* 4 列：標籤／欄位／提示／補助試算框 */
 @media(max-width:560px){.ai-row{grid-template-columns:1fr!important}.ai-row > div{display:block;grid-row:auto}}   /* 手機單欄：補助試算框佔滿寬 */
+/* 按摩「設定／編輯開放」編輯器（2026-10-06 改版：時段改方塊格、一眼看完） */
+.ms-oe{background:#fff;border:1px solid #D5DAE2;border-radius:16px;padding:18px}
+.ms-oe-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.ms-oe-title{font-size:16px;font-weight:800;color:#2E332D;letter-spacing:.02em}
+.ms-oe-sum{font-size:12px;font-weight:700;color:#0066CC;background:#EEF4FC;border:1px solid #CFE0F5;border-radius:20px;padding:4px 12px;white-space:nowrap}
+.ms-oe-sum.warn{color:#C2410C;background:#FFF4EC;border-color:#FBD3B5}
+.ms-oe-label{font-size:12px;font-weight:700;color:#767B75;letter-spacing:.04em;margin-bottom:8px}
+.ms-oe-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ms-oe-preset{background:#fff;border:1.5px solid #D5DAE2;border-radius:12px;padding:8px 4px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;transition:border-color .15s,background .15s}
+.ms-oe-preset b{font-size:14px;color:#2E332D}
+.ms-oe-preset span{font-size:12px;color:#8A8F88;font-variant-numeric:tabular-nums}
+.ms-oe-preset:hover{border-color:#9DBDE6}
+.ms-oe-preset.on{border-color:#0066CC;background:#EEF4FC}
+.ms-oe-preset.on b{color:#0066CC}
+.ms-dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.ms-dslot{position:relative;border:1.5px solid #D5DAE2;border-radius:12px;background:#fff;padding:8px 8px 6px;text-align:center;transition:border-color .15s}
+.ms-dslot:hover{border-color:#9DBDE6}
+.ms-dslot.dup{border-color:#E8A0A0;background:#FFF6F6}
+.ms-dslot select{appearance:none;-webkit-appearance:none;border:none;background:transparent;font-family:inherit;font-size:16px;font-weight:800;color:#2E332D;text-align:center;text-align-last:center;width:100%;cursor:pointer;padding:0;outline:none;font-variant-numeric:tabular-nums}
+.ms-dslot .cap{display:flex;align-items:center;justify-content:center;gap:4px;margin-top:2px;font-size:12px;color:#8A8F88}
+.ms-dslot .cap input{width:36px;border:1px solid #E3E7EC;border-radius:6px;padding:2px 0;font-family:inherit;font-size:12px;font-weight:700;color:#2E332D;text-align:center;outline:none}
+.ms-dslot .cap input:focus,.ms-dslot select:focus-visible{outline:2px solid #9DBDE6;outline-offset:2px}
+.ms-dslot .x{position:absolute;top:2px;right:4px;border:none;background:none;color:#C4C9C2;font-size:14px;line-height:1;cursor:pointer;padding:2px 4px;font-family:inherit}
+.ms-dslot .x:hover{color:#dc2626}
+.ms-dadd{border:1.5px dashed #B8C9DF;border-radius:12px;background:#F8FAFD;color:#0066CC;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;min-height:58px}
+.ms-dadd:hover{background:#EEF4FC}
+.ms-dempty{grid-column:1/-1;border:1.5px dashed #D5DAE2;border-radius:12px;padding:16px;text-align:center;font-size:12px;color:#8A8F88}
+@media(max-width:520px){.ms-oe{padding:14px}.ms-oe-presets{grid-template-columns:repeat(2,1fr)}.ms-dgrid{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}}
 /* 按摩月曆：手機格子太窄，「可預約」會被切成「可預／約」→ 只留彩色肉球（顏色意義見下方圖例） */
 @media(max-width:520px){.ms-paw-label{display:none}}
 
@@ -4961,32 +4989,33 @@ thead th{color:#767B75!important}
           </div>
           <!-- 管理者：點日曆未開放日／「編輯此日開放」→ 直接在此設定，不需再選日期 -->
           <div id="ms-open-editor-wrap" style="display:none">
-            <div id="ms-open-editor" style="background:#F3F5F2;border:1px solid #E6E9E4;border-radius:12px;padding:14px">
-              <div id="ms-open-editor-title" style="font-size:16px;font-weight:700;color:#0066CC;margin-bottom:10px">設定開放</div>
-              <input id="ms-open-date-inp" type="hidden">
-              <div style="margin:0 0 7px">
-                <span style="font-size:12px;color:#767B75">開放時段與名額</span>
+            <div id="ms-open-editor" class="ms-oe">
+              <div class="ms-oe-head">
+                <div id="ms-open-editor-title" class="ms-oe-title">設定開放</div>
+                <span id="ms-draft-summary" class="ms-oe-sum">尚未設定</span>
               </div>
+              <input id="ms-open-date-inp" type="hidden">
+              <div class="ms-oe-label">快速套用班表</div>
               <!-- 一鍵套用標準按摩日班表：四種長度對應實際 M-Day 預約表；每節15分鐘、每節1人，自動跳過師傅休息
                    ★ 排列順序照「實際使用頻率」而非時間長短（2026/06–09 共 17 個開放日統計）：
                      四小時 9 天 ＞ 六小時 6 天 ＞ 二小時 1 天 ＝ 全天 1 天
                      → 九成情況第一顆就按到，不必每次掃過整排 -->
-              <div style="display:flex;gap:6px;margin-bottom:8px">
-                <button onclick="msDraftApplyMDay('4h')" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 四小時<br><span style="font-weight:500;opacity:.8">09:00–12:45</span></button>
-                <button onclick="msDraftApplyMDay('6h')" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 六小時<br><span style="font-weight:500;opacity:.8">09:00–15:15</span></button>
-                <button onclick="msDraftApplyMDay('2h')" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 二小時<br><span style="font-weight:500;opacity:.8">09:00–10:45</span></button>
-                <button onclick="msDraftApplyMDay('day')" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場" style="flex:1;background:#E7F0FB;border:1.5px solid #cdd3db;color:#0066CC;border-radius:10px;padding:8px 4px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">⚡ 全天<br><span style="font-weight:500;opacity:.8">09:00–17:30</span></button>
+              <div class="ms-oe-presets">
+                <button onclick="msDraftApplyMDay('4h')" data-ms-preset="4h" class="ms-oe-preset" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）"><b>四小時</b><span>09:00–12:45</span></button>
+                <button onclick="msDraftApplyMDay('6h')" data-ms-preset="6h" class="ms-oe-preset" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）"><b>六小時</b><span>09:00–15:15</span></button>
+                <button onclick="msDraftApplyMDay('2h')" data-ms-preset="2h" class="ms-oe-preset" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場"><b>二小時</b><span>09:00–10:45</span></button>
+                <button onclick="msDraftApplyMDay('day')" data-ms-preset="day" class="ms-oe-preset" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場"><b>全天</b><span>09:00–17:30</span></button>
               </div>
+              <div class="ms-oe-label" style="margin-top:14px">開放時段 <span style="font-weight:500;color:#9AA096">（點時間可修改，右上 × 移除）</span></div>
               <div id="ms-draft-slots"></div>
-              <button onclick="msDraftAddSlot()" style="width:100%;margin-top:4px;background:#fff;border:1.5px dashed #cdd3db;color:#0066CC;border-radius:10px;padding:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">＋ 新增時段</button>
               <!-- 批次開放：同一組時段一次套用到多個日期（籤條式，直覺可增刪） -->
-              <div style="margin-top:12px;border-top:1px dashed #D5DAE2;padding-top:10px;position:relative">
-                <div style="font-size:12px;font-weight:700;color:#767B75;margin-bottom:7px">📅 這次要開放的日期（同一組時段）</div>
+              <div style="margin-top:16px;border-top:1px solid #E3E7EC;padding-top:14px;position:relative">
+                <div class="ms-oe-label">這次要開放的日期（同一組時段）</div>
                 <div id="ms-open-date-chips" style="display:flex;flex-wrap:wrap;gap:7px;align-items:center"></div>
                 <!-- flatpickr 錨點：留在版面內（0 高度、不佔位），日曆才會開在籤條下方而非畫面外 -->
                 <input id="ms-open-extra-dates" type="text" readonly style="display:block;width:100%;height:0;padding:0;margin:0;border:0;opacity:0">
               </div>
-              <div style="display:flex;gap:8px;margin-top:12px">
+              <div style="display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid #E3E7EC">
                 <button id="ms-open-close-btn" onclick="msCloseDate(document.getElementById('ms-open-date-inp').value)" style="display:none;flex:0 0 auto;background:#fef2f2;border:1.5px solid #fecaca;color:#dc2626;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">🚫 關閉此日</button>
                 <button id="ms-open-cancel-btn" onclick="msResetOpenEditor()" style="flex:0 0 auto;background:#fff;border:1.5px solid #D2D7CD;color:#767B75;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消</button>
                 <button id="ms-open-confirm-btn" onclick="msConfirmOpenDate()" style="flex:1;background:linear-gradient(135deg,#5E86C4,#084C99);color:#fff;border:none;border-radius:10px;padding:9px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">確認開放</button>
@@ -23579,22 +23608,50 @@ function _msTimeSelectHtml(selected) {
   }
   return opts;
 }
+function _msShiftSlots(mode) {
+  var BREAKS = { '11:00': 1, '13:00': 1, '13:15': 1, '15:15': 1 };
+  var cfg = _MS_SHIFTS[mode] || _MS_SHIFTS['4h'];
+  var _toMin = function(hhmm){ var p = hhmm.split(':'); return (+p[0]) * 60 + (+p[1]); };
+  var endMin = _toMin(cfg.end), slots = [];
+  for (var m = 9 * 60; m <= endMin; m += 15) {
+    var t = ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
+    // 六小時班表結束在 15:15：那一節在全天班是休息，但在六小時班是最後一節 → 不可跳過
+    if (BREAKS[t] && !(mode === '6h' && t === '15:15')) continue;
+    slots.push({ time: t, capacity: 1 });
+  }
+  return slots;
+}
 function msRenderDraftSlots() {
   var el = document.getElementById('ms-draft-slots'); if (!el) return;
+  // 依時間排序（改時間後自動歸位，畫面跟實際開放順序一致）
+  _msDraftSlots.sort(function(a, b){ return String(a.time).localeCompare(String(b.time)); });
+  var cnt = {};
+  _msDraftSlots.forEach(function(s){ cnt[s.time] = (cnt[s.time] || 0) + 1; });
+  var hasDup = Object.keys(cnt).some(function(k){ return cnt[k] > 1; });
+  var total = _msDraftSlots.reduce(function(a, s){ return a + (parseInt(s.capacity) || 0); }, 0);
+  var sum = document.getElementById('ms-draft-summary');
+  if (sum) {
+    sum.textContent = !_msDraftSlots.length ? '尚未設定' : (hasDup ? '⚠ 有重複的時間' : ('共 ' + _msDraftSlots.length + ' 節・' + total + ' 位'));
+    sum.classList.toggle('warn', hasDup);
+  }
+  // 目前時段剛好等於哪個班表 → 該按鈕亮起
+  var sig = JSON.stringify(_msDraftSlots.map(function(s){ return s.time + '|' + s.capacity; }));
+  document.querySelectorAll('[data-ms-preset]').forEach(function(b){
+    var on = _msDraftSlots.length && JSON.stringify(_msShiftSlots(b.getAttribute('data-ms-preset')).map(function(s){ return s.time + '|' + s.capacity; })) === sig;
+    b.classList.toggle('on', !!on);
+  });
+  var addTile = '<button type="button" class="ms-dadd" onclick="msDraftAddSlot()">＋ 新增時段</button>';
   if (!_msDraftSlots.length) {
-    el.innerHTML = '<div style="font-size:12px;color:#767B75;padding:4px 0 8px">尚未設定時段——點下方「＋ 新增時段」開始設定</div>';
+    el.innerHTML = '<div class="ms-dgrid"><div class="ms-dempty">尚未設定時段——點上方班表一鍵套用，或按「＋ 新增時段」</div>' + addTile + '</div>';
     return;
   }
-  var selStyle = 'border:1.5px solid #D2D7CD;border-radius:8px;padding:7px 10px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;outline:none;cursor:pointer';
-  var capStyle = 'width:62px;border:1.5px solid #D2D7CD;border-radius:8px;padding:7px 8px;font-size:14px;font-family:inherit;background:#fff;color:#363B35;text-align:center;outline:none';
-  el.innerHTML = _msDraftSlots.map(function(s, i) {
-    return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
-      + '<select onchange="msDraftSlotChange(' + i + ',\'time\',this.value)" style="' + selStyle + ';flex:1">' + _msTimeSelectHtml(s.time) + '</select>'
-      + '<span style="font-size:12px;color:#767B75;white-space:nowrap">名額</span>'
-      + '<input type="number" min="1" max="20" value="' + s.capacity + '" onchange="msDraftSlotChange(' + i + ',\'capacity\',this.value)" style="' + capStyle + '">'
-      + '<button onclick="msDraftRemoveSlot(' + i + ')" title="移除" style="background:none;border:none;color:#D2D6D0;font-size:16px;cursor:pointer;font-family:inherit;padding:0 4px" onmouseover="this.style.color=\'#dc2626\'" onmouseout="this.style.color=\'#D2D6D0\'">✕</button>'
+  el.innerHTML = '<div class="ms-dgrid">' + _msDraftSlots.map(function(s, i) {
+    return '<div class="ms-dslot' + (cnt[s.time] > 1 ? ' dup' : '') + '"' + (cnt[s.time] > 1 ? ' title="這個時間重複了"' : '') + '>'
+      + '<button type="button" class="x" onclick="msDraftRemoveSlot(' + i + ')" title="移除這個時段" aria-label="移除 ' + s.time + '">×</button>'
+      + '<select onchange="msDraftSlotChange(' + i + ',\'time\',this.value)" aria-label="時段時間">' + _msTimeSelectHtml(s.time) + '</select>'
+      + '<div class="cap">名額<input type="number" min="1" max="20" value="' + s.capacity + '" onchange="msDraftSlotChange(' + i + ',\'capacity\',this.value)" aria-label="' + s.time + ' 名額"></div>'
       + '</div>';
-  }).join('');
+  }).join('') + addTile + '</div>';
 }
 window.msDraftAddSlot = function() {
   // 預設接在最後一個時段後 15 分鐘（符合每節 15 分鐘的實際班表）、每節 1 人
@@ -23622,17 +23679,8 @@ var _MS_SHIFTS = {
   'day': { end: '17:30', label: '全天'   }    // 例：8/12
 };
 window.msDraftApplyMDay = function(mode) {
-  var BREAKS = { '11:00': 1, '13:00': 1, '13:15': 1, '15:15': 1 };
   var cfg = _MS_SHIFTS[mode] || _MS_SHIFTS['4h'];
-  var _toMin = function(hhmm){ var p = hhmm.split(':'); return (+p[0]) * 60 + (+p[1]); };
-  var endMin = _toMin(cfg.end);
-  var slots = [];
-  for (var m = 9 * 60; m <= endMin; m += 15) {
-    var t = ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
-    // 六小時班表結束在 15:15：那一節在全天班是休息，但在六小時班是最後一節 → 不可跳過
-    if (BREAKS[t] && !(mode === '6h' && t === '15:15')) continue;
-    slots.push({ time: t, capacity: 1 });
-  }
+  var slots = _msShiftSlots(mode);
   _msDraftSlots = slots;
   msRenderDraftSlots();
   toast('⚡ 已套用' + cfg.label + '班表：09:00–' + cfg.end + '，共 ' + slots.length + ' 節（已跳過師傅休息時間）');
@@ -23642,6 +23690,7 @@ window.msDraftSlotChange = function(i, f, v) {
   if (!_msDraftSlots[i]) return;
   if (f === 'capacity') _msDraftSlots[i].capacity = Math.max(1, parseInt(v) || 1);
   else _msDraftSlots[i].time = v;
+  msRenderDraftSlots();
 };
 window.msDraftApplyTemplate = function() {
   _msDraftSlots = (_msSlotTemplates || []).map(function(t){ return { time:t.time, capacity:t.capacity }; });
