@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006121341';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006121642';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1689,6 +1689,9 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-pill{display:inline-flex;align-items:center;gap:4px;color:#C63968;font-weight:700}
 .ms-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#EC4F7D}
 @media(max-width:520px){.ms-sgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.ms-stime{font-size:16px}.ms-pill{padding:2px 6px}}
+/* 「編輯此日開放」：低調中性按鈕，不跟粉紅時段搶色 */
+.ms-editday{margin-left:auto;background:#fff;color:#4A4F49;border:1px solid #D5DAE2;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;transition:border-color .12s,color .12s,background .12s}
+.ms-editday:hover,.ms-editday:focus-visible{border-color:#0066CC;color:#0066CC;background:#F5F9FE;outline:none}
 /* 按摩預約時段 C+ 樣式：依整點分列的膠囊 */
 .ms-slist{background:#fff;border:1px solid #E6ECF3;border-radius:14px;padding:4px 14px}
 .ms-hr{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #EEF1F4}
@@ -22769,7 +22772,7 @@ function msShowSlots(dateStr) {
   var dt2 = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
   var _isMsAdmin = !!(_msData && _msData.isMgr); // HR＋管理者可編輯開放日/時段
   var _isFutureDay = new Date(dateStr + 'T23:59:00') >= new Date();
-  var _admEditBtn = (_isMsAdmin && _isFutureDay) ? '<button onclick="msAdminOpenDate(\'' + dateStr + '\')" style="margin-left:auto;background:#FFF4E4;color:#EC4F7D;border:1.5px solid #F0C48A;border-radius:20px;padding:4px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap">✏️ 編輯此日開放</button>' : '';
+  var _admEditBtn = (_isMsAdmin && _isFutureDay) ? '<button onclick="msAdminOpenDate(\'' + dateStr + '\')" class="ms-editday">✎ 編輯此日開放</button>' : '';
   dateLabel.style.width = '100%';
   dateLabel.innerHTML = '<div style="width:4px;height:18px;background:linear-gradient(#5E86C4,#084C99);border-radius:10px;flex-shrink:0"></div>'
     + parseInt(parts[1]) + ' 月 ' + parseInt(parts[2]) + ' 日（' + days[dt2.getDay()] + '）' + _admEditBtn;
