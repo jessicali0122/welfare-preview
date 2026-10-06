@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006153501';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006153845';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -23480,6 +23480,8 @@ window.msRemoveExtraDate = function(ds) {
   msRenderOpenDateChips();
 };
 
+// 2026-10-21 → 10/21（提示訊息用，比完整日期好讀）
+function _msMD(ds) { var p = String(ds || '').split('-'); return p.length === 3 ? (parseInt(p[1], 10) + '/' + parseInt(p[2], 10)) : String(ds || ''); }
 window.msAdminOpenDate = function(dateStr) {
   if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以設定開放日期'); return; }
   var entry = (_msData && _msData.openDates || {})[dateStr];
@@ -23739,7 +23741,7 @@ window.msDraftApplyMDay = function(mode) {
   var slots = _msShiftSlots(mode);
   _msDraftSlots = slots;
   msRenderDraftSlots();
-  toast('⚡ 已套用 09:00–' + cfg.end + '，共 ' + slots.length + ' 節（已跳過師傅休息時間）');
+  toast('已帶入 09:00–' + cfg.end + '（' + slots.length + ' 節），按「確認開放」才會生效');
 };
 window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
 window.msDraftSlotChange = function(i, f, v) {
@@ -23794,7 +23796,7 @@ window.msConfirmOpenDate = async function() {
   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '確認開放'; }
   if (!okDates.length) { toast('❌ 儲存失敗：' + (failDates.join('、')) + '，請稍後再試', 'error'); return; }
   if (failDates.length) toast('⚠️ ' + okDates.length + ' 天已開放；失敗：' + failDates.join('、'), 'error');
-  else toast(okDates.length > 1 ? ('✅ 已開放 ' + okDates.length + ' 天：' + okDates.join('、')) : ('✅ ' + okDates[0] + ' 已開放/更新'));
+  else toast(okDates.length > 1 ? ('✅ ' + okDates.length + ' 天的開放時段已儲存：' + okDates.map(_msMD).join('、')) : ('✅ ' + _msMD(okDates[0]) + ' 開放時段已儲存'));
   // 收起編輯器、直接切到主日期的時段檢視
   _msDraftSlots = [];
   _msExtraDates = [];
@@ -23815,7 +23817,7 @@ window.msCloseDate = function(ds) {
       var r; try { r = await htApi('massageCloseDate', { date: ds }); } catch(e) {}
       if (!r || !r.ok) { toast('❌ 關閉失敗：' + (r && r.error ? r.error : '網路連線失敗，請稍後再試'), 'error'); return; }
       if (_msData && _msData.openDates) delete _msData.openDates[ds];
-      msRenderOpenDates(); msRenderCal(); toast('已關閉 ' + ds);
+      msRenderOpenDates(); msRenderCal(); toast('已關閉 ' + _msMD(ds) + ' 的開放');
       if (typeof msResetOpenEditor === 'function') msResetOpenEditor();
     }
   );
