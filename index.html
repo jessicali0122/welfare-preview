@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006114905';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006115135';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1663,6 +1663,19 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-dadd:hover{background:#EEF4FC;border-color:#9DBDE6}
 .ms-dempty{grid-column:1/-1;background:#fff;border:1.5px dashed #D5DAE2;border-radius:12px;padding:16px;text-align:center;font-size:12px;color:#8A8F88}
 @media(max-width:520px){.ms-oe{padding:14px}.ms-oe-presets{grid-template-columns:repeat(2,1fr)}.ms-dgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.ms-dslot{padding:6px 4px 4px}.ms-dslot select{font-size:14px}.ms-dslot .cap{gap:2px}.ms-dslot .cap input{width:30px}.ms-dslot .x{top:0;right:2px}.ms-dadd{min-height:52px;font-size:12px}}
+/* 按摩預約時段（員工端，2026-10-06 改版：上午／下午分組、白底卡片、可預約膠囊） */
+.ms-sgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:8px;background:#F5F8FC;border:1px solid #E6ECF3;border-radius:14px;padding:10px}
+.ms-sgrp{grid-column:1/-1;display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:#4A4F49;letter-spacing:.06em;padding:2px 2px 0}
+.ms-sgrp:not(:first-child){margin-top:6px}
+.ms-sgrp span{font-weight:600;color:#8A8F88;letter-spacing:0}
+.ms-stile{border:1.5px solid #E2E5EA;border-radius:12px;padding:10px 6px;text-align:center;transition:transform .12s,box-shadow .12s,border-color .12s;outline:none}
+.ms-stile.click:hover,.ms-stile.click:focus-visible{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,102,204,.12)}
+.ms-stile.open:hover,.ms-stile.open:focus-visible{border-color:#0066CC!important}
+.ms-stime{font-size:18px;font-weight:800;line-height:1.2;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ms-slbl{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;line-height:1.3}
+.ms-pill{display:inline-flex;align-items:center;gap:4px;background:#EEF4FC;color:#0066CC;font-weight:800;border-radius:20px;padding:2px 10px}
+.ms-pill::before{content:"";width:6px;height:6px;border-radius:50%;background:#2E9E5B}
+@media(max-width:520px){.ms-sgrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:8px}.ms-stime{font-size:16px}.ms-pill{padding:2px 6px}}
 /* 按摩月曆：手機格子太窄，「可預約」會被切成「可預／約」→ 只留彩色肉球（顏色意義見下方圖例） */
 @media(max-width:520px){.ms-paw-label{display:none}}
 
@@ -4985,7 +4998,7 @@ thead th{color:#767B75!important}
             <div id="ms-slots-date" style="font-size:16px;font-weight:800;color:#2E332D;margin-bottom:14px;display:flex;align-items:center;gap:8px">
               <div style="width:4px;height:18px;background:linear-gradient(#0066CC,#A5C4E4);border-radius:10px"></div>
             </div>
-            <div id="ms-slots-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:10px"></div>
+            <div id="ms-slots-list" class="ms-sgrid"></div>
           </div>
           <!-- 管理者：點日曆未開放日／「編輯此日開放」→ 直接在此設定，不需再選日期 -->
           <div id="ms-open-editor-wrap" style="display:none">
@@ -22739,7 +22752,7 @@ function msShowSlots(dateStr) {
   var overMonthLimit = monthBookCnt >= (settings.monthlyLimit || 2);
   // ── inline 訂位風格：時段以彩色磚塊平鋪，顏色直接代表可否預約 ──
   var myEmail = (_msData && _msData.userEmail) || '';
-  list.innerHTML = slots.map(function(s) {
+  var _tiles = slots.map(function(s) {
     var isMySlot = myBook && myBook.timeSlot === s.time;
     var attended = isMySlot && myBook && myBook.status === 'attended';
     var isFuture = new Date(dateStr + 'T' + s.time + ':00') > new Date();
@@ -22767,9 +22780,9 @@ function msShowSlots(dateStr) {
       onclick = 'msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')'; cursor = 'pointer';
     } else if (hasRoom && !suspended && !overMonthLimit && isFuture) {
       // 可預約：綠色外框、點擊直接預約
-      bg = 'linear-gradient(135deg,#F4F7FB,#E7EEF7)'; border = '#96bae4'; timeColor = '#2E332D';
+      bg = '#fff'; border = '#B9D2EE'; timeColor = '#2E332D';
       // 一個時段只有 1 個位子時不寫「剩 1 位」（多餘）；多人時段才顯示剩幾位
-      labelHtml = '<span style="color:#0066CC;font-weight:800">可預約' + (s.capacity > 1 ? ' · 剩 ' + s.remaining + ' 位' : '') + '</span>';
+      labelHtml = '<span class="ms-pill">可預約' + (s.capacity > 1 ? ' · 剩 ' + s.remaining + ' 位' : '') + '</span>';
       onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
     } else if (hasRoom && overMonthLimit) {
       // 本月已達上限：綠但淡化、不可點
@@ -22781,8 +22794,8 @@ function msShowSlots(dateStr) {
       labelHtml = '<span style="color:#767B75;font-weight:600">' + (isFuture ? '暫停預約' : '已過時') + '</span>'; dim = true;
     } else {
       // 額滿：灰色，未過時可點候補
-      bg = '#F1F3F6'; border = '#D2D7CD'; timeColor = '#767B75';
-      labelHtml = '<span style="color:#767B75;font-weight:700">額滿' + (waitCount > 0 ? ' · 候補 ' + waitCount : '') + '</span>';
+      bg = '#F3F4F6'; border = '#E2E5EA'; timeColor = '#9AA096';
+      labelHtml = '<span style="color:#8A8F88;font-weight:700">額滿' + (waitCount > 0 ? ' · 候補 ' + waitCount : '') + '</span>';
       if (!suspended && isFuture) { onclick = 'msJoinWaitlist(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
         labelHtml += '<span style="color:#0066CC;font-weight:700">🕐 候補</span>'; }
     }
@@ -22797,12 +22810,22 @@ function msShowSlots(dateStr) {
         + '</div>';
     }
 
-    return '<div' + (onclick ? ' onclick="' + onclick + '"' : '') + ' style="background:' + bg + ';border:1.5px solid ' + border
-      + ';border-radius:14px;padding:12px 8px;text-align:center;cursor:' + cursor + ';box-shadow:0 1px 3px rgba(46,51,45,.06)'
-      + (dim ? ';opacity:.72' : '') + ';transition:transform .08s' + (cursor === 'pointer' ? '" onmouseover="this.style.transform=\'translateY(-2px)\'" onmouseout="this.style.transform=\'\'"' : '"') + '>'
-      + '<div style="font-size:18px;font-weight:800;color:' + timeColor + ';line-height:1.2;white-space:nowrap">' + s.time + '</div>'
-      + '<div style="margin-top:5px;display:flex;flex-direction:column;gap:2px;font-size:12px;line-height:1.3">' + labelHtml + '</div>'
+    var _tile = '<div class="ms-stile' + (cursor === 'pointer' ? ' click' : '') + (onclick && onclick.indexOf('msBookConfirm') === 0 ? ' open' : '') + '"'
+      + (onclick ? ' onclick="' + onclick + '" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();this.click()}"' : '')
+      + ' style="background:' + bg + ';border-color:' + border + ';cursor:' + cursor + (dim ? ';opacity:.6' : '') + '">'
+      + '<div class="ms-stime" style="color:' + timeColor + '">' + s.time + '</div>'
+      + '<div class="ms-slbl">' + labelHtml + '</div>'
       + '</div>';
+    return { time: s.time, html: _tile, open: (onclick && onclick.indexOf('msBookConfirm') === 0) };
+  });
+  // 分「上午／下午」兩組（13:00 前為上午），每組標題顯示可預約數
+  var _groups = [['上午', function(t){ return t < '13:00'; }], ['下午', function(t){ return t >= '13:00'; }]];
+  list.innerHTML = _groups.map(function(g){
+    var items = _tiles.filter(function(x){ return g[1](x.time); });
+    if (!items.length) return '';
+    var openCnt = items.filter(function(x){ return x.open; }).length;
+    return '<div class="ms-sgrp">' + g[0] + '<span>' + (openCnt ? openCnt + ' 個可預約' : '已無空位') + '</span></div>'
+      + items.map(function(x){ return x.html; }).join('');
   }).join('');
 }
 
