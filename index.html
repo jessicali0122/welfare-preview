@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006153143';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006153501';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1643,8 +1643,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-oe-sum.warn{color:#C2410C;background:#FFF4EC;border-color:#FBD3B5}
 .ms-oe-label{font-size:12px;font-weight:700;color:#767B75;letter-spacing:.04em;margin-bottom:8px}
 .ms-oe-presets{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.ms-oe-preset{background:#fff;border:1.5px solid #D5DAE2;border-radius:12px;padding:8px 4px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;transition:border-color .15s,background .15s}
-.ms-oe-preset b{font-size:14px;color:#2E332D}
+.ms-oe-preset{background:#fff;border:1.5px solid #D5DAE2;border-radius:12px;padding:10px 4px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;align-items:center;gap:2px;transition:border-color .15s,background .15s}
+.ms-oe-preset b{font-size:14px;color:#2E332D;font-variant-numeric:tabular-nums}
 .ms-oe-preset span{font-size:12px;color:#8A8F88;font-variant-numeric:tabular-nums}
 .ms-oe-preset:hover{border-color:#9DBDE6}
 .ms-oe-preset.on{border-color:#0066CC;background:#EEF4FC}
@@ -1692,6 +1692,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 /* 「編輯此日開放」：低調中性按鈕，不跟粉紅時段搶色 */
 .ms-editday{margin-left:auto;background:#0066CC;color:#fff;border:1px solid #0066CC;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;box-shadow:0 2px 6px rgba(0,102,204,.22);transition:background .12s,box-shadow .12s}
 .ms-editday:hover,.ms-editday:focus-visible{background:#0052A3;border-color:#0052A3;box-shadow:0 4px 10px rgba(0,102,204,.3);outline:none}
+/* 按摩注意事項：粗體重點詞整組不拆行（太長放不下就整組換到下一行，不會拆成兩半） */
+#ms-notice-body strong,#ms-notice-body span[style*="font-weight:700"]{white-space:nowrap}
 /* 按摩預約時段 C+ 樣式：依整點分列的膠囊 */
 .ms-slist{background:#fff;border:1px solid #E6ECF3;border-radius:14px;padding:4px 14px}
 .ms-hr{display:grid;grid-template-columns:52px 1fr;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #EEF1F4}
@@ -5062,10 +5064,10 @@ thead th{color:#767B75!important}
                      四小時 9 天 ＞ 六小時 6 天 ＞ 二小時 1 天 ＝ 全天 1 天
                      → 九成情況第一顆就按到，不必每次掃過整排 -->
               <div class="ms-oe-presets">
-                <button onclick="msDraftApplyMDay('4h')" data-ms-preset="4h" class="ms-oe-preset" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）"><b>四小時</b><span>09:00–12:45</span></button>
-                <button onclick="msDraftApplyMDay('6h')" data-ms-preset="6h" class="ms-oe-preset" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）"><b>六小時</b><span>09:00–15:15</span></button>
-                <button onclick="msDraftApplyMDay('2h')" data-ms-preset="2h" class="ms-oe-preset" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場"><b>二小時</b><span>09:00–10:45</span></button>
-                <button onclick="msDraftApplyMDay('day')" data-ms-preset="day" class="ms-oe-preset" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場"><b>全天</b><span>09:00–17:30</span></button>
+                <button onclick="msDraftApplyMDay('4h')" data-ms-preset="4h" class="ms-oe-preset" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）"><b>09:00–12:45</b></button>
+                <button onclick="msDraftApplyMDay('6h')" data-ms-preset="6h" class="ms-oe-preset" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）"><b>09:00–15:15</b></button>
+                <button onclick="msDraftApplyMDay('2h')" data-ms-preset="2h" class="ms-oe-preset" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場"><b>09:00–10:45</b></button>
+                <button onclick="msDraftApplyMDay('day')" data-ms-preset="day" class="ms-oe-preset" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場"><b>09:00–17:30</b></button>
               </div>
               <div class="ms-oe-label" style="margin-top:14px">開放時段 <span style="font-weight:500;color:#9AA096">（每節 1 位；點時間可修改，× 移除）</span></div>
               <div id="ms-draft-slots"></div>
@@ -23737,7 +23739,7 @@ window.msDraftApplyMDay = function(mode) {
   var slots = _msShiftSlots(mode);
   _msDraftSlots = slots;
   msRenderDraftSlots();
-  toast('⚡ 已套用' + cfg.label + '班表：09:00–' + cfg.end + '，共 ' + slots.length + ' 節（已跳過師傅休息時間）');
+  toast('⚡ 已套用 09:00–' + cfg.end + '，共 ' + slots.length + ' 節（已跳過師傅休息時間）');
 };
 window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
 window.msDraftSlotChange = function(i, f, v) {
