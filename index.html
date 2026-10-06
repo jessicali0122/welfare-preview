@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261002155419';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006110710';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -22739,7 +22739,8 @@ function msShowSlots(dateStr) {
     } else if (hasRoom && !suspended && !overMonthLimit && isFuture) {
       // 可預約：綠色外框、點擊直接預約
       bg = 'linear-gradient(135deg,#F4F7FB,#E7EEF7)'; border = '#96bae4'; timeColor = '#2E332D';
-      labelHtml = '<span style="color:#0066CC;font-weight:800">可預約 · 剩 ' + s.remaining + ' 位</span>';
+      // 一個時段只有 1 個位子時不寫「剩 1 位」（多餘）；多人時段才顯示剩幾位
+      labelHtml = '<span style="color:#0066CC;font-weight:800">可預約' + (s.capacity > 1 ? ' · 剩 ' + s.remaining + ' 位' : '') + '</span>';
       onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; cursor = 'pointer';
     } else if (hasRoom && overMonthLimit) {
       // 本月已達上限：綠但淡化、不可點
@@ -23063,7 +23064,7 @@ window.msModifyDateChange = function() {
   timeSel.innerHTML = slots.map(function(s) {
     var isOrig = (d === _msModifyOrigDate && s.time === _msModifyOrigTime);
     var disabled = s.remaining <= 0 && !isOrig;
-    return '<option value="' + s.time + '"' + (disabled ? ' disabled' : '') + (isOrig ? ' selected' : '') + '>' + s.time + (disabled ? '（額滿）' : '（剩 ' + s.remaining + ' 位）') + '</option>';
+    return '<option value="' + s.time + '"' + (disabled ? ' disabled' : '') + (isOrig ? ' selected' : '') + '>' + s.time + (disabled ? '（額滿）' : (s.capacity > 1 ? '（剩 ' + s.remaining + ' 位）' : '')) + '</option>';
   }).join('');
 };
 window.msCloseModify = function() { document.getElementById('ms-modify-modal').classList.remove('open'); };
