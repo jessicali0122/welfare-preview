@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006153845';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261006154153';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -266,7 +266,9 @@ thead th{font-size:14px;color:#767B75;font-weight:500;background:transparent!imp
 .radio-btn{display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;color:#4A4F49;font-weight:500}
 input[type=radio]{accent-color:#0066CC}
 .tag{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500;letter-spacing:.01em;white-space:nowrap}
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#363B35;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(360px,calc(100vw - 32px));white-space:nowrap;text-align:center;overflow:hidden;text-overflow:ellipsis}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#363B35;color:#fff;padding:13px 20px;border-radius:10px;font-size:14px;font-weight:500;opacity:0;transition:all .3s;z-index:201;box-shadow:0 8px 32px rgba(0,0,0,.3);max-width:min(440px,calc(100vw - 32px));width:max-content;white-space:normal;text-align:center;overflow:visible;text-overflow:clip;line-height:1.5;word-break:normal;overflow-wrap:anywhere;text-wrap:pretty}
+#toast.toast-error{background:#B42318}
+#toast.toast-warn{background:#B54708}
 #toast.toast-strong{background:linear-gradient(135deg,#1e9d6b,#0066CC);font-size:16px;font-weight:800;padding:16px 28px;border-radius:14px;box-shadow:0 14px 44px rgba(30,157,107,.48);letter-spacing:.02em}
 #submit-result-card{animation:slideUpCard .3s ease}
 @keyframes slideUpCard{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
@@ -12424,11 +12426,15 @@ function toast(msg, prominent){
   if(_toastTimer){clearTimeout(_toastTimer);_toastTimer=null;}
   if(!msg){t.style.animation='toastSlideOut .3s ease forwards';return;}
   t.textContent=(msg||'').replace(/\n+/g,' ').trim();
-  t.classList.toggle('toast-strong', !!prominent);   // 明顯版：綠底放大、停久一點（只給明確要求的呼叫用）
+  // 第二個參數：true＝明顯版（綠底放大）；'error'＝紅底；'warning'＝橘底。
+  // ★ 2026-10-06 修正：原本 'error'/'warning' 也被當成 truthy → 錯誤訊息顯示成綠色「成功」樣式，容易誤會
+  t.classList.toggle('toast-strong', prominent === true);
+  t.classList.toggle('toast-error', prominent === 'error');
+  t.classList.toggle('toast-warn', prominent === 'warning');
   t.style.animation='none';
   t.offsetHeight; // reflow
   t.style.animation='toastSlideIn .35s cubic-bezier(.22,1,.36,1) forwards';
-  _toastTimer=setTimeout(()=>{t.style.animation='toastSlideOut .3s ease forwards';_toastTimer=null;}, prominent?4500:3000);
+  _toastTimer=setTimeout(()=>{t.style.animation='toastSlideOut .3s ease forwards';_toastTimer=null;}, prominent?4500:Math.min(6000, 3000 + Math.max(0, (msg||'').length - 20) * 60));   // 長訊息停久一點，來得及看完
 }
 
 // ── 數字計數動畫 ──
