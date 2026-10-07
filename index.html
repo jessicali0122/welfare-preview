@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007151340';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007151921';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1783,9 +1783,28 @@ body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-dfoot{padding-top:10px;border-top:1px solid #EEF1F4}
 .ms-dlist .ms-dadd{min-height:0;padding:7px 16px;border-radius:999px}
 .ms-dfoot{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-.ms-daddsel{position:relative;display:inline-flex;align-items:center}
-.ms-daddsel select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font-size:16px}
-.ms-daddsel:focus-within{outline:2px solid #0066CC;outline-offset:2px}
+.ms-dp.lock{background:#F3F4F6;border-color:#E2E5EA;color:#8A8F88;padding:5px 12px;gap:6px;cursor:default}
+.ms-dp.lock b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.ms-dp.lock em{font-style:normal;font-size:12px;font-weight:700}
+.ms-dp.lock .lk{font-size:12px}
+.ms-dp .tm{border:none;background:transparent;font-family:inherit;font-size:16px;font-weight:800;color:inherit;cursor:pointer;padding:0;font-variant-numeric:tabular-nums}
+.ms-dp .tm:hover{text-decoration:underline;text-underline-offset:3px}
+.ms-dp .tm:focus-visible{outline:2px solid #EC4F7D;outline-offset:2px;border-radius:4px}
+.ms-tp{position:fixed;z-index:10030;width:332px;max-width:calc(100vw - 32px);background:#fff;border:1px solid #E6ECF3;border-radius:16px;box-shadow:0 12px 40px rgba(46,51,45,.18);overflow:hidden;font-family:'Noto Sans TC',sans-serif}
+.ms-tp .hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #EEF1F4;font-size:14px;color:#2E332D}
+.ms-tp .hd .x{border:none;background:none;font-size:20px;line-height:1;color:#8A8F88;cursor:pointer;padding:2px 6px;border-radius:8px}
+.ms-tp .hd .x:hover{background:#F3F4F6}
+.ms-tp .bd{max-height:300px;overflow-y:auto;padding:4px 12px 10px;overscroll-behavior:contain}
+.ms-tp .r{display:grid;grid-template-columns:40px 1fr;align-items:center;gap:8px;padding:6px 0;border-top:1px solid #F3F4F6}
+.ms-tp .r:first-child{border-top:none}
+.ms-tp .h{font-size:12px;font-weight:700;color:#8A8F88}
+.ms-tp .cs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ms-tp .c{border:1px solid #F4C0D1;background:#FFF5F8;color:#C63968;border-radius:999px;padding:6px 0;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
+.ms-tp .c:hover,.ms-tp .c:focus-visible{background:#EC4F7D;border-color:#EC4F7D;color:#fff;outline:none}
+.ms-tp .c.cur{background:#EC4F7D;border-color:#EC4F7D;color:#fff}
+.ms-tp .c[disabled]{background:#F3F4F6;border-color:#ECEEF1;color:#C2C7C1;cursor:not-allowed}
+.ms-tp.sheet{left:16px!important;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));top:auto!important;width:auto;max-width:none}
+.ms-tp.sheet .bd{max-height:min(50vh,420px)}
 .ms-dnext{border:1px solid #D5DAE2;background:#fff;color:#4A4F49;border-radius:999px;padding:7px 14px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
 .ms-dnext:hover{border-color:#0066CC;color:#0066CC}
 .ms-dtip{font-size:12px;color:#8A8F88;white-space:nowrap}
@@ -23918,11 +23937,10 @@ function msRenderDraftSlots() {
     var on = _msDraftSlots.length && JSON.stringify(_msShiftSlots(b.getAttribute('data-ms-preset')).map(function(s){ return s.time + '|' + s.capacity; })) === sig;
     b.classList.toggle('on', !!on);
   });
-  // ＋ 新增時段：直接選時間（原生下拉，手機會跳滾輪）；只列還沒加過的時間。另留「接在最後一節後面」的快速鍵
-  var _used = {}; _msDraftSlots.forEach(function(s){ _used[s.time] = 1; });
-  var _free = _msTimeSelectHtml('').replace(/<option value="([0-9:]+)">[^<]*<\/option>/g, function(m, t){ return _used[t] ? '' : m; });
-  var addBtn = '<label class="ms-dadd ms-daddsel">＋ 新增時段'
-    + '<select onchange="msDraftAddTime(this.value)" aria-label="選擇要新增的時間"><option value="" selected disabled>選擇時間</option>' + _free + '</select></label>'
+  var _dsLk = (document.getElementById('ms-open-date-inp') || {}).value || '';
+  if (_dsLk && _msDraftSlots.length) { _msDraftSlots = _msMergeLocked(_dsLk, _msDraftSlots).slots; }
+  // ＋ 新增時段：點了跳出系統樣式的時間面板（依整點分列的膠囊，不用瀏覽器原生下拉）；另留「接在最後一節後面」的快速鍵
+  var addBtn = '<button type="button" class="ms-dadd" onclick="msOpenTimePicker(this,-1)" aria-haspopup="dialog">＋ 新增時段</button>'
     + (_msDraftSlots.length ? '<button type="button" class="ms-dnext" onclick="msDraftAddSlot()">＋ 接下一節</button>' : '')
     + '<span class="ms-dtip">點膠囊上的時間可直接修改</span>';
   if (!_msDraftSlots.length) {
@@ -23930,12 +23948,18 @@ function msRenderDraftSlots() {
     return;
   }
   // 依整點分列（與員工預約畫面同一個樣式），每個時段一顆膠囊：點時間可改、× 移除
+  var _dsEd = (document.getElementById('ms-open-date-inp') || {}).value || '';
   var byHour = {};
   _msDraftSlots.forEach(function(s, i) {
     var h = String(s.time).slice(0, 2);
+    var _lk = _dsEd ? _msSlotLock(_dsEd, s.time) : '';
+    if (_lk) {
+      (byHour[h] = byHour[h] || []).push('<span class="ms-p ms-dp lock" title="' + (_lk === '已過' ? '時間已過，保留為紀錄，不能刪除' : '已有人預約，請先請對方取消或改時段') + '"><b>' + s.time + '</b><em>' + _lk + '</em><span class="lk" aria-hidden="true">🔒</span></span>');
+      return;
+    }
     (byHour[h] = byHour[h] || []).push(
       '<span class="ms-p ms-dp' + (cnt[s.time] > 1 ? ' dup' : '') + '"' + (cnt[s.time] > 1 ? ' title="這個時間重複了"' : '') + '>'
-      + '<select onchange="msDraftSlotChange(' + i + ',\'time\',this.value)" aria-label="時段時間">' + _msTimeSelectHtml(s.time) + '</select>'
+      + '<button type="button" class="tm" onclick="msOpenTimePicker(this,' + i + ')" aria-haspopup="dialog" title="點一下修改時間">' + s.time + '</button>'
       + '<button type="button" class="x" onclick="msDraftRemoveSlot(' + i + ')" title="移除這個時段" aria-label="移除 ' + s.time + '">×</button>'
       + '</span>');
   });
@@ -23944,6 +23968,82 @@ function msRenderDraftSlots() {
   }).join('') + '<div class="ms-dfoot">' + addBtn + '</div></div>';
 }
 
+// ★ 2026-10-07：已開放的時段若「時間已過」或「已有人預約／報到」→ 鎖定，不可刪除、不可改時間
+//   （已過＝已發生的紀錄，刪了報到／缺席統計會對不上；有預約＝刪了那筆預約會指向不存在的時段）
+//   只鎖「原本已儲存」的時段；這次新加的時段照常可刪改。套用班表／批次開放時，鎖定時段一律自動保留。
+function _msSlotLock(ds, t) {
+  var saved = ((_msData && _msData.openDates) || {})[ds];
+  if (!saved || !(saved.slots || []).some(function(x){ return x.time === t; })) return '';
+  var booked = ((_msData && _msData.allBookings) || []).some(function(b){ return b.date === ds && b.timeSlot === t && (b.status === 'booked' || b.status === 'attended'); });
+  if (booked) return '有預約';
+  if (new Date(ds + 'T' + t + ':00') <= new Date()) return '已過';
+  return '';
+}
+function _msLockedSlots(ds) {
+  var saved = ((_msData && _msData.openDates) || {})[ds];
+  return ((saved && saved.slots) || []).filter(function(x){ return _msSlotLock(ds, x.time); })
+    .map(function(x){ return { time: x.time, capacity: x.capacity || 1 }; });
+}
+function _msMergeLocked(ds, slots) {
+  var have = {}; slots.forEach(function(x){ have[x.time] = 1; });
+  var add = _msLockedSlots(ds).filter(function(x){ return !have[x.time]; });
+  return { slots: slots.concat(add).sort(function(a, b){ return String(a.time).localeCompare(String(b.time)); }), kept: add.map(function(x){ return x.time; }) };
+}
+// 時間面板（新增／修改共用）：idx < 0 → 新增；idx ≥ 0 → 改第 idx 個時段的時間。已用過的時間反灰不可點。
+window.msOpenTimePicker = function(anchor, idx) {
+  _msCloseTimePicker();
+  var cur = idx >= 0 && _msDraftSlots[idx] ? _msDraftSlots[idx].time : '';
+  var used = {}; _msDraftSlots.forEach(function(s){ used[s.time] = 1; });
+  var _tpDs = (document.getElementById('ms-open-date-inp') || {}).value || '', _tpNow = new Date();
+  var rows = '';
+  for (var h = 8; h <= 20; h++) {
+    var chips = '';
+    for (var mn = 0; mn < 60; mn += 15) {
+      var t = pad2(h) + ':' + pad2(mn);
+      var isCur = t === cur, taken = used[t] && !isCur;
+      var gone = !isCur && _tpDs && new Date(_tpDs + 'T' + t + ':00') <= _tpNow;   // 今天已經過去的時間不能選
+      chips += '<button type="button" class="c' + (isCur ? ' cur' : '') + '"' + (taken ? ' disabled title="已在清單中"' : (gone ? ' disabled title="時間已過"' : '')) + ' data-t="' + t + '">' + t + '</button>';
+    }
+    rows += '<div class="r"><span class="h">' + pad2(h) + ' 點</span><div class="cs">' + chips + '</div></div>';
+  }
+  var pop = document.createElement('div');
+  pop.id = 'ms-tp';
+  pop.className = 'ms-tp';
+  pop.setAttribute('role', 'dialog');
+  pop.innerHTML = '<div class="hd"><b>' + (idx >= 0 ? '把 ' + cur + ' 改成…' : '新增哪個時間？') + '</b><button type="button" class="x" aria-label="關閉">×</button></div><div class="bd">' + rows + '</div>';
+  document.body.appendChild(pop);
+  // 定位：對齊按鈕，下方放不下就放上方；手機（窄）改成置中底部面板
+  var r = anchor.getBoundingClientRect(), W = window.innerWidth, H = window.innerHeight;
+  if (W <= 520) { pop.classList.add('sheet'); }
+  else {
+    var pw = pop.offsetWidth, ph = pop.offsetHeight;
+    var left = Math.min(Math.max(16, r.left), W - pw - 16);
+    var top = (r.bottom + 8 + ph <= H - 16) ? r.bottom + 8 : Math.max(16, r.top - 8 - ph);
+    pop.style.left = left + 'px'; pop.style.top = top + 'px';
+  }
+  pop.addEventListener('click', function(e) {
+    if (e.target.closest('.x')) { _msCloseTimePicker(); return; }
+    var c = e.target.closest('.c'); if (!c || c.disabled) return;
+    var t2 = c.getAttribute('data-t');
+    _msCloseTimePicker();
+    if (idx >= 0) msDraftSlotChange(idx, 'time', t2); else msDraftAddTime(t2);
+  });
+  var sel = pop.querySelector('.c.cur') || pop.querySelector('.c:not([disabled])');
+  if (sel) { try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); } catch(e) {} }
+  setTimeout(function(){
+    document.addEventListener('mousedown', _msTpOutside, true);
+    document.addEventListener('touchstart', _msTpOutside, true);
+    document.addEventListener('keydown', _msTpKey, true);
+  }, 0);
+};
+function _msTpOutside(e) { var p = document.getElementById('ms-tp'); if (p && !p.contains(e.target)) _msCloseTimePicker(); }
+function _msTpKey(e) { if (e.key === 'Escape') _msCloseTimePicker(); }
+function _msCloseTimePicker() {
+  var p = document.getElementById('ms-tp'); if (p) p.remove();
+  document.removeEventListener('mousedown', _msTpOutside, true);
+  document.removeEventListener('touchstart', _msTpOutside, true);
+  document.removeEventListener('keydown', _msTpKey, true);
+}
 window.msDraftAddTime = function(t) {
   if (!t) return;
   if (_msDraftSlots.some(function(s){ return s.time === t; })) { toast(t + ' 已經在清單裡了', 'warning'); msRenderDraftSlots(); return; }
@@ -23983,9 +24083,17 @@ window.msDraftApplyMDay = function(mode) {
   msRenderDraftSlots();
   toast('已帶入 09:00–' + cfg.end + '（' + slots.length + ' 節），按「確認開放」才會生效');
 };
-window.msDraftRemoveSlot = function(i) { _msDraftSlots.splice(i, 1); msRenderDraftSlots(); };
+window.msDraftRemoveSlot = function(i) {
+  var _ds = (document.getElementById('ms-open-date-inp') || {}).value || '';
+  var s0 = _msDraftSlots[i]; if (!s0) return;
+  var lk = _ds ? _msSlotLock(_ds, s0.time) : '';
+  if (lk) { toast(s0.time + (lk === '已過' ? ' 時間已過，不能刪除' : ' 已有人預約，不能刪除'), 'warning'); return; }
+  _msDraftSlots.splice(i, 1); msRenderDraftSlots();
+};
 window.msDraftSlotChange = function(i, f, v) {
   if (!_msDraftSlots[i]) return;
+  var _ds = (document.getElementById('ms-open-date-inp') || {}).value || '';
+  if (f === 'time' && _ds && _msSlotLock(_ds, _msDraftSlots[i].time)) { toast(_msDraftSlots[i].time + ' 已鎖定，不能改時間', 'warning'); msRenderDraftSlots(); return; }
   if (f === 'capacity') _msDraftSlots[i].capacity = Math.max(1, parseInt(v) || 1);
   else _msDraftSlots[i].time = v;
   msRenderDraftSlots();
@@ -24023,20 +24131,23 @@ window.msConfirmOpenDate = async function() {
   var confirmBtn = document.getElementById('ms-open-confirm-btn');
   if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '儲存中…'; }
   if (!_msData.openDates) _msData.openDates = {};
-  var okDates = [], failDates = [];
+  var okDates = [], failDates = [], keptNote = [];
   // 逐日呼叫既有 API（massageEditDate/massageOpenDate 邏輯完全不變），避免動到後端
   for (var di = 0; di < dates.length; di++) {
     var ds2 = dates[di];
     var existed = !!_msData.openDates[ds2];
+    var _mg = _msMergeLocked(ds2, slots);   // 已過／有預約的時段一律保留
+    if (_mg.kept.length) keptNote.push(_msMD(ds2) + ' ' + _mg.kept.join('、'));
     var r = null;
-    try { r = await htApi(existed ? 'massageEditDate' : 'massageOpenDate', { date: ds2, slots: slots }); } catch(e) {}
-    if (r && r.ok) { _msData.openDates[ds2] = { slots: slots }; okDates.push(ds2); _msMarkWrite(); }
+    try { r = await htApi(existed ? 'massageEditDate' : 'massageOpenDate', { date: ds2, slots: _mg.slots }); } catch(e) {}
+    if (r && r.ok) { _msData.openDates[ds2] = { slots: _mg.slots }; okDates.push(ds2); _msMarkWrite(); }
     else failDates.push(ds2);
   }
   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '確認開放'; }
   if (!okDates.length) { toast('❌ 儲存失敗：' + (failDates.join('、')) + '，請稍後再試', 'error'); return; }
   if (failDates.length) toast('⚠️ ' + okDates.length + ' 天已開放；失敗：' + failDates.join('、'), 'error');
-  else toast(okDates.length > 1 ? ('✅ ' + okDates.length + ' 天的開放時段已儲存：' + okDates.map(_msMD).join('、')) : ('✅ ' + _msMD(okDates[0]) + ' 開放時段已儲存'));
+  else toast((okDates.length > 1 ? ('✅ ' + okDates.length + ' 天的開放時段已儲存：' + okDates.map(_msMD).join('、')) : ('✅ ' + _msMD(okDates[0]) + ' 開放時段已儲存'))
+    + (keptNote.length ? '（已過或有預約的時段已自動保留：' + keptNote.join('；') + '）' : ''));
   // 收起編輯器、直接切到主日期的時段檢視
   _msDraftSlots = [];
   _msExtraDates = [];
