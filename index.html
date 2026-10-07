@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007163532';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007163652';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8976,7 +8976,9 @@ function _dshDutyMassage(){
   var pend=(d&&Array.isArray(d.pendingRequests))?d.pendingRequests.length:((typeof _msPendingRequests!=='undefined'&&_msPendingRequests)?_msPendingRequests.length:0);
   var now=new Date(),monthBk=0;
   if(d&&Array.isArray(d.allBookings)){d.allBookings.forEach(function(b){if(b&&b.date){var dt=new Date(b.date+'T00:00:00');if(dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth()&&(b.status==='booked'||b.status==='attended'))monthBk++;}});}
-  var openN=(d&&Array.isArray(d.openDates))?d.openDates.length:0;
+  // openDates 是 {日期: {slots}} 物件（不是陣列）→ 原本永遠 0；改數本月的開放日
+  var _ym=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
+  var openN=(d&&d.openDates&&typeof d.openDates==='object')?Object.keys(d.openDates).filter(function(k){return k.slice(0,7)===_ym;}).length:0;
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#E6E9FB;color:#5B6BD6;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('person',17)+'</span>按摩管理</div><div class="dsub">本月預約與待辦</div></div>'+cta+'</div>'
     +'<div class="grid">'
     +'<div class="cell"><div class="n">'+monthBk+'<small> 人次</small></div><div class="k">本月已預約</div></div>'
@@ -22751,11 +22753,13 @@ window.msGetNextBookingHint = function() {
 // 首頁入口卡背景預抓：本裝置還沒有按摩快取時，背景抓一次資料寫入快取並刷新卡片提示，
 // 讓「本月已預約 X 次／下次預約」不必等使用者先進過按摩頁才顯示
 window.msPrefetchHubData = function() {
-  if (_msData || window._msHubPrefetching) return;
-  if (_msLoadLocal()) return; // 已有快取（msGetNextBookingHint 會直接用）
+  // 有快取先用快取畫（快），但每次開頁仍要背景抓一次最新——原本有快取就不抓，首頁按摩卡會一直停在舊數字
+  if (_msData || window._msHubPrefetching || window._msHubFresh) return;
   window._msHubPrefetching = true;
   htApi('massageGetData', {}).then(function(r) {
+    window._msHubPrefetching = false;
     if (!(r && r.ok)) return;
+    window._msHubFresh = true;
     try {
       localStorage.setItem(_msStoreKey(), JSON.stringify({
         openDates: r.openDates || {}, myBookings: r.myBookings || [],
@@ -22765,7 +22769,7 @@ window.msPrefetchHubData = function() {
     } catch(e) {}
     var dv = document.getElementById('view-dashboard');
     if (typeof applyDashboardBlocks === 'function' && dv && dv.classList.contains('active')) applyDashboardBlocks();
-  }).catch(function(){});
+  }).catch(function(){ window._msHubPrefetching = false; });
 };
 
 // ── 按摩預約專屬公告欄（scope='massage'，與首頁/午茶日獨立）──
@@ -23806,7 +23810,7 @@ function msBookingCard(b, isUpcoming) {
     //   主票面（手機 .ms-t-main 允許換行，操作鈕掉到第二排全寬，避免內容被擠成直排）
     +   '<div class="ms-t-main" style="flex:1;min-width:0;background:#fff;padding:14px 16px;display:flex;align-items:flex-start;gap:14px;position:relative">'
     //     日期徽章
-    +     '<div style="background:'+(isTodayOrange?'linear-gradient(150deg,#FDEBD3,#F7D6A6)':'linear-gradient(150deg,#EAF1F9,#dce4ee)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#EC4F7D':'#0066CC')+';flex-shrink:0">'
+    +     '<div style="background:'+(isTodayOrange?'#FBEAF0':'linear-gradient(150deg,#EAF1F9,#dce4ee)')+';border-radius:12px;padding:10px 0;width:60px;text-align:center;color:'+(isTodayOrange?'#EC4F7D':'#0066CC')+';flex-shrink:0">'
     +       '<div style="font-size:12px;font-weight:700;letter-spacing:.05em;opacity:.75">'+mAbbr+'</div>'
     +       '<div style="font-size:26px;font-weight:900;line-height:1.05">'+day+'</div>'
     +       '<div style="font-size:12px;opacity:.7;margin-top:1px">週'+weekday+'</div>'
