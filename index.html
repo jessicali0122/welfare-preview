@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007153357';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007155759';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1808,7 +1808,8 @@ body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-tp .h{font-size:12px;font-weight:700;color:#8A8F88}
 .ms-tp .cs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
 .ms-tp .c{border:1px solid #F4C0D1;background:#FFF5F8;color:#C63968;border-radius:999px;padding:6px 0;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;font-variant-numeric:tabular-nums}
-.ms-tp .c:hover,.ms-tp .c:focus-visible{background:#EC4F7D;border-color:#EC4F7D;color:#fff;outline:none}
+.ms-tp .c:hover{background:#FBEAF0;border-color:#EC4F7D}
+.ms-tp .c:focus-visible{outline:2px solid #EC4F7D;outline-offset:2px}
 .ms-tp .c.cur{background:#EC4F7D;border-color:#EC4F7D;color:#fff}
 .ms-tp .c[disabled]{background:#F3F4F6;border-color:#ECEEF1;color:#C2C7C1;cursor:not-allowed}
 .ms-tp.sheet{left:16px!important;right:16px;bottom:calc(84px + env(safe-area-inset-bottom,0px));top:auto!important;width:auto;max-width:none}
@@ -24115,6 +24116,7 @@ function _msMergeLocked(ds, slots) {
   return { slots: slots.concat(add).sort(function(a, b){ return String(a.time).localeCompare(String(b.time)); }), kept: add.map(function(x){ return x.time; }) };
 }
 // 時間面板（新增／修改共用）：idx < 0 → 新增；idx ≥ 0 → 改第 idx 個時段的時間。已用過的時間反灰不可點。
+var _MS_FIRST_SLOT = '09:00', _MS_LAST_SLOT = '18:15';   // 最早／最晚一節（使用者 2026-10-07 指定）
 window.msOpenTimePicker = function(anchor, idx) {
   _msCloseTimePicker();
   var cur = idx >= 0 && _msDraftSlots[idx] ? _msDraftSlots[idx].time : '';
@@ -24125,11 +24127,13 @@ window.msOpenTimePicker = function(anchor, idx) {
     var chips = '';
     for (var mn = 0; mn < 60; mn += 15) {
       var t = pad2(h) + ':' + pad2(mn);
+      if (t < _MS_FIRST_SLOT) continue;
+      if (t > _MS_LAST_SLOT) break;
       var isCur = t === cur, taken = used[t] && !isCur;
       var gone = !isCur && _tpDs && new Date(_tpDs + 'T' + t + ':00') <= _tpNow;   // 今天已經過去的時間不能選
       chips += '<button type="button" class="c' + (isCur ? ' cur' : '') + '"' + (taken ? ' disabled title="已在清單中"' : (gone ? ' disabled title="時間已過"' : '')) + ' data-t="' + t + '">' + t + '</button>';
     }
-    rows += '<div class="r"><span class="h">' + pad2(h) + ' 點</span><div class="cs">' + chips + '</div></div>';
+    if (chips) rows += '<div class="r"><span class="h">' + pad2(h) + ' 點</span><div class="cs">' + chips + '</div></div>';
   }
   var pop = document.createElement('div');
   pop.id = 'ms-tp';
@@ -24154,7 +24158,7 @@ window.msOpenTimePicker = function(anchor, idx) {
     if (idx >= 0) msDraftSlotChange(idx, 'time', t2); else msDraftAddTime(t2);
   });
   var sel = pop.querySelector('.c.cur') || pop.querySelector('.c:not([disabled])');
-  if (sel) { try { sel.scrollIntoView({ block: 'center' }); sel.focus({ preventScroll: true }); } catch(e) {} }
+  if (sel) { try { sel.scrollIntoView({ block: 'center' }); } catch(e) {} }
   setTimeout(function(){
     document.addEventListener('mousedown', _msTpOutside, true);
     document.addEventListener('touchstart', _msTpOutside, true);
@@ -24171,6 +24175,7 @@ function _msCloseTimePicker() {
 }
 window.msDraftAddTime = function(t) {
   if (!t) return;
+  if (t < _MS_FIRST_SLOT || t > _MS_LAST_SLOT) { toast('可開放時間是 ' + _MS_FIRST_SLOT + '–' + _MS_LAST_SLOT, 'warning'); return; }
   if (_msDraftSlots.some(function(s){ return s.time === t; })) { toast(t + ' 已經在清單裡了', 'warning'); msRenderDraftSlots(); return; }
   _msDraftSlots.push({ time: t, capacity: 1 });
   _msDraftSlots.sort(function(a, b){ return String(a.time).localeCompare(String(b.time)); });
@@ -24185,6 +24190,7 @@ window.msDraftAddSlot = function() {
     var min = (parseInt(hm[0], 10) || 9) * 60 + (parseInt(hm[1], 10) || 0) + 15;
     t = ('0' + Math.floor(min / 60)).slice(-2) + ':' + ('0' + (min % 60)).slice(-2);
   }
+  if (t > _MS_LAST_SLOT) { toast('最晚一節是 ' + _MS_LAST_SLOT + '，不能再往後加', 'warning'); return; }
   _msDraftSlots.push({ time: t, capacity: 1 });
   msRenderDraftSlots();
 };
