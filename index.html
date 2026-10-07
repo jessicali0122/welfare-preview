@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007160243';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007160405';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1701,6 +1701,21 @@ body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-role-opt{flex-wrap:wrap;row-gap:2px}
 /* 午茶活動卡（手機）：複製鈕只留圖示、縮內距，讓人數／壽星／品項有空間不被擠斷 */
 @media(max-width:520px){.ht-evmain{padding:12px!important;gap:10px!important}.ht-dupbtn{padding:4px 8px!important;margin-right:6px!important}.ht-dupbtn .t{display:none}}
+/* 報到結果卡（畫面正中央） */
+.ms-ci{position:fixed;inset:0;z-index:10055;background:rgba(46,51,45,.45);display:flex;align-items:center;justify-content:center;padding:24px;font-family:'Noto Sans TC',sans-serif;animation:msCiIn .2s ease-out}
+@keyframes msCiIn{from{opacity:0}to{opacity:1}}
+.ms-ci .card{background:#fff;border-radius:24px;padding:32px 24px 20px;width:100%;max-width:340px;text-align:center;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.ms-ci .ic{width:76px;height:76px;margin:0 auto 14px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#fff;background:#22826A}
+.ms-ci.late .ic{background:#E0820A}
+.ms-ci.fail .ic{background:#B42318}
+.ms-ci .tt{font-size:24px;font-weight:800;color:#2E332D}
+.ms-ci .sb{margin-top:8px;font-size:16px;color:#4A4F49;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+.ms-ci.late .tt{color:#B54708}
+.ms-ci.fail .tt{color:#B42318}
+.ms-ci .ok{margin-top:22px;width:100%;border:none;border-radius:14px;padding:13px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;background:#22826A;color:#fff}
+.ms-ci.late .ok{background:#E0820A}
+.ms-ci.fail .ok{background:#2E332D}
+@media (prefers-reduced-motion:reduce){.ms-ci{animation:none}}
 /* 網站內掃碼報到 */
 .ms-scan{position:fixed;inset:0;z-index:10045;background:#111;display:flex;flex-direction:column;color:#fff;font-family:'Noto Sans TC',sans-serif}
 .ms-scan .hd{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;font-size:16px}
@@ -23591,14 +23606,38 @@ window.msScanCheckIn = async function() {
   };
   st.raf = setTimeout(tick, 150);
 };
+function _msCheckInResult(kind, title, sub) {
+  var old = document.getElementById('ms-ci-result'); if (old) old.remove();
+  var icon = kind === 'fail' ? '✕' : (kind === 'late' ? '!' : '✓');
+  var ov = document.createElement('div');
+  ov.id = 'ms-ci-result';
+  ov.className = 'ms-ci ' + kind;
+  ov.setAttribute('role', 'alertdialog');
+  ov.innerHTML = '<div class="card"><div class="ic" aria-hidden="true">' + icon + '</div><div class="tt">' + htEsc(title) + '</div><div class="sb">' + htEsc(sub) + '</div>'
+    + '<button type="button" class="ok">' + (kind === 'fail' ? '知道了' : '好') + '</button></div>';
+  var close = function(){ ov.remove(); };
+  ov.querySelector('.ok').onclick = close;
+  ov.onclick = function(e){ if (e.target === ov) close(); };
+  document.body.appendChild(ov);
+  if (kind !== 'fail') setTimeout(close, 6000);   // 成功的 6 秒自動關；失敗的要按「知道了」，避免沒看到原因
+}
 window.msCheckInFromQR = async function(token) {
   var r;
   try { r = await htApi('massageCheckInQR', { token: token }); } catch(e) {}
   var url = new URL(window.location.href);
   url.searchParams.delete('ms_token');
   window.history.replaceState({}, '', url.toString());
-  if (!r || !r.ok) { toast('❌ 報到失敗：' + (r && r.error ? r.error : 'QR Code 無效或已過期'), 'error'); return; }
-  toast(r.late ? '✅ 報到成功（遲到 ' + (r.lateMin || '') + ' 分鐘，下次準時哦）' : '✅ 報到成功！');
+  // 報到結果用畫面正中央的大卡片（使用者 2026-10-07：底部 toast 太不明顯）
+  if (!r || !r.ok) { _msCheckInResult('fail', '報到失敗', (r && r.error) ? r.error : 'QR Code 無效或已過期'); return; }
+  var _slot = '';
+  try {
+    var _today = fmtDateStr(new Date());
+    var _bk = ((_msData && _msData.myBookings) || []).filter(function(b){ return b.date === _today && b.status === 'booked'; })
+      .sort(function(a, b){ return Math.abs(new Date(_today + 'T' + a.timeSlot) - new Date()) - Math.abs(new Date(_today + 'T' + b.timeSlot) - new Date()); })[0];
+    if (_bk) { _slot = _bk.timeSlot; _bk.status = 'attended'; }
+  } catch(e) {}
+  if (r.late) _msCheckInResult('late', '報到成功', (_slot ? _slot + ' 時段・' : '') + '遲到 ' + (r.lateMin || '') + ' 分鐘，下次記得準時哦');
+  else _msCheckInResult('ok', '報到成功', (_slot ? _slot + ' 時段・' : '') + '請稍候，師傅馬上為你服務');
   msRenderCal(); msRenderMyBookings();
   try { if (typeof msRefreshFromServer === 'function') msRefreshFromServer(); } catch(e) {}   // 票卡立刻變「已報到」
 };
