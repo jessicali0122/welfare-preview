@@ -5,13 +5,13 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007175450';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007175842';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
-  // 版本檢查：開頁時檢查一次；之後「切回這個分頁」或每 5 分鐘再檢查（2026-10-07：原本只在開頁檢查，
+  // 版本檢查：開頁時檢查一次；之後「切回這個分頁」或每 1 分鐘再檢查（2026-10-07：原本只在開頁檢查，
   //   頁面一直開著就永遠是舊版，要手動重新整理）。
-  //   有新版時：沒在填東西 → 直接更新（停在原頁）；正在填申請單／開著彈窗或編輯器 → 只跳一條提示，讓使用者自己按更新。
+  //   有新版時：沒在填東西 → 直接更新（停在原頁）；正在填申請單／開著彈窗或編輯器 → 不打擾，等空閒了再自動更新（不跳提示）。
   function _doReload(v) {
     var key = 'bf_reloaded_for';
     if (sessionStorage.getItem(key) === v) return;  // 本次已為此版重載過，避免迴圈
@@ -50,20 +50,19 @@
     } catch (e) {}
     return false;
   }
-  function _showUpdateBar(v) {
-    if (document.getElementById('bf-update-bar')) return;
-    var bar = document.createElement('div');
-    bar.id = 'bf-update-bar';
-    bar.setAttribute('role', 'status');
-    bar.style.cssText = 'position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:10070;background:#2E332D;color:#fff;border-radius:999px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);white-space:nowrap;font-family:inherit';
-    bar.innerHTML = '<span>網站有新版本</span><button type="button" style="border:none;background:#0066CC;color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">更新</button>';
-    bar.querySelector('button').onclick = function(){ _doReload(v); };
-    document.body.appendChild(bar);
+  // 正在填東西時先記著新版本，每 20 秒看一次，等使用者空閒（填完、關掉彈窗）就悄悄更新——不跳任何提示
+  var _pendingVer = null;
+  function _waitIdleThenReload(v) {
+    if (_pendingVer) { _pendingVer = v; return; }
+    _pendingVer = v;
+    var t = setInterval(function(){
+      if (document.visibilityState === 'visible' && !_busy()) { clearInterval(t); _doReload(_pendingVer); }
+    }, 20000);
   }
   var _checking = false, _lastCheck = 0;
   function _checkVersion(onLoad) {
     if (_checking) return;
-    if (!onLoad && Date.now() - _lastCheck < 60000) return;   // 切分頁很頻繁時，1 分鐘內不重複檢查
+    if (!onLoad && Date.now() - _lastCheck < 30000) return;   // 切分頁很頻繁時，30 秒內不重複檢查
     _checking = true; _lastCheck = Date.now();
     try {
       fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
@@ -73,14 +72,15 @@
           if (!v) return;
           v = v.trim();
           if (!v || v === APP_VERSION) return;            // 已是最新
-          if (onLoad || !_busy()) _doReload(v); else _showUpdateBar(v);
+          if (onLoad || !_busy()) _doReload(v); else _waitIdleThenReload(v);
         })
         .catch(function(){ _checking = false; });
     } catch (e) { _checking = false; }
   }
   _checkVersion(true);
   document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') _checkVersion(false); });
-  setInterval(function(){ if (document.visibilityState === 'visible') _checkVersion(false); }, 5 * 60 * 1000);
+  // 每分鐘一次：version.txt 是 GitHub Pages 上的小靜態檔，頻繁檢查不增加後端負擔；GitHub 上線本身約需 1～2 分鐘，再快也拿不到新檔
+  setInterval(function(){ if (document.visibilityState === 'visible') _checkVersion(false); }, 60 * 1000);
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
