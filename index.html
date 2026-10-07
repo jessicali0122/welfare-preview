@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261006173221';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007122045';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -7969,6 +7969,8 @@ function handleAuthError(serverRejected) {
 }
 function _showAuthExpiredBar() {
   if (document.getElementById('auth-expired-bar')) return;
+  // 本機預覽（?demo=1）本來就沒有真登入憑證 → 不顯示「憑證已過期」，也不清除登入資料
+  if (window.currentUser && window.currentUser.token === 'demo') return;
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token');       // 一併清掉失效 token，勿讓死 token 留存
   localStorage.removeItem('bf_sb_tok');      // 連 Supabase JWT 快取一起清（與 reLogin 一致），勿留死憑證
