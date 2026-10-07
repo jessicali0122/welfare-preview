@@ -5,43 +5,82 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007175027';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007175450';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
-  try {
-    fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
-      .then(function(r){ return r.ok ? r.text() : null; })
-      .then(function(v){
-        if (!v) return;
-        v = v.trim();
-        if (!v || v === APP_VERSION) return;            // 已是最新
-        var key = 'bf_reloaded_for';
-        if (sessionStorage.getItem(key) === v) return;  // 本次已為此版重載過，避免迴圈
-        sessionStorage.setItem(key, v);
-        // ★ 只做 location.replace 是不夠的：瀏覽器可能又從 HTTP 快取拿同一份舊 HTML，
-        //   而 sessionStorage 已記下「已為此版重載過」→ 之後連重試都不會做，
-        //   整個分頁就永遠卡在舊版（Ctrl+Shift+R 也未必壓得掉）。
-        //   所以先清 Cache Storage、並用 cache:'reload' 強制從網路重抓一次把快取條目換掉。
-        var _went = false;
-        var go = function(){
-          if (_went) return; _went = true;
-          location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
-        };
-        setTimeout(go, 3000);                            // 保險：3 秒內沒清完也照樣更新
-        var jobs = [];
-        try {
-          if (window.caches && caches.keys) {
-            jobs.push(caches.keys().then(function(ks){
-              return Promise.all(ks.map(function(k){ return caches.delete(k); }));
-            }));
-          }
-        } catch (e) {}
-        jobs.push(fetch(location.pathname, { cache: 'reload' }).catch(function(){}));
-        Promise.all(jobs).catch(function(){}).then(go);
-      })
-      .catch(function(){});
-  } catch (e) {}
+  // 版本檢查：開頁時檢查一次；之後「切回這個分頁」或每 5 分鐘再檢查（2026-10-07：原本只在開頁檢查，
+  //   頁面一直開著就永遠是舊版，要手動重新整理）。
+  //   有新版時：沒在填東西 → 直接更新（停在原頁）；正在填申請單／開著彈窗或編輯器 → 只跳一條提示，讓使用者自己按更新。
+  function _doReload(v) {
+    var key = 'bf_reloaded_for';
+    if (sessionStorage.getItem(key) === v) return;  // 本次已為此版重載過，避免迴圈
+    sessionStorage.setItem(key, v);
+    // ★ 只做 location.replace 是不夠的：瀏覽器可能又從 HTTP 快取拿同一份舊 HTML，
+    //   而 sessionStorage 已記下「已為此版重載過」→ 之後連重試都不會做，
+    //   整個分頁就永遠卡在舊版（Ctrl+Shift+R 也未必壓得掉）。
+    //   所以先清 Cache Storage、並用 cache:'reload' 強制從網路重抓一次把快取條目換掉。
+    var _went = false;
+    var go = function(){
+      if (_went) return; _went = true;
+      location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
+    };
+    setTimeout(go, 3000);                            // 保險：3 秒內沒清完也照樣更新
+    var jobs = [];
+    try {
+      if (window.caches && caches.keys) {
+        jobs.push(caches.keys().then(function(ks){
+          return Promise.all(ks.map(function(k){ return caches.delete(k); }));
+        }));
+      }
+    } catch (e) {}
+    jobs.push(fetch(location.pathname, { cache: 'reload' }).catch(function(){}));
+    Promise.all(jobs).catch(function(){}).then(go);
+  }
+  // 現在更新會不會讓使用者丟掉正在填的東西
+  function _busy() {
+    try {
+      var nf = document.getElementById('view-new-form');
+      if (nf && nf.classList.contains('active') && typeof _formHasContent === 'function' && _formHasContent()) return true;
+      if (document.querySelector('.modal-bg.open, #ms-tp, .ms-scan, #ms-ci-result, #inapp-help')) return true;
+      var ed = document.getElementById('ms-open-editor-wrap');
+      if (ed && ed.offsetParent && ed.style.display !== 'none') return true;
+      var ae = document.activeElement;
+      if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return true;
+    } catch (e) {}
+    return false;
+  }
+  function _showUpdateBar(v) {
+    if (document.getElementById('bf-update-bar')) return;
+    var bar = document.createElement('div');
+    bar.id = 'bf-update-bar';
+    bar.setAttribute('role', 'status');
+    bar.style.cssText = 'position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:10070;background:#2E332D;color:#fff;border-radius:999px;padding:8px 8px 8px 16px;display:flex;align-items:center;gap:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);white-space:nowrap;font-family:inherit';
+    bar.innerHTML = '<span>網站有新版本</span><button type="button" style="border:none;background:#0066CC;color:#fff;border-radius:999px;padding:6px 14px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">更新</button>';
+    bar.querySelector('button').onclick = function(){ _doReload(v); };
+    document.body.appendChild(bar);
+  }
+  var _checking = false, _lastCheck = 0;
+  function _checkVersion(onLoad) {
+    if (_checking) return;
+    if (!onLoad && Date.now() - _lastCheck < 60000) return;   // 切分頁很頻繁時，1 分鐘內不重複檢查
+    _checking = true; _lastCheck = Date.now();
+    try {
+      fetch('version.txt?cb=' + Date.now(), { cache: 'no-store' })
+        .then(function(r){ return r.ok ? r.text() : null; })
+        .then(function(v){
+          _checking = false;
+          if (!v) return;
+          v = v.trim();
+          if (!v || v === APP_VERSION) return;            // 已是最新
+          if (onLoad || !_busy()) _doReload(v); else _showUpdateBar(v);
+        })
+        .catch(function(){ _checking = false; });
+    } catch (e) { _checking = false; }
+  }
+  _checkVersion(true);
+  document.addEventListener('visibilitychange', function(){ if (document.visibilityState === 'visible') _checkVersion(false); });
+  setInterval(function(){ if (document.visibilityState === 'visible') _checkVersion(false); }, 5 * 60 * 1000);
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
@@ -1696,8 +1735,7 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-editday:hover,.ms-editday:focus-visible{background:#0052A3;border-color:#0052A3;box-shadow:0 4px 10px rgba(0,102,204,.3);outline:none}
 /* 按摩注意事項：粗體重點詞整組不拆行（太長放不下就整組換到下一行，不會拆成兩半） */
 #ms-notice-body strong,#ms-notice-body span[style*="font-weight:700"]{white-space:nowrap}
-#ms-notice-body .ms-ntgrid{display:grid;grid-template-columns:1fr;gap:6px 32px}
-@media(min-width:900px){#ms-notice-body .ms-ntgrid{grid-template-columns:1fr 1fr}}
+#ms-notice-body .ms-ntgrid{display:grid;grid-template-columns:1fr;gap:6px}
 #ms-notice-body .ms-ntslogan{grid-column:1/-1}
 #ms-notice-body .ms-nt{display:flex;gap:10px;align-items:flex-start}
 /* 注意事項重點上色：粉＝規則數字、綠＝準時、橘＝遲到、紅＝缺席 */
@@ -5052,7 +5090,7 @@ thead th{color:#767B75!important}
         <svg id="ms-notice-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div id="ms-notice-body" style="font-size:14px;color:#4A4F49;line-height:1.7;margin-top:8px">
-        <!-- 2026-10-07 精簡：一條一件事、重點粗體；電腦兩欄並排（6 條→3 行），手機一欄 -->
+        <!-- 2026-10-07 定稿（版型 A）：單欄，一條一行「標題｜說明」，重點上色 -->
         <div class="ms-ntgrid">
           <div class="ms-nt">
             <span class="i">📅</span>
@@ -5068,7 +5106,7 @@ thead th{color:#767B75!important}
           </div>
           <div class="ms-nt">
             <span class="i">🕒</span>
-            <span><strong>遲到</strong>｜<b class="ok">5&nbsp;分鐘內準時</b>，<wbr><b class="warn">5～15&nbsp;分鐘遲到</b>，<wbr><b class="bad">逾&nbsp;15&nbsp;分鐘未報到視為缺席</b></span>
+            <span><strong>遲到</strong>｜<b class="ok">✅&nbsp;5&nbsp;分鐘內準時</b>，<wbr><b class="warn">⏰&nbsp;5～15&nbsp;分鐘遲到</b>，<wbr><b class="bad">❌&nbsp;逾&nbsp;15&nbsp;分鐘未報到視為缺席</b></span>
           </div>
           <div class="ms-nt">
             <span class="i">⚠️</span>
