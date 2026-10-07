@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007122045';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007144944';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2109,6 +2109,10 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 #login-screen #google-login-btn{width:100%;height:50px;border-radius:12px;background:linear-gradient(135deg,#5E86C4,#084C99);border:none;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;letter-spacing:.08em;color:#fff;font-weight:600;cursor:pointer;transition:transform .15s,box-shadow .2s,filter .2s;font-family:'Noto Sans TC',sans-serif;box-shadow:0 3px 10px rgba(87,123,83,.25)}
 #login-screen #google-login-btn:hover{transform:translateY(-1px);filter:brightness(1.06);box-shadow:0 6px 16px rgba(87,123,83,.35)}
 #login-screen #google-login-btn:active{transform:scale(.98)}
+#login-screen .lg-qrhint{margin-top:14px;background:rgba(255,249,240,.95);border:1px solid #F4CF9A;border-radius:16px;padding:14px 16px;font-size:14px;line-height:1.6;color:#8A5A1C;text-align:left;display:flex;flex-direction:column;gap:4px}
+#login-screen .lg-qrhint .h{font-weight:700;color:#B0701F}
+#login-screen .lg-qrhint .w{margin-top:6px;padding-top:8px;border-top:1px dashed #F4CF9A;font-size:12px;color:#8A6A40}
+#login-screen .lg-qrhint b{color:#B0701F;white-space:nowrap}
 #login-screen .lg-note{font-size:12px;letter-spacing:.04em;color:#767B75;font-weight:400;margin-top:14px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
 #login-screen .lg-note::before,#login-screen .lg-note::after{content:'';width:20px;height:1px;background:#D5DED3}
 </style>
@@ -6211,6 +6215,23 @@ function _safeSsSet(k, v) { try { sessionStorage.setItem(k, v); } catch(e) { try
 
 // 公司帳號登入：OAuth implicit flow 全頁轉址
 function doGoogleLogin() {
+  // ★ LINE 內建瀏覽器：Google 會擋登入（轉圈圈卡住）。改帶 LINE 官方參數 openExternalBrowser=1 重開本頁，
+  //   LINE 會把這頁交給手機的 Safari／Chrome 開啟；掃碼報到的 ms_token 一併帶過去（外部瀏覽器讀不到這裡的 sessionStorage）。
+  //   已帶過參數仍在 LINE 裡（LINE 沒照做）→ 不再重跳，照常走登入，避免無限循環。
+  try {
+    if (/\bLine\//i.test(navigator.userAgent || '')) {
+      var _lu = new URL(location.href);
+      if (_lu.searchParams.get('openExternalBrowser') !== '1') {
+        _lu.searchParams.set('openExternalBrowser', '1');
+        if (!_lu.searchParams.get('ms_token')) {
+          var _mt = null; try { _mt = sessionStorage.getItem('bf_ms_token') || localStorage.getItem('bf_ms_token'); } catch(e) {}
+          if (_mt) _lu.searchParams.set('ms_token', _mt);
+        }
+        location.replace(_lu.toString());
+        return;
+      }
+    }
+  } catch(e) {}
   var nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
   _safeSsSet('bf_oauth_nonce', nonce);
   // 記住登入前所在頁面：OAuth 轉址回來 hash 會被 id_token 蓋掉，登入完成後由 showApp 還原
@@ -6261,11 +6282,14 @@ async function _bfBoot() {
       setTimeout(function() {
         var ls = document.getElementById('login-screen');
         if (ls && ls.style.display !== 'none' && !document.getElementById('ms-qr-login-hint')) {
+          // 放在登入卡片裡（登入框正下方）；原本加在整個登入頁（橫向置中的 flex）→ 變成擠在右邊的一條直欄
           var d = document.createElement('div');
           d.id = 'ms-qr-login-hint';
-          d.style.cssText = 'margin:14px auto 0;max-width:320px;background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:10px 14px;font-size:14px;color:#B0701F;line-height:1.7;text-align:left';
-          d.innerHTML = '🔲 <b>掃碼報到</b>：登入後會自動完成報到。<br>⚠️ 若點登入後沒反應或出錯，代表目前在 App 內建瀏覽器（LINE 等），請點選單改用 <b>Safari／Chrome 開啟此頁</b>再登入。';
-          ls.appendChild(d);
+          d.className = 'lg-qrhint';
+          d.innerHTML = '<div class="h">📱 掃碼報到</div>'
+            + '<div>登入後<wbr>會自動完成報到</div>'
+            + '<div class="w">登入沒反應？<wbr>LINE 等 App 內建瀏覽器<wbr>會擋 Google 登入，<wbr>請點右上角選單，<wbr>改用 <b>Safari／Chrome</b> 開啟</div>';
+          (ls.querySelector('.lg-card') || ls).appendChild(d);
         }
       }, 400);
     }
@@ -22480,10 +22504,17 @@ function _msNormalizePending(list) {
 }
 
 var _msOfflineNotified = false; // 離線提醒防洗版：同一次斷線只提示一次，恢復連線後才重置
+// ★ 2026-10-07 修正「開放成功卻整個消失」：讀取送出後、回來前若剛好有開放／關閉／修改時段成功，
+//   這次回來的是「寫入前的舊資料」，不可蓋掉畫面上剛寫好的結果 → 以寫入序號判斷，舊回應直接丟棄
+var _msWriteSeq = 0, _msGotLive = false;
+function _msMarkWrite() { _msWriteSeq++; try { _msSaveLocal(); } catch(e) {} }
 async function msFetchData() {
+  var _seq0 = _msWriteSeq;
   try {
     var r = await htApi('massageGetData', {});
+    if (_seq0 !== _msWriteSeq && _msData) return;   // 期間有寫入 → 這份是舊資料，保留畫面上的新結果
     if (r && r.ok) {
+      _msGotLive = true;
       // ★ 後端已改走 Supabase（真實來源），r.ok 為 true 時 openDates 即使是空物件也是正確狀態
       //   （代表目前沒有開放任何日期），不可再拿舊快取蓋回去，否則已關閉/清空的日期永遠洗不掉。
       _msData = r;
@@ -22509,6 +22540,11 @@ async function msFetchData() {
 function _msApplyLocalFallback() {
   var _saved = _msLoadLocal();
   if (!_saved || !_msData) return;
+  // 這次開頁已經拿過伺服器的真實資料（或剛寫入過）→ 記憶體比本機快取新，不可拿舊快取蓋回去
+  if (_msGotLive || _msWriteSeq) {
+    if (window.toast && !_msOfflineNotified) { toast('⚠️ 暫時連不上伺服器，畫面資料可能不是最新', 'warning'); _msOfflineNotified = true; }
+    return;
+  }
   if (_saved.openDates) _msData.openDates = _saved.openDates;
   if (_saved.myBookings) _msData.myBookings = _saved.myBookings;
   if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
@@ -23084,6 +23120,7 @@ function _msUpdateBookingStatus(bookingId, status) {
 
 // 供除錯／測試用：讀取按摩模組內部狀態（閉包變數無法從外部觸及）
 window._msDebugData = function(){ return _msData; };
+window._msDebugFetch = function(){ return msFetchData(); };   // 測試用：重現「讀取中途寫入」的競態
 
 // ── 預約詳情彈窗（方案C）：票卡與時段名單的共同操作中心 ──
 window.msOpenBookingDetail = function(bookingId) {
@@ -23721,6 +23758,7 @@ window.msInlineEditCapacity = async function(ds, idx, newVal) {
   try { r = await htApi('massageEditDate', { date: ds, slots: slots }); } catch(e) {}
   if (!r || !r.ok) { toast('❌ 更新失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); msRenderOpenDates(); return; }
   entry.slots = slots;
+  _msMarkWrite();
   toast('✅ 已更新 ' + ds + ' ' + slots[idx].time + ' 名額為 ' + cap);
   msRenderOpenDates(); msRenderCal();
 };
@@ -23869,7 +23907,7 @@ window.msConfirmOpenDate = async function() {
     var existed = !!_msData.openDates[ds2];
     var r = null;
     try { r = await htApi(existed ? 'massageEditDate' : 'massageOpenDate', { date: ds2, slots: slots }); } catch(e) {}
-    if (r && r.ok) { _msData.openDates[ds2] = { slots: slots }; okDates.push(ds2); }
+    if (r && r.ok) { _msData.openDates[ds2] = { slots: slots }; okDates.push(ds2); _msMarkWrite(); }
     else failDates.push(ds2);
   }
   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '確認開放'; }
@@ -23896,6 +23934,7 @@ window.msCloseDate = function(ds) {
       var r; try { r = await htApi('massageCloseDate', { date: ds }); } catch(e) {}
       if (!r || !r.ok) { toast('❌ 關閉失敗：' + (r && r.error ? r.error : '網路連線失敗，請稍後再試'), 'error'); return; }
       if (_msData && _msData.openDates) delete _msData.openDates[ds];
+      _msMarkWrite();
       msRenderOpenDates(); msRenderCal(); toast('已關閉 ' + _msMD(ds) + ' 的開放');
       if (typeof msResetOpenEditor === 'function') msResetOpenEditor();
     }
