@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007151921';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007153000';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2166,11 +2166,16 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 .inapp-help .box{background:#fff;border-radius:18px;padding:22px 20px 16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Noto Sans TC',sans-serif;color:#2E332D}
 .inapp-help .t{font-size:18px;font-weight:800;margin-bottom:6px}
 .inapp-help .d{font-size:14px;color:#767B75;line-height:1.6}
-.inapp-help ol{margin:14px 0 16px;padding:12px 14px 12px 32px;background:#F7F8F6;border-radius:12px;font-size:14px;line-height:1.9}
+.inapp-help .btns{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.inapp-help .b{background:#0066CC;color:#fff;border:none}
+.inapp-help .b.chrome{background:#fff;color:#0066CC;border:1.5px solid #0066CC}
+.inapp-help .msg{font-size:14px;color:#B54708;line-height:1.6;margin-top:8px;min-height:0}
+.inapp-help .msg:empty{display:none}
+.inapp-help .line{margin-top:12px;padding:10px 12px;background:#F7F8F6;border-radius:12px;font-size:14px;line-height:1.7;color:#4A4F49}
 .inapp-help b{white-space:nowrap}
 .inapp-help button{display:block;width:100%;border-radius:12px;padding:12px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer}
-.inapp-help .copy{background:#0066CC;color:#fff;border:none}
-.inapp-help .close{margin-top:8px;background:none;border:none;color:#767B75;font-size:14px;font-weight:600}
+.inapp-help .copy{margin-top:12px;background:none;border:none;color:#0066CC;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;padding:6px}
+.inapp-help .close{margin-top:2px;background:none;border:none;color:#767B75;font-size:14px;font-weight:600}
 #login-screen .lg-note{font-size:12px;letter-spacing:.04em;color:#767B75;font-weight:400;margin-top:14px;text-align:center;display:flex;align-items:center;justify-content:center;gap:6px}
 #login-screen .lg-note::before,#login-screen .lg-note::after{content:'';width:20px;height:1px;background:#D5DED3}
 </style>
@@ -6300,10 +6305,9 @@ function doGoogleLogin() {
     var _retHash = (location.hash || '').slice(1);
     if (_retHash && !_retHash.includes('id_token=')) _tgt.hash = _retHash;
     if (_isIOS && (_inApp || _mt) && _cur.searchParams.get('xs') !== '1') {
+      // 2026-10-07 實測：相機掃碼可自動轉 Safari，但 LINE 會擋自動跳轉 → 改成讓使用者自己選 Safari 或 Chrome
       _tgt.searchParams.set('xs', '1');
-      var _helpUrl = _tgt.toString();
-      setTimeout(function(){ if (!document.hidden) _showInAppLoginHelp(_helpUrl, _isLine); }, 1800);
-      location.href = 'x-safari-' + _helpUrl;
+      _showInAppLoginHelp(_tgt.toString(), _isLine, true);
       return;
     }
     if (_inApp && !_isIOS) {
@@ -6312,7 +6316,8 @@ function doGoogleLogin() {
         location.replace(_tgt.toString());
         return;
       }
-      _showInAppLoginHelp(_tgt.toString(), _isLine);
+      _tgt.searchParams.set('xs', '1');
+      _showInAppLoginHelp(_tgt.toString(), _isLine, false);
       return;
     }
   } catch(e) {}
@@ -6335,27 +6340,45 @@ function doGoogleLogin() {
 }
 
 // App 內建瀏覽器的登入說明：Google 不允許在 LINE 等 App 裡登入 → 教使用者改用 Safari／Chrome 開啟本頁
-function _showInAppLoginHelp(url, isLine) {
+function _showInAppLoginHelp(url, isLine, isIOS) {
   if (document.getElementById('inapp-help')) return;
+  var noScheme = url.replace(/^https?:\/\//, '');
   var ov = document.createElement('div');
   ov.id = 'inapp-help';
   ov.className = 'inapp-help';
   ov.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="inapp-t">'
-    + '<div class="t" id="inapp-t">請改用 Safari 或 Chrome 開啟</div>'
-    + '<div class="d">Google 不允許在 ' + (isLine ? 'LINE' : 'App') + ' 裡登入公司帳號，<wbr>直接登入會在驗證後失敗。</div>'
-    + '<ol>'
-    + '<li>點畫面' + (isLine ? '右上角的 <b>≡</b>' : '右上角的 <b>⋯</b>') + '</li>'
-    + '<li>選<b>「在預設瀏覽器開啟」</b><wbr>或<b>「以 Safari 開啟」</b></li>'
-    + '<li>在 Safari 裡登入，<wbr>掃碼報到會自動完成</li>'
-    + '</ol>'
-    + '<button type="button" class="copy">複製網址（貼到 Safari）</button>'
-    + '<button type="button" class="close">關閉</button>'
+    + '<div class="t" id="inapp-t">請用 Safari 或 Chrome 開啟</div>'
+    + '<div class="d">這個小視窗<wbr>無法完成 Google 驗證。<wbr>改用瀏覽器開啟後登入，<wbr>可記住 7 天，<wbr>之後掃碼直接報到。</div>'
+    + '<div class="btns">'
+    + (isIOS ? '<button type="button" class="b safari">用 Safari 開啟</button>' : '')
+    + '<button type="button" class="b chrome">用 Chrome 開啟</button>'
+    + '</div>'
+    + '<div class="msg" aria-live="polite"></div>'
+    + (isLine ? '<div class="line"><b>按了沒反應？</b><wbr>點右上角 <b>≡</b> →<wbr><b>「在預設瀏覽器開啟」</b></div>' : '')
+    + '<button type="button" class="copy">複製網址，自己貼到瀏覽器</button>'
+    + '<button type="button" class="close">取消</button>'
     + '</div>';
+  var msg = ov.querySelector('.msg');
+  // 按了之後 1.5 秒還在本頁（沒跳出去）→ 提示改用另一個方式
+  var watch = function(name) {
+    setTimeout(function(){
+      if (document.hidden || !document.getElementById('inapp-help')) return;
+      msg.textContent = name + ' 沒有開啟？' + (name === 'Chrome' ? '可能沒有安裝 Chrome，' : '') + (isLine ? '請照下方步驟手動開啟，或複製網址。' : '請改按另一個，或複製網址。');
+    }, 1500);
+  };
+  var sf = ov.querySelector('.safari');
+  if (sf) sf.onclick = function(){ msg.textContent = ''; location.href = 'x-safari-' + url; watch('Safari'); };
+  ov.querySelector('.chrome').onclick = function(){
+    msg.textContent = '';
+    if (isIOS) location.href = 'googlechromes://' + noScheme;
+    else location.href = 'intent://' + noScheme.replace(/#.*$/, '') + '#Intent;scheme=https;package=com.android.chrome;end';
+    watch('Chrome');
+  };
   ov.querySelector('.copy').onclick = function() {
     var btn = this;
-    var done = function(){ btn.textContent = '✅ 已複製，請貼到 Safari 網址列'; };
-    try { navigator.clipboard.writeText(url).then(done, function(){ prompt('請複製這個網址，貼到 Safari：', url); }); }
-    catch(e) { prompt('請複製這個網址，貼到 Safari：', url); }
+    var done = function(){ btn.textContent = '✅ 已複製，請貼到瀏覽器網址列'; };
+    try { navigator.clipboard.writeText(url).then(done, function(){ prompt('請複製這個網址，貼到瀏覽器：', url); }); }
+    catch(e) { prompt('請複製這個網址，貼到瀏覽器：', url); }
   };
   ov.querySelector('.close').onclick = function(){ ov.remove(); };
   document.body.appendChild(ov);
@@ -6400,8 +6423,8 @@ async function _bfBoot() {
           d.innerHTML = '<div class="h">📱 掃碼報到</div>'
             + '<div>登入後<wbr>會自動完成報到</div>'
             + (new URLSearchParams(location.search).get('xs') === '1'
-                ? '<div class="w">已改用 Safari 開啟，<wbr>登入一次可記住 7 天，<wbr>之後掃碼直接報到。</div>'
-                : '<div class="w">按登入後<wbr>會自動改用 Safari 開啟<wbr>（相機或 LINE 的小視窗<wbr>無法完成 Google 驗證），<wbr>跳出詢問時請按「開啟」。</div>');
+                ? '<div class="w">已改用瀏覽器開啟，<wbr>登入一次可記住 7 天，<wbr>之後掃碼直接報到。</div>'
+                : '<div class="w">按登入後<wbr>請選「用 Safari 開啟」<wbr>或「用 Chrome 開啟」<wbr>（相機或 LINE 的小視窗<wbr>無法完成 Google 驗證）。</div>');
           (ls.querySelector('.lg-card') || ls).appendChild(d);
         }
       }, 400);
