@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007145344';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007145945';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1701,6 +1701,29 @@ body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-role-opt{flex-wrap:wrap;row-gap:2px}
 /* 午茶活動卡（手機）：複製鈕只留圖示、縮內距，讓人數／壽星／品項有空間不被擠斷 */
 @media(max-width:520px){.ht-evmain{padding:12px!important;gap:10px!important}.ht-dupbtn{padding:4px 8px!important;margin-right:6px!important}.ht-dupbtn .t{display:none}}
+/* 今日報到 QR 卡 */
+.ms-qr{container-type:inline-size;margin-top:12px;background:#fff;border:1px solid #F4C0D1;border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(46,51,45,.04)}
+.ms-qr-in{display:flex;align-items:center;gap:18px}
+.ms-qr-code{flex-shrink:0;padding:10px;background:#fff;border:1px solid #E6ECF3;border-radius:14px;cursor:zoom-in;line-height:0}
+.ms-qr-code img,.ms-qr-code canvas{display:block}
+.ms-qr-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.ms-qr-eb{font-size:12px;font-weight:700;letter-spacing:.16em;color:#EC4F7D}
+.ms-qr-t{font-size:16px;font-weight:800;color:#2E332D}
+.ms-qr-date{align-self:flex-start;margin-top:2px;background:#FBEAF0;color:#C63968;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.ms-qr-steps{margin:8px 0 0;padding-left:20px;font-size:14px;color:#4A4F49;line-height:1.7}
+.ms-qr-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.ms-qr-full{background:#EC4F7D;color:#fff;border:none;border-radius:10px;padding:8px 14px;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+.ms-qr-full:hover{background:#C63968}
+.ms-qr-re{background:none;border:1px solid #D5DAE2;color:#767B75;border-radius:10px;padding:8px 12px;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
+.ms-qr-re:hover{border-color:#0066CC;color:#0066CC}
+.ms-qr-ov{position:fixed;inset:0;z-index:10040;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;cursor:pointer;padding:24px;text-align:center}
+.ms-qr-ov-t{font-size:28px;font-weight:800;color:#2E332D;letter-spacing:.1em}
+.ms-qr-ov-s{font-size:16px;color:#767B75}
+.ms-qr-ov-c{margin:14px 0;padding:16px;border:2px solid #F4C0D1;border-radius:20px;line-height:0}
+.ms-qr-ov-c img,.ms-qr-ov-c canvas{display:block}
+.ms-qr-ov-x{font-size:12px;color:#8A8F88}
+@container (max-width:460px){.ms-qr-in{flex-direction:column;text-align:center}.ms-qr-info{align-items:center}.ms-qr-date{align-self:center}.ms-qr-steps{text-align:left}.ms-qr-acts{justify-content:center}}
+@media(max-width:520px){.ms-qr-in{flex-direction:column;text-align:center}.ms-qr-info{align-items:center}.ms-qr-date{align-self:center}.ms-qr-steps{text-align:left}.ms-qr-acts{justify-content:center}}
 /* 修改預約／轉讓彈窗 */
 .ms-mlbl{font-size:14px;font-weight:700;color:#4A4F49;margin-bottom:8px}
 .ms-mdates{display:flex;flex-wrap:wrap;gap:8px}
@@ -5133,14 +5156,22 @@ thead th{color:#767B75!important}
             </div>
           </div>
           <!-- 今日報到 QR：管理者選到「今天」時自動顯示並自動產生；按鈕僅供 QR 有問題時重新產生 -->
-          <div id="ms-qr-section" style="display:none;background:#FDF1F5;border:1px solid #F5D9E3;border-radius:12px;padding:14px;margin-top:12px">
-            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:10px">
-              <div style="font-size:14px;font-weight:700;color:#2E332D">今日報到 QR Code</div>
-              <button onclick="msGenerateQR()" title="QR 無法掃描時，重新產生一組新的" style="background:#fff;color:#0066CC;border:1.5px solid #cdd3db;border-radius:10px;padding:8px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit" onmouseover="this.style.background='#F4F7FB'" onmouseout="this.style.background='#fff'">🔄 重新產生</button>
-            </div>
-            <div id="ms-qr-display" style="display:none;text-align:center">
-              <div id="ms-qr-canvas-wrap" style="display:inline-block;padding:16px;background:#fff;border:2px solid #D2D7CD;border-radius:16px;margin-bottom:10px"></div>
-              <div id="ms-qr-hint" style="font-size:12px;color:#767B75"></div>
+          <div id="ms-qr-section" class="ms-qr" style="display:none">
+            <div id="ms-qr-display" class="ms-qr-in" style="display:none">
+              <div id="ms-qr-canvas-wrap" class="ms-qr-code" title="點一下全螢幕顯示" onclick="msQRFullscreen()"></div>
+              <div class="ms-qr-info">
+                <div class="ms-qr-eb">CHECK-IN</div>
+                <div class="ms-qr-t">今日報到<wbr> QR&nbsp;Code</div>
+                <div id="ms-qr-hint" class="ms-qr-date"></div>
+                <ol class="ms-qr-steps">
+                  <li>同仁用<wbr>手機相機掃描</li>
+                  <li>登入後<wbr>自動完成報到</li>
+                </ol>
+                <div class="ms-qr-acts">
+                  <button type="button" class="ms-qr-full" onclick="msQRFullscreen()">⛶ 全螢幕顯示</button>
+                  <button type="button" class="ms-qr-re" onclick="msGenerateQR()" title="QR 無法掃描時，重新產生一組新的">重新產生</button>
+                </div>
+              </div>
             </div>
           </div>
           <div id="ms-no-slots" style="text-align:center;padding:48px 20px;color:#767B75;font-size:14px;background:#F7F8F6;border-radius:12px">
@@ -23332,13 +23363,15 @@ window.msGenerateQR = async function() {
   // 避免 Google 封鎖內建瀏覽器登入（iPhone 相機掃碼本來就開 Safari，不受影響）
   var url = window.location.origin + window.location.pathname + '?openExternalBrowser=1&ms_token=' + r.token;
   // 只渲染到日曆右欄的「今日報到 QR」卡（進階管理不再重複顯示一份未包裝的 QR）
-  var _hintText = '限今天（' + today + '）使用，一次性掃描即完成報到';
+  var _wd = ['日','一','二','三','四','五','六'][new Date(today + 'T00:00:00').getDay()];
+  var _hintText = '限今天 ' + _msMD(today) + '（' + _wd + '）使用';
+  window._msQrUrl = url;
   var wrap = document.getElementById('ms-qr-canvas-wrap');
   var display = document.getElementById('ms-qr-display');
   var hint = document.getElementById('ms-qr-hint');
   if (wrap) {
     wrap.innerHTML = '';
-    if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 180, height: 180 });
+    if (typeof QRCode !== 'undefined') new QRCode(wrap, { text: url, width: 152, height: 152 });
     else wrap.textContent = url;
   }
   if (hint) hint.textContent = _hintText;
@@ -23346,6 +23379,19 @@ window.msGenerateQR = async function() {
   // 進階管理裡的舊 QR 容器一律隱藏
   var _adv = document.getElementById('ms-adv-qr-display'); if (_adv) _adv.style.display = 'none';
   toast('✅ QR Code 已產生');
+};
+// 全螢幕顯示報到 QR（放在平板／螢幕上讓同仁排隊掃）：點任何地方或按 Esc 關閉
+window.msQRFullscreen = function() {
+  if (!window._msQrUrl || typeof QRCode === 'undefined') return;
+  var ov = document.createElement('div');
+  ov.className = 'ms-qr-ov';
+  var size = Math.min(window.innerWidth - 64, window.innerHeight - 220, 420);
+  ov.innerHTML = '<div class="ms-qr-ov-t">按摩報到</div><div class="ms-qr-ov-s">用手機相機掃描，登入後自動完成報到</div><div class="ms-qr-ov-c"></div><div class="ms-qr-ov-x">點任何地方關閉</div>';
+  new QRCode(ov.querySelector('.ms-qr-ov-c'), { text: window._msQrUrl, width: size, height: size });
+  var close = function(){ ov.remove(); document.removeEventListener('keydown', esc); };
+  var esc = function(e){ if (e.key === 'Escape') close(); };
+  ov.onclick = close; document.addEventListener('keydown', esc);
+  document.body.appendChild(ov);
 };
 window.msCheckInFromQR = async function(token) {
   var r;
