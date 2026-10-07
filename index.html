@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007163806';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007164113';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -8975,6 +8975,29 @@ function _dshDutyTea(){
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#FBEEDD;color:#D98324;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('coffee',17)+'</span>午茶日籌備</div></div><div style="display:flex;align-items:center;gap:8px;flex-shrink:0">'+badge+cta+'</div></div>'
     +'<div class="grid grid-2">'+cells+'</div></div>';
 }
+// 首頁按摩卡：接下來的預約（今天起、還沒結束的，依時間排，最多 4 筆）——直接看到日期、時間、誰
+function _dshMsUpcoming(d){
+  var wd=['日','一','二','三','四','五','六'], now=new Date();
+  var list=((d&&d.allBookings)||[]).filter(function(b){
+    if(!b||!b.date||!b.timeSlot||(b.status!=='booked'&&b.status!=='attended'))return false;
+    var end=new Date(b.date+'T'+b.timeSlot+':00'); end.setMinutes(end.getMinutes()+15);
+    return end>now;
+  }).sort(function(a,b){return (a.date+a.timeSlot).localeCompare(b.date+b.timeSlot);});
+  var head='<div style="margin-top:12px;font-size:12px;font-weight:700;color:#8A96A6;letter-spacing:.04em">接下來的預約</div>';
+  if(!list.length)return head+'<div style="margin-top:6px;font-size:14px;color:#8A96A6">目前沒有預約</div>';
+  var rows=list.slice(0,4).map(function(b){
+    var dt=new Date(b.date+'T00:00:00'), isToday=b.date===(now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2)+'-'+('0'+now.getDate()).slice(-2));
+    var nm=(typeof zhName==='function'?zhName(b.userName):'')||b.userName||'';
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid #EEF1F4">'
+      +'<span style="flex-shrink:0;min-width:84px;font-size:14px;font-weight:700;color:'+(isToday?'#C63968':'#2E332D')+';white-space:nowrap">'+(isToday?'今天':(dt.getMonth()+1)+'/'+dt.getDate())+'（'+wd[dt.getDay()]+'）</span>'
+      +'<span style="flex-shrink:0;font-size:16px;font-weight:800;color:#2E332D;font-variant-numeric:tabular-nums">'+_dshEsc(b.timeSlot)+'</span>'
+      +'<span style="flex:1;min-width:0;font-size:14px;color:#4A4F49;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+_dshEsc(nm)+'</span>'
+      +(b.status==='attended'?'<span style="flex-shrink:0;font-size:12px;font-weight:700;color:#22826A">已報到</span>':'')
+      +'</div>';
+  }).join('');
+  var more=list.length>4?'<div style="padding-top:6px;font-size:12px;color:#8A96A6">還有 '+(list.length-4)+' 筆，到按摩頁查看</div>':'';
+  return head+'<div style="margin-top:4px">'+rows+'</div>'+more;
+}
 function _dshDutyMassage(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var d=_dshMs();
@@ -8990,7 +9013,7 @@ function _dshDutyMassage(){
     +'<div class="cell"><div class="n">'+monthBk+'<small> 人次</small></div><div class="k">本月已預約</div></div>'
     +'<div class="cell"><div class="n"'+(pend?' style="color:#DC2626"':'')+'>'+pend+'<small> 筆</small></div><div class="k">待處理申請</div></div>'
     +'<div class="cell"><div class="n">'+openN+'<small> 天</small></div><div class="k">本月開放日</div></div>'
-    +'</div></div>';
+    +'</div>'+_dshMsUpcoming(d)+'</div>';
 }
 function _dshDutyAdmin(cases){
   cases=cases||[];
@@ -22759,13 +22782,20 @@ window.msGetNextBookingHint = function() {
 // 首頁入口卡背景預抓：本裝置還沒有按摩快取時，背景抓一次資料寫入快取並刷新卡片提示，
 // 讓「本月已預約 X 次／下次預約」不必等使用者先進過按摩頁才顯示
 window.msPrefetchHubData = function() {
-  // 有快取先用快取畫（快），但每次開頁仍要背景抓一次最新——原本有快取就不抓，首頁按摩卡會一直停在舊數字
-  if (_msData || window._msHubPrefetching || window._msHubFresh) return;
+  // 首頁按摩卡用：每次回到首頁都背景抓一次最新（30 秒內不重抓），抓到就重畫首頁。
+  // 原本「開頁抓一次就不再抓」→ 之後自己／別人預約，首頁數字要重新整理才會變（使用者 2026-10-07 回報）。
+  if (window._msHubPrefetching) return;
+  if (Date.now() - (window._msHubAt || 0) < 30000) return;
   window._msHubPrefetching = true;
+  var _redraw = function() {
+    var dv = document.getElementById('view-dashboard');
+    if (typeof applyDashboardBlocks === 'function' && dv && dv.classList.contains('active')) applyDashboardBlocks();
+  };
+  var _done = function(ok) { window._msHubPrefetching = false; if (ok) { window._msHubAt = Date.now(); _redraw(); } };
+  // 按摩頁已載入過（有 _msData）→ 走按摩頁同一支讀取，記憶體與快取一起更新
+  if (_msData) { msFetchData().then(function(){ _done(true); }, function(){ _done(false); }); return; }
   htApi('massageGetData', {}).then(function(r) {
-    window._msHubPrefetching = false;
-    if (!(r && r.ok)) return;
-    window._msHubFresh = true;
+    if (!(r && r.ok)) { _done(false); return; }
     try {
       localStorage.setItem(_msStoreKey(), JSON.stringify({
         openDates: r.openDates || {}, myBookings: r.myBookings || [],
@@ -22773,9 +22803,8 @@ window.msPrefetchHubData = function() {
         settings: r.settings || null
       }));
     } catch(e) {}
-    var dv = document.getElementById('view-dashboard');
-    if (typeof applyDashboardBlocks === 'function' && dv && dv.classList.contains('active')) applyDashboardBlocks();
-  }).catch(function(){ window._msHubPrefetching = false; });
+    _done(true);
+  }).catch(function(){ _done(false); });
 };
 
 // ── 按摩預約專屬公告欄（scope='massage'，與首頁/午茶日獨立）──
