@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007153000';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007153357';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1701,6 +1701,14 @@ body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-role-opt{flex-wrap:wrap;row-gap:2px}
 /* 午茶活動卡（手機）：複製鈕只留圖示、縮內距，讓人數／壽星／品項有空間不被擠斷 */
 @media(max-width:520px){.ht-evmain{padding:12px!important;gap:10px!important}.ht-dupbtn{padding:4px 8px!important;margin-right:6px!important}.ht-dupbtn .t{display:none}}
+/* 網站內掃碼報到 */
+.ms-scan{position:fixed;inset:0;z-index:10045;background:#111;display:flex;flex-direction:column;color:#fff;font-family:'Noto Sans TC',sans-serif}
+.ms-scan .hd{display:flex;align-items:center;justify-content:space-between;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;font-size:16px}
+.ms-scan .hd .x{border:none;background:rgba(255,255,255,.14);color:#fff;font-size:22px;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer}
+.ms-scan .vw{position:relative;flex:1;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.ms-scan video{width:100%;height:100%;object-fit:cover}
+.ms-scan .fr{position:absolute;width:min(68vw,280px);aspect-ratio:1;border:3px solid #EC4F7D;border-radius:20px;box-shadow:0 0 0 100vmax rgba(0,0,0,.45)}
+.ms-scan .tip{padding:16px 20px calc(20px + env(safe-area-inset-bottom,0px));text-align:center;font-size:14px;line-height:1.6;color:#F3F4F6}
 /* 今日報到 QR 卡 */
 .ms-qr{container-type:inline-size;margin-top:12px;background:#fff;border:1px solid #F4C0D1;border-radius:16px;padding:16px;box-shadow:0 1px 2px rgba(46,51,45,.04)}
 .ms-qr-in{display:flex;align-items:center;gap:18px}
@@ -2166,6 +2174,7 @@ window.BF_BUILD = 'v8.4 (2026-06-25)';
 .inapp-help .box{background:#fff;border-radius:18px;padding:22px 20px 16px;width:100%;max-width:380px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Noto Sans TC',sans-serif;color:#2E332D}
 .inapp-help .t{font-size:18px;font-weight:800;margin-bottom:6px}
 .inapp-help .d{font-size:14px;color:#767B75;line-height:1.6}
+.inapp-help .best{margin:4px 0 12px;padding:12px 14px;background:#FDF1F5;border:1px solid #F4C0D1;border-radius:12px;font-size:14px;line-height:1.7;color:#72243E}
 .inapp-help .btns{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 .inapp-help .b{background:#0066CC;color:#fff;border:none}
 .inapp-help .b.chrome{background:#fff;color:#0066CC;border:1.5px solid #0066CC}
@@ -5046,7 +5055,7 @@ thead th{color:#767B75!important}
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">📷</span>
-            <span>現場掃描<strong>當日 QR Code</strong>即可完成報到，系統會自動比對你的預約。</span>
+            <span>到按摩室後，<wbr>點你的預約<wbr>→ 按<strong style="white-space:nowrap">「📷 掃碼報到」</strong><wbr>掃現場 QR Code，<wbr>系統會自動比對你的預約。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">⏰</span>
@@ -5197,8 +5206,8 @@ thead th{color:#767B75!important}
                 <div class="ms-qr-t">今日報到<wbr> QR&nbsp;Code</div>
                 <div id="ms-qr-hint" class="ms-qr-date"></div>
                 <ol class="ms-qr-steps">
-                  <li>同仁用<wbr>手機相機掃描</li>
-                  <li>登入後<wbr>自動完成報到</li>
+                  <li>同仁打開福委會網站<wbr>→ 按摩預約</li>
+                  <li>按「📷 掃碼報到」<wbr>掃這個 QR Code</li>
                 </ol>
                 <div class="ms-qr-acts">
                   <button type="button" class="ms-qr-full" onclick="msQRFullscreen()">⛶ 全螢幕顯示</button>
@@ -6305,9 +6314,12 @@ function doGoogleLogin() {
     var _retHash = (location.hash || '').slice(1);
     if (_retHash && !_retHash.includes('id_token=')) _tgt.hash = _retHash;
     if (_isIOS && (_inApp || _mt) && _cur.searchParams.get('xs') !== '1') {
-      // 2026-10-07 實測：相機掃碼可自動轉 Safari，但 LINE 會擋自動跳轉 → 改成讓使用者自己選 Safari 或 Chrome
       _tgt.searchParams.set('xs', '1');
-      _showInAppLoginHelp(_tgt.toString(), _isLine, true);
+      // 2026-10-07 實測：iPhone 相機掃碼的小視窗可自動轉 Safari；LINE 會擋自動跳轉 → 直接跳說明視窗
+      if (_inApp) { _showInAppLoginHelp(_tgt.toString(), _isLine, true); return; }
+      var _helpUrl = _tgt.toString();
+      setTimeout(function(){ if (!document.hidden) _showInAppLoginHelp(_helpUrl, _isLine, true); }, 1800);
+      location.href = 'x-safari-' + _helpUrl;
       return;
     }
     if (_inApp && !_isIOS) {
@@ -6347,8 +6359,9 @@ function _showInAppLoginHelp(url, isLine, isIOS) {
   ov.id = 'inapp-help';
   ov.className = 'inapp-help';
   ov.innerHTML = '<div class="box" role="dialog" aria-modal="true" aria-labelledby="inapp-t">'
-    + '<div class="t" id="inapp-t">請用 Safari 或 Chrome 開啟</div>'
-    + '<div class="d">這個小視窗<wbr>無法完成 Google 驗證。<wbr>改用瀏覽器開啟後登入，<wbr>可記住 7 天，<wbr>之後掃碼直接報到。</div>'
+    + '<div class="t" id="inapp-t">' + (isLine ? 'LINE 裡無法登入' : '請用 Safari 或 Chrome 開啟') + '</div>'
+    + (isLine ? '<div class="best"><b>最快的方式：</b><wbr>打開平常用的福委會網站<wbr>→ 按摩預約<wbr>→ 按「📷 掃碼報到」<wbr>掃現場 QR Code</div>' : '')
+    + '<div class="d">' + (isLine ? '或改用瀏覽器開啟這頁：' : '這個小視窗<wbr>無法完成 Google 驗證。<wbr>改用瀏覽器開啟後登入，<wbr>可記住 7 天，<wbr>之後掃碼直接報到。') + '</div>'
     + '<div class="btns">'
     + (isIOS ? '<button type="button" class="b safari">用 Safari 開啟</button>' : '')
     + '<button type="button" class="b chrome">用 Chrome 開啟</button>'
@@ -23297,7 +23310,8 @@ window.msOpenBookingDetail = function(bookingId) {
   }).length;
   // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
-  if (canCheckIn) acts += '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">🔲 報到方式：請至按摩室掃描現場 QR Code<br><span style="font-size:12px;font-weight:600">時段前&nbsp;5&nbsp;分鐘開放・超過&nbsp;5&nbsp;分鐘算遲到・時段結束（15&nbsp;分鐘）後需管理者補登</span></div>';
+  if (canCheckIn) acts += '<button type="button" onclick="msCloseBookingDetail();msScanCheckIn()" style="width:100%;background:#EC4F7D;color:#fff;border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit">📷 掃碼報到</button>'
+    + '<div style="background:#FFF9F0;border:1.5px solid #F2A03D;border-radius:12px;padding:11px 14px;font-size:14px;color:#B0701F;font-weight:700;text-align:center;line-height:1.6">到按摩室後，<wbr>按上方按鈕掃現場 QR Code<br><span style="font-size:12px;font-weight:600">時段前&nbsp;5&nbsp;分鐘開放・超過&nbsp;5&nbsp;分鐘算遲到・時段結束（15&nbsp;分鐘）後需管理者補登</span></div>';
   if (canModify) {
     acts += '<div style="display:flex;gap:8px">'
       + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#E7F0FB;color:#0066CC;border:1.5px solid #cdd3db;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
@@ -23485,12 +23499,99 @@ window.msQRFullscreen = function() {
   var ov = document.createElement('div');
   ov.className = 'ms-qr-ov';
   var size = Math.min(window.innerWidth - 64, window.innerHeight - 220, 420);
-  ov.innerHTML = '<div class="ms-qr-ov-t">按摩報到</div><div class="ms-qr-ov-s">用手機相機掃描，登入後自動完成報到</div><div class="ms-qr-ov-c"></div><div class="ms-qr-ov-x">點任何地方關閉</div>';
+  ov.innerHTML = '<div class="ms-qr-ov-t">按摩報到</div><div class="ms-qr-ov-s">打開福委會網站 → 按摩預約 → 按「📷 掃碼報到」掃描</div><div class="ms-qr-ov-c"></div><div class="ms-qr-ov-x">點任何地方關閉</div>';
   new QRCode(ov.querySelector('.ms-qr-ov-c'), { text: window._msQrUrl, width: size, height: size });
   var close = function(){ ov.remove(); document.removeEventListener('keydown', esc); };
   var esc = function(e){ if (e.key === 'Escape') close(); };
   ov.onclick = close; document.addEventListener('keydown', esc);
   document.body.appendChild(ov);
+};
+// ── 網站內掃碼報到：用已登入的網站直接開相機掃現場 QR，不經過 LINE／相機 App，不用重新登入 ──
+//   QR 解碼：瀏覽器有 BarcodeDetector 就用（Android Chrome），否則載入 jsQR（iPhone Safari）
+var _msScan = null;
+function _msLoadJsQR() {
+  return new Promise(function(res, rej){
+    if (window.jsQR) return res(window.jsQR);
+    var sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+    sc.onload = function(){ window.jsQR ? res(window.jsQR) : rej(new Error('jsQR')); };
+    sc.onerror = function(){ rej(new Error('jsQR')); };
+    document.head.appendChild(sc);
+  });
+}
+function _msTokenFromText(t) {
+  t = String(t || '');
+  try { var u = new URL(t); var k = u.searchParams.get('ms_token'); if (k) return k; } catch(e) {}
+  var m = t.match(/ms_token=([0-9a-f-]{20,})/i);
+  return m ? m[1] : '';
+}
+window.msScanCheckIn = async function() {
+  if (_msScan) return;
+  var ov = document.createElement('div');
+  ov.className = 'ms-scan';
+  ov.innerHTML = '<div class="hd"><b>掃描現場 QR Code</b><button type="button" class="x" aria-label="關閉">×</button></div>'
+    + '<div class="vw"><video playsinline muted autoplay></video><div class="fr"></div></div>'
+    + '<div class="tip">把 QR Code 放進框框裡</div>';
+  document.body.appendChild(ov);
+  var video = ov.querySelector('video'), tip = ov.querySelector('.tip');
+  var st = { ov: ov, stream: null, raf: 0, done: false };
+  _msScan = st;
+  var stop = function() {
+    st.done = true;
+    if (st.raf) clearTimeout(st.raf);
+    if (st.stream) st.stream.getTracks().forEach(function(t){ t.stop(); });
+    ov.remove(); _msScan = null;
+  };
+  ov.querySelector('.x').onclick = stop;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    tip.textContent = '這個瀏覽器不能開相機，請改用手機相機掃現場 QR Code'; return;
+  }
+  try {
+    st.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+  } catch(e) {
+    tip.textContent = '無法使用相機：請允許這個網站使用相機（設定 → Safari／Chrome → 相機），或改用手機相機掃描';
+    return;
+  }
+  if (st.done) { st.stream.getTracks().forEach(function(t){ t.stop(); }); return; }
+  video.srcObject = st.stream;
+  try { await video.play(); } catch(e) {}
+  var detector = null, jsqr = null;
+  try { if ('BarcodeDetector' in window) detector = new BarcodeDetector({ formats: ['qr_code'] }); } catch(e) { detector = null; }
+  if (!detector) { try { jsqr = await _msLoadJsQR(); } catch(e) { tip.textContent = '掃描元件載入失敗，請檢查網路後再試'; return; } }
+  var cv = document.createElement('canvas'), ctx = cv.getContext('2d', { willReadFrequently: true });
+  var busy = false, lastBad = 0;
+  var found = async function(text) {
+    var tok = _msTokenFromText(text);
+    if (!tok) {
+      if (Date.now() - lastBad > 2500) { tip.textContent = '這不是按摩報到的 QR Code'; lastBad = Date.now(); }
+      return false;
+    }
+    stop();
+    await msCheckInFromQR(tok);
+    return true;
+  };
+  var tick = async function() {
+    if (st.done) return;
+    if (!busy && video.readyState >= 2 && video.videoWidth) {
+      busy = true;
+      try {
+        if (detector) {
+          var codes = await detector.detect(video);
+          if (codes && codes.length && await found(codes[0].rawValue)) return;
+        } else {
+          var w = video.videoWidth, h = video.videoHeight, sc = Math.min(1, 640 / Math.max(w, h));
+          cv.width = Math.round(w * sc); cv.height = Math.round(h * sc);
+          ctx.drawImage(video, 0, 0, cv.width, cv.height);
+          var img = ctx.getImageData(0, 0, cv.width, cv.height);
+          var code = jsqr(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+          if (code && code.data && await found(code.data)) return;
+        }
+      } catch(e) {}
+      busy = false;
+    }
+    st.raf = setTimeout(tick, 150);
+  };
+  st.raf = setTimeout(tick, 150);
 };
 window.msCheckInFromQR = async function(token) {
   var r;
@@ -23501,6 +23602,7 @@ window.msCheckInFromQR = async function(token) {
   if (!r || !r.ok) { toast('❌ 報到失敗：' + (r && r.error ? r.error : 'QR Code 無效或已過期'), 'error'); return; }
   toast(r.late ? '✅ 報到成功（遲到 ' + (r.lateMin || '') + ' 分鐘，下次準時哦）' : '✅ 報到成功！');
   msRenderCal(); msRenderMyBookings();
+  try { if (typeof msRefreshFromServer === 'function') msRefreshFromServer(); } catch(e) {}   // 票卡立刻變「已報到」
 };
 
 // ── 我的預約 ──
@@ -23638,7 +23740,7 @@ function msBookingCard(b, isUpcoming) {
   if (isUpcoming) {
     // 報到防呆：當天不提供自行報到，改提示至現場掃 QR（點卡仍可開彈窗看詳情/修改/取消）
     actions = canCheckIn
-      ? '<span style="flex:0 0 auto;background:#FFF4E4;color:#EC4F7D;border:1.5px solid #F0C48A;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap">🔲 現場掃碼報到</span>'
+      ? '<button type="button" onclick="event.stopPropagation();msScanCheckIn()" style="flex:0 0 auto;background:#EC4F7D;color:#fff;border:none;border-radius:20px;padding:9px 16px;font-size:14px;font-weight:700;white-space:nowrap;cursor:pointer;font-family:inherit">📷 掃碼報到</button>'
       : '<span style="flex:0 0 auto;background:#E7F0FB;color:#0066CC;border:1.5px solid #cdd3db;border-radius:20px;padding:8px 16px;font-size:14px;font-weight:700;white-space:nowrap">⚙ 管理 ›</span>';
   }
 
