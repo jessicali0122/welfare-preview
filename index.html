@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007151001';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007151340';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6262,25 +6262,38 @@ function _safeSsSet(k, v) { try { sessionStorage.setItem(k, v); } catch(e) { try
 
 // 公司帳號登入：OAuth implicit flow 全頁轉址
 function doGoogleLogin() {
-  // ★ App 內建瀏覽器（LINE／FB／IG）：Google 登入在裡面會失敗（尤其兩步驟驗證切 App 回來後跳「發生問題」）。
-  //   第一次：帶 LINE 官方參數 openExternalBrowser=1 重開本頁，請 LINE 改用 Safari／Chrome；
-  //   參數已帶過仍在 App 裡（LINE 沒照做，2026-10-07 實測掃 QR 時不一定生效）→ 不送去 Google，改跳說明視窗教改用 Safari 開啟。
+  // ★ 在 App 內建瀏覽器／Safari 小視窗裡登入 Google 會失敗：兩步驟驗證要切到別的 App 按「是」，
+  //   切回來時小視窗的登入流程已斷 → Google 顯示「發生問題」；小視窗也不保留登入，每次掃碼都要重登。
+  //   做法：登入前先把本頁交給「真的瀏覽器」開啟，在那裡登入（可記住 7 天，掃碼直接報到）。
+  //   iPhone：用 iOS 17+ 的 x-safari-https:// 叫出 Safari——相機掃碼小視窗、LINE、FB、IG 都適用；
+  //           網址帶 xs=1 表示「已經在 Safari 了」，不再轉，避免循環。
+  //   Android LINE：用 LINE 官方參數 openExternalBrowser=1。
+  //   轉不出去（舊版 iOS 等）→ 1.8 秒後仍在本頁就跳說明視窗，教手動改用 Safari 並可複製網址。
   try {
     var _ua = navigator.userAgent || '';
     var _isLine = /\bLine\//i.test(_ua), _inApp = _isLine || /FBAN|FBAV|Instagram/i.test(_ua);
-    if (_inApp) {
-      var _lu = new URL(location.href);
-      if (!_lu.searchParams.get('ms_token')) {
-        var _mt = null; try { _mt = sessionStorage.getItem('bf_ms_token') || localStorage.getItem('bf_ms_token'); } catch(e) {}
-        if (_mt) _lu.searchParams.set('ms_token', _mt);
-      }
-      if (_isLine && _lu.searchParams.get('openExternalBrowser') !== '1') {
-        _lu.searchParams.set('openExternalBrowser', '1');
-        location.replace(_lu.toString());
+    var _isIOS = /iPhone|iPad|iPod/.test(_ua) || (/Macintosh/.test(_ua) && navigator.maxTouchPoints > 1);
+    var _cur = new URL(location.href);
+    var _mt = _cur.searchParams.get('ms_token');
+    if (!_mt) { try { _mt = sessionStorage.getItem('bf_ms_token') || localStorage.getItem('bf_ms_token'); } catch(e) {} }
+    var _tgt = new URL(location.origin + location.pathname);
+    if (_mt) _tgt.searchParams.set('ms_token', _mt);
+    var _retHash = (location.hash || '').slice(1);
+    if (_retHash && !_retHash.includes('id_token=')) _tgt.hash = _retHash;
+    if (_isIOS && (_inApp || _mt) && _cur.searchParams.get('xs') !== '1') {
+      _tgt.searchParams.set('xs', '1');
+      var _helpUrl = _tgt.toString();
+      setTimeout(function(){ if (!document.hidden) _showInAppLoginHelp(_helpUrl, _isLine); }, 1800);
+      location.href = 'x-safari-' + _helpUrl;
+      return;
+    }
+    if (_inApp && !_isIOS) {
+      if (_isLine && _cur.searchParams.get('openExternalBrowser') !== '1') {
+        _tgt.searchParams.set('openExternalBrowser', '1');
+        location.replace(_tgt.toString());
         return;
       }
-      _lu.searchParams.delete('openExternalBrowser');
-      _showInAppLoginHelp(_lu.toString(), _isLine);
+      _showInAppLoginHelp(_tgt.toString(), _isLine);
       return;
     }
   } catch(e) {}
@@ -6367,7 +6380,9 @@ async function _bfBoot() {
           d.className = 'lg-qrhint';
           d.innerHTML = '<div class="h">📱 掃碼報到</div>'
             + '<div>登入後<wbr>會自動完成報到</div>'
-            + '<div class="w">登入沒反應？<wbr>LINE 等 App 內建瀏覽器<wbr>會擋 Google 登入，<wbr>請點右上角選單，<wbr>改用 <b>Safari／Chrome</b> 開啟</div>';
+            + (new URLSearchParams(location.search).get('xs') === '1'
+                ? '<div class="w">已改用 Safari 開啟，<wbr>登入一次可記住 7 天，<wbr>之後掃碼直接報到。</div>'
+                : '<div class="w">按登入後<wbr>會自動改用 Safari 開啟<wbr>（相機或 LINE 的小視窗<wbr>無法完成 Google 驗證），<wbr>跳出詢問時請按「開啟」。</div>');
           (ls.querySelector('.lg-card') || ls).appendChild(d);
         }
       }, 400);
@@ -22548,6 +22563,7 @@ window.massageLoad = async function() {
       var _cleanUrl = new URL(window.location.href);
       _cleanUrl.searchParams.delete('ms_token');
       _cleanUrl.searchParams.delete('openExternalBrowser');
+      _cleanUrl.searchParams.delete('xs');
       window.history.replaceState({}, '', _cleanUrl.toString());
       msCheckInFromQR(msToken);
     }
