@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261007160641';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261007163433';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1696,6 +1696,8 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-editday:hover,.ms-editday:focus-visible{background:#0052A3;border-color:#0052A3;box-shadow:0 4px 10px rgba(0,102,204,.3);outline:none}
 /* 按摩注意事項：粗體重點詞整組不拆行（太長放不下就整組換到下一行，不會拆成兩半） */
 #ms-notice-body strong,#ms-notice-body span[style*="font-weight:700"]{white-space:nowrap}
+#ms-notice-body .ms-nt{display:flex;gap:10px;align-items:flex-start}
+#ms-notice-body .ms-nt .i{flex-shrink:0;font-size:16px;line-height:1.7}
 /* 全站：中文只在標點／空白處換行（避免「不算違／規」「職工福利委／員會」這種把詞拆開的斷行）；真的太長才允許任意斷，不會超出畫面 */
 body{word-break:keep-all;overflow-wrap:anywhere}
 .ms-role-opt{flex-wrap:wrap;row-gap:2px}
@@ -5041,35 +5043,31 @@ thead th{color:#767B75!important}
         <svg id="ms-notice-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#767B75" stroke-width="2.5" style="transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
       </div>
       <div id="ms-notice-body" style="font-size:14px;color:#4A4F49;line-height:1.7;margin-top:8px">
-        <!-- 統一樣式：六行同款「圖示＋文字」列，規則靠粗體與字色凸顯，不用底色與膠囊 -->
+        <!-- 2026-10-07 精簡：一條一件事、重點粗體；細節（遲到分級、提醒時間）都收在同一行 -->
         <div style="display:flex;flex-direction:column;gap:6px">
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">📅</span>
-            <span><strong>每月上限 2&nbsp;次</strong>，讓每個夥伴都有機會參與；連續二週為一排程區間。</span>
+          <div class="ms-nt">
+            <span class="i">📅</span>
+            <span><strong>每月最多 2&nbsp;次</strong>；<wbr>額滿可排候補，<wbr>候補不佔額度。</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">↩️</span>
-            <span>臨時無法參與，<strong>時段前&nbsp;30&nbsp;分鐘皆可自行取消</strong>（免審核）；不足&nbsp;30&nbsp;分鐘<strong>須等 HR 審核</strong>。</span>
+          <div class="ms-nt">
+            <span class="i">↩️</span>
+            <span><strong>開始 30&nbsp;分鐘前</strong><wbr>可自行取消；<wbr>之後取消<span style="white-space:nowrap">需&nbsp;HR&nbsp;審核</span>。</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">🕒</span>
-            <span><strong>報到時間窗（每節 15&nbsp;分鐘）</strong>：時段前&nbsp;5&nbsp;分鐘開放報到；開始後 <strong>5&nbsp;分鐘內為準時</strong>，<strong>5～15&nbsp;分鐘為遲到</strong>（仍可進場、不算違規）；<strong>超過 15&nbsp;分鐘視同未到</strong>。</span>
+          <div class="ms-nt">
+            <span class="i">📷</span>
+            <span>到現場點你的預約<wbr>→ 按<strong>「📷 掃碼報到」</strong><wbr>（開始前 5&nbsp;分鐘開放）。</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">🙋</span>
-            <span><strong>時段額滿可排候補</strong>；不佔每月 2&nbsp;次額度，有人取消就依排隊順序自動遞補給你。</span>
+          <div class="ms-nt">
+            <span class="i">🕒</span>
+            <span>開始 <strong>5&nbsp;分鐘內</strong>準時，<wbr>5～15&nbsp;分鐘算遲到，<wbr><strong>超過 15&nbsp;分鐘記缺席</strong>。</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">⚠️</span>
-            <span><span style="color:#B0701F;font-weight:700">違規＝預約卻缺席（未報到）</span>；系統直接標記，<strong>累計 3&nbsp;次暫停預約</strong>。遲到不算違規，但仍請準時。</span>
+          <div class="ms-nt">
+            <span class="i">⚠️</span>
+            <span><span style="color:#B0701F;font-weight:700">缺席累計 3&nbsp;次</span><wbr>會暫停預約。</span>
           </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">📷</span>
-            <span>到按摩室後，<wbr>點你的預約<wbr>→ 按<strong style="white-space:nowrap">「📷 掃碼報到」</strong><wbr>掃現場 QR Code，<wbr>系統會自動比對你的預約。</span>
-          </div>
-          <div style="display:flex;gap:10px;align-items:flex-start">
-            <span style="flex-shrink:0;font-size:16px;line-height:1.7">⏰</span>
-            <span>設個小鬧鐘<strong>準時參與</strong>；按摩完畢請協助「<strong>呼喚下一位夥伴</strong>」。</span>
+          <div class="ms-nt">
+            <span class="i">🔔</span>
+            <span>開始前 40、5&nbsp;分鐘<wbr>會用 Chat 提醒你；<wbr>按摩完請<strong>呼喚下一位夥伴</strong>。</span>
           </div>
           <div style="display:flex;gap:10px;align-items:flex-start;border-top:1px dashed #EDEFF2;padding-top:8px;margin-top:2px">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">😌</span>
