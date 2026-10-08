@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261008105306';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261008105926';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -24389,7 +24389,12 @@ window.msConfirmOpenDate = async function() {
   if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '確認開放'; }
   if (!okDates.length) { toast('❌ 儲存失敗：' + (failDates.join('、')) + '，請稍後再試', 'error'); return; }
   // 有新開放的日期 → 請後端立刻發「按摩開放預約囉」通知（不等 5 分鐘排程；背景送出，失敗也不影響開放）
-  if (newOpened.length) { try { htApi('massageBroadcastNow', {}).catch(function(){}); } catch(e) {} }
+  // 後端要等「最後一次開放」滿 3 分鐘才發（連續開好幾天會合併成一則）→ 3 分 10 秒後再請後端檢查；
+  //   又開了新日期就重新計時。頁面關掉也沒關係，後端每 5 分鐘的排程會補發。
+  if (newOpened.length) {
+    try { clearTimeout(window._msBcTimer); } catch(e) {}
+    window._msBcTimer = setTimeout(function(){ try { htApi('massageBroadcastNow', {}).catch(function(){}); } catch(e) {} }, 190000);
+  }
   if (failDates.length) toast('⚠️ ' + okDates.length + ' 天已開放；失敗：' + failDates.join('、'), 'error');
   else toast((okDates.length > 1 ? ('✅ ' + okDates.length + ' 天的開放時段已儲存：' + okDates.map(_msMD).join('、')) : ('✅ ' + _msMD(okDates[0]) + ' 開放時段已儲存'))
     + (keptNote.length ? '（已過或有預約的時段已自動保留：' + keptNote.join('；') + '）' : ''));
