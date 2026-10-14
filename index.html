@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261014192907';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261014225743';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -2463,6 +2463,13 @@ html,body{background:#FAFBFC}
 .dsh-duty .dcta,.dsh-cardhd .dcta{display:inline-block;font-size:13px;font-weight:700;color:#fff;padding:8px 15px;border-radius:20px;cursor:pointer;border:none;font-family:inherit;flex-shrink:0;white-space:nowrap}
 .dsh-cardhd .dcta{margin-left:auto}
 .dsh-duty .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;margin-top:13px}
+/* 首頁管理者卡片右上：目前在線人數＋進系統管理（2026-10-14） */
+.dsh-adm-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dsh-onl{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1px solid #CFE6DD;background:#EEF7F3;color:#22826A;font-size:12px;font-weight:700;font-family:inherit;line-height:20px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s}
+.dsh-onl:hover{background:#E3F1EC}
+.dsh-onl i{width:8px;height:8px;border-radius:50%;background:#22826A;box-shadow:0 0 0 4px rgba(34,130,106,.14);margin-right:2px}
+.dsh-onl b{font-size:14px;font-weight:800;margin:0 2px}
+@media(max-width:360px){ .dsh-adm-acts{gap:6px} .dsh-onl{padding:6px 10px} }   /* 小手機（320px）：在線人數與按鈕維持同一列 */
 .dsh-duty .grid.grid-2{grid-template-columns:repeat(2,1fr)}
 .dsh-duty .cell{background:#F6F9FD;border:1px solid #E9EEF5;border-radius:10px;padding:10px 12px}
 .dsh-duty .cell .n{font-size:18px;font-weight:800;color:#2E332D}
@@ -9124,7 +9131,10 @@ function _dshDutyAdmin(cases){
   var done=cases.filter(function(c){return c.status==='已完成';}).length;
   var prog=cases.filter(function(c){var s=String(c.status||'');return s.indexOf('待')<0&&s!=='已完成'&&s!=='已退件'&&s!=='作廢'&&s!=='草稿';}).length;
   var voidN=cases.filter(function(c){return c.status==='作廢';}).length;
-  return '<div class="dsh-panel dsh-duty dsh-full"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#E7EFFB;color:#4B7BC4;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('grid',17)+'</span>全站案件概況</div><div class="dsub">管理者專屬 · 全體視角</div></div><button class="dcta" style="background:#4B7BC4" onclick="sw(\'admin\')">進系統管理 →</button></div>'
+  // 目前在線人數（2026-10-14）：只有管理者的首頁有這張卡；數字由 presenceWatch() 背景更新，先顯示上次的數字避免閃「—」
+  var _onN=(typeof window._presenceCount==='number')?window._presenceCount:'—';
+  var _onl='<button class="dsh-onl" onclick="dshOpenOnline()" title="查看目前在線名單"><i></i>目前在線<b id="dsh-online-n">'+_onN+'</b>人</button>';
+  return '<div class="dsh-panel dsh-duty dsh-full"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#E7EFFB;color:#4B7BC4;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('grid',17)+'</span>全站案件概況</div><div class="dsub">管理者專屬 · 全體視角</div></div><div class="dsh-adm-acts">'+_onl+'<button class="dcta" style="background:#4B7BC4" onclick="sw(\'admin\')">進系統管理 →</button></div></div>'
     +'<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(100px,1fr))">'
     +'<div class="cell"><div class="n" style="color:#C63968">'+pend+'</div><div class="k">待審核</div></div>'
     +'<div class="cell"><div class="n">'+prog+'</div><div class="k">進行中</div></div>'
@@ -9283,6 +9293,7 @@ function _renderRoleDash(){
   try{if(can_('massage.manage'))duties.push(_dshDutyMassage());}catch(e){}
   try{if(typeof isAdmin==='function'&&isAdmin())duties.unshift(_dshDutyAdmin(cases));}catch(e){}
   document.getElementById('dsh-duty').innerHTML=duties.join('');
+  try{if(document.getElementById('dsh-online-n')&&window.presenceWatch)presenceWatch();}catch(e){}   // 管理者：目前在線人數
   try{document.getElementById('dsh-fuli').innerHTML=_dshFuli();}catch(e){}
   try{document.getElementById('dsh-cases').innerHTML=_dshCases(myCases);}catch(e){}
   // 「本月同事生日／本月壽星」獨立卡：福委在午茶日籌備卡的「本月壽星」欄位已直接看得到姓名+日期，
@@ -14051,7 +14062,12 @@ function switchAdminTab(tab){
       deviceId: _devId(), device: _devType(), page: a.page || _curPage(),
       visible: !!a.vis, online: online !== false
     }, keepalive);
-    Promise.resolve(pr).then(function(ok){ if (ok) { try { localStorage.setItem(_SENT_KEY, String(Date.now())); } catch(e) {} } }).catch(function(){});
+    Promise.resolve(pr).then(function(ok){
+      if (!ok) return;
+      try { localStorage.setItem(_SENT_KEY, String(Date.now())); } catch(e) {}
+      // 剛登入時首頁人數還是「—」（當時憑證還沒到手）→ 第一次回報成功就立刻補抓，不必等 20 秒輪詢
+      if (typeof window._presenceCount !== 'number' && _watchOn() && window.presenceLoad) window.presenceLoad(!_olOn());
+    }).catch(function(){});
   }
   function _send(keepalive){ if (_loggedIn()) _post(_agg(_writeTabs(true)), keepalive, true); }
   // 憑證：畫面在前景時順便確保有效（快到期才會在背景續簽，平常不打 GAS）；
@@ -14086,7 +14102,7 @@ function switchAdminTab(tab){
   document.addEventListener('visibilitychange', function(){
     if (!_loggedIn()) return;
     if (document.visibilityState === 'hidden') _send(true);               // 切走：其他分頁也都不在前景＝閒置（keepalive：關閉中也送得出）
-    else { _beatNow(); if (_olOn()) presenceLoad(); }
+    else { _beatNow(); if (_olOn()) presenceLoad(); else if (_dshOn()) presenceLoad(true); }
   });
   window.addEventListener('pagehide', function(){
     if (!_loggedIn()) return;
@@ -14103,6 +14119,11 @@ function switchAdminTab(tab){
     var p = document.getElementById('admin-panel-online'), v = document.getElementById('view-admin');
     return !!(p && v && v.classList.contains('active') && p.style.display !== 'none' && document.visibilityState !== 'hidden');
   }
+  function _dshOn(){
+    var n = document.getElementById('dsh-online-n'), v = document.getElementById('view-dashboard');
+    return !!(n && v && v.classList.contains('active') && document.visibilityState !== 'hidden');
+  }
+  function _watchOn(){ return _olOn() || _dshOn(); }
   var _PAGE_EXTRA = { noperm: '無權限頁', login: '登入頁' };
   function _pageName(k){ return (typeof titles !== 'undefined' && titles[k]) || _PAGE_EXTRA[k] || ''; }
   var _DEV_NAME = { mobile: '📱 手機', tablet: '📱 平板', desktop: '💻 電腦' };
@@ -14157,6 +14178,8 @@ function switchAdminTab(tab){
     }).join('') : '<div class="ol-empty">目前沒有人在線上</div>';
     if (html !== _olHtml) { box.innerHTML = html; _olHtml = html; }   // 內容沒變就不重畫（頭像不閃）
     if (cnt) cnt.textContent = '· ' + list.length + ' 人';
+    window._presenceCount = list.length;
+    var _dn = document.getElementById('dsh-online-n'); if (_dn) _dn.textContent = list.length;
     if (badge) { badge.textContent = list.length; badge.style.display = list.length ? '' : 'none'; }
     // 今天稍早上線：同一人只留最後一次，且排除目前在線的人
     if (rec) {
@@ -14184,20 +14207,27 @@ function switchAdminTab(tab){
       recent: [ { email: 'demo.d@example.com', device: 'mobile', lastSeen: '14:32' }, { email: 'demo.e@example.com', device: 'desktop', lastSeen: '11:05' } ] };
     return demo;
   }
-  window.presenceLoad = async function(){
+  // soft＝首頁背景更新人數：手上沒有現成憑證就先不抓（不為了人數去打 GAS 換證、不和登入流程搶通道），
+  //   讀取失敗也保留上次的數字、不顯示錯誤；下一輪（20 秒）再試。
+  var _olLast = 0;
+  window.presenceLoad = async function(soft){
+    soft = (soft === true);
     if (_olBusy) { _olAgain = true; return; }
-    _olBusy = true;
+    _olBusy = true; _olLast = Date.now();
     try {
       var u = _me();
       if (u && u.token === 'demo') { _olRender(_olDemo()); return; }
-      if (!window.sbPresence) { _olRender({ ok: false, error: '連線模組尚未載入，請稍後再試' }); return; }
-      if (typeof _htEnsureSbToken === 'function') { try { await _htEnsureSbToken(); } catch(e) {} }
-      _olRender(await window.sbPresence.list());
+      if (!window.sbPresence) { if (!soft) _olRender({ ok: false, error: '連線模組尚未載入，請稍後再試' }); return; }
+      if (soft) { if (typeof _htSbTokenReadyNow === 'function' && !_htSbTokenReadyNow()) return; }
+      else if (typeof _htEnsureSbToken === 'function') { try { await _htEnsureSbToken(); } catch(e) {} }
+      var r = await window.sbPresence.list();
+      if (soft && !(r && r.ok)) return;
+      _olRender(r);
     } catch(e) {
-      _olRender({ ok: false, error: (e && e.message) || String(e) });
+      if (!soft) _olRender({ ok: false, error: (e && e.message) || String(e) });
     } finally {
       _olBusy = false;
-      if (_olAgain) { _olAgain = false; setTimeout(window.presenceLoad, 300); }
+      if (_olAgain) { _olAgain = false; setTimeout(function(){ window.presenceLoad(soft); }, 300); }
     }
   };
   // Realtime：有人上線／換頁／切閒置就立刻重抓；單純的心跳（狀態沒變）略過不重抓。
@@ -14205,17 +14235,30 @@ function switchAdminTab(tab){
   function _olSub(){
     if (!window.sbPresence || (_me() && _me().token === 'demo')) return;
     window.sbPresence.subscribe(function(n){
-      if (!_olOn() || !n || !n.email) return;
+      if (!_watchOn() || !n || !n.email) return;
       var st = n.online ? ((n.visible ? 'on|' : 'idle|') + n.page) : 'off';
       if (_olState[n.email] === st) return;
-      clearTimeout(_olReT); _olReT = setTimeout(presenceLoad, 800);
+      clearTimeout(_olReT); _olReT = setTimeout(function(){ presenceLoad(!_olOn()); }, 800);
     });
   }
-  window.presenceOpen = function(){
-    presenceLoad();
-    _olSub();
-    // 每 20 秒重抓一次：補「斷線逾時」這種不會觸發 Realtime 的下線
-    if (!_olPoll) _olPoll = setInterval(function(){ if (_olOn()) { presenceLoad(); _olSub(); } }, 20000);
+  // 每 20 秒重抓一次：補「斷線逾時」這種不會觸發 Realtime 的下線（畫面上沒有名單／人數時不抓）
+  function _olStartPoll(){
+    if (_olPoll) return;
+    _olPoll = setInterval(function(){
+      if (_olOn()) { presenceLoad(); _olSub(); }
+      else if (_dshOn()) { presenceLoad(true); _olSub(); }
+    }, 20000);
+  }
+  window.presenceOpen = function(){ presenceLoad(); _olSub(); _olStartPoll(); };
+  // 首頁「目前在線 N 人」（只有管理者的首頁會出現）：首頁每次重畫都會呼叫，5 秒內不重複抓
+  window.presenceWatch = function(){
+    if (Date.now() - _olLast > 5000) presenceLoad(true);
+    _olSub(); _olStartPoll();
+  };
+  // 點首頁的在線人數 → 直接開系統管理的「目前在線」名單
+  window.dshOpenOnline = function(){
+    try { sw('admin'); } catch(e) {}
+    try { var v = document.getElementById('view-admin'); if (v && v.classList.contains('active')) switchAdminTab('online'); } catch(e) {}
   };
 })();
 
