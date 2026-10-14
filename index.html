@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261008105926';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261014192907';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -23,6 +23,7 @@
     var _went = false;
     var go = function(){
       if (_went) return; _went = true;
+      try { window._bfReloading = true; } catch (e) {}   // 目前在線：這是自動更新，不是離開
       location.replace(location.pathname + '?v=' + encodeURIComponent(v) + location.hash);
     };
     setTimeout(go, 3000);                            // 保險：3 秒內沒清完也照樣更新
@@ -371,6 +372,51 @@ input[type=radio]{accent-color:#0066CC}
 .adm-pill{border:1.5px solid #D5DAE2!important;border-radius:22px;padding:8px 18px;background:#fff;color:#767B75;font-weight:700;box-shadow:0 1px 2px rgba(46,51,45,.06),0 4px 12px rgba(46,51,45,.10);transition:box-shadow .18s,transform .12s}
 .adm-pill.active{background:#0066CC;border-color:#0066CC!important;color:#fff;border-bottom-color:#0066CC;box-shadow:0 2px 6px rgba(70,99,63,.28),0 8px 18px rgba(70,99,63,.22)}
 .adm-pill:active{transform:translateY(1px)}
+/* 系統管理 → 目前在線（2026-10-14） */
+.adm-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-left:6px;border-radius:10px;background:#E3F1EC;color:#22826A;font-size:12px;font-weight:700;line-height:1}
+.adm-pill.active .adm-cnt{background:rgba(255,255,255,.24);color:#fff}
+.ol-card{background:#fff;border:1px solid #D5DAE2;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(46,51,45,.06),0 6px 20px rgba(46,51,45,.06)}
+.ol-head{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;padding:14px 20px;border-bottom:1px solid #D9DDD3}
+.ol-title{display:flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:#2E332D;white-space:nowrap}
+.ol-live{width:8px;height:8px;border-radius:50%;background:#22826A;box-shadow:0 0 0 4px #E3F1EC;flex-shrink:0}
+.ol-num{font-size:14px;font-weight:600;color:#767B75}
+.ol-note{margin-left:auto;font-size:12px;color:#767B75;white-space:nowrap}
+.ol-row{display:grid;grid-template-columns:minmax(0,1.4fr) 120px minmax(0,1fr) 120px;align-items:center;gap:8px 16px;padding:12px 20px;border-bottom:1px solid #EDEFF2}
+.ol-row:last-child{border-bottom:none}
+.ol-who{display:flex;align-items:center;gap:10px;min-width:0}
+.ol-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;object-fit:cover;display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
+.ol-nm{min-width:0}
+.ol-name{font-size:14px;font-weight:700;color:#2E332D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ol-name small{font-size:12px;font-weight:500;color:#767B75;margin-left:4px}
+.ol-dept{font-size:12px;color:#767B75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ol-st{display:inline-flex;align-items:center;gap:6px;justify-self:start;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.ol-st i{width:8px;height:8px;border-radius:50%;box-sizing:border-box;flex-shrink:0}
+.ol-st.on{background:#E3F1EC;color:#22826A}.ol-st.on i{background:#22826A}
+.ol-st.idle{background:#F1F2F4;color:#767B75}.ol-st.idle i{border:2px solid #98A09A}
+.ol-page{font-size:14px;color:#4A4F49;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ol-page small{font-size:12px;color:#767B75;margin-right:6px}
+.ol-dev{font-size:12px;color:#767B75;text-align:right;line-height:1.7}
+.ol-dev span{white-space:nowrap}
+.ol-empty{padding:28px 20px;text-align:center;font-size:14px;color:#767B75;line-height:1.8}
+.ol-empty a{color:#0066CC;font-weight:600}
+.ol-recent{padding:14px 20px 16px;border-top:1px solid #D9DDD3;background:#FAFBFA}
+.ol-recent-t{font-size:12px;font-weight:700;color:#767B75;letter-spacing:.04em;margin-bottom:8px}
+.ol-chips{display:flex;flex-wrap:wrap;gap:6px}
+.ol-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;border:1px solid #D9DDD3;border-radius:20px;background:#fff;font-size:12px;color:#767B75;white-space:nowrap}
+.ol-chip .ol-av{width:22px;height:22px;font-size:12px}
+.ol-chip b{font-weight:600;color:#2E332D}
+/* 手機：三顆分頁鈕等寬排一列（原本第三顆會被擠到第二行）；人數面板標題已有，分頁上不另顯示 */
+@media(max-width:480px){
+  #view-admin .adm-tabs{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px!important}
+  #view-admin .adm-tabs .adm-pill{padding:8px 2px!important;white-space:nowrap}
+  #view-admin .adm-tabs .adm-cnt{display:none!important}
+}
+@media(max-width:360px){ #view-admin .adm-tabs .adm-pill{font-size:12px!important} }   /* 小手機（320px）字別貼邊 */
+@media(max-width:640px){
+  .ol-head,.ol-recent{padding-left:16px;padding-right:16px}
+  .ol-row{grid-template-columns:minmax(0,1fr) auto;gap:6px 10px;padding:12px 16px}
+  .ol-st,.ol-dev{justify-self:end}
+}
 /* 案件追蹤上層切換膠囊：同款立體陰影（inline 底色不動，只補陰影與按壓回饋） */
 #apps-tab-all,#apps-tab-analytics{box-shadow:0 1px 2px rgba(46,51,45,.06),0 4px 12px rgba(46,51,45,.10);transition:box-shadow .18s,transform .12s}
 #apps-tab-all:active,#apps-tab-analytics:active{transform:translateY(1px)}
@@ -4331,9 +4377,21 @@ thead th{color:#767B75!important}
       </button>
     </div>
     <!-- 使用者管理／系統紀錄：緊湊膠囊（與案件追蹤上層切換同款） -->
-    <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <div class="adm-tabs" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
       <div class="admin-tab adm-pill active" id="tab-users" onclick="switchAdminTab('users')">👥 使用者管理</div>
       <div class="admin-tab adm-pill" id="tab-log" onclick="switchAdminTab('log')">📋 系統紀錄</div>
+      <div class="admin-tab adm-pill" id="tab-online" onclick="switchAdminTab('online')">🟢 目前在線<span class="adm-cnt" id="tab-online-n" style="display:none"></span></div>
+    </div>
+    <!-- 目前在線（2026-10-14）：只有管理者看得到；資料見 presenceLoad() -->
+    <div id="admin-panel-online" style="display:none">
+      <div class="ol-card">
+        <div class="ol-head">
+          <div class="ol-title"><span class="ol-live"></span>目前在線<span class="ol-num" id="online-count"></span></div>
+          <div class="ol-note">即時更新・僅管理者可見</div>
+        </div>
+        <div id="online-list"><div class="ol-empty">載入中…</div></div>
+        <div id="online-recent" class="ol-recent" style="display:none"></div>
+      </div>
     </div>
     <div id="admin-panel-users">
       <div class="card" style="padding:14px 16px;margin-bottom:14px">
@@ -7373,6 +7431,7 @@ function applyAvatar(dataUrl) {
 }
 
 function logout() {
+  try { if (window._presenceOffline) window._presenceOffline(); } catch(e) {}   // 目前在線：登出即下線
   localStorage.removeItem('bf_user');
   localStorage.removeItem('bf_token'); // 同時清除備援 token
   sessionStorage.removeItem('bf_token');
@@ -11423,6 +11482,7 @@ function sw(name,elOrName,_fromPop){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   const v=document.getElementById('view-'+name);
   if(v)v.classList.add('active');
+  try { if (window._presenceNudge) window._presenceNudge(); } catch(e) {}   // 目前在線：回報所在頁
   document.getElementById('ptitle').textContent=titles[name]||name;
   // header 左側：品牌列每頁都顯示（#app-header 已改實體白 bar，不再是透明浮層，
   //    所以品牌常駐不會疊到內容；使用者要求標題列每頁都在）。
@@ -11471,7 +11531,7 @@ function sw(name,elOrName,_fromPop){
   if(name==='dashboard'){
     loadDashboard();
   }
-  if(name==='admin') loadAdminUsers();
+  if(name==='admin'){ loadAdminUsers(); try { if (window.presenceLoad) presenceLoad(); } catch(e) {} }   // 順便更新「目前在線」人數
   if(name==='hightea'){
     htLoadList();
     try{ if(window.htRenderYearTimeline) htRenderYearTimeline(); }catch(e){}
@@ -13914,11 +13974,250 @@ async function doSaveFlowStep() {
 function switchAdminTab(tab){
   document.getElementById('admin-panel-users').style.display=tab==='users'?'block':'none';
   document.getElementById('admin-panel-log').style.display=tab==='log'?'block':'none';
+  document.getElementById('admin-panel-online').style.display=tab==='online'?'block':'none';
   document.getElementById('tab-users').classList.toggle('active',tab==='users');
   document.getElementById('tab-log').classList.toggle('active',tab==='log');
+  document.getElementById('tab-online').classList.toggle('active',tab==='online');
   if(tab==='log') loadAuditLogDashboard();
+  if(tab==='online') presenceOpen();
   setTimeout(applyRolePermissions, 50);
 }
+
+// ══════════════════════════════════════════
+//  目前在線（2026-10-14 使用者要求，只有管理者看得到）
+//  每個登入中的分頁每 60 秒向 Supabase 報到（presence_touch，身分取 JWT）；
+//  管理者在「系統管理 → 目前在線」看名單（presence_list 在資料庫端限 manager）。
+//  只記「在哪一頁、用什麼裝置」，不記任何案件內容。
+// ══════════════════════════════════════════
+(function(){
+  var _devIdMem = '';
+  function _devId(){
+    if (_devIdMem) return _devIdMem;          // 記憶體優先：無痕模式 localStorage 失效時也不會每次換新代碼
+    var id = '';
+    try { id = localStorage.getItem('bf_dev_id') || ''; } catch(e) {}
+    if (!/^[A-Za-z0-9_-]{8,40}$/.test(id)) {
+      var cs = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', a = [];
+      try { a = Array.prototype.slice.call(crypto.getRandomValues(new Uint8Array(16))); }
+      catch(e) { for (var i = 0; i < 16; i++) a.push(Math.floor(Math.random() * 256)); }
+      id = a.map(function(b){ return cs[b % cs.length]; }).join('');
+      try { localStorage.setItem('bf_dev_id', id); } catch(e) {}
+    }
+    return (_devIdMem = id);
+  }
+  function _devType(){
+    var ua = navigator.userAgent || '';
+    if (/iPad|Tablet/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) || (/Android/i.test(ua) && !/Mobi/i.test(ua))) return 'tablet';
+    if (/Mobi|iPhone|iPod|Android/i.test(ua)) return 'mobile';
+    return 'desktop';
+  }
+  function _curPage(){
+    var v = document.querySelector('.view.active');
+    return v ? String(v.id || '').replace(/^view-/, '') : '';
+  }
+  function _me(){ return (typeof currentUser !== 'undefined' && currentUser) || window.currentUser || null; }
+  function _loggedIn(){ var u = _me(); return !!(u && u.email && u.token && u.token !== 'demo'); }
+  // ── 同一個瀏覽器開好幾個分頁：先在本機彙整，再以「這台裝置」的狀態回報 ──
+  //   各分頁把自己的狀態寫進 localStorage（bf_pr_tabs），回報時看全部分頁：
+  //   任一分頁在前景＝使用中；所在頁取「最近一次在前景的分頁」。
+  //   不這樣做的話：背景分頁的心跳會把狀態蓋成「閒置」（使用中／閒置跳來跳去），
+  //   關掉其中一個分頁也會被誤判成下線（2026-10-14 debug 時發現）。
+  var _TABS_KEY = 'bf_pr_tabs', _SENT_KEY = 'bf_pr_sent';
+  var _tabId = Math.random().toString(36).slice(2, 10), _lastVisAt = 0;
+  function _readTabs(){ try { return JSON.parse(localStorage.getItem(_TABS_KEY) || '{}') || {}; } catch(e) { return {}; } }
+  function _writeTabs(alive){
+    var m = _readTabs(), now = Date.now(), vis = document.visibilityState !== 'hidden';
+    if (!m || typeof m !== 'object') m = {};
+    Object.keys(m).forEach(function(k){ if (!m[k] || !(now - Number(m[k].ts) < 180000)) delete m[k]; });   // 3 分鐘沒更新＝已關閉／被系統凍結
+    if (vis) _lastVisAt = now;
+    if (alive) m[_tabId] = { ts: now, vis: vis, page: _curPage(), at: _lastVisAt };
+    else delete m[_tabId];
+    try { localStorage.setItem(_TABS_KEY, JSON.stringify(m)); } catch(e) {}
+    return m;
+  }
+  function _agg(m){
+    var now = Date.now(), r = { n: 0, vis: false, page: '' }, best = -1;
+    Object.keys(m || {}).forEach(function(k){
+      var t = m[k]; if (!t || !(now - Number(t.ts) < 150000)) return;
+      r.n++;
+      if (t.vis) r.vis = true;
+      var score = (t.vis ? 1e13 : 0) + (Number(t.at) || 0);    // 在前景的分頁優先，其次最近一次在前景的
+      if (score > best) { best = score; r.page = String(t.page || ''); }
+    });
+    return r;
+  }
+  function _post(a, keepalive, online){
+    if (!_loggedIn() || !window.sbPresence) return;
+    var pr = window.sbPresence.touch({
+      deviceId: _devId(), device: _devType(), page: a.page || _curPage(),
+      visible: !!a.vis, online: online !== false
+    }, keepalive);
+    Promise.resolve(pr).then(function(ok){ if (ok) { try { localStorage.setItem(_SENT_KEY, String(Date.now())); } catch(e) {} } }).catch(function(){});
+  }
+  function _send(keepalive){ if (_loggedIn()) _post(_agg(_writeTabs(true)), keepalive, true); }
+  // 憑證：畫面在前景時順便確保有效（快到期才會在背景續簽，平常不打 GAS）；
+  //   背景分頁不續簽 → 開著不看約 1 小時、憑證到期後就自然下線。
+  function _ensureTok(){
+    var vis = document.visibilityState !== 'hidden';
+    return (vis && window.HT_SB_TOKEN && typeof _htEnsureSbToken === 'function') ? _htEnsureSbToken() : null;
+  }
+  // 立即回報（切回畫面、從快取還原頁面）
+  function _beatNow(){
+    if (!_loggedIn()) return;
+    Promise.resolve(_ensureTok()).catch(function(){}).then(function(){ _send(false); });
+  }
+  // 定時心跳：同一台的其他分頁 40 秒內已成功回報過就不重送（狀態一樣，只差最後上線時間）
+  function _beat(){
+    if (!_loggedIn()) return;
+    Promise.resolve(_ensureTok()).catch(function(){}).then(function(){
+      var m = _writeTabs(true), last = 0;
+      try { last = Number(localStorage.getItem(_SENT_KEY)) || 0; } catch(e) {}
+      if (Date.now() - last < 40000) return;
+      _post(_agg(m), false, true);
+    });
+  }
+  var _nudgeT = null;
+  window._presenceNudge = function(){ clearTimeout(_nudgeT); _nudgeT = setTimeout(function(){ _send(false); }, 1200); };   // 切頁：連點只報最後一頁
+  // 登出：這個人明確離開 → 直接回報下線（之後 reload 觸發的 pagehide 因已無登入者不會重送）
+  window._presenceOffline = function(){
+    try { if (!_loggedIn()) return; _writeTabs(false); _post({ vis: false, page: '' }, true, false); } catch(e) {}
+  };
+  setInterval(_beat, 60000);
+  [3000, 10000, 25000].forEach(function(ms){ setTimeout(_beat, ms); });   // 剛登入時憑證通常幾秒後才到手
+  document.addEventListener('visibilitychange', function(){
+    if (!_loggedIn()) return;
+    if (document.visibilityState === 'hidden') _send(true);               // 切走：其他分頁也都不在前景＝閒置（keepalive：關閉中也送得出）
+    else { _beatNow(); if (_olOn()) presenceLoad(); }
+  });
+  window.addEventListener('pagehide', function(){
+    if (!_loggedIn()) return;
+    var a = _agg(_writeTabs(false));                       // 先把自己移出分頁清單
+    if (window._bfReloading) return;                       // 自動更新版本的重新載入：幾秒後就回來，不報下線
+    if (a.n > 0) _post(a, true, true);                     // 還有其他分頁開著 → 以剩下分頁的狀態回報
+    else _post({ vis: false, page: '' }, true, false);     // 最後一個分頁也關了 → 下線
+  });
+  window.addEventListener('pageshow', function(e){ if (e && e.persisted) _beatNow(); });
+
+  // ── 管理者畫面 ──
+  var _olState = {}, _olBusy = false, _olAgain = false, _olPoll = null, _olReT = null, _olHtml = '';
+  function _olOn(){
+    var p = document.getElementById('admin-panel-online'), v = document.getElementById('view-admin');
+    return !!(p && v && v.classList.contains('active') && p.style.display !== 'none' && document.visibilityState !== 'hidden');
+  }
+  var _PAGE_EXTRA = { noperm: '無權限頁', login: '登入頁' };
+  function _pageName(k){ return (typeof titles !== 'undefined' && titles[k]) || _PAGE_EXTRA[k] || ''; }
+  var _DEV_NAME = { mobile: '📱 手機', tablet: '📱 平板', desktop: '💻 電腦' };
+  function _who(email){
+    var u = (typeof LOCAL_USER_LIST !== 'undefined' ? LOCAL_USER_LIST : []).find(function(x){ return x && x.email === email; }) || {};
+    var name = u.name || (typeof LOCAL_EMAIL_TO_NAME !== 'undefined' && LOCAL_EMAIL_TO_NAME[email]) || String(email || '').split('@')[0] || '—';
+    return { name: name, dept: u.dept || '' };
+  }
+  function _av(name, email, cls){
+    var src = null; try { src = email ? localStorage.getItem('bf_avatar_' + email) : null; } catch(e) {}
+    if (src) return '<img class="ol-av" src="' + htEsc(src) + '" alt="">';
+    var bg = (typeof adminUserAvatarColor === 'function') ? adminUserAvatarColor(name) : '#0066CC';
+    return '<span class="ol-av" style="background:' + bg + '">' + htEsc(String(name).charAt(0)) + '</span>';
+  }
+  function _idleText(sec){
+    var m = Math.floor((Number(sec) || 0) / 60);
+    if (m < 1) return '閒置';
+    if (m < 60) return '閒置 ' + m + ' 分鐘';
+    return '閒置 ' + Math.floor(m / 60) + ' 小時';
+  }
+  function _olRender(r){
+    var box = document.getElementById('online-list'), rec = document.getElementById('online-recent');
+    var cnt = document.getElementById('online-count'), badge = document.getElementById('tab-online-n');
+    if (!box) return;
+    if (!r || !r.ok) {
+      box.innerHTML = '<div class="ol-empty">讀取失敗：' + htEsc((r && r.error) || '未知錯誤') + '<br><a href="javascript:void(0)" onclick="presenceLoad()">重新讀取</a></div>';
+      _olHtml = '';
+      return;
+    }
+    // 一個人可能同時開電腦＋手機 → 依 email 合併：任一裝置在前景就算「使用中」
+    var by = {}, list = [];
+    _olState = {};
+    (r.online || []).forEach(function(x){
+      var g = by[x.email];
+      if (!g) { g = by[x.email] = { email: x.email, devs: [], active: false, page: '', idle: null }; list.push(g); }
+      if (g.devs.indexOf(x.device) < 0) g.devs.push(x.device);
+      if (x.visible && !g.active) { g.active = true; g.page = x.page; }
+      if (!x.visible) g.idle = (g.idle === null) ? x.sinceSec : Math.min(g.idle, x.sinceSec);
+      if (!g.active && !g.page) g.page = x.page;
+    });
+    list.forEach(function(g){ var w = _who(g.email); g.name = w.name; g.dept = w.dept; _olState[g.email] = (g.active ? 'on|' : 'idle|') + g.page; });
+    list.sort(function(a, b){ return (b.active - a.active) || a.name.localeCompare(b.name, 'zh-Hant'); });
+    var me = String((_me() || {}).email || '');
+    var html = list.length ? list.map(function(g){
+      return '<div class="ol-row">'
+        + '<div class="ol-who">' + _av(g.name, g.email) + '<div class="ol-nm"><div class="ol-name">' + htEsc(g.name) + (g.email === me ? '<small>（你）</small>' : '') + '</div>'
+        +   (g.dept ? '<div class="ol-dept">' + htEsc(g.dept) + '</div>' : '') + '</div></div>'
+        + (g.active ? '<span class="ol-st on"><i></i>使用中</span>' : '<span class="ol-st idle"><i></i>' + _idleText(g.idle) + '</span>')
+        + '<div class="ol-page">' + (_pageName(g.page) ? '<small>瀏覽</small>' + htEsc(_pageName(g.page)) : '') + '</div>'
+        + '<div class="ol-dev">' + g.devs.map(function(d){ return '<span>' + htEsc(_DEV_NAME[d] || d) + '</span>'; }).join('、') + '</div>'
+        + '</div>';
+    }).join('') : '<div class="ol-empty">目前沒有人在線上</div>';
+    if (html !== _olHtml) { box.innerHTML = html; _olHtml = html; }   // 內容沒變就不重畫（頭像不閃）
+    if (cnt) cnt.textContent = '· ' + list.length + ' 人';
+    if (badge) { badge.textContent = list.length; badge.style.display = list.length ? '' : 'none'; }
+    // 今天稍早上線：同一人只留最後一次，且排除目前在線的人
+    if (rec) {
+      var seen = {}, recent = [];
+      (r.recent || []).forEach(function(x){ if (!by[x.email] && !seen[x.email]) { seen[x.email] = 1; recent.push(x); } });
+      if (!recent.length) { rec.style.display = 'none'; rec.innerHTML = ''; }
+      else {
+        rec.style.display = '';
+        rec.innerHTML = '<div class="ol-recent-t">今天稍早上線（' + recent.length + ' 人）</div><div class="ol-chips">'
+          + recent.map(function(x){ var w = _who(x.email); return '<span class="ol-chip">' + _av(w.name, x.email) + '<b>' + htEsc(w.name) + '</b>' + htEsc(x.lastSeen || '') + '</span>'; }).join('')
+          + '</div>';
+      }
+    }
+  }
+  // 本機 demo（?demo=1，僅 localhost）沒有 JWT → 用假資料看版面
+  function _olDemo(){
+    var demo = { ok: true,
+      online: [
+        { email: 'demo@tsagroup.com.tw', device: 'desktop', page: 'admin',     visible: true,  sinceSec: 60 },
+        { email: 'demo.a@example.com',   device: 'mobile',  page: 'massage',   visible: true,  sinceSec: 30 },
+        { email: 'demo.b@example.com',   device: 'desktop', page: 'dashboard', visible: false, sinceSec: 1500 },
+        { email: 'demo.b@example.com',   device: 'mobile',  page: 'hightea',   visible: false, sinceSec: 300 },
+        { email: 'demo.c@example.com',   device: 'tablet',  page: 'applications', visible: false, sinceSec: 7300 }
+      ],
+      recent: [ { email: 'demo.d@example.com', device: 'mobile', lastSeen: '14:32' }, { email: 'demo.e@example.com', device: 'desktop', lastSeen: '11:05' } ] };
+    return demo;
+  }
+  window.presenceLoad = async function(){
+    if (_olBusy) { _olAgain = true; return; }
+    _olBusy = true;
+    try {
+      var u = _me();
+      if (u && u.token === 'demo') { _olRender(_olDemo()); return; }
+      if (!window.sbPresence) { _olRender({ ok: false, error: '連線模組尚未載入，請稍後再試' }); return; }
+      if (typeof _htEnsureSbToken === 'function') { try { await _htEnsureSbToken(); } catch(e) {} }
+      _olRender(await window.sbPresence.list());
+    } catch(e) {
+      _olRender({ ok: false, error: (e && e.message) || String(e) });
+    } finally {
+      _olBusy = false;
+      if (_olAgain) { _olAgain = false; setTimeout(window.presenceLoad, 300); }
+    }
+  };
+  // Realtime：有人上線／換頁／切閒置就立刻重抓；單純的心跳（狀態沒變）略過不重抓。
+  //   subscribe 本身可重複呼叫（已訂閱就直接回傳）→ 第一次沒拿到憑證而失敗時，下一輪輪詢會自動補訂閱。
+  function _olSub(){
+    if (!window.sbPresence || (_me() && _me().token === 'demo')) return;
+    window.sbPresence.subscribe(function(n){
+      if (!_olOn() || !n || !n.email) return;
+      var st = n.online ? ((n.visible ? 'on|' : 'idle|') + n.page) : 'off';
+      if (_olState[n.email] === st) return;
+      clearTimeout(_olReT); _olReT = setTimeout(presenceLoad, 800);
+    });
+  }
+  window.presenceOpen = function(){
+    presenceLoad();
+    _olSub();
+    // 每 20 秒重抓一次：補「斷線逾時」這種不會觸發 Realtime 的下線
+    if (!_olPoll) _olPoll = setInterval(function(){ if (_olOn()) { presenceLoad(); _olSub(); } }, 20000);
+  };
+})();
 
 // ══════════════════════════════════════════
 //  使用者管理 — 從後端載入

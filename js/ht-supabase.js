@@ -672,6 +672,71 @@
   };
 
   // ══════════════════════════════════════════════════════════
+  // 目前在線（系統管理 → 目前在線，2026-10-14，只有管理者看得到）
+  // ------------------------------------------------------------
+  // 每個登入中的分頁每 60 秒呼叫 presence_touch 報到（身分取 JWT 的 email，前端無法冒名）；
+  // 管理者用 presence_list() 讀名單（函式內驗 manager），Realtime 收到變動就重抓。
+  // 表的 RLS 只讓 manager select → 非管理者連 Realtime 事件都收不到。見 docs/supabase/33（本機限定）。
+  // ══════════════════════════════════════════════════════════
+  var _prRtChannel = null, _prRtSubscribing = false;
+
+  window.sbPresence = {
+    // keepalive＝關閉分頁時送「離線」：頁面卸載後請求仍會送出（不支援的瀏覽器就等 150 秒逾時自動下線）
+    touch: function (s, keepalive) {
+      if (!_validToken()) return Promise.resolve(null);
+      return fetch(REST + 'rpc/presence_touch', {
+        method: 'POST',
+        headers: _headers(),
+        keepalive: !!keepalive,
+        body: JSON.stringify({
+          p_device_id: s.deviceId, p_device: s.device, p_page: s.page,
+          p_visible: !!s.visible, p_online: s.online !== false
+        })
+      }).then(function (res) { return res.ok; }).catch(function () { return false; });
+    },
+
+    list: function () {
+      return _sb('rpc/presence_list', { method: 'POST', body: {} }).then(function (r) {
+        if (r.__error) return { ok: false, error: r.__error };
+        var d = r.__data;
+        return (d && typeof d === 'object') ? d : { ok: false, error: '回應異常' };
+      });
+    },
+
+    // onRow(newRow)：user_presence 任一列異動（RLS：只有管理者收得到）
+    subscribe: async function (onRow) {
+      var tok = _validToken();
+      if (!tok) return false;
+      if (_prRtChannel || _prRtSubscribing) return true;
+      _prRtSubscribing = true;
+      var lib;
+      try { lib = await _loadRtLib(); }
+      catch (e) { _prRtSubscribing = false; return false; }
+      try {
+        if (!_rtClient) {
+          _rtClient = lib.createClient(SB_URL, SB_KEY, {
+            auth: { persistSession: false, autoRefreshToken: false },
+            realtime: { params: { eventsPerSecond: 10 } }
+          });
+        }
+        _rtClient.realtime.setAuth(tok);
+        _prRtChannel = _rtClient
+          .channel('presence-live')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'user_presence' }, function (p) {
+            _bump('prRecv');
+            try { onRow && onRow((p && p.new) || {}); } catch (e) {}
+          })
+          .subscribe(function (status) { _bump('prStatus', status); });
+        _prRtSubscribing = false;
+        return true;
+      } catch (e) {
+        _prRtSubscribing = false;
+        return false;
+      }
+    }
+  };
+
+  // ══════════════════════════════════════════════════════════
   // 公佈欄（首頁／午茶日／按摩共用一張表，以 scope 區分）
   // ----------------------------------------------------------
   // 搬家動機：GAS 端不穩，實際造成「公告明明有卻不見」「刪掉重整又回來」。
