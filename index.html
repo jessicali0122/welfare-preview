@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261014225743';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261016092743';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -6228,6 +6228,40 @@ function isMyTurnToApprove(c) {
       && String(APPROVER_EMAILS[stepIdx] || '').trim().toLowerCase() === _me;
 }
 
+// 這次核准之後會怎樣（2026-10-16：原本不管第幾關都寫「申請人將收到通知」，但其實全部簽完申請人才會收到）。
+//   與後端 approveCase 同規則：目前關卡 step 已達「這張單凍結的簽核鏈」總關數 → 全部完成、通知申請人；
+//   否則送往下一關、只通知下一關審核人。舊單沒有快照時退回目前流程設定（與 isMyTurnToApprove 同策略）。
+//   回傳 { last: true／false／null(判斷不出來), next: 下一關審核人姓名, status, step }（status/step＝核准後的新值）
+function _approveOutcome(c) {
+  if (!c) return { last: null, next: '' };
+  var step = Number(c.step) || 1;
+  var total = (Array.isArray(c.chainEmails) && c.chainEmails.length) ? c.chainEmails.length
+            : (Number(c.totalSteps) || (Array.isArray(APPROVER_EMAILS) ? APPROVER_EMAILS.length : 0));
+  if (!total) return { last: null, next: '' };
+  if (step >= total) return { last: true, next: '', status: '已完成', step: step };
+  var nm = (Array.isArray(c.chainNames) && c.chainNames[step]) ? String(c.chainNames[step]) : '';
+  if (!nm && Array.isArray(c.chainEmails) && c.chainEmails[step] && typeof localName === 'function') nm = localName(c.chainEmails[step], '') || '';
+  return { last: false, next: nm, status: '待第' + (step + 1) + '關簽核', step: step + 1 };
+}
+function _findCaseLocal(caseId) {
+  var arr = window._allCasesCache || [];
+  for (var i = 0; i < arr.length; i++) { if (arr[i] && arr[i].caseId === caseId) return arr[i]; }
+  return null;
+}
+// 確認視窗的說明文字
+function _approveConfirmNote(o) {
+  var tail = '此操作無法撤銷。';
+  if (!o || o.last === null) return tail;
+  if (o.last) return '這是最後一關，核准後即完成全部簽核，申請人將收到通知。' + tail;
+  return '核准後將送交下一關審核人' + (o.next ? '<strong style="white-space:nowrap">' + htEsc(o.next) + '</strong>' : '') + '，全部簽核完成後申請人才會收到通知。' + tail;
+}
+// 核准成功的 toast
+function _approveDoneToast(o) {
+  if (!o || o.last === null) return '✅ 已核准！';
+  if (o.last) return '✅ 已完成全部簽核！申請人將收到通知';
+  return '✅ 已核准！已通知下一關審核人' + (o.next ? ' ' + String(o.next).replace(/ /g, '\u00A0') : '');   // 姓名內用不斷行空格：職稱與姓名不被拆到兩行
+}
+
 // 目前登入者是否為「此案當關的請假指定代理人」（原簽核人請假中→其指定代理人可代簽）。
 // 只認真正的代理人，管理員不再萬能代簽（2026-08-23 依需求移除管理員越權）。
 function _isActiveProxyForCase(c) {
@@ -9941,10 +9975,11 @@ async function loadApprovals() {
 }
 
 function quickApprove(caseId) {
+  var _o = _approveOutcome(_findCaseLocal(caseId));   // 是否最後一關（決定說明文字與通知對象）
   // 用內建確認 modal，取代 native confirm()
   _showConfirmModal(
     '✅ 確認核准',
-    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:14px;color:#767B75">核准後申請人將收到通知，此操作無法撤銷。</span>',
+    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:14px;color:#767B75">' + _approveConfirmNote(_o) + '</span>',
     '核准',
     'var(--brand)',
     async function() {
@@ -9953,7 +9988,8 @@ function quickApprove(caseId) {
       toast('⏳ 處理中...');
       const res = await callAPI('approve', { caseId, comment: '核准' });
       window._actionLock = false;
-      if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); loadApprovals(); loadDashboard(); }
+      // ★ 後端只回 {ok:true}：原本拿 res.status/res.step（undefined）去更新畫面，案件狀態會被清空約 1 秒 → 改用預判的新狀態
+      if (res.ok) { _cacheClear(); if (_o.last !== null || res.status) _patchCaseLocal(res.caseId || caseId, { status: res.status || _o.status, step: res.step || _o.step }); _reconcileCasesSoon(); toast(_approveDoneToast(_o)); _launchConfetti(document.querySelector('.view.active')); loadApprovals(); loadDashboard(); }
       else toast('❌ 錯誤：' + res.error);
     }
   );
@@ -9970,7 +10006,7 @@ async function _doQuickReject(caseId, comment) {
   toast('⏳ 處理中...');
   const res = await callAPI('reject', { caseId, comment });
   window._actionLock = false;
-  if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
+  if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status || '已退件' }); _reconcileCasesSoon(); toast('🔴 已退件，申請人將收到通知'); loadApprovals(); loadDashboard(); }
   else toast('❌ 錯誤：' + res.error);
 }
 
@@ -10519,6 +10555,7 @@ async function loadDetail(caseId, _fromPop) {
     const canApprove  = isMyTurnToApprove(c) || _isActiveProxyForCase(c);
     approveBox.style.display = canApprove ? 'block' : 'none';
     approveBox.setAttribute('data-caseid', c.caseId);
+    approveBox._caseRef = c;   // 核准時判斷「是否最後一關」用（_approveOutcome）
     // 每次切換案件時清空退件原因，避免帶入上一筆的內容
     const _ta = approveBox.querySelector('textarea');
     if (_ta) _ta.value = '';
@@ -10677,9 +10714,11 @@ function doApprove() {
   const caseId  = document.getElementById('approve-box').getAttribute('data-caseid');
   const comment = document.querySelector('#approve-box textarea').value;
   if (!caseId) return;
+  const _ab = document.getElementById('approve-box');
+  const _o  = _approveOutcome((_ab && _ab._caseRef && _ab._caseRef.caseId === caseId) ? _ab._caseRef : _findCaseLocal(caseId));
   _showConfirmModal(
     '✅ 確認核准',
-    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:14px;color:#767B75">核准後申請人將收到通知，此操作無法撤銷。</span>',
+    '確定核准案件 <strong>' + caseId + '</strong>？<br><span style="font-size:14px;color:#767B75">' + _approveConfirmNote(_o) + '</span>',
     '核准', 'var(--brand)',
     async function() {
       if (_approveLock) return;   // 防連點重複送出
@@ -10687,7 +10726,7 @@ function doApprove() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('approve', { caseId, comment });
-        if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('✅ 已核准！申請人將收到通知'); _launchConfetti(document.querySelector('.view.active')); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
+        if (res.ok) { _cacheClear(); if (_o.last !== null || res.status) _patchCaseLocal(res.caseId || caseId, { status: res.status || _o.status, step: res.step || _o.step }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast(_approveDoneToast(_o)); _launchConfetti(document.querySelector('.view.active')); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
@@ -10709,7 +10748,7 @@ function doReject() {
       try {
         toast('⏳ 處理中...');
         const res = await callAPI('reject', { caseId, comment });
-        if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status, step: res.step }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
+        if (res.ok) { _cacheClear(); _patchCaseLocal(res.caseId || caseId, { status: res.status || '已退件' }); _reconcileCasesSoon(); _markCaseStale(caseId); const _ta=document.querySelector('#approve-box textarea'); if(_ta)_ta.value=''; toast('🔴 已退件，申請人將收到通知'); setTimeout(function(){ loadDetail(caseId); }, 700); setTimeout(function(){ loadDashboard(); }, 1600); }
         else toast('❌ 錯誤：' + res.error);
       } finally { _approveLock = false; }
     }
