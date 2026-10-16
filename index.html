@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261016102115';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261016110823';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -15132,10 +15132,11 @@ function _fpKeepInView(fp) {
     var top = cal ? parseFloat(cal.style.top) : NaN;
     if (isNaN(top)) return;
     var vTop = top - (window.pageYOffset || document.documentElement.scrollTop || 0);
-    var over = vTop + cal.offsetHeight - (window.innerHeight - 8);
-    if (over <= 0) return;
-    var up = Math.min(over, vTop - 8);
-    if (up > 0) cal.style.top = (top - up) + 'px';
+    var h = cal.offsetHeight, vh = window.innerHeight, newTop = vTop;
+    // 只在「真的超出畫面」才動（原本剛好放得下的一律不動），挪的時候才留 8px 邊距
+    if (vTop + h > vh) newTop = Math.max(8, vh - 8 - h);        // 超出底部 → 往上挪（最多到頂端）
+    else if (vTop < 0 && 8 + h <= vh - 8) newTop = 8;           // 頂端被切掉 → 往下挪
+    if (newTop !== vTop) cal.style.top = (top + (newTop - vTop)) + 'px';
   } catch (e) {}
 }
 var _BDAY_YEAR = 2000;   // 閏年：2 月 29 日也選得到
