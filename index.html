@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261016094759';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261016102115';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1707,6 +1707,14 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .fp-clear-btn:hover{background:#EDEFF2;color:#4A4F49}
 .date-inp{cursor:pointer!important}
 .date-inp::placeholder{color:#767B75}
+/* 生日日曆（只有月／日，2026-10-16）：不顯示年份、不需要「今天」，「清除」靠右 */
+.bday-inp{cursor:pointer!important}
+.bday-inp::placeholder{color:#767B75}
+.fp-bday .flatpickr-current-month .numInputWrapper{display:none!important}
+.fp-bday .fp-today-btn{display:none!important}
+.fp-bday .fp-footer{justify-content:flex-end}
+/* 人員視窗的日期欄與旁邊欄位同字級（日曆會把字設成 16px 防 iOS 放大；電腦版不需要，手機版另有 16px 規則） */
+@media(min-width:769px){#add-user-modal .flatpickr-input,#edit-user-modal .flatpickr-input{font-size:14px!important}}
 
 /* ── 1. 表單進度條 ── */
 #form-progress-bar{display:flex;align-items:center;margin-bottom:16px;background:#F7F8F6;border-radius:12px;padding:11px 16px;border:1px solid #D5DAE2;gap:0}
@@ -5547,11 +5555,11 @@ thead th{color:#767B75!important}
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">生日</label>
-          <input class="inp" id="add-bday" placeholder="例：01-22（MM-DD）" maxlength="5">
+          <input class="inp bday-inp" id="add-bday" type="text" placeholder="選擇生日">
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">到職日</label>
-          <input class="inp" id="add-hiredate" type="date">
+          <input class="inp date-inp" id="add-hiredate" type="text" placeholder="選擇日期">
         </div>
       </div>
 
@@ -5630,12 +5638,12 @@ thead th{color:#767B75!important}
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">生日</label>
-          <input class="inp" id="edit-birthday" type="text" placeholder="例：01-22（MM-DD）">
+          <input class="inp bday-inp" id="edit-birthday" type="text" placeholder="選擇生日">
           <div style="font-size:12px;color:#767B75;margin-top:4px">用於午茶日壽星自動帶入</div>
         </div>
         <div>
           <label style="font-size:14px;font-weight:600;color:#4A4F49;display:block;margin-bottom:5px">到職日</label>
-          <input class="inp" id="edit-hiredate" type="date">
+          <input class="inp date-inp" id="edit-hiredate" type="text" placeholder="選擇日期">
           <div style="font-size:12px;color:#767B75;margin-top:4px">用於結婚／喪葬補助年資比對</div>
         </div>
       </div>
@@ -7029,6 +7037,7 @@ function showApp() {
         initFlatpickr(el);
         el.addEventListener('focus', function(){ this.blur(); }, { passive: true });
       });
+      document.querySelectorAll('.bday-inp').forEach(function(el){ initBdayPicker(el); });   // 人員視窗的生日
     }, 50);
     // URL 參數處理：?reapply=CASEID（來自 Chat 退件通知的「重新申請」按鈕）
     setTimeout(function() {
@@ -14339,6 +14348,8 @@ function _bdayParse(v) {
   if (ymd) { var mo=+ymd[2], d=+ymd[3]; if(mo>=1&&mo<=12&&d>=1&&d<=31) return {m:mo,d:d}; }
   var md = s.match(/^(\d{1,2})\D+(\d{1,2})/);
   if (md) { var mo2=+md[1], d2=+md[2]; if(mo2>=1&&mo2<=12&&d2>=1&&d2<=31) return {m:mo2,d:d2}; }
+  var md4 = s.match(/^(\d{2})(\d{2})$/);   // 0316 這種沒分隔符號的
+  if (md4) { var mo3=+md4[1], d3=+md4[2]; if(mo3>=1&&mo3<=12&&d3>=1&&d3<=31) return {m:mo3,d:d3}; }
   return null;
 }
 // 生日顯示 → MM/DD
@@ -14468,8 +14479,8 @@ function closeAddUserModal(){
   document.getElementById('add-empid').value='';
   document.getElementById('add-email').value='';
   document.getElementById('add-dept').value='';
-  document.getElementById('add-bday').value='';
-  const _ah=document.getElementById('add-hiredate'); if(_ah) _ah.value='';
+  setFpDate(document.getElementById('add-bday'), '');
+  setFpDate(document.getElementById('add-hiredate'), '');
 }
 function doAddUser(){
   const name=document.getElementById('add-name').value.trim();
@@ -14508,9 +14519,9 @@ function showEditUserModal(btn){
   const empidEl=document.getElementById('edit-empid');
   if(empidEl)empidEl.value=empId;
   const bdayEl=document.getElementById('edit-birthday');
-  if(bdayEl){ bdayEl.value=row.dataset.birthday||''; }
+  if(bdayEl){ _setBdayInput(bdayEl, row.dataset.birthday||''); }
   const hireEl=document.getElementById('edit-hiredate');
-  if(hireEl){ hireEl.value=row.dataset.hiredate||''; }
+  if(hireEl){ setFpDate(hireEl, row.dataset.hiredate||''); }
   const deptVal=row.dataset.dept||'';
   const editDept=document.getElementById('edit-dept');
   // ★ 部門不在下拉清單內（清單是寫死的 8 個，實際部門更多，如總經理室／寵物部）→ 先補一個選項再選，
@@ -15106,8 +15117,54 @@ function initFlatpickr(el, opts) {
       // iOS：開啟日曆時立刻讓 input 失焦，防止 viewport 縮放
       if (fp.altInput) fp.altInput.blur();
       if (fp.input) fp.input.blur();
+      // flatpickr 先觸發 onOpen、之後才定位日曆 → 等它定位完再檢查
+      setTimeout(function(){ _fpKeepInView(fp); }, 0);
     },
   }, opts || {}));
+}
+// 日曆在欄位上方、下方都放不下時（欄位在畫面中下段、筆電螢幕較矮），flatpickr 會直接超出畫面底部
+//   → 往上挪到剛好看得見（最多挪到畫面頂端）。2026-10-16：新增／編輯人員的生日、到職日在 800px 高的螢幕被切掉 20px。
+//   用 style.top＋offsetHeight 計算（不用 getBoundingClientRect：開啟動畫的位移會讓量到的位置不準）；
+//   釘在版面內（static／inline）的日曆沒有 style.top → 不處理。
+function _fpKeepInView(fp) {
+  try {
+    var cal = fp && fp.calendarContainer;
+    var top = cal ? parseFloat(cal.style.top) : NaN;
+    if (isNaN(top)) return;
+    var vTop = top - (window.pageYOffset || document.documentElement.scrollTop || 0);
+    var over = vTop + cal.offsetHeight - (window.innerHeight - 8);
+    if (over <= 0) return;
+    var up = Math.min(over, vTop - 8);
+    if (up > 0) cal.style.top = (top - up) + 'px';
+  } catch (e) {}
+}
+var _BDAY_YEAR = 2000;   // 閏年：2 月 29 日也選得到
+function initBdayPicker(el) {
+  if (!el || el._flatpickr) return;
+  if (typeof flatpickr === 'undefined') { _loadFlatpickr(function(){ initBdayPicker(el); }); return; }
+  var fp = initFlatpickr(el, {
+    dateFormat: 'n月j日',
+    minDate: new Date(_BDAY_YEAR, 0, 1),
+    maxDate: new Date(_BDAY_YEAR, 11, 31),
+    parseDate: function(str) { var p = _bdayParse(str); return p ? new Date(_BDAY_YEAR, p.m - 1, p.d) : undefined; }
+  });
+  if (!fp) return;
+  fp.calendarContainer.classList.add('fp-bday');
+  // 沒選過時打開在「這個月」（不然會停在可選範圍的最後一個月＝12 月）
+  fp.config.onOpen.push(function(sel, str, inst){
+    if (!sel.length) inst.jumpToDate(new Date(_BDAY_YEAR, new Date().getMonth(), 1));
+  });
+}
+// 編輯人員：把現有生日帶進日曆；讀不懂的舊值原樣保留（避免沒動生日、一按儲存就被清掉）
+function _setBdayInput(el, v) {
+  if (!el) return;
+  var p = _bdayParse(v);
+  if (el._flatpickr) {
+    if (p) el._flatpickr.setDate(new Date(_BDAY_YEAR, p.m - 1, p.d), false);
+    else { el._flatpickr.clear(false); el.value = v || ''; }
+  } else {
+    el.value = p ? (p.m + '月' + p.d + '日') : (v || '');
+  }
 }
 function setFpDate(el, dateStr) {
   if (!el) return;
