@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261022145217';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261023124233';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -12996,9 +12996,13 @@ function _notifClickMine(el, caseId, key){
 function renderAuditLog(c) {
   const section = document.getElementById('audit-log-section');
   if (!section) return;
-  const activeApprovers = _flowApprovers
+  const _activeFlow = _flowApprovers
     ? _flowApprovers.filter(function(a){ return a.enabled !== false; })
     : [];
+  // 第 i 關原本是誰：優先用這張單凍結的簽核鏈快照（換人後現行流程第 i 關已是別人，且不需 HR 的單關卡位置不同）
+  const activeApprovers = (Array.isArray(c.chainEmails) && c.chainEmails.length)
+    ? c.chainEmails.map(function(e, i){ return { email: e, name: (Array.isArray(c.chainNames) && c.chainNames[i]) || '' }; })
+    : _activeFlow;
 
   // 組合所有送件輪次：歷史輪次 + 目前輪次
   const history = c.resubmitHistory || [];
@@ -13124,6 +13128,16 @@ function updateDetailFlow(c){
       APPROVERS.push({ label: '第 ' + _sn + ' 關', name: '—', email: '' });
     }
   }
+  // 關卡名稱的「對位」流程：快照裡的人已不在現行流程（例：離職換人）時，關卡名稱不可直接取現行第 i 關——
+  //   不需 HR 的單只有 3 關（總幹事/主委/財務），現行第 1 關卻是 HR → 舊單的總幹事會被標成「HR」。
+  //   關卡數對不上時，改用「去掉 HR 條件關卡」的現行流程對位。
+  const _labelSeq = (function(){
+    var act = allApprovers.filter(function(a){ return a.enabled !== false; });
+    var n = Array.isArray(c.chainEmails) ? c.chainEmails.length : 0;
+    if (!n || n === act.length) return act;
+    var noSpecial = act.filter(function(a){ return a.condition !== 'special'; });
+    return noSpecial.length === n ? noSpecial : act;
+  })();
   const approvals   = c.approvals || [];
   const isDone      = c.status === '已完成';
   const isRejected  = c.status === '已退件';
@@ -13237,8 +13251,9 @@ function updateDetailFlow(c){
       _snapLabel = _snapName.slice(0, _spIdx);
       _snapPlainName = _snapName.slice(_spIdx + 1).trim();
     }
-    // 關卡名稱：快照存了組合字串 → 直接用拆出來的職稱；否則才嘗試用 email 反查現行流程(best-effort)，找不到退回現行設定
-    var _stepLabel = a.label;
+    // 關卡名稱：快照存了組合字串 → 直接用拆出來的職稱；否則才嘗試用 email 反查現行流程(best-effort)，
+    //   找不到（人已換掉）→ 用對位後的現行流程（_labelSeq），不是單純的現行第 i 關
+    var _stepLabel = (_labelSeq[i] && _labelSeq[i].label) || a.label;
     if (_snapLabel) {
       _stepLabel = _snapLabel;
     } else if (_snapEmail && Array.isArray(_flowApprovers)) {
