@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261023124233';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261023131307';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -1744,6 +1744,22 @@ span.flatpickr-weekday{color:#9AA096!important;font-weight:700!important;font-si
 .ms-oe-preset:hover{border-color:#9DBDE6}
 .ms-oe-preset.on{border-color:#0066CC;background:#EEF4FC}
 .ms-oe-preset.on b{color:#0066CC}
+/* 自訂班表 2 組（2026-10-23）：每組＝套用鈕＋「存目前時段」小鈕 */
+.ms-oe-custom{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ms-oe-cus{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ms-oe-cus .ms-oe-preset{width:100%;min-width:0}
+.ms-oe-cus .ms-oe-preset b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms-oe-cus .ms-oe-preset.empty{border-style:dashed;color:#767B75}
+.ms-oe-cus .ms-oe-preset.empty b{color:#767B75;font-weight:600}
+.ms-oe-cus-save{background:none;border:none;color:#0066CC;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;padding:2px 0;align-self:center}
+.ms-oe-cus-save:disabled{color:#B5BAB3;cursor:default}
+/* 暫停預約名單 */
+.ms-sus-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff;border:1px solid #E3E7EC;border-radius:10px;flex-wrap:wrap}
+.ms-sus-row+.ms-sus-row{margin-top:8px}
+.ms-sus-name{font-size:14px;font-weight:700;color:#2E332D;min-width:0}
+.ms-sus-meta{font-size:12px;color:#767B75;flex:1;min-width:140px}
+.ms-sus-lift{background:#fff;border:1.5px solid #D2D7CD;color:#C63968;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap}
+.ms-sus-lift:hover{border-color:#EC4F7D}
 .ms-dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;background:#F5F8FC;border:1px solid #E6ECF3;border-radius:14px;padding:10px}
 .ms-dslot{position:relative;border:1.5px solid #D5DAE2;border-radius:12px;background:#fff;padding:10px 8px;text-align:center;transition:border-color .15s}
 .ms-dslot:hover{border-color:#9DBDE6}
@@ -3320,7 +3336,7 @@ thead th{color:#767B75!important}
           return { unlocked:true, state:'每人 $2,000（2026/8 起）', note:'併同當月薪資發放' };
         } },
       { icon:'☕', name:'騰勢午茶日', rule:function(){ return { unlocked:true, state:'每月 16 號' }; } },
-      { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'每月 2～4 次，線上預約' }; } },
+      { icon:'💆', name:'視障按摩日', rule:function(){ return { unlocked:true, state:'上半月、下半月各 1 次，線上預約' }; } },
       { icon:'🥪', name:'迎新午餐', rule:function(){ return { unlocked:true, state:'到職迎新，每人 $150' }; } },
       { icon:'🏷️', name:'員購價', rule:function(c){ if (c.m<1) return { unlocked:false, state:'到職次月起，官網員購價' }; return { unlocked:true, state:'官網員購價' }; } },
       { icon:'🍽️', name:'部門季聚餐', rule:function(c){
@@ -5140,7 +5156,7 @@ thead th{color:#767B75!important}
 
   <!-- Hero 橫幅 -->
   <div id="ms-suspend-warn" style="display:none;background:#fee2e2;border-radius:12px;padding:10px 16px;margin-bottom:16px">
-    <div style="font-size:14px;font-weight:700;color:#dc2626">⚠️ 帳號暫停預約</div>
+    <div id="ms-suspend-warn-text" style="font-size:14px;font-weight:700;color:#dc2626">⚠️ 因缺席暫停預約</div>
   </div>
 
   <!-- 頁首：3D icon + 標題 + 本月額度 ＋ 注意事項（融入同卡、可收合） -->
@@ -5167,11 +5183,15 @@ thead th{color:#767B75!important}
         <div class="ms-ntgrid">
           <div class="ms-nt">
             <span class="i">📅</span>
-            <span><strong>預約</strong>｜<b class="k">每月最多&nbsp;2&nbsp;次</b>，<wbr>額滿可候補<wbr>（候補不佔額度）</span>
+            <span><strong>預約</strong>｜<b class="k">上半月、下半月各&nbsp;1&nbsp;次</b>，<wbr>額滿可候補<wbr>（候補不佔次數）</span>
+          </div>
+          <div class="ms-nt">
+            <span class="i">➕</span>
+            <span><strong>加約</strong>｜次數用完，<wbr><b class="k">各時段開始前&nbsp;15&nbsp;分鐘</b>起可加約<wbr>（不佔次數，<wbr>一天限&nbsp;1&nbsp;次）</span>
           </div>
           <div class="ms-nt">
             <span class="i">↩️</span>
-            <span><strong>取消</strong>｜<b class="k">開始前&nbsp;30&nbsp;分鐘</b>可自行取消，<wbr>逾時須經&nbsp;HR&nbsp;審核</span>
+            <span><strong>取消</strong>｜<b class="k">開始前&nbsp;30&nbsp;分鐘</b>以前取消不扣次數；<wbr>之後仍可自行取消，<wbr><b class="warn">但會用掉本期次數</b></span>
           </div>
           <div class="ms-nt">
             <span class="i">📷</span>
@@ -5183,7 +5203,7 @@ thead th{color:#767B75!important}
           </div>
           <div class="ms-nt">
             <span class="i">⚠️</span>
-            <span><strong>缺席</strong>｜<b class="bad">累計&nbsp;3&nbsp;次</b>，<wbr>暫停預約資格</span>
+            <span><strong>缺席</strong>｜<b class="bad">暫停預約&nbsp;1&nbsp;個月</b>，<wbr>半年內再缺席<b class="bad">暫停&nbsp;2&nbsp;個月</b><wbr>（缺席也算用掉次數）</span>
           </div>
           <div class="ms-ntslogan" style="display:flex;gap:10px;align-items:flex-start;border-top:1px dashed #EDEFF2;padding-top:8px;margin-top:2px">
             <span style="flex-shrink:0;font-size:16px;line-height:1.7">😌</span>
@@ -5296,13 +5316,17 @@ thead th{color:#767B75!important}
               <!-- 一鍵套用標準按摩日班表：四種長度對應實際 M-Day 預約表；每節15分鐘、每節1人，自動跳過師傅休息
                    ★ 排列順序照「實際使用頻率」而非時間長短（2026/06–09 共 17 個開放日統計）：
                      四小時 9 天 ＞ 六小時 6 天 ＞ 二小時 1 天 ＝ 全天 1 天
-                     → 九成情況第一顆就按到，不必每次掃過整排 -->
+                     → 九成情況第一顆就按到，不必每次掃過整排
+                   ★ 2026-10-23：按鈕改寫「結束時間」（最後一節 12:45 開始＝13:00 結束），與 Amanda 的說法一致 -->
               <div class="ms-oe-presets">
-                <button onclick="msDraftApplyMDay('4h')" data-ms-preset="4h" class="ms-oe-preset" title="09:00–12:45，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節）。最常用（近四個月 9 天）"><b>09:00–12:45</b></button>
-                <button onclick="msDraftApplyMDay('6h')" data-ms-preset="6h" class="ms-oe-preset" title="09:00–15:15，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節）。次常用（近四個月 6 天）"><b>09:00–15:15</b></button>
-                <button onclick="msDraftApplyMDay('2h')" data-ms-preset="2h" class="ms-oe-preset" title="09:00–10:45，每15分鐘一節、每節1人（共8節）。對應 9/4 那種二小時場"><b>09:00–10:45</b></button>
-                <button onclick="msDraftApplyMDay('day')" data-ms-preset="day" class="ms-oe-preset" title="09:00–17:30，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節）。對應 8/12 那種全天場"><b>09:00–17:30</b></button>
+                <button onclick="msDraftApplyMDay('4h')" data-ms-preset="4h" class="ms-oe-preset" title="09:00–13:00，每15分鐘一節、每節1人，跳過11:00師傅休息（共15節，最後一節12:45）。最常用"><b>09:00–13:00</b></button>
+                <button onclick="msDraftApplyMDay('6h')" data-ms-preset="6h" class="ms-oe-preset" title="09:00–15:30，下午從13:30開始，跳過11:00與13:00–13:15師傅休息（共23節，最後一節15:15）。次常用"><b>09:00–15:30</b></button>
+                <button onclick="msDraftApplyMDay('2h')" data-ms-preset="2h" class="ms-oe-preset" title="09:00–11:00，每15分鐘一節、每節1人（共8節，最後一節10:45）"><b>09:00–11:00</b></button>
+                <button onclick="msDraftApplyMDay('day')" data-ms-preset="day" class="ms-oe-preset" title="09:00–17:45，下午從13:30開始，跳過11:00、13:00–13:15、15:15師傅休息（共31節，最後一節17:30）"><b>09:00–17:45</b></button>
               </div>
+              <!-- 自訂班表（2 組，可命名；存在 massage_settings.slotTemplates，所有管理者共用） -->
+              <div class="ms-oe-label" style="margin-top:12px">自訂班表</div>
+              <div id="ms-oe-custom" class="ms-oe-custom"></div>
               <div class="ms-oe-label" style="margin-top:14px">開放時段 <span style="font-weight:500;color:#9AA096">（每節 1 位；點時間可修改，× 移除）</span></div>
               <div id="ms-draft-slots"></div>
               <!-- 批次開放：同一組時段一次套用到多個日期（籤條式，直覺可增刪） -->
@@ -5379,6 +5403,16 @@ thead th{color:#767B75!important}
     <!-- 「已開放日期」清單已移除：開放/編輯改由直接點上方日曆日期操作。
          保留隱藏容器供 msRenderOpenDates 寫入（不再顯示於畫面）。 -->
     <div id="ms-open-dates-list" style="display:none"></div>
+
+    <!-- 暫停預約名單（2026-10-23：缺席停 1 個月、半年內再缺席停 2 個月，到期自動恢復；可手動解除） -->
+    <div id="ms-suspend-section" style="display:none;background:#F7F8F6;border-radius:12px;padding:18px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="width:32px;height:32px;border-radius:10px;background:linear-gradient(135deg,#E8798F,#C63968);display:flex;align-items:center;justify-content:center;font-size:14px">⏸</div>
+        <div style="font-size:14px;font-weight:700;color:#2E332D">暫停預約名單</div>
+        <div id="ms-suspend-badge" style="background:#C63968;color:#fff;border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700"></div>
+      </div>
+      <div id="ms-suspend-list"></div>
+    </div>
 
     <!-- 所有預約紀錄 -->
     <div style="background:#F7F8F6;border-radius:12px;padding:18px">
@@ -5458,6 +5492,7 @@ thead th{color:#767B75!important}
         <li>對方接受前，<wbr>你仍是預約人</li>
         <li>對方沒回應，<wbr>時段開始後<wbr>自動退回給你</li>
         <li>該時段有人候補時<wbr>不能轉讓</li>
+        <li>轉讓後，<wbr><b>次數仍算你的</b><wbr>（對方不扣次數）</li>
       </ul>
     </div>
     <div style="padding:14px 20px;border-top:1px solid #D9DDD3;display:flex;gap:8px;justify-content:flex-end">
@@ -5889,7 +5924,7 @@ const CAPABILITY_MAP = {
   'feedback.view':         [],                   // 福委聽你說：尚未開放（2026-09-30）暫時僅管理者；正式開放時改回 ['welfare']（管理者＋福委）並刪 fbOpenBoard 開頭的守門
   'hightea.manage':        ['welfare'],
   'hightea.discover':      ['welfare'],
-  'massage.manage':        ['hr'],               // 按摩「進階管理區」可見＋產生報到 QR：HR＋管理者
+  'massage.manage':        ['hr', 'welfare'],    // 按摩「進階管理區」可見＋產生報到 QR：HR＋福委＋管理者（2026-10-23 福委加入；後端 _ms_is_admin_or_hr 同步）
   'bulletin.post':         ['welfare', 'hr'],    // 公告基底能力；實際新增/刪除依版位用 canBulletin(scope)：首頁/午茶日含福委，按摩僅 HR/管理者
   'admin.users':           [],                   // 系統管理：僅管理者（按摩後臺管理另由 massage.manage 控管＝HR＋管理者）
   'supplier.manage':       ['welfare'],         // 供應商管理：管理者＋福委（可看也可新增／編輯／刪除）
@@ -8389,7 +8424,7 @@ function applyDashboardBlocks() {
   var msSub = document.getElementById('dash-hub-massage-sub');
   if (msSub) {
     var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
-    msSub.textContent = msHint || '每月可預約 2 次，點此查看時段';
+    msSub.textContent = msHint || '上半月、下半月各可預約 1 次，點此查看時段';
     // 沒快取（首次用這台裝置）→ 背景抓一次按摩資料，抓到後自動刷新此提示
     if (!msHint && typeof window.msPrefetchHubData === 'function') window.msPrefetchHubData();
   }
@@ -8963,7 +8998,7 @@ function _renderDashStatus(){
   rows += row('#E7F0FB','#0066CC',teaSvg,'下次午茶日', teaDate || teaHint || '尚未安排', (teaDate && teaHint) ? teaHint : '', "sw('hightea')", false);
   // 本月按摩剩餘
   var msHint = (typeof window.msGetNextBookingHint === 'function') ? window.msGetNextBookingHint() : null;
-  rows += row('#E6E9FB','#5B6BD6',msSvg,'按摩預約', msHint || '每月可預約 2 次', '', "sw('massage')", false);
+  rows += row('#E6E9FB','#5B6BD6',msSvg,'按摩預約', msHint || '上半月、下半月各 1 次', '', "sw('massage')", false);
   // 本月壽星（吃「月」的邏輯：比對 _BF_USER_BDAYS 當月生日者）
   var cakeSvg='<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-8a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8"/><path d="M4 16s.5-1 2-1 2.5 1 4 1 2.5-1 4-1 2.5 1 4 1 2-1 2-1"/><path d="M2 21h20"/><path d="M7 8v2M12 8v2M17 8v2"/><path d="M7 4h.01M12 4h.01M17 4h.01"/></svg>';
   var bdayNames = [];
@@ -9153,7 +9188,8 @@ function _dshDutyMassage(){
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
   var d=_dshMs();
   var cta='<button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">進按摩管理 →</button>';
-  var pend=(d&&Array.isArray(d.pendingRequests))?d.pendingRequests.length:((typeof _msPendingRequests!=='undefined'&&_msPendingRequests)?_msPendingRequests.length:0);
+  // 2026-10-23：取消不再需要 HR 審核 →「待處理申請」改成「暫停預約」人數（缺席停權中，可到按摩頁解除）
+  var pend=(d&&Array.isArray(d.suspendedList))?d.suspendedList.length:0;
   var now=new Date(),monthBk=0;
   if(d&&Array.isArray(d.allBookings)){d.allBookings.forEach(function(b){if(b&&b.date){var dt=new Date(b.date+'T00:00:00');if(dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth()&&(b.status==='booked'||b.status==='attended'))monthBk++;}});}
   // openDates 是 {日期: {slots}} 物件（不是陣列）→ 原本永遠 0；改數本月的開放日
@@ -9162,7 +9198,7 @@ function _dshDutyMassage(){
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#E6E9FB;color:#5B6BD6;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('person',17)+'</span>按摩管理</div><div class="dsub">本月預約與待辦</div></div>'+cta+'</div>'
     +'<div class="grid">'
     +'<div class="cell"><div class="n">'+monthBk+'<small> 人次</small></div><div class="k">本月已預約</div></div>'
-    +'<div class="cell"><div class="n"'+(pend?' style="color:#DC2626"':'')+'>'+pend+'<small> 筆</small></div><div class="k">待處理申請</div></div>'
+    +'<div class="cell"><div class="n"'+(pend?' style="color:#DC2626"':'')+'>'+pend+'<small> 人</small></div><div class="k">暫停預約</div></div>'
     +'<div class="cell"><div class="n">'+openN+'<small> 天</small></div><div class="k">本月開放日</div></div>'
     +'</div>'+_dshMsUpcoming(d)+'</div>';
 }
@@ -9189,8 +9225,9 @@ function _dshFuli(){
   var dateStr=(typeof htGetNextEventDate==='function')?htGetNextEventDate():'';
   var hint=(typeof htGetNextEventHint==='function')?htGetNextEventHint():'';
   if(typeof msPrefetchHubData==='function'){try{msPrefetchHubData();}catch(e){}}
-  var used='—',limit=2;
-  try{var _md=_dshMs();if(_md){limit=(_md.settings&&_md.settings.monthlyLimit)||2;var now=new Date();used=(_md.myBookings||[]).filter(function(b){if(!b||!b.date)return false;if(String(b.bookingId||'').indexOf('WL')===0)return false;var dt=new Date(b.date+'T00:00:00');return (b.status==='booked'||b.status==='attended')&&dt.getFullYear()===now.getFullYear()&&dt.getMonth()===now.getMonth();}).length;}}catch(e){}
+  // 按摩次數：上半月／下半月各 1 次（2026-10-23），算法集中在按摩模組 msHalfQuota
+  var used='—',limit=1,_msSus=null;
+  try{var _md=_dshMs();if(_md&&typeof msHalfQuota==='function'){var _hq=msHalfQuota(_md);if(_hq){used=_hq.used;limit=_hq.limit;_msSus=_hq.suspendedUntil;}}}catch(e){}
   // 午茶日剩餘天數做成琥珀膠囊凸顯，緊貼大日期
   var teaDays='';var _dm=(hint||'').match(/(\d+)\s*天/);
   // 「今天／明天」本身就是最強的提示，不再另外掛「就是今天」（同一件事說兩次）；
@@ -9202,12 +9239,16 @@ function _dshFuli(){
     ?('<span style="font-size:12px;font-weight:700;color:#B4670E;background:#FBEEDD;border-radius:8px;padding:2px 8px;white-space:nowrap">'+_dshEsc(dateStr)+'</span>')
     :('<span style="font-size:16px;font-weight:800;color:#2E332D">'+_dshEsc(dateStr||'尚未安排')+'</span>');
   var msMain=(used==='—')?'—':(used+' / '+limit);
-  var msRem=(used==='—')?'':('<span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;white-space:nowrap">剩 '+Math.max(0,limit-used)+' 次</span>');
+  var _msHalfLbl=(new Date().getDate()<=15)?'上半月':'下半月';
+  var _susMD=_msSus?(parseInt(String(_msSus).split('-')[1],10)+'/'+parseInt(String(_msSus).split('-')[2],10)):'';
+  var msRem=_msSus
+    ?('<span style="font-size:12px;font-weight:700;color:#C63968;background:#FDF1F5;border-radius:8px;padding:2px 9px;white-space:nowrap">暫停至 '+_susMD+'</span>')
+    :((used==='—')?'':('<span style="font-size:12px;font-weight:700;color:#5B6BD6;background:#E6E9FB;border-radius:8px;padding:2px 9px;white-space:nowrap">'+(used>=limit?'已用完':'剩 '+Math.max(0,limit-used)+' 次')+'</span>'));
   var _lab='font-size:13px;font-weight:600;color:#8A96A6;flex-shrink:0';var _val='font-size:16px;font-weight:800;color:#2E332D';
   return '<div class="dsh-panel dsh-duty"><div class="dhead"><div class="dt"><span style="width:30px;height:30px;border-radius:9px;background:#DCF2F4;color:#0E9AA7;display:flex;align-items:center;justify-content:center;flex-shrink:0">'+_dshIc('gift',17)+'</span>我的福利</div><button class="dcta" style="background:#5B6BD6" onclick="sw(\'massage\')">立即預約按摩 →</button></div>'
     +'<div class="grid" style="grid-template-columns:1fr;margin-top:12px">'
     +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'hightea\')"><span style="'+_lab+'">午茶日</span>'+teaVal+teaPill+'</div>'
-    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'massage\')"><span style="'+_lab+'">本月按摩</span><span style="'+_val+'">'+msMain+'</span>'+msRem+'</div>'
+    +'<div class="cell" style="cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap" onclick="sw(\'massage\')"><span style="'+_lab+'">'+_msHalfLbl+'按摩</span><span style="'+_val+'">'+msMain+'</span>'+msRem+'</div>'
     +'</div></div>';
 }
 function _dshCases(myCases){
@@ -17846,7 +17887,7 @@ var _HT_WRITE = /^(htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUp
 //     「同一天只能預約一次按摩」而誤以為自己根本沒約到 → 真的跑去現場才發現有／沒有。
 //   ・午茶／公佈欄寫入 → 可能產生重複資料。
 //   與請款那條路徑的 _NO_RETRY_ACTIONS 同一個原則（見 001/002/003 重複單事故的註解）。
-var _HT_WRITE_NO_RETRY = /^(massageBook|massageCancel|massageJoinWaitlist|massageLeaveWaitlist|massageCheckIn|massageCheckInQR|massageModifyBooking|massageRequestCancel|massageRequestDelete|htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUpsertItems|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
+var _HT_WRITE_NO_RETRY = /^(massageBook|massageCancel|massageLiftSuspension|massageSaveSettings|massageJoinWaitlist|massageLeaveWaitlist|massageCheckIn|massageCheckInQR|massageModifyBooking|massageRequestCancel|massageRequestDelete|htCreate|htUpdate|htDeleteEvent|htSaveItems|htUpsertItem|htUpsertItems|htDeleteItem|htReorderItems|htVoteSubmit|htVoteClose|htVoteItemsSave|feedbackPost|feedbackDelete)$/;
 
 // 逾時保護：GAS 偶爾回應很慢甚至不回，加 25 秒逾時避免載入畫面無限轉圈；一律 resolve 成物件（不 reject），呼叫端只看 r.ok
 function _htFetchRaw(body, timeoutMs) {
@@ -18089,7 +18130,8 @@ const _MS_RPC = {
   massageEditDate       : function(d){ return ['massage_edit_date', { p_date:d.date, p_slots:d.slots }]; },
   massageSaveSettings   : function(d){ return ['massage_save_settings', { p_settings:d }]; },
   massageGenerateQRToken: function(d){ return ['massage_generate_qr_token', { p_date:d.date }]; },
-  massageAdminDelete    : function(d){ return ['massage_admin_delete', { p_booking_id:d.bookingId }]; }
+  massageAdminDelete    : function(d){ return ['massage_admin_delete', { p_booking_id:d.bookingId }]; },
+  massageLiftSuspension : function(d){ return ['massage_lift_suspension', { p_email:d.email }]; }   // 2026-10-23：解除缺席停權（僅 Supabase，無 GAS 版）
 };
 
 async function htApi(action, payload) {
@@ -23061,9 +23103,74 @@ function _msSaveLocal() {
       myBookings: _msData.myBookings || [],
       allBookings: _msData.allBookings || [],
       pendingRequests: _msPendingRequests || [],
-      settings: _msData.settings || null
+      settings: _msData.settings || null,
+      quotaUsed: _msData.quotaUsed || null,             // 2026-10-23：各半月已用次數（含轉讓出去、仍算自己的）
+      suspended: !!_msData.suspended,
+      suspendedUntil: _msData.suspendedUntil || null,
+      suspendedList: _msData.isAdmin && Array.isArray(_msData.suspendedList) ? _msData.suspendedList : null   // 管理者首頁卡用
     }));
   } catch(e) {}
+}
+// 快取 → 畫面資料（秒開／離線備援共用）
+function _msApplySavedExtras(d, s) {
+  if (!d || !s) return;
+  if (s.quotaUsed) d.quotaUsed = s.quotaUsed;
+  if (typeof s.suspended === 'boolean') d.suspended = s.suspended;
+  if (s.suspendedUntil) d.suspendedUntil = s.suspendedUntil;
+  if (Array.isArray(s.suspendedList)) d.suspendedList = s.suspendedList;
+}
+
+// ── 次數規則（2026-10-23）：上半月（1–15 日）1 次＋下半月（16 日–月底）1 次，以「按摩那天」判斷 ──
+//   計入：booked／attended／noshow／臨時取消（開始前 30 分鐘內取消）；不計：候補轉正（WL 開頭）、加約、30 分鐘前取消
+//   次數用完 → 各時段開始前 15 分鐘起可「加約」（不佔次數，一天仍限一次）。權威判斷在後端 massage_book。
+var _MS_HALF_LIMIT = 1, _MS_EXTRA_MIN = 15, _MS_LATE_CANCEL_MIN = 30;
+function _msHalfKey(ds) {
+  var p = String(ds || '').split('-');
+  if (p.length < 3) return '';
+  return p[0] + '-' + p[1] + '-' + (parseInt(p[2], 10) <= 15 ? '01' : '16');
+}
+function _msHalfLabel(ds) { return parseInt(String(ds || '').split('-')[2], 10) <= 15 ? '上半月' : '下半月'; }
+function _msCountsQuota(b) {
+  if (!b) return false;
+  if (String(b.bookingId || '').indexOf('WL') === 0) return false;
+  if (b.isExtra) return false;
+  return b.status === 'booked' || b.status === 'attended' || b.status === 'noshow' || (b.status === 'cancelled' && !!b.lateCancel);
+}
+// 某天所屬半月已用次數：伺服器值（含轉讓出去的）與本機預約（含剛寫入、還沒重抓的）取大
+function _msQuotaUsed(ds) { return _msQuotaUsedFor(_msData, ds); }
+function _msQuotaUsedFor(data, ds) {
+  var key = _msHalfKey(ds);
+  if (!key || !data) return 0;
+  var me = String(data.userEmail || (window.currentUser && window.currentUser.email) || '').toLowerCase();
+  var local = (data.myBookings || []).filter(function(b){
+    var owner = String(b.quotaEmail || b.userEmail || '').toLowerCase();
+    return (!me || !owner || owner === me) && _msHalfKey(b.date) === key && _msCountsQuota(b);
+  }).length;
+  var q = data.quotaUsed;
+  var srv = (q && Object.prototype.hasOwnProperty.call(q, key)) ? (parseInt(q[key], 10) || 0) : 0;
+  return Math.max(local, srv);
+}
+// 首頁「我的福利」卡用：本期（今天所屬半月）次數＋停權（data＝_msData 或本機快取）
+window.msHalfQuota = function(data) {
+  data = data || _msData || (typeof _msLoadLocal === 'function' ? _msLoadLocal() : null);
+  if (!data) return null;
+  var td = fmtDateStr(new Date());
+  return { label: _msHalfLabel(td), used: Math.min(_msQuotaUsedFor(data, td), _MS_HALF_LIMIT), limit: _MS_HALF_LIMIT,
+           suspendedUntil: (data.suspended && data.suspendedUntil) ? data.suspendedUntil : null };
+};
+function _msMinsToStart(ds, ts) {
+  var t = new Date(ds + 'T' + (ts || '00:00') + ':00');
+  return (t.getTime() - Date.now()) / 60000;
+}
+// 次數用完時，這個時段現在可不可以加約（開始前 15 分鐘內、尚未開始）
+function _msInExtraWindow(ds, ts) {
+  var m = _msMinsToStart(ds, ts);
+  return m > 0 && m <= _MS_EXTRA_MIN;
+}
+function _msFmtMD(ds) { var p = String(ds || '').split('-'); return p.length < 3 ? String(ds || '') : (parseInt(p[1], 10) + '/' + parseInt(p[2], 10)); }
+function _msSuspendText() {
+  var u = _msData && _msData.suspendedUntil;
+  return u ? ('因缺席暫停預約，' + _msFmtMD(u) + ' 起可再預約') : '因缺席暫停預約中';
 }
 function _msLoadLocal() {
   try { var s = localStorage.getItem(_msStoreKey()); return s ? JSON.parse(s) : null; }
@@ -23099,8 +23206,9 @@ window.massageLoad = async function() {
       isAdmin: (typeof can === 'function' ? can('massage.manage') : false),
       isMgr: (typeof can === 'function' ? can('massage.manage') : false),
       isHR: (typeof can === 'function' ? can('massage.manage') : false), suspended: false, violationCount: 0, monthlyCancelCount: 0,
-      settings: { monthlyLimit: 2, cancelDeadlineHours: 0.5, violationPenaltyCount: 3,
-        slotTemplates: [{time:'10:00',capacity:2},{time:'14:00',capacity:2},{time:'16:00',capacity:1}] },
+      settings: { monthlyLimit: 2, halfLimit: 1, extraWindowMin: 15, cancelDeadlineHours: 0.5,
+        slotTemplates: [] },
+      quotaUsed: {}, suspendedUntil: null,
       openDates: mockOpen, myBookings: [], allBookings: [], pendingRequests: [],
       _loading: !_isDemo   // 真實使用者：預設載入中；下方若有本地快取則立即秒開
     };
@@ -23117,6 +23225,7 @@ window.massageLoad = async function() {
         // 舊版快取可能存的是未正規化的原始預約列 → 一律過一次正規化（見 _msNormalizePending）
         if (_saved0.pendingRequests) { _msData.pendingRequests = _msNormalizePending(_saved0.pendingRequests); _msPendingRequests = _msData.pendingRequests; }
         if (_saved0.settings) { _msData.settings = _saved0.settings; _msSlotTemplates = _saved0.settings.slotTemplates || []; }
+        _msApplySavedExtras(_msData, _saved0);
         _msData._loading = false; // 有快取→直接畫，不顯示載入中
       }
     }
@@ -23234,6 +23343,7 @@ function _msApplyLocalFallback() {
   if (_saved.allBookings) _msData.allBookings = _saved.allBookings;
   if (_saved.pendingRequests) _msData.pendingRequests = _msNormalizePending(_saved.pendingRequests);
   if (_saved.settings) { _msData.settings = _saved.settings; _msSlotTemplates = _saved.settings.slotTemplates || []; }
+  _msApplySavedExtras(_msData, _saved);
   _msPendingRequests = _msData.pendingRequests || [];
   if (window.toast && !_msOfflineNotified) { toast('⚠️ 暫時連不上伺服器，顯示上次的按摩資料（可能非最新）'); _msOfflineNotified = true; }
 }
@@ -23243,16 +23353,15 @@ function msRenderQuota() {
   if (!_msData) return;
   var sw2 = document.getElementById('ms-suspend-warn');
   if (sw2) sw2.style.display = _msData.suspended ? '' : 'none';
+  var swt = document.getElementById('ms-suspend-warn-text');
+  if (swt) swt.textContent = '⚠️ ' + _msSuspendText();
   var chip = document.getElementById('ms-quota-chip');
   if (chip) {
-    var now = new Date();
-    var limit = (_msData.settings && _msData.settings.monthlyLimit) || 2;
-    var used = (_msData.myBookings || []).filter(function(b){
-      if (b.status !== 'booked' && b.status !== 'attended') return false;
-      var bd = new Date(b.date + 'T00:00:00');
-      return bd.getFullYear() === now.getFullYear() && bd.getMonth() === now.getMonth();
-    }).length;
-    chip.textContent = '本月 ' + used + ' / ' + limit + ' 次';
+    // 本期＝今天所屬的半月（上半月／下半月各 1 次）
+    var _td = fmtDateStr(new Date());
+    var limit = _MS_HALF_LIMIT;
+    var used = _msQuotaUsed(_td);
+    chip.textContent = _msHalfLabel(_td) + ' ' + Math.min(used, limit) + ' / ' + limit + ' 次';
     chip.style.display = '';
     if (used >= limit) { chip.style.background = '#E7F0FB'; chip.style.borderColor = '#D2D7CD'; chip.style.color = '#767B75'; }
     else { chip.style.background = '#EAF1E9'; chip.style.borderColor = '#C6D4E4'; chip.style.color = '#0066CC'; }
@@ -23268,10 +23377,14 @@ window.msGetNextBookingHint = function() {
   // 用本地午夜比較，避免 new Date('YYYY-MM-DD') 依 ISO 規則解析成 UTC 午夜（台灣 UTC+8 會變成當天 08:00），
   // 導致今天尚未發生的預約在早上 8 點後被誤判為過去而消失
   var today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  var monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   var upcoming = (data.myBookings || []).filter(function(b){ return b.status === 'booked' && new Date(b.date + 'T00:00:00') >= today; })
     .sort(function(a,b){ return a.date.localeCompare(b.date); });
-  if (!upcoming.length) return '本月已預約 ' + ((data.myBookings||[]).filter(function(b){return b.status==='booked' && String(b.bookingId||'').indexOf('WL')!==0 && new Date(b.date+'T00:00:00')>=monthStart;}).length) + ' / ' + ((data.settings||{}).monthlyLimit||2) + ' 次';
+  if (!upcoming.length) {
+    if (data.suspended && data.suspendedUntil) return '暫停預約至 ' + _msFmtMD(data.suspendedUntil);
+    // 本期（今天所屬半月）已用次數；_msData 還沒載入時用快取資料算
+    var _td = fmtDateStr(now);
+    return _msHalfLabel(_td) + '已預約 ' + Math.min(_msQuotaUsedFor(data, _td), _MS_HALF_LIMIT) + ' / ' + _MS_HALF_LIMIT + ' 次';
+  }
   var nd = upcoming[0].date || '';
   var parts = nd.split('-');
   var wd = ['日','一','二','三','四','五','六'][new Date(nd + 'T00:00:00').getDay()];
@@ -23561,17 +23674,9 @@ function msShowSlots(dateStr) {
   var settings = (_msData && _msData.settings) || {};
   var suspended = _msData && _msData.suspended;
   var now = new Date();
-  // 依「選取日期」的月份計算，而非固定用今天月份（避免跨月顯示錯誤）
-  var viewDate = new Date(dateStr + 'T00:00:00');
-  var viewMonthStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
-  var viewMonthEnd   = new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1);
-  var monthBookCnt = myBookings.filter(function(b){
-    if (b.status !== 'booked') return false;
-    if (String(b.bookingId||'').indexOf('WL') === 0) return false;   // 候補遞補不計入當月上限
-    var bd = new Date(b.date + 'T00:00:00');
-    return bd >= viewMonthStart && bd < viewMonthEnd;
-  }).length;
-  var overMonthLimit = monthBookCnt >= (settings.monthlyLimit || 2);
+  // 依「選取日期」所屬的半月計算（上半月／下半月各 1 次，2026-10-23）
+  var _halfLbl = _msHalfLabel(dateStr);
+  var overQuota = _msQuotaUsed(dateStr) >= _MS_HALF_LIMIT;
   // ── inline 訂位風格：時段以彩色磚塊平鋪，顏色直接代表可否預約 ──
   var myEmail = (_msData && _msData.userEmail) || '';
   // ── C+ 樣式（使用者 2026-10-06 選定）：依整點分列，每個時段一顆膠囊 ──
@@ -23593,17 +23698,23 @@ function msShowSlots(dateStr) {
       if (myBook.status === 'booked' && !myBook.deleteRequested && !myBook.cancelRequested) {
         onclick = 'msOpenBookingDetail(\'' + myBook.bookingId + '\')'; title = '我的預約，點擊管理';
       }
+    } else if (myWaitEntry && hasRoom && isFuture && !suspended) {
+      // 我候補的時段有人臨時取消（開始前 30 分鐘內取消不會自動遞補）→ 先約先得，不佔次數
+      kind = 'open'; extra = '候補空位';
+      onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; title = '你候補的時段有空位了，點擊預約（不佔次數）';
     } else if (myWaitEntry) {
       kind = 'wait'; extra = '候補第 ' + myWaitEntry.position + ' 位';
       onclick = 'msLeaveWaitlist(\'' + myWaitEntry.waitlistId + '\')'; title = '候補中，點擊取消候補';
-    } else if (hasRoom && !suspended && !overMonthLimit && isFuture) {
+    } else if (hasRoom && !suspended && isFuture && (!overQuota || _msInExtraWindow(dateStr, s.time))) {
       kind = 'open';
-      if (s.capacity > 1) extra = '剩 ' + s.remaining;          // 多人時段才寫剩幾位
-      onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')'; title = '可預約，點擊預約';
-    } else if (hasRoom && overMonthLimit) {
-      kind = 'off'; title = '本月預約次數已達上限';
+      if (overQuota) extra = '加約';                             // 次數用完、開始前 15 分鐘內 → 加約
+      else if (s.capacity > 1) extra = '剩 ' + s.remaining;     // 多人時段才寫剩幾位
+      onclick = 'msBookConfirm(\'' + dateStr + '\',\'' + s.time + '\')';
+      title = overQuota ? '次數已用完，可加約（不佔次數）' : '可預約，點擊預約';
+    } else if (hasRoom && isFuture && !suspended && overQuota) {
+      kind = 'off'; title = _halfLbl + '的預約次數已用完；開始前 15 分鐘起可加約';
     } else if (hasRoom && (!isFuture || suspended)) {
-      kind = 'off'; title = isFuture ? '帳號暫停預約' : '時段已過';
+      kind = 'off'; title = isFuture ? _msSuspendText() : '時段已過';
     } else {
       kind = 'full';
       // 額滿：膠囊內放預約人姓名（員工要知道是誰訂的，方便叫下一位／找人換時段）
@@ -23628,7 +23739,8 @@ function msShowSlots(dateStr) {
 }
 
 function msSlotsForDate(dateStr, slotTemplates) {
-  var tmpl = slotTemplates || _msSlotTemplates;
+  // 一定用該日自己的時段（slotTemplates 已改存「自訂班表」{name, slots}，不能拿來當時段）
+  var tmpl = (Array.isArray(slotTemplates) ? slotTemplates : []).filter(function(t){ return t && t.time; });
   var allBk = (_msData && _msData.allBookings) || [];
   return tmpl.map(function(t){
     var bookedList = allBk.filter(function(b){ return b.date===dateStr && b.timeSlot===t.time && (b.status==='booked' || b.status==='attended'); });
@@ -23646,13 +23758,26 @@ window.msBookConfirm = function(date, timeSlot) {
   var _wd = ['日','一','二','三','四','五','六'];
   var _dt = new Date(date + 'T00:00:00');
   var _label = isNaN(_dt) ? date : (date + '（週' + _wd[_dt.getDay()] + '）');
+  var _kind = _msBookKind(date, timeSlot);
+  var _kindLine = _kind === 'waitlist' ? '這是你候補的時段空出來的位子，<strong>不佔次數</strong>。'
+                : _kind === 'extra'    ? '本期次數已用完，這次是<strong>加約</strong>，不佔次數。'
+                : '會用掉<strong>' + _msHalfLabel(date) + '</strong>的 1 次預約。';
   _showConfirmModal(
-    '確定要預約嗎？',
-    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>時段前&nbsp;30&nbsp;分鐘皆可自行取消（免審核）；未取消且缺席會計入違規次數。',
-    '確定預約', '#0066CC',
+    _kind === 'extra' ? '確定要加約嗎？' : '確定要預約嗎？',
+    '按摩時段：<strong>' + _label + ' ' + timeSlot + '</strong><br>' + _kindLine
+      + '<br>開始前&nbsp;30&nbsp;分鐘以前取消不扣次數；之後仍可自行取消，但會用掉本期次數。未報到超過&nbsp;15&nbsp;分鐘記缺席，將暫停預約&nbsp;1&nbsp;個月。',
+    _kind === 'extra' ? '確定加約' : '確定預約', '#0066CC',
     function() { return msBook(date, timeSlot); }
   );
 };
+// 這次預約屬於哪一種：waitlist＝我候補的時段有空位（不佔次數）／normal＝用本期次數／extra＝次數用完、開始前 15 分鐘內加約
+//   ／'' ＝目前不能約（次數用完且還沒到加約時間）。與後端 massage_book 同一套判斷順序。
+function _msBookKind(date, timeSlot) {
+  var waiting = ((_msData && _msData.myWaitlist) || []).some(function(w){ return w.date === date && w.timeSlot === timeSlot; });
+  if (waiting) return 'waitlist';
+  if (_msQuotaUsed(date) < _MS_HALF_LIMIT) return 'normal';
+  return _msInExtraWindow(date, timeSlot) ? 'extra' : '';
+}
 
 // ── 預約 ──
 window.msBook = async function(date, timeSlot) {
@@ -23660,15 +23785,12 @@ window.msBook = async function(date, timeSlot) {
   window._msBookLock = true;
   try {
   if (!_msData) return;
-  if (_msData.suspended) { toast('⚠️ 帳號已暫停預約'); return; }
-  // 前端再驗一次：同日不可重複、每月上限（避免畫面未更新或繞過 UI 直接呼叫）
+  if (_msData.suspended) { toast('⚠️ ' + _msSuspendText()); return; }
+  // 前端再驗一次：同日不可重複、本期次數（避免畫面未更新或繞過 UI 直接呼叫）；權威判斷在後端
   var _myBooked = (_msData.myBookings || []).filter(function(b){ return b.status === 'booked' || b.status === 'attended'; });
   if (_myBooked.some(function(b){ return b.date === date; })) { toast('⚠️ 同一天只能預約一個時段唷'); return; }
-  var _ym = String(date).slice(0,7);
-  var _limit = (_msData.settings && _msData.settings.monthlyLimit) || 2;
-  if (_myBooked.filter(function(b){ return String(b.date||'').slice(0,7) === _ym; }).length >= _limit) {
-    toast('⚠️ 本月預約已達上限 ' + _limit + ' 次'); return;
-  }
+  var _kind = _msBookKind(date, timeSlot);
+  if (!_kind) { toast('⚠️ ' + _msHalfLabel(date) + '的預約次數已用完；開始前 15 分鐘起可加約'); return; }
   var bid = 'BK' + Date.now();
   var r;
   try {
@@ -23676,30 +23798,62 @@ window.msBook = async function(date, timeSlot) {
   } catch(e) { r = null; }
   if (!r || !r.ok) { toast('預約失敗：' + (r && r.error ? r.error : '請稍後再試'), 'error'); return; }
   if (r.bookingId) bid = r.bookingId;
+  var _k = r.kind || _kind;
   var uname = (window.currentUser && window.currentUser.name) || '';
+  var me = String(_msData.userEmail || '').toLowerCase();
   if (!_msData.myBookings) _msData.myBookings = [];
-  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname });
+  _msData.myBookings.push({ bookingId:bid, date, timeSlot, status:'booked', createdAt:new Date().toISOString(), userName:uname,
+                            userEmail:me, quotaEmail:me, isExtra:_k === 'extra', lateCancel:false });
   if (!_msData.allBookings) _msData.allBookings = [];
   _msData.allBookings.push({ bookingId:bid, date, timeSlot, status:'booked', userEmail:_msData.userEmail, userName:uname, createdAt:new Date().toISOString() });
-  _msSaveLocal();
-  toast('✅ 預約成功！');
+  if (_k === 'waitlist' && _msData.myWaitlist) {
+    _msData.myWaitlist = _msData.myWaitlist.filter(function(w){ return !(w.date === date && w.timeSlot === timeSlot); });
+  }
+  if (_k === 'normal' && _msData.quotaUsed) {   // 本期次數 +1（等下重抓會以伺服器為準）
+    var _hk = _msHalfKey(date); _msData.quotaUsed[_hk] = (parseInt(_msData.quotaUsed[_hk], 10) || 0) + 1;
+  }
+  _msMarkWrite();
+  toast(_k === 'extra' ? '✅ 加約成功！（不佔次數）' : (_k === 'waitlist' ? '✅ 預約成功！（候補空位，不佔次數）' : '✅ 預約成功！'));
   msRenderQuota(); msRenderCal(); msRenderMyBookings();
+  _msResyncSoon();
   } finally { window._msBookLock = false; }
 };
+// 寫入後稍等再跟伺服器對一次（次數、候補、停權都以伺服器為準）
+function _msResyncSoon() {
+  setTimeout(function(){
+    msFetchData().then(function(){ try { msRenderQuota(); msRenderCal(); msRenderMyBookings(); if (_msData && _msData.isAdmin) msRenderAdmin(); } catch(e) {} }).catch(function(){});
+  }, 1200);
+}
 
 // ── 取消（在限額內直接取消） ──
 window.msCancel = function(bookingId, date) {
+  // 2026-10-23：開始前 30 分鐘內也能自己取消（免 HR 審核），但會用掉本期次數、不算缺席
+  var _b = ((_msData && _msData.myBookings) || []).find(function(b){ return b.bookingId === bookingId; });
+  var _mins = _b ? _msMinsToStart(_b.date, _b.timeSlot) : 999;
+  var _late = _mins < _MS_LATE_CANCEL_MIN;
+  var _free = _b && (String(_b.bookingId || '').indexOf('WL') === 0 || _b.isExtra);   // 候補轉正／加約本來就不佔次數
+  var _when = '<strong>' + date + (_b ? ' ' + _b.timeSlot : '') + '</strong>';
   _showConfirmModal(
-    '確定要取消預約嗎？',
-    '取消 <strong>' + date + '</strong> 的按摩預約，名額將釋出給其他同事。',
-    '確定取消', '#dc2626',
+    _late ? '確定要臨時取消嗎？' : '確定要取消預約嗎？',
+    _late
+      ? '取消 ' + _when + ' 的按摩預約。<br>距離開始不到&nbsp;30&nbsp;分鐘，' + (_free ? '這筆不佔次數，取消不影響你的次數' : '<strong>仍會用掉本期次數</strong>（不算缺席）') + '。<br>空出來的時段會通知候補的同事與群組。'
+      : '取消 ' + _when + ' 的按摩預約，名額將釋出給其他同事（有候補會自動遞補）。',
+    _late ? '確定臨時取消' : '確定取消', '#dc2626',
     async function() {
-      var ok = false;
-      try { var cr = await htApi('massageCancel', { bookingId }); ok = cr && cr.ok; } catch(e) {}
-      if (!ok) { toast('取消失敗，請稍後再試', 'error'); return; }
+      var cr = null;
+      try { cr = await htApi('massageCancel', { bookingId }); } catch(e) {}
+      if (!cr || !cr.ok) { toast('取消失敗：' + ((cr && cr.error) || '請稍後再試'), 'error'); return; }
+      var _isLate = (typeof cr.late === 'boolean') ? cr.late : _late;
       _msUpdateBookingStatus(bookingId, 'cancelled');
-      toast('✅ 已取消 · 名額已釋出，麻煩幫忙找同事來遞補，別讓師傅空等 🙏', true);
+      if (_b) _b.lateCancel = _isLate;
+      if (!_isLate && _b && !_free && _msData.quotaUsed) {   // 30 分鐘前取消：本期次數還回來（等下重抓以伺服器為準）
+        var _hk = _msHalfKey(_b.date); _msData.quotaUsed[_hk] = Math.max(0, (parseInt(_msData.quotaUsed[_hk], 10) || 0) - 1);
+      }
+      _msMarkWrite();
+      toast(_isLate ? '✅ 已臨時取消 · ' + (_free ? '' : '已用掉本期次數（不算缺席）· ') + '系統會通知候補的同事與群組'
+                    : '✅ 已取消 · 名額已釋出，有候補會自動遞補 🙏', true);
       msRenderQuota(); msRenderCal(); msRenderMyBookings();
+      _msResyncSoon();
     }
   );
 };
@@ -23831,6 +23985,9 @@ window.msOpenBookingDetail = function(bookingId) {
   var _cancelHrs = settings.cancelDeadlineHours || 0.5;
   var _cancelLabel = (_cancelHrs < 1) ? (Math.round(_cancelHrs * 60) + ' 分鐘') : (_cancelHrs + ' 小時');
   var canCancelNormal = s === 'booked' && !b.cancelRequested && !b.deleteRequested && (appointmentTime - now) > _cancelHrs * 3600000;
+  // 2026-10-23：開始前 30 分鐘內仍可自己「臨時取消」（免 HR 審核；扣本期次數、不算缺席）
+  var canCancelLate = s === 'booked' && !b.deleteRequested && !canCancelNormal && (appointmentTime - now) > 0;
+  var _isFreeBk = String(b.bookingId || '').indexOf('WL') === 0 || !!b.isExtra;
   var canCheckIn = s === 'booked' && isToday && !b.deleteRequested && !b.cancelRequested;
   var canModify = s === 'booked' && !b.deleteRequested && !b.cancelRequested;
   // 狀態籤
@@ -23843,30 +24000,27 @@ window.msOpenBookingDetail = function(bookingId) {
   else if (isToday)           chip = '<span style="background:#FFF4E4;color:#EC4F7D;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700">🔔 今天按摩</span>';
   else                        chip = '';  // 一般「已預約」狀態不再重複顯示籤（時間本身已代表這是你的預約）
   // 「同時段夥伴」已移除：每時段名額 1 人，無同時段夥伴可言
-  // 該預約「所屬月份」的已約次數（不是當下月份：七月看八月的預約，要算八月的額度）
+  // 該預約「所屬半月」的已約次數（不是當下：十月看十一月上半月的預約，要算那個半月的次數）
   var bMonthDate = new Date(b.date + 'T00:00:00');
-  var monthCnt = ((_msData && _msData.myBookings) || []).filter(function(x){
-    if (x.status !== 'booked' && x.status !== 'attended') return false;
-    var xd = new Date(x.date + 'T00:00:00');
-    return xd.getFullYear() === bMonthDate.getFullYear() && xd.getMonth() === bMonthDate.getMonth();
-  }).length;
+  var monthCnt = Math.min(_msQuotaUsed(b.date), _MS_HALF_LIMIT);
   // 操作按鈕（報到防呆：不提供自行按鈕，一律至現場掃 QR，確保真的有到按摩室）
   var acts = '';
   if (canCheckIn) acts += '<button type="button" onclick="msCloseBookingDetail();msScanCheckIn()" style="width:100%;background:#EC4F7D;color:#fff;border:none;border-radius:12px;padding:13px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit">📷 掃碼報到</button>'
     + '<div style="font-size:12px;color:#767B75;text-align:center;line-height:1.6;margin-top:-2px">開始前&nbsp;5&nbsp;分鐘開放・<wbr>超過&nbsp;5&nbsp;分鐘算遲到・<wbr>超過&nbsp;15&nbsp;分鐘記缺席</div>';
   if (canModify) {
     acts += '<div style="display:flex;gap:8px">'
-      + '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#E7F0FB;color:#0066CC;border:1.5px solid #cdd3db;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>'
+      // 修改時段／轉讓：後端只接受開始前 30 分鐘以前 → 之後不顯示，免得按了才被擋
+      + (canCancelNormal ? '<button onclick="msCloseBookingDetail();msOpenModify(\'' + b.bookingId + '\',\'' + b.date + '\',\'' + (b.timeSlot || '') + '\')" style="flex:1;background:#E7F0FB;color:#0066CC;border:1.5px solid #cdd3db;border-radius:12px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">✏ 修改時段</button>' : '')
       + (canCancelNormal
         ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">取消預約</button>'
-        // 不足取消期限（30 分鐘）但時段還沒開始 → 改提供「申請取消」，送 HR 審核（與注意事項一致）
-        : ((appointmentTime - now) > 0
-          ? '<button onclick="msCloseBookingDetail();msRequestCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#FFF9F0;color:#B0701F;border:1.5px solid #F2C48A;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">申請取消（HR 審核）</button>'
+        // 不足 30 分鐘但時段還沒開始 → 「臨時取消」（自己取消、免審核；扣本期次數、不算缺席）
+        : (canCancelLate
+          ? '<button onclick="msCloseBookingDetail();msCancel(\'' + b.bookingId + '\',\'' + b.date + '\')" style="flex:1;background:#FFF9F0;color:#B0701F;border:1.5px solid #F2C48A;border-radius:12px;padding:11px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">臨時取消</button>'
           : '<span style="flex:1;background:#F7F8F6;color:#B0B6AD;border:1.5px solid #D2D7CD;border-radius:12px;padding:11px;font-size:14px;font-weight:600;text-align:center;box-sizing:border-box">時段已開始</span>'))
       + '</div>';
   }
   // 轉讓給同事：已送出邀請 → 顯示等待狀態＋收回；否則提供轉讓入口
-  if (s === 'booked' && !b.deleteRequested && !b.cancelRequested) {
+  if (s === 'booked' && !b.deleteRequested && !b.cancelRequested && (canCancelNormal || b.transferStatus === 'pending')) {
     if (b.transferStatus === 'pending') {
       acts += '<div style="background:#FDF1F5;border:1.5px solid #EC4F7D;border-radius:12px;padding:12px 14px;font-size:14px;color:#B03A60;font-weight:700;text-align:center;line-height:1.6">🤝 已邀請 ' + htEsc(b.transferToName || b.transferToEmail || '同事') + ' 接手<br><span style="font-size:12px;font-weight:600">對方接受前，這個預約仍然是你的</span></div>'
         + '<button onclick="msWithdrawTransfer(\'' + b.bookingId + '\')" style="background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:12px;padding:12px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">收回轉讓邀請</button>';
@@ -23884,13 +24038,16 @@ window.msOpenBookingDetail = function(bookingId) {
     + '</div>'
     + '<div style="padding:14px 20px 4px">'
     +   '<div style="display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#EAF1F9,#F4F7FB);border:1.5px solid #CCE0F2;border-radius:12px;padding:11px 14px;font-size:14px;color:#22406A;font-weight:700">'
-    +     '<span>📅 ' + (bMonthDate.getMonth() + 1) + ' 月已預約</span>'
-    +     '<span style="background:#0066CC;color:#fff;border-radius:20px;padding:2px 12px;font-size:14px;font-weight:800">' + monthCnt + ' / ' + (settings.monthlyLimit || 2) + ' 次</span>'
+    +     (_isFreeBk
+            ? '<span>' + (b.isExtra ? '➕ 這次是加約' : '🎯 候補遞補') + '</span>'
+              + '<span style="background:#0066CC;color:#fff;border-radius:20px;padding:2px 12px;font-size:14px;font-weight:800">不佔次數</span>'
+            : '<span>📅 ' + (bMonthDate.getMonth() + 1) + ' 月' + _msHalfLabel(b.date) + '已預約</span>'
+              + '<span style="background:#0066CC;color:#fff;border-radius:20px;padding:2px 12px;font-size:14px;font-weight:800">' + monthCnt + ' / ' + _MS_HALF_LIMIT + ' 次</span>')
     +   '</div>'
     + '</div>'
     + '<div style="padding:14px 20px 18px;display:flex;flex-direction:column;gap:8px">'
     +   acts
-    +   (_noActs ? '' : '<div style="font-size:12px;color:#767B75;text-align:center;margin-top:2px">取消免審核，期限：時段前&nbsp;' + _cancelLabel + '</div>')
+    +   (_noActs ? '' : '<div style="font-size:12px;color:#767B75;text-align:center;margin-top:2px;line-height:1.6">開始前&nbsp;' + _cancelLabel + '以前取消不扣次數；<wbr>之後仍可自行取消，<wbr>但會用掉本期次數</div>')
     + '</div>';
   document.getElementById('ms-detail-modal').classList.add('open');
 };
@@ -23978,10 +24135,10 @@ window.msConfirmModify = async function() {
 
 // ── 結算缺席（整天批次結算）──
 window.msMarkNoshowDate = function(ds) {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以結算缺席'); return; }
+  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR、福委與管理者可以結算缺席'); return; }
   _showConfirmModal(
     '確定要結算缺席嗎？',
-    '將 <strong>' + ds + '</strong> 已預約、時段開始超過 15 分鐘仍未報到的人標記為缺席，會計入違規次數。',
+    '將 <strong>' + ds + '</strong> 已預約、時段開始超過 15 分鐘仍未報到的人標記為缺席，缺席者將暫停預約 1 個月（半年內再缺席 2 個月）。',
     '確定結算', '#dc2626',
     async function() {
       var r;
@@ -24003,7 +24160,7 @@ window.msMarkNoshowDate = function(ds) {
 
 // ── 今日報到 QR Code（管理員產生 → 員工掃碼報到）──
 window.msGenerateQR = async function() {
-  if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR 與管理者可以產生報到 QR Code'); return; }
+  if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR、福委與管理者可以產生報到 QR Code'); return; }
   var today = fmtDateStr(new Date());
   // 即時回饋：先顯示產生中（自動產生與手動重整都適用）
   var _qd = document.getElementById('ms-qr-display'); if (_qd) _qd.style.display = '';
@@ -24278,7 +24435,7 @@ function msWaitlistCard(w) {
     + '</div>'
     + '<div style="flex:1;min-width:0">'
     +   '<div style="font-size:14px;font-weight:700;color:#2E332D">' + htEsc(w.timeSlot||'') + ' 候補中</div>'
-    +   '<div style="font-size:12px;color:#0066CC;margin-top:2px">目前第 ' + w.position + ' 位，有人取消會自動遞補給你</div>'
+    +   '<div style="font-size:12px;color:#0066CC;margin-top:2px;line-height:1.5">目前第 ' + w.position + ' 位，<wbr>有人提早取消會自動遞補給你；<wbr>臨時空位會通知你先約先得</div>'
     + '</div>'
     + '<button onclick="msLeaveWaitlist(\'' + w.waitlistId + '\')" style="background:#fff;color:#767B75;border:1.5px solid #D2D7CD;border-radius:20px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;flex-shrink:0">取消候補</button>'
     + '</div>';
@@ -24330,8 +24487,11 @@ function msBookingCard(b, isUpcoming) {
   else if (s==='booked')       { stubColor='#7C6BAF'; statusIcon='💆'; statusText='已預約'; statusEn='BOOKED'; }
   else if (s==='attended' && /遲到/.test(String(b.cancelReason||''))) { stubColor='#D9932C'; statusIcon='⏰'; statusText='遲到報到'; statusEn='LATE'; }
   else if (s==='attended')     { stubColor='#16a34a'; statusIcon='✓'; statusText='已報到'; statusEn='CHECKED IN'; }
+  else if (s==='cancelled' && b.lateCancel) { stubColor='#B0701F'; statusIcon='✕'; statusText='臨時取消'; statusEn='CANCELLED'; }
   else if (s==='cancelled')    { stubColor='#767B75'; statusIcon='✕'; statusText='已取消'; statusEn='CANCELLED'; }
+  else if (b.noshowWaived)     { stubColor='#B0B6AD'; statusIcon='⚠'; statusText='缺席（已解除）'; statusEn='NO SHOW'; }
   else                         { stubColor='#dc2626'; statusIcon='⚠'; statusText='缺席'; statusEn='NO SHOW'; }
+  if (b.isExtra && (s==='booked' || s==='attended')) statusText += '・加約';
 
   var mNames = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
   var mAbbr = (month>=1 && month<=12) ? mNames[month-1] : '';
@@ -24422,7 +24582,7 @@ window.msRemoveExtraDate = function(ds) {
 // 2026-10-21 → 10/21（提示訊息用，比完整日期好讀）
 function _msMD(ds) { var p = String(ds || '').split('-'); return p.length === 3 ? (parseInt(p[1], 10) + '/' + parseInt(p[2], 10)) : String(ds || ''); }
 window.msAdminOpenDate = function(dateStr) {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以設定開放日期'); return; }
+  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR、福委與管理者可以設定開放日期'); return; }
   var entry = (_msData && _msData.openDates || {})[dateStr];
   var inp = document.getElementById('ms-open-date-inp');
   if (inp) inp.value = dateStr;
@@ -24467,9 +24627,112 @@ function msRenderAdmin() {
   msRenderOpenDates();
   msRenderSlotTemplates();
   msRenderDraftSlots();
+  msRenderSuspendList();
   msRenderAdminTable();
 }
 window.msRenderAdmin = msRenderAdmin; // 對外可呼叫（首次進頁與輪詢皆會用到）
+
+// ── 暫停預約名單（2026-10-23）：缺席停 1 個月、半年內再缺席停 2 個月，到期自動恢復；HR／福委／管理者可解除 ──
+function msRenderSuspendList() {
+  var sec = document.getElementById('ms-suspend-section');
+  var box = document.getElementById('ms-suspend-list');
+  if (!sec || !box) return;
+  var list = (_msData && Array.isArray(_msData.suspendedList)) ? _msData.suspendedList : [];
+  if (!(_msData && _msData.isAdmin) || !list.length) { sec.style.display = 'none'; box.innerHTML = ''; return; }
+  sec.style.display = '';
+  var badge = document.getElementById('ms-suspend-badge');
+  if (badge) badge.textContent = list.length + ' 人';
+  box.innerHTML = list.map(function(p){
+    var nm = (typeof zhName === 'function' ? zhName(p.name) : '') || p.name || p.email;
+    return '<div class="ms-sus-row">'
+      +   '<span class="ms-sus-name">' + htEsc(nm) + '</span>'
+      +   '<span class="ms-sus-meta">' + htEsc(_msFmtMD(p.until)) + ' 起可再預約・<wbr>缺席 ' + (parseInt(p.noshowCount, 10) || 0) + ' 次</span>'
+      +   '<button type="button" class="ms-sus-lift" onclick="msLiftSuspension(\'' + htEsc(String(p.email || '')) + '\',\'' + htEsc(String(nm)).replace(/'/g, '') + '\')">解除暫停</button>'
+      + '</div>';
+  }).join('');
+}
+window.msLiftSuspension = function(email, name) {
+  if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR、福委與管理者可以解除暫停'); return; }
+  _showConfirmModal(
+    '確定要解除暫停預約嗎？',
+    '解除 <strong>' + htEsc(name || email) + '</strong> 的暫停預約，<wbr>解除後馬上可以再預約。<br>缺席紀錄會保留，<wbr>但這次缺席之後不再計入停權。',
+    '確定解除', '#C63968',
+    async function() {
+      var r = null;
+      try { r = await htApi('massageLiftSuspension', { email: email }); } catch(e) {}
+      if (!r || !r.ok) { toast('解除失敗：' + ((r && r.error) || '請稍後再試'), 'error'); return; }
+      if (_msData && Array.isArray(_msData.suspendedList)) {
+        _msData.suspendedList = _msData.suspendedList.filter(function(p){ return String(p.email).toLowerCase() !== String(email).toLowerCase(); });
+      }
+      _msMarkWrite();
+      toast('✅ 已解除暫停預約', true);
+      msRenderSuspendList();
+      _msResyncSoon();
+    }
+  );
+};
+
+// ── 自訂班表 2 組（2026-10-23）：存在 massage_settings.slotTemplates＝[{name, slots:[{time,capacity}]}, …]（所有管理者共用） ──
+var _MS_CUSTOM_N = 2;
+function _msCustomTemplates() {
+  var arr = Array.isArray(_msSlotTemplates) ? _msSlotTemplates : [];
+  // 舊格式（直接是時段陣列）不是自訂班表 → 忽略
+  var out = [];
+  for (var i = 0; i < _MS_CUSTOM_N; i++) {
+    var t = arr[i];
+    out.push((t && typeof t === 'object' && Array.isArray(t.slots) && t.slots.length) ? t : null);
+  }
+  return out;
+}
+function _msSlotsKey(slots) {
+  return (slots || []).map(function(s){ return s.time + 'x' + (parseInt(s.capacity, 10) || 1); }).sort().join(',');
+}
+function msRenderCustomTemplates() {
+  var box = document.getElementById('ms-oe-custom');
+  if (!box) return;
+  var cur = _msSlotsKey(_msDraftSlots);
+  var hasDraft = (_msDraftSlots || []).length > 0;
+  box.innerHTML = _msCustomTemplates().map(function(t, i){
+    var on = t && cur && _msSlotsKey(t.slots) === cur;
+    var main = t
+      ? '<button type="button" class="ms-oe-preset' + (on ? ' on' : '') + '" onclick="msApplyCustomTemplate(' + i + ')" title="套用「' + htEsc(t.name) + '」（' + t.slots.length + ' 節）"><b>' + htEsc(t.name) + '</b><span>' + htEsc(t.slots[0].time) + ' 起・' + t.slots.length + ' 節</span></button>'
+      : '<button type="button" class="ms-oe-preset empty" onclick="msSaveCustomTemplate(' + i + ')"' + (hasDraft ? '' : ' disabled') + ' title="先設定好下方時段，再存成自訂班表"><b>＋ 自訂 ' + (i + 1) + '</b><span>存目前時段</span></button>';
+    var save = t ? '<button type="button" class="ms-oe-cus-save" onclick="msSaveCustomTemplate(' + i + ')"' + (hasDraft ? '' : ' disabled') + '>用目前時段覆蓋</button>' : '';
+    return '<div class="ms-oe-cus">' + main + save + '</div>';
+  }).join('');
+}
+window.msApplyCustomTemplate = function(i) {
+  var t = _msCustomTemplates()[i];
+  if (!t) return;
+  _msDraftSlots = t.slots.map(function(s){ return { time: s.time, capacity: parseInt(s.capacity, 10) || 1 }; });
+  msRenderDraftSlots();
+  toast('已帶入「' + t.name + '」（' + t.slots.length + ' 節），按「確認開放」才會生效');
+};
+window.msSaveCustomTemplate = function(i) {
+  if (!(_msData && _msData.isAdmin)) { toast('🔒 只有 HR、福委與管理者可以設定'); return; }
+  var slots = (_msDraftSlots || []).map(function(s){ return { time: s.time, capacity: parseInt(s.capacity, 10) || 1 }; })
+    .sort(function(a, b){ return a.time.localeCompare(b.time); });
+  if (!slots.length) { toast('請先在下方設定開放時段，再存成自訂班表'); return; }
+  var old = _msCustomTemplates()[i];
+  _showPromptModal('存成自訂班表 ' + (i + 1), '班表名稱，例：下午場', '儲存', '#0066CC',
+    async function(name) {
+      name = String(name || '').trim().slice(0, 12) || ('自訂 ' + (i + 1));
+      var list = _msCustomTemplates().map(function(t){ return t ? { name: t.name, slots: t.slots } : null; });
+      list[i] = { name: name, slots: slots };
+      var payload = list.map(function(t){ return t || {}; });
+      var r = null;
+      try { r = await htApi('massageSaveSettings', { slotTemplates: payload }); } catch(e) {}
+      if (!r || !r.ok) { toast('儲存失敗：' + ((r && r.error) || '請稍後再試'), 'error'); return; }
+      _msSlotTemplates = payload;
+      if (_msData) { _msData.settings = _msData.settings || {}; _msData.settings.slotTemplates = payload; }
+      _msMarkWrite();
+      toast('✅ 已存成「' + name + '」', true);
+      msRenderCustomTemplates();
+    },
+    { desc: '把目前的 ' + slots.length + ' 節時段（' + slots[0].time + '–' + slots[slots.length - 1].time + '）存起來，<wbr>下次一鍵套用。',
+      value: old ? old.name : '' }
+  );
+};
 
 // ── 待審核申請 ──
 function msRenderPendingRequests() {
@@ -24633,6 +24896,7 @@ function msRenderDraftSlots() {
   });
   var _dsLk = (document.getElementById('ms-open-date-inp') || {}).value || '';
   if (_dsLk && _msDraftSlots.length) { _msDraftSlots = _msMergeLocked(_dsLk, _msDraftSlots).slots; }
+  try { msRenderCustomTemplates(); } catch(e) {}   // 自訂班表：依目前時段亮起／可否「存目前時段」
   // ＋ 新增時段：點了跳出系統樣式的時間面板（依整點分列的膠囊，不用瀏覽器原生下拉）；另留「接在最後一節後面」的快速鍵
   var addBtn = '<button type="button" class="ms-dadd" onclick="msOpenTimePicker(this,-1)" aria-haspopup="dialog">＋ 新增時段</button>'
     + (_msDraftSlots.length ? '<button type="button" class="ms-dnext" onclick="msDraftAddSlot()">＋ 接下一節</button>' : '')
@@ -24769,18 +25033,19 @@ window.msDraftAddSlot = function() {
 // 師傅休息時間（表上標「休息／下班」的格子）不開放：
 //   11:00 一節；午休 13:00＋13:15 兩節（下午固定從 13:30 開始）；下午場 15:15 一節。
 //   ★ 13:15 原本被當成可預約（舊版只跳 13:00），但表上午休是兩節 —— 已修正。
+// end＝最後一節開始時間（產生時段用）；until＝結束時間（按鈕與提示顯示用，2026-10-23 改成大家習慣的說法）
 var _MS_SHIFTS = {
-  '2h' : { end: '10:45', label: '二小時' },   // 例：9/4
-  '4h' : { end: '12:45', label: '四小時' },   // 例：8/5、8/19、8/26、9/2、9/16（最常用）
-  '6h' : { end: '15:15', label: '六小時' },   // 例：9/11、9/23
-  'day': { end: '17:30', label: '全天'   }    // 例：8/12
+  '2h' : { end: '10:45', until: '11:00', label: '二小時' },   // 例：9/4
+  '4h' : { end: '12:45', until: '13:00', label: '四小時' },   // 例：8/5、8/19、8/26、9/2、9/16（最常用）
+  '6h' : { end: '15:15', until: '15:30', label: '六小時' },   // 例：9/11、9/23
+  'day': { end: '17:30', until: '17:45', label: '全天'   }    // 例：8/12
 };
 window.msDraftApplyMDay = function(mode) {
   var cfg = _MS_SHIFTS[mode] || _MS_SHIFTS['4h'];
   var slots = _msShiftSlots(mode);
   _msDraftSlots = slots;
   msRenderDraftSlots();
-  toast('已帶入 09:00–' + cfg.end + '（' + slots.length + ' 節），按「確認開放」才會生效');
+  toast('已帶入 09:00–' + cfg.until + '（' + slots.length + ' 節），按「確認開放」才會生效');
 };
 window.msDraftRemoveSlot = function(i) {
   var _ds = (document.getElementById('ms-open-date-inp') || {}).value || '';
@@ -24865,7 +25130,7 @@ window.msConfirmOpenDate = async function() {
 };
 
 window.msCloseDate = function(ds) {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以關閉開放日'); return; }
+  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR、福委與管理者可以關閉開放日'); return; }
   _showConfirmModal(
     '確定要關閉這天的預約嗎？',
     '關閉 <strong>' + ds + '</strong> 後，員工將無法再預約這天的時段。',
@@ -24906,7 +25171,7 @@ window.msAddSlotTemplate = function() {
 };
 window.msRemoveSlot = function(i) { _msSlotTemplates.splice(i,1); msRenderSlotTemplates(); };
 
-// 預約規則已定案寫死於前後端（每月 2 次、時段前 1 小時可自行取消免審核、缺席 3 次停權），
+// 預約規則已定案寫死於前後端（2026-10-23：上下半月各 1 次＋開始前 15 分鐘加約、30 分鐘內可臨時取消但扣次數、缺席停 1／2 個月），
 // 「限制設定」表單改為唯讀展示，不再提供儲存
 
 
@@ -24922,8 +25187,8 @@ function msRenderAdminTable() {
     var k = (b.bookingId||'') + '|' + (b.date||'') + '|' + (b.timeSlot||'');
     if (!seen[k] && b.status !== 'deleted') { seen[k] = 1; all.push(b); }
   });
-  // 已取消的預約不列入「所有預約紀錄」
-  all = all.filter(function(b){ return (b.status||'') !== 'cancelled'; });
+  // 已取消的預約不列入「所有預約紀錄」；但「臨時取消」（開始前 30 分鐘內，會扣次數）要留著讓 HR 看得到（2026-10-23）
+  all = all.filter(function(b){ return (b.status||'') !== 'cancelled' || !!b.lateCancel; });
   all.sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
   _allBookings = all; msRenderAdminRows(all);
 }
@@ -24950,6 +25215,14 @@ function msRenderAdminRows(rows) {
     // 過期的 booked 視為「未報到」呈現（與歷史票卡一致；未實際報到即缺席）
     var isPast = (b.date||'') < _todayStr;
     if (st==='booked' && isPast) cfg = sc.noshow;
+    // 2026-10-23：臨時取消（扣次、不算缺席）／缺席已解除／遲到／加約／轉讓（次數算原預約人）一眼看出
+    var _lbl = cfg.label;
+    if (st==='cancelled' && b.lateCancel) _lbl = '臨時取消';
+    else if (st==='noshow' && b.noshowWaived) _lbl = '缺席（已解除）';
+    else if (st==='attended' && /遲到/.test(String(b.cancelReason||''))) _lbl = '遲到報到';
+    var _tags = '';
+    if (b.isExtra) _tags += '<span style="margin-left:6px;border:1px solid #EC4F7D;color:#C63968;border-radius:20px;padding:1px 8px;font-size:12px;font-weight:700;white-space:nowrap">加約</span>';
+    if (b.quotaEmail && b.userEmail && String(b.quotaEmail).toLowerCase() !== String(b.userEmail).toLowerCase()) _tags += '<span style="margin-left:6px;border:1px solid #9DBDE6;color:#0066CC;border-radius:20px;padding:1px 8px;font-size:12px;font-weight:700;white-space:nowrap" title="同事轉讓來的，次數算原預約人">轉讓</span>';
     var btnBase = 'border:none;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600';
     var actions = '';
     var _canAdmMut = !!(_msData && _msData.isMgr); // 取消／報到／補登：HR＋管理者
@@ -24969,13 +25242,13 @@ function msRenderAdminRows(rows) {
       + '<td style="padding:10px;font-weight:600;color:#2E332D;white-space:nowrap">' + htEsc(zhName(b.userName)||b.userEmail||'—') + '</td>'
       + '<td style="padding:10px;color:#4A4F49;white-space:nowrap">' + htEsc(b.date||'') + '</td>'
       + '<td style="padding:10px;font-weight:700;color:#4A4F49;white-space:nowrap">' + htEsc(b.timeSlot||'') + '</td>'
-      + '<td style="padding:10px;white-space:nowrap"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;display:inline-block">' + cfg.label + '</span></td>'
+      + '<td style="padding:10px;white-space:nowrap"><span style="background:' + cfg.bg + ';color:' + cfg.color + ';border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap;display:inline-block">' + _lbl + '</span>' + _tags + '</td>'
       + '<td style="padding:10px;white-space:nowrap">' + actions + '</td></tr>';
   }).join('');
 }
 
 window.msAdminCancel = function(bookingId) {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以刪除預約'); return; }
+  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR、福委與管理者可以刪除預約'); return; }
   _showConfirmModal(
     '確定要刪除此預約嗎？',
     '此動作無法復原，將直接移除這筆預約紀錄。',
@@ -24991,7 +25264,7 @@ window.msAdminCancel = function(bookingId) {
   );
 };
 window.msAdminCheckIn = function(bookingId) {
-  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR 與管理者可以補登報到'); return; }
+  if (!(_msData && _msData.isMgr)) { toast('🔒 只有 HR、福委與管理者可以補登報到'); return; }
   _msUpdateBookingStatus(bookingId,'attended'); msRenderAdminTable(); msRenderCal(); msRenderMyBookings();
   // 同一段程式的「管理端刪除」有檢查 r.ok，這支原本只接網路層失敗、{ok:false} 完全沒處理，
   // 畫面照樣顯示「已強制報到」。補上檢查並在失敗時重抓伺服器真實狀態。
@@ -25160,6 +25433,18 @@ window.msStartPolling = function() {
 window.msStopPolling = function() {
   if (_msPollTimer) { clearInterval(_msPollTimer); _msPollTimer = null; }
 };
+
+// 本機示範模式（localhost＋?demo=）專用測試把手：可塞入假資料檢查各種狀態的畫面；正式網址不會出現
+if ((location.hostname === 'localhost' || location.hostname === '127.0.0.1') && /[?&]demo=/.test(location.search)) {
+  window.__msTest = {
+    get: function(){ return _msData; },
+    set: function(d){ _msData = d; },
+    setTemplates: function(t){ _msSlotTemplates = t; },
+    draft: function(s){ if (s) _msDraftSlots = s; return _msDraftSlots; },
+    showSlots: msShowSlots, renderQuota: msRenderQuota, renderMy: msRenderMyBookings, renderAdmin: msRenderAdmin,
+    quotaUsed: _msQuotaUsed, bookKind: _msBookKind, halfKey: _msHalfKey, card: msBookingCard
+  };
+}
 
 })(); // end 按摩預約 module
 </script>
