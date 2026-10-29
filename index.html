@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261029151407';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261029151816';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -16402,7 +16402,8 @@ function renderAnalytics(startDate,endDate){
 // 佔比用甜甜圈圖：橫條的長度是「相對最大項」，看不出各佔總額幾成
 function renderDonutChart(id,dataMap,colors){
   var el=document.getElementById(id);if(!el)return;
-  var entries=Object.entries(dataMap).sort(function(a,b){return b[1]-a[1];});
+  // 折讓單會讓某分類淨額 ≤ 0：佔比圖只畫正值，否則扇形長度為負、百分比超過 100%
+  var entries=Object.entries(dataMap).filter(function(e){return e[1]>0;}).sort(function(a,b){return b[1]-a[1];});
   if(entries.length===0){el.innerHTML='<div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">此區間無資料</div>';return;}
   var total=entries.reduce(function(s,e){return s+e[1];},0);
   if(total<=0){el.innerHTML='<div style="color:#767B75;font-size:14px;text-align:center;padding:20px 0;width:100%">此區間無資料</div>';return;}
@@ -16445,7 +16446,7 @@ function renderBarChart(id,dataMap,colors){
   // 限寬後即使單筆也維持圖表的樣子，多筆時彼此的長度比較也更容易讀。
   el.style.maxWidth='560px';
   el.innerHTML=entries.map(function(e,i){
-    var lbl=e[0];var val=e[1];var pct=maxVal>0?Math.round(val/maxVal*100):0;var color=colors[i%colors.length];
+    var lbl=e[0];var val=e[1];var pct=maxVal>0?Math.max(0,Math.round(val/maxVal*100)):0;var color=colors[i%colors.length];
     return'<div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-weight:500;color:#4A4F49">'+lbl+'</span><span style="font-weight:700;color:'+color+'">NT$ '+Number(val).toLocaleString()+'</span></div><div style="background:#EDEFF2;border-radius:16px;height:7px"><div style="background:'+color+';height:7px;border-radius:16px;width:'+pct+'%;transition:width .4s ease"></div></div></div>';
   }).join('');
 }
