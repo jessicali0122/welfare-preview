@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261029151816';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261029165832';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -9607,7 +9607,7 @@ function _applyCasesData(allCases) {
   window._appFilteredCases = null;
   // ★ 停在「待我審核」時，背景刷新（進頁、切分頁節流刷新、Realtime）回來不能直接畫全部案件——
   //   否則頁籤是待我審核、清單卻變成全部案件。交給 renderApplications 依分頁篩選（它也會處理空狀態）。
-  if (_currentAppTab === 'pending') { renderApplications(); return; }
+  if (_currentAppTab === 'pending') { renderApplications(true); return; }
   if (cases.length === 0) {
     tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state">
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D2D6D0" stroke-width="1.5" style="margin:0 auto 12px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -9618,9 +9618,11 @@ function _applyCasesData(allCases) {
     return;
   }
   window._appSortedCases = [...cases].sort(_byCreatedDesc);
-  window._appCurrentPage = 1;
+  // ★ 資料刷新（從案件返回、Realtime、背景更新）要停在原本的頁碼與篩選，不能踹回第 1 頁；
+  //   「重新進入費用申請」時 sw 會先 resetAppFilter（頁碼歸 1），所以這裡沿用目前頁碼即可。
+  window._appCurrentPage = window._appCurrentPage || 1;
   if (!window._appPageSize) window._appPageSize = 15;
-  _renderAppPage(window._appCurrentPage);
+  if (_appHasFilter()) applyAppFilter(true); else _renderAppPage(window._appCurrentPage);
   if (typeof syncApplicantFilter === 'function') setTimeout(syncApplicantFilter, 50);
 }
 
@@ -9752,7 +9754,7 @@ function _byCreatedDesc(a, b) {
   return String(b && b.createdAt || '').localeCompare(String(a && a.createdAt || ''));
 }
 // renderApplications: 根據 _appsTab 重新渲染案件列表
-function renderApplications() {
+function renderApplications(keepPage) {
   var allCases = window._allCasesCache || [];
   // 🎭 角色預覽（模擬一般福委）：只顯示自己發起的案件，與後端真實過濾一致
   if (_previewOwnOnly()) {
@@ -9765,12 +9767,12 @@ function renderApplications() {
     cases = cases.filter(function(c){ return typeof isMyTurnToApprove === 'function' ? isMyTurnToApprove(c) : false; });
   }
   window._appSortedCases = cases.slice().sort(_byCreatedDesc);
-  window._appCurrentPage = 1;
+  window._appCurrentPage = keepPage === true ? (window._appCurrentPage || 1) : 1;
   window._appFilteredCases = null;
   var countLabel = document.getElementById('app-count-label');
   if (countLabel) countLabel.textContent = '共 ' + cases.length + ' 件';
   if (typeof syncApplicantFilter === 'function') syncApplicantFilter();   // 申請人下拉只列實際有案件的人
-  _renderAppPage(1);
+  if (keepPage === true && _appHasFilter()) applyAppFilter(true); else _renderAppPage(window._appCurrentPage);
 }
 
 // 全選 / 取消全選（案件追蹤表格）
@@ -10450,6 +10452,8 @@ async function loadDetail(caseId, _fromPop) {
   // 而不是跳回總覽（使用者實際回報的困惑點）。從審核頁等其他頁進來則維持回到原頁。
   if (_retView === 'dashboard') _retView = 'applications';
   window._detailReturnView = _retView;
+  // 是不是從費用申請清單點進來的（返回時才保留清單的頁碼／篩選；從總覽、通知進來的則照常重設）
+  if (currentView !== 'detail') window._detailFromList = (currentView === 'applications');
   // ── 瀏覽器歷史紀錄：pushState 讓重整 / 上一頁正確還原 ──
   if (!_fromPop && window._appReady && location.hash !== '#detail/' + caseId) {
     history.pushState({ view: 'detail', caseId: caseId }, '', '#detail/' + caseId);
@@ -11518,6 +11522,7 @@ function _resolvePermPending(){
   _revalidateAppsTab();
 }
 function sw(name,elOrName,_fromPop){
+  var _swFromDetail = (document.querySelector('.view.active') || {}).id === 'view-detail' && !!window._detailFromList;
   // 保險：切頁一律清掉列印用的暫存文件（殘留會讓其他頁面按列印時印出上一張案件）
   try {
     document.getElementById('print-root')?.remove();
@@ -11613,7 +11618,10 @@ function sw(name,elOrName,_fromPop){
   updateVH();
   // 載入對應資料（先觸發，之後再做 DOM 調整，避免 iOS fetch 被中斷）
   closeSidebar();
-  if(name==='applications'){
+  if(name==='applications' && _swFromDetail){
+    // 從案件詳情「返回」：保留原本的頁碼、篩選與頁籤（使用者回報：在第 2/3 頁點進案件，返回卻跳回第 1 頁）
+    loadApplications();
+  } else if(name==='applications'){
     resetAppFilter(false); _appsTab = 'all'; _currentAppTab = 'cases';
     if(document.getElementById('apps-tab-all')) appsSetTab('all');
     loadApplications();
@@ -14942,7 +14950,13 @@ window.doAddUser = function() {
 // ══════════════════════════════════════════
 //  案件追蹤篩選
 // ══════════════════════════════════════════
-function applyAppFilter() {
+// 目前是否有任何篩選條件（資料刷新時用來決定要不要重套篩選）
+function _appHasFilter() {
+  var v = function(id){ return ((document.getElementById(id) || {}).value || '').trim(); };
+  return !!(v('app-search') || v('app-filter-applicant') || v('app-filter-status') || v('app-filter-cat') || v('app-filter-dept')
+    || (typeof dpState !== 'undefined' && (dpState.start || dpState.end)));
+}
+function applyAppFilter(keepPage) {
   const q         = (document.getElementById('app-search')?.value || '').trim().toLowerCase();
   const applicant = (document.getElementById('app-filter-applicant')?.value || '').trim().toLowerCase();
   const status    = (document.getElementById('app-filter-status')?.value || '');
@@ -14975,8 +14989,9 @@ function applyAppFilter() {
     }
     return true;
   });
-  window._appCurrentPage = 1;
-  _renderAppPage(1);
+  // keepPage＝資料刷新時重套篩選，停在原頁（_renderAppPage 會夾在有效頁數內）；使用者改篩選條件則回第 1 頁
+  window._appCurrentPage = keepPage === true ? (window._appCurrentPage || 1) : 1;
+  _renderAppPage(window._appCurrentPage);
   const label = document.getElementById('app-count-label');
   if (label) label.textContent = '共 ' + window._appFilteredCases.length + ' 件';
   // 搜尋框清除鍵
