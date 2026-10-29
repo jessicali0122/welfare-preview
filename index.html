@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261023131307';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261029151407';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4131,7 +4131,7 @@ thead th{color:#767B75!important}
               <div style="display:grid;grid-template-columns:minmax(0,260px) 1fr;gap:12px;align-items:end;margin-bottom:10px">
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">單據類型 <span style="color:#dc2626">*</span></label>
-                  <select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option><option>證明文件</option><option>無憑證</option></select>
+                  <select class="inp"><option value="">請選擇</option><option>發票</option><option>折讓單</option><option>收據</option><option>證明文件</option><option>無憑證</option></select>
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">稅率</label>
@@ -4152,7 +4152,7 @@ thead th{color:#767B75!important}
                 </div>
                 <div>
                   <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">含稅金額 (NT$) <span style="color:#dc2626">*</span></label>
-                  <input class="inp withtax" type="number" min="0" step="1" inputmode="numeric" placeholder="請輸入含稅金額" value="" oninput="calcRowFromTotal(this);updateFormProgress()" style="font-weight:700">
+                  <input class="inp withtax" type="number" step="1" inputmode="numeric" placeholder="請輸入含稅金額" value="" oninput="calcRowFromTotal(this);updateFormProgress()" style="font-weight:700">
                 </div>
               </div>
               </div><!-- end item-card-body -->
@@ -10223,7 +10223,7 @@ function _formHasContent(){
   document.querySelectorAll('#view-new-form .item-card').forEach(function(c){
     var d = c.querySelector('.desc-inp')?.value || '';
     var t = parseFloat(c.querySelector('.withtax')?.value) || 0;
-    if (d.trim() || t > 0) hit = true;
+    if (d.trim() || t !== 0) hit = true;
   });
   return hit;
 }
@@ -10881,11 +10881,13 @@ async function submitForm() {
     _failValidation(_k0 ? ('⚠️ 請先在「申請項目」下方完成' + _SUB_LABEL[_k0] + '試算，並按「帶入明細」') : '⚠️ 請至少新增一筆明細'); return;
   }
 
-  // 每筆明細的含稅金額必須 > 0
-  const hasZeroAmount = items.some(i => !(i.total > 0));
+  // 每筆明細的含稅金額必須 > 0（折讓單則必須 < 0）
+  const _amtOk = (rt, t) => rt === '折讓單' ? t < 0 : t > 0;
+  const hasZeroAmount = items.some(i => !_amtOk(i.receiptType, i.total));
   if (hasZeroAmount) {
-    document.querySelectorAll('.withtax').forEach(el => {
-      if (!(parseFloat(el.value) > 0)) { el.classList.add('inp-error'); setTimeout(() => el.classList.remove('inp-error'), 2500); }
+    document.querySelectorAll('.item-card').forEach(c => {
+      const el = c.querySelector('.withtax');
+      if (el && !_amtOk(c.querySelectorAll('select')[1]?.value, parseFloat(el.value))) { el.classList.add('inp-error'); setTimeout(() => el.classList.remove('inp-error'), 2500); }
     });
     _failValidation('⚠️ 每筆明細都需填寫含稅金額（不得為 0）'); return;
   }
@@ -12135,7 +12137,7 @@ function addItem(){
     <div><label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">項目 <span style="color:#dc2626">*</span></label><input class="inp desc-inp" placeholder="例：慶生聚餐費用"></div>
   </div>
   <div style="margin-bottom:10px">
-    <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">單據類型 <span style="color:#dc2626">*</span></label><select class="inp"><option value="">請選擇</option><option>發票</option><option>收據</option><option>證明文件</option><option>無憑證</option></select>
+    <label style="font-size:12px;font-weight:600;color:#4A4F49;display:block;margin-bottom:4px">單據類型 <span style="color:#dc2626">*</span></label><select class="inp"><option value="">請選擇</option><option>發票</option><option>折讓單</option><option>收據</option><option>證明文件</option><option>無憑證</option></select>
   </div>
   <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
     <span style="font-size:12px;font-weight:600;color:#4A4F49">稅率</span>
@@ -15996,7 +15998,7 @@ function autoSaveDraft(){
   // 表單完全空白時，不寫入 localStorage，避免下次誤顯示草稿提示
   const hasSubject=subjectEl&&subjectEl.value.trim().length>0;
   const hasReason=reasonEl&&reasonEl.value.trim().length>0;
-  const hasItemData=_items.some(function(i){return (i.description&&i.description.trim().length>0)||(i.total>0);});
+  const hasItemData=_items.some(function(i){return (i.description&&i.description.trim().length>0)||(i.total&&i.total!==0);});
   if(!hasSubject&&!hasReason&&!hasItemData){return;}
 
   const _exist=(() => { try { return JSON.parse(localStorage.getItem('bf_draft')||'{}'); } catch(e) { return {}; } })();
@@ -16042,7 +16044,7 @@ function checkDraftBanner(){
       const hasSubject=d.subject&&d.subject.trim().length>0;
       const hasReason=d.reason&&d.reason.trim().length>0;
       const hasItems=Array.isArray(d.items)&&d.items.some(function(i){
-        return (i.description&&i.description.trim().length>0)||(i.total&&i.total>0);
+        return (i.description&&i.description.trim().length>0)||(i.total&&i.total!==0);
       });
       if(hasSubject||hasReason||hasItems){banner.classList.add('show');return;}
     }catch(e){}
@@ -16542,7 +16544,7 @@ function updateFormProgress() {
   const subjectEl  = document.querySelector('#view-new-form input[placeholder*="主旨"]');
   const hasSubject = !!(subjectEl && subjectEl.value.trim());
   const hasItems   = document.querySelectorAll('.item-card .withtax').length > 0
-    && Array.from(document.querySelectorAll('.item-card .withtax')).some(el => parseFloat(el.value) > 0);
+    && Array.from(document.querySelectorAll('.item-card .withtax')).some(el => (parseFloat(el.value) || 0) !== 0);
   const hasFiles   = (window._pendingFiles && window._pendingFiles.length > 0)
     || (window._uploadedDraftFiles && window._uploadedDraftFiles.length > 0)
     || (window._draftUploadingCount > 0);   // 上傳中也算已有附件，否則進度條第 3 步會倒退
@@ -16604,7 +16606,7 @@ function showSubmitPreview(subjectEl, reasonEl, departmentEl, payeeEl, items, ne
       <div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">附件</span><span style="color:#0066CC;font-weight:600;flex:1">${fileCnt} 份${fileNote}</span></div>
       ${reason ? `<div style="display:flex;gap:10px"><span style="color:#767B75;width:60px;flex-shrink:0">備註</span><span style="color:#0066CC;flex:1;line-height:1.5">${htEsc(reason)}</span></div>` : ''}
     </div>
-    ${needsReceipt ? `<div style="font-size:12px;color:#767B75;margin-bottom:12px;display:flex;align-items:center;gap:6px">📎 請確認已準備好實體發票、收據或證明文件，審核人員將會核對。</div>` : ''}
+    ${needsReceipt ? `<div style="font-size:12px;color:#767B75;margin-bottom:12px;display:flex;align-items:center;gap:6px">📎 請確認已準備好實體發票、折讓單、收據或證明文件，審核人員將會核對。</div>` : ''}
     <div style="padding:12px 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;border-top:1px solid #D9DDD3;border-bottom:1px solid #D9DDD3">
       <div style="font-size:12px;color:#767B75;font-weight:500">含稅總金額</div>
       <div style="font-size:20px;font-weight:800;color:#0066CC">NT$ ${total.toLocaleString()}</div>
@@ -16981,43 +16983,55 @@ function setTaxRate(btn, rate) {
   const taxEl     = card.querySelector('.taxamt');
   if (!withtaxEl || !pretaxEl || !taxEl) return;
   const total = parseFloat(withtaxEl.value) || 0;
-  if (rate === 0) {
-    // 免稅：未稅=含稅，稅=0
-    pretaxEl.removeAttribute('readonly'); pretaxEl.value = total || ''; pretaxEl.setAttribute('readonly','');
-    taxEl.removeAttribute('readonly');    taxEl.value    = 0;           taxEl.setAttribute('readonly','');
-  } else {
-    // 5% 含稅計算
-    const pretax = total > 0 ? Math.round(total / (1 + rate)) : 0;
-    pretaxEl.removeAttribute('readonly'); pretaxEl.value = pretax || ''; pretaxEl.setAttribute('readonly','');
-    taxEl.removeAttribute('readonly');    taxEl.value    = total > 0 ? total - pretax : 0; taxEl.setAttribute('readonly','');
-  }
+  _fillPretaxTax(pretaxEl, taxEl, total, rate);
   calcTotal();
 }
+
+// ── 折讓單：含稅金額為負數（使用者輸入正數，系統自動轉負；未稅／稅額跟著為負）──
+function _isCreditNote(card) {
+  var rs = card && card.querySelectorAll('select')[1];
+  return !!(rs && rs.value === '折讓單');
+}
+// 依含稅金額（可為負）反推未稅與稅額：先用絕對值算，再套回正負號，正負兩邊算法一致
+function _fillPretaxTax(pretaxEl, taxEl, total, rate) {
+  const sign = total < 0 ? -1 : 1, abs = Math.abs(total);
+  let pretax = abs, tax = 0;
+  if (rate !== 0 && abs > 0) { pretax = Math.round(abs / (1 + rate)); tax = abs - pretax; }
+  pretaxEl.removeAttribute('readonly'); pretaxEl.value = abs ? sign * pretax : ''; pretaxEl.setAttribute('readonly','');
+  taxEl.removeAttribute('readonly');    taxEl.value    = tax ? sign * tax : 0;    taxEl.setAttribute('readonly','');
+}
+// 切換單據類型：選到／取消折讓單時，把已填的金額翻成對應正負號
+document.addEventListener('change', function(e) {
+  var sel = e.target;
+  if (!sel || sel.tagName !== 'SELECT') return;
+  var card = sel.closest && sel.closest('.item-card');
+  if (!card || card.querySelectorAll('select')[1] !== sel) return;
+  var w = card.querySelector('.withtax');
+  if (!w) return;
+  w.placeholder = _isCreditNote(card) ? '輸入折讓金額（自動為負）' : '請輸入含稅金額';
+  if (!_isCreditNote(card) && parseFloat(w.value) < 0) w.value = Math.abs(parseFloat(w.value));   // 改回一般單據：負數翻正，不歸零
+  if (w.value !== '') calcRowFromTotal(w);
+  updateFormProgress();
+});
 
 // 覆寫 calcRowFromTotal，支援稅率切換按鈕
 function calcRowFromTotal(inp) {
   const card = inp.closest('.item-card');
-  // ★ 負數就地歸零、小數四捨五入成整數：
-  //   原本負數會讓未稅/稅額被歸零、含稅欄卻留著負值，三個欄位互相矛盾，
-  //   而總計是加總含稅欄 → 整張單的金額會顯示成負的（送出時才被擋，但畫面已經在騙人）。
-  //   新台幣沒有小數，順手一起正規化。
+  // ★ 正負號以單據類型為準、小數四捨五入成整數：
+  //   一般單據負數就地歸零（否則未稅/稅額歸零、含稅欄卻留負值，三欄互相矛盾）；
+  //   折讓單一律為負（使用者打正數即自動轉負，免在手機上找負號）。新台幣沒有小數，順手正規化。
   let total = parseFloat(inp.value);
-  if (!isFinite(total) || total < 0) total = 0;
-  total = Math.round(total);
-  if (inp.value !== '' && String(total) !== String(inp.value)) inp.value = total || '';
+  if (!isFinite(total)) total = 0;
+  total = Math.round(Math.abs(total));
+  if (_isCreditNote(card)) total = -total;
+  else if (parseFloat(inp.value) < 0) total = 0;
+  if (inp.value !== '' && inp.value !== '-' && String(total) !== String(inp.value)) inp.value = total || '';
   const activeBtn = card?.querySelector('.tax-btn.tax-active');
   const rate = activeBtn ? parseFloat(activeBtn.dataset.taxRate ?? activeBtn.getAttribute('onclick').match(/[\d.]+/)?.[0] ?? '0.05') : 0.05;
   const pretaxEl = card?.querySelector('.pretax');
   const taxEl    = card?.querySelector('.taxamt');
   if (!card || !pretaxEl || !taxEl) return;
-  if (rate === 0) {
-    pretaxEl.removeAttribute('readonly'); pretaxEl.value = total || ''; pretaxEl.setAttribute('readonly','');
-    taxEl.removeAttribute('readonly');    taxEl.value    = 0;           taxEl.setAttribute('readonly','');
-  } else {
-    const pretax = total > 0 ? Math.round(total / (1 + rate)) : 0;
-    pretaxEl.removeAttribute('readonly'); pretaxEl.value = pretax || ''; pretaxEl.setAttribute('readonly','');
-    taxEl.removeAttribute('readonly');    taxEl.value    = total > 0 ? total - pretax : 0; taxEl.setAttribute('readonly','');
-  }
+  _fillPretaxTax(pretaxEl, taxEl, total, rate);
   calcTotal();
 }
 
@@ -17041,7 +17055,7 @@ function toggleItemCard(btn) {
       _sName.className = 'ic-sum-name';
       _sName.textContent = desc ? (desc.slice(0, 18) + (desc.length > 18 ? '…' : '')) : '（未填寫）';
       summary.appendChild(_sName);
-      if (total > 0) {
+      if (total !== 0) {
         const _sAmt = document.createElement('span');
         _sAmt.className = 'ic-sum-amt';
         _sAmt.textContent = 'NT$' + total.toLocaleString();
@@ -17064,7 +17078,7 @@ document.addEventListener('click', function(e) {
       // 將除最後一張以外的已填卡片收合
       Array.from(cards).slice(0, -1).forEach(function(c) {
         const withtax = parseFloat(c.querySelector('.withtax')?.value);
-        if (withtax > 0 && !c.classList.contains('ic-collapsed')) {
+        if (withtax && !c.classList.contains('ic-collapsed')) {
           const btn_ = c.querySelector('.ic-toggle-btn');
           if (btn_) toggleItemCard(btn_);
         }
