@@ -369,10 +369,12 @@
   // 2026-08-04：19 場已搬完並逐欄比對與 GAS 完全一致，已掛進 HANDLERS。
   // 日後舊試算表若又被修改，呼叫 ht_sheet_sessions_sync(sessions) 重新同步即可。
   async function htSheetList() {
-    var r = await _sb('ht_sheet_sessions?select=data&order=ym.desc');
+    var r = await _sb('ht_sheet_sessions?select=data,synced_at&order=ym.desc');
     if (r.__error) return { ok: false, error: r.__error };
     var sessions = (r.__data || []).map(function (x) { return x.data; }).filter(Boolean);
-    return { ok: true, sessions: sessions };
+    // 最近一次同步時間（同步 RPC 每次都會把所有列的 synced_at 更新成 now()）→ 頁面顯示「上次更新」
+    var syncedAt = (r.__data || []).reduce(function (m, x) { return (x.synced_at && (!m || x.synced_at > m)) ? x.synced_at : m; }, '');
+    return { ok: true, sessions: sessions, syncedAt: syncedAt };
   }
 
   // 廠商清單
