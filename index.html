@@ -5,7 +5,7 @@
 <!-- 自動版本檢查：發現有新版自動重新載入（version.txt 由 pre-commit hook 自動更新） -->
 <script>
 (function(){
-  var APP_VERSION = '20261029165832';  // 由 pre-commit hook 自動蓋章，請勿手改
+  var APP_VERSION = '20261030162837';  // 由 pre-commit hook 自動蓋章，請勿手改
   // 這支 IIFE 內的區域變數，外面拿不到 → 掛上 window，供動態載入的 JS 帶版本參數
   // （否則會退化成 Date.now()，等於每次載入都重抓模組）
   window.APP_VERSION = APP_VERSION;
@@ -4431,6 +4431,9 @@ thead th{color:#767B75!important}
           <select class="inp" id="admin-filter-dept" style="width:150px" onchange="_syncAdminFilterBtns()">
             <option value="">全部部門</option>
             <option>人力資源部</option><option>資訊部</option><option>數位廣告部</option><option>後勤部</option><option>供應鏈部</option><option>行銷部</option><option>通路事業發展部</option><option>財務會計部</option>
+          </select>
+          <select class="inp" id="admin-filter-status" style="width:120px" onchange="applyAdminFilter()" aria-label="帳號狀態">
+            <option value="">全部狀態</option><option value="active">啟用中</option><option value="disabled">已停用</option>
           </select>
           <button id="admin-search-btn" type="button" class="btn" style="padding:8px 14px;font-size:14px;background:#EDEFF2;color:#767B75;border:1.5px solid #D2D7CD;transition:all .15s" onclick="applyAdminFilter()">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>搜尋
@@ -15076,7 +15079,8 @@ function _syncAnalyticsApplyBtn() {
 function _syncAdminFilterBtns() {
   var q    = (document.getElementById('admin-search')?.value || '').trim();
   var dept = (document.getElementById('admin-filter-dept')?.value || '').trim();
-  var active = !!(q || dept);
+  var st   = (document.getElementById('admin-filter-status')?.value || '');
+  var active = !!(q || dept || st);
   var sb = document.getElementById('admin-search-btn');
   var cb = document.getElementById('admin-clear-btn');
   if (sb) { sb.style.background='#EDEFF2';sb.style.color='#767B75';sb.style.borderColor='#D2D7CD';
@@ -15093,12 +15097,15 @@ var _adminPage = 1;
 function _applyAdminView(quiet) {
   const q = (document.getElementById('admin-search')?.value || '').trim().toLowerCase();
   const dept = (document.getElementById('admin-filter-dept')?.value || '').trim();
+  const st = (document.getElementById('admin-filter-status')?.value || '');   // '' 全部／active 啟用中／disabled 已停用
   // 刪除中的列（樂觀移除）先排除，避免重算分頁時又被顯示回來
   const rows = Array.prototype.slice.call(document.querySelectorAll('#admin-users-tbody tr[data-email]:not([data-deleting])'));
   const matches = rows.filter(function(r){
     const text = r.textContent.toLowerCase();
     const deptText = (r.getAttribute('data-dept') || (r.cells[3] ? r.cells[3].textContent : '') || '').trim();
-    return (!q || text.includes(q)) && (!dept || deptText === dept || deptText.includes(dept));
+    const isDis = r.getAttribute('data-status') === 'disabled';
+    return (!q || text.includes(q)) && (!dept || deptText === dept || deptText.includes(dept))
+      && (!st || (st === 'disabled' ? isDis : !isDis));
   });
   const per = _adminPerPage;
   const totalPages = Math.max(1, Math.ceil(matches.length / per));
@@ -15142,6 +15149,7 @@ function applyAdminFilter() {
 function resetAdminFilter() {
   document.getElementById('admin-search').value = '';
   document.getElementById('admin-filter-dept').value = '';
+  var _afs = document.getElementById('admin-filter-status'); if (_afs) _afs.value = '';
   _adminPage = 1;
   _applyAdminView(true);
   updateSelectedCount();
